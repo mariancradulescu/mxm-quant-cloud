@@ -139,4 +139,31 @@ fixedSource.Observe(Bar(0,1.10m));
 Check(Rejects(()=>fixedSource.Observe(
     Bar(1,1.10m) with {Symbol="GBPUSD"})),"different symbol never shares adaptive weights");
 
-Console.WriteLine($"PASS {passed} recovery/accounting/portfolio/causal-H1 checks; synthetic, no economic qualification.");
+
+var accountRisk = new BrokerRiskSnapshot(220m, 130m, 240m,true,true,true,true);
+var existingRisk = new[]{
+    new OpenRiskExposure("position-1",5m,20m),
+    new OpenRiskExposure("position-2",7m,30m)
+};
+var proposalRisk = new ProposedRiskExposure("position-3",8m,2m,35m);
+var riskOk = PortfolioRiskBudget.Assess(accountRisk,existingRisk,proposalRisk);
+Check(riskOk.Admissible && riskOk.PortfolioPositionCountAfter==3 &&
+    riskOk.DrawdownHeadroomEur==52m && riskOk.TotalStressLossAfterEur==22m,
+    "dynamic multi-position risk without obsolete per-trade caps");
+Check(!PortfolioRiskBudget.Assess(accountRisk with {CertifiedEquityPeakUpperEur=null},
+    existingRisk,proposalRisk).Admissible,"uncertified peak cannot open risk capacity");
+Check(!PortfolioRiskBudget.Assess(accountRisk with {OrderOutcomesKnown=false},
+    existingRisk,proposalRisk).Admissible,"ambiguous execution blocks new exposure");
+Check(!PortfolioRiskBudget.Assess(accountRisk with {EquityEur=168m},
+    existingRisk,proposalRisk).Admissible,"drawdown boundary has zero headroom");
+Check(!PortfolioRiskBudget.Assess(accountRisk,existingRisk,
+    proposalRisk with {RequiredMarginEur=131m}).Admissible,
+    "margin cannot exceed actual free broker margin");
+Check(!PortfolioRiskBudget.Assess(accountRisk,
+    new[]{existingRisk[0],existingRisk[0]},proposalRisk).Admissible,
+    "duplicated native positions cannot fake exposure");
+Check(!PortfolioRiskBudget.Assess(accountRisk with {ProposedMarginAndLossBoundsVerified=false},
+    existingRisk,proposalRisk).Admissible,
+    "estimated scenario risk does not replace verified broker bounds");
+
+Console.WriteLine($"PASS {passed} recovery/accounting/portfolio/causal-H1/dynamic-risk checks; synthetic, no economic qualification.");
