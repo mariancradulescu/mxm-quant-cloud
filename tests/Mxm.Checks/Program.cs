@@ -16,4 +16,13 @@ var volumes = new Dictionary<long, decimal> { [10] = 100 };
 Check(RoundTrips.Count(t,t.AddDays(7),new[]{a,b,a},volumes,new HashSet<long>()) == 1,"partial exits and duplicate events count once");
 Check(RoundTrips.Count(t,t.AddDays(7),new[]{a},volumes,new HashSet<long>()) == 0,"incomplete close excluded");
 Check(RoundTrips.Count(t,t.AddDays(7),new[]{a,b},volumes,new HashSet<long>{10}) == 0,"still open excluded");
+var ledger=new NetLedger();
+var settlement=new NetSettlement("deal-1",5m,1m,-0.5m,0.2m,new string('a',64));
+ledger.Apply(settlement);
+Check(ledger.Balance==203.3m,"net settlement in EUR includes all supplied costs");
+ledger.Apply(settlement);
+Check(ledger.Balance==203.3m,"duplicate settlement idempotency");
+var conflict=false;
+try { ledger.Apply(settlement with { GrossEur=6m }); } catch (InvalidOperationException) { conflict=true; }
+Check(conflict,"conflicting economic evidence rejected");
 Console.WriteLine($"PASS {passed} recovery/accounting checks; synthetic, no economic qualification.");

@@ -2,6 +2,12 @@ name: Verify native foundation
 on:
   push:
   pull_request:
+  workflow_dispatch:
+    inputs:
+      collect:
+        description: Run protected read-only source collection and custody readback
+        type: boolean
+        default: false
 permissions:
   contents: read
 jobs:
@@ -15,6 +21,12 @@ jobs:
             8.0.x
             6.0.x
       - run: dotnet run --project tests/Mxm.Checks -c Release
+      - run: dotnet build src/Mxm.Replay -c Release
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - run: python -m unittest research.test_pipeline
       - run: dotnet build src/Mxm.Cloud -c Release
       - name: Verify algo produced
         run: test -n "$(find src/Mxm.Cloud/bin/Release -name '*.algo' -print -quit)"
@@ -22,4 +34,63 @@ jobs:
         with:
           name: mxm-observation-only-not-authorized-for-activation
           path: src/Mxm.Cloud/bin/Release/**/*.algo
+          if-no-files-found: error
+  collect:
+    if: github.event_name == 'workflow_dispatch' && inputs.collect && github.ref == 'refs/heads/main'
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: mxm-r3-pepperstone-v1
+    concurrency:
+      group: mxm-existing-oauth-read-only
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - run: dotnet build src/Mxm.Replay -c Release
+      - name: Authenticated read-only collection and CSharp source receipt
+        run: python -m research.collect
+        env:
+          R3_CTRADER_CLIENT_ID: ${{ secrets.R3_CTRADER_CLIENT_ID }}
+          R3_CTRADER_CLIENT_SECRET: ${{ secrets.R3_CTRADER_CLIENT_SECRET }}
+          R3_CTRADER_ACCESS_TOKEN: ${{ secrets.R3_CTRADER_ACCESS_TOKEN }}
+          R3_CTRADER_ACCOUNT_FINGERPRINT_SHA256: ${{ secrets.R3_CTRADER_ACCOUNT_FINGERPRINT_SHA256 }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sealed-source
+          path: sealed-output/
+          if-no-files-found: error
+          retention-days: 30
+  custody:
+    needs: collect
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: mxm-r3-custody-v1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - run: dotnet build src/Mxm.Replay -c Release
+      - uses: actions/download-artifact@v4
+        with:
+          name: sealed-source
+          path: sealed-output
+      - run: python -m research.readback
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: custody-public-receipt
+          path: readback.public.json
           if-no-files-found: error

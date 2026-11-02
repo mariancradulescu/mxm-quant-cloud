@@ -5,3 +5,8 @@
 *.key
 .env*
 private-data/
+__pycache__/
+*.pyc
+sealed-output/
+readback.public.json
+!research/custody_public.pem
