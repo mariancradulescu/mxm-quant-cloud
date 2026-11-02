@@ -5,3 +5,5 @@ Ex ante universe: EURUSD GBPUSD USDJPY AUDUSD USDCAD XAUUSD, enabled only.
 Period: H4 370 days, M15 14 days, last Friday 60-second BID/ASK per supported symbol.
 Purpose: broker source / contract / economic cost evidence; all data encrypted v2.
 No orders, no Cloud, no historical H1 model rerun, no declared NET edge.
+
+Retry sequence: 2; strictly valid broker boundary bars only; no change to universe, credentials, cost gates, or trade permissions.
