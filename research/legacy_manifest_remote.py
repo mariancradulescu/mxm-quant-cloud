@@ -7,6 +7,7 @@ Release/manifest are pinned to immutable historical source repository/version.
 import datetime as dt
 import hashlib
 import json
+import os
 import urllib.request
 from pathlib import Path
 
@@ -16,9 +17,16 @@ PATH = "research_core_v4/state/BREADTH_FIRST_SHALLOW_M5_SUPPORT_V2_FINAL_DURABLE
 TAG = "mxm-shallow-m5-v2-v4-ac8322bd8e44786c3f6e1c5707079bc7eaa370c8db44f9053b9b84dfac3a2ce0"
 
 def load(url):
-    req = urllib.request.Request(url,headers={
+    headers={
         "User-Agent":"MXM-Quant-ReadOnly-Archive-Identity/1.0",
-        "Accept":"application/vnd.github+json"})
+        "Accept":"application/vnd.github+json"}
+    # Public GitHub release metadata uses the native ephemeral, read-only
+    # Actions token to avoid anonymous REST rate limits. The token never
+    # reaches raw.githubusercontent.com and is never logged or published.
+    temporary=os.environ.get("MXM_GITHUB_METADATA_READ_TOKEN","")
+    if url.startswith("https://api.github.com/") and temporary:
+        headers["Authorization"]="Bearer "+temporary
+    req = urllib.request.Request(url,headers=headers)
     with urllib.request.urlopen(req, timeout=45) as response:
         data=response.read(3_000_001)
     if len(data)>3_000_000:
