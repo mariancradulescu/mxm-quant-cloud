@@ -1,0 +1,6 @@
+MXM frozen causal cold source score request
+Date: 2026-11-02
+Frozen new-source v2 ciphertext: GitHub Actions #41467047520 (same repo).
+Model frozen: native CausalRangePressureResearch implementation integrated in PR #4.
+Mode: strictly protected custody readback, C# source parity, next-bar Brier/neutral aggregate.
+No Pepperstone API queries, no raw source/public prices, no model retuning, no orders or Cloud.
