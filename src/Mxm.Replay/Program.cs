@@ -1,5 +1,69 @@
 using System.Text.Json;
 using System.Security.Cryptography;
+if (args.Length == 3 && args[2] == "--economic-screen")
+{
+    try
+    {
+        using var input=JsonDocument.Parse(File.ReadAllBytes(args[0]));
+        var root=input.RootElement;
+        _=Mxm.Core.EconomicSourceAdmission.ReadReceipt(root);
+        var contracts=root.GetProperty("brokerContract");
+        var groups=root.GetProperty("bars").EnumerateArray()
+            .GroupBy(x=>(
+                symbol:x.GetProperty("symbol").GetString()!,
+                resolution:x.GetProperty("resolution").GetString()!,
+                duration:x.GetProperty("periodMinutes").GetInt32()
+            )).ToArray();
+        var results=new List<object>();
+        foreach(var g in groups.OrderBy(x=>x.Key.symbol,StringComparer.Ordinal)
+                                .ThenBy(x=>x.Key.resolution,StringComparer.Ordinal))
+        {
+            var contract=contracts.GetProperty(g.Key.symbol);
+            var pip=contract.GetProperty("pipPosition");
+            if(pip.ValueKind!=JsonValueKind.Number)
+                throw new ArgumentException("UNAVAILABLE_BROKER_PIP_SCALE");
+            var bars=g.Select(b=>new Mxm.Core.PriceOnlyBar(
+                g.Key.symbol,g.Key.resolution,
+                DateTimeOffset.FromUnixTimeMilliseconds(b.GetProperty("openTime").GetInt64()).UtcDateTime,
+                DateTimeOffset.FromUnixTimeMilliseconds(b.GetProperty("availableTime").GetInt64()).UtcDateTime,
+                g.Key.duration,b.GetProperty("open").GetInt64(),
+                b.GetProperty("high").GetInt64(),b.GetProperty("low").GetInt64(),
+                b.GetProperty("close").GetInt64()));
+            var gross=Mxm.Core.EconomicBreakoutProbe.Assess(bars,pip.GetInt32());
+            // Never claim qualified trades or prefer one profitable instrument.
+            bool admitted=gross.Episodes>=20;
+            results.Add(new {
+                symbol=g.Key.symbol,resolution=g.Key.resolution,
+                priceOnlyCompleteProxies=gross.Episodes,
+                observedWeeksWithProxies=gross.ObservedExitWeeks,
+                weeksWith21PriceOnlyProxies=gross.WeeksWith21Proxies,
+                meanGrossPips=admitted?gross.MeanGrossPips:null,
+                medianGrossPips=admitted?gross.MedianGrossPips:null,
+                positiveFraction=admitted?gross.PositiveFraction:null,
+                earlySliceGrossPips=admitted?gross.EarlySliceGrossPips:null,
+                middleSliceGrossPips=admitted?gross.MiddleSliceGrossPips:null,
+                lateSliceGrossPips=admitted?gross.LateSliceGrossPips:null,
+                status=admitted?gross.Verdict:"INSUFFICIENT_PRICE_ONLY_EPISODES"
+            });
+        }
+        File.WriteAllText(args[1],JsonSerializer.Serialize(new {
+            schema="mxm-new-fixed-breakout-price-only-v1",
+            sourceRunId=41476636915L,
+            modelFrozen="PR11_FIXED_12_BAR_CLOSE_BREAKOUT_NEXT_BAR_OPEN_FOUR_BAR_CLOSE",
+            developmentOnly=true,
+            reportedPerSymbolNotCherryPicked=true,
+            results,
+            historicalBidAskNotAnExecutionPrice=true,
+            netInEur=null as decimal?,
+            funded200EurProven=false,
+            hard21BrokerRoundTripsProven=false,
+            independentConfirmation=false,
+            ordersSubmitted=0
+        }));
+        return 0;
+    }
+    catch { return 7; }
+}
 if (args.Length == 3 && args[2] == "--economic-source")
 {
     try
