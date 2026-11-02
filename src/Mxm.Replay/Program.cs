@@ -1,5 +1,16 @@
 using System.Text.Json;
 using System.Security.Cryptography;
+if (args.Length == 3 && args[2] == "--economic-net-coverage")
+{
+    try
+    {
+        using var doc=JsonDocument.Parse(File.ReadAllBytes(args[0]));
+        var result=Mxm.Core.AuthenticatedNetCoverage.Examine(doc.RootElement);
+        File.WriteAllText(args[1],JsonSerializer.Serialize(result));
+        return 0;
+    }
+    catch { return 8; }
+}
 if (args.Length == 3 && args[2] == "--economic-screen")
 {
     try
