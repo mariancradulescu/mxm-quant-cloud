@@ -15,6 +15,7 @@ jobs:
     outputs:
       authorized_source_request: ${{ steps.intent.outputs.authorized_source_request }}
       authorized_cold_source_score: ${{ steps.cold.outputs.authorized_cold_source_score }}
+      authorized_economic_request: ${{ steps.economic.outputs.authorized_economic_request }}
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -43,6 +44,18 @@ jobs:
                 "$(git log -1 --format=%s)" == "MXM_COLD_SOURCE_SCORE" ]] &&
              [[ "$(git diff-tree --no-commit-id --name-only -r HEAD)" == "ops/cold-score-request.txt" ]]; then
             echo "authorized_cold_source_score=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Verify exact OWNER new multi-resolution economic data request
+        id: economic
+        shell: bash
+        run: |
+          echo "authorized_economic_request=false" >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_EVENT_NAME" == "push" &&
+                "$GITHUB_REF" == "refs/heads/main" &&
+                "$GITHUB_ACTOR" == "mariancradulescu" &&
+                "$(git log -1 --format=%s)" == "MXM_ECONOMIC_SOURCE_ADMISSION" ]] &&
+             [[ "$(git diff-tree --no-commit-id --name-only -r HEAD)" == "ops/economic-request.txt" ]]; then
+            echo "authorized_economic_request=true" >> "$GITHUB_OUTPUT"
           fi
       - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
         with:
@@ -81,7 +94,7 @@ jobs:
       (
         (github.event_name == 'workflow_dispatch' && inputs.collect == true) ||
         (github.event_name == 'push' &&
-          needs.verify.outputs.authorized_source_request == 'true')
+          (needs.verify.outputs.authorized_source_request == 'true' || needs.verify.outputs.authorized_economic_request == 'true'))
       )
     needs: verify
     runs-on: ubuntu-24.04
@@ -112,7 +125,7 @@ jobs:
       (
         (github.event_name == 'workflow_dispatch' && inputs.collect == true) ||
         (github.event_name == 'push' &&
-          needs.verify.outputs.authorized_source_request == 'true')
+          (needs.verify.outputs.authorized_source_request == 'true' || needs.verify.outputs.authorized_economic_request == 'true'))
       )
     needs: [verify, custody_recipient]
     runs-on: ubuntu-24.04
@@ -135,8 +148,16 @@ jobs:
         with:
           name: new-source-recipient-public-only
           path: new-source-recipient
-      - name: Authenticated read-only collection and CSharp source receipt
+      - name: Existing bounded source H1 collection (non-economic request only)
+        if: needs.verify.outputs.authorized_economic_request != 'true'
         run: python -m research.collect
+        env:
+          R3_CTRADER_CLIENT_ID: ${{ secrets.R3_CTRADER_CLIENT_ID }}
+          R3_CTRADER_CLIENT_SECRET: ${{ secrets.R3_CTRADER_CLIENT_SECRET }}
+          R3_CTRADER_ACCESS_TOKEN: ${{ secrets.R3_CTRADER_ACCESS_TOKEN }}
+      - name: New broad economic source (no historical model replay)
+        if: needs.verify.outputs.authorized_economic_request == 'true'
+        run: python -m research.economic_source
         env:
           R3_CTRADER_CLIENT_ID: ${{ secrets.R3_CTRADER_CLIENT_ID }}
           R3_CTRADER_CLIENT_SECRET: ${{ secrets.R3_CTRADER_CLIENT_SECRET }}
@@ -155,7 +176,7 @@ jobs:
       (
         (github.event_name == 'workflow_dispatch' && inputs.collect == true) ||
         (github.event_name == 'push' &&
-          needs.verify.outputs.authorized_source_request == 'true')
+          (needs.verify.outputs.authorized_source_request == 'true' || needs.verify.outputs.authorized_economic_request == 'true'))
       ) &&
       needs.verify.result == 'success' &&
       needs.collect.result == 'success'
@@ -177,14 +198,29 @@ jobs:
         with:
           name: sealed-source
           path: sealed-output
-      - name: Decrypt new v2 source under existing private and reconcile CSharp
+      - name: Existing v2 H1 source readback
+        if: needs.verify.outputs.authorized_economic_request != 'true'
         run: python -m research.readback
         env:
           R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - name: New economic multi-resolution CSharp custody and source coverage
+        if: needs.verify.outputs.authorized_economic_request == 'true'
+        run: python -m research.economic_readback
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - name: Upload existing original v2 CSharp source receipt
+        if: needs.verify.outputs.authorized_economic_request != 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: new-source-custody-public-receipt
           path: readback.public.json
+          if-no-files-found: error
+      - name: Upload NEW economic source CSharp receipt without raw source
+        if: needs.verify.outputs.authorized_economic_request == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: economic-source-csharp-public-receipt
+          path: economic-source-receipt.public.json
           if-no-files-found: error
 
   cold_causal_score:
