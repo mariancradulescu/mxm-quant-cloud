@@ -253,6 +253,21 @@ class PipelineChecks(unittest.TestCase):
             self.assertEqual(evidence["brokerSourceContract"]["FIXTURE"],
                 "OBSERVED_BID_ASK_MARGIN_OR_COST_MISSING")
 
+    def test_broker_boundary_bar_filtered_without_cost_or_geometry_relaxation(self):
+        from .economic_source import _bounded_server_window
+        origin=240*60000*100
+        out=origin+240*60000
+        def bar(ms):
+            return e.ProtoOATrendbar(
+                utcTimestampInMinutes=ms//60000,
+                low=100000,deltaOpen=5,deltaHigh=10,deltaClose=6,volume=100)
+        requested=_bounded_server_window([bar(origin),bar(out)],
+            origin,out-1,240)
+        self.assertEqual([r[0] for r in requested],[origin])
+        with self.assertRaisesRegex(CaptureContractError,"BAR_GEOMETRY"):
+            _bounded_server_window([bar(out+2*240*60000)],
+                origin,out-1,240)
+
     def test_schema_completion(self):
         self.assertEqual(m.ProtoOAGetTrendbarsRes.DESCRIPTOR.fields_by_name['hasMore'].number,7)
 

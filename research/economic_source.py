@@ -43,6 +43,17 @@ def _windows(start,stop,days):
         yield lo,hi-1
         lo=hi
 
+def _bounded_server_window(bars, lo, hi, period_minutes):
+    """Spotware may include a boundary candle from the adjacent chunk.
+
+    Admit source only if the raw reply stays within ONE genuine bar period
+    of the requested window; preserve raw reply cryptographically, and
+    discard non-member bars. An authentic truncated page still fails closed.
+    """
+    margin=period_minutes*60000
+    decoded=decode_bars(bars,max(0,lo-margin),hi+margin,0)
+    return [row for row in decoded if lo<=row[0]<=hi]
+
 def _request(t,q,cls,account,raw):
     need(len(raw)<MAX_BROKER_REQUESTS,"ECONOMIC_SOURCE_REQUEST_BUDGET")
     r=t.request(q)
@@ -106,7 +117,7 @@ def run(output):
                         need(hi>lo,"ECONOMIC_HISTORY_UNRESOLVABLE_TRUNCATION")
                         middle=(lo+hi)//2
                         return window(lo,middle,depth+1)+window(middle+1,hi,depth+1)
-                    return decode_bars(response.trendbar,lo,hi,0)
+                    return _bounded_server_window(response.trendbar,lo,hi,minutes)
                 for lo,hi in _windows(first,stop,chunk_days):
                     for row in window(lo,hi):
                         stamp=row[0]
