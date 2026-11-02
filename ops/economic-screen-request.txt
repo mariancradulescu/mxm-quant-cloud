@@ -1,0 +1,6 @@
+MXM fixed new economic native CSharp research score
+Source: sealed Pepperstone LIVE multi-resolution v2 run #41476636915.
+Model: exact closed 12-bar breakout next OHLC open to 4th completed bar close.
+Timeframes: H4 and M15; all six account-enabled original instruments; no model/parameter changes after outcomes.
+Scope: read-only encrypted source readback, original CSharp parity, pooled gross pip research only.
+No broker recollection, orders, LIVE/DEMO execution, economic NET, or cTrader Cloud activation.
