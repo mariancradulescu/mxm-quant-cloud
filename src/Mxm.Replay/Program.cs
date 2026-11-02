@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Security.Cryptography;
-if (args.Length != 2) return 2;
+if (args.Length != 2 && !(args.Length == 3 && args[2] == "--score-causal")) return 2;
+var scoreOnly = args.Length == 3;
 try
 {
     var bytes = File.ReadAllBytes(args[0]);
@@ -27,6 +28,9 @@ try
     var bundleSha=Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
     var researchers=new Dictionary<string,Mxm.Core.CausalRangePressureResearch>();
     var actualSourceClocks=new List<Mxm.Core.SourceBarClock>();
+    var pending=new Dictionary<string,Mxm.Core.ResearchForecast>();
+    var lastCloses=new Dictionary<string,decimal>();
+    var scorer=new Mxm.Core.CausalForecastScoreLedger();
     int causalForecastCount=0;
     foreach(var bar in root.GetProperty("bars").EnumerateArray()
         .OrderBy(x=>x.GetProperty("symbol").GetString(),StringComparer.Ordinal)
@@ -44,6 +48,16 @@ try
             bar.GetProperty("availableTime").GetInt64()).UtcDateTime;
         actualSourceClocks.Add(new Mxm.Core.SourceBarClock(
             name,open,available,TimeSpan.FromHours(1),bundleSha));
+        var close=bar.GetProperty("close").GetDecimal();
+        // Score only predictions made BEFORE this target completed.
+        // A missing interval is never converted into an invented outcome.
+        if (scoreOnly && pending.TryGetValue(name,out var prior) &&
+            prior.TargetBarEndsUtc==available &&
+            lastCloses.TryGetValue(name,out var priorClose))
+        {
+            var target=close>priorClose?1m:close<priorClose?0m:.5m;
+            scorer.Score(prior.ProbabilityUp,target);
+        }
         var candidate=researcher.Observe(new Mxm.Core.CompletedH1Candle(
             name,open,available,
             bar.GetProperty("open").GetDecimal(),
@@ -52,8 +66,34 @@ try
             bar.GetProperty("close").GetDecimal(),
             bar.GetProperty("tickVolume").GetInt64(),bundleSha));
         if(candidate!=null)causalForecastCount++;
+        if (scoreOnly)
+        {
+            pending.Remove(name);
+            if (candidate is not null) pending[name]=candidate;
+            lastCloses[name]=close;
+        }
     }
     var calendar=Mxm.Core.CausalSourceCalendar.Assess(actualSourceClocks);
+    if(scoreOnly)
+    {
+        var score=scorer.Summarize();
+        File.WriteAllText(args[1],JsonSerializer.Serialize(new {
+            schema="mxm.causal-range-pressure-authentic-observation-only.v1",
+            forecastScored=score.Count,
+            publicScoreAdmitted=score.Count>=100,
+            meanBrier=score.Count>=100 ? (decimal?)score.MeanBrier : null,
+            neutralMeanBrier=score.Count>=100 ? (decimal?)score.BaselineMeanBrier : null,
+            brierSkill=score.Count>=100 ? (decimal?)score.BrierSkillVersusNeutral : null,
+            qualification=score.Qualification,
+            sourceBars=count,
+            sourceObservedWeeks=calendar.DistinctObservedIsoWeeks,
+            netEurQualified=false,
+            hard21BrokerOrders=0,
+            twelveMonthsIndependentConfirmation=false,
+            ordersSubmitted=0
+        }));
+        return 0;
+    }
     File.WriteAllText(args[1],JsonSerializer.Serialize(new {
         sourceSha256=bundleSha,bars=count,
         observedCalendarWeeks=calendar.DistinctObservedIsoWeeks,
