@@ -18,11 +18,33 @@ def secret(name):
     need(bool(value), "CONFIGURATION_MISSING")
     return value
 
+def normalize_binding(value):
+    """Accept exact SHA-256 or tightly delimited copies of the same 64-hex value.
+
+    Never discover/select an account from available accounts or accept a partial hash.
+    A different or malformed fingerprint must stop account authentication.
+    """
+    import re
+    value = value.strip()
+    if "=" in value:
+        label, value = value.split("=", 1)
+        need(label.strip() in {"ACCOUNT_FINGERPRINT_SHA256", "R3_CTRADER_ACCOUNT_FINGERPRINT_SHA256"}, "ACCOUNT_BINDING_INVALID")
+        value = value.strip()
+    if value[:1] in ("'", '"', "`") or value[-1:] in ("'", '"', "`"):
+        need(len(value) >= 2 and value[0] == value[-1] and value[0] in ("'", '"', "`"), "ACCOUNT_BINDING_INVALID")
+        value = value[1:-1].strip()
+    if value.lower().startswith("sha256:"):
+        value = value[7:]
+    elif value.lower().startswith("0x"):
+        value = value[2:]
+    need(re.fullmatch(r"[0-9a-fA-F]{64}", value) is not None, "ACCOUNT_BINDING_INVALID")
+    return value.lower()
+
 def authenticate(t):
     client = secret("R3_CTRADER_CLIENT_ID")
     client_secret = secret("R3_CTRADER_CLIENT_SECRET")
     token = secret("R3_CTRADER_ACCESS_TOKEN")
-    expected = secret("R3_CTRADER_ACCOUNT_FINGERPRINT_SHA256").lower()
+    expected = secret("R3_CTRADER_ACCOUNT_FINGERPRINT_SHA256")
     reply = t.request(m.ProtoOAApplicationAuthReq(clientId=client, clientSecret=client_secret))
     need(isinstance(reply, m.ProtoOAApplicationAuthRes), "APPLICATION_AUTH_FAILED")
     print("APPLICATION_AUTH_VERIFIED", flush=True)
@@ -32,7 +54,7 @@ def authenticate(t):
     print("ACCESS_TOKEN_EXPLICIT_VIEW_VERIFIED", flush=True)
     # Authenticate the application/token independently, but never select or
     # authenticate an account until the existing binding is well formed.
-    need(len(expected) == 64 and all(c in "0123456789abcdef" for c in expected), "ACCOUNT_BINDING_INVALID")
+    expected = normalize_binding(expected)
     matches = [a for a in accounts.ctidTraderAccount if hashlib.sha256(f"ctrader-account:{int(a.ctidTraderAccountId)}".encode("ascii")).hexdigest() == expected]
     need(len(matches) == 1 and matches[0].HasField("isLive") and matches[0].isLive, "ACCOUNT_BINDING_FAILED")
     account = matches[0].ctidTraderAccountId
