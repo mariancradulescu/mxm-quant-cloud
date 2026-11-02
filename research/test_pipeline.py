@@ -76,6 +76,18 @@ class PipelineChecks(unittest.TestCase):
             with self.assertRaisesRegex(CaptureContractError,'ACCOUNT_BINDING_INVALID'): collect.authenticate(fake)
         self.assertEqual(fake.count,2)
 
+    def test_credential_jobs_need_owner_main_request(self):
+        # Static regression against accidentally exposing environment jobs on PR.
+        # This is defense-in-depth, not a replacement for GitHub environment rules.
+        workflow=Path('.github/workflows/verify.yml').read_text()
+        self.assertEqual(workflow.count("github.actor == 'mariancradulescu'"),2)
+        self.assertEqual(workflow.count("github.ref == 'refs/heads/main'"),2)
+        self.assertEqual(workflow.count("github.event.head_commit.message == 'MXM_READ_ONLY_SOURCE_ADMISSION'"),2)
+        self.assertEqual(workflow.count("contains(github.event.head_commit.modified, 'ops/collect-request.txt')"),2)
+        self.assertEqual(workflow.count("inputs.collect == true"),2)
+        self.assertIn("needs.verify.result == 'success'",workflow)
+        self.assertIn('permissions:\\n  contents: read'.replace('\\n','\n'),workflow)
+
     def test_schema_completion(self):
         self.assertEqual(m.ProtoOAGetTrendbarsRes.DESCRIPTOR.fields_by_name['hasMore'].number,7)
 
