@@ -50,8 +50,9 @@ var completeFlags = new EconomicProof(true,true,true,true,true,true,true,true,19
 // No synthetic assertions are attached to real source evidence.
 var logicalPass = PortfolioEconomics.Evaluate(study,syntheticTrades,observed,
     new[]{week},completeFlags);
-Check(logicalPass.Pass && logicalPass.CertifiedMaxDrawdownUpperBound is > 0m and < .30m,
-    "all economic gates require hypothetical complete evidence");
+Check(!logicalPass.Pass && logicalPass.Verdict=="EVIDENCE_CHAIN_NOT_VERIFIED" &&
+    logicalPass.CertifiedMaxDrawdownUpperBound is > 0m and < .30m,
+    "manufactured true proof cannot qualify an economically attractive fixture");
 var tooFew = PortfolioEconomics.Evaluate(study,syntheticTrades.Take(20),
     new [] {observed[0],observed[1],observed[2] with {EquityEur=212m}},
     new[]{week},completeFlags);
