@@ -118,11 +118,11 @@ Check(twelve is { Status: CausalRangePressureResearch.ResearchOnly } &&
     twelve.TargetBarEndsUtc==predictiveBars[11].EvidenceAvailableUtc.AddHours(1),
     "predict next bar only after complete candle");
 for(int i=0;i<12;i++)independent.Observe(predictiveBars[i]);
-var changedFuture=predictiveBars[12] with {Close=1.0990m};
+var changedFuture=predictiveBars[12] with {Close=1.10105m};
 var nextOriginal=research.Observe(predictiveBars[12]);
 var nextChanged=independent.Observe(changedFuture);
 Check(nextOriginal is not null && nextChanged is not null &&
-    twelve.ProbabilityUp >= .05m && twelve.ProbabilityUp <= .95m,
+    twelve is not null && twelve.ProbabilityUp >= .05m && twelve.ProbabilityUp <= .95m,
     "bounded, observation-only probability");
 var gap=research.Observe(Bar(15,1.1020m));
 Check(gap is null,"H1 gap resets adaptation and warmup");
