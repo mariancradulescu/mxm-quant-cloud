@@ -47,6 +47,7 @@ def run():
         "perResolutionMonths":original["observedCalendarMonths"],
         "twelveMonthSourceSpanObserved":original["twelveMonthSpanObserved"],
         "brokerContractFeasibilityStatus":original["brokerSourceContract"],
+        "historicalBidAskQuoteSpreadObservation":original["genuineHistoricalBidAskQuotes"],
         "economicNET":None,
         "eur200ExecutableConfirmed":False,
         "hard21Confirmed":False,
@@ -60,6 +61,7 @@ def run():
         "totalBars":receipt["totalBars"],
         "resolutionMonths":receipt["perResolutionMonths"],
         "brokerContractFeasibilityStatus":receipt["brokerContractFeasibilityStatus"],
+        "historicalBidAskQuoteSpreadObservation":receipt["historicalBidAskQuoteSpreadObservation"],
         "economicNET":receipt["economicNET"],
         "eur200ExecutableConfirmed":False
     },sort_keys=True))
