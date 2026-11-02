@@ -6,3 +6,5 @@ Initiator: repository OWNER via Chat-normal GitHub connector.
 No secret values, account identifiers or market data belong in this request.
 
 Read-only request sequence: 2 (first verified-Git-object gate; no new credentials).
+
+Read-only request sequence: 3 (test exact-input normalization, unchanged identity and custody constraints).
