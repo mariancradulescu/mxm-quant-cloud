@@ -36,7 +36,18 @@ jobs:
           path: src/Mxm.Cloud/bin/Release/**/*.algo
           if-no-files-found: error
   collect:
-    if: github.event_name == 'workflow_dispatch' && inputs.collect && github.ref == 'refs/heads/main'
+    # Secrets are unavailable to PRs, branches, generic pushes and non-owner triggers.
+    # A precise source-request file update substitutes for dispatch from Chat normal.
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.actor == 'mariancradulescu' &&
+      (
+        (github.event_name == 'workflow_dispatch' && inputs.collect == true) ||
+        (github.event_name == 'push' &&
+          github.event.head_commit.message == 'MXM_READ_ONLY_SOURCE_ADMISSION' &&
+          (contains(github.event.head_commit.added, 'ops/collect-request.txt') ||
+           contains(github.event.head_commit.modified, 'ops/collect-request.txt')))
+      )
     needs: verify
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -68,7 +79,20 @@ jobs:
           if-no-files-found: error
           retention-days: 30
   custody:
-    if: always() && github.event_name == 'workflow_dispatch' && inputs.collect && github.ref == 'refs/heads/main' && needs.verify.result == 'success' && needs.collect.result != 'cancelled'
+    # Independent existing-key preflight also runs if collection fails.
+    if: >-
+      always() &&
+      github.ref == 'refs/heads/main' &&
+      github.actor == 'mariancradulescu' &&
+      (
+        (github.event_name == 'workflow_dispatch' && inputs.collect == true) ||
+        (github.event_name == 'push' &&
+          github.event.head_commit.message == 'MXM_READ_ONLY_SOURCE_ADMISSION' &&
+          (contains(github.event.head_commit.added, 'ops/collect-request.txt') ||
+           contains(github.event.head_commit.modified, 'ops/collect-request.txt')))
+      ) &&
+      needs.verify.result == 'success' &&
+      needs.collect.result != 'cancelled'
     needs: [verify, collect]
     runs-on: ubuntu-24.04
     timeout-minutes: 10
