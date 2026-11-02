@@ -227,7 +227,11 @@ class PipelineChecks(unittest.TestCase):
               "source":"Pepperstone-cTrader-OpenAPI","readOnly":True,
               "developmentDataOnly":True,"captureEnd":1780000000000,
               "brokerContract":{"FIXTURE":{"minVolume":100000,
-                  "stepVolume":100000,"lotSize":10000000}},
+                  "stepVolume":100000,"lotSize":10000000,
+                  "pipPosition":4}},
+              "historicalBidAsk":{
+                 "FIXTURE":{"bid":{"complete":True,"rows":[[1770000000000,110000]]},
+                            "ask":{"complete":True,"rows":[[1770000000000,110002]]}}},
               "bars":[{"symbol":"FIXTURE","resolution":"H4",
                  "periodMinutes":240,"openTime":1770000000000,
                  "availableTime":1770000000000+240*60000,
@@ -242,6 +246,10 @@ class PipelineChecks(unittest.TestCase):
             self.assertFalse(evidence["fullyFundedNet200EurProven"])
             self.assertFalse(evidence["twelveMonthSpanObserved"])
             self.assertEqual(evidence["ordersSubmitted"],0)
+            quotes=evidence["genuineHistoricalBidAskQuotes"]["FIXTURE"]
+            self.assertEqual(quotes["sampleCount"],2)
+            self.assertEqual(float(quotes["medianPips"]),.2)
+
             self.assertEqual(evidence["brokerSourceContract"]["FIXTURE"],
                 "OBSERVED_BID_ASK_MARGIN_OR_COST_MISSING")
 
