@@ -16,7 +16,7 @@ from pathlib import Path
 from .collect import authenticate, secret
 from .ctrader_transport import StdlibCTraderTransport
 from .ctrader_proto import OpenApiMessages_pb2 as m, OpenApiModelMessages_pb2 as e
-from .decode import need, decode_bars
+from .decode import need, decode_bars, decode_side
 from .custody import seal_new
 from .custody_new import checked_public
 
@@ -120,6 +120,31 @@ def run(output):
                             "open":row[2],"high":row[3],"low":row[4],
                             "close":row[5],"tickVolume":row[6]})
                 bars.extend(sorted(rows,key=lambda x:x["openTime"]))
+        # One fixed, bounded genuine BID/ASK observation period. This is a
+        # quote spread sample, NOT proof of executable historical trade fills.
+        # Historical ticks must be queried separately by quote side (Spotware).
+        day_back=(stop_dt.weekday()-4)%7 or 7
+        friday=(stop_dt-timedelta(days=day_back)).replace(
+            hour=14,minute=0,second=0,microsecond=0)
+        from_tick=int(friday.timestamp()*1000)
+        to_tick=from_tick+59000  # fixed 60 seconds, max one-week API window
+        quotes={}
+        for s in choices:
+            sides={}
+            for side_name,side in (("bid",e.BID),("ask",e.ASK)):
+                response=_request(transport,m.ProtoOAGetTickDataReq(
+                    ctidTraderAccountId=account,symbolId=s.symbolId,
+                    type=side,fromTimestamp=from_tick,toTimestamp=to_tick),
+                    m.ProtoOAGetTickDataRes,account,raw)
+                need(response.HasField("hasMore"),
+                     "ECONOMIC_TICK_COMPLETENESS_UNKNOWN")
+                if response.hasMore:
+                    sides[side_name]={"complete":False,"rows":[]}
+                else:
+                    rows=decode_side(response.tickData,from_tick,to_tick)
+                    sides[side_name]={"complete":True,"rows":rows}
+            quotes[s.symbolName]=sides
+
         need(bool(bars),"ECONOMIC_NO_AUTHENTIC_BARS")
         tape={"schema":"mxm-econ-source-v2","source":"Pepperstone-cTrader-OpenAPI",
               "readOnly":True,"captureEnd":stop,
@@ -127,6 +152,9 @@ def run(output):
               "predeclaredResolutions":[x[0] for x in RESOLUTIONS],
               "developmentDataOnly":True,
               "brokerContract":contracts,
+              "tickWindowStart":from_tick,
+              "tickWindowEnd":to_tick,
+              "historicalBidAsk":quotes,
               "traderRaw":base64.b64encode(trader.SerializeToString()).decode(),
               "bars":bars,"raw":raw}
         with tempfile.TemporaryDirectory(prefix="mxm-economic-private-") as tmp:
