@@ -182,6 +182,12 @@ Check(clockAudit.DiscontinuitiesBetweenSuccessiveSameSymbolBars==1,
 Check(Rejects(()=>CausalSourceCalendar.Assess(
     sourceClocks.Concat(new[]{sourceClocks[0]}))),
     "duplicate source candles fail independently");
+Check(!CausalSourceCalendar.Assess(new[]{
+    sourceClocks[0],sourceClocks[0] with {
+        OpenUtc=UTC(2027,1,5),
+        AvailableUtc=UTC(2027,1,5).AddMinutes(5)
+    }}).TwelveCalendarMonthsObservedForAnySymbol,
+    "two isolated annual endpoints do not constitute annual source coverage");
 Check(Rejects(()=>CausalSourceCalendar.Assess(
     new[]{sourceClocks[0] with {AvailableUtc=sourceClocks[0].OpenUtc}})),
     "unclosed candle cannot be a causal source input");
