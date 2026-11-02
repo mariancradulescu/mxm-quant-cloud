@@ -192,4 +192,24 @@ Check(Rejects(()=>CausalSourceCalendar.Assess(
     new[]{sourceClocks[0] with {AvailableUtc=sourceClocks[0].OpenUtc}})),
     "unclosed candle cannot be a causal source input");
 
-Console.WriteLine($"PASS {passed} recovery/accounting/portfolio/causal-H1/dynamic-risk/source-calendar checks; synthetic, no economic qualification.");
+
+var brierLedger=new CausalForecastScoreLedger();
+for (int i=0;i<99;i++)brierLedger.Score(.6m,1m);
+var insufficientBrier=brierLedger.Summarize();
+Check(insufficientBrier.Count==99 && insufficientBrier.MeanBrier==0m &&
+    insufficientBrier.Qualification=="INSUFFICIENT_OBSERVATIONS_NO_PUBLIC_NUMERIC_SKILL",
+    "no public numeric skill for small authentic research sample");
+brierLedger.Score(.6m,1m);
+var brierScore=brierLedger.Summarize();
+Check(brierScore.Count==100 && brierScore.MeanBrier==.16m &&
+    brierScore.BaselineMeanBrier==.25m &&
+    brierScore.BrierSkillVersusNeutral==.36m,
+    "proper prequential Brier score against fixed neutral baseline");
+Check(Rejects(()=>brierLedger.Score(1.01m,0m)),
+    "causal probabilities cannot be outside [0,1]");
+Check(Rejects(()=>brierLedger.Score(.6m,.8m)),
+    "resolved labels must be strict binary or tie");
+Check(Rejects(()=>brierLedger.Summarize(1)),
+    "public privacy minimum cannot be bypassed");
+
+Console.WriteLine($"PASS {passed} recovery/accounting/portfolio/causal-H1/dynamic-risk/source-calendar/causal-score checks; synthetic, no economic qualification.");

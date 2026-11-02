@@ -95,8 +95,8 @@ class PipelineChecks(unittest.TestCase):
         # Static regression against accidentally exposing environment jobs on PR.
         # This is defense-in-depth, not a replacement for GitHub environment rules.
         workflow=Path('.github/workflows/verify.yml').read_text()
-        self.assertEqual(workflow.count("github.actor == 'mariancradulescu'"),3)
-        self.assertEqual(workflow.count("github.ref == 'refs/heads/main'"),3)
+        self.assertEqual(workflow.count("github.actor == 'mariancradulescu'"),4)
+        self.assertEqual(workflow.count("github.ref == 'refs/heads/main'"),4)
         self.assertEqual(workflow.count("needs.verify.outputs.authorized_source_request == 'true'"),3)
         self.assertIn('git diff-tree --no-commit-id --name-only -r HEAD',workflow)
         self.assertIn('== "ops/collect-request.txt"',workflow)
@@ -152,6 +152,55 @@ class PipelineChecks(unittest.TestCase):
             b'-----BEGIN PUBLIC KEY-----'))
         self.assertIn('CUSTODY_NEW_RECIPIENT_MISMATCH',
             Path('research/custody.py').read_text())
+
+    @unittest.skipUnless(Path('src/Mxm.Replay/bin/Release/net8.0/Mxm.Replay.dll').exists(), 'C# build required')
+    def test_same_native_replay_has_separate_observation_only_cold_score(self):
+        # Synthetic fixture tests output mechanics only. Authentic source runs
+        # solely in the protected, pinned, read-only GitHub custody job.
+        import datetime as dt
+        start=int(dt.datetime(2026,10,5,tzinfo=dt.timezone.utc).timestamp()*1000)
+        bars=[]
+        for i in range(150):
+            price=1000000+i*11
+            bars.append(dict(symbol="FIXTURE",openTime=start+i*3600000,
+                availableTime=start+(i+1)*3600000,open=price-1,
+                high=price+10,low=price-20,close=price,
+                tickVolume=123+i))
+        bundle={"schema":1,"source":"Pepperstone-cTrader-OpenAPI",
+            "readOnly":True,"start":start,"end":start+151*3600000,
+            "bars":bars,"raw":[]}
+        with tempfile.TemporaryDirectory() as folder:
+            folder=Path(folder)
+            source=folder/"source.json"
+            normal=folder/"normal.json"
+            scored=folder/"score.json"
+            source.write_text(json.dumps(bundle,sort_keys=True))
+            executable=str(Path.cwd()/"src/Mxm.Replay/bin/Release/net8.0/Mxm.Replay.dll")
+            subprocess.run(["dotnet",executable,str(source),str(normal)],check=True)
+            subprocess.run(["dotnet",executable,str(source),str(scored),
+                "--score-causal"],check=True)
+            a=json.loads(normal.read_text());b=json.loads(scored.read_text())
+            self.assertEqual(a["status"],"SOURCE_VALIDATED_NOT_EXECUTION_REPLAY")
+            self.assertFalse(a["economicQualification"])
+            self.assertTrue(b["forecastScored"]>=100)
+            self.assertTrue(b["publicScoreAdmitted"])
+            self.assertIsNotNone(b["brierSkill"])
+            self.assertFalse(b["netEurQualified"])
+            self.assertEqual(b["ordersSubmitted"],0)
+
+    def test_cold_source_is_previous_exact_authenticated_run_and_owner_only(self):
+        workflow=Path('.github/workflows/verify.yml').read_text()
+        script=Path('research/score_existing_source.py').read_text()
+        self.assertIn("      authorized_cold_source_score:",workflow)
+        self.assertIn("  cold_causal_score:",workflow)
+        self.assertIn("needs.verify.outputs.authorized_cold_source_score == 'true'",workflow)
+        self.assertIn('git diff-tree --no-commit-id --name-only -r HEAD',workflow)
+        self.assertIn('"ops/cold-score-request.txt"',workflow)
+        self.assertIn("run-id: 41467047520",workflow)
+        self.assertIn('SOURCE_RUN_ID = "41467047520"',script)
+        self.assertIn("unseal_new(sealed,private,SOURCE_RUN_ID)",script)
+        self.assertNotIn("ProtoOAGetTrendbarsReq(",script)
+        self.assertNotIn("ProtoOANewOrderReq(",script)
 
     def test_schema_completion(self):
         self.assertEqual(m.ProtoOAGetTrendbarsRes.DESCRIPTOR.fields_by_name['hasMore'].number,7)
