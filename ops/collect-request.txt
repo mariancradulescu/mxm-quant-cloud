@@ -8,3 +8,5 @@ No secret values, account identifiers or market data belong in this request.
 Read-only request sequence: 2 (first verified-Git-object gate; no new credentials).
 
 Read-only request sequence: 3 (test exact-input normalization, unchanged identity and custody constraints).
+
+New-source v2 request sequence: 4 (original-account cryptographic pin; installed-key-derived v2 recipient; read-only only).
