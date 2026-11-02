@@ -1,0 +1,6 @@
+MXM OWNER authentic EUR200 broker cost coverage on the original sealed new source.
+Date 2026-11-02. Exact archived run 41476636915; no new broker API queries.
+Read-only source SHA verification and native CSharp receipt parity required.
+Publish real Pepperstone LIVE minimum/step volumes and observed cost metadata coverage only.
+No replay of closed H1/H4/M15 strategies; no gross pip optimization; no NET fabrication.
+No order placement, modification, cancellation, LIVE/DEMO or Cloud activation.
