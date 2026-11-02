@@ -11,7 +11,16 @@ from datetime import datetime, timezone, timedelta
 from .ctrader_proto import OpenApiMessages_pb2 as m, OpenApiModelMessages_pb2 as e
 from .ctrader_transport import StdlibCTraderTransport
 from .decode import need, decode_bars
-from .custody import seal
+from .custody import seal_new
+from .custody_new import checked_public
+
+# Double-SHA256 commitment to the exact historical public account fingerprint:
+# research_core_v4/shallow_m5_support_v2_production.py, frozen commit
+# 6a4e56758d985f00020cd13ef264e8dc84fc6a9b, line 49.
+# Computing SHA256(candidate_account_fingerprint_ASCII) must equal this
+# constant. No legacy key, history data, Github network, OWNER secret or
+# account discovery is necessary for authentic account identity binding.
+HISTORIC_ACCOUNT_FINGERPRINT_COMMITMENT = "3e43fdd68b1cdcb030699c674bdd5e95f74c40984060847f3f9f290f29ce03d3"
 
 def secret(name):
     value = os.environ.get(name, "").strip()
@@ -44,7 +53,7 @@ def authenticate(t):
     client = secret("R3_CTRADER_CLIENT_ID")
     client_secret = secret("R3_CTRADER_CLIENT_SECRET")
     token = secret("R3_CTRADER_ACCESS_TOKEN")
-    expected = secret("R3_CTRADER_ACCOUNT_FINGERPRINT_SHA256")
+    expected = HISTORIC_ACCOUNT_FINGERPRINT_COMMITMENT
     reply = t.request(m.ProtoOAApplicationAuthReq(clientId=client, clientSecret=client_secret))
     need(isinstance(reply, m.ProtoOAApplicationAuthRes), "APPLICATION_AUTH_FAILED")
     print("APPLICATION_AUTH_VERIFIED", flush=True)
@@ -54,8 +63,14 @@ def authenticate(t):
     print("ACCESS_TOKEN_EXPLICIT_VIEW_VERIFIED", flush=True)
     # Authenticate the application/token independently, but never select or
     # authenticate an account until the existing binding is well formed.
-    expected = normalize_binding(expected)
-    matches = [a for a in accounts.ctidTraderAccount if hashlib.sha256(f"ctrader-account:{int(a.ctidTraderAccountId)}".encode("ascii")).hexdigest() == expected]
+    # The old environment fingerprint string is not a source of truth.
+    # Only the frozen commitment to the original verified account is used.
+    def bound_to_historic_account(account):
+        fingerprint = hashlib.sha256(
+            f"ctrader-account:{int(account.ctidTraderAccountId)}".encode("ascii")
+        ).hexdigest()
+        return hashlib.sha256(fingerprint.encode("ascii")).hexdigest() == expected
+    matches = [a for a in accounts.ctidTraderAccount if bound_to_historic_account(a)]
     need(len(matches) == 1 and matches[0].HasField("isLive") and matches[0].isLive, "ACCOUNT_BINDING_FAILED")
     account = matches[0].ctidTraderAccountId
     reply = t.request(m.ProtoOAAccountAuthReq(ctidTraderAccountId=account, accessToken=token))
@@ -65,7 +80,7 @@ def authenticate(t):
 
 def run(output):
     # All credential presence checks happen before the first connection.
-    for name in ("R3_CTRADER_CLIENT_ID", "R3_CTRADER_CLIENT_SECRET", "R3_CTRADER_ACCESS_TOKEN", "R3_CTRADER_ACCOUNT_FINGERPRINT_SHA256"):
+    for name in ("R3_CTRADER_CLIENT_ID", "R3_CTRADER_CLIENT_SECRET", "R3_CTRADER_ACCESS_TOKEN"):
         secret(name)
     t = StdlibCTraderTransport()
     raw = []
@@ -118,10 +133,14 @@ def run(output):
             result=subprocess.run(["dotnet","src/Mxm.Replay/bin/Release/net8.0/Mxm.Replay.dll",str(p),str(receipt)],env=clean_env,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
             need(result.returncode==0 and receipt.exists(),"CSHARP_SOURCE_RECEIPT_FAILED")
             bundle["csharpReceipt"]=json.loads(receipt.read_text())
-        cipher=seal(json.dumps(bundle,sort_keys=True).encode(),Path(__file__).with_name("custody_public.pem").read_bytes())
+        # New source recipient derived in a separate protected custody job
+        # from the ALREADY installed private key. Historical recipient unchanged.
+        run_id=os.environ.get("GITHUB_RUN_ID","")
+        recipient=checked_public(Path("new-source-recipient"),run_id)
+        cipher=seal_new(json.dumps(bundle,sort_keys=True).encode(),recipient,run_id)
         output.mkdir(parents=True,exist_ok=True)
         (output/"source.envelope.json").write_bytes(cipher)
-        (output/"receipt.public.json").write_text(json.dumps({"schema":1,"status":"SOURCE_RECEIPT_ONLY","ciphertextSha256":hashlib.sha256(cipher).hexdigest(),"ordersSubmitted":0,"economicQualification":False}))
+        (output/"receipt.public.json").write_text(json.dumps({"schema":2,"status":"NEW_SOURCE_V2_RECEIPT_ONLY","ciphertextSha256":hashlib.sha256(cipher).hexdigest(),"ordersSubmitted":0,"economicQualification":False,"recipientNamespace":"MXM_NEW_PEPPERSTONE_READ_ONLY_SOURCE"}))
     finally:
         t.close()
 
