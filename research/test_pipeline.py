@@ -95,8 +95,8 @@ class PipelineChecks(unittest.TestCase):
         # Static regression against accidentally exposing environment jobs on PR.
         # This is defense-in-depth, not a replacement for GitHub environment rules.
         workflow=Path('.github/workflows/verify.yml').read_text()
-        self.assertEqual(workflow.count("github.actor == 'mariancradulescu'"),4)
-        self.assertEqual(workflow.count("github.ref == 'refs/heads/main'"),4)
+        self.assertEqual(workflow.count("github.actor == 'mariancradulescu'"),5)
+        self.assertEqual(workflow.count("github.ref == 'refs/heads/main'"),5)
         self.assertEqual(workflow.count("needs.verify.outputs.authorized_source_request == 'true'"),3)
         self.assertIn('git diff-tree --no-commit-id --name-only -r HEAD',workflow)
         self.assertIn('== "ops/collect-request.txt"',workflow)
@@ -267,6 +267,20 @@ class PipelineChecks(unittest.TestCase):
         with self.assertRaisesRegex(CaptureContractError,"BAR_GEOMETRY"):
             _bounded_server_window([bar(out+2*240*60000)],
                 origin,out-1,240)
+
+    def test_one_frozen_new_economic_challenger_never_relabels_gross_as_net(self):
+        workflow=Path(".github/workflows/verify.yml").read_text()
+        scorer=Path("research/score_economic_source.py").read_text()
+        model=Path("src/Mxm.Core/EconomicBreakoutProbe.cs").read_text()
+        self.assertIn("MXM_COLD_ECONOMIC_SCREEN",workflow)
+        self.assertIn('"ops/economic-screen-request.txt"',workflow)
+        self.assertIn("authorized_economic_screen",workflow)
+        self.assertIn("run-id: 41476636915",workflow)
+        self.assertIn('FROZEN_SOURCE_RUN="41476636915"',scorer)
+        self.assertIn("originalCsharpSourceReceiptReconciled",scorer)
+        self.assertIn("NO broker requests",workflow)
+        self.assertNotIn("ProtoOANewOrderReq(",scorer)
+        self.assertIn("GROSS_OHLC_PROXY_NOT_EXECUTABLE_NET",model)
 
     def test_schema_completion(self):
         self.assertEqual(m.ProtoOAGetTrendbarsRes.DESCRIPTOR.fields_by_name['hasMore'].number,7)

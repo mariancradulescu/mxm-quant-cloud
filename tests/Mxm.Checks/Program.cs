@@ -229,4 +229,25 @@ Check(Rejects(()=>brierLedger.Score(.6m,.8m)),
 Check(Rejects(()=>brierLedger.Summarize(1)),
     "public privacy minimum cannot be bypassed");
 
+// Strictly synthetic directional OHLC proxy; no brokerage fills or NET.
+var breakoutBars=new List<PriceOnlyBar>();
+DateTime breakoutStart=UTC(2026,9,1);
+for(int k=0;k<20;k++)
+{
+    long o=1000,h=1020,l=980,cl=1000;
+    if(k==12){o=1005;h=1050;l=1000;cl=1040;}
+    if(k>=13){o=1040;h=1080;l=1030;cl=1070;}
+    breakoutBars.Add(new PriceOnlyBar("TEST","H4",
+        breakoutStart.AddHours(4*k),breakoutStart.AddHours(4*(k+1)),
+        240,o,h,l,cl));
+}
+var breakoutResult=EconomicBreakoutProbe.Assess(breakoutBars,4);
+Check(breakoutResult.Episodes>0 && breakoutResult.MeanGrossPips is > 0m &&
+    breakoutResult.Verdict==EconomicBreakoutProbe.PriceOnly,
+    "new distinct H4 range breakout reports only gross pip proxies");
+var gapBars=breakoutBars.Select((x,k)=>k==13?
+    x with {OpenUtc=x.OpenUtc.AddHours(4),AvailableUtc=x.AvailableUtc.AddHours(4)}:x);
+Check(Rejects(()=>EconomicBreakoutProbe.Assess(gapBars,4)),
+    "duplicate or out-of-order market timeline blocks research");
+
 Console.WriteLine($"PASS {passed} recovery/accounting/portfolio/causal-H1/dynamic-risk/source-calendar/causal-score checks; synthetic, no economic qualification.");
