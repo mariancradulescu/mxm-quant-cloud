@@ -70,8 +70,8 @@ public sealed class CausalRangePressureResearch
                         previousFeatures[i], -3m, 3m);
                 updates++;
             }
-            decimal range = Math.Max(1m, bar.High - bar.Low);
-            decimal priorRange = Math.Max(1m, previous.High - previous.Low);
+            decimal range = Math.Max(.00000001m, bar.High - bar.Low);
+            decimal priorRange = Math.Max(.00000001m, previous.High - previous.Low);
             decimal totalVol = Math.Max(1m, bar.TickVolume + (decimal)previous.TickVolume);
             var features = new[] {
                 Clamp((bar.Close-bar.Open)/range,-1m,1m),
