@@ -95,8 +95,8 @@ class PipelineChecks(unittest.TestCase):
         # Static regression against accidentally exposing environment jobs on PR.
         # This is defense-in-depth, not a replacement for GitHub environment rules.
         workflow=Path('.github/workflows/verify.yml').read_text()
-        self.assertEqual(workflow.count("github.actor == 'mariancradulescu'"),4)
-        self.assertEqual(workflow.count("github.ref == 'refs/heads/main'"),4)
+        self.assertEqual(workflow.count("github.actor == 'mariancradulescu'"),5)
+        self.assertEqual(workflow.count("github.ref == 'refs/heads/main'"),5)
         self.assertEqual(workflow.count("needs.verify.outputs.authorized_source_request == 'true'"),3)
         self.assertIn('git diff-tree --no-commit-id --name-only -r HEAD',workflow)
         self.assertIn('== "ops/collect-request.txt"',workflow)
@@ -201,6 +201,49 @@ class PipelineChecks(unittest.TestCase):
         self.assertIn("unseal_new(sealed,private,SOURCE_RUN_ID)",script)
         self.assertNotIn("ProtoOAGetTrendbarsReq(",script)
         self.assertNotIn("ProtoOANewOrderReq(",script)
+
+    def test_economic_source_exact_owner_gate_and_fixed_universe(self):
+        from . import economic_source
+        self.assertEqual(economic_source.UNIVERSE,
+            ("EURUSD","GBPUSD","USDJPY","AUDUSD","USDCAD","XAUUSD"))
+        self.assertEqual([(x[0],x[2],x[3]) for x in economic_source.RESOLUTIONS],
+            [("H4",240,370),("M15",15,14)])
+        workflow=Path(".github/workflows/verify.yml").read_text()
+        self.assertIn("MXM_ECONOMIC_SOURCE_ADMISSION",workflow)
+        self.assertIn('"ops/economic-request.txt"',workflow)
+        self.assertIn("authorized_economic_request",workflow)
+        self.assertIn("run: python -m research.economic_source",workflow)
+        self.assertIn("run: python -m research.economic_readback",workflow)
+        self.assertNotIn("ProtoOANewOrderReq(",Path("research/economic_source.py").read_text())
+
+    @unittest.skipUnless(Path('src/Mxm.Replay/bin/Release/net8.0/Mxm.Replay.dll').exists(), 'C# build required')
+    def test_native_multitimeframe_receipt_explicitly_refuses_net(self):
+        with tempfile.TemporaryDirectory() as root:
+            root=Path(root)
+            input=root/"econ.json"
+            receipt=root/"receipt.json"
+            data={
+              "schema":"mxm-econ-source-v2",
+              "source":"Pepperstone-cTrader-OpenAPI","readOnly":True,
+              "developmentDataOnly":True,"captureEnd":1780000000000,
+              "brokerContract":{"FIXTURE":{"minVolume":100000,
+                  "stepVolume":100000,"lotSize":10000000}},
+              "bars":[{"symbol":"FIXTURE","resolution":"H4",
+                 "periodMinutes":240,"openTime":1770000000000,
+                 "availableTime":1770000000000+240*60000,
+                 "open":110000,"high":110100,"low":109900,
+                 "close":110010,"tickVolume":12}]}
+            input.write_text(json.dumps(data))
+            executable=Path.cwd()/"src/Mxm.Replay/bin/Release/net8.0/Mxm.Replay.dll"
+            subprocess.run(["dotnet",str(executable),str(input),str(receipt),
+                "--economic-source"],check=True)
+            evidence=json.loads(receipt.read_text())
+            self.assertEqual(evidence["sourceBarCount"],1)
+            self.assertFalse(evidence["fullyFundedNet200EurProven"])
+            self.assertFalse(evidence["twelveMonthSpanObserved"])
+            self.assertEqual(evidence["ordersSubmitted"],0)
+            self.assertEqual(evidence["brokerSourceContract"]["FIXTURE"],
+                "OBSERVED_BID_ASK_MARGIN_OR_COST_MISSING")
 
     def test_schema_completion(self):
         self.assertEqual(m.ProtoOAGetTrendbarsRes.DESCRIPTOR.fields_by_name['hasMore'].number,7)
