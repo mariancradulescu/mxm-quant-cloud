@@ -43,6 +43,14 @@ jobs:
           python-version: '3.12'
       - run: python -m pip install -r research/requirements.txt
       - run: python -m unittest research.test_pipeline
+      - name: Verify original 100 encrypted archive identities without any secrets
+        run: python -m research.legacy_manifest_remote
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: original-archive-public-identity-only
+          path: legacy-archive-public-receipt.json
+          if-no-files-found: error
+          retention-days: 30
       - run: dotnet build src/Mxm.Cloud -c Release
       - name: Verify algo produced
         run: test -n "$(find src/Mxm.Cloud/bin/Release -name '*.algo' -print -quit)"
