@@ -68,7 +68,8 @@ jobs:
           if-no-files-found: error
           retention-days: 30
   custody:
-    needs: collect
+    if: always() && github.event_name == 'workflow_dispatch' && inputs.collect && github.ref == 'refs/heads/main' && needs.verify.result == 'success' && needs.collect.result != 'cancelled'
+    needs: [verify, collect]
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     environment: mxm-r3-custody-v1
@@ -82,14 +83,21 @@ jobs:
           python-version: '3.12'
       - run: python -m pip install -r research/requirements.txt
       - run: dotnet build src/Mxm.Replay -c Release
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+      - name: Verify existing custody key independently
+        run: python -m research.custody_preflight
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - if: needs.collect.result == 'success'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: sealed-source
           path: sealed-output
-      - run: python -m research.readback
+      - if: needs.collect.result == 'success'
+        run: python -m research.readback
         env:
           R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - if: needs.collect.result == 'success'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: custody-public-receipt
           path: readback.public.json

@@ -63,6 +63,19 @@ class PipelineChecks(unittest.TestCase):
         ticks=[e.ProtoOATickData(timestamp=1000,tick=100000),e.ProtoOATickData(timestamp=0,tick=-2),e.ProtoOATickData(timestamp=-10,tick=1)]
         self.assertEqual(decode_side(ticks,990,1000),[[990,99999],[1000,99998],[1000,100000]])
 
+    def test_bad_binding_never_authenticates_account(self):
+        class Fake:
+            count=0
+            def request(self,q):
+                self.count+=1
+                if self.count==1: return m.ProtoOAApplicationAuthRes()
+                if self.count==2: return m.ProtoOAGetAccountListByAccessTokenRes(permissionScope=e.SCOPE_VIEW)
+                raise AssertionError('Account request must not be reached')
+        fake=Fake()
+        with patch.dict('os.environ',{'R3_CTRADER_CLIENT_ID':'test','R3_CTRADER_CLIENT_SECRET':'test','R3_CTRADER_ACCESS_TOKEN':'test','R3_CTRADER_ACCOUNT_FINGERPRINT_SHA256':'invalid-fixture'}):
+            with self.assertRaisesRegex(CaptureContractError,'ACCOUNT_BINDING_INVALID'): collect.authenticate(fake)
+        self.assertEqual(fake.count,2)
+
     def test_schema_completion(self):
         self.assertEqual(m.ProtoOAGetTrendbarsRes.DESCRIPTOR.fields_by_name['hasMore'].number,7)
 
@@ -71,6 +84,11 @@ class PipelineChecks(unittest.TestCase):
         key=rsa.generate_private_key(public_exponent=65537,key_size=2048)
         pub=key.public_key().public_bytes(serialization.Encoding.PEM,serialization.PublicFormat.SubjectPublicKeyInfo)
         private=key.private_bytes(serialization.Encoding.PEM,serialization.PrivateFormat.PKCS8,serialization.NoEncryption())
+        from .custody_preflight import verify
+        self.assertEqual(verify(private,pub),'EXISTING_CUSTODY_KEY_VERIFIED_NOT_SOURCE_READBACK')
+        self.assertEqual(verify(b'',pub),'CUSTODY_CONFIGURATION_MISSING')
+        self.assertEqual(verify(b'invalid fixture',pub),'CUSTODY_PEM_INVALID_OR_ENCRYPTED')
+        self.assertEqual(verify(private,Path('research/custody_public.pem').read_bytes()),'CUSTODY_EXISTING_RECIPIENT_MISMATCH')
         encrypted=seal(b'private-test-record',pub)
         self.assertEqual(unseal(encrypted,private),b'private-test-record')
         data=json.loads(encrypted); data['ciphertext']='AAAA'

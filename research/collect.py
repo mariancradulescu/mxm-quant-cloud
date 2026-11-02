@@ -23,17 +23,22 @@ def authenticate(t):
     client_secret = secret("R3_CTRADER_CLIENT_SECRET")
     token = secret("R3_CTRADER_ACCESS_TOKEN")
     expected = secret("R3_CTRADER_ACCOUNT_FINGERPRINT_SHA256").lower()
-    need(len(expected) == 64 and all(c in "0123456789abcdef" for c in expected), "ACCOUNT_BINDING_INVALID")
     reply = t.request(m.ProtoOAApplicationAuthReq(clientId=client, clientSecret=client_secret))
     need(isinstance(reply, m.ProtoOAApplicationAuthRes), "APPLICATION_AUTH_FAILED")
+    print("APPLICATION_AUTH_VERIFIED", flush=True)
     accounts = t.request(m.ProtoOAGetAccountListByAccessTokenReq(accessToken=token))
     need(isinstance(accounts, m.ProtoOAGetAccountListByAccessTokenRes), "TOKEN_INVALID_OR_EXPIRED")
     need(accounts.HasField("permissionScope") and accounts.permissionScope == e.SCOPE_VIEW, "SCOPE_NOT_EXPLICIT_VIEW")
+    print("ACCESS_TOKEN_EXPLICIT_VIEW_VERIFIED", flush=True)
+    # Authenticate the application/token independently, but never select or
+    # authenticate an account until the existing binding is well formed.
+    need(len(expected) == 64 and all(c in "0123456789abcdef" for c in expected), "ACCOUNT_BINDING_INVALID")
     matches = [a for a in accounts.ctidTraderAccount if hashlib.sha256(f"ctrader-account:{int(a.ctidTraderAccountId)}".encode("ascii")).hexdigest() == expected]
     need(len(matches) == 1 and matches[0].HasField("isLive") and matches[0].isLive, "ACCOUNT_BINDING_FAILED")
     account = matches[0].ctidTraderAccountId
     reply = t.request(m.ProtoOAAccountAuthReq(ctidTraderAccountId=account, accessToken=token))
     need(isinstance(reply, m.ProtoOAAccountAuthRes) and reply.ctidTraderAccountId == account, "ACCOUNT_AUTH_FAILED")
+    print("BOUND_LIVE_ACCOUNT_AUTH_VERIFIED", flush=True)
     return account
 
 def run(output):
