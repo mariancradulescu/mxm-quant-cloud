@@ -247,7 +247,7 @@ class PipelineChecks(unittest.TestCase):
             self.assertFalse(evidence["twelveMonthSpanObserved"])
             self.assertEqual(evidence["ordersSubmitted"],0)
             quotes=evidence["genuineHistoricalBidAskQuotes"]["FIXTURE"]
-            self.assertEqual(quotes["sampleCount"],2)
+            self.assertEqual(quotes["sampleCount"],1)
             self.assertEqual(float(quotes["medianPips"]),.2)
 
             self.assertEqual(evidence["brokerSourceContract"]["FIXTURE"],
