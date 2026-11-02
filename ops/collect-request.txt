@@ -1,0 +1,6 @@
+MXM read-only source admission request
+Date: 2026-11-02
+Intent: one existing-credential Pepperstone LIVE read-only sample and independent existing-key custody preflight.
+Scope: SCOPE_VIEW only; no account binding bypass; no orders, no token refresh, no Cloud activation.
+Initiator: repository OWNER via Chat-normal GitHub connector.
+No secret values, account identifiers or market data belong in this request.
