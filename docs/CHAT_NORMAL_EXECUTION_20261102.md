@@ -27,3 +27,9 @@ As observed on 2026-11-02, `main` is **not branch protected**, and no repository
 Any account-binding failure must halt account selection, even if app/token authentication succeeds. A successful custody-key preflight is not proof of genuine Pepperstone source decryption. The seven-day H1 sample is not the required twelve-month economic test. The native .algo remains observation-only and forbidden from Cloud activation or LIVE/DEMO orders.
 
 The workflow does not schedule repetitive capture: the request is explicit to avoid uncontrolled secret access, cost and source polling. Trigger receipts are read from GitHub run jobs and sealed artifacts, not chat claims.
+
+## 2026-11-02 configuration outcome
+
+Owner-controlled push run #41444054445 verified application authentication and explicit `SCOPE_VIEW` on the existing token, then stopped before account selection with `ACCOUNT_BINDING_INVALID`. Separately, the custody job parsed the configured private key but reported `CUSTODY_EXISTING_RECIPIENT_MISMATCH`. Neither condition authorizes bypassing the bound LIVE account or switching custody identity. No authentic source, decrypted readback or economic replay resulted.
+
+A format-only remediation now accepts a complete 64-hex SHA-256 fingerprint directly, with matching quotes/backticks, optional `sha256:`/`0x` notation, or an exact `ACCOUNT_FINGERPRINT_SHA256 = ...` assignment. The *same exact fingerprint match* remains mandatory; malformed, partial or different values still fail before account authentication. This does not repair a wrong secret value. It does not change the fixed original recipient public key or the verified custody mismatch.
