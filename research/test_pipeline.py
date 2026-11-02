@@ -150,7 +150,7 @@ class PipelineChecks(unittest.TestCase):
         # Legacy public recipient is unchanged: v2 may use different RSA key.
         self.assertTrue(Path('research/custody_public.pem').read_bytes().startswith(
             b'-----BEGIN PUBLIC KEY-----'))
-        self.assertIn('NEW_CUSTODY_RECIPIENT_MISMATCH',
+        self.assertIn('CUSTODY_NEW_RECIPIENT_MISMATCH',
             Path('research/custody.py').read_text())
 
     def test_schema_completion(self):
