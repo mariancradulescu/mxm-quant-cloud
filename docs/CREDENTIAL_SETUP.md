@@ -2,7 +2,7 @@
 
 The new repository cannot inherit repository/environment secrets from the old repository. GitHub does not reveal saved values. Re-enter the EXISTING values from your secure original copy. Do not create a new OAuth application, token identity or custody keypair.
 
-In `mariancradulescu/mxm-quant-cloud`, open Settings → Environments. Create the following two environment names if absent. For each, restrict deployment branches to `main`; add yourself as required reviewer where available. Do not alter the old repository's environments. This is protection of machine-side read-only jobs, not Cloud activation.
+In `mariancradulescu/mxm-quant-cloud`, open Settings → Environments. Create the following two environment names if absent. For each, restrict deployment branches to `main`. No repeated manual reviewer gate is required by this implementation. Do not alter the old repository's environments. This is protection of machine-side read-only jobs, not Cloud activation.
 
 | Environment | Secret name | Existing value to enter |
 |---|---|---|

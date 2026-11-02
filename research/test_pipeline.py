@@ -1,5 +1,10 @@
 import json
 import unittest
+import os
+import tempfile
+import subprocess
+import hashlib
+from pathlib import Path
 from unittest.mock import patch
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
@@ -10,6 +15,32 @@ from .decode import decode_side
 from .ctrader_proto import OpenApiMessages_pb2 as m, OpenApiModelMessages_pb2 as e
 
 class PipelineChecks(unittest.TestCase):
+    @unittest.skipUnless(Path('src/Mxm.Replay/bin/Release/net8.0/Mxm.Replay.dll').exists(), 'C# build required')
+    def test_csharp_sealed_readback_pipeline(self):
+        from . import readback
+        root=Path.cwd()
+        # Small causality fixture verifies the newly integrated serialization path.
+        bundle={'schema':1,'source':'Pepperstone-cTrader-OpenAPI','readOnly':True,'start':0,'end':7200000,'bars':[dict(symbol='TEST',openTime=0,availableTime=3600000,open=100,high=102,low=99,close=101,tickVolume=2)],'raw':[]}
+        key=rsa.generate_private_key(public_exponent=65537,key_size=2048)
+        pub=key.public_key().public_bytes(serialization.Encoding.PEM,serialization.PublicFormat.SubjectPublicKeyInfo)
+        private=key.private_bytes(serialization.Encoding.PEM,serialization.PrivateFormat.PKCS8,serialization.NoEncryption())
+        with tempfile.TemporaryDirectory() as folder:
+            folder=Path(folder)
+            (folder/'src').symlink_to(root/'src',target_is_directory=True)
+            p=folder/'source.json'; p.write_text(json.dumps(bundle,sort_keys=True))
+            out=folder/'receipt.json'
+            subprocess.run(['dotnet',str(root/'src/Mxm.Replay/bin/Release/net8.0/Mxm.Replay.dll'),str(p),str(out)],check=True)
+            bundle['csharpReceipt']=json.loads(out.read_text())
+            cipher=seal(json.dumps(bundle,sort_keys=True).encode(),pub)
+            (folder/'sealed-output').mkdir()
+            (folder/'sealed-output/source.envelope.json').write_bytes(cipher)
+            (folder/'sealed-output/receipt.public.json').write_text(json.dumps({'ciphertextSha256':hashlib.sha256(cipher).hexdigest()}))
+            try:
+                os.chdir(folder)
+                with patch.dict('os.environ',{'R3_CUSTODY_PRIVATE_KEY_PEM':private.decode()}): readback.main()
+                self.assertEqual(json.loads(Path('readback.public.json').read_text())['status'],'CUSTODY_AND_CSHARP_READBACK_VERIFIED')
+            finally: os.chdir(root)
+
     def test_trade_and_envelope_rejected(self):
         for q in [m.ProtoOANewOrderReq(),m.ProtoOAClosePositionReq(),m.ProtoOACancelOrderReq(),m.ProtoOARefreshTokenReq()]:
             with self.assertRaises(CaptureContractError): require_read_only_request(q)
