@@ -26,6 +26,23 @@ var conflict=false;
 try { ledger.Apply(settlement with { GrossEur=6m }); } catch (InvalidOperationException) { conflict=true; }
 Check(conflict,"conflicting economic evidence rejected");
 
+// Synthetic cost-floor arithmetic, never a claim about live broker pricing.
+var missingCosts=FundedBrokerCostScreen.Assess(new FundedBrokerQuote(
+    "EURUSD",1.10000m,1.10010m,1000m,null,null,null,null,null,null,null,true,true));
+Check(!missingCosts.Complete && missingCosts.Status=="OBSERVED_BID_ASK_MARGIN_OR_COST_MISSING",
+    "no assumed currency conversion commission slippage or margin at EUR200");
+var costScenario=FundedBrokerCostScreen.Assess(new FundedBrokerQuote(
+    "SYNTH",1.10000m,1.10010m,1000m,.90m,.10m,.10m,.05m,0m,45m,.02m,true,true));
+Check(costScenario.Complete && costScenario.CanFundFromInitialCapital &&
+    costScenario.MinimumAllInCostEur==.36m &&
+    costScenario.MinimumNonnegativeProfitMoveInQuote==.0004m,
+    "cost-adjusted break-even from executable bid ask for minimum volume");
+var marginBlocked=FundedBrokerCostScreen.Assess(new FundedBrokerQuote(
+    "SYNTH",1.1m,1.1001m,1000m,.90m,.10m,.10m,.05m,0m,205m,.02m,true,true));
+Check(marginBlocked.Complete && !marginBlocked.CanFundFromInitialCapital &&
+    marginBlocked.Status=="INITIAL_200_EUR_OR_MAX_DRAWDOWN_INCOMPATIBLE",
+    "minimum broker margin above EUR200 is not fundable");
+
 // Synthetic-only portfolio evaluation: input truth flags are NOT evidence.
 DateTime UTC(int year,int month,int day) => new(year,month,day,0,0,0,DateTimeKind.Utc);
 var study = new StudyWindow(UTC(2025,10,20), UTC(2026,3,2), UTC(2026,7,6), UTC(2026,11,2));

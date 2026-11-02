@@ -1,5 +1,16 @@
 using System.Text.Json;
 using System.Security.Cryptography;
+if (args.Length == 3 && args[2] == "--economic-source")
+{
+    try
+    {
+        using var economic=JsonDocument.Parse(File.ReadAllBytes(args[0]));
+        var sourceReceipt=Mxm.Core.EconomicSourceAdmission.ReadReceipt(economic.RootElement);
+        File.WriteAllText(args[1],JsonSerializer.Serialize(sourceReceipt));
+        return 0;
+    }
+    catch { return 6; }
+}
 if (args.Length != 2 && !(args.Length == 3 && args[2] == "--score-causal")) return 2;
 var scoreOnly = args.Length == 3;
 try
