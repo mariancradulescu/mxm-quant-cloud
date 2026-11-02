@@ -1,0 +1,7 @@
+**/bin/
+**/obj/
+*.algo
+*.pem
+*.key
+.env*
+private-data/

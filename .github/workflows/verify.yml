@@ -1,0 +1,25 @@
+name: Verify native foundation
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            6.0.x
+      - run: dotnet run --project tests/Mxm.Checks -c Release
+      - run: dotnet build src/Mxm.Cloud -c Release
+      - name: Verify algo produced
+        run: test -n "$(find src/Mxm.Cloud/bin/Release -name '*.algo' -print -quit)"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mxm-observation-only-not-authorized-for-activation
+          path: src/Mxm.Cloud/bin/Release/**/*.algo
+          if-no-files-found: error

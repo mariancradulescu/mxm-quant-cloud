@@ -1,2 +1,9 @@
-# mxm-quant-cloud
-Native C# cTrader Cloud research and execution architecture. Trading disabled pending explicit owner authorization.
+# MXM Quant Cloud
+
+Public greenfield implementation under OWNER specification v1.0 and the 2026-11-02 public-repository decision. Initial capital EUR 200, no additional deposits; maximum drawdown control objective 30%; HARD21 means at least 21 fully closed round trips per objectively eligible week, never forced trades.
+
+**Status: native foundation only. No qualified strategy, no profitability claim, no trading authority. Do not activate the artifact in Cloud, LIVE or DEMO.** The current cBot reads native account collections then stops; it contains no order submission, cancellation or position modification functions.
+
+The repository contains a shared C# core, an observation-only cBot and focused accounting/recovery checks. One Linux workflow builds the `.algo` artifact without secrets. GitHub is development infrastructure, not the future trading decision engine. The final product will be one native cBot controlled from Android.
+
+See [architecture and recovery](docs/ARCHITECTURE.md), [migration provenance](docs/MIGRATION.md) and [acceptance gates](docs/ACCEPTANCE.md). Passing compilation or synthetic checks does not establish economic advantage or operational Cloud acceptance.
