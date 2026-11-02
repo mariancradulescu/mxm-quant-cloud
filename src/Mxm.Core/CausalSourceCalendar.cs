@@ -39,7 +39,16 @@ public static class CausalSourceCalendar
         foreach(var group in rows.GroupBy(r=>(r.Symbol,r.Duration)))
         {
             var ordered=group.OrderBy(r=>r.OpenUtc).ToArray();
-            twelve |= ordered[0].OpenUtc.AddMonths(12) <= ordered[^1].AvailableUtc;
+            // A first/last year span with missing intermediate months is NOT
+            // a year of observed source support. Every intervening UTC calendar
+            // month must contain at least one bar; sessions still need separate
+            // broker-specific attendance certification.
+            int firstMonth=ordered[0].OpenUtc.Year*12+ordered[0].OpenUtc.Month;
+            int lastMonth=ordered[^1].AvailableUtc.Year*12+ordered[^1].AvailableUtc.Month;
+            var months=ordered.Select(x=>x.OpenUtc.Year*12+x.OpenUtc.Month)
+                .ToHashSet();
+            twelve |= ordered[0].OpenUtc.AddMonths(12) <= ordered[^1].AvailableUtc &&
+                Enumerable.Range(firstMonth,lastMonth-firstMonth+1).All(months.Contains);
             for(int i=1;i<ordered.Length;i++)
             {
                 if(ordered[i].OpenUtc < ordered[i-1].OpenUtc+ordered[i-1].Duration)
