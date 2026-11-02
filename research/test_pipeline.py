@@ -98,7 +98,7 @@ class PipelineChecks(unittest.TestCase):
         self.assertEqual(workflow.count("github.ref == 'refs/heads/main'"),2)
         self.assertEqual(workflow.count("needs.verify.outputs.authorized_source_request == 'true'"),2)
         self.assertIn('git diff-tree --no-commit-id --name-only -r HEAD',workflow)
-        self.assertIn('grep -Fxq "ops/collect-request.txt"',workflow)
+        self.assertIn('== "ops/collect-request.txt"',workflow)
         self.assertIn('fetch-depth: 2',workflow)
         self.assertEqual(workflow.count("inputs.collect == true"),2)
         self.assertIn("needs.verify.result == 'success'",workflow)
