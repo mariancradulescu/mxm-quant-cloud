@@ -95,4 +95,47 @@ Check(Rejects(()=>PortfolioEconomics.Evaluate(study,
         with {CertifiedGlobalEquityPeakUpperEur=200m})),
     "claimed peak certificate cannot contradict observed equity");
 
-Console.WriteLine($"PASS {passed} recovery/accounting/portfolio checks; synthetic, no economic qualification.");
+
+// The H1 predictor learns only after a preceding target bar is completed.
+var research = new CausalRangePressureResearch();
+var independent = new CausalRangePressureResearch();
+DateTime h1Base=UTC(2026,9,7);
+CompletedH1Candle Bar(int i,decimal close) =>
+    new("EURUSD",h1Base.AddHours(i),h1Base.AddHours(i+1),
+        close-.0002m,close+.0004m,close-.0005m,close,
+        100+i,new string('c',64));
+var predictiveBars=Enumerable.Range(0,14).Select(i=>
+    Bar(i,1.1000m+i*.0001m)).ToArray();
+ResearchForecast? twelve=null;
+for(int i=0;i<12;i++)
+{
+    var forecast=research.Observe(predictiveBars[i]);
+    if(i<11) Check(forecast is null,"H1 causal warmup no early score");
+    if(i==11)twelve=forecast;
+}
+Check(twelve is { Status: CausalRangePressureResearch.ResearchOnly } &&
+    twelve.AsOfUtc==predictiveBars[11].EvidenceAvailableUtc &&
+    twelve.TargetBarEndsUtc==predictiveBars[11].EvidenceAvailableUtc.AddHours(1),
+    "predict next bar only after complete candle");
+for(int i=0;i<12;i++)independent.Observe(predictiveBars[i]);
+var changedFuture=predictiveBars[12] with {Close=1.0990m};
+var nextOriginal=research.Observe(predictiveBars[12]);
+var nextChanged=independent.Observe(changedFuture);
+Check(nextOriginal is not null && nextChanged is not null &&
+    twelve.ProbabilityUp >= .05m && twelve.ProbabilityUp <= .95m,
+    "bounded, observation-only probability");
+var gap=research.Observe(Bar(15,1.1020m));
+Check(gap is null,"H1 gap resets adaptation and warmup");
+Check(Rejects(()=>research.Observe(Bar(15,1.1020m))),"duplicate H1 bar rejected");
+Check(Rejects(()=>new CausalRangePressureResearch().Observe(
+    Bar(1,1.1m) with {EvidenceAvailableUtc=h1Base.AddHours(1)})),
+    "no use of unclosed candle");
+Check(Rejects(()=>new CausalRangePressureResearch().Observe(
+    Bar(1,1.1m) with {SourceEvidenceSha256="invalid"})),
+    "unverified H1 input blocked");
+var fixedSource = new CausalRangePressureResearch();
+fixedSource.Observe(Bar(0,1.10m));
+Check(Rejects(()=>fixedSource.Observe(
+    Bar(1,1.10m) with {Symbol="GBPUSD"})),"different symbol never shares adaptive weights");
+
+Console.WriteLine($"PASS {passed} recovery/accounting/portfolio/causal-H1 checks; synthetic, no economic qualification.");
