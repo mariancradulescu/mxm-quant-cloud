@@ -69,6 +69,11 @@ def assess():
         "constant_half_brier_baseline":result["neutralMeanBrier"],
         "brier_skill_relative_to_neutral":result["brierSkill"],
         "qualification":result["qualification"],
+        "candidate_screen_verdict":(
+            "INSUFFICIENT_CAUSAL_TARGETS" if not result["publicScoreAdmitted"] else
+            "CLOSED_NONPOSITIVE_PREQUENTIAL_SKILL" if result["brierSkill"] <= 0 else
+            "PRICE_ONLY_SKILL_POSITIVE_BUT_NET_UNQUALIFIED"),
+
         "decrypted_private_source_exported":False,
         "broker_requests_this_run":0,
         "historical_rejected_models_reexecuted":0,
@@ -85,7 +90,14 @@ def assess():
 
 def main():
     try:
-        assess()
+        public=assess()
+        # Public-safe pooled metrics only, to permit independent GitHub LIVE
+        # inspection without decrypting or downloading any private artifact.
+        fields=("observed_bars","observed_iso_weeks","scored_prequential_predictions",
+            "brier","constant_half_brier_baseline",
+            "brier_skill_relative_to_neutral","candidate_screen_verdict")
+        print("CAUSAL_COLD_PUBLIC_AGGREGATE "+json.dumps(
+            {k:public[k] for k in fields},sort_keys=True),flush=True)
     except Exception:
         print("CAUSAL_COLD_SCORE_FAILED_DETAIL_WITHHELD")
         sys.exit(1)
