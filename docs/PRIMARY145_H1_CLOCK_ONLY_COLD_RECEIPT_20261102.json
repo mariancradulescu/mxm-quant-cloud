@@ -1,0 +1,23 @@
+{
+  "schema": "mxm.primary145-derived-h1-cold-source-clock-audit.v1",
+  "date": "2026-11-02",
+  "input_name": "PRIMARY145_NATIVE_H1_CSHARP_INPUT_PRIVATE.json",
+  "input_sha256": "7157db48811ed1f1e4583ab567c6e04c876a4c4738c4bd242f182632fff54ebb",
+  "original_source_lineage": "PRIMARY145 authentic original ZIPs historically SHA256-verified; derived tape has separate frozen hash",
+  "source_count_h1_completed_observations": 32607,
+  "distinct_instruments": 8,
+  "observed_iso_weeks": 36,
+  "first_hour_end_utc": "2025-09-28T22:00:00Z",
+  "last_hour_end_utc": "2026-05-31T23:00:00Z",
+  "consecutive_hour_sequence_discontinuities": 535,
+  "all_source_events_have_available_time_five_minutes_after_hour_end": true,
+  "scope": "DEVELOPMENT_EXPOSED_PRIVATE_LIBRARY_SOURCE_COLD_CLOCK_READ",
+  "original_private_values_exported": false,
+  "source_original_replayed_in_github_actions": false,
+  "full_twelve_months": false,
+  "objectively_predeclared_hard21_eligible_weeks": false,
+  "executed_round_trips_proven": 0,
+  "fully_costed_eur200_economics_proven": false,
+  "independent_confirmation_proven": false,
+  "notes": "Cold clock-only audit of exact SHA256-verified pre-existing private derived tape; no rejected strategies executed, no prices or outcomes exported, no model evaluated and no trading operations."
+}
