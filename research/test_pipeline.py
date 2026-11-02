@@ -95,8 +95,8 @@ class PipelineChecks(unittest.TestCase):
         # Static regression against accidentally exposing environment jobs on PR.
         # This is defense-in-depth, not a replacement for GitHub environment rules.
         workflow=Path('.github/workflows/verify.yml').read_text()
-        self.assertEqual(workflow.count("github.actor == 'mariancradulescu'"),5)
-        self.assertEqual(workflow.count("github.ref == 'refs/heads/main'"),5)
+        self.assertEqual(workflow.count("github.actor == 'mariancradulescu'"),6)
+        self.assertEqual(workflow.count("github.ref == 'refs/heads/main'"),6)
         self.assertEqual(workflow.count("needs.verify.outputs.authorized_source_request == 'true'"),3)
         self.assertIn('git diff-tree --no-commit-id --name-only -r HEAD',workflow)
         self.assertIn('== "ops/collect-request.txt"',workflow)
@@ -281,6 +281,24 @@ class PipelineChecks(unittest.TestCase):
         self.assertIn("NO broker requests",workflow)
         self.assertNotIn("ProtoOANewOrderReq(",scorer)
         self.assertIn("GROSS_OHLC_PROXY_NOT_EXECUTABLE_NET",model)
+
+    def test_true_broker_cost_coverage_source_is_authenticated_and_read_only(self):
+        workflow=Path(".github/workflows/verify.yml").read_text()
+        source=Path("research/net_coverage.py").read_text()
+        bot=Path("src/Mxm.Cloud/MxmCloud.cs").read_text()
+        self.assertIn("MXM_AUTHENTIC_NET_COVERAGE",workflow)
+        self.assertIn('"ops/net-coverage-request.txt"',workflow)
+        self.assertIn("needs.verify.outputs.authorized_net_coverage == 'true'",workflow)
+        self.assertIn("run-id: 41476636915",workflow)
+        self.assertIn('SOURCE_RUN_ID="41476636915"',source)
+        self.assertIn("NET_ORIGINAL_CSHARP_PARITY_FAILED",source)
+        self.assertNotIn("ProtoOANewOrderReq(",source)
+        self.assertIn("Timer.Start(15)",bot)
+        self.assertIn("protected override void OnTimer()",bot)
+        self.assertIn("protected override void OnException(",bot)
+        self.assertNotIn("ExecuteMarketOrder(",bot)
+        self.assertNotIn("PlaceLimitOrder(",bot)
+        self.assertNotIn("Stop();",bot)
 
     def test_schema_completion(self):
         self.assertEqual(m.ProtoOAGetTrendbarsRes.DESCRIPTOR.fields_by_name['hasMore'].number,7)

@@ -250,4 +250,84 @@ var gapBars=breakoutBars.Select((x,k)=>k==13?
 Check(Rejects(()=>EconomicBreakoutProbe.Assess(gapBars,4)),
     "duplicate or out-of-order market timeline blocks research");
 
+
+// Funded quote-level EUR lower bound (SYNTHETIC inputs; no broker fill proof).
+DateTime e0=new(2026,11,2,12,0,0,DateTimeKind.Utc);
+var quoted=new ExecutableQuoteEvidence("SYNTH",PositionDirection.Buy,
+    e0,e0.AddMinutes(15),1.1000m,1.1002m,1.1010m,1.1012m,
+    1000m,1000m,1000m,.9m,.1m,.1m,.1m,.2m,.1m,
+    20m,200m,new string('f',64),true,true,true,true);
+var priced=ExecutableNet.Evaluate(quoted);
+Check(priced.FullyPriced && priced.FundableAt200Eur &&
+    priced.QuoteGrossEur==.72m &&
+    priced.TotalCostUpperEur==.6m &&
+    priced.AdverseNetLowerEur==.12m && !priced.EconomicQualified,
+    "quote bid ask and all bound EUR costs computed but not mistaken for broker fills");
+Check(ExecutableNet.Evaluate(quoted with {SlippageUpperEur=null}).Verdict==
+    "EXECUTABLE_QUOTE_MARGIN_OR_NET_COST_MISSING",
+    "no slippage value never treated as free");
+Check(!ExecutableNet.Evaluate(quoted with {BothQuoteEventsVerified=false}).FullyPriced,
+    "bar-open or one-minute disconnected quotes do not price roundtrip");
+Check(!ExecutableNet.Evaluate(quoted with {Units=1200m}).FullyPriced,
+    "minimum broker volume step enforced exactly");
+Check(!ExecutableNet.Evaluate(quoted with {RequiredMarginEur=250m}).FundableAt200Eur,
+    "EUR200 cannot fund broker-required margin");
+Check(!ExecutableNet.Evaluate(quoted with {Original200EurNoDepositsReconciled=false}).FullyPriced,
+    "no synthetic 200 EUR funded account identity");
+Check(Rejects(()=>ExecutableNet.Evaluate(quoted with {EntryAsk=1.099m})),
+    "crossed impossible original bid ask is rejected");
+var shortScenario=ExecutableNet.Evaluate(quoted with {Direction=PositionDirection.Sell});
+Check(shortScenario.QuoteGrossEur==-1.08m &&
+    shortScenario.AdverseNetLowerEur==-1.68m,
+    "shorts sell at bid and cover at ask without favorable fills");
+
+// Multi-lane automatic recovery from independent snapshots; no order calls.
+var safeAccount=new RecoveryPortfolioEvidence(200m,120m,200m,true,true,true,
+    5m,30m,0);
+var uncertain=new RecoveryLaneEvidence("EURUSD",true,true,false,true,false,
+    10m,10m);
+var other=new RecoveryLaneEvidence("AUDUSD",true,true,false,false,false,null,null);
+var isolation=SelectiveRecovery.Assess(safeAccount,new[]{uncertain,other});
+Check(isolation.MonitoringActive && isolation.CanReviewAnyNewExposure &&
+    isolation.AvailableWorstCaseDrawdownHeadroomEur==45m &&
+    isolation.ReservableFreeMarginEur==80m &&
+    isolation.Lanes[0].Mode==RecoveryLaneMode.QuarantinedAmbiguous &&
+    !isolation.Lanes[0].EligibleForFurtherRiskReview &&
+    isolation.Lanes[1].EligibleForFurtherRiskReview,
+    "bounded unknown order isolates EURUSD while AUDUSD survives adverse risk certificate");
+var noHistoryProof=SelectiveRecovery.Assess(
+    safeAccount with {HistoricalInFlightIntentsCertified=false},new[]{other});
+Check(!noHistoryProof.CanReviewAnyNewExposure && noHistoryProof.MonitoringActive,
+    "restart never treats empty in-memory requests as proof of absent ambiguous orders");
+var missingBudget=SelectiveRecovery.Assess(safeAccount,
+    new[]{uncertain with {WorstCaseUnknownOrderLossEur=null},other});
+Check(!missingBudget.CanReviewAnyNewExposure && missingBudget.MonitoringActive,
+    "unbounded unknown order blocks new risk globally while monitor continues");
+var networkDown=SelectiveRecovery.Assess(safeAccount,new[]{
+    uncertain with {UncertainOrderSubmission=false,TransientFault=true},other});
+Check(networkDown.Lanes[0].Mode==RecoveryLaneMode.AutoRecoverTransient &&
+    networkDown.Lanes[1].EligibleForFurtherRiskReview,
+    "transient local disconnect recovers without freezing unaffected symbol");
+var autoReturned=SelectiveRecovery.Assess(safeAccount,new[]{
+    uncertain with {UncertainOrderSubmission=false},other});
+Check(autoReturned.Lanes.All(x=>x.EligibleForFurtherRiskReview),
+    "fresh native snapshots automatically restore eligible lanes");
+var vanishedButUnknown=SelectiveRecovery.Assess(safeAccount,new[]{uncertain});
+Check(vanishedButUnknown.Lanes[0].Mode==RecoveryLaneMode.QuarantinedAmbiguous,
+    "mere absence in inventory never clears unknown submission");
+var finalReconciliation=SelectiveRecovery.Assess(safeAccount,new[]{
+    uncertain with {PositiveBrokerFinalOutcomeReconciled=true},other});
+Check(finalReconciliation.Lanes.All(x=>x.EligibleForFurtherRiskReview) &&
+    finalReconciliation.AvailableWorstCaseDrawdownHeadroomEur==55m,
+    "affirmative terminal broker proof releases adverse reservation automatically");
+var inFlightFull=SelectiveRecovery.Assess(
+    safeAccount with {VerifiedCurrentInFlightRequests=1},new[]{other});
+Check(!inFlightFull.CanReviewAnyNewExposure &&
+    inFlightFull.Lanes[0].Mode==RecoveryLaneMode.ReadyForObservation,
+    "one global in-flight slot prevents overlapping ambiguous requests");
+Check(!SelectiveRecovery.Assess(
+    safeAccount with {EquityEur=140m},new[]{other}).CanReviewAnyNewExposure,
+    "30 percent drawdown boundary remains protective but timer can continue");
+
+
 Console.WriteLine($"PASS {passed} recovery/accounting/portfolio/causal-H1/dynamic-risk/source-calendar/causal-score checks; synthetic, no economic qualification.");
