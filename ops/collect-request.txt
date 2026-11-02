@@ -4,3 +4,5 @@ Intent: one existing-credential Pepperstone LIVE read-only sample and independen
 Scope: SCOPE_VIEW only; no account binding bypass; no orders, no token refresh, no Cloud activation.
 Initiator: repository OWNER via Chat-normal GitHub connector.
 No secret values, account identifiers or market data belong in this request.
+
+Read-only request sequence: 2 (first verified-Git-object gate; no new credentials).
