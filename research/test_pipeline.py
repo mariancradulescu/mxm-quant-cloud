@@ -63,6 +63,20 @@ class PipelineChecks(unittest.TestCase):
         ticks=[e.ProtoOATickData(timestamp=1000,tick=100000),e.ProtoOATickData(timestamp=0,tick=-2),e.ProtoOATickData(timestamp=-10,tick=1)]
         self.assertEqual(decode_side(ticks,990,1000),[[990,99999],[1000,99998],[1000,100000]])
 
+    def test_existing_fingerprint_format_is_strict_but_paste_safe(self):
+        # Harmless synthetic fingerprint: never an account identifier.
+        h="aB"*32
+        expected=h.lower()
+        for representation in (h, "  "+h+"  ", "'"+h+"'", '"'+h+'"',
+            "`"+h+"`", "sha256:"+h,
+            "ACCOUNT_FINGERPRINT_SHA256 = '"+h+"'",
+            "R3_CTRADER_ACCOUNT_FINGERPRINT_SHA256="+h):
+            self.assertEqual(collect.normalize_binding(representation),expected)
+        for invalid in ("", "wrong", "b"*63, "z"*64, "account_id="+h,
+            "ACCOUNT_FINGERPRINT_SHA256 = short", "'"+h, h+"'", h+"junk"):
+            with self.assertRaisesRegex(CaptureContractError, "ACCOUNT_BINDING_INVALID"):
+                collect.normalize_binding(invalid)
+
     def test_bad_binding_never_authenticates_account(self):
         class Fake:
             count=0
