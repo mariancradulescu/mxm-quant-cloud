@@ -1,3 +1,5 @@
+> **Updated 2026-11-02 — new-source v2 supersedes the two historical-repair requirements below.** For **new** Pepperstone data collection, the source identity is now pinned to the exact original account via a double-SHA256 commitment in code; `R3_CTRADER_ACCOUNT_FINGERPRINT_SHA256` is no longer read. The existing RSA private secret `R3_CUSTODY_PRIVATE_KEY_PEM` is used as installed to derive a **different, run-bound new-source public recipient**; it need not decrypt historical archives. No new credentials or keys and no OWNER secret changes are requested for the new-source pipeline. Historical decryption still requires the corresponding original private key. Read [new-source v2 decision](NEW_SOURCE_CUSTODY_AND_ECONOMICS_20261102.md) before following older setup steps.
+
 # Existing credentials: owner setup, no values in chat
 
 The new repository cannot inherit repository/environment secrets from the old repository. GitHub does not reveal saved values. Re-enter the EXISTING values from your secure original copy. Do not create a new OAuth application, token identity or custody keypair.
