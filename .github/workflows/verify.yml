@@ -12,9 +12,25 @@ permissions:
   contents: read
 jobs:
   verify:
+    outputs:
+      authorized_source_request: ${{ steps.intent.outputs.authorized_source_request }}
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 2
+      - name: Validate exact owner source admission intent without secrets
+        id: intent
+        shell: bash
+        run: |
+          echo "authorized_source_request=false" >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_EVENT_NAME" == "push" &&
+                "$GITHUB_REF" == "refs/heads/main" &&
+                "$GITHUB_ACTOR" == "mariancradulescu" &&
+                "$(git log -1 --format=%s)" == "MXM_READ_ONLY_SOURCE_ADMISSION" ]] &&
+             git diff-tree --no-commit-id --name-only -r HEAD | grep -Fxq "ops/collect-request.txt"; then
+            echo "authorized_source_request=true" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
         with:
           dotnet-version: |
@@ -44,9 +60,7 @@ jobs:
       (
         (github.event_name == 'workflow_dispatch' && inputs.collect == true) ||
         (github.event_name == 'push' &&
-          github.event.head_commit.message == 'MXM_READ_ONLY_SOURCE_ADMISSION' &&
-          (contains(github.event.head_commit.added, 'ops/collect-request.txt') ||
-           contains(github.event.head_commit.modified, 'ops/collect-request.txt')))
+          needs.verify.outputs.authorized_source_request == 'true')
       )
     needs: verify
     runs-on: ubuntu-24.04
@@ -87,9 +101,7 @@ jobs:
       (
         (github.event_name == 'workflow_dispatch' && inputs.collect == true) ||
         (github.event_name == 'push' &&
-          github.event.head_commit.message == 'MXM_READ_ONLY_SOURCE_ADMISSION' &&
-          (contains(github.event.head_commit.added, 'ops/collect-request.txt') ||
-           contains(github.event.head_commit.modified, 'ops/collect-request.txt')))
+          needs.verify.outputs.authorized_source_request == 'true')
       ) &&
       needs.verify.result == 'success' &&
       needs.collect.result != 'cancelled'

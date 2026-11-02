@@ -9,10 +9,12 @@ This extends the existing repository; it is not a new strategy, credential, brok
 The existing **single** `.github/workflows/verify.yml` retains ordinary push/PR verification without secrets. Its privileged jobs additionally accept a GitHub **push to main** only when all requirements hold:
 
 1. GitHub authenticated actor equals the repository OWNER `mariancradulescu`;
-2. the last pushed commit message equals **`MXM_READ_ONLY_SOURCE_ADMISSION`** exactly;
-3. that last commit adds or modifies **`ops/collect-request.txt`**;
-4. the normal verify job succeeds first;
+2. the normal secret-free verify job checks the last commit subject equals **`MXM_READ_ONLY_SOURCE_ADMISSION`** exactly;
+3. that job independently verifies using `git diff-tree` that the last commit adds or modifies **`ops/collect-request.txt`**, and publishes only a boolean job output;
+4. the normal verify job succeeds first, and the protected jobs require the boolean output;
 5. both existing GitHub environments allow only `main`. Collection and custody jobs use distinct environments.
+
+This Git object verification replaces reliance on the optional `head_commit.added/modified` fields in an event payload, which did not activate the protected jobs in run #41443569152.
 
 For dispatch the same OWNER/main gate additionally requires explicit `collect=true`. Neither PRs, fork code, normal commits, other branches, nor non-owner pushes satisfy the job gates. A request is just a plain-text marker; it MUST contain no credentials, account identifiers, market data or code. Future controlled requests may change the marker, with one new authorized commit each. A regular code merge does not request a capture.
 
