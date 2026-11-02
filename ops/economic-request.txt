@@ -1,0 +1,7 @@
+MXM OWNER read-only economic source admission
+Date: 2026-11-02
+Identity: existing pinned Pepperstone Europe LIVE account, SCOPE_VIEW, unchanged OAuth.
+Ex ante universe: EURUSD GBPUSD USDJPY AUDUSD USDCAD XAUUSD, enabled only.
+Period: H4 370 days, M15 14 days, last Friday 60-second BID/ASK per supported symbol.
+Purpose: broker source / contract / economic cost evidence; all data encrypted v2.
+No orders, no Cloud, no historical H1 model rerun, no declared NET edge.
