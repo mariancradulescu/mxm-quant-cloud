@@ -50,8 +50,9 @@ var completeFlags = new EconomicProof(true,true,true,true,true,true,true,true,19
 // No synthetic assertions are attached to real source evidence.
 var logicalPass = PortfolioEconomics.Evaluate(study,syntheticTrades,observed,
     new[]{week},completeFlags);
-Check(logicalPass.Pass && logicalPass.CertifiedMaxDrawdownUpperBound is > 0m and < .30m,
-    "all economic gates require hypothetical complete evidence");
+Check(!logicalPass.Pass && logicalPass.Verdict=="EVIDENCE_CHAIN_NOT_VERIFIED" &&
+    logicalPass.CertifiedMaxDrawdownUpperBound is > 0m and < .30m,
+    "manufactured true proof cannot qualify an economically attractive fixture");
 var tooFew = PortfolioEconomics.Evaluate(study,syntheticTrades.Take(20),
     new [] {observed[0],observed[1],observed[2] with {EquityEur=212m}},
     new[]{week},completeFlags);
@@ -138,4 +139,57 @@ fixedSource.Observe(Bar(0,1.10m));
 Check(Rejects(()=>fixedSource.Observe(
     Bar(1,1.10m) with {Symbol="GBPUSD"})),"different symbol never shares adaptive weights");
 
-Console.WriteLine($"PASS {passed} recovery/accounting/portfolio/causal-H1 checks; synthetic, no economic qualification.");
+
+var accountRisk = new BrokerRiskSnapshot(220m, 130m, 240m,true,true,true,true);
+var existingRisk = new[]{
+    new OpenRiskExposure("position-1",5m,20m),
+    new OpenRiskExposure("position-2",7m,30m)
+};
+var proposalRisk = new ProposedRiskExposure("position-3",8m,2m,35m);
+var riskOk = PortfolioRiskBudget.Assess(accountRisk,existingRisk,proposalRisk);
+Check(riskOk.Admissible && riskOk.PortfolioPositionCountAfter==3 &&
+    riskOk.DrawdownHeadroomEur==52m && riskOk.TotalStressLossAfterEur==22m,
+    "dynamic multi-position risk without obsolete per-trade caps");
+Check(!PortfolioRiskBudget.Assess(accountRisk with {CertifiedEquityPeakUpperEur=null},
+    existingRisk,proposalRisk).Admissible,"uncertified peak cannot open risk capacity");
+Check(!PortfolioRiskBudget.Assess(accountRisk with {OrderOutcomesKnown=false},
+    existingRisk,proposalRisk).Admissible,"ambiguous execution blocks new exposure");
+Check(!PortfolioRiskBudget.Assess(accountRisk with {EquityEur=168m},
+    existingRisk,proposalRisk).Admissible,"drawdown boundary has zero headroom");
+Check(!PortfolioRiskBudget.Assess(accountRisk,existingRisk,
+    proposalRisk with {RequiredMarginEur=131m}).Admissible,
+    "margin cannot exceed actual free broker margin");
+Check(!PortfolioRiskBudget.Assess(accountRisk,
+    new[]{existingRisk[0],existingRisk[0]},proposalRisk).Admissible,
+    "duplicated native positions cannot fake exposure");
+Check(!PortfolioRiskBudget.Assess(accountRisk with {ProposedMarginAndLossBoundsVerified=false},
+    existingRisk,proposalRisk).Admissible,
+    "estimated scenario risk does not replace verified broker bounds");
+
+
+var sourceClocks = new [] {
+    new SourceBarClock("EURUSD",UTC(2026,1,5),UTC(2026,1,5).AddMinutes(5),TimeSpan.FromMinutes(5),new string('a',64)),
+    new SourceBarClock("EURUSD",UTC(2026,1,5).AddMinutes(5),UTC(2026,1,5).AddMinutes(10),TimeSpan.FromMinutes(5),new string('a',64)),
+    new SourceBarClock("GBPUSD",UTC(2026,1,5),UTC(2026,1,5).AddHours(1),TimeSpan.FromHours(1),new string('b',64)),
+    new SourceBarClock("EURUSD",UTC(2026,1,12),UTC(2026,1,12).AddMinutes(5),TimeSpan.FromMinutes(5),new string('a',64))
+};
+var clockAudit = CausalSourceCalendar.Assess(sourceClocks);
+Check(clockAudit.ObservedBars==4 && clockAudit.DistinctSymbols==2 &&
+    clockAudit.DistinctObservedIsoWeeks==2 && !clockAudit.TwelveCalendarMonthsObservedForAnySymbol,
+    "multitimeframe weeks counted once, not multiplied by instruments");
+Check(clockAudit.DiscontinuitiesBetweenSuccessiveSameSymbolBars==1,
+    "unobserved session gaps explicitly retained");
+Check(Rejects(()=>CausalSourceCalendar.Assess(
+    sourceClocks.Concat(new[]{sourceClocks[0]}))),
+    "duplicate source candles fail independently");
+Check(!CausalSourceCalendar.Assess(new[]{
+    sourceClocks[0],sourceClocks[0] with {
+        OpenUtc=UTC(2027,1,5),
+        AvailableUtc=UTC(2027,1,5).AddMinutes(5)
+    }}).TwelveCalendarMonthsObservedForAnySymbol,
+    "two isolated annual endpoints do not constitute annual source coverage");
+Check(Rejects(()=>CausalSourceCalendar.Assess(
+    new[]{sourceClocks[0] with {AvailableUtc=sourceClocks[0].OpenUtc}})),
+    "unclosed candle cannot be a causal source input");
+
+Console.WriteLine($"PASS {passed} recovery/accounting/portfolio/causal-H1/dynamic-risk/source-calendar checks; synthetic, no economic qualification.");

@@ -154,9 +154,13 @@ public static class PortfolioEconomics
             certifiedDd >= OwnerMaxDrawdown ? "DRAWDOWN_LIMIT" :
             confirmationNet <= 0m ? "CONFIRMATION_NET_NOT_POSITIVE" :
             !proof.IndependentConfirmationNetEdgeProven ? "INDEPENDENT_NET_EDGE_NOT_PROVEN" :
-            "ALL_EVIDENCE_GATES_PASSED";
+            // A caller can manufacture every field in EconomicProof. Until a
+            // protected-source verifier binds the ledger, admissible weeks,
+            // broker costs and replay to the same authenticated input, no
+            // public caller may create a passing economic qualification.
+            "EVIDENCE_CHAIN_NOT_VERIFIED";
         return new EconomicResult(OwnerInitialCapitalEur, net, confirmationNet,
             finalBalance, observedMaxDrawdown, certifiedDd, weeks.Length, weeklyMin,
-            verdict == "ALL_EVIDENCE_GATES_PASSED", verdict);
+            false, verdict);
     }
 }

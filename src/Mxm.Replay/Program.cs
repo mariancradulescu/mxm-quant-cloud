@@ -26,6 +26,7 @@ try
     // treats candidate counts as NET performance or independent confirmation.
     var bundleSha=Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
     var researchers=new Dictionary<string,Mxm.Core.CausalRangePressureResearch>();
+    var actualSourceClocks=new List<Mxm.Core.SourceBarClock>();
     int causalForecastCount=0;
     foreach(var bar in root.GetProperty("bars").EnumerateArray()
         .OrderBy(x=>x.GetProperty("symbol").GetString(),StringComparer.Ordinal)
@@ -41,6 +42,8 @@ try
             bar.GetProperty("openTime").GetInt64()).UtcDateTime;
         var available=DateTimeOffset.FromUnixTimeMilliseconds(
             bar.GetProperty("availableTime").GetInt64()).UtcDateTime;
+        actualSourceClocks.Add(new Mxm.Core.SourceBarClock(
+            name,open,available,TimeSpan.FromHours(1),bundleSha));
         var candidate=researcher.Observe(new Mxm.Core.CompletedH1Candle(
             name,open,available,
             bar.GetProperty("open").GetDecimal(),
@@ -50,7 +53,14 @@ try
             bar.GetProperty("tickVolume").GetInt64(),bundleSha));
         if(candidate!=null)causalForecastCount++;
     }
-    File.WriteAllText(args[1],JsonSerializer.Serialize(new { sourceSha256=bundleSha,bars=count,causalResearchForecasts=causalForecastCount,causalResearchStatus=Mxm.Core.CausalRangePressureResearch.ResearchOnly,
+    var calendar=Mxm.Core.CausalSourceCalendar.Assess(actualSourceClocks);
+    File.WriteAllText(args[1],JsonSerializer.Serialize(new {
+        sourceSha256=bundleSha,bars=count,
+        observedCalendarWeeks=calendar.DistinctObservedIsoWeeks,
+        observedCalendarDiscontinuities=calendar.DiscontinuitiesBetweenSuccessiveSameSymbolBars,
+        twelveCalendarMonthsObserved=calendar.TwelveCalendarMonthsObservedForAnySymbol,
+        calendarStatus=calendar.Status,
+        causalResearchForecasts=causalForecastCount,causalResearchStatus=Mxm.Core.CausalRangePressureResearch.ResearchOnly,
         status="SOURCE_VALIDATED_NOT_EXECUTION_REPLAY",economicQualification=false,
         missing="Historical executable spreads, costs, FX, financing, margin and qualified strategy" }));
     return 0;
