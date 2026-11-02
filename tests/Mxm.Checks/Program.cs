@@ -166,4 +166,24 @@ Check(!PortfolioRiskBudget.Assess(accountRisk with {ProposedMarginAndLossBoundsV
     existingRisk,proposalRisk).Admissible,
     "estimated scenario risk does not replace verified broker bounds");
 
-Console.WriteLine($"PASS {passed} recovery/accounting/portfolio/causal-H1/dynamic-risk checks; synthetic, no economic qualification.");
+
+var sourceClocks = new [] {
+    new SourceBarClock("EURUSD",UTC(2026,1,5),UTC(2026,1,5).AddMinutes(5),TimeSpan.FromMinutes(5),new string('a',64)),
+    new SourceBarClock("EURUSD",UTC(2026,1,5).AddMinutes(5),UTC(2026,1,5).AddMinutes(10),TimeSpan.FromMinutes(5),new string('a',64)),
+    new SourceBarClock("GBPUSD",UTC(2026,1,5),UTC(2026,1,5).AddHours(1),TimeSpan.FromHours(1),new string('b',64)),
+    new SourceBarClock("EURUSD",UTC(2026,1,12),UTC(2026,1,12).AddMinutes(5),TimeSpan.FromMinutes(5),new string('a',64))
+};
+var clockAudit = CausalSourceCalendar.Assess(sourceClocks);
+Check(clockAudit.ObservedBars==4 && clockAudit.DistinctSymbols==2 &&
+    clockAudit.DistinctObservedIsoWeeks==2 && !clockAudit.TwelveCalendarMonthsObservedForAnySymbol,
+    "multitimeframe weeks counted once, not multiplied by instruments");
+Check(clockAudit.DiscontinuitiesBetweenSuccessiveSameSymbolBars==1,
+    "unobserved session gaps explicitly retained");
+Check(Rejects(()=>CausalSourceCalendar.Assess(
+    sourceClocks.Concat(new[]{sourceClocks[0]}))),
+    "duplicate source candles fail independently");
+Check(Rejects(()=>CausalSourceCalendar.Assess(
+    new[]{sourceClocks[0] with {AvailableUtc=sourceClocks[0].OpenUtc}})),
+    "unclosed candle cannot be a causal source input");
+
+Console.WriteLine($"PASS {passed} recovery/accounting/portfolio/causal-H1/dynamic-risk/source-calendar checks; synthetic, no economic qualification.");
