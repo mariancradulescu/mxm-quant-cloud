@@ -1,5 +1,18 @@
 using System.Text.Json;
 using System.Security.Cryptography;
+if (args.Length == 3 && args[2].StartsWith("--flow-"))
+{
+    try {
+        using var d=JsonDocument.Parse(File.ReadAllBytes(args[0]));
+        object result=args[2] switch {
+            "--flow-plan"=>Mxm.Core.CausalFlowResearch.Propose(d.RootElement),
+            "--flow-confirm-plan"=>Mxm.Core.CausalFlowResearch.Propose(d.RootElement,true),
+            "--flow-selection"=>Mxm.Core.CausalFlowResearch.Evaluate(d.RootElement),
+            "--flow-confirmation"=>Mxm.Core.CausalFlowResearch.Evaluate(d.RootElement,true),
+            _=>throw new ArgumentException()};
+        File.WriteAllText(args[1],JsonSerializer.Serialize(result));return 0;
+    } catch { return 10; }
+}
 if (args.Length == 3 && (args[2] == "--intraday-plan" || args[2] == "--intraday-net"))
 {
     try {
