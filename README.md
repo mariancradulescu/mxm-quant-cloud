@@ -129,3 +129,17 @@ three calendar strata, two holding horizons and active in-position protection
 through the same native allocator and funded ledger. Current leverage/margin
 profiles are observed, while historical used margin and account stopout threshold
 remain unverified. All results remain pending the protected economic execution.
+
+EPA2 authenticated run [41648280262](https://github.com/mariancradulescu/mxm-quant-cloud/actions/runs/41648280262)
+completed 12 fixed January/April/July development days and both 2/4-hour horizons.
+All eight cases admitted zero trades at the evidence gate: modeled capital stays
+EUR200, with no evidence of portfolio edge or in-position adaptation from EPA2.
+[The frozen receipt](docs/EPA2_AUTHENTIC_HOLDING_RESULT.json) preserves all cases.
+3725 bounded read-only requests yielded 612 partial-or-full as-of states (257 with
+all six assets). Missing evidence is not economic unprofitability; a broker-free
+custody diagnosis must identify the exact route/calibration/margin blocker without
+relaxing the frozen criteria. EPA1 original fixed trades reconcile unchanged;
+sampled equity/margin minima at 0.5x slippage are 109.9214% (primary 2-SE) and
+101.6992% (central sensitivity). No observed 50% reference crossings; one missing
+holding mark and between-mark execution uncertainty preclude a liquidation or DD
+certificate. No orders, activation, policy selection or promotion.
