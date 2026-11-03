@@ -14,18 +14,42 @@ public sealed record AdaptiveRiskChoice(decimal Units, double UtilityLowerBound,
     decimal WorstScenarioDrawdown, decimal WorstEquityEur, decimal MarginEur,
     decimal? SampleRuinFraction, int FeasibleVolumes, string Reason, bool AbsoluteGuarantee);
 
+// Mathematical scenario inputs carry no certified-peak or broker-stopout claim.
+public sealed record ScenarioSizingInputs(decimal EquityEur, decimal PeakReferenceEur, decimal FreeMarginEur,
+    decimal MinimumUnits, decimal StepUnits, decimal MaximumUnits, decimal MarginPerUnitEur,
+    decimal MarginCoverageScenarioRatio, int EffectiveIndependentBlocks, decimal UncertaintyMultiplier);
+
 public static class AdaptivePortfolioRisk
 {
     // Experiment-specific confidence/support inputs, not OWNER risk percentages.
     // Maximise conservative expected log incremental wealth versus doing nothing.
     public static AdaptiveRiskChoice Choose(AdaptiveRiskInputs a, IEnumerable<JointRiskScenario> scenarios)
     {
+        if(!a.Reconciled || !a.CompleteJointRiskEvidence)
+            return new(0,0,0,a.EquityEur,0,null,0,"JOINT_ACCOUNT_OR_RISK_EVIDENCE_MISSING_MONITOR_CONTINUES",false);
+        return Evaluate(ToScenario(a),scenarios);
+    }
+    public static ScenarioSizingInputs ToScenario(AdaptiveRiskInputs a) => new(a.EquityEur,a.CertifiedPeakEur,
+        a.FreeMarginEur,a.MinimumUnits,a.StepUnits,a.MaximumUnits,a.MarginPerUnitEur,
+        a.BrokerStopoutEquityToMargin,a.EffectiveIndependentBlocks,a.UncertaintyMultiplier);
+
+    // Explicit conditional research endpoint. It cannot create a peak
+    // certificate or set verified execution/operational evidence to true.
+    public static AdaptiveRiskChoice Estimate(ScenarioSizingInputs a, IEnumerable<JointRiskScenario> scenarios,
+        bool ledgerReconciled, bool scenarioInputsComplete)
+    {
+        if(!ledgerReconciled || !scenarioInputsComplete)
+            return new(0,0,0,a.EquityEur,0,null,0,"CONDITIONAL_SCENARIO_INPUTS_MISSING",false);
+        var result=Evaluate(a,scenarios);
+        return result with {Reason="CONDITIONAL_ESTIMATE_"+result.Reason};
+    }
+    private static AdaptiveRiskChoice Evaluate(ScenarioSizingInputs a, IEnumerable<JointRiskScenario> scenarios)
+    {
         var s=scenarios.ToArray();
         AdaptiveRiskChoice Deny(string why)=>new(0,0,0,a.EquityEur,0,null,0,why,false);
-        if(!a.Reconciled || !a.CompleteJointRiskEvidence)return Deny("JOINT_ACCOUNT_OR_RISK_EVIDENCE_MISSING_MONITOR_CONTINUES");
-        if(a.EquityEur<=0 || a.CertifiedPeakEur<200 || a.CertifiedPeakEur<a.EquityEur || a.FreeMarginEur<0 ||
+        if(a.EquityEur<=0 || a.PeakReferenceEur<200 || a.PeakReferenceEur<a.EquityEur || a.FreeMarginEur<0 ||
            a.MinimumUnits<=0 || a.StepUnits<=0 || a.MaximumUnits<a.MinimumUnits || a.MarginPerUnitEur<=0 ||
-           a.BrokerStopoutEquityToMargin<0 || a.EffectiveIndependentBlocks<2 || a.UncertaintyMultiplier<0 || s.Length<2 ||
+           a.MarginCoverageScenarioRatio<0 || a.EffectiveIndependentBlocks<2 || a.UncertaintyMultiplier<0 || s.Length<2 ||
            s.Count(x=>x.InEstimationSample)<2 || a.EffectiveIndependentBlocks>s.Count(x=>x.InEstimationSample) ||
            s.Any(x=>x.ProposedFixedCostEur<0 || x.IntrahorizonOpenLossEur<0 || x.IntrahorizonLossPerUnitEur<0 ||
                     x.FavorablePeakEur<0 || x.ProposedFavorablePeakPerUnitEur<0 || x.ExistingMarginEur<0))return Deny("INVALID_ADAPTIVE_EVIDENCE");
@@ -45,12 +69,12 @@ public static class AdaptivePortfolioRisk
                 decimal terminal=baseline+u*x.ProposedNetPerUnitEur-x.ProposedFixedCostEur;
                 decimal low=Math.Min(terminal,a.EquityEur-x.IntrahorizonOpenLossEur-u*x.IntrahorizonLossPerUnitEur-x.ProposedFixedCostEur);
                 // Candidate peak scales with volume; terminal gains also bound the peak.
-                decimal peak=Math.Max(a.CertifiedPeakEur,Math.Max(terminal,
+                decimal peak=Math.Max(a.PeakReferenceEur,Math.Max(terminal,
                     a.EquityEur+x.FavorablePeakEur+u*x.ProposedFavorablePeakPerUnitEur));
                 decimal d=1m-low/peak;worst=Math.Min(worst,low);dd=Math.Max(dd,d);
                 // No correlation/netting discount: each joint adverse state survives.
                 if(baseline<=0 || terminal<=0 || d>=.30m ||
-                   low<=(x.ExistingMarginEur+margin)*a.BrokerStopoutEquityToMargin ||
+                   low<=(x.ExistingMarginEur+margin)*a.MarginCoverageScenarioRatio ||
                    x.ExistingMarginEur+margin>low || margin+Math.Max(0,a.EquityEur-low)>a.FreeMarginEur)ok=false;
                 if(x.InEstimationSample && baseline>0 && terminal>0)utilities.Add(Math.Log((double)(terminal/baseline)));
             }

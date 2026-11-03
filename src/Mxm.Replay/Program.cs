@@ -1,5 +1,33 @@
 using System.Text.Json;
 using System.Security.Cryptography;
+if (args.Length == 3 && args[2] == "--value-portfolio-source")
+{
+    try {
+        using var d=JsonDocument.Parse(File.ReadAllBytes(args[0]));
+        File.WriteAllText(args[1],JsonSerializer.Serialize(Mxm.Core.MultiAssetValuation.Assess(d.RootElement)));
+        return 0;
+    } catch { return 16; }
+}
+if (args.Length == 3 && args[2] == "--estimate-portfolio-opportunities")
+{
+    try {
+        var r=JsonSerializer.Deserialize<Mxm.Core.ResearchOrchestrationRequest>(File.ReadAllBytes(args[0]),
+            new JsonSerializerOptions {NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString})
+            ?? throw new ArgumentException();
+        File.WriteAllText(args[1],JsonSerializer.Serialize(Mxm.Core.OpportunityOrchestrator.Estimate(r)));
+        return 0;
+    } catch { return 14; }
+}
+if (args.Length == 3 && args[2] == "--economic-portfolio-plan")
+{
+    try {
+        using var d=JsonDocument.Parse(File.ReadAllBytes(args[0]));
+        var bars=Mxm.Core.RegimeDiscovery.Read(d.RootElement);
+        var plan=Mxm.Core.JointOpportunityResearch.Describe(bars)
+            .Select(r=>new {r.Candidate,r.Symbol,r.Clock,r.Exit,r.Side});
+        File.WriteAllText(args[1],JsonSerializer.Serialize(plan));return 0;
+    } catch { return 15; }
+}
 if (args.Length == 3 && args[2] == "--orchestrate-opportunities")
 {
     try {

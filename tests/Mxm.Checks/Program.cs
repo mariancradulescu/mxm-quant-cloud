@@ -429,4 +429,21 @@ var descriptors=JointOpportunityResearch.Describe(researchBars);
 var futureMutated=researchBars.Select((x,i)=>i>=900?x with {C=x.C*2}:x).ToArray();
 Check(System.Text.Json.JsonSerializer.Serialize(descriptors)==System.Text.Json.JsonSerializer.Serialize(JointOpportunityResearch.Describe(futureMutated)),
     "unscored late source cannot influence joint research descriptors");
+// Conditional research cannot manufacture evidence for the verified pathway.
+var unverifiedJo=jo with {ExecutionEvidenceComplete=false,VolumeGrid=jo.VolumeGrid with {
+    CertifiedPeakEur=0,Reconciled=false,CompleteJointRiskEvidence=false}};
+var estimatedRequest=new ResearchOrchestrationRequest("EPA1_CONDITIONAL_RESEARCH_NOT_CERTIFIED",240,jointClock,
+    AdaptivePortfolioRisk.ToScenario(adaptiveAccount),jointBase,new[]{unverifiedJo},true,new[]{unverifiedJo.Id});
+Check(OpportunityOrchestrator.Estimate(estimatedRequest).Allocations.Length==1,
+    "explicit conditional estimate uses numeric scenario grid without a fabricated peak certificate");
+Check(OpportunityOrchestrator.Select(jointClock,adaptiveAccount,jointBase,new[]{unverifiedJo}).Allocations.Length==0,
+    "same unverified opportunity remains blocked on verified endpoint");
+Check(!OpportunityOrchestrator.Estimate(estimatedRequest).Qualified,
+    "conditional positive estimates never qualify portfolio trading");
+Check(Rejects(()=>OpportunityOrchestrator.Estimate(estimatedRequest with {Scope="TRADING"})),
+    "conditional endpoint requires explicit research scope");
+Check(Rejects(()=>OpportunityOrchestrator.Estimate(estimatedRequest with {CommonHorizonMinutes=15})),
+    "EPA1 cannot compare different economic holding horizons");
+Check(OpportunityOrchestrator.Estimate(estimatedRequest with {LedgerReconciled=false}).Allocations.Length==0,
+    "conditional research still refuses unreconciled capital");
 Console.WriteLine($"PASS {passed} recovery/accounting/portfolio/causal-H1/dynamic-risk/source-calendar/causal-score checks; synthetic, no economic qualification.");

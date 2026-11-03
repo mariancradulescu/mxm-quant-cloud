@@ -1,0 +1,74 @@
+{
+  "id": "EPA1",
+  "purpose": "CONDITIONAL_INTEGRATED_ECONOMIC_RESEARCH_NOT_TRADING_QUALIFICATION",
+  "universe": [
+    "EURUSD",
+    "GBPUSD",
+    "USDJPY",
+    "AUDUSD",
+    "USDCAD",
+    "XAUUSD"
+  ],
+  "families": [
+    "JOP1_SIX_BAR_DRIFT",
+    "JOP1_LAST_BAR_REVERSAL"
+  ],
+  "sourceRunId": 41476636915,
+  "sourceSha256": "50e40f62156f598d715d6052e466ae7ef77b9bc39117cad37472c7f0f505e61d",
+  "calibrationDays": [
+    "2026-04-07",
+    "2026-04-14",
+    "2026-04-21",
+    "2026-04-28",
+    "2026-05-05",
+    "2026-05-12",
+    "2026-05-19",
+    "2026-05-26"
+  ],
+  "replayDays": [
+    "2026-06-08",
+    "2026-06-09",
+    "2026-06-10",
+    "2026-06-11",
+    "2026-06-12"
+  ],
+  "entryUtc": "09:00",
+  "exitUtc": "13:00",
+  "commonHorizonMinutes": 240,
+  "calibrationMarkStepMinutes": 60,
+  "replayMarkStepMinutes": 30,
+  "preDecisionQuoteSeconds": 20,
+  "latencyMs": 1000,
+  "quoteSearchMs": 10000,
+  "maximumSideAgeMs": 2000,
+  "maxEvidenceRequests": 1300,
+  "uncertaintyMultipliers": [
+    "0",
+    "2"
+  ],
+  "slippageMultiplesOfObservedEntrySpreadEachSide": [
+    "0",
+    "0.5",
+    "1"
+  ],
+  "ablation": "ALL12_CANDIDATES_REMOVED_ONE_AT_A_TIME_BOTH_POLICIES_AT_0p5_SLIP_NO_SELECTION",
+  "margin": "CURRENT_BROKER_QUERIED_VOLUME_GRID_UPPER_BOUND_NOT_HISTORICAL_CERTIFICATE",
+  "funding": "ZERO_ONLY_CONDITIONAL_ON_CURRENT_DAILY_SWAP_OUTSIDE_HOLDING_WINDOW",
+  "peak": "SAMPLED_RESEARCH_REFERENCE_NOT_CERTIFICATE",
+  "net": "OBSERVED_QUOTES_AND_FX_CURRENT_TARIFF_SCENARIOS_NOT_ACTUAL_FILLS",
+  "independence": false,
+  "hard21": "NOT_EVALUATED_ON_THIS_FIVE_DAY_DEVELOPMENT_PILOT",
+  "modelPromotion": false,
+  "minimumCompleteCalibrationBlocks": 4,
+  "missingHoldingSource": "FLAG_INCOMPLETE_NO_INTERPOLATION",
+  "missingExitSource": "UNRESOLVED_EXPOSURE_SUSPEND_NEW_ENTRIES_NO_ZERO_PNL_ASSUMPTION",
+  "missingEntrySource": "EXPIRE_MODELED_ENTRY_AFTER_PREDECLARED_WINDOW_AND_DISCLOSE_UNOBSERVED_EXECUTION",
+  "commissionForecast": "CONSERVATIVE_SLOPE_PLUS_FLOOR_BOUND_ACTUAL_MODEL_FEES_MAX_SLOPE_FLOOR",
+  "marginCoverageScenarioRatio": "1",
+  "volumeQueryMarginReferenceEur": "200",
+  "extraVolumeStepsForReinvestment": 2,
+  "maxVolumeQueryPoints": 12,
+  "primaryResearchPolicy": "UNCERTAINTY_SCREEN_2SE",
+  "centralMeanPolicyRole": "PREDECLARED_SENSITIVITY_ONLY_NOT_RELAXED_TRADING_ACCEPTANCE",
+  "selectFavorablePolicyAfterResults": false
+}

@@ -39,7 +39,7 @@ link here; older dated directives remain provenance, never competing authority.
   could only be research information in a genuinely prospective portfolio
   hypothesis on independent evidence, never a resurrection mechanism.
 
-## Active methodological policy v1 (prospectively revisable)
+## Active methodological policy v2 (prospectively revisable)
 
 Evidence levels: (1) exploratory economic hypothesis; (2) preliminary predictive
 and economic support; (3) demonstrated possible incremental portfolio contribution;
@@ -122,3 +122,53 @@ upgrade JOP1 beyond exploratory level or supply the missing causal joint NET
 samples, continuous drawdown evidence or independent confirmation. Cross-timeframe
 allocation additionally needs demonstrably aligned common economic horizons;
 state identifiers alone are not a proof of those horizons.
+
+## EPA1 integrated conditional economics (prospective protocol)
+
+The OWNER continuation after PR34–36 prioritizes an economically executable common
+portfolio research replay. OWNER v2.0 requirements above remain unchanged.
+`research/portfolio_economic_protocol.json` freezes EPA1 before collection: all six
+original instruments, unchanged JOP1 drift/reversal descriptors, eight weekly
+Tuesday 09–13 UTC calibration windows, then five weekday replay windows on
+2026-06-08 through 2026-06-12. Calibration marks are hourly and replay marks every
+30 minutes, plus strictly earlier decision quotes. At most1300 evidence requests
+are allowed. No date/asset is replaced according to observed performance.
+
+Sampled simultaneous BID/ASK and FX have <=2s side age, 1s modeled latency and a
+10s search. Independent raw custody readback binds all request clocks, instrument
+IDs, contracts and current expected-margin grids. Current volume-grid margin
+ratios provide a conservative bound over queried volumes, not historical margin
+certification. A small extra grid above initial financing capacity tests potential
+reinvestment; it is a data-query bound, not a universal OWNER position/risk cap.
+
+Two policies, central-mean sensitivity (0-SE penalty) and an exploratory 2-SE
+uncertainty screen, are both evaluated at 0/0.5/1 times observed entry spread per
+side as hypothetical slippage. All six scenarios and all12 leave-one-candidate-out
+comparisons for each policy at0.5x are disclosed, never selected for promotion.
+These are descriptive exposed-data comparisons with no multiple-testing-adjusted
+statistical qualification. A candidate is evaluated for marginal portfolio utility,
+not required to satisfy individual HARD21 or a separate standalone qualification.
+
+Research estimation and product evidence are separate. `ScenarioSizingInputs` uses
+a sampled peak reference and an explicit margin-coverage scenario. The conditional
+selector endpoint applies the same numeric risk grid and 30% scenario limit while
+retaining false verified-execution/certificate flags. It cannot generate a peak
+certificate, broker stopout claim or trading qualification. The existing verified
+endpoint remains protective. No Cloud adapter uses the conditional endpoint.
+
+`MultiAssetValuation` supplies native C# FX routes, current-tariff adverse-notional
+fee bounds and commission floors. Forecast fees conservatively use slope plus
+floor; quote-time model charges use max(slope*units,floor). Financing is zero only
+conditionally on the effective normal-account flag and observed current daily
+swap outside the holding interval (protobuf flag wire presence is disclosed); no
+historical schedule is certified. Slippage and historical tariff continuity are
+uncertain. These limitations remain visible in the unchanged funded ledger's
+incomplete-financing status. Numeric research NET is conditional, never actual
+execution profit. Source gaps, unseen intramark risk and uncertified drawdown
+preclude qualification.
+
+The atomic multi-asset dispatcher inherits the existing `FundedReplay` accounting,
+entry, exit and mark functions; only synchronized dispatch and quote-time fee marks
+are added. Absent exits leave unresolved exposure and suspend subsequent entries.
+A missing future quote is never used to suppress an earlier decision or turn an
+unknown loss into zero. The original frozen replay file/results remain unchanged.
