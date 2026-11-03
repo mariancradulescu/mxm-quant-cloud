@@ -10,10 +10,8 @@ Check(CausalObservationClock.First(clockWindow with {Events=clockWindow.Events.T
     "observation prefix invariant");
 Check(CausalObservationClock.First(clockWindow with {Complete=false}).At==null,"incomplete tick page never usable");
 Check(CausalObservationClock.First(clockWindow with {Route=new[]{"X","FX"}}).At==null,"missing conversion route blocks observation");
-var duplicateClockRejected=false;
-try {CausalObservationClock.First(clockWindow with {Events=clockWindow.Events.Append(new QuoteSideEvent(11000,"X",0,99)).ToArray()});}
-catch(ArgumentException){duplicateClockRejected=true;}
-Check(duplicateClockRejected,"conflicting simultaneous quote rejected");
+Check(CausalObservationClock.First(clockWindow with {Events=clockWindow.Events.Append(new QuoteSideEvent(11000,"X",0,99)).ToArray()}).Status=="AMBIGUOUS_SAME_TIME_SIDE",
+    "conflicting simultaneous quote makes window unavailable without inventing event order");
 var good = new RecoveryEvidence(200, 200, 200, true, true, true, false, false);
 Check(Recovery.Assess(good).Mode == RecoveryMode.ReconciledObservation, "complete evidence permits observation only");
 Check(Recovery.Assess(good with { EquityPeakUpperBound = null }).Mode == RecoveryMode.Protective, "missing peak");

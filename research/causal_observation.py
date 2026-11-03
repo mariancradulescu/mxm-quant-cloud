@@ -18,7 +18,7 @@ def first_observation(w):
         for e in events:
             key=e['Symbol'],e['Side']
             if key in batch and batch[key]['Price']!=e['Price']:
-                raise ValueError('AMBIGUOUS_SAME_TIME_SIDE')
+                return dict(Status='AMBIGUOUS_SAME_TIME_SIDE',At=None,Quotes=[])
             batch[key]=e
         state.update(batch)
         if at<start:continue

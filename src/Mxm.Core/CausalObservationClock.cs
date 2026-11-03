@@ -27,7 +27,7 @@ public static class CausalObservationClock
             foreach(var side in batch.GroupBy(x=>(x.Symbol,x.Side)))
             {
                 if(side.Select(x=>x.Price).Distinct().Count()!=1)
-                    throw new ArgumentException("AMBIGUOUS_SAME_TIME_SIDE");
+                    return new("AMBIGUOUS_SAME_TIME_SIDE",null,Array.Empty<ObservedQuote>());
                 state[side.Key]=side.First();
             }
             long at=batch.Key;

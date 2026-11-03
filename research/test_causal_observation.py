@@ -31,7 +31,7 @@ class CausalClockTests(unittest.TestCase):
         w=self.window();w['Events'].append(copy.deepcopy(w['Events'][0]))
         self.assertEqual(first_observation(w)['At'],11000)
         w['Events'][-1]['Price']=99
-        with self.assertRaises(ValueError):first_observation(w)
+        self.assertEqual(first_observation(w)['Status'],'AMBIGUOUS_SAME_TIME_SIDE')
         w=self.window();w['Complete']=False
         self.assertEqual(first_observation(w)['Status'],'INCOMPLETE_SOURCE')
 
