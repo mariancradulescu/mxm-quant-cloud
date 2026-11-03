@@ -143,3 +143,24 @@ sampled equity/margin minima at 0.5x slippage are 109.9214% (primary 2-SE) and
 101.6992% (central sensitivity). No observed 50% reference crossings; one missing
 holding mark and between-mark execution uncertainty preclude a liquidation or DD
 certificate. No orders, activation, policy selection or promotion.
+
+Broker-free [diagnosis 41654064703](https://github.com/mariancradulescu/mxm-quant-cloud/actions/runs/41654064703)
+identified the precise EPA2 blocker: zero of 72 candidate/symbol/horizon/cohort groups
+had all six complete fixed-asof calibrations (observed range 0–3). Funding schedules
+passed; predecision margin routes existed for 57/72 symbol-days. Availability-only
+first causal quote windows covered 596–609/612 routes per asset and all required
+calibration windows for 68/72 groups. These are **not replacement fills or repaired
+EPA2 results**. Any future event-time evaluation needs its own prospective protocol;
+EPA2 is closed and the old entrypoint refuses recollection/replay after freezing.
+
+[The separate fixed-book sensitivity](docs/EPA2_EXECUTION_DIAGNOSIS.json) also shows
+why margin units matter: decoding raw tier 2000/3000 as 20/30 produces, for EPA1's
+central 0.5x case at June12 13:00 UTC, EUR211.0470 margin versus EUR208.2697 sampled
+liquidation equity (98.6840%). It requests a model protective exit, without applying
+one to or rewriting EPA1. No sampled 50% reference crossing is observed; broker
+threshold and execution remain unknown. Native holding risk now requires explicit
+tier-unit encoding and rejects ambiguous input; raw research callers use the
+conservative hundredths scenario. Original raw-scale EPA2 audit remains frozen.
+All three ciphertexts were re-archived encrypted through 2027-02-01. Incremental
+edge, live holding adaptation, HARD21, continuous DD and 12-month independent
+validation remain unproved; no policy or candidate is promoted.

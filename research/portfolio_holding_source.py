@@ -29,6 +29,7 @@ def readback(p):
 if __name__=='__main__':
     try:
         p=json.loads(PROTOCOL.read_text())
+        need(not Path('docs/EPA2_AUTHENTIC_HOLDING_RESULT.json').exists(),'EPA2_CLOSED_USE_FROZEN_RECEIPT_AND_BROKER_FREE_DIAGNOSIS')
         readback(p) if '--readback' in sys.argv else collect(p)
     except Exception:
         print('EPA2_FAILED_CLOSED_DETAILS_WITHHELD',flush=True);raise SystemExit(1)

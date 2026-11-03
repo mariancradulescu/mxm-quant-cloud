@@ -89,12 +89,9 @@ def readback():
     original=read('baseline-source/source.envelope.json',p['sourceSha256'],p['sourceRunId'])
     old=read('epa1-source/source.envelope.json',p['oldEpa1SourceSha256'],p['oldEpa1Run'])
     result=evaluate(b,original,p)
-    normalized=copy.deepcopy(b)
-    for row in normalized['symbols'].values():
-        for tier in row['dynamicLeverage']:tier['leverage']=float(D(tier['leverage'])/100)
     result['conservativeHundredthsTierSensitivity']=dict(rawTiers={s:r['dynamicLeverage'] for s,r in b['symbols'].items()},
         interpretation='OBSERVED_2000_3000_AS20_30_CONSERVATIVE_MARGIN_SENSITIVITY_NOT_HISTORICAL_MARGIN_CERTIFICATION',
-        fixedOriginalEpa1BookAudit=audit_epa1(old,normalized),originalEpa2BookReallocated=False)
+        fixedOriginalEpa1BookAudit=audit_epa1(old,b),originalEpa2BookReallocated=False)
     result['executionRunId']=int(os.environ['GITHUB_RUN_ID'])
     result['sourceCiphertextSha256']=frozen['sourceCiphertextSha256']
     Path('holding-diagnostics.public.json').write_text(json.dumps(result,sort_keys=True,indent=2,default=str)+'\n')

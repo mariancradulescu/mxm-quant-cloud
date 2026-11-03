@@ -14,6 +14,7 @@
     "docs/AUTHENTIC_WIDE_REGIME_VERDICT_20261103.json": "8ce232c1cb4f8f7dafc014de898ec6752838e5c58190d32eebe0a6c180860a65",
     "docs/EPA1_AUTHENTIC_PORTFOLIO_RESULT.json": "abfcff3da3f72cba7d355713daf32f61a9a70cc2964f3a3a23b5f5cd58b31984",
     "docs/EPA2_AUTHENTIC_HOLDING_RESULT.json": "0c3e9ab22d5471ffa52291c5b66c649f3d4f01a78afe5f6ac37a4597886858ca",
+    "docs/EPA2_EXECUTION_DIAGNOSIS.json": "74054ec4cd11368cf5635c0e1b5b5b21b7b69a59547b65b79f112ea981df2a31",
     "docs/JOINED_OPPORTUNITY_AUTHENTIC_RESULT.json": "292c3a3d086deee3af9efb3b480a339fa4edf99c3dda58de7559d712cd166187",
     "docs/JOINT_QUOTE_EVIDENCE_AUTHENTIC_RESULT.json": "5df419990d0cd142e7bda794ed2ae791bc0853c4739f6b0286c35c1f62a5403a",
     "docs/NEW_SOURCE_H1_CAUSAL_COLD_VERDICT_20261102.json": "e1a264c8dda8e9f2af3f8b4c1eda51b03fd05be0c98000e23f601c1dd04ffda3",
@@ -104,6 +105,9 @@
     },
     {
       "criteria": "ALL8_PORTFOLIO_CASES_ALL12_PRIMARY_ABLATIONS_NO_SELECTION",
+      "diagnosisPublicArtifactId": 13238687558,
+      "diagnosisReceiptSha256": "74054ec4cd11368cf5635c0e1b5b5b21b7b69a59547b65b79f112ea981df2a31",
+      "diagnosisRunId": 41654064703,
       "executionRunId": 41648280262,
       "id": "EPA2",
       "independent": false,
@@ -115,7 +119,7 @@
       "publicResultSha256": "0c3e9ab22d5471ffa52291c5b66c649f3d4f01a78afe5f6ac37a4597886858ca",
       "sourceRunId": 41476636915,
       "statisticalPromotion": false,
-      "status": "EXECUTED_FROZEN_ZERO_ADMISSIONS_EVIDENCE_GATE_DIAGNOSIS_REQUIRED"
+      "status": "CLOSED_FROZEN_ZERO_ADMISSIONS_FIXED_ASOF_CALIBRATION_GAPS_IDENTIFIED"
     }
   ],
   "schema": "mxm-project-data-exposure-v1",
@@ -235,6 +239,9 @@
         }
       ],
       "exactCalendarOutput": "docs/JOINED_OPPORTUNITY_AUTHENTIC_RESULT.json after protected execution",
+      "extendedEncryptedSourceSetArtifactId": 13238468011,
+      "extendedEncryptedSourceSetExpiresAt": "2027-02-01T14:28:43Z",
+      "extendedEncryptedSourceSetRunId": 41654064703,
       "independent": false,
       "scope": "six instruments H4 approximately370 days and M15 approximately14 days",
       "sourceRunId": 41476636915
@@ -300,6 +307,9 @@
         "ALL24_LEAVE_ONE_CANDIDATE_OUT_ABLATIONS"
       ],
       "exactPublicReceipt": "docs/EPA1_AUTHENTIC_PORTFOLIO_RESULT.json",
+      "extendedEncryptedSourceSetArtifactId": 13238468011,
+      "extendedEncryptedSourceSetExpiresAt": "2027-02-01T14:28:43Z",
+      "extendedEncryptedSourceSetRunId": 41654064703,
       "independent": false,
       "replayDays": [
         "2026-06-08",
@@ -368,9 +378,13 @@
       },
       "decisionExposure": [
         "ALL8_CASES_ALL12_ABLATIONS_NO_NEW_TRADES",
-        "EPA1_FIXED_ORIGINAL_BOOK_RISK_NOT_RESELECTION"
+        "EPA1_FIXED_ORIGINAL_BOOK_RISK_NOT_RESELECTION",
+        "CAUSAL_ROUTE_AVAILABILITY_ONLY_AND_CONSERVATIVE_TIER_UNIT_FIXED_BOOK_SENSITIVITY_NO_ALLOCATION_RERUN"
       ],
       "exactPublicReceipt": "docs/EPA2_AUTHENTIC_HOLDING_RESULT.json",
+      "extendedEncryptedSourceSetArtifactId": 13238468011,
+      "extendedEncryptedSourceSetExpiresAt": "2027-02-01T14:28:43Z",
+      "extendedEncryptedSourceSetRunId": 41654064703,
       "independent": false,
       "replayDays": [
         "2026-01-06",
