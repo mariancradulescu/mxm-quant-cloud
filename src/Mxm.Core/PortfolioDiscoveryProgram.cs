@@ -37,7 +37,9 @@ public static class PortfolioDiscoveryProgram
         var result=new List<Example>();
         for(int i=64;i<a.Length;i++)
         {
-            if(!Enumerable.Range(i-31,32).All(j=>a[j].Start==a[j-1].End))continue;
+            // Past observed gaps are information, not fabricated bars. A weekend
+            // must not make a 32-bar H4 feature window structurally impossible.
+            if(Enumerable.Range(i-31,32).Count(j=>a[j].Start==a[j-1].End)<24)continue;
             double R(int n)=>(a[i].Close/a[i-n].Close-1)*10000;
             var r=Enumerable.Range(i-31,32).Select(j=>(a[j].Close/a[j-1].Close-1)*10000).ToArray();
             double vol=Math.Sqrt(r.Select(x=>x*x).Average());if(vol<=0)continue;

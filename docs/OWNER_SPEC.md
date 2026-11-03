@@ -437,7 +437,7 @@ name, with old defaults unchanged. No economic result is recomputed or relabeled
 OWNER prioritizes one portfolio programme instead of serial small-calendar probes.
 BDP1 predeclares52 full UTC Monday weeks (2025-11-03 through2026-11-02 exclusive),
 M5 source and complete M15/H1/H4 aggregates, four contextual distribution views and
-one/four-bar horizons:192 groups, no hyperparameter search or closed-model calls.
+one/four-bar horizons:192 context groups plus48 mixtures, no parameter search or closed-model calls.
 26 weeks fit only matured labels;13 selection weeks freeze admissions before13
 chronological audit weeks. All calendars overlap global development exposure:
 there is NO independent confirmation and no annual funded performance claim.
@@ -493,3 +493,9 @@ credit. All192 remove-one-view proxy comparisons are reported on the same observ
 clock population, without retuning or dropping negative views. They measure
 predictive/cost-scenario complementarity, NOT financed portfolio marginal NET.
 No audit winner can alter selection admissions, mixture weights or pricing dates.
+
+BDP1 past features require24 of32 contiguous past increments, while preserving
+observed gap price changes as known history. Weekend gaps must not structurally
+erase H4 features. Future gap-crossing outcomes remain unknown, cannot suppress
+an earlier feature signal and prevent selection admission if any active outcome
+is missing. No absent bar, price, trade or label is imputed.

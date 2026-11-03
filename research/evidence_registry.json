@@ -197,7 +197,7 @@
       "nativeFactProofSourceRunId": 41706496201,
       "phase": "INTEGRATED_52_WEEK_CONTEXTUAL_DISCOVERY_AND_NATIVE_FUNDED_FACT_RECEPTION",
       "protocolFile": "research/portfolio_discovery_protocol.json",
-      "protocolSha256": "89db8275f4f77e3c6c84db512ccd58db13d7496af6c028c879d6cecc2fec9521",
+      "protocolSha256": "f8715fb32ce260a22ac821621994cb82d786a782b3769fc2a61eff9d228b2867",
       "qualification": false,
       "selectionEnd": 1785715200000,
       "split": "26W_DEVELOPMENT_13W_SELECTION_13W_EXPOSED_CHRONOLOGICAL_AUDIT",
