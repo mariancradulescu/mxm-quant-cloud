@@ -49,6 +49,17 @@ class PipelineChecks(unittest.TestCase):
         q.payloadType=m.ProtoOANewOrderReq().payloadType
         with self.assertRaises(CaptureContractError): require_read_only_request(q)
 
+    def test_auction_decimal_source_and_missing_costs(self):
+        from decimal import Decimal
+        from .auction_inventory_source import normalized_input
+        b={'bars':{},'sessionSpecs':[],'costContexts':[{'RoundTripBps':None,'MinimumNotionalEur':None},{'RoundTripBps':Decimal('1.234'),'MinimumNotionalEur':Decimal('2.50')}]}
+        p={'start':0,'developmentEnd':1,'selectionEnd':2,'end':3}
+        encoded=json.dumps(b,sort_keys=True,default=str)
+        self.assertEqual(json.loads(encoded)['costContexts'][1]['RoundTripBps'],'1.234')
+        normalized=normalized_input(b,p)
+        self.assertEqual(len(normalized['Costs']),1)
+        self.assertEqual(b['costContexts'][0]['RoundTripBps'],None)
+
     def test_broker_identity_readonly_allowlist(self):
         from .broker_identity_transport import require_read_only_request as identity_guard
         for q in [m.ProtoOAReconcileReq(ctidTraderAccountId=1),m.ProtoOAOrderListReq(ctidTraderAccountId=1,fromTimestamp=0,toTimestamp=1),m.ProtoOADealListReq(ctidTraderAccountId=1,fromTimestamp=0,toTimestamp=1,maxRows=1000)]:

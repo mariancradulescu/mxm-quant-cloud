@@ -1,0 +1,14 @@
+{
+  "annualExpansionStarted": false,
+  "costOrUncertaintyCriteriaChanged": false,
+  "economicFitOrVerdictExecuted": false,
+  "failure": "Decimal not serializable by initial JSON encoder",
+  "initialEncryptedArtifactProduced": false,
+  "newHypothesisSelectedAfterResults": false,
+  "protocolChanged": false,
+  "rawPilotRepliesUnavailableAfterRunnerExit": true,
+  "remedy": "Exact Decimal strings in sealed source; retain encrypted checkpoint on exceptions and upload artifact even after failure; independent identity probe step",
+  "runId": 41734193354,
+  "schema": "mxm-aip1-source-technical-interruption-v1",
+  "stage": "PILOT_ENCRYPTED_SERIALIZATION_BEFORE_ANNUAL_EXPANSION"
+}

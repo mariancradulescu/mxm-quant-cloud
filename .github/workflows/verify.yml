@@ -523,9 +523,14 @@ jobs:
           R3_CTRADER_ACCESS_TOKEN: ${{ secrets.R3_CTRADER_ACCESS_TOKEN }}
       - name: New index inventory-acceptance study with financial and source pilot before expansion
         if: needs.verify.outputs.authorized_auction_inventory == 'true'
-        run: |
-          python -m research.auction_inventory_source
-          python -m research.broker_identity_source
+        run: python -m research.auction_inventory_source
+        env:
+          R3_CTRADER_CLIENT_ID: ${{ secrets.R3_CTRADER_CLIENT_ID }}
+          R3_CTRADER_CLIENT_SECRET: ${{ secrets.R3_CTRADER_CLIENT_SECRET }}
+          R3_CTRADER_ACCESS_TOKEN: ${{ secrets.R3_CTRADER_ACCESS_TOKEN }}
+      - name: Authentic bounded broker identity probe independent of economic source success
+        if: always() && needs.verify.outputs.authorized_auction_inventory == 'true'
+        run: python -m research.broker_identity_source
         env:
           R3_CTRADER_CLIENT_ID: ${{ secrets.R3_CTRADER_CLIENT_ID }}
           R3_CTRADER_CLIENT_SECRET: ${{ secrets.R3_CTRADER_CLIENT_SECRET }}
@@ -553,6 +558,7 @@ jobs:
           R3_CTRADER_CLIENT_SECRET: ${{ secrets.R3_CTRADER_CLIENT_SECRET }}
           R3_CTRADER_ACCESS_TOKEN: ${{ secrets.R3_CTRADER_ACCESS_TOKEN }}
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
         with:
           name: sealed-source
           path: sealed-output/

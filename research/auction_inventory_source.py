@@ -17,7 +17,7 @@ P=Path('research/auction_inventory_protocol.json');SCHEMA='mxm-aip1-source-v1'
 def digest(x):return hashlib.sha256(x).hexdigest()
 def normalized_input(b,p):
     return dict(Bars=[dict(Symbol=s,Start=x[0],End=x[1],Open=x[2],High=x[3],Low=x[4],Close=x[5],Volume=x[6]) for s,rows in b['bars'].items() for x in rows],
-        Costs=b.get('costContexts',[]),Sessions=b['sessionSpecs'],Start=p['start'],DevelopmentEnd=p['developmentEnd'],SelectionEnd=p['selectionEnd'],End=p['end'])
+        Costs=[c for c in b.get('costContexts',[]) if c['RoundTripBps'] is not None and c['MinimumNotionalEur'] is not None],Sessions=b['sessionSpecs'],Start=p['start'],DevelopmentEnd=p['developmentEnd'],SelectionEnd=p['selectionEnd'],End=p['end'])
 
 def audit(b,p):
     need(b['schema']==SCHEMA and b['readOnly'] and b['protocolSha256']==digest(P.read_bytes()),'AIP1_PROTOCOL')
@@ -59,7 +59,7 @@ def collect():
         raw.append(dict(requestType=type(q).__name__,requestProtobuf=base64.b64encode(q.SerializeToString()).decode(),type=type(r).__name__,protobuf=base64.b64encode(r.SerializeToString()).decode()));return r,len(raw)-1
     def seal(final=False):
         if b is None:return
-        data=seal_new(json.dumps(b,sort_keys=True).encode(),recipient,run);out=Path('sealed-output');out.mkdir(exist_ok=True)
+        data=seal_new(json.dumps(b,sort_keys=True,default=str).encode(),recipient,run);out=Path('sealed-output');out.mkdir(exist_ok=True)
         (out/'source.envelope.json').write_bytes(data);(out/'receipt.public.json').write_text(json.dumps(dict(schema=SCHEMA,runId=run,sha256=digest(data),complete=final,ordersSubmitted=0)))
     try:
         account=authenticate(transport);trader=req(m.ProtoOATraderReq(ctidTraderAccountId=account),m.ProtoOATraderRes)[0].trader
@@ -116,6 +116,9 @@ def collect():
             for t in p['costClocks']:
                 if str(t) not in b['costIndices']:quotes(t)
         b['auditReceipt']=audit(b,p);seal(True);print('AIP1_SOURCE_SEALED '+json.dumps(b['auditReceipt'],sort_keys=True),flush=True)
+    except Exception:
+        seal(False)
+        raise
     finally:transport.close()
 
 
