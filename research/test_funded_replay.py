@@ -56,6 +56,19 @@ class CausalFundedReplayChecks(unittest.TestCase):
         self.assertEqual(self.r.trades[0]['net_eur'],D('-21.2'))
         self.assertGreater(self.r.max_sampled_drawdown,D('0.10'))
 
+    def test_short_uses_bid_to_open_ask_to_cover_and_conserves_costs(self):
+        self.r.quote(q(10,100,102))
+        self.r.decide(d(10,side=-1,stop=110,target=90))
+        self.r.quote(q(11,100,102))
+        self.r.decide(d(11,action='CLOSE'))
+        self.r.quote(q(12,95,97))
+        x=self.r.trades[0]
+        self.assertEqual(x['gross_eur'],D('5'))
+        self.assertEqual(x['spread_eur'],D('2'))
+        self.assertEqual(x['slippage_eur'],D('1'))
+        self.assertEqual(x['net_eur'],D('1.8'))
+        self.assertEqual(self.r.report()['balance_eur'],D('201.8'))
+
     def test_portfolio_margin_is_aggregate_and_same_capital(self):
         c=contract(margin='100',fee='0',slip='0')
         self.r.quote(q(10,100,100))
