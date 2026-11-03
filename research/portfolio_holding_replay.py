@@ -47,7 +47,7 @@ def holding_input(engine,b,raw,stress,account_leverage=None):
                         StressLossEur=stress.get(pid,ZERO)) for pid,p in engine.open.items()],
         SourceSymbols=b['symbols'],RawQuotes=raw['quotes'],
         AccountLeverage=account_leverage if account_leverage is not None else D(b['riskTerms']['leverageInCents'])/100,
-        DocumentedReferenceStopoutRatio=D('.5'))
+        DocumentedReferenceStopoutRatio=D('.5'),TierLeverageDivisor=100)
 
 
 def monitor(engine,b,raw,stress):
@@ -84,7 +84,7 @@ def pre_margin_bounds(b,valued,p):
             req=dict(EquityEur=200,PeakReferenceEur=200,DataComplete=True,
                 Positions=[dict(Id='QUERY/'+s,Symbol=s,Units=row['maxQueriedUnits'],EntryMarginPerUnitEur=D(row['currentMarginPerUnitBoundEur']),StressLossEur=0)],
                 SourceSymbols=b['symbols'],RawQuotes=raw['quotes'],AccountLeverage=D(b['riskTerms']['leverageInCents'])/100,
-                DocumentedReferenceStopoutRatio=D('.5'))
+                DocumentedReferenceStopoutRatio=D('.5'),TierLeverageDivisor=100)
             result=native(req,'--assess-holding-risk')
             if result['Positions'] and result['Positions'][0]['MarginEnvelopeEur'] is not None:
                 bounds[day,s]=D(str(result['Positions'][0]['MarginEnvelopeEur']))/row['maxQueriedUnits']

@@ -48,6 +48,20 @@ def verify():
     for c in r['epa1ExecutionAudit']['cases']:
         assert c['originalClosedNetUnchanged'] and not c['originalAllocationsReselected'] and not c['originalResultOverwritten']
         close(c['originalClosedNetEur'],old[c['uncertaintyMultiplier'],c['slippageMultiple']]['ledgerReport']['closed_net_eur'])
+    diagnostic=json.loads(Path('docs/EPA2_EXECUTION_DIAGNOSIS.json').read_text())
+    assert diagnostic['sourceCiphertextSha256']==r['sourceCiphertextSha256'] and diagnostic['rawReadbackMatched']
+    assert diagnostic['sourceRunId']==r['sourceRunId'] and diagnostic['protocolSha256']==r['sourceAudit']['protocolSha256']
+    for flag in ['allocationOrPolicyRerun','sourceGapsFilled','parametersRetuned','independentConfirmation','qualification','ordersSubmitted','cloudActivated']:assert not diagnostic[flag]
+    assert len(diagnostic['evidenceGates'])==72
+    assert all(g['completeCalibrationBlocks']==sum(x['completeCalibrationPath'] for x in g['calibration']) for g in diagnostic['evidenceGates'])
+    for symbol,coverage in diagnostic['routeCoverage'].items():
+        assert 0<=coverage['valuedSnapshots']<=coverage['rawSnapshots']<=r['sourceAudit']['requestedSnapshots']
+        assert 0<=diagnostic['availabilityOnlyWindowRouteCounts'][symbol]<=r['sourceAudit']['requestedSnapshots']
+    scaled=diagnostic['conservativeHundredthsTierSensitivity']
+    assert not scaled['originalEpa2BookReallocated']
+    for c in scaled['fixedOriginalEpa1BookAudit']['cases']:
+        close(c['originalClosedNetEur'],old[c['uncertaintyMultiplier'],c['slippageMultiple']]['ledgerReport']['closed_net_eur'])
+        assert c['originalClosedNetUnchanged'] and not c['originalAllocationsReselected'] and not c['originalResultOverwritten']
     print('PASS EPA2 public cash, allocation and risk receipts plus unchanged EPA1 cash; no model rerun or qualification')
 
 

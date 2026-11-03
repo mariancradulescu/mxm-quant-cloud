@@ -265,3 +265,39 @@ sensitivities, never historical margin certification. Original raw source bundle
 are re-archived encrypted during the diagnosis with 90-day retention; permanent
 public receipts and hashes remain in git. No new broker requests, allocations,
 source-gap filling or favorable policy selection are authorized by that diagnosis.
+
+The completed broker-free diagnosis 41654064703 is frozen separately in
+EPA2_EXECUTION_DIAGNOSIS.json. All 72 groups had only 0–3 of six required complete
+fixed-asof calibration paths. Every funding schedule passed; 57/72 symbol-days had
+predecision valuation/margin evidence. Availability-only causal quote stopping
+times within the very same bounded windows are substantially more complete
+(596–609/612 per route, all calibration windows in 68/72 groups). This identifies a
+measurement bottleneck; it does not license replacing EPA2 snapshots, reducing the
+six-block threshold or selecting a more profitable policy. EPA2 is closed; its
+entrypoint rejects recollection/replay once the frozen receipt exists. A future
+execution-clock protocol must be prospective, preserve data exposure and evaluate
+new predefined economic episodes before any qualification claim.
+
+A separate conservative hundredths-tier sensitivity keeps every original EPA1
+trade and cash result fixed. At June12 13:00 UTC in the central 0.5x case, XAUUSD
+margin becomes EUR181.227028; combined with USDJPY EUR29.82, modeled margin is
+EUR211.047028 against EUR208.269750 liquidation equity, ratio98.684048%. A model
+capacity-protection signal occurs; no exit is applied and no broker liquidation
+is invented. The primary 2-SE minimum remains109.921442%. Neither proves the
+unobserved path or actual historical margin; the one missing holding mark remains.
+
+The initial EPA2 native input mixed raw tier values with account 1:N leverage;
+the account cap masked the difference for major FX. After freezing, the native
+holding-risk contract requires an explicit tier divisor (100 for raw hundredths,
+1 only for already decoded ratios) and rejects omitted/ambiguous encoding. Raw
+research callers declare100; this is a conservative conditional margin treatment,
+not a historical-margin certificate or retrospective EPA2 rerun. The frozen Open
+API schema merely says applied leverage; the companion official cTrader server
+model documents hundredths (2000=1:20), consistent with the observed broker tiers.
+This unit interpretation and its evidence limits are explicit rather than silently
+claiming actual used margin. Documentation:
+https://help.ctrader.com/plugins/developers/all-apps/sdk-references/public-server-model/#protodynamicleveragetier .
+The three original ciphertext bindings were re-archived as artifact13238468011,
+run41654064703, expiring2027-02-01. Public receipts stay permanently versioned.
+Neither zero-exposure ablations nor synthetic protective exits demonstrate
+incremental economic edge or validated adaptive holding performance.

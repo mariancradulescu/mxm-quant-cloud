@@ -1,4 +1,4 @@
-import unittest,copy,shutil,json
+import unittest,copy,shutil,json,subprocess
 from pathlib import Path
 from decimal import Decimal as D
 from .portfolio_economic_source import partial_snapshot,clocks
@@ -29,7 +29,7 @@ class HoldingEconomics(unittest.TestCase):
         for s in p['universe']:
             b['symbols'][s]=dict(quoteAsset='USD',currentMarginPerUnitBoundEur='.09',maxQueriedUnits=1000,
                 contract=dict(minVolume=100000,stepVolume=100000,maxVolume=100000,swapPeriod=24,swapTime=1320),
-                dynamicLeverage=[dict(volume=100000000,leverage=1000)])
+                dynamicLeverage=[dict(volume=100000000,leverage=100000)])
         for day in p['calibrationDays']+p['replayDays']:
             start=day_clock(day)
             for c in p['families']:
@@ -96,8 +96,10 @@ class HoldingEconomics(unittest.TestCase):
     def test_leverage_tier_margin_and_unknown_stopout_are_separate(self):
         req=dict(EquityEur=200,PeakReferenceEur=200,DataComplete=True,AccountLeverage=100,
             Positions=[dict(Id='x',Symbol='EURUSD',Units=3000,EntryMarginPerUnitEur=D('.01'),StressLossEur=0)],
-            SourceSymbols=dict(EURUSD=dict(quoteAsset='USD',dynamicLeverage=[dict(volume=100000,leverage=100),dict(volume=1000000,leverage=10)])),
-            RawQuotes=dict(EURUSD=dict(bid=100000,ask=100000)),DocumentedReferenceStopoutRatio=D('.5'))
+            SourceSymbols=dict(EURUSD=dict(quoteAsset='USD',dynamicLeverage=[dict(volume=100000,leverage=10000),dict(volume=1000000,leverage=1000)])),
+            RawQuotes=dict(EURUSD=dict(bid=100000,ask=100000)),DocumentedReferenceStopoutRatio=D('.5'),TierLeverageDivisor=100)
+        ambiguous=copy.deepcopy(req);ambiguous.pop('TierLeverageDivisor')
+        with self.assertRaises(subprocess.CalledProcessError):native(ambiguous,'--assess-holding-risk')
         r=native(req,'--assess-holding-risk');self.assertEqual(r['UsedMarginEnvelopeEur'],300)
         self.assertEqual(r['ExitIds'],['x']);self.assertFalse(r['AccountStopoutThresholdVerified'])
         req['EquityEur']=100;r=native(req,'--assess-holding-risk');self.assertTrue(r['DocumentedReferenceCrossed'])

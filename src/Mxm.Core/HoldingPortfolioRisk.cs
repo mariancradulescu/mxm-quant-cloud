@@ -5,7 +5,7 @@ public sealed record HoldingExposure(string Id,string Symbol,decimal Units,decim
     decimal StressLossEur);
 public sealed record HoldingRiskInput(decimal? EquityEur,decimal PeakReferenceEur,bool DataComplete,
     HoldingExposure[] Positions,JsonElement SourceSymbols,JsonElement RawQuotes,decimal? AccountLeverage,
-    decimal DocumentedReferenceStopoutRatio=.5m);
+    decimal DocumentedReferenceStopoutRatio=.5m,decimal TierLeverageDivisor=0m);
 public sealed record HoldingMargin(string Id,decimal EntryMarginEur,decimal? RepricedMarginEur,
     decimal? MarginEnvelopeEur,decimal StressLossEur);
 public sealed record HoldingRiskResult(HoldingMargin[] Positions,decimal? UsedMarginEnvelopeEur,
@@ -42,7 +42,8 @@ public static class HoldingPortfolioRisk
     {
         if(a.Positions.Select(p=>p.Id).Distinct(StringComparer.Ordinal).Count()!=a.Positions.Length ||
            a.Positions.Any(p=>p.Units<=0 || p.EntryMarginPerUnitEur<=0 || p.StressLossEur<0) ||
-           a.DocumentedReferenceStopoutRatio<=0 || a.DocumentedReferenceStopoutRatio>1)
+           a.DocumentedReferenceStopoutRatio<=0 || a.DocumentedReferenceStopoutRatio>1 ||
+           a.TierLeverageDivisor is not (1m or 100m))
             throw new ArgumentException("INVALID_HOLDING_RISK_INPUT");
         if(a.Positions.Length==0)return new(Array.Empty<HoldingMargin>(),0,null,a.EquityEur,false,
             Array.Empty<string>(),!a.DataComplete,false,"FLAT",false,false);
@@ -68,7 +69,9 @@ public static class HoldingPortfolioRisk
                 foreach(var tier in tiers)
                 {
                     decimal cap=tier.GetProperty("volume").GetDecimal()/100m;
-                    decimal lev=tier.GetProperty("leverage").GetDecimal();
+                    // The caller must declare raw hundredths (100) or already decoded
+                    // ratios (1). Never silently mix account 1:N with raw wire values.
+                    decimal lev=tier.GetProperty("leverage").GetDecimal()/a.TierLeverageDivisor;
                     if(cap<=priorCap || lev<=0)throw new ArgumentException("INVALID_LEVERAGE_TIERS");
                     // Conservative full-notional rate at the least leverage of
                     // all touched tiers, without inventing broker historical tiers.
