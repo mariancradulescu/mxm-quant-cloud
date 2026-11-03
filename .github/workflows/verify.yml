@@ -26,6 +26,7 @@ jobs:
       authorized_volume_net: ${{ steps.volume_net.outputs.authorized_volume_net }}
       authorized_policy_attribution: ${{ steps.policy_attribution.outputs.authorized_policy_attribution }}
       authorized_m15_anchor_net: ${{ steps.m15_anchor.outputs.authorized_m15_anchor_net }}
+      authorized_joint_quote_extension: ${{ steps.joint_quotes.outputs.authorized_joint_quote_extension }}
       authorized_joint_opportunity: ${{ steps.joint.outputs.authorized_joint_opportunity }}
       authorized_wick_net: ${{ steps.wick.outputs.authorized_wick_net }}
     runs-on: ubuntu-24.04
@@ -208,6 +209,17 @@ jobs:
              [[ "$(git diff-tree --no-commit-id --name-only -r HEAD)" == "ops/joint-opportunity-request.txt" ]]; then
             echo "authorized_joint_opportunity=true" >> "$GITHUB_OUTPUT"
           fi
+      - name: Exact owner/main bounded execution-evidence extension intent
+        id: joint_quotes
+        shell: bash
+        run: |
+          echo "authorized_joint_quote_extension=false" >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_EVENT_NAME" == "push" && "$GITHUB_REF" == "refs/heads/main" &&
+                "$GITHUB_ACTOR" == "mariancradulescu" &&
+                "$(git log -1 --format=%s)" == "MXM_JOINT_QUOTE_EVIDENCE_EXTENSION" ]] &&
+             [[ "$(git diff-tree --no-commit-id --name-only -r HEAD)" == "ops/joint-quote-extension-request.txt" ]]; then
+            echo "authorized_joint_quote_extension=true" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
         with:
           dotnet-version: |
@@ -220,7 +232,7 @@ jobs:
           python-version: '3.12'
       - run: python -m research.verify_owner_policy
       - run: python -m pip install -r research/requirements.txt
-      - run: python -m unittest research.test_pipeline research.test_intraday_net research.test_flow_net research.test_neighbour_net research.test_funded_replay research.test_relative_gross research.test_tick_volume_net research.test_anchor_signal research.test_session_wick_signal research.test_orchestrated_replay
+      - run: python -m unittest research.test_pipeline research.test_intraday_net research.test_flow_net research.test_neighbour_net research.test_funded_replay research.test_relative_gross research.test_tick_volume_net research.test_anchor_signal research.test_session_wick_signal research.test_orchestrated_replay research.test_joint_quote_extension
       - name: Verify original 100 encrypted archive identities with read-only GitHub API token
         run: python -m research.legacy_manifest_remote
         env:
@@ -246,7 +258,7 @@ jobs:
       (
         (github.event_name == 'workflow_dispatch' && inputs.collect == true) ||
         (github.event_name == 'push' &&
-          (needs.verify.outputs.authorized_source_request == 'true' || needs.verify.outputs.authorized_economic_request == 'true' || needs.verify.outputs.authorized_intraday_net == 'true' || needs.verify.outputs.authorized_flow_net == 'true' || needs.verify.outputs.authorized_neighbour_net == 'true' || needs.verify.outputs.authorized_volume_net == 'true' || needs.verify.outputs.authorized_m15_anchor_net == 'true'))
+          (needs.verify.outputs.authorized_source_request == 'true' || needs.verify.outputs.authorized_economic_request == 'true' || needs.verify.outputs.authorized_intraday_net == 'true' || needs.verify.outputs.authorized_flow_net == 'true' || needs.verify.outputs.authorized_neighbour_net == 'true' || needs.verify.outputs.authorized_volume_net == 'true' || needs.verify.outputs.authorized_m15_anchor_net == 'true' || needs.verify.outputs.authorized_joint_quote_extension == 'true'))
       )
     needs: verify
     runs-on: ubuntu-24.04
@@ -277,7 +289,7 @@ jobs:
       (
         (github.event_name == 'workflow_dispatch' && inputs.collect == true) ||
         (github.event_name == 'push' &&
-          (needs.verify.outputs.authorized_source_request == 'true' || needs.verify.outputs.authorized_economic_request == 'true' || needs.verify.outputs.authorized_intraday_net == 'true' || needs.verify.outputs.authorized_flow_net == 'true' || needs.verify.outputs.authorized_neighbour_net == 'true' || needs.verify.outputs.authorized_volume_net == 'true' || needs.verify.outputs.authorized_m15_anchor_net == 'true'))
+          (needs.verify.outputs.authorized_source_request == 'true' || needs.verify.outputs.authorized_economic_request == 'true' || needs.verify.outputs.authorized_intraday_net == 'true' || needs.verify.outputs.authorized_flow_net == 'true' || needs.verify.outputs.authorized_neighbour_net == 'true' || needs.verify.outputs.authorized_volume_net == 'true' || needs.verify.outputs.authorized_m15_anchor_net == 'true' || needs.verify.outputs.authorized_joint_quote_extension == 'true'))
       )
     needs: [verify, custody_recipient]
     runs-on: ubuntu-24.04
@@ -301,7 +313,7 @@ jobs:
           name: new-source-recipient-public-only
           path: new-source-recipient
       - name: Existing bounded source H1 collection (non-economic request only)
-        if: needs.verify.outputs.authorized_economic_request != 'true' && needs.verify.outputs.authorized_intraday_net != 'true' && needs.verify.outputs.authorized_flow_net != 'true' && needs.verify.outputs.authorized_neighbour_net != 'true' && needs.verify.outputs.authorized_volume_net != 'true' && needs.verify.outputs.authorized_m15_anchor_net != 'true'
+        if: needs.verify.outputs.authorized_economic_request != 'true' && needs.verify.outputs.authorized_intraday_net != 'true' && needs.verify.outputs.authorized_flow_net != 'true' && needs.verify.outputs.authorized_neighbour_net != 'true' && needs.verify.outputs.authorized_volume_net != 'true' && needs.verify.outputs.authorized_m15_anchor_net != 'true' && needs.verify.outputs.authorized_joint_quote_extension != 'true'
         run: python -m research.collect
         env:
           R3_CTRADER_CLIENT_ID: ${{ secrets.R3_CTRADER_CLIENT_ID }}
@@ -349,6 +361,13 @@ jobs:
           R3_CTRADER_CLIENT_ID: ${{ secrets.R3_CTRADER_CLIENT_ID }}
           R3_CTRADER_CLIENT_SECRET: ${{ secrets.R3_CTRADER_CLIENT_SECRET }}
           R3_CTRADER_ACCESS_TOKEN: ${{ secrets.R3_CTRADER_ACCESS_TOKEN }}
+      - name: Bounded all-six-asset historical quote and current minimum-margin evidence
+        if: needs.verify.outputs.authorized_joint_quote_extension == 'true'
+        run: python -m research.joint_quote_extension
+        env:
+          R3_CTRADER_CLIENT_ID: ${{ secrets.R3_CTRADER_CLIENT_ID }}
+          R3_CTRADER_CLIENT_SECRET: ${{ secrets.R3_CTRADER_CLIENT_SECRET }}
+          R3_CTRADER_ACCESS_TOKEN: ${{ secrets.R3_CTRADER_ACCESS_TOKEN }}
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: sealed-source
@@ -363,11 +382,14 @@ jobs:
       (
         (github.event_name == 'workflow_dispatch' && inputs.collect == true) ||
         (github.event_name == 'push' &&
-          (needs.verify.outputs.authorized_source_request == 'true' || needs.verify.outputs.authorized_economic_request == 'true' || needs.verify.outputs.authorized_intraday_net == 'true' || needs.verify.outputs.authorized_flow_net == 'true' || needs.verify.outputs.authorized_neighbour_net == 'true' || needs.verify.outputs.authorized_volume_net == 'true' || needs.verify.outputs.authorized_m15_anchor_net == 'true'))
+          (needs.verify.outputs.authorized_source_request == 'true' || needs.verify.outputs.authorized_economic_request == 'true' || needs.verify.outputs.authorized_intraday_net == 'true' || needs.verify.outputs.authorized_flow_net == 'true' || needs.verify.outputs.authorized_neighbour_net == 'true' || needs.verify.outputs.authorized_volume_net == 'true' || needs.verify.outputs.authorized_m15_anchor_net == 'true' || needs.verify.outputs.authorized_joint_quote_extension == 'true'))
       ) &&
       needs.verify.result == 'success' &&
       needs.collect.result == 'success'
     needs: [verify, collect]
+    permissions:
+      contents: read
+      actions: read
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     environment: mxm-r3-custody-v1
@@ -386,10 +408,31 @@ jobs:
           name: sealed-source
           path: sealed-output
       - name: Existing v2 H1 source readback
-        if: needs.verify.outputs.authorized_economic_request != 'true' && needs.verify.outputs.authorized_intraday_net != 'true' && needs.verify.outputs.authorized_flow_net != 'true' && needs.verify.outputs.authorized_neighbour_net != 'true' && needs.verify.outputs.authorized_volume_net != 'true' && needs.verify.outputs.authorized_m15_anchor_net != 'true'
+        if: needs.verify.outputs.authorized_economic_request != 'true' && needs.verify.outputs.authorized_intraday_net != 'true' && needs.verify.outputs.authorized_flow_net != 'true' && needs.verify.outputs.authorized_neighbour_net != 'true' && needs.verify.outputs.authorized_volume_net != 'true' && needs.verify.outputs.authorized_m15_anchor_net != 'true' && needs.verify.outputs.authorized_joint_quote_extension != 'true'
         run: python -m research.readback
         env:
           R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - name: Download original multi-asset ciphertext for clock-only evidence binding
+        if: needs.verify.outputs.authorized_joint_quote_extension == 'true'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: sealed-source
+          path: baseline-source
+          run-id: 41476636915
+          github-token: ${{ github.token }}
+      - name: Independently decrypt and reconcile original broker quote and margin responses
+        if: needs.verify.outputs.authorized_joint_quote_extension == 'true'
+        run: python -m research.joint_quote_extension --readback
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - name: Publish execution-evidence feasibility aggregate only
+        if: needs.verify.outputs.authorized_joint_quote_extension == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: joint-quote-evidence-extension-public-only
+          path: joint-quote-evidence.public.json
+          if-no-files-found: error
+          retention-days: 90
       - name: New economic multi-resolution CSharp custody and source coverage
         if: needs.verify.outputs.authorized_economic_request == 'true'
         run: python -m research.economic_readback
@@ -461,7 +504,7 @@ jobs:
           if-no-files-found: error
           retention-days: 90
       - name: Upload existing original v2 CSharp source receipt
-        if: needs.verify.outputs.authorized_economic_request != 'true' && needs.verify.outputs.authorized_intraday_net != 'true' && needs.verify.outputs.authorized_flow_net != 'true' && needs.verify.outputs.authorized_neighbour_net != 'true' && needs.verify.outputs.authorized_volume_net != 'true' && needs.verify.outputs.authorized_m15_anchor_net != 'true'
+        if: needs.verify.outputs.authorized_economic_request != 'true' && needs.verify.outputs.authorized_intraday_net != 'true' && needs.verify.outputs.authorized_flow_net != 'true' && needs.verify.outputs.authorized_neighbour_net != 'true' && needs.verify.outputs.authorized_volume_net != 'true' && needs.verify.outputs.authorized_m15_anchor_net != 'true' && needs.verify.outputs.authorized_joint_quote_extension != 'true'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: new-source-custody-public-receipt

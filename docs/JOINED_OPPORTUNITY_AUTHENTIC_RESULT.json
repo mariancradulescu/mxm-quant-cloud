@@ -1,0 +1,904 @@
+{
+  "availableHistoricalQuoteWindowEndMs": 1793368859000,
+  "availableHistoricalQuoteWindowStartMs": 1793368800000,
+  "causalDecisionClocks": 978,
+  "commonFundedReplayStarted": false,
+  "contradictorySymbolClocks": 3591,
+  "deterministicRepeatMatched": true,
+  "economicQualification": false,
+  "endingNoTradeCapitalEur": 200,
+  "evidenceLevel": 1,
+  "globalDrawdownCertified": false,
+  "hard21Proven": false,
+  "incrementalContributionDemonstrated": false,
+  "independentConfirmation": false,
+  "initialCapitalEur": 200,
+  "missing": "Historical H4 entry/exit BID+ASK, synchronized holding marks, historical tariffs, conversion, financing and joint EUR risk samples",
+  "nativeSelectorAdmitted": 0,
+  "nativeSelectorEvidenceBlocked": 11696,
+  "netOpportunityEstimateEur": null,
+  "opportunities": 11696,
+  "opportunitiesWithBothClocksInQuoteWindow": 0,
+  "ordersSubmitted": 0,
+  "originalNativeReceiptParity": true,
+  "pairRelationships": [
+    {
+      "commonLabeledClocks": 925,
+      "directionalGrossCorrelation": 0.39305214571166475,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "AUDUSD",
+      "sameDirectionClocks": 709,
+      "secondCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "secondSymbol": "EURUSD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 927,
+      "directionalGrossCorrelation": 0.35701309065457815,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "AUDUSD",
+      "sameDirectionClocks": 716,
+      "secondCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "secondSymbol": "GBPUSD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 926,
+      "directionalGrossCorrelation": 0.19029930443384105,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "AUDUSD",
+      "sameDirectionClocks": 294,
+      "secondCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "secondSymbol": "USDCAD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 927,
+      "directionalGrossCorrelation": 0.23476157421494334,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "AUDUSD",
+      "sameDirectionClocks": 342,
+      "secondCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "secondSymbol": "USDJPY",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 921,
+      "directionalGrossCorrelation": 0.2094962337565483,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "AUDUSD",
+      "sameDirectionClocks": 629,
+      "secondCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "secondSymbol": "XAUUSD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 929,
+      "directionalGrossCorrelation": -0.2036129107546607,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "AUDUSD",
+      "sameDirectionClocks": 371,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "AUDUSD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 928,
+      "directionalGrossCorrelation": -0.11944633757962896,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "AUDUSD",
+      "sameDirectionClocks": 390,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "EURUSD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 928,
+      "directionalGrossCorrelation": -0.10764075219760515,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "AUDUSD",
+      "sameDirectionClocks": 391,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "GBPUSD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 927,
+      "directionalGrossCorrelation": -0.1048046114946648,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "AUDUSD",
+      "sameDirectionClocks": 533,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "USDCAD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 929,
+      "directionalGrossCorrelation": -0.12271941320734257,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "AUDUSD",
+      "sameDirectionClocks": 506,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "USDJPY",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 921,
+      "directionalGrossCorrelation": -0.07607238042717179,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "AUDUSD",
+      "sameDirectionClocks": 390,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "XAUUSD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 930,
+      "directionalGrossCorrelation": 0.6275764695364117,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "EURUSD",
+      "sameDirectionClocks": 776,
+      "secondCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "secondSymbol": "GBPUSD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 929,
+      "directionalGrossCorrelation": 0.2763351346045438,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "EURUSD",
+      "sameDirectionClocks": 274,
+      "secondCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "secondSymbol": "USDCAD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 930,
+      "directionalGrossCorrelation": 0.31885816667411726,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "EURUSD",
+      "sameDirectionClocks": 269,
+      "secondCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "secondSymbol": "USDJPY",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 924,
+      "directionalGrossCorrelation": 0.13780839890522953,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "EURUSD",
+      "sameDirectionClocks": 606,
+      "secondCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "secondSymbol": "XAUUSD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 932,
+      "directionalGrossCorrelation": -0.15777844338105043,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "EURUSD",
+      "sameDirectionClocks": 406,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "AUDUSD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 931,
+      "directionalGrossCorrelation": -0.2600816284624291,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "EURUSD",
+      "sameDirectionClocks": 383,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "EURUSD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 931,
+      "directionalGrossCorrelation": -0.19804189667727481,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "EURUSD",
+      "sameDirectionClocks": 376,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "GBPUSD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 930,
+      "directionalGrossCorrelation": -0.15592822861794256,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "EURUSD",
+      "sameDirectionClocks": 526,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "USDCAD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 932,
+      "directionalGrossCorrelation": -0.1050497654751936,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "EURUSD",
+      "sameDirectionClocks": 511,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "USDJPY",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 924,
+      "directionalGrossCorrelation": -0.01211918154893478,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "EURUSD",
+      "sameDirectionClocks": 415,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "XAUUSD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 931,
+      "directionalGrossCorrelation": 0.25267814442754266,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "GBPUSD",
+      "sameDirectionClocks": 291,
+      "secondCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "secondSymbol": "USDCAD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 932,
+      "directionalGrossCorrelation": 0.29864619226564576,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "GBPUSD",
+      "sameDirectionClocks": 296,
+      "secondCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "secondSymbol": "USDJPY",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 926,
+      "directionalGrossCorrelation": 0.13275518265637828,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "GBPUSD",
+      "sameDirectionClocks": 590,
+      "secondCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "secondSymbol": "XAUUSD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 934,
+      "directionalGrossCorrelation": -0.20061756512003895,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "GBPUSD",
+      "sameDirectionClocks": 384,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "AUDUSD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 933,
+      "directionalGrossCorrelation": -0.23441088635874924,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "GBPUSD",
+      "sameDirectionClocks": 380,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "EURUSD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 933,
+      "directionalGrossCorrelation": -0.3422053628498587,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "GBPUSD",
+      "sameDirectionClocks": 360,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "GBPUSD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 932,
+      "directionalGrossCorrelation": -0.22809934643210475,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "GBPUSD",
+      "sameDirectionClocks": 533,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "USDCAD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 934,
+      "directionalGrossCorrelation": -0.16306382565069036,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "GBPUSD",
+      "sameDirectionClocks": 517,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "USDJPY",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 926,
+      "directionalGrossCorrelation": -0.032159921616240025,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "GBPUSD",
+      "sameDirectionClocks": 405,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "XAUUSD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 931,
+      "directionalGrossCorrelation": 0.07139960097514005,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "USDCAD",
+      "sameDirectionClocks": 595,
+      "secondCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "secondSymbol": "USDJPY",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 925,
+      "directionalGrossCorrelation": -0.016946118082067564,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "USDCAD",
+      "sameDirectionClocks": 368,
+      "secondCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "secondSymbol": "XAUUSD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 933,
+      "directionalGrossCorrelation": -0.19029163769388155,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "USDCAD",
+      "sameDirectionClocks": 552,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "AUDUSD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 932,
+      "directionalGrossCorrelation": -0.2609201617932669,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "USDCAD",
+      "sameDirectionClocks": 549,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "EURUSD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 932,
+      "directionalGrossCorrelation": -0.20864951669909204,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "USDCAD",
+      "sameDirectionClocks": 545,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "GBPUSD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 931,
+      "directionalGrossCorrelation": -0.28362151336746555,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "USDCAD",
+      "sameDirectionClocks": 362,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "USDCAD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 933,
+      "directionalGrossCorrelation": -0.15091503268698309,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "USDCAD",
+      "sameDirectionClocks": 407,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "USDJPY",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 925,
+      "directionalGrossCorrelation": 0.022882997284432965,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "USDCAD",
+      "sameDirectionClocks": 499,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "XAUUSD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 926,
+      "directionalGrossCorrelation": 0.037982657424808865,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "USDJPY",
+      "sameDirectionClocks": 376,
+      "secondCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "secondSymbol": "XAUUSD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 934,
+      "directionalGrossCorrelation": -0.08548296127485724,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "USDJPY",
+      "sameDirectionClocks": 519,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "AUDUSD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 933,
+      "directionalGrossCorrelation": -0.04943744733331811,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "USDJPY",
+      "sameDirectionClocks": 537,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "EURUSD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 933,
+      "directionalGrossCorrelation": -0.08011051776300067,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "USDJPY",
+      "sameDirectionClocks": 547,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "GBPUSD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 932,
+      "directionalGrossCorrelation": -0.05199821148474172,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "USDJPY",
+      "sameDirectionClocks": 407,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "USDCAD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 934,
+      "directionalGrossCorrelation": -0.3870520001831869,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "USDJPY",
+      "sameDirectionClocks": 312,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "USDJPY",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 926,
+      "directionalGrossCorrelation": -0.07612643951183151,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "USDJPY",
+      "sameDirectionClocks": 509,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "XAUUSD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 928,
+      "directionalGrossCorrelation": -0.05569205352377739,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "XAUUSD",
+      "sameDirectionClocks": 420,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "AUDUSD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 927,
+      "directionalGrossCorrelation": -0.08850969164271608,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "XAUUSD",
+      "sameDirectionClocks": 435,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "EURUSD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 927,
+      "directionalGrossCorrelation": -0.04411494485339079,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "XAUUSD",
+      "sameDirectionClocks": 428,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "GBPUSD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 926,
+      "directionalGrossCorrelation": 0.02609646676561139,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "XAUUSD",
+      "sameDirectionClocks": 490,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "USDCAD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 928,
+      "directionalGrossCorrelation": -0.07237072532532643,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "XAUUSD",
+      "sameDirectionClocks": 497,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "USDJPY",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 928,
+      "directionalGrossCorrelation": -0.2711047245062073,
+      "firstCandidate": "JOP1_LAST_BAR_REVERSAL",
+      "firstSymbol": "XAUUSD",
+      "sameDirectionClocks": 355,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "XAUUSD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 935,
+      "directionalGrossCorrelation": 0.4277767766680131,
+      "firstCandidate": "JOP1_SIX_BAR_DRIFT",
+      "firstSymbol": "AUDUSD",
+      "sameDirectionClocks": 680,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "EURUSD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 935,
+      "directionalGrossCorrelation": 0.4491267883527592,
+      "firstCandidate": "JOP1_SIX_BAR_DRIFT",
+      "firstSymbol": "AUDUSD",
+      "sameDirectionClocks": 704,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "GBPUSD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 934,
+      "directionalGrossCorrelation": 0.32750346153785076,
+      "firstCandidate": "JOP1_SIX_BAR_DRIFT",
+      "firstSymbol": "AUDUSD",
+      "sameDirectionClocks": 254,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "USDCAD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 936,
+      "directionalGrossCorrelation": 0.16509272443073733,
+      "firstCandidate": "JOP1_SIX_BAR_DRIFT",
+      "firstSymbol": "AUDUSD",
+      "sameDirectionClocks": 350,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "USDJPY",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 928,
+      "directionalGrossCorrelation": 0.29121954514501874,
+      "firstCandidate": "JOP1_SIX_BAR_DRIFT",
+      "firstSymbol": "AUDUSD",
+      "sameDirectionClocks": 667,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "XAUUSD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 934,
+      "directionalGrossCorrelation": 0.6803162911846852,
+      "firstCandidate": "JOP1_SIX_BAR_DRIFT",
+      "firstSymbol": "EURUSD",
+      "sameDirectionClocks": 804,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "GBPUSD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 933,
+      "directionalGrossCorrelation": 0.32537979299394726,
+      "firstCandidate": "JOP1_SIX_BAR_DRIFT",
+      "firstSymbol": "EURUSD",
+      "sameDirectionClocks": 252,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "USDCAD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 935,
+      "directionalGrossCorrelation": 0.23145873795671298,
+      "firstCandidate": "JOP1_SIX_BAR_DRIFT",
+      "firstSymbol": "EURUSD",
+      "sameDirectionClocks": 258,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "USDJPY",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 927,
+      "directionalGrossCorrelation": 0.21749236031198182,
+      "firstCandidate": "JOP1_SIX_BAR_DRIFT",
+      "firstSymbol": "EURUSD",
+      "sameDirectionClocks": 612,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "XAUUSD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 933,
+      "directionalGrossCorrelation": 0.3759261836366061,
+      "firstCandidate": "JOP1_SIX_BAR_DRIFT",
+      "firstSymbol": "GBPUSD",
+      "sameDirectionClocks": 251,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "USDCAD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 935,
+      "directionalGrossCorrelation": 0.261262205452945,
+      "firstCandidate": "JOP1_SIX_BAR_DRIFT",
+      "firstSymbol": "GBPUSD",
+      "sameDirectionClocks": 270,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "USDJPY",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 927,
+      "directionalGrossCorrelation": 0.2390045620254488,
+      "firstCandidate": "JOP1_SIX_BAR_DRIFT",
+      "firstSymbol": "GBPUSD",
+      "sameDirectionClocks": 639,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "XAUUSD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 934,
+      "directionalGrossCorrelation": 0.1961304597771263,
+      "firstCandidate": "JOP1_SIX_BAR_DRIFT",
+      "firstSymbol": "USDCAD",
+      "sameDirectionClocks": 601,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "USDJPY",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 926,
+      "directionalGrossCorrelation": 0.14054625591479297,
+      "firstCandidate": "JOP1_SIX_BAR_DRIFT",
+      "firstSymbol": "USDCAD",
+      "sameDirectionClocks": 347,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "XAUUSD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    },
+    {
+      "commonLabeledClocks": 928,
+      "directionalGrossCorrelation": 0.05180000911979307,
+      "firstCandidate": "JOP1_SIX_BAR_DRIFT",
+      "firstSymbol": "USDJPY",
+      "sameDirectionClocks": 378,
+      "secondCandidate": "JOP1_SIX_BAR_DRIFT",
+      "secondSymbol": "XAUUSD",
+      "status": "EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"
+    }
+  ],
+  "priorCalendarExposure": "GLOBAL_DEVELOPMENT_EXPOSED_NOT_INDEPENDENT",
+  "results": [
+    {
+      "candidate": "JOP1_LAST_BAR_REVERSAL",
+      "labeledObservations": 929,
+      "meanDirectionalGrossBps": -0.13320754305384733,
+      "observations": 970,
+      "positiveFraction": 0.5080731969860065,
+      "status": "GROSS_PRICE_DESCRIPTOR_NOT_EXECUTABLE_NET",
+      "symbol": "AUDUSD"
+    },
+    {
+      "candidate": "JOP1_SIX_BAR_DRIFT",
+      "labeledObservations": 936,
+      "meanDirectionalGrossBps": 0.7611479685114354,
+      "observations": 978,
+      "positiveFraction": 0.5042735042735043,
+      "status": "GROSS_PRICE_DESCRIPTOR_NOT_EXECUTABLE_NET",
+      "symbol": "AUDUSD"
+    },
+    {
+      "candidate": "JOP1_LAST_BAR_REVERSAL",
+      "labeledObservations": 932,
+      "meanDirectionalGrossBps": -0.28188395591377413,
+      "observations": 974,
+      "positiveFraction": 0.5032188841201717,
+      "status": "GROSS_PRICE_DESCRIPTOR_NOT_EXECUTABLE_NET",
+      "symbol": "EURUSD"
+    },
+    {
+      "candidate": "JOP1_SIX_BAR_DRIFT",
+      "labeledObservations": 935,
+      "meanDirectionalGrossBps": -0.22931060568465214,
+      "observations": 977,
+      "positiveFraction": 0.4802139037433155,
+      "status": "GROSS_PRICE_DESCRIPTOR_NOT_EXECUTABLE_NET",
+      "symbol": "EURUSD"
+    },
+    {
+      "candidate": "JOP1_LAST_BAR_REVERSAL",
+      "labeledObservations": 934,
+      "meanDirectionalGrossBps": -0.050698723496185046,
+      "observations": 976,
+      "positiveFraction": 0.5053533190578159,
+      "status": "GROSS_PRICE_DESCRIPTOR_NOT_EXECUTABLE_NET",
+      "symbol": "GBPUSD"
+    },
+    {
+      "candidate": "JOP1_SIX_BAR_DRIFT",
+      "labeledObservations": 935,
+      "meanDirectionalGrossBps": -0.05790923024809231,
+      "observations": 977,
+      "positiveFraction": 0.48770053475935826,
+      "status": "GROSS_PRICE_DESCRIPTOR_NOT_EXECUTABLE_NET",
+      "symbol": "GBPUSD"
+    },
+    {
+      "candidate": "JOP1_LAST_BAR_REVERSAL",
+      "labeledObservations": 933,
+      "meanDirectionalGrossBps": -0.04798694566098728,
+      "observations": 975,
+      "positiveFraction": 0.5112540192926045,
+      "status": "GROSS_PRICE_DESCRIPTOR_NOT_EXECUTABLE_NET",
+      "symbol": "USDCAD"
+    },
+    {
+      "candidate": "JOP1_SIX_BAR_DRIFT",
+      "labeledObservations": 934,
+      "meanDirectionalGrossBps": 0.13665750391476408,
+      "observations": 976,
+      "positiveFraction": 0.49464668094218417,
+      "status": "GROSS_PRICE_DESCRIPTOR_NOT_EXECUTABLE_NET",
+      "symbol": "USDCAD"
+    },
+    {
+      "candidate": "JOP1_LAST_BAR_REVERSAL",
+      "labeledObservations": 934,
+      "meanDirectionalGrossBps": -0.4450496018579399,
+      "observations": 975,
+      "positiveFraction": 0.49464668094218417,
+      "status": "GROSS_PRICE_DESCRIPTOR_NOT_EXECUTABLE_NET",
+      "symbol": "USDJPY"
+    },
+    {
+      "candidate": "JOP1_SIX_BAR_DRIFT",
+      "labeledObservations": 936,
+      "meanDirectionalGrossBps": 1.3764352493899246,
+      "observations": 978,
+      "positiveFraction": 0.5523504273504274,
+      "status": "GROSS_PRICE_DESCRIPTOR_NOT_EXECUTABLE_NET",
+      "symbol": "USDJPY"
+    },
+    {
+      "candidate": "JOP1_LAST_BAR_REVERSAL",
+      "labeledObservations": 928,
+      "meanDirectionalGrossBps": 3.4773933100651577,
+      "observations": 970,
+      "positiveFraction": 0.540948275862069,
+      "status": "GROSS_PRICE_DESCRIPTOR_NOT_EXECUTABLE_NET",
+      "symbol": "XAUUSD"
+    },
+    {
+      "candidate": "JOP1_SIX_BAR_DRIFT",
+      "labeledObservations": 928,
+      "meanDirectionalGrossBps": 0.5478845195838523,
+      "observations": 970,
+      "positiveFraction": 0.49676724137931033,
+      "status": "GROSS_PRICE_DESCRIPTOR_NOT_EXECUTABLE_NET",
+      "symbol": "XAUUSD"
+    }
+  ],
+  "schema": "mxm-joint-opportunity-development-v1",
+  "simultaneousMultiAssetClocks": 978,
+  "sourceCalendar": [
+    {
+      "endMs": 1793394000000,
+      "exposure": "PRIOR_PROJECT_DEVELOPMENT_EXPOSED",
+      "independent": false,
+      "startMs": 1761613200000,
+      "symbol": "AUDUSD",
+      "timeframe": "H4"
+    },
+    {
+      "endMs": 1793577600000,
+      "exposure": "PRIOR_PROJECT_DEVELOPMENT_EXPOSED",
+      "independent": false,
+      "startMs": 1792368000000,
+      "symbol": "AUDUSD",
+      "timeframe": "M15"
+    },
+    {
+      "endMs": 1793394000000,
+      "exposure": "PRIOR_PROJECT_DEVELOPMENT_EXPOSED",
+      "independent": false,
+      "startMs": 1761613200000,
+      "symbol": "EURUSD",
+      "timeframe": "H4"
+    },
+    {
+      "endMs": 1793577600000,
+      "exposure": "PRIOR_PROJECT_DEVELOPMENT_EXPOSED",
+      "independent": false,
+      "startMs": 1792368000000,
+      "symbol": "EURUSD",
+      "timeframe": "M15"
+    },
+    {
+      "endMs": 1793394000000,
+      "exposure": "PRIOR_PROJECT_DEVELOPMENT_EXPOSED",
+      "independent": false,
+      "startMs": 1761613200000,
+      "symbol": "GBPUSD",
+      "timeframe": "H4"
+    },
+    {
+      "endMs": 1793577600000,
+      "exposure": "PRIOR_PROJECT_DEVELOPMENT_EXPOSED",
+      "independent": false,
+      "startMs": 1792368000000,
+      "symbol": "GBPUSD",
+      "timeframe": "M15"
+    },
+    {
+      "endMs": 1793394000000,
+      "exposure": "PRIOR_PROJECT_DEVELOPMENT_EXPOSED",
+      "independent": false,
+      "startMs": 1761613200000,
+      "symbol": "USDCAD",
+      "timeframe": "H4"
+    },
+    {
+      "endMs": 1793577600000,
+      "exposure": "PRIOR_PROJECT_DEVELOPMENT_EXPOSED",
+      "independent": false,
+      "startMs": 1792368000000,
+      "symbol": "USDCAD",
+      "timeframe": "M15"
+    },
+    {
+      "endMs": 1793394000000,
+      "exposure": "PRIOR_PROJECT_DEVELOPMENT_EXPOSED",
+      "independent": false,
+      "startMs": 1761613200000,
+      "symbol": "USDJPY",
+      "timeframe": "H4"
+    },
+    {
+      "endMs": 1793577600000,
+      "exposure": "PRIOR_PROJECT_DEVELOPMENT_EXPOSED",
+      "independent": false,
+      "startMs": 1792368000000,
+      "symbol": "USDJPY",
+      "timeframe": "M15"
+    },
+    {
+      "endMs": 1793394000000,
+      "exposure": "PRIOR_PROJECT_DEVELOPMENT_EXPOSED",
+      "independent": false,
+      "startMs": 1761613200000,
+      "symbol": "XAUUSD",
+      "timeframe": "H4"
+    },
+    {
+      "endMs": 1793577600000,
+      "exposure": "PRIOR_PROJECT_DEVELOPMENT_EXPOSED",
+      "independent": false,
+      "startMs": 1792368000000,
+      "symbol": "XAUUSD",
+      "timeframe": "M15"
+    }
+  ],
+  "sourceCiphertextSha256": "50e40f62156f598d715d6052e466ae7ef77b9bc39117cad37472c7f0f505e61d",
+  "sourceInstrumentCount": 6,
+  "sourceRunId": 41476636915,
+  "study": "JOP1_ALL_SOURCE_ASSETS_H4_TWO_FIXED_DESCRIPTORS_FIRST80_NO_SELECTION",
+  "unexposedEvaluatedCalendarMonths": 0,
+  "sourceRunUrl": "https://github.com/mariancradulescu/mxm-quant-cloud/actions/runs/41627571731",
+  "artifactId": 13226761643
+}
