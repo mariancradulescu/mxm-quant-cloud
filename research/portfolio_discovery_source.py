@@ -162,7 +162,7 @@ def collect():
 
 def readback():
     p=json.loads(PROTOCOL.read_text());need(not Path('docs/BDP1_AUTHENTIC_RESULT.json').exists(),'BDP1_CLOSED')
-    run=os.environ['GITHUB_RUN_ID'];raw=Path('sealed-output/source.envelope.json').read_bytes();receipt=json.loads(Path('sealed-output/receipt.public.json').read_text())
+    run='41724643418' if '--bound-source-reception' in sys.argv else os.environ['GITHUB_RUN_ID'];raw=Path('sealed-output/source.envelope.json').read_bytes();receipt=json.loads(Path('sealed-output/receipt.public.json').read_text())
     need(receipt['complete'] and receipt['runId']==run and receipt['sha256']==hashlib.sha256(raw).hexdigest(),'BDP1_CUSTODY')
     b=json.loads(unseal_new(raw,os.environ['R3_CUSTODY_PRIVATE_KEY_PEM'].encode(),run));need(audit(b,p)==b['auditReceipt'],'BDP1_INDEPENDENT_RAW_READBACK')
     contexts=cost_contexts(b,p)
@@ -171,7 +171,7 @@ def readback():
             Costs=[c for c in contexts if c['RoundTripBps'] is not None],Start=p['start'],DevelopmentEnd=p['developmentEnd'],SelectionEnd=p['selectionEnd'],End=p['end'])
         result=native(inp,'--portfolio-discovery-program')
     else:result=dict(Schema='mxm-integrated-discovery-program-v1',Verdict='SOURCE_PILOT_FAILED_NO_EXPANSION',FundedNetEur=None,EconomicQualification=False)
-    result.update(Protocol=p,SourceRunId=int(run),SourceCiphertextSha256=receipt['sha256'],RawReadbackMatched=True,SourceAudit=b['auditReceipt'],Pilot=b['pilot'],CostContexts=contexts,
+    result.update(Protocol=p,SourceRunId=int(run),ExecutionRunId=int(os.environ['GITHUB_RUN_ID']),SourceRecollected=False if '--bound-source-reception' in sys.argv else True,SourceCiphertextSha256=receipt['sha256'],RawReadbackMatched=True,SourceAudit=b['auditReceipt'],Pilot=b['pilot'],CostContexts=contexts,
         AccountSwapFreeEffective=b['accountSwapFreeEffective'],AccountSwapFreeExplicitInWire=b['accountSwapFreeExplicitInWire'])
     Path('portfolio-discovery.public.json').write_text(json.dumps(result,sort_keys=True,indent=2,default=str)+'\n')
     print('BDP1_AUTHENTIC_DISCOVERY_RESULT '+json.dumps(result,sort_keys=True,default=str),flush=True)

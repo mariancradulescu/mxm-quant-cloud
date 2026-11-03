@@ -55,6 +55,19 @@
     "src/Mxm.Core/SequenceOpportunityResearch.cs": "75131c62df5e6a2b3276548bb70e2d98399f2cbec6a3889745ed5e7abf32acb7"
   },
   "independenceDefault": "NOT_ESTABLISHED",
+  "nativeFundedFactReception": {
+    "brokerFillRecoveryProven": false,
+    "eventsPerNonemptyCase": 90,
+    "executionRunId": 41724643418,
+    "forecastOrAllocationOrExitPolicyRerun": false,
+    "frozenResultUnchanged": true,
+    "monetaryComponentToleranceEur": "1e-18",
+    "nonemptyCases": 2,
+    "publicArtifactId": 13273872349,
+    "receiptSha256": "386146c81cfd6e4e4a73ebed4c85d207f6badf6eb6baa9cafd3ba503e14202ba",
+    "restartEveryEventMatched": true,
+    "sourceRunId": 41706496201
+  },
   "projectWideCalendarRule": "Union of relevant design/research exposures across sources and instruments; overlaps are not independent.",
   "prospectiveStudies": [
     {
@@ -192,7 +205,10 @@
       "end": 1793577600000,
       "hard21SignalCountsForbidden": true,
       "id": "BDP1",
+      "implementationDefect": "INT32_WEEK_MILLISECOND_MULTIPLICATION_OVERFLOW_AFTER_WEEK_INDEX3;NO_PARAMETER_RETUNING",
       "independent": false,
+      "initialPublicArtifactId": 13275041084,
+      "initialPublicResultSha256": "180838d4cd9f428e219db27de436e1304bf9f55fdc53d052f28d9bd4a7885bd9",
       "marginalProxyChecks": 192,
       "nativeFactProofSourceRunId": 41706496201,
       "phase": "INTEGRATED_52_WEEK_CONTEXTUAL_DISCOVERY_AND_NATIVE_FUNDED_FACT_RECEPTION",
@@ -200,8 +216,13 @@
       "protocolSha256": "f8715fb32ce260a22ac821621994cb82d786a782b3769fc2a61eff9d228b2867",
       "qualification": false,
       "selectionEnd": 1785715200000,
+      "sourceArtifactExpiresAt": "2027-02-01T21:45:22Z",
+      "sourceArtifactId": 13273950911,
+      "sourceCiphertextSha256": "e47ba7204ca7e07e7bb523ede8a8171f49b216cad09914142ed548839660a370",
+      "sourceRunId": 41724643418,
       "split": "26W_DEVELOPMENT_13W_SELECTION_13W_EXPOSED_CHRONOLOGICAL_AUDIT",
       "start": 1762128000000,
+      "status": "SOURCE_EXECUTED_INITIAL_CALENDAR_AGGREGATION_INVALID_CORRECTION_PENDING",
       "trialGroups": 240
     }
   ],
@@ -528,6 +549,19 @@
       "sourceArtifactRunId": 41710960192,
       "sourcePreservationCiphertextHashVerified": true,
       "sourceRunId": 41706496201
+    },
+    {
+      "ciphertextSha256": "e47ba7204ca7e07e7bb523ede8a8171f49b216cad09914142ed548839660a370",
+      "decisionExposure": [
+        "ALL240_FIXED_CONTEXT_GROUPS_AND192_PROXY_ABLATIONS_INITIAL_INVALID_CALENDAR_REPORT_EXPOSED_NO_RESELECTION"
+      ],
+      "end": 1793577600000,
+      "independent": false,
+      "scope": "BDP1 six assets M5 and derived M15/H1/H4, complete 52-week predeclared calendar plus18 development cost windows",
+      "sourceArtifactExpiresAt": "2027-02-01T21:45:22Z",
+      "sourceArtifactId": 13273950911,
+      "sourceRunId": 41724643418,
+      "start": 1762128000000
     }
   ],
   "unknownExposurePolicy": "TREAT_AS_EXPOSED_FOR_QUALIFICATION"

@@ -107,7 +107,7 @@ public sealed class NativeFundedLedger
                 var position=new LedgerPosition(e.PositionId,e.Symbol,e.Side,e.Units,e.ExecutionPrice,e.At,e.FeeEur,
                     e.MarginPerUnit,e.SlippagePerSide,entryQuote,0);
                 decimal projected=Equity(quotes,e.At)-e.FeeEur+Floating(position,entryQuote);
-                decimal margin=state.Positions.Values.Sum(p=>Math.Max(p.MarginPerUnit,Quote(quotes,p.Symbol,e.At).MarginPerUnit)*p.Units)+e.MarginPerUnit*e.Units;
+                decimal margin=state.Positions.Values.Sum(p=>Math.Max(p.MarginPerUnit,Quote(quotes,p.Symbol,e.At).MarginPerUnit)*p.Units)+Math.Max(e.MarginPerUnit,entryQuote.MarginPerUnit)*e.Units;
                 if(projected<=margin || projected<=0)throw new InvalidOperationException("NATIVE_LEDGER_UNFINANCED_MODEL_FILL");
                 state=state with {CashEur=state.CashEur-e.FeeEur};state.Positions.Add(e.PositionId,position);state.Pending.Remove(e.PositionId);break;
             case "CLOSE_FILL":
