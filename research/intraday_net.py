@@ -14,10 +14,13 @@ MAX_REQUESTS=8000
 
 def reconstruct(bid,ask,t):
     """No prior unseen side imputed. Both sides must update within 2s of state."""
-    events=sorted([(s,0,p) for s,p in bid]+[(s,1,p) for s,p in ask])
+    from itertools import groupby
+    events=sorted([(s,0,p) for s,p in bid]+[(s,1,p) for s,p in ask],key=lambda x:x[0])
     state={}
-    for stamp,side,p in events:
-        state[side]=(stamp,p)
+    for stamp,group in groupby(events,key=lambda x:x[0]):
+        # Preserve original same-side feed ordering at equal milliseconds;
+        # evaluate only after all updates at that millisecond, never by price sort.
+        for _,side,p in group:state[side]=(stamp,p)
         if len(state)==2 and t<=stamp<=t+10000:
             if stamp-min(state[0][0],state[1][0])<=2000 and state[1][1]>=state[0][1]:
                 return {'time':stamp,'bid':state[0][1],'ask':state[1][1]}

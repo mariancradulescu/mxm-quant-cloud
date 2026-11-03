@@ -7,6 +7,8 @@ class IntradayNetChecks(unittest.TestCase):
     def test_observed_sides_and_stale_rejection(self):
         self.assertEqual(reconstruct([[1001,110000]],[[1002,110002]],1000),
             {'time':1002,'bid':110000,'ask':110002})
+        self.assertEqual(reconstruct([[1001,110005],[1001,110000]],[[1001,110002]],1000),
+            {'time':1001,'bid':110000,'ask':110002})
         self.assertIsNone(reconstruct([[1001,110000]],[],1000))
         self.assertIsNone(reconstruct([[1001,110000]],[[5000,110002]],1000))
         self.assertIsNone(reconstruct([[1001,110003]],[[1002,110002]],1000))
