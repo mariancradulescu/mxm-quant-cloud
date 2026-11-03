@@ -27,6 +27,8 @@ def cost_contexts(b,p):
         result={s,'EURUSD'}
         if b['symbols'][s]['quoteAsset']=='JPY':result.add('USDJPY')
         if b['symbols'][s]['quoteAsset']=='CAD':result.add('USDCAD')
+        if b['symbols'][s]['quoteAsset']=='GBP':result.add('GBPUSD')
+        if b['symbols'][s]['quoteAsset']=='AUD':result.add('AUDUSD')
         return sorted(result)
     for nominal,indices in b['costIndices'].items():
         nominal=int(nominal);events=[];complete={}
@@ -43,8 +45,8 @@ def cost_contexts(b,p):
     for s in p['universe']:
         snapshots={str(t):dict(at=r['At'],quotes={q['Symbol']:dict(bid=q['Bid'],ask=q['Ask'],bidAt=q['BidAt'],askAt=q['AskAt']) for q in r['Quotes']})
             for (name,t),r in zip(keys,observed) if name==s and r['At'] is not None}
-        valued=native(dict(schema=SCHEMA,readOnly=True,depositCurrency='EUR',symbols=b['symbols'],snapshots=snapshots),'--value-portfolio-source')['Snapshots']
-        row=b['symbols'][s];units=row['contract']['minVolume']//100;values=[];notionals=[]
+        valued=native(dict(schema=b['schema'],readOnly=True,depositCurrency='EUR',symbols=b['symbols'],snapshots=snapshots),'--value-portfolio-source')['Snapshots']
+        row=b['symbols'][s];units=D(row['contract']['minVolume'])/100;values=[];notionals=[]
         for point in valued.values():
             q=point['Quotes'].get(s)
             if q is None:continue

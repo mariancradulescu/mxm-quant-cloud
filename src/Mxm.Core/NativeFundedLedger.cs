@@ -85,7 +85,7 @@ public sealed class NativeFundedLedger
         switch(e.Kind)
         {
             case "REQUEST_OPEN":
-                if(string.IsNullOrWhiteSpace(e.PositionId) || string.IsNullOrWhiteSpace(e.Symbol) || e.Side is not (-1 or 1) ||
+                if(state.HistoryEvidenceIncomplete || string.IsNullOrWhiteSpace(e.PositionId) || string.IsNullOrWhiteSpace(e.Symbol) || e.Side is not (-1 or 1) ||
                     e.Units<=0 || e.AvailableAt>e.At || e.CalibratedThrough>e.AvailableAt || e.CalibratedThrough<0 ||
                     e.LatencyMs<=0 || state.UsedPositionIds.Contains(e.PositionId) || state.Pending.ContainsKey(e.PositionId))
                     throw new ArgumentException("NATIVE_LEDGER_OPEN_INTENT");

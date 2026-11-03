@@ -49,6 +49,10 @@ class PipelineChecks(unittest.TestCase):
         q.payloadType=m.ProtoOANewOrderReq().payloadType
         with self.assertRaises(CaptureContractError): require_read_only_request(q)
 
+    def test_broker_identity_readonly_allowlist(self):
+        for q in [m.ProtoOAReconcileReq(ctidTraderAccountId=1),m.ProtoOAOrderListReq(ctidTraderAccountId=1,fromTimestamp=0,toTimestamp=1),m.ProtoOADealListReq(ctidTraderAccountId=1,fromTimestamp=0,toTimestamp=1,maxRows=1000)]:
+            require_read_only_request(q)
+
     def test_explicit_scope_before_account_auth(self):
         class Fake:
             count=0
