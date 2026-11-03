@@ -1,0 +1,48 @@
+{
+  "actualCloudRestartProven": false,
+  "all26EvaluationWeeksRetained": true,
+  "brokerIdentityRequests": 5,
+  "capitalEur": 200,
+  "cloudActivated": false,
+  "evaluationSummary": [
+    {
+      "baseCostSensitivityEpisodes": 0,
+      "featureEpisodes": 287,
+      "largestBaseCostMarginBps": -3.6561576729660166,
+      "maximumTwoSeBeforeCostBps": -0.953875320616886,
+      "missingFutureLabels": 0,
+      "phase": "selection",
+      "positiveTwoSeBeforeCost": 0,
+      "primaryEpisodes": 0
+    },
+    {
+      "baseCostSensitivityEpisodes": 0,
+      "featureEpisodes": 359,
+      "largestBaseCostMarginBps": -3.475202219652606,
+      "maximumTwoSeBeforeCostBps": -0.7430623927783557,
+      "missingFutureLabels": 0,
+      "phase": "exposedAudit",
+      "positiveTwoSeBeforeCost": 0,
+      "primaryEpisodes": 0
+    }
+  ],
+  "exactConfigurationStatus": "CLOSED_NO_UNCERTAINTY_ADMISSIONS_BEFORE_COST_NO_RETUNING",
+  "executionCommit": "1ce05f83efe3c0cb9bf8933efb3371f9b94610ff",
+  "executionRunId": 41735441128,
+  "fundedNetEur": null,
+  "historicalCostsCertified": false,
+  "identityReceiptSha256": "0312f98e9dba98eda06e29607792098d7b37db956b533a8096a7447c7998d6f1",
+  "independentConfirmation": false,
+  "marginalProxyComparisons": 6,
+  "marketSourceRequests": 995,
+  "ordersSubmitted": 0,
+  "protocolSha256": "45ba828356d149bc48dd8e17908d2e55c62e5c6dd72346742caae47c7011ab13",
+  "realBrokerFillRecoveryProven": false,
+  "resultSha256": "ed23b6d7ce289ce1eeede6626ef8d9bce09d2cfbdb59fd6fe4b4493a75a4bd3c",
+  "schema": "mxm-aip1-and-native-identity-audit-v1",
+  "sourceBars": 394847,
+  "sourceReadbackMatched": true,
+  "trainingLabels": 456,
+  "trainingWeeks": 22,
+  "zeroAblationsAreNotEconomicContribution": true
+}

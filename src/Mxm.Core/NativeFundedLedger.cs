@@ -156,10 +156,12 @@ public sealed class NativeFundedLedger
         }
         Reconcile();
     }
-    public LedgerSummary Summary()
+    public LedgerSummary Summary(long? observedAt=null)
     {
+        long valuationClock=observedAt??state.Clock;
+        if(valuationClock<state.Clock)throw new ArgumentException("NATIVE_LEDGER_VALUATION_CLOCK_BEFORE_STATE");
         decimal? equity=null,margin=null;
-        try {equity=Equity(state.Quotes,state.Clock);margin=state.Positions.Values.Sum(p=>p.Units*Math.Max(p.MarginPerUnit,Quote(state.Quotes,p.Symbol,state.Clock).MarginPerUnit));}
+        try {equity=Equity(state.Quotes,valuationClock);margin=state.Positions.Values.Sum(p=>p.Units*Math.Max(p.MarginPerUnit,Quote(state.Quotes,p.Symbol,valuationClock).MarginPerUnit));}
         catch(InvalidOperationException){}
         return new(state.CashEur,equity,margin,equity-margin,state.ObservedPeakEur,state.MaximumSampledDrawdown,
             state.Positions.Count,state.Pending.Count,state.Closed.Count(t=>t.CompletesRoundTrip),state.Closed.Sum(t=>t.NetEur),

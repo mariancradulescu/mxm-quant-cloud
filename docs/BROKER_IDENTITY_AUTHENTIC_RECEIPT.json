@@ -1,0 +1,56 @@
+{
+  "ActualBrokerCashImported": false,
+  "OrdersSubmitted": 0,
+  "Report": {
+    "CanConsiderNewExposure": false,
+    "GlobalDrawdownCertified": false,
+    "Identity": {
+      "BrokerCashReconciled": false,
+      "BrokerDeals": 0,
+      "BrokerOrders": 0,
+      "HistoryRangeComplete": true,
+      "Intents": [],
+      "LifetimeHistoryProven": false,
+      "OpenPositions": 0,
+      "OrdersEnabled": false,
+      "Reasons": [],
+      "SnapshotConsistent": true,
+      "UnattributedPositions": 0,
+      "UnresolvedIntents": 0
+    },
+    "JournalContinuityProven": false,
+    "ModelCashMatchesBroker": false,
+    "ModelLedger": {
+      "BrokerStateReconciled": false,
+      "CashEur": 200,
+      "ClosedNetEur": 0,
+      "CompleteRoundTrips": 0,
+      "EventChainHash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "FreeMarginEur": 200,
+      "GlobalDrawdownCertified": false,
+      "HistoryEvidenceIncomplete": false,
+      "LiquidationEquityEur": 200,
+      "MaximumSampledDrawdown": 0,
+      "ObservedPeakEur": 200,
+      "OpenPositions": 0,
+      "OrdersEnabled": false,
+      "PendingIntents": 0,
+      "UsedMarginEur": 0
+    },
+    "OrdersEnabled": false,
+    "Status": "PROTECTIVE_JOURNAL_CONTINUITY_UNKNOWN"
+  },
+  "RestoredReportMatched": true,
+  "cloudActivated": false,
+  "filledRecoveryProvenOnRealOrders": false,
+  "historyRange": [
+    1793142302022,
+    1793747102022
+  ],
+  "lifetimeHistoryCertified": false,
+  "rawRepliesReconstructed": true,
+  "requestCount": 5,
+  "sourceCiphertextSha256": "2e6e4b1072130d1df23ca66f0cf9c0ff2a2f174c9e0ef33fc0d3c96d0ed298ac",
+  "sourceRunId": 41735441128,
+  "unfilledTerminalRecoveryProvenOnRealOrders": false
+}

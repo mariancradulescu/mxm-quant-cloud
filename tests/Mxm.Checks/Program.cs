@@ -75,6 +75,8 @@ Check(positionBridge.Observe(brokerIdentity with {Positions=new[]{new BrokerPosi
     "broker position identities join the actual funded model position, symbol side and remaining units");
 Check(!positionBridge.Observe(brokerIdentity with {Positions=new[]{new BrokerPositionIdentity("position-A","SYNTH",1,1)}},199.9m).PositionInventoryMatchesModel,
     "a broker partial close cannot silently retain the model's previous volume");
+Check(positionBridge.Observe(brokerIdentity with {At=5000},199.9m).ModelLedger.LiquidationEquityEur is null,
+    "a previously fresh model mark cannot become current broker-clock floating equity after an interruption");
 var missingMarkBook=NativeFundedLedger.Restore(nativeBook.Checkpoint());missingMarkBook.Apply(Journal("missing-held",4000,"MARK"));
 bool missingEntryRejected=false;
 try{missingMarkBook.Apply(Journal("unsafe-new",4001,"REQUEST_OPEN") with {PositionId="different-position"});}catch(ArgumentException){missingEntryRejected=true;}

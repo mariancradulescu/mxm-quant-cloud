@@ -101,7 +101,7 @@ public sealed class NativeFundedSession
     public NativeSessionReport Observe(BrokerIdentitySnapshot snapshot,decimal? brokerCash)
     {
         if(snapshot.AccountBinding!=AccountBinding)throw new InvalidOperationException("SESSION_ACCOUNT_MISMATCH");
-        var identity=BrokerIdentityReconciliation.Assess(snapshot,Intents);var book=Ledger.Summary();
+        var identity=BrokerIdentityReconciliation.Assess(snapshot,Intents);var book=Ledger.Summary(snapshot.At);
         bool cash=brokerCash.HasValue && Math.Abs(book.CashEur-brokerCash.Value)<.00000001m;
         var modelPositions=Ledger.PositionSnapshot();
         var bindings=Intents.Where(i=>!string.IsNullOrEmpty(i.LedgerPositionId)).Select(i=>{
@@ -117,7 +117,7 @@ public sealed class NativeFundedSession
         // unpriced fills or promote the observed peak to a lifetime certificate.
         return new(identity,book,JournalContinuityProven,cash,positions,false,
             !JournalContinuityProven?"PROTECTIVE_JOURNAL_CONTINUITY_UNKNOWN":!identity.SnapshotConsistent || identity.UnresolvedIntents>0?"PROTECTIVE_BROKER_IDENTITIES_UNRESOLVED":
-            !positions?"PROTECTIVE_MODEL_BROKER_POSITION_MISMATCH":!cash?"PROTECTIVE_CASH_MISMATCH":"PROTECTIVE_PEAK_AND_EXECUTION_AUTHORITY_UNPROVEN");
+            !positions?"PROTECTIVE_MODEL_BROKER_POSITION_MISMATCH":book.LiquidationEquityEur is null?"PROTECTIVE_FLOATING_VALUATION_MISSING":!cash?"PROTECTIVE_CASH_MISMATCH":"PROTECTIVE_PEAK_AND_EXECUTION_AUTHORITY_UNPROVEN");
     }
     static string Hash(string x)=>Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(x))).ToLowerInvariant();
     public string Checkpoint()

@@ -1,7 +1,29 @@
 {
   "authority": "docs/OWNER_SPEC.md",
   "baselineCommit": "d76561f35bf9707046767a52f6773f4182af7fe2",
+  "brokerIdentityReception": {
+    "cloudAccepted": false,
+    "executionRunId": 41735441128,
+    "historicalContinuityProven": false,
+    "historyRange": [
+      1793142302022,
+      1793747102022
+    ],
+    "modelCashWasImported": false,
+    "observedDeals": 0,
+    "observedOrders": 0,
+    "observedPositions": 0,
+    "publicArtifactId": 13279217153,
+    "realFillRecoveryProven": false,
+    "receiptSha256": "0312f98e9dba98eda06e29607792098d7b37db956b533a8096a7447c7998d6f1",
+    "requestCount": 5,
+    "restoredReportMatched": true,
+    "sourceArtifactId": 13278617985,
+    "sourceCiphertextSha256": "2e6e4b1072130d1df23ca66f0cf9c0ff2a2f174c9e0ef33fc0d3c96d0ed298ac"
+  },
   "frozenFileSha256": {
+    "docs/AIP1_AUTHENTIC_RESULT.json": "ed23b6d7ce289ce1eeede6626ef8d9bce09d2cfbdb59fd6fe4b4493a75a4bd3c",
+    "docs/AIP1_SOURCE_TECHNICAL_INTERRUPTION.json": "4fcb577b7b9de96f6d722ed2fd30e0560e3512898bc92961f60e09345e45c9e6",
     "docs/AUTHENTIC_CAUSAL_FLOW_VERDICT_20261103.json": "84bc1380ee3bf91d0ca0883bba1602fea8feec50aa17bf5b0648240d4b23b785",
     "docs/AUTHENTIC_ECONOMIC_BREAKOUT_VERDICT_20261102.json": "2980c70966f2a0a51c4eb8e37651adcd89d5349097f5f58a7a7549038e70cc6b",
     "docs/AUTHENTIC_H1_POLICY_ATTRIBUTION_20261103.json": "400a14e17fa273a60e2c3e260fc89d1f3216e89bb628909ee154ab947eb8d64d",
@@ -13,6 +35,7 @@
     "docs/AUTHENTIC_RELATIVE_GROSS_VERDICT_20261103.json": "2ed851f41737fd8b4a8963852602137db6aad1bcd187f3fa41a618a71d51812a",
     "docs/AUTHENTIC_WIDE_REGIME_VERDICT_20261103.json": "8ce232c1cb4f8f7dafc014de898ec6752838e5c58190d32eebe0a6c180860a65",
     "docs/BDP1_AUTHENTIC_RESULT.json": "ba33bc4bdd756db85c1c017c6c1f39241facd94408901787ff4db4bd53871cdb",
+    "docs/BROKER_IDENTITY_AUTHENTIC_RECEIPT.json": "0312f98e9dba98eda06e29607792098d7b37db956b533a8096a7447c7998d6f1",
     "docs/CAUSAL_OBSERVATION_FEASIBILITY_RESULT.json": "f6b01ad3220419d7fcdf418c0bc2ddc1270625afb0cb1e114e53cbec30148ce4",
     "docs/EPA1_AUTHENTIC_PORTFOLIO_RESULT.json": "abfcff3da3f72cba7d355713daf32f61a9a70cc2964f3a3a23b5f5cd58b31984",
     "docs/EPA2_AUTHENTIC_HOLDING_RESULT.json": "0c3e9ab22d5471ffa52291c5b66c649f3d4f01a78afe5f6ac37a4597886858ca",
@@ -243,15 +266,30 @@
       "trialGroups": 240
     },
     {
+      "auditFeatureEpisodes": 359,
+      "baseCostSensitivityEpisodes": 0,
+      "exactPublicReceipt": "docs/AIP1_AUTHENTIC_RESULT.json",
+      "executionCommit": "1ce05f83efe3c0cb9bf8933efb3371f9b94610ff",
+      "executionRunId": 41735441128,
       "fundedNetEur": null,
       "id": "AIP1",
       "independent": false,
+      "marginalContributionDemonstrated": false,
       "ordersSubmitted": 0,
       "phase": "POOLED_INDEX_CASH_OPENING_INVENTORY_ACCEPTANCE_WITH_BROKER_IDENTITY_RECEIPT",
+      "primaryEpisodes": 0,
       "protocolFile": "research/auction_inventory_protocol.json",
       "protocolSha256": "45ba828356d149bc48dd8e17908d2e55c62e5c6dd72346742caae47c7011ab13",
+      "publicArtifactId": 13279217153,
+      "publicResultSha256": "ed23b6d7ce289ce1eeede6626ef8d9bce09d2cfbdb59fd6fe4b4493a75a4bd3c",
       "selection": "One pooled model; no asset winner subset; common quote-priced allocation required after causal plans",
-      "status": "PROSPECTIVE_SOURCE_AND_FINANCIAL_PILOT_BEFORE_EXPANSION"
+      "selectionFeatureEpisodes": 287,
+      "sourceArtifactExpiresAt": "2027-02-01T22:59:18Z",
+      "sourceArtifactId": 13278617985,
+      "sourceCiphertextSha256": "fa684ca1de58c6d1e8bdee410834855d05389af0c0ae4523b095367dce0e5331",
+      "status": "CLOSED_NO_UNCERTAINTY_ADMISSIONS_BEFORE_COST_NO_RETUNING",
+      "trainingLabels": 456,
+      "trainingWeeks": 22
     }
   ],
   "schema": "mxm-project-data-exposure-v1",
@@ -591,6 +629,20 @@
       "sourceArtifactExpiresAt": "2027-02-01T21:45:22Z",
       "sourceArtifactId": 13273950911,
       "sourceRunId": 41724643418,
+      "start": 1762128000000
+    },
+    {
+      "ciphertextSha256": "fa684ca1de58c6d1e8bdee410834855d05389af0c0ae4523b095367dce0e5331",
+      "decisionExposure": [
+        "ALL6_INDEX_ROLES_ONE_FIXED_POOLED_RIDGE_ALL646_CAUSAL_EVALUATION_FORECASTS_ALL6_REMOVE_ONE_PROXY_CHECKS"
+      ],
+      "end": 1793577600000,
+      "exactPublicReceipt": "docs/AIP1_AUTHENTIC_RESULT.json",
+      "independent": false,
+      "scope": "AIP1 fixed six index CFDs M5 first30 cash-opening and next120 minute episodes; whole52-week calendar plus fixed development cost routes",
+      "sourceArtifactExpiresAt": "2027-02-01T22:59:18Z",
+      "sourceArtifactId": 13278617985,
+      "sourceRunId": 41735441128,
       "start": 1762128000000
     }
   ],
