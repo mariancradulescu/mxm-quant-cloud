@@ -133,9 +133,18 @@ def funded_and_diagnostics(bundle):
             observed_exit_fee=commission_eur(c,min_units,q2.bid if p["side"]>0 else q2.ask,q2.bid,q2.ask)
             replay.quote(q2,observed_exit_commission_eur=observed_exit_fee)
         report=replay.report(weeks)
+        # Full predeclared UTC weeks, INCLUDING zero-activity weeks.
+        week_nets=[sum((t["net_eur"] for t in replay.trades
+                 if mon <= t["closed_at"] < mon+7*DAY),D("0")) for mon in weeks]
+        weekly_mean=sum(week_nets,D("0"))/len(weeks)
+        weekly_var=sum((z-weekly_mean)**2 for z in week_nets)/(len(weeks)-1)
+        weekly_lower=weekly_mean-D("2.6")*D(str(math.sqrt(float(weekly_var)/len(weeks))))
+        report["weekly_net_eur"]=[str(x) for x in week_nets]
+        report["mean_weekly_net_eur"]=str(weekly_mean)
+        report["conservative_2p6se_weekly_lower_eur"]=str(weekly_lower)
         report["cost_breakdown_eur"]={k:str(sum((t[k] for t in replay.trades),D("0"))) for k in
                 ("gross_eur","spread_eur","slippage_eur","conversion_eur","commissions_eur","financing_eur")}
-        outcome={"slippageScaleOfTrainQuoteMotion":mult,
+        outcome={"slippageScaleOfTRAINSpreadDerivedHypothesis":mult,
                  "eventQuotesPresent":len(full),"missingEntryOrExitEventQuotes":missing,
                  "forecastCostBlocked":costblocked,"trainingTailStressBlocked":stressblocked,
                  "financingCurrentScheduleOutsideHolding":financing_proven(c),
@@ -152,6 +161,8 @@ def funded_and_diagnostics(bundle):
     survivors=all(o["portfolioEur200QuoteReplay"]["complete_round_trips"]>=30 and
                   D(o["portfolioEur200QuoteReplay"]["closed_net_eur"])>0 and
                   D(o["portfolioEur200QuoteReplay"]["sampled_max_drawdown"])<=D(".30") and
+                  D(o["portfolioEur200QuoteReplay"]["conservative_2p6se_weekly_lower_eur"])>0 and
+                  o["missingEntryOrExitEventQuotes"]==0 and
                   not o["portfolioEur200QuoteReplay"]["incomplete_marks"] and
                   o["financingCurrentScheduleOutsideHolding"] for o in outcomes)
     return {"schema":"mxm-m15-anchor-cost-funded-selection-v1","model":MODEL,
