@@ -25,7 +25,8 @@ public static class OpportunityOrchestrator
     public static OrchestrationResult Estimate(ResearchOrchestrationRequest request)
     {
         if(!((request.Scope=="EPA1_CONDITIONAL_RESEARCH_NOT_CERTIFIED" && request.CommonHorizonMinutes==240) ||
-             (request.Scope=="EPA2_CONDITIONAL_RESEARCH_NOT_CERTIFIED" && request.CommonHorizonMinutes is 120 or 240)))
+             (request.Scope=="EPA2_CONDITIONAL_RESEARCH_NOT_CERTIFIED" && request.CommonHorizonMinutes is 120 or 240) ||
+             (request.Scope=="SQP1_CONDITIONAL_RESEARCH_NOT_CERTIFIED" && request.CommonHorizonMinutes==60)))
             throw new ArgumentException("UNDECLARED_CONDITIONAL_RESEARCH_SCOPE");
         // No certificate is manufactured: the verified DTO retains zero peak
         // and false evidence flags. Conditional sizing uses its separate DTO.

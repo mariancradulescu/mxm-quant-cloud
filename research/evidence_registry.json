@@ -136,6 +136,39 @@
       "sourceRunId": 41648280262,
       "status": "EXECUTED_NATIVE_PARITY_AND_CONDITIONAL_MINIMUM_VOLUME_PATH_SUPPORT_NOT_FULL_STUDY_ADMISSION",
       "trialCountPolicy": "UNIQUE_ROUTE_HORIZON_COHORT_COVERAGE_NOT_STRATEGY_REPLICATED_SAMPLE_SIZE"
+    },
+    {
+      "calibrationDays": [
+        "2026-08-04",
+        "2026-08-11",
+        "2026-08-18",
+        "2026-08-25",
+        "2026-09-01",
+        "2026-09-08",
+        "2026-09-15",
+        "2026-09-22"
+      ],
+      "caseCount": 4,
+      "featureLookbacks": "7D_M15_AND14D_H1_PRIOR_TO_EACH_PREDECLARED_DATE; GLOBAL_H4_OVERLAP_EXPOSED",
+      "id": "SQP1",
+      "independent": false,
+      "phase": "PREDECLARED_EXPOSED_DEVELOPMENT_INTEGRATED_NET",
+      "protocolFile": "research/sequence_portfolio_protocol.json",
+      "protocolSha256": "d583e953c17c31e9a9910d3e44b55448de4896b2779b48982696dbf1931b3a11",
+      "qualification": false,
+      "replayDays": [
+        "2026-09-29",
+        "2026-09-30",
+        "2026-10-01",
+        "2026-10-02",
+        "2026-10-05",
+        "2026-10-06",
+        "2026-10-07",
+        "2026-10-08"
+      ],
+      "sourceAllowed": "PINNED_EXISTING_PEPPERSTONE_EU_LIVE_SCOPE_VIEW",
+      "trialCount": 24,
+      "trialPolicy": "ALL_GROUPS_ALL_CASES_ALL_PRIMARY_ABLATIONS_NO_FAVORABLE_SELECTION"
     }
   ],
   "schema": "mxm-project-data-exposure-v1",

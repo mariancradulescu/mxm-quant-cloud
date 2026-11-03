@@ -72,3 +72,18 @@ failures demonstrate why source coverage and EUR200 funding must be checked
 separately. The subsequent batch endpoint invokes the identical holding-risk
 kernel in one process, removing thousands of process launches. Protected readback
 requires its entire economic support result to match the original frozen receipt.
+
+## SQP1 economic research integration
+
+SQP1 directly combines native sequence forecasts (M15/H1), event clocks, source
+valuation, the existing opportunity allocator and holding-risk kernel with the
+existing one-capital funded ledger. It adds no workflow file, external service,
+second allocator or broker simulator. The existing protected collection/custody
+jobs execute the outcome-blind small pilot, bounded continuation, raw reconstruction
+and all disclosed economic cases. Conditional research and verified product
+admission remain distinct. Dynamic quote unions follow selected/open exposure;
+missing unrelated symbols do not erase a valid portfolio valuation. Same-calendar
+state IDs align common decision/exit request horizons, not fictitious identical
+fill timestamps; loss/peak aggregation grants no diversification credit. Independent
+incremental NET, continuous risk evidence and full native ledger equivalence remain
+unresolved; compilation of these kernels is not final Cloud product acceptance.
