@@ -484,3 +484,12 @@ restart after EVERY event and immediate duplicate replay must preserve native
 state. This is technical accounting equivalence, not new economics or permission
 to rerun SQP1. Original receipts, labels, protocols and ciphertext remain frozen.
 The Cloud adapter remains observation-only; compiler success is not product acceptance.
+
+BDP1 includes48 predeclared inverse-development-variance context mixtures as well
+as192 isolated diagnostics (240 groups total). Only the mixtures supply programme
+admissions; a view need NOT have positive isolated selection performance to enter
+the mixture. Standard errors combine as a weighted sum, granting no independence
+credit. All192 remove-one-view proxy comparisons are reported on the same observable
+clock population, without retuning or dropping negative views. They measure
+predictive/cost-scenario complementarity, NOT financed portfolio marginal NET.
+No audit winner can alter selection admissions, mixture weights or pricing dates.

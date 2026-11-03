@@ -21,6 +21,7 @@ public static class PortfolioDiscoveryProgram
     }
     sealed record Example(long At,long KnownAt,int Cell,double? Outcome);
     sealed record Prediction(long At,long Exit,int Side,double? Gross,double? ProxyNet,double LowerAtDecision);
+    sealed record RawForecast(long At,long Exit,int Family,double Mean,double Se,double Variance,double? Outcome);
     static int Bin(double x,double low,double high)=>x<low?0:x>high?2:1;
     static int Cell(int a,int b,int c)=>a*9+b*3+c;
     static int UsdSign(string s)=>s is "USDJPY" or "USDCAD"?-1:1;
@@ -92,6 +93,8 @@ public static class PortfolioDiscoveryProgram
         if(sources.Any(g=>g.Value.Select(b=>b.Start).Distinct().Count()!=g.Value.Length))throw new ArgumentException("BDP1_DUPLICATE_BAR");
         var groups=new List<object>();var admittedSelection=new List<(string Symbol,Prediction P)>();var admittedAudit=new List<(string Symbol,Prediction P)>();
         var sourceCoverage=new List<object>();int trials=0;
+        var mixtureRows=new Dictionary<(string Symbol,int Minutes,int Horizon),List<RawForecast>>();
+        var mixtureTraining=new Dictionary<(string Symbol,int Minutes,int Horizon),int>();
         foreach(int minutes in new[]{5,15,60,240})
         {
             var lanes=sources.ToDictionary(g=>g.Key,g=>minutes==5?g.Value:Aggregate(g.Value,minutes*60000L));
@@ -112,6 +115,21 @@ public static class PortfolioDiscoveryProgram
                     foreach(var x in train){global.Add(x.Outcome!.Value);cells[x.Cell].Add(x.Outcome.Value);}
                     costMap.TryGetValue(symbol,out var costs);bool financeable=costs!=null && costs.Samples>=12 && costs.CurrentMinimumMarginEur<200;
                     bool fundingCovered=costs!=null && costs.CurrentFundingScheduleKnown && minutes*horizon<=240;
+                    var mixtureKey=(symbol,minutes,horizon);
+                    if(!mixtureRows.ContainsKey(mixtureKey))mixtureRows[mixtureKey]=new();
+                    mixtureTraining[mixtureKey]=mixtureTraining.TryGetValue(mixtureKey,out var previousTraining)?Math.Min(previousTraining,train.Length):train.Length;
+                    if(costs!=null && financeable && fundingCovered && global.N>=256*horizon)
+                    {
+                        foreach(var x in examples.Where(x=>x.At>=input.DevelopmentEnd && x.KnownAt<input.End))
+                        {
+                            int minute=(int)((x.At/60000)%1440);
+                            if(costs.SwapMinute is null || minute<=costs.SwapMinute && costs.SwapMinute<=minute+minutes*horizon || minute+minutes*horizon>=1440)continue;
+                            var leaf=cells[x.Cell];if(leaf.N<32*horizon)continue;
+                            double variance=Math.Max(global.Variance,leaf.Variance);
+                            mixtureRows[mixtureKey].Add(new(x.At,x.KnownAt,family,(leaf.Sum+32*global.Mean)/(leaf.N+32),
+                                Math.Sqrt(variance/(leaf.N/(double)horizon)),variance,x.Outcome));
+                        }
+                    }
                     Prediction[] Predict(long start,long end,double costMultiplier)
                     {
                         var predicted=new List<Prediction>();
@@ -138,15 +156,61 @@ public static class PortfolioDiscoveryProgram
                     var weekly=Enumerable.Range(0,13).Select(i=>select.Where(x=>input.DevelopmentEnd+i*604800000<=x.At && x.At<input.DevelopmentEnd+(i+1)*604800000).Sum(x=>x.ProxyNet??0)).ToArray();
                     double m=weekly.Average(),sew=Math.Sqrt(weekly.Sum(x=>(x-m)*(x-m))/12/13);
                     bool selected=select.Length>=26 && select.All(x=>x.ProxyNet.HasValue) && weekly.Count(x=>x!=0)>=8 && m-5*sew>0;
-                    if(selected){admittedSelection.AddRange(select.Select(x=>(symbol,x)));admittedAudit.AddRange(audit.Select(x=>(symbol,x)));}
+                    // Isolated screens are descriptive only; admission uses the common mixture below.
                     groups.Add(new {Id=Families[family]+"/M"+minutes+"/H"+(minutes*horizon)+"/"+symbol,Symbol=symbol,
                         FeatureView=Families[family],Minutes=minutes,HorizonMinutes=minutes*horizon,TrainingLabels=train.Length,
                         MatureNonemptyCells=cells.Count(x=>x.N>=32*horizon),MinimumVolumeCapacityCurrentScenario=financeable,
                         FundingScenarioCovered=fundingCovered,CostProxyBps=costs?.RoundTripBps,CostSamples=costs?.Samples,
-                        SelectedBeforeAudit=selected,Selection=Statistics(select,input.DevelopmentEnd,input.SelectionEnd,2),
+                        SelectedBeforeAudit=selected,IndividualPassIsNotPortfolioAdmission=true,Selection=Statistics(select,input.DevelopmentEnd,input.SelectionEnd,2),
                         Audit=Statistics(audit,input.SelectionEnd,input.End,2),BaseCostSelection=Statistics(selectBase,input.DevelopmentEnd,input.SelectionEnd,1),
                         BaseCostAudit=Statistics(auditBase,input.SelectionEnd,input.End,1),ActualOrders=0,IndependentEdge=false});
                 }
+            }
+        }
+        var marginalChecks=new List<object>();int mixtureTrials=0;
+        foreach(var (key,raw) in mixtureRows.OrderBy(x=>x.Key.Symbol).ThenBy(x=>x.Key.Minutes).ThenBy(x=>x.Key.Horizon))
+        {
+            mixtureTrials++;costMap.TryGetValue(key.Symbol,out var costs);
+            Prediction[] Mix(long start,long end,double multiplier,int removed=-1)
+            {
+                var output=new List<Prediction>();if(costs==null)return output.ToArray();
+                foreach(var clock in raw.Where(x=>start<=x.At && x.At<end && x.Exit<end).GroupBy(x=>(x.At,x.Exit)))
+                {
+                    var full=clock.ToArray();if(full.Select(x=>x.Family).Distinct().Count()<2)continue;
+                    var available=full.Where(x=>x.Family!=removed).ToArray();if(available.Length==0)continue;
+                    double total=available.Sum(x=>1/Math.Max(1e-12,x.Variance));
+                    double mean=available.Sum(x=>x.Mean/Math.Max(1e-12,x.Variance))/total;
+                    // Perfect-correlation upper standard-error combination: no
+                    // invented independence/diversification credit among views.
+                    double se=available.Sum(x=>x.Se/Math.Max(1e-12,x.Variance))/total;
+                    double lower=Math.Abs(mean)-2*se-multiplier*costs.RoundTripBps;if(lower<=0)continue;
+                    int side=mean>0?1:-1;double? gross=side*full[0].Outcome;
+                    output.Add(new(clock.Key.At,clock.Key.Exit,side,gross,gross-multiplier*costs.RoundTripBps,lower));
+                }
+                return output.ToArray();
+            }
+            var selection=Mix(input.DevelopmentEnd,input.SelectionEnd,2);var later=Mix(input.SelectionEnd,input.End,2);
+            double[] Weekly(Prediction[] values,long start)=>Enumerable.Range(0,13).Select(i=>values.Where(x=>start+i*604800000<=x.At && x.At<start+(i+1)*604800000).Sum(x=>x.ProxyNet??0)).ToArray();
+            var weeks=Weekly(selection,input.DevelopmentEnd);double mean=weeks.Average();
+            double se=Math.Sqrt(weeks.Sum(x=>(x-mean)*(x-mean))/12/13);
+            bool admitted=selection.Length>=26 && selection.All(x=>x.ProxyNet.HasValue) && weeks.Count(x=>x!=0)>=8 && mean-5*se>0;
+            if(admitted){admittedSelection.AddRange(selection.Select(x=>(key.Symbol,x)));admittedAudit.AddRange(later.Select(x=>(key.Symbol,x)));}
+            groups.Add(new {Id="CONTEXT_MIXTURE/M"+key.Minutes+"/H"+(key.Minutes*key.Horizon)+"/"+key.Symbol,Symbol=key.Symbol,
+                FeatureView="CONTEXT_MIXTURE",Minutes=key.Minutes,HorizonMinutes=key.Minutes*key.Horizon,TrainingLabels=mixtureTraining[key],
+                SelectedBeforeAudit=admitted,IndividualPositivePerformanceRequired=false,
+                Selection=Statistics(selection,input.DevelopmentEnd,input.SelectionEnd,2),Audit=Statistics(later,input.SelectionEnd,input.End,2),
+                BaseCostSelection=Statistics(Mix(input.DevelopmentEnd,input.SelectionEnd,1),input.DevelopmentEnd,input.SelectionEnd,1),
+                BaseCostAudit=Statistics(Mix(input.SelectionEnd,input.End,1),input.SelectionEnd,input.End,1),IndependentEdge=false});
+            foreach(int removed in Enumerable.Range(0,4))
+            {
+                var withoutSelection=Mix(input.DevelopmentEnd,input.SelectionEnd,2,removed);var withoutAudit=Mix(input.SelectionEnd,input.End,2,removed);
+                bool knownSelection=selection.All(x=>x.ProxyNet.HasValue)&&withoutSelection.All(x=>x.ProxyNet.HasValue);
+                bool knownAudit=later.All(x=>x.ProxyNet.HasValue)&&withoutAudit.All(x=>x.ProxyNet.HasValue);
+                marginalChecks.Add(new {Symbol=key.Symbol,Minutes=key.Minutes,HorizonMinutes=key.Minutes*key.Horizon,RemovedView=Families[removed],
+                    SelectionConditionalProxyDifferenceBps=knownSelection?selection.Sum(x=>x.ProxyNet??0)-withoutSelection.Sum(x=>x.ProxyNet??0):(double?)null,
+                    AuditConditionalProxyDifferenceBps=knownAudit?later.Sum(x=>x.ProxyNet??0)-withoutAudit.Sum(x=>x.ProxyNet??0):(double?)null,
+                    WithoutSelection=Statistics(withoutSelection,input.DevelopmentEnd,input.SelectionEnd,2),WithoutAudit=Statistics(withoutAudit,input.SelectionEnd,input.End,2),
+                    ReallocationOrFundedMarginalNet=false,MixtureRetunedAfterAblation=false});
             }
         }
         object Ceiling(List<(string Symbol,Prediction P)> all,long start,long end)
@@ -157,10 +221,10 @@ public static class PortfolioDiscoveryProgram
                 return new {Week=w,UnfinancedOpportunityCeiling=n,EvenUnfinancedCeilingBelow21=n<21};}).ToArray(),
                 IsFinancedRoundTripCount=false,MarginConcurrencyApplied=false,Hard21Proven=false};
         }
-        return new {Schema="mxm-integrated-discovery-program-v1",Trials=trials,SourceCoverage=sourceCoverage,Groups=groups,
+        return new {Schema="mxm-integrated-discovery-program-v1",Trials=trials+mixtureTrials,StandaloneGroups=trials,MixtureGroups=mixtureTrials,MarginalProxyChecks=marginalChecks,SourceCoverage=sourceCoverage,Groups=groups,
             SelectionSystemOpportunityCeiling=Ceiling(admittedSelection,input.DevelopmentEnd,input.SelectionEnd),
             AuditSystemOpportunityCeiling=Ceiling(admittedAudit,input.SelectionEnd,input.End),
-            StatisticalPolicy="FROZEN26W_TRAIN_13W_SELECTION_13W_EXPOSED_CHRONOLOGICAL_AUDIT;192_TRIALS;5SE_DESCRIPTIVE_NOT_CERTIFICATION",
+            StatisticalPolicy="FROZEN26W_TRAIN_13W_SELECTION_13W_EXPOSED_CHRONOLOGICAL_AUDIT;240_GROUPS_192_PROXY_ABLATIONS;5SE_DESCRIPTIVE_NOT_CERTIFICATION",
             PriceBasis="BID_BAR_CLOSE_TO_FUTURE_BID_CLOSE_NOT_EXECUTION_FILLS",Costs="MINIMUM_VOLUME_CURRENT_TARIFF_AND_WORST_DEVELOPMENT_OBSERVED_SPREAD_SCENARIOS_NOT_HISTORICAL_BOUND",
             FundedNetEur=(decimal?)null,ActualFillProbability=(double?)null,HistoricalMarginConfirmed=false,
             IndependentConfirmation=false,GlobalDrawdownCertified=false,EconomicQualification=false,OrdersSubmitted=0,CloudActivated=false};

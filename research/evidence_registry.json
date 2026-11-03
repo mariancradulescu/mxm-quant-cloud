@@ -193,15 +193,16 @@
       "hard21SignalCountsForbidden": true,
       "id": "BDP1",
       "independent": false,
+      "marginalProxyChecks": 192,
       "nativeFactProofSourceRunId": 41706496201,
       "phase": "INTEGRATED_52_WEEK_CONTEXTUAL_DISCOVERY_AND_NATIVE_FUNDED_FACT_RECEPTION",
       "protocolFile": "research/portfolio_discovery_protocol.json",
-      "protocolSha256": "19c63f117117bb60ed55678ea31cc8bc25934f1689cc9345e9ef6c8849a68a7b",
+      "protocolSha256": "89db8275f4f77e3c6c84db512ccd58db13d7496af6c028c879d6cecc2fec9521",
       "qualification": false,
       "selectionEnd": 1785715200000,
       "split": "26W_DEVELOPMENT_13W_SELECTION_13W_EXPOSED_CHRONOLOGICAL_AUDIT",
       "start": 1762128000000,
-      "trialGroups": 192
+      "trialGroups": 240
     }
   ],
   "schema": "mxm-project-data-exposure-v1",
