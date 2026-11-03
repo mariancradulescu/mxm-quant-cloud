@@ -150,8 +150,10 @@ def funded_and_diagnostics(bundle):
                     hashlib.sha256((row["sha"]+bundle["sourceId"]).encode()).hexdigest())
             q1=mk(ein);q2=mk(eout)
             entry_fee=commission_eur(c,min_units,q1.ask if p["side"]>0 else q1.bid,q1.bid,q1.ask)
-            exit_fee=commission_eur(c,min_units,q2.bid if p["side"]>0 else q2.ask,q2.bid,q2.ask)
-            con=Contract(min_units,step,max_units,margin,entry_fee,exit_fee,slip,
+            # Ex-ante equity marks use only the entry-time estimate.
+            # Actual exit commission is learned and booked ONLY at the exit quote.
+            estimated_exit_fee=commission_eur(c,min_units,q1.bid if p["side"]>0 else q1.ask,q1.bid,q1.ask)
+            con=Contract(min_units,step,max_units,margin,entry_fee,estimated_exit_fee,slip,
                 "PEPPERSTONE_CURRENT_CONTRACT_SNAPSHOT_CONDITIONAL_HISTORY")
             replay.decide(Decision(p["signal"],p["signal"],frozen["trainingCutMs"]-1,
                 str(p["signal"]),SYMBOL,"OPEN",1000,p["side"],min_units,con))
@@ -160,8 +162,11 @@ def funded_and_diagnostics(bundle):
                 admitted+=1
                 replay.decide(Decision(p["exit"],p["exit"],frozen["trainingCutMs"]-1,
                     str(p["signal"]),SYMBOL,"CLOSE",1000))
-            replay.quote(q2)
+            observed_exit_fee=commission_eur(c,min_units,q2.bid if p["side"]>0 else q2.ask,q2.bid,q2.ask)
+            replay.quote(q2,observed_exit_commission_eur=observed_exit_fee)
         report=replay.report(weeks)
+        report["cost_breakdown_eur"]={k:str(sum((t[k] for t in replay.trades),D("0"))) for k in
+                ("gross_eur","spread_eur","slippage_eur","conversion_eur","commissions_eur","financing_eur")}
         outcome={"slippageScaleOfTrainQuoteMotion":mult,
                  "eventQuotesPresent":len(full),"missingEntryOrExitEventQuotes":missing,
                  "forecastCostBlocked":costblocked,
