@@ -1,0 +1,67 @@
+{
+  "alignedH4Timestamps": 1571,
+  "approx95LowerWeeklyGrossBpsPerLegNotional": -61.68807266,
+  "brokerActualFills": false,
+  "brokerHistoricalBidAskEventExecution": false,
+  "completeGrossPairObservations": 307,
+  "costSensitivityHypotheticalOnly": {
+    "0": {
+      "assumedRoundTripBpsPerLegNotBroker": 0,
+      "averagePairGrossLessAssumptionBpsPerLeg": -0.53448464,
+      "weeklyLowerAfterAssumptionBps": -61.68807266
+    },
+    "1": {
+      "assumedRoundTripBpsPerLegNotBroker": 1,
+      "averagePairGrossLessAssumptionBpsPerLeg": -1.53448464,
+      "weeklyLowerAfterAssumptionBps": -90.68807266
+    },
+    "3": {
+      "assumedRoundTripBpsPerLegNotBroker": 3,
+      "averagePairGrossLessAssumptionBpsPerLeg": -3.53448464,
+      "weeklyLowerAfterAssumptionBps": -148.68807266
+    },
+    "10": {
+      "assumedRoundTripBpsPerLegNotBroker": 10,
+      "averagePairGrossLessAssumptionBpsPerLeg": -10.53448464,
+      "weeklyLowerAfterAssumptionBps": -351.68807266
+    }
+  },
+  "eligibleFullWeeks": 10,
+  "final20PctNotScored": true,
+  "fundedDrawdownPct": null,
+  "fundedEur200Net": null,
+  "historicalH4BarsBySymbol": {
+    "AUDUSD": 1571,
+    "EURUSD": 1571,
+    "GBPUSD": 1571,
+    "USDCAD": 1571,
+    "USDJPY": 1571
+  },
+  "historicalTrueCommissionAndSlippage": false,
+  "hypothesis": "USD_ALIGNED_FIVE_FX_H4_CROSS_SECTIONAL_RESIDUAL_REVERSAL_V1",
+  "independentConfirmation": false,
+  "limitations": "Genuine H4 BID historical closes; label is forward BID-close movement, not an executable entry, midpoint, EUR funded return or fill. No contemporaneous event BID/ASK, quote-currency conversions, historic tariff, financing or real slippage. Selection dates development-exposed; no future data used to choose positions.",
+  "meanGrossBpsPerLeg": -0.53448464,
+  "meanWeeklyGrossBpsPerLegNotional": -14.83490858,
+  "missingSourceOrHistoryWindows": 10,
+  "ordersSubmitted": 0,
+  "originalNativeCSharpSourceParity": true,
+  "phase": "DEVELOPMENT_SELECTION_NOT_UNTOUCHED_CONFIRMATION",
+  "plannedRoundTripLegsNOTExecuted": 614,
+  "positiveGrossPairFraction": 0.53094463,
+  "potentialDecisionWindows": 317,
+  "realBrokerHard21": false,
+  "schema": "mxm.usd-relative-dispersion-h4-gross.v1",
+  "selectionEndUtc": "2026-08-20T00:00:00+00:00",
+  "selectionStartUtc": "2026-06-07T00:00:00+00:00",
+  "sourceAuthenticity": "ORIGINAL_SEALED_PEPPERSTONE_AND_NATIVE_CSHARP_PARITY",
+  "sourceCiphertextSha256": "50e40f62156f598d715d6052e466ae7ef77b9bc39117cad37472c7f0f505e61d",
+  "sourceRunId": 41476636915,
+  "weeksWith21OrMorePlannedLegsNOTBrokerCompletions": 10,
+  "zeroCostGrossSupportGate": false,
+  "authenticWorkflowRun": 41608022074,
+  "artifactUrl": "https://github.com/mariancradulescu/mxm-quant-cloud/actions/runs/41608022074/artifacts/13216809374",
+  "freezeStatus": "CLOSED_GROSS_ZERO_COST_SUPPORT_FAIL_NO_RETUNING",
+  "noLiveOrDemoOrders": true,
+  "ownerCapitalEur200Unchanged": true
+}
