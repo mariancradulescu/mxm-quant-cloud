@@ -34,6 +34,16 @@ def audit(b,p):
         need(row['symbolId']==light.symbolId and list(q.symbolId)==[light.symbolId] and len(r.symbol)==1 and row['contract']==contract_snapshot(r.symbol[0]) and row['quoteAsset']==assets[light.quoteAssetId],'AIP1_CONTRACT')
         q,r=decoded[row['marginRawIndex']];need(q.symbolId==light.symbolId and list(q.volume)==[row['contract']['minVolume']] and r.HasField('moneyDigits') and len(r.margin)==1 and r.margin[0].volume==q.volume[0],'AIP1_MARGIN_BINDING')
         need(D(row['currentMinMarginEur'])==D(max(r.margin[0].buyMargin,r.margin[0].sellMargin))/D(10)**r.moneyDigits,'AIP1_MARGIN_VALUE')
+    expected_universe=[];expected_specs=[]
+    for spec in p['sessionSpecs']:
+        name=next((n for n in spec['aliases'] if n in listed and listed[n].enabled),None)
+        if name is None:continue
+        need(name in b['symbols'],'AIP1_ALL_DECLARED_METADATA')
+        row=b['symbols'][name]
+        if D(row['currentMinMarginEur'])<200 and row['quoteAsset'] in ['USD','EUR','GBP','AUD','JPY']:
+            expected_universe.append(name)
+            expected_specs.append(dict(Symbol=name,**{k:v for k,v in spec.items() if k not in ['canonical','aliases']}))
+    need(b['universe']==expected_universe and b['sessionSpecs']==expected_specs,'AIP1_PROSPECTIVE_UNIVERSE_AND_SCHEDULE')
     rebuilt={s:{} for s in b['universe']}
     for w in b['windows']:
         lo,hi=w['range'];s=w['symbol'];q,r=decoded[w['rawIndex']]
@@ -45,6 +55,20 @@ def audit(b,p):
         for s,ixs in indices.items():
             for side,ix in zip((e.BID,e.ASK),ixs):
                 q,r=decoded[ix];need(q.symbolId==b['symbols'][s]['symbolId'] and q.type==side and q.fromTimestamp==int(t)-2000 and q.toTimestamp==int(t)+58000 and r.HasField('hasMore'),'AIP1_COST_REQUEST')
+    # Rebuild the outcome-blind expansion decision from the original pilot replies.
+    import copy
+    pilot=copy.deepcopy(b);pilot['bars']={s:[] for s in b['universe']}
+    for w in b['windows']:
+        if w['range'] not in [p['sourceChunks'][i] for i in p['pilotChunkIndices']]:continue
+        q,r=decoded[w['rawIndex']];pilot['bars'][w['symbol']].extend(bars(r,*w['range']))
+    for rows in pilot['bars'].values():rows.sort()
+    pilot['costIndices']={t:v for t,v in b['costIndices'].items() if int(t) in p['pilotCostClocks']}
+    contexts=cost_contexts(pilot,dict(universe=b['universe'])) if pilot['costIndices'] else []
+    useful=[c for c in contexts if c['Samples']>=2 and c['CurrentFundingScheduleKnown']]
+    support=native(normalized_input(dict(pilot,costContexts=contexts),p),'--auction-source-support') if len(useful)>=2 else []
+    passed=sum(x['FeatureEpisodes']>=3 and x['KnownLabels']>=3 and x['Symbol'] in [c['Symbol'] for c in useful] for x in support)>=2
+    need(passed==b['pilotPassed'] and support==b['pilotSummary']['support'] and b['pilotSummary']['netScoresComputed'] is False,'AIP1_RAW_PILOT_EXPANSION_RECONSTRUCTION')
+    need(json.dumps(contexts,sort_keys=True,default=str)==json.dumps(b['pilotSummary']['costContexts'],sort_keys=True,default=str),'AIP1_RAW_PILOT_COST_RECONSTRUCTION')
     need(len(decoded)<=p['maxEvidenceRequests'],'AIP1_BUDGET')
     if b['pilotPassed']:need(len(b['windows'])==len(p['sourceChunks'])*len(b['universe']),'AIP1_COMPLETE_SOURCE')
     return dict(originalAccountBindingRechecked=True,requests=len(decoded),bars={s:len(v) for s,v in b['bars'].items()},sourceWindows=len(b['windows']),pilotPassed=b['pilotPassed'])
