@@ -66,5 +66,59 @@ valuation, the common selector and the existing funded account ledger. Its
 [prospective protocol](research/portfolio_economic_protocol.json) compares central
 and uncertainty-screened conditional policies and all candidate ablations. It
 uses an explicit research-estimate endpoint; sampled risk references never become
-certificates or verified product admission. Authentic results remain pending until
-the separately authorized protected source/readback execution completes.
+certificates or verified product admission. Authentic protected source collection, independent raw readback and economic
+replay succeeded in the separately authorized execution below.
+
+## First integrated conditional portfolio economics — EPA1
+
+[Authenticated run #41634941443](https://github.com/mariancradulescu/mxm-quant-cloud/actions/runs/41634941443)
+succeeded: 1,101 read-only evidence requests,87/90 complete synchronized snapshots,
+native C# EUR valuation and decisions, common EUR200 funded ledger and all 24
+predeclared candidate ablations. Preserve the [full original result](docs/EPA1_AUTHENTIC_PORTFOLIO_RESULT.json).
+
+| Predeclared policy | Slippage each side / observed entry spread | Closed modeled trips | Conditional NET EUR | Sampled incomplete DD |
+|---|---:|---:|---:|---:|
+| Primary 2-SE uncertainty screen |0|3|+4.570039|1.7168%|
+| Primary 2-SE uncertainty screen |0.5|3|+4.408195|1.7500%|
+| Primary 2-SE uncertainty screen |1|3|+4.246351|1.7831%|
+| Central sensitivity only |0|4|+8.551930|11.7757%|
+| Central sensitivity only |0.5|4|+8.269750|11.8370%|
+| Central sensitivity only |1|4|+7.987570|11.8984%|
+
+At 0.5x, primary capital is modeled 200→204.408195 EUR. All three positions
+are USDJPY reversal, 6000 units each; eliminating that candidate leaves zero
+trades and zero NET. The last trade contributes +5.128523 EUR,116.34% of total
+NET; the first two sum to−0.720328 EUR. This is concentrated preliminary
+conditional performance, not independently confirmed portfolio advantage.
+
+The central sensitivity books XAUUSD drift and USDJPY reversal. After modeled
+retained gains lifted cash to 232.080052 EUR, the June12 decision reserved 204.79
+EUR of scenario margin for simultaneous XAUUSD 1-unit and USDJPY 1000-unit
+positions. This demonstrates shared capital, reinvestment, competing opportunity
+selection and financing/risk interactions. It does not qualify that policy.
+Removing USDJPY reversal changes central NET by 1.834825 EUR although its booked
+contribution is 0.854754 EUR: the ablation also reallocates opportunities. These
+are descriptive interactions on exposed data, not marginal-alpha proof.
+
+Missing snapshots: June9 12:30 UTC (open-position mark), June11 08:59:40 UTC
+(predecision, all entries suspended that day), June11 09:30 UTC. No substitution,
+imputation or hindsight day removal occurred. Both ledgers end flat and their
+closed cash arithmetic reconciles; the unchanged ledger correctly retains
+`INCOMPLETE_EXPOSURE_OR_EVIDENCE`, incomplete marks and unverified financing.
+The full five-day calendar includes Monday warmup abstention and Thursday's
+source-driven abstention. It is not an independently confirmed eligible week.
+
+Historical tariffs/financing, actual slippage, available executable volume/depth
+and continuous drawdown remain unproven. Simulated selected volume at observed
+BID/ASK is a conditional fill model, not observed liquidity. Sampled peak and
+loss paths are research references only. No LIVE/DEMO orders, Cloud activation,
+HARD21 qualification, policy selection or candidate promotion follows. Original
+protocol/results are frozen without retuning or retrospective gap repair.
+
+Diagnostic interpretation: the 13 no-proposal slots include frozen warmup, absent
+causal features or a zero descriptor; they are not 13 additional quote outages.
+Native rejection reasons describe the final marginal state after selected capital
+is reserved and are not exclusive standalone failure explanations. The primary
+0.5x case evaluates 35 actual proposals: 3 admitted and 32 declined. Twelve candidate
+slots on Monday have no frozen proposal; another zero/absent proposal occurs later.
+Thursday is separately recorded as a source-driven suspension before selection.
