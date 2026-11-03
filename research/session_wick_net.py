@@ -156,7 +156,7 @@ def run():
     result["originalCustodyRunVerified"]=True
     result["frozenWickModelUsedPreviouslyObservedSelectionCalendar"]=True
     result["independentFutureConfirmation"]=False
-    result["sourceOutcomeUnavailableForOneQuotePair"]=True
+    result["originalAnchorStudyReportedOneIncompleteQuotePair"]=True
     result["entryExitHorizonHours"]=6
     result["ordersSubmitted"]=0
     Path("session-wick-net.public.json").write_text(json.dumps(result,sort_keys=True,indent=2)+"\n")
