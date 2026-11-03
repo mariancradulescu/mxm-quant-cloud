@@ -1,0 +1,4 @@
+Preserve original SQP1 encrypted source from run41706496201, artifact13266505512.
+Verify ciphertext SHA256 against the frozen SQP1_AUTHENTIC_RESULT.json before re-archiving for90 days.
+No broker access, private-key access, decryption, economic scoring, model or allocator replay.
+Original public receipt and original ciphertext remain unchanged.
