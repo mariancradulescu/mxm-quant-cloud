@@ -1,6 +1,6 @@
 namespace Mxm.Core;
 
-// Native, pre-entry scenario sizing; never submits or alters orders.
+// Frozen PR16 arithmetic for closed receipt reproduction ONLY. Not current sizing authority.
 public sealed record StopExecutionTerms(decimal MinimumUnits,decimal StepUnits,decimal MaximumUnits,
     decimal StopPriceDistance,decimal TakeProfitPriceDistance,decimal MinimumBrokerStopDistance,
     decimal GapPriceStress,decimal AdverseSlippagePriceStress,decimal SpreadPriceStress,
@@ -9,7 +9,7 @@ public sealed record StopExecutionTerms(decimal MinimumUnits,decimal StepUnits,d
 public sealed record ReservedPositionRisk(string Key,decimal AdditionalLossEur,decimal FavorablePeakEur,decimal MarginEur);
 public sealed record PreventiveSize(decimal Units,decimal StressLossEur,decimal StressPeakEur,
     decimal StressDrawdown,decimal MarginEur,string Reason,bool AbsoluteGuarantee);
-public static class PreventiveExecutionRisk
+public static class HistoricalPr16Risk
 {
     public static PreventiveSize Size(decimal equity,decimal peak,decimal freeMargin,
         IEnumerable<ReservedPositionRisk> positions,StopExecutionTerms terms)
@@ -29,7 +29,7 @@ public static class PreventiveExecutionRisk
         decimal existingLoss=open.Sum(p=>p.AdditionalLossEur),existingPeak=open.Sum(p=>p.FavorablePeakEur);
         decimal headroom=equity-.70m*Math.Max(peak,equity+existingPeak)-existingLoss;
         if(headroom<=terms.FixedRoundTripCostEur)return Deny("NO_STRESS_DRAWDOWN_HEADROOM");
-        // Dynamic 2% equity / 20% remaining headroom is a policy, not historical OWNER EUR2 cap.
+        // CLOSED experiment: these fractions are preserved solely for historical arithmetic.
         decimal budget=Math.Min(.02m*equity,.20m*headroom);
         decimal units=Math.Min(terms.MaximumUnits,Math.Min((budget-terms.FixedRoundTripCostEur)/lossPerUnit,freeMargin/terms.MarginPerUnitEur));
         units=terms.MinimumUnits+Math.Floor((units-terms.MinimumUnits)/terms.StepUnits)*terms.StepUnits;

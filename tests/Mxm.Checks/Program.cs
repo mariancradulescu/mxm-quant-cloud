@@ -352,20 +352,47 @@ Check(Rejects(()=>IntradayReversalNet.Propose(reversalBars.Concat(new[]{reversal
 // OWNER material correction: preventive stop/gap/cost risk BEFORE entry.
 var executionTerms=new StopExecutionTerms(1000m,1000m,100000m,.001m,.002m,.0001m,.001m,.0004m,.0002m,
     1m/1.08m,.0001m,0m,.04m,true,true);
-var preventive=PreventiveExecutionRisk.Size(200m,200m,200m,Array.Empty<ReservedPositionRisk>(),executionTerms);
+var preventive=HistoricalPr16Risk.Size(200m,200m,200m,Array.Empty<ReservedPositionRisk>(),executionTerms);
 Check(preventive.Units>=1000m && preventive.StressDrawdown<.30m && !preventive.AbsoluteGuarantee,
     "pre-entry native stop gap slip FX cost and favorable-peak scenario capacity; residual gaps not guaranteed");
-Check(PreventiveExecutionRisk.Size(141m,200m,141m,Array.Empty<ReservedPositionRisk>(),executionTerms).Units==0,
+Check(HistoricalPr16Risk.Size(141m,200m,141m,Array.Empty<ReservedPositionRisk>(),executionTerms).Units==0,
     "minimum lot blocked BEFORE entry when remaining DD cannot absorb stop plus gap");
 var portfolioReserved=new[]{new ReservedPositionRisk("GBP",2m,4m,40m),new ReservedPositionRisk("AUD",2m,4m,20m)};
-Check(PreventiveExecutionRisk.Size(200m,200m,140m,portfolioReserved,executionTerms).Units>=1000m,
+Check(HistoricalPr16Risk.Size(200m,200m,140m,portfolioReserved,executionTerms).Units>=1000m,
     "correlated risk reserves support multiple positions without historic single-position restriction");
-Check(PreventiveExecutionRisk.Size(200m,200m,200m,Array.Empty<ReservedPositionRisk>(),executionTerms with {MinimumUnits=100000m,StepUnits=100000m}).Units==0,
+Check(HistoricalPr16Risk.Size(200m,200m,200m,Array.Empty<ReservedPositionRisk>(),executionTerms with {MinimumUnits=100000m,StepUnits=100000m}).Units==0,
     "broker minimum larger than funded risk budget rejected without rounding up");
-Check(PreventiveExecutionRisk.Size(200m,200m,200m,Array.Empty<ReservedPositionRisk>(),executionTerms with {MinimumBrokerStopDistance=.002m}).Units==0,
+Check(HistoricalPr16Risk.Size(200m,200m,200m,Array.Empty<ReservedPositionRisk>(),executionTerms with {MinimumBrokerStopDistance=.002m}).Units==0,
     "invalid broker stop rejected before exposure");
-Check(PreventiveExecutionRisk.Size(200m,200m,200m,Array.Empty<ReservedPositionRisk>(),executionTerms with {ReconciledAccount=false}).Units==0,
+Check(HistoricalPr16Risk.Size(200m,200m,200m,Array.Empty<ReservedPositionRisk>(),executionTerms with {ReconciledAccount=false}).Units==0,
     "unknown account inhibits new exposure without changing selective monitor recovery");
-Check(PreventiveExecutionRisk.Size(200m,200m,20m,new[]{new ReservedPositionRisk("other",1m,0,180m)},executionTerms).Units==0,
+Check(HistoricalPr16Risk.Size(200m,200m,20m,new[]{new ReservedPositionRisk("other",1m,0,180m)},executionTerms).Units==0,
     "open portfolio margin and potential loss reserved before minimum lot");
+
+// Material new economic/risk logic: causal forecasts and joint portfolio shocks.
+var adaptiveAccount=new AdaptiveRiskInputs(200m,200m,200m,1000m,1000m,10000m,.01m,.5m,true,true,8,2m);
+var optimistic=Enumerable.Range(0,8).Select(i=>new JointRiskScenario(0,.001m,0,0,.002m,0,0,true)).ToArray();
+var adaptive=AdaptivePortfolioRisk.Choose(adaptiveAccount,optimistic);
+Check(adaptive.Units>0 && adaptive.WorstScenarioDrawdown<.30m,"adaptive funded positive utility chooses broker steps");
+Check(adaptive.Units%1000m==0,"adaptive volume respects broker step");
+Check(AdaptivePortfolioRisk.Choose(adaptiveAccount,optimistic.Select(x=>x with {ProposedNetPerUnitEur=-.001m})).Units==0,"negative net scenarios suspend exposure");
+Check(AdaptivePortfolioRisk.Choose(adaptiveAccount,optimistic.Append(new JointRiskScenario(-10,-.1m,0,10,.1m,0,0,false))).Units==0,"unweighted tail stress blocks despite positive estimation sample");
+Check(AdaptivePortfolioRisk.Choose(adaptiveAccount,optimistic.Select(x=>x with {IntrahorizonOpenLossEur=59m})).Units==0,"existing correlated portfolio risk consumes capacity");
+Check(AdaptivePortfolioRisk.Choose(adaptiveAccount with {FreeMarginEur=5m},optimistic).Units==0,"broker minimum cannot be fractionally invented");
+Check(AdaptivePortfolioRisk.Choose(adaptiveAccount with {CompleteJointRiskEvidence=false},optimistic).Units==0,"unknown joint risk stops only new exposure");
+Check(AdaptivePortfolioRisk.Choose(adaptiveAccount,optimistic.Select((x,i)=>x with {ProposedNetPerUnitEur=i%2==0?.003m:-.002m})).Units==0,"uncertain mean not enough for new exposure");
+var anchor=DateTimeOffset.Parse("2025-01-01T00:00:00Z").ToUnixTimeMilliseconds();
+var researchBars=Enumerable.Range(0,1000).Select(i=>{
+    double o=100000+10*i+20*Math.Sin(i*.4),c=o+10;
+    return new RegimeDiscovery.Bar("TEST","H4",anchor+i*14400000L,anchor+(i+1)*14400000L,o,c+5,o-5,c,100+i%10);
+}).ToArray();
+var featurePoints=RegimeDiscovery.Features(researchBars,new Dictionary<string,RegimeDiscovery.Bar[]>{{"TEST",researchBars}},4);
+Check(featurePoints.All(p=>p.Exit>p.Entry),"research labels follow prediction clock");
+var originalWalk=RegimeDiscovery.Walk(featurePoints);
+var modifiedPoints=featurePoints.Select((p,i)=>i>=featurePoints.Length*8/10?p with {Y=p.Y+10000,X=p.X.Select(v=>v+50).ToArray()}:p).ToArray();
+Check(System.Text.Json.JsonSerializer.Serialize(originalWalk)==System.Text.Json.JsonSerializer.Serialize(RegimeDiscovery.Walk(modifiedPoints)),"withheld late outcomes and features cannot affect walk results");
+var noLookahead=RegimeDiscovery.Features(researchBars.Take(500).ToArray(),new Dictionary<string,RegimeDiscovery.Bar[]>{{"TEST",researchBars}},4);
+Check(noLookahead.Zip(featurePoints.Take(noLookahead.Length)).All(p=>p.First.X.SequenceEqual(p.Second.X)),"future source cannot alter historical features");
+var incomplete=RegimeDiscovery.Aggregate(researchBars.Where((b,i)=>i!=2),"D1",86400000);
+Check(incomplete.All(b=>b.T!=anchor),"incomplete higher timeframe never fabricated");
 Console.WriteLine($"PASS {passed} recovery/accounting/portfolio/causal-H1/dynamic-risk/source-calendar/causal-score checks; synthetic, no economic qualification.");

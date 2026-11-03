@@ -126,7 +126,7 @@ public static class CausalFlowResearch
                     decimal unitCost=(2*terms.CommissionUsd(terms.Min,Math.Max(ea,eb)+p.TargetDistance+gap,fa)/terms.Min+
                         terms.CarryReserveUsd(terms.Min,Math.Max(ea,eb)+p.TargetDistance+gap)/terms.Min+(stop+gap)*terms.FxFeeRate)/currencyFloor;
                     decimal marginPerUnit=Math.Max(D(r.GetProperty("margins"),symbol)/terms.Min,Math.Max(ea,eb)/fb/D(r.GetProperty("leverage"),symbol));
-                    var sizing=PreventiveExecutionRisk.Size(equity,peak,equity,Array.Empty<ReservedPositionRisk>(),
+                    var sizing=HistoricalPr16Risk.Size(equity,peak,equity,Array.Empty<ReservedPositionRisk>(),
                         new(terms.Min,terms.Step,terms.Max,stop,p.TargetDistance,terms.MinimumStop(p.ReferencePrice),gap,.0004m,spreadStress,
                             1m/currencyFloor,unitCost,0,marginPerUnit,true,true));
                     if(sizing.Units<=0){blocked++;continue;}

@@ -1,0 +1,3 @@
+Protocol: docs/WIDE_ADAPTIVE_RESEARCH_20261103.md
+Existing source run: 41476636915; DEVELOPMENT ONLY; no broker request.
+Trigger only by later exact owner/main marker after reviewed integration.
