@@ -70,7 +70,7 @@ public static class PortfolioDiscoveryProgram
     }
     static object Statistics(Prediction[] predictions,long start,long end,double multiplier)
     {
-        var weeks=Enumerable.Range(0,(int)((end-start)/604800000)).Select(i=>start+i*604800000).ToArray();
+        var weeks=Enumerable.Range(0,(int)((end-start)/604800000)).Select(i=>start+i*604800000L).ToArray();
         var totals=weeks.Select(w=>predictions.Where(x=>w<=x.At && x.At<w+604800000).Sum(x=>x.ProxyNet??0)).ToArray();
         double mean=totals.Length>0?totals.Average():0;
         double se=totals.Length>1?Math.Sqrt(totals.Sum(x=>(x-mean)*(x-mean))/(totals.Length-1)/totals.Length):double.PositiveInfinity;
@@ -155,7 +155,7 @@ public static class PortfolioDiscoveryProgram
                     }
                     var select=Predict(input.DevelopmentEnd,input.SelectionEnd,2);var audit=Predict(input.SelectionEnd,input.End,2);
                     var selectBase=Predict(input.DevelopmentEnd,input.SelectionEnd,1);var auditBase=Predict(input.SelectionEnd,input.End,1);
-                    var weekly=Enumerable.Range(0,13).Select(i=>select.Where(x=>input.DevelopmentEnd+i*604800000<=x.At && x.At<input.DevelopmentEnd+(i+1)*604800000).Sum(x=>x.ProxyNet??0)).ToArray();
+                    var weekly=Enumerable.Range(0,13).Select(i=>select.Where(x=>input.DevelopmentEnd+i*604800000L<=x.At && x.At<input.DevelopmentEnd+(i+1)*604800000L).Sum(x=>x.ProxyNet??0)).ToArray();
                     double m=weekly.Average(),sew=Math.Sqrt(weekly.Sum(x=>(x-m)*(x-m))/12/13);
                     bool selected=select.Length>=26 && select.All(x=>x.ProxyNet.HasValue) && weekly.Count(x=>x!=0)>=8 && m-5*sew>0;
                     // Isolated screens are descriptive only; admission uses the common mixture below.
@@ -192,7 +192,7 @@ public static class PortfolioDiscoveryProgram
                 return output.ToArray();
             }
             var selection=Mix(input.DevelopmentEnd,input.SelectionEnd,2);var later=Mix(input.SelectionEnd,input.End,2);
-            double[] Weekly(Prediction[] values,long start)=>Enumerable.Range(0,13).Select(i=>values.Where(x=>start+i*604800000<=x.At && x.At<start+(i+1)*604800000).Sum(x=>x.ProxyNet??0)).ToArray();
+            double[] Weekly(Prediction[] values,long start)=>Enumerable.Range(0,13).Select(i=>values.Where(x=>start+i*604800000L<=x.At && x.At<start+(i+1)*604800000L).Sum(x=>x.ProxyNet??0)).ToArray();
             var weeks=Weekly(selection,input.DevelopmentEnd);double mean=weeks.Average();
             double se=Math.Sqrt(weeks.Sum(x=>(x-mean)*(x-mean))/12/13);
             bool admitted=selection.Length>=26 && selection.All(x=>x.ProxyNet.HasValue) && weeks.Count(x=>x!=0)>=8 && mean-5*se>0;
@@ -215,15 +215,32 @@ public static class PortfolioDiscoveryProgram
                     ReallocationOrFundedMarginalNet=false,MixtureRetunedAfterAblation=false});
             }
         }
+        // Outcome-free funnel explains abstention without relaxing any gate.
+        var forecastSupport=mixtureRows.Select(pair=>new {
+            Symbol=pair.Key.Symbol,Minutes=pair.Key.Minutes,HorizonMinutes=pair.Key.Minutes*pair.Key.Horizon,
+            Phases=new[]{(Name:"SELECTION",Start:input.DevelopmentEnd,End:input.SelectionEnd),(Name:"AUDIT",Start:input.SelectionEnd,End:input.End)}.Select(phase=>{
+                var rows=pair.Value.Where(x=>phase.Start<=x.At && x.At<phase.End && x.Exit<phase.End).ToArray();
+                var clocks=rows.GroupBy(x=>(x.At,x.Exit)).Where(g=>g.Select(x=>x.Family).Distinct().Count()>=2).Select(g=>{
+                    double total=g.Sum(x=>1/Math.Max(1e-12,x.Variance));
+                    double mean=g.Sum(x=>x.Mean/Math.Max(1e-12,x.Variance))/total;
+                    double se=g.Sum(x=>x.Se/Math.Max(1e-12,x.Variance))/total;
+                    return Math.Abs(mean)-2*se;
+                }).ToArray();
+                double cost=costMap.TryGetValue(pair.Key.Symbol,out var c)?c.RoundTripBps:double.PositiveInfinity;
+                return new {Phase=phase.Name,SupportedViewForecasts=rows.Length,MixtureObservableClocks=clocks.Length,
+                    PositiveTwoSeBeforeCostClocks=clocks.Count(x=>x>0),BaseCostAdmissibleClocks=clocks.Count(x=>x>cost),
+                    PrimaryCostAdmissibleClocks=clocks.Count(x=>x>2*cost),MaximumTwoSeBeforeCostBps=clocks.Length>0?clocks.Max():(double?)null};
+            }).ToArray()
+        }).ToArray();
         object Ceiling(List<(string Symbol,Prediction P)> all,long start,long end)
         {
             var unique=all.GroupBy(x=>(x.Symbol,x.P.At,x.P.Exit,x.P.Side)).Select(g=>g.First()).ToArray();
             return new {UniqueUnfinancedOpportunities=unique.Length,Weeks=Enumerable.Range(0,(int)((end-start)/604800000)).Select(i=>{
-                long w=start+i*604800000;int n=unique.Count(x=>w<=x.P.At && x.P.At<w+604800000);
+                long w=start+i*604800000L;int n=unique.Count(x=>w<=x.P.At && x.P.At<w+604800000);
                 return new {Week=w,UnfinancedOpportunityCeiling=n,EvenUnfinancedCeilingBelow21=n<21};}).ToArray(),
                 IsFinancedRoundTripCount=false,MarginConcurrencyApplied=false,Hard21Proven=false};
         }
-        return new {Schema="mxm-integrated-discovery-program-v1",Trials=trials+mixtureTrials,StandaloneGroups=trials,MixtureGroups=mixtureTrials,MarginalProxyChecks=marginalChecks,SourceCoverage=sourceCoverage,Groups=groups,
+        return new {Schema="mxm-integrated-discovery-program-v1",Trials=trials+mixtureTrials,StandaloneGroups=trials,MixtureGroups=mixtureTrials,MarginalProxyChecks=marginalChecks,CausalForecastSupport=forecastSupport,SourceCoverage=sourceCoverage,Groups=groups,
             SelectionSystemOpportunityCeiling=Ceiling(admittedSelection,input.DevelopmentEnd,input.SelectionEnd),
             AuditSystemOpportunityCeiling=Ceiling(admittedAudit,input.SelectionEnd,input.End),
             StatisticalPolicy="FROZEN26W_TRAIN_13W_SELECTION_13W_EXPOSED_CHRONOLOGICAL_AUDIT;240_GROUPS_192_PROXY_ABLATIONS;5SE_DESCRIPTIVE_NOT_CERTIFICATION",

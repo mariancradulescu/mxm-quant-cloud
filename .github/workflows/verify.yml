@@ -30,6 +30,7 @@ jobs:
       authorized_policy_attribution: ${{ steps.policy_attribution.outputs.authorized_policy_attribution }}
       authorized_m15_anchor_net: ${{ steps.m15_anchor.outputs.authorized_m15_anchor_net }}
       authorized_discovery_program: ${{ steps.bdp.outputs.authorized_discovery_program }}
+      authorized_discovery_reception: ${{ steps.bdp.outputs.authorized_discovery_reception }}
       authorized_sequence_portfolio: ${{ steps.sqp.outputs.authorized_sequence_portfolio }}
       authorized_observation_feasibility: ${{ steps.cef.outputs.authorized_observation_feasibility }}
       authorized_holding_diagnosis: ${{ steps.holding_diag.outputs.authorized_holding_diagnosis }}
@@ -300,11 +301,19 @@ jobs:
         shell: bash
         run: |
           echo "authorized_discovery_program=false" >> "$GITHUB_OUTPUT"
+          echo "authorized_discovery_reception=false" >> "$GITHUB_OUTPUT"
           if [[ "$GITHUB_EVENT_NAME" == "push" && "$GITHUB_REF" == "refs/heads/main" &&
                 "$GITHUB_ACTOR" == "mariancradulescu" &&
                 "$(git log -1 --format=%s)" == "MXM_INTEGRATED_DISCOVERY_PROGRAM" ]] &&
              [[ "$(git diff-tree --no-commit-id --name-only -r HEAD)" == "ops/portfolio-discovery-request.txt" ]]; then
             echo "authorized_discovery_program=true" >> "$GITHUB_OUTPUT"
+          fi
+          if [[ "$GITHUB_EVENT_NAME" == "push" && "$GITHUB_REF" == "refs/heads/main" &&
+                "$GITHUB_ACTOR" == "mariancradulescu" &&
+                "$(git log -1 --format=%s)" == "MXM_BDP1_CALENDAR_FACT_RECEPTION" ]] &&
+             [[ "$(git diff-tree --no-commit-id --name-only -r HEAD)" == "ops/portfolio-discovery-reception-request.txt" ]]; then
+            echo "authorized_discovery_program=true" >> "$GITHUB_OUTPUT"
+            echo "authorized_discovery_reception=true" >> "$GITHUB_OUTPUT"
           fi
       - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
         with:
@@ -497,8 +506,16 @@ jobs:
           R3_CTRADER_CLIENT_ID: ${{ secrets.R3_CTRADER_CLIENT_ID }}
           R3_CTRADER_CLIENT_SECRET: ${{ secrets.R3_CTRADER_CLIENT_SECRET }}
           R3_CTRADER_ACCESS_TOKEN: ${{ secrets.R3_CTRADER_ACCESS_TOKEN }}
+      - name: Recover already sealed annual source for calendar correction without broker recollection
+        if: needs.verify.outputs.authorized_discovery_reception == 'true'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: sealed-source
+          path: sealed-output
+          run-id: 41724643418
+          github-token: ${{ github.token }}
       - name: Integrated annual M5 source and development cost context after source pilot
-        if: needs.verify.outputs.authorized_discovery_program == 'true'
+        if: needs.verify.outputs.authorized_discovery_program == 'true' && needs.verify.outputs.authorized_discovery_reception != 'true'
         run: python -m research.portfolio_discovery_source
         env:
           R3_CTRADER_CLIENT_ID: ${{ secrets.R3_CTRADER_CLIENT_ID }}
@@ -552,7 +569,12 @@ jobs:
           path: sealed-output
       - name: Raw annual source reconstruction and native integrated discovery program
         if: needs.verify.outputs.authorized_discovery_program == 'true'
-        run: python -m research.portfolio_discovery_source --readback
+        run: |
+          if [[ "${{ needs.verify.outputs.authorized_discovery_reception }}" == 'true' ]]; then
+            python -m research.portfolio_discovery_source --readback --bound-source-reception
+          else
+            python -m research.portfolio_discovery_source --readback
+          fi
         env:
           R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
       - name: Preserve all contextual groups and full-week programme ceilings

@@ -41,6 +41,12 @@ Check(nativeConflict,"native conflicting duplicate rejected");
 var pendingBook=new NativeFundedLedger();pendingBook.Apply(Journal("request",1000,"REQUEST_OPEN"));
 pendingBook.Apply(Journal("cancel",1500,"CONFIRMED_CANCEL"));
 Check(pendingBook.Summary().PendingIntents==0 && pendingBook.Summary().CashEur==200,"confirmed cancellation retains cash and leaves no invented fill");
+var highMarginBook=new NativeFundedLedger();highMarginBook.Apply(Journal("margin-intent",1000,"REQUEST_OPEN"));
+var rejectsHigherCurrentMargin=false;
+try{highMarginBook.Apply(Journal("margin-fill",2000,"OPEN_FILL",price:10.01m,quotes:new[]{ledgerQuote with {MarginPerUnit=101}}));}
+catch(InvalidOperationException){rejectsHigherCurrentMargin=true;}
+Check(rejectsHigherCurrentMargin && highMarginBook.Summary().OpenPositions==0 && highMarginBook.Summary().CashEur==200,
+    "new native fill cannot use lower recorded margin when current causal margin is higher");
 const long bdpSyntheticStart=1762128000000L;
 var bdpSyntheticBars=new List<ProgramBar>();
 void AddProgramWindow(long start,int count)
@@ -56,6 +62,15 @@ for(int w=26;w<52;w++)AddProgramWindow(bdpSyntheticStart+w*604800000L,128);
 var bdpSyntheticInput=new DiscoveryInput(bdpSyntheticBars.ToArray(),new[]{new ProgramCost("SYNTH",.01,1000,10,true,1320,18)},
     bdpSyntheticStart,bdpSyntheticStart+26*604800000L,bdpSyntheticStart+39*604800000L,bdpSyntheticStart+52*604800000L);
 using var bdpFirst=System.Text.Json.JsonDocument.Parse(System.Text.Json.JsonSerializer.Serialize(PortfolioDiscoveryProgram.Evaluate(bdpSyntheticInput)));
+foreach(var phase in new[]{("Selection",bdpSyntheticInput.DevelopmentEnd),("Audit",bdpSyntheticInput.SelectionEnd)})
+    foreach(var group in bdpFirst.RootElement.GetProperty("Groups").EnumerateArray())
+    {
+        var stats=group.GetProperty(phase.Item1);var counts=stats.GetProperty("WeeklyOpportunityCounts").EnumerateArray().ToArray();
+        Check(counts.Length==13 && counts.Select((week,index)=>week.GetProperty("Week").GetInt64()==phase.Item2+index*604800000L).All(x=>x),
+            "every calendar week uses nonoverflowing 64 bit milliseconds");
+        Check(counts.Sum(x=>x.GetProperty("Count").GetInt32())==stats.GetProperty("Windows").GetInt32(),
+            "all decisions belong to exactly one of the thirteen complete weeks");
+    }
 var bdpChanged=bdpSyntheticInput with {Bars=bdpSyntheticBars.Select(b=>b.Start<bdpSyntheticInput.SelectionEnd?b:
     b with {Open=1e10/b.Open,High=1e10/b.Low,Low=1e10/b.High,Close=1e10/b.Close}).ToArray()};
 using var bdpSecond=System.Text.Json.JsonDocument.Parse(System.Text.Json.JsonSerializer.Serialize(PortfolioDiscoveryProgram.Evaluate(bdpChanged)));

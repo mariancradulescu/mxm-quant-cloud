@@ -1,0 +1,9 @@
+# BDP1 execution review
+
+Source run [41724643418](https://github.com/mariancradulescu/mxm-quant-cloud/actions/runs/41724643418) completed963 read-only requests after an outcome-blind source pilot.441,240 authentic M5 bars cover the predeclared52 weeks across six assets. Original account binding and raw protobuf reconstruction passed. Source artifact13273950911 retains the original ciphertext until2027-02-01T21:45:22Z; decryption domain remains41724643418.
+
+Initial public artifact13275041084 has SHA256180838d4cd9f428e219db27de436e1304bf9f55fdc53d052f28d9bd4a7885bd9. Its calendar aggregation is **invalid**: C# integer multiplication overflow displaced weekly boundaries after index3. The untouched initial artifact and encrypted source remain preserved; no economic conclusion is accepted from its calendar statistics. A technical correction uses64-bit week arithmetic, exact13-week partition checks and the same sealed source. No protocol, feature, cost, uncertainty, eligibility, split or allocation rule is retuned. Outcome-free forecast support diagnostics explain abstention without changing admissions.
+
+Native funded reception already passed on the immutable SQP1 facts: two nonempty90-event scenario journals, each seven modeled round trips, match original cash, NET, every cost component and sampled drawdown within EUR1e-18. Checkpoint restore after every event and duplicate idempotence pass. This is accounting parity, not new SQP1 research, broker fill recovery, continuous drawdown certification or independent economic evidence. The current-margin admission guard is strengthened before technical re-reception.
+
+No orders, Cloud activation, deposit, source substitution or independent-confirmation claim is authorized or performed. Discovery BID-return cost scenarios are not financed NET; actual common-capital execution remains unproved.
