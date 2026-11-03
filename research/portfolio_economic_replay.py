@@ -50,6 +50,7 @@ class SynchronizedFundedReplay(FundedReplay):
             if q.symbol in self.quotes and self.quotes[q.symbol].t>=at:raise IncompleteEvidence('EPA1_REPEATED_BATCH')
         self._clock(at);self.quotes.update(new);self.source_ids.add(source_hash)
         self._mark_valuations=point['Quotes'];self._valuation_clock=at
+        self.before_pending_actions(point)
         rest=[]
         for d in self.pending:
             q=new.get(d.symbol)
@@ -62,6 +63,9 @@ class SynchronizedFundedReplay(FundedReplay):
             elif d.position_id in self.open:
                 self._exit(d.position_id,q,'EPA1_FIXED_CLOCK_OBSERVED_QUOTE',fee(point['Quotes'][d.symbol],self.open[d.position_id].request.units))
         self.pending=rest;self._mark(at)
+
+    def before_pending_actions(self,point):
+        pass # EPA1 semantics unchanged; EPA2 observes risk before pending exits.
 
 
 def funding_condition(contract):

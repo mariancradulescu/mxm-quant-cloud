@@ -24,6 +24,9 @@ class HoldingReplay(SynchronizedFundedReplay):
             super()._mark(t);self.equity_known=True
         except IncompleteEvidence:
             self.incomplete_marks=True;self.equity_known=False
+    def before_pending_actions(self,point):
+        if self.open and getattr(self,'risk_observer',None) is not None:
+            self._mark(point['At']);self.risk_observer()
     def dispatch(self,point,slip,source_hash,entry_deadline=False):
         self.equity_known=not self.open
         self.quote_batch(point,slip,source_hash)
@@ -153,8 +156,10 @@ def run_case(b,plan,valued,p,horizon,active,slip,bounds,removed=None,retain=True
                     # No extra price collection. Response snapshots come from
                     # the same complete tick window and can fill a later exit.
                     key=str(nominal+offset);point=valued[key];raw=b['snapshots'][key]
-                    engine.dispatch(point,slip,hashlib.sha256((b['protocolSha256']+key).encode()).hexdigest(),entry_deadline=(minute==0 and offset==0))
-                    if engine.open:
+                    observed_before=False
+                    def observe_holding():
+                        nonlocal uncertain,suspend,observed_before
+                        observed_before=True
                         state=monitor(engine,b,raw,stress)
                         risk.append(dict(day=day,nominal=nominal+offset,observedAt=raw['at'],**state))
                         if state['OutcomeUncertain']:uncertain=True
@@ -165,6 +170,9 @@ def run_case(b,plan,valued,p,horizon,active,slip,bounds,removed=None,retain=True
                             for pid in state['ExitIds']:
                                 if pid in engine.open and not any(x.position_id==pid and x.action=='CLOSE' for x in engine.pending):
                                     pos=engine.open[pid];engine.decide(Decision(raw['at'],raw['at'],through,pid,pos.request.symbol,'CLOSE',1000))
+                    engine.risk_observer=observe_holding
+                    engine.dispatch(point,slip,hashlib.sha256((b['protocolSha256']+key).encode()).hexdigest(),entry_deadline=(minute==0 and offset==0))
+                    if engine.open and not observed_before:observe_holding()
                     if engine.max_sampled_drawdown>=D('.30'):suspend=True
             unresolved=bool(engine.open or engine.pending)
             if unresolved:uncertain=True;suspend=True
@@ -215,10 +223,15 @@ def audit_epa1(old,b):
                 if point is None:
                     if e.open:e.incomplete_marks=True;missing.append(dict(day=day,minute=minute,positionOutcomeBetweenMarks='UNKNOWN'))
                     continue
-                e.dispatch(point,slip,'EPA1_FIXED_BOOK_AUDIT',entry_deadline=(minute==0))
-                if e.open:
+                observed_before=False
+                def observe_fixed_book():
+                    nonlocal observed_before
+                    observed_before=True
                     observed=monitor(e,b,old['snapshots'][str(tm)],{});eq=e.equity(point['At']);static=sum((pos.margin for pos in e.open.values()),ZERO)
                     risks.append(dict(day=day,nominal=tm,sampledLiquidationEquityEur=eq,originalStaticMarginEur=static,originalStaticEquityToMargin=eq/static if static>0 else None,**observed))
+                e.risk_observer=observe_fixed_book
+                e.dispatch(point,slip,'EPA1_FIXED_BOOK_AUDIT',entry_deadline=(minute==0))
+                if e.open and not observed_before:observe_fixed_book()
         rep=e.report();delta=rep['closed_net_eur']-D(case['ledgerReport']['closed_net_eur'])
         if abs(delta)>D('1e-20'):raise IncompleteEvidence('ORIGINAL_EPA1_FIXED_BOOK_CASH_MISMATCH')
         ratios=[x['EquityToMargin'] for x in risks if x['EquityToMargin'] is not None]

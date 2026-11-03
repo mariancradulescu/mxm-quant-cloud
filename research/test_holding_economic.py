@@ -76,6 +76,15 @@ class HoldingEconomics(unittest.TestCase):
         unknown=[x for x in r['holdingRiskLedger'] if x['Reason']=='EVIDENCE_GAP_EXIT_AT_NEXT_OBSERVED_QUOTE']
         self.assertTrue(unknown);self.assertIsNone(unknown[0]['EquityToMargin'])
 
+    def test_terminal_quote_risk_observed_before_pending_fixed_exit(self):
+        b,plan,v,p,bounds=self.fixture();end=day_clock(p['replayDays'][0])+240*60000
+        for q in v[str(end)]['Quotes'].values():q['Bid']=D('.9');q['Ask']=D('.9002')
+        for q in b['snapshots'][str(end)]['quotes'].values():q['bid']=90000;q['ask']=90020
+        r=run_case(b,plan,v,p,240,False,D('.5'),bounds)
+        terminal=[x for x in r['holdingRiskLedger'] if x['nominal']==end]
+        self.assertTrue(terminal);self.assertTrue(terminal[0]['DocumentedReferenceCrossed'])
+        self.assertTrue(r['executionOutcomeUncertain']);self.assertTrue(r['completeFlatLedger'])
+
     def test_missing_final_exit_retains_unresolved_positions(self):
         b,plan,v,p,bounds=self.fixture();end=day_clock(p['replayDays'][0])+240*60000
         for off in (0,30000):
