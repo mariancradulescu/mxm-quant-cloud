@@ -62,3 +62,13 @@ repriced financing remain required. Missing historical tariffs, depth, account
 stop-out and intramark risk remain explicit. The Cloud adapter still does not use
 the new clock or manage open risk; the existing native risk implementation only
 runs in research/replay. No economic qualification follows from compilation.
+
+CEF1 run41695561224 verified native/reference parity on4284 authentic windows.
+It found570/612 common all-six clocks and8/36 fully supported unique paths under
+the explicit minimum-volume current-rule financing screen. This validates a
+usable observation mechanism on exposed source; it does not validate a predictive
+candidate or permit selecting the successful July cohort. XAUUSD April capacity
+failures demonstrate why source coverage and EUR200 funding must be checked
+separately. The subsequent batch endpoint invokes the identical holding-risk
+kernel in one process, removing thousands of process launches. Protected readback
+requires its entire economic support result to match the original frozen receipt.

@@ -56,21 +56,21 @@ def evaluate(b,p):
             for (s,t),r in observed.items() if s==symbol and r['At'] is not None}
         source=dict(schema=b['schema'],readOnly=True,depositCurrency='EUR',symbols=b['symbols'],snapshots=snapshots)
         valued[symbol]=native(source,'--value-portfolio-source')['Snapshots']
-    margin_cache={}
-    def capacity(s,t):
-        if (s,t) in margin_cache:return margin_cache[s,t]
-        observation=observed.get((s,t))
-        if observation is None or observation['At'] is None:return None
-        row=b['symbols'][s];units=D(row['contract']['minVolume'])/100
-        raw={q['Symbol']:dict(bid=q['Bid'],ask=q['Ask']) for q in observation['Quotes']}
-        result=native(dict(EquityEur=200,PeakReferenceEur=200,DataComplete=True,
-            Positions=[dict(Id='CEF1_MINIMUM_CAPACITY/'+s,Symbol=s,Units=units,
+    margin_keys=[];margin_requests=[]
+    for (symbol,t),observation in observed.items():
+        if symbol=='ALL' or observation['At'] is None:continue
+        row=b['symbols'][symbol];units=D(row['contract']['minVolume'])/100
+        margin_keys.append((symbol,t))
+        margin_requests.append(dict(EquityEur=200,PeakReferenceEur=200,DataComplete=True,
+            Positions=[dict(Id='CEF1_MINIMUM_CAPACITY/'+symbol,Symbol=symbol,Units=units,
                 EntryMarginPerUnitEur=D(row['currentMarginPerUnitBoundEur']),StressLossEur=0)],
-            SourceSymbols=b['symbols'],RawQuotes=raw,
+            SourceSymbols=b['symbols'],RawQuotes={q['Symbol']:dict(bid=q['Bid'],ask=q['Ask']) for q in observation['Quotes']},
             AccountLeverage=D(b['riskTerms']['leverageInCents'])/100,
-            DocumentedReferenceStopoutRatio=D('.5'),TierLeverageDivisor=100),'--assess-holding-risk')
-        margin_cache[s,t]=result['UsedMarginEnvelopeEur']
-        return margin_cache[s,t]
+            DocumentedReferenceStopoutRatio=D('.5'),TierLeverageDivisor=100))
+    margins=native(margin_requests,'--assess-holding-risk-batch')
+    need(len(margins)==len(margin_keys),'CEF1_MARGIN_BATCH_CARDINALITY')
+    margin_cache={key:result['UsedMarginEnvelopeEur'] for key,result in zip(margin_keys,margins)}
+    def capacity(s,t):return margin_cache.get((s,t))
     def support(s,t):
         return s in valued.get(s,{}).get(str(t),{}).get('Quotes',{})
     def path(s,day,horizon,replay=False):
@@ -129,6 +129,7 @@ def evaluate(b,p):
     return dict(schema='mxm-causal-observation-feasibility-v1',id='CEF1',
         nativePythonEventParity=True,testedWindows=len(items),
         clockRule='FIRST_ATOMIC_VALID_EVENT_AFTER_LATENCY_WITHIN_FIXED_WINDOW_NO_PRICE_RANKING',
+        windowStatuses={status:sum(r['Status']==status for r in actual) for status in sorted({r['Status'] for r in actual})},
         routeWindowCounts={s:sum(name==s and r['At'] is not None for (name,_),r in zip(items,actual))
                            for s in p['universe']+['ALL']},
         uniqueEconomicSupportGroups=groups,completeGroups=usable,totalGroups=len(groups),
@@ -154,6 +155,14 @@ def main():
     result=evaluate(b,p)
     result.update(executionRunId=int(os.environ['GITHUB_RUN_ID']),sourceRunId=frozen['sourceRunId'],
         sourceCiphertextSha256=frozen['sourceCiphertextSha256'])
+    frozen_path=Path('docs/CAUSAL_OBSERVATION_FEASIBILITY_RESULT.json')
+    if frozen_path.exists():
+        original=json.loads(frozen_path.read_text())
+        # Batch optimization must reproduce the entire original economic support
+        # receipt. Only execution identity and the added diagnostic histogram differ.
+        need({k:v for k,v in result.items() if k not in ('executionRunId','windowStatuses')} ==
+             {k:v for k,v in original.items() if k not in ('executionRunId','windowStatuses')},
+             'CEF1_BATCH_OPTIMIZATION_CHANGED_ORIGINAL_SUPPORT_RESULT')
     Path('observation-feasibility.public.json').write_text(json.dumps(result,sort_keys=True,indent=2)+'\n')
     print('CEF1_AUTHENTIC_FEASIBILITY '+json.dumps(result,sort_keys=True),flush=True)
 

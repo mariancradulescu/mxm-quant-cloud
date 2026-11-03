@@ -327,3 +327,22 @@ remains authorized, with no requirement to inherit JOP1 or an EPA3 identity.
 The existing holding-risk kernel is research infrastructure. It is not yet wired
 to native Cloud position management; neither a compiled clock nor source support
 is full C# replay equivalence. No trades or Cloud activation are authorized.
+
+CEF1 executed successfully in run41695561224 without broker requests. All4284
+route/common-window native outputs matched the independent Python reference.
+570/612 windows admitted a common all-six observation; individual routes had
+596–609/612. Of36 unique symbol/horizon/cohort groups,8 had all required six
+calibration and four replay source/funding/minimum-volume capacity paths.
+These8 are all in July; they MUST NOT become retrospectively selected research
+dates. The full earlier calendar and missing paths remain in the receipt.
+Current-rule XAUUSD minimum-volume margin on complete April replay paths is
+about EUR203–205, before friction, exposing conditional initial-capital capacity
+failure even with available quotes. No actual historic margin or stopout follows.
+
+The receipt is frozen as `CAUSAL_OBSERVATION_FEASIBILITY_RESULT.json` and hashed
+in the global exposure registry. It contains no forecasts, returns, allocations
+or rescued EPA2 results. New economic protocol admission remains false pending
+prospective feature/label/sample/split definition and source pilot on the new
+episodes, common open-position valuation and financing, and declared uncertainty
+bounds. Conditional research may model uncertain costs conservatively; this is
+not permission to certify unknown historical terms or execution depth.
