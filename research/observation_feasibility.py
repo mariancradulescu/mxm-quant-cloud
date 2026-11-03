@@ -102,7 +102,8 @@ def evaluate(b,p):
             # A source capacity screen at one minimum lot, not modeled P/L.
             # Spread + 1x entry-spread hypothetical slippage on each side.
             cost=2*commission+3*(D(q['Ask'])-D(q['Bid']))*units*D(q['EurDebitPerQuote'])
-        return dict(day=day,complete=not missing and funding,missingWindowCount=len(missing),
+        return dict(day=day,complete=(not missing and funding and margin_complete and cost is not None
+                    and maximum_margin+cost<200),missingWindowCount=len(missing),
             windowCount=len(keys),fundingCondition=funding,
             currentMinimumMarginEur=str(current_min),currentMinMarginBelowInitial200=current_min<=200,
             historicalMarginCertified=False,actualFillOrDepthProven=False,
