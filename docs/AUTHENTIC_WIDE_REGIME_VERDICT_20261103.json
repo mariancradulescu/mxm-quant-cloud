@@ -1,0 +1,102 @@
+{
+  "brokerNetEur": null,
+  "candidates": [],
+  "costStatus": "0_1_3_10_BPS_HYPOTHETICAL_ROUNDTRIP_SENSITIVITY_NOT_BROKER_NET",
+  "families": {
+    "CANDLE_REVERSION_RIDGE": {
+      "positiveGross": 25,
+      "stableAt3Bps": 0,
+      "supportAt3Bps": 0,
+      "trials": 54
+    },
+    "FIXED_EQUAL_ENSEMBLE": {
+      "positiveGross": 24,
+      "stableAt3Bps": 0,
+      "supportAt3Bps": 0,
+      "trials": 54
+    },
+    "INTERCEPT_BASELINE": {
+      "positiveGross": 23,
+      "stableAt3Bps": 0,
+      "supportAt3Bps": 0,
+      "trials": 54
+    },
+    "INTERMARKET_RIDGE": {
+      "positiveGross": 27,
+      "stableAt3Bps": 0,
+      "supportAt3Bps": 0,
+      "trials": 54
+    },
+    "POOLED_RIDGE": {
+      "positiveGross": 26,
+      "stableAt3Bps": 0,
+      "supportAt3Bps": 0,
+      "trials": 54
+    },
+    "REGIME_SPECIALIST_RIDGE": {
+      "positiveGross": 22,
+      "stableAt3Bps": 0,
+      "supportAt3Bps": 0,
+      "trials": 54
+    },
+    "TREND_RIDGE": {
+      "positiveGross": 24,
+      "stableAt3Bps": 0,
+      "supportAt3Bps": 0,
+      "trials": 54
+    },
+    "VOLATILITY_INTERACTION_RIDGE": {
+      "positiveGross": 26,
+      "stableAt3Bps": 0,
+      "supportAt3Bps": 0,
+      "trials": 54
+    }
+  },
+  "independentConfirmation": false,
+  "ordersSubmitted": 0,
+  "originalSourceReceiptParity": true,
+  "sourceCiphertextSha256": "50e40f62156f598d715d6052e466ae7ef77b9bc39117cad37472c7f0f505e61d",
+  "sourceRunId": 41476636915,
+  "trialCount": 432,
+  "executionRunId": 41590537732,
+  "implementationMergeCommit": "44baec50cf1662241f1a311bf306440f66f02779",
+  "executionCommit": "6042cf2a5d87d852570c11299ca504db98244198",
+  "originalArtifactId": 13210375007,
+  "originalArtifactZipSha256": "9635ab058bce026609fe58ffb1186c6f128a75b8af8371fb79dff383150cf12c",
+  "originalArtifactPath": "docs/evidence/WIDE_REGIME_41590537732_PUBLIC.zip",
+  "positiveGrossCells": 197,
+  "cellsMeetingEpisodeAndWeekMinimum": 96,
+  "cellsWithInsufficientEpisodeOrWeekSupport": 336,
+  "supportedCellsByHypotheticalCostBps": {
+    "0": 0,
+    "1": 0,
+    "3": 0,
+    "10": 0
+  },
+  "effectiveTimeframes": [
+    "M15",
+    "H1",
+    "H4"
+  ],
+  "d1Status": "NO_COMPLETE_UTC_D1_AGGREGATES_IN_ORIGINAL_SOURCE; NOT_EVALUATED",
+  "sourceBarsByTimeframe": {
+    "M15": 5695,
+    "H1": 1423,
+    "H4": 9418
+  },
+  "observedRegimes": 4,
+  "regimeObservationCountsAcrossOverlappingTrialsNotDistinctEvents": [
+    19336,
+    7928,
+    14240,
+    5640
+  ],
+  "exactConfigurationStatus": "CLOSED_INSUFFICIENT_SUPPORT_OR_NO_APPROXIMATE_MULTIPLICITY_ADJUSTED_EVIDENCE_EVEN_AT_ZERO_COST; NO_RETUNING",
+  "netVerdict": "NOT_COMPUTED_EXECUTABLE_EUR_NET; NO_CANDIDATE_PASSED_GROSS_SCREEN",
+  "funded200EurProven": false,
+  "hard21Proven": false,
+  "adaptiveRiskCalibratedOrProspectivelyValidated": false,
+  "cloudTradingActivation": false,
+  "csharpChecks": 109,
+  "pythonTests": 26
+}
