@@ -12,6 +12,7 @@
     "docs/AUTHENTIC_NEIGHBOUR_NET_VERDICT_20261103.json": "4e9677ca94afa4c568e9104ebb33768e758b6100ffcfcf128596bdcbb4bfd2b1",
     "docs/AUTHENTIC_RELATIVE_GROSS_VERDICT_20261103.json": "2ed851f41737fd8b4a8963852602137db6aad1bcd187f3fa41a618a71d51812a",
     "docs/AUTHENTIC_WIDE_REGIME_VERDICT_20261103.json": "8ce232c1cb4f8f7dafc014de898ec6752838e5c58190d32eebe0a6c180860a65",
+    "docs/CAUSAL_OBSERVATION_FEASIBILITY_RESULT.json": "f6b01ad3220419d7fcdf418c0bc2ddc1270625afb0cb1e114e53cbec30148ce4",
     "docs/EPA1_AUTHENTIC_PORTFOLIO_RESULT.json": "abfcff3da3f72cba7d355713daf32f61a9a70cc2964f3a3a23b5f5cd58b31984",
     "docs/EPA2_AUTHENTIC_HOLDING_RESULT.json": "0c3e9ab22d5471ffa52291c5b66c649f3d4f01a78afe5f6ac37a4597886858ca",
     "docs/EPA2_EXECUTION_DIAGNOSIS.json": "74054ec4cd11368cf5635c0e1b5b5b21b7b69a59547b65b79f112ea981df2a31",
@@ -124,12 +125,16 @@
     {
       "allocationsAllowed": false,
       "epa2ReplacementAllowed": false,
+      "executionRunId": 41695561224,
       "fullStudyAdmission": false,
       "id": "CEF1",
       "independent": false,
       "netEstimateAllowed": false,
       "phase": "NATIVE_CAUSAL_OBSERVATION_FEASIBILITY_ON_EXPOSED_SOURCE",
+      "publicArtifactId": 13261641379,
+      "publicResultSha256": "f6b01ad3220419d7fcdf418c0bc2ddc1270625afb0cb1e114e53cbec30148ce4",
       "sourceRunId": 41648280262,
+      "status": "EXECUTED_NATIVE_PARITY_AND_CONDITIONAL_MINIMUM_VOLUME_PATH_SUPPORT_NOT_FULL_STUDY_ADMISSION",
       "trialCountPolicy": "UNIQUE_ROUTE_HORIZON_COHORT_COVERAGE_NOT_STRATEGY_REPLICATED_SAMPLE_SIZE"
     }
   ],

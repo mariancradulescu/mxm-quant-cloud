@@ -1,5 +1,15 @@
 using System.Text.Json;
 using System.Security.Cryptography;
+if (args.Length == 3 && args[2] == "--assess-holding-risk-batch")
+{
+    try {
+        var inputs=JsonSerializer.Deserialize<Mxm.Core.HoldingRiskInput[]>(File.ReadAllBytes(args[0]),
+            new JsonSerializerOptions {NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString})
+            ?? throw new ArgumentException();
+        File.WriteAllText(args[1],JsonSerializer.Serialize(inputs.Select(Mxm.Core.HoldingPortfolioRisk.Assess).ToArray()));
+        return 0;
+    } catch { return 20; }
+}
 if (args.Length == 3 && args[2] == "--causal-observation-windows")
 {
     try {
