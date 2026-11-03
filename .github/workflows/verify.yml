@@ -29,6 +29,7 @@ jobs:
       authorized_volume_net: ${{ steps.volume_net.outputs.authorized_volume_net }}
       authorized_policy_attribution: ${{ steps.policy_attribution.outputs.authorized_policy_attribution }}
       authorized_m15_anchor_net: ${{ steps.m15_anchor.outputs.authorized_m15_anchor_net }}
+      authorized_discovery_program: ${{ steps.bdp.outputs.authorized_discovery_program }}
       authorized_sequence_portfolio: ${{ steps.sqp.outputs.authorized_sequence_portfolio }}
       authorized_observation_feasibility: ${{ steps.cef.outputs.authorized_observation_feasibility }}
       authorized_holding_diagnosis: ${{ steps.holding_diag.outputs.authorized_holding_diagnosis }}
@@ -294,6 +295,17 @@ jobs:
              [[ "$(git diff-tree --no-commit-id --name-only -r HEAD)" == "ops/sqp1-preserve-source-request.txt" ]]; then
             echo "authorized_sqp_preservation=true" >> "$GITHUB_OUTPUT"
           fi
+      - name: Recognize exact owner/main integrated discovery and native-ledger reception intent
+        id: bdp
+        shell: bash
+        run: |
+          echo "authorized_discovery_program=false" >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_EVENT_NAME" == "push" && "$GITHUB_REF" == "refs/heads/main" &&
+                "$GITHUB_ACTOR" == "mariancradulescu" &&
+                "$(git log -1 --format=%s)" == "MXM_INTEGRATED_DISCOVERY_PROGRAM" ]] &&
+             [[ "$(git diff-tree --no-commit-id --name-only -r HEAD)" == "ops/portfolio-discovery-request.txt" ]]; then
+            echo "authorized_discovery_program=true" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
         with:
           dotnet-version: |
@@ -361,7 +373,7 @@ jobs:
       (
         (github.event_name == 'workflow_dispatch' && inputs.collect == true) ||
         (github.event_name == 'push' &&
-          (needs.verify.outputs.authorized_source_request == 'true' || needs.verify.outputs.authorized_economic_request == 'true' || needs.verify.outputs.authorized_intraday_net == 'true' || needs.verify.outputs.authorized_flow_net == 'true' || needs.verify.outputs.authorized_neighbour_net == 'true' || needs.verify.outputs.authorized_volume_net == 'true' || needs.verify.outputs.authorized_m15_anchor_net == 'true' || needs.verify.outputs.authorized_joint_quote_extension == 'true' || needs.verify.outputs.authorized_portfolio_economic == 'true' || needs.verify.outputs.authorized_portfolio_holding == 'true' || needs.verify.outputs.authorized_sequence_portfolio == 'true'))
+          (needs.verify.outputs.authorized_source_request == 'true' || needs.verify.outputs.authorized_economic_request == 'true' || needs.verify.outputs.authorized_intraday_net == 'true' || needs.verify.outputs.authorized_flow_net == 'true' || needs.verify.outputs.authorized_neighbour_net == 'true' || needs.verify.outputs.authorized_volume_net == 'true' || needs.verify.outputs.authorized_m15_anchor_net == 'true' || needs.verify.outputs.authorized_joint_quote_extension == 'true' || needs.verify.outputs.authorized_portfolio_economic == 'true' || needs.verify.outputs.authorized_portfolio_holding == 'true' || needs.verify.outputs.authorized_sequence_portfolio == 'true' || needs.verify.outputs.authorized_discovery_program == 'true'))
       )
     needs: verify
     runs-on: ubuntu-24.04
@@ -392,7 +404,7 @@ jobs:
       (
         (github.event_name == 'workflow_dispatch' && inputs.collect == true) ||
         (github.event_name == 'push' &&
-          (needs.verify.outputs.authorized_source_request == 'true' || needs.verify.outputs.authorized_economic_request == 'true' || needs.verify.outputs.authorized_intraday_net == 'true' || needs.verify.outputs.authorized_flow_net == 'true' || needs.verify.outputs.authorized_neighbour_net == 'true' || needs.verify.outputs.authorized_volume_net == 'true' || needs.verify.outputs.authorized_m15_anchor_net == 'true' || needs.verify.outputs.authorized_joint_quote_extension == 'true' || needs.verify.outputs.authorized_portfolio_economic == 'true' || needs.verify.outputs.authorized_portfolio_holding == 'true' || needs.verify.outputs.authorized_sequence_portfolio == 'true'))
+          (needs.verify.outputs.authorized_source_request == 'true' || needs.verify.outputs.authorized_economic_request == 'true' || needs.verify.outputs.authorized_intraday_net == 'true' || needs.verify.outputs.authorized_flow_net == 'true' || needs.verify.outputs.authorized_neighbour_net == 'true' || needs.verify.outputs.authorized_volume_net == 'true' || needs.verify.outputs.authorized_m15_anchor_net == 'true' || needs.verify.outputs.authorized_joint_quote_extension == 'true' || needs.verify.outputs.authorized_portfolio_economic == 'true' || needs.verify.outputs.authorized_portfolio_holding == 'true' || needs.verify.outputs.authorized_sequence_portfolio == 'true' || needs.verify.outputs.authorized_discovery_program == 'true'))
       )
     needs: [verify, custody_recipient]
     runs-on: ubuntu-24.04
@@ -416,7 +428,7 @@ jobs:
           name: new-source-recipient-public-only
           path: new-source-recipient
       - name: Existing bounded source H1 collection (non-economic request only)
-        if: needs.verify.outputs.authorized_economic_request != 'true' && needs.verify.outputs.authorized_intraday_net != 'true' && needs.verify.outputs.authorized_flow_net != 'true' && needs.verify.outputs.authorized_neighbour_net != 'true' && needs.verify.outputs.authorized_volume_net != 'true' && needs.verify.outputs.authorized_m15_anchor_net != 'true' && needs.verify.outputs.authorized_joint_quote_extension != 'true' && needs.verify.outputs.authorized_portfolio_economic != 'true' && needs.verify.outputs.authorized_portfolio_holding != 'true' && needs.verify.outputs.authorized_sequence_portfolio != 'true'
+        if: needs.verify.outputs.authorized_economic_request != 'true' && needs.verify.outputs.authorized_intraday_net != 'true' && needs.verify.outputs.authorized_flow_net != 'true' && needs.verify.outputs.authorized_neighbour_net != 'true' && needs.verify.outputs.authorized_volume_net != 'true' && needs.verify.outputs.authorized_m15_anchor_net != 'true' && needs.verify.outputs.authorized_joint_quote_extension != 'true' && needs.verify.outputs.authorized_portfolio_economic != 'true' && needs.verify.outputs.authorized_portfolio_holding != 'true' && needs.verify.outputs.authorized_sequence_portfolio != 'true' && needs.verify.outputs.authorized_discovery_program != 'true'
         run: python -m research.collect
         env:
           R3_CTRADER_CLIENT_ID: ${{ secrets.R3_CTRADER_CLIENT_ID }}
@@ -485,6 +497,13 @@ jobs:
           R3_CTRADER_CLIENT_ID: ${{ secrets.R3_CTRADER_CLIENT_ID }}
           R3_CTRADER_CLIENT_SECRET: ${{ secrets.R3_CTRADER_CLIENT_SECRET }}
           R3_CTRADER_ACCESS_TOKEN: ${{ secrets.R3_CTRADER_ACCESS_TOKEN }}
+      - name: Integrated annual M5 source and development cost context after source pilot
+        if: needs.verify.outputs.authorized_discovery_program == 'true'
+        run: python -m research.portfolio_discovery_source
+        env:
+          R3_CTRADER_CLIENT_ID: ${{ secrets.R3_CTRADER_CLIENT_ID }}
+          R3_CTRADER_CLIENT_SECRET: ${{ secrets.R3_CTRADER_CLIENT_SECRET }}
+          R3_CTRADER_ACCESS_TOKEN: ${{ secrets.R3_CTRADER_ACCESS_TOKEN }}
       - name: Prospective sequence portfolio source with outcome-blind pilot before expansion
         if: needs.verify.outputs.authorized_sequence_portfolio == 'true'
         run: python -m research.sequence_portfolio_source
@@ -506,7 +525,7 @@ jobs:
       (
         (github.event_name == 'workflow_dispatch' && inputs.collect == true) ||
         (github.event_name == 'push' &&
-          (needs.verify.outputs.authorized_source_request == 'true' || needs.verify.outputs.authorized_economic_request == 'true' || needs.verify.outputs.authorized_intraday_net == 'true' || needs.verify.outputs.authorized_flow_net == 'true' || needs.verify.outputs.authorized_neighbour_net == 'true' || needs.verify.outputs.authorized_volume_net == 'true' || needs.verify.outputs.authorized_m15_anchor_net == 'true' || needs.verify.outputs.authorized_joint_quote_extension == 'true' || needs.verify.outputs.authorized_portfolio_economic == 'true' || needs.verify.outputs.authorized_portfolio_holding == 'true' || needs.verify.outputs.authorized_sequence_portfolio == 'true'))
+          (needs.verify.outputs.authorized_source_request == 'true' || needs.verify.outputs.authorized_economic_request == 'true' || needs.verify.outputs.authorized_intraday_net == 'true' || needs.verify.outputs.authorized_flow_net == 'true' || needs.verify.outputs.authorized_neighbour_net == 'true' || needs.verify.outputs.authorized_volume_net == 'true' || needs.verify.outputs.authorized_m15_anchor_net == 'true' || needs.verify.outputs.authorized_joint_quote_extension == 'true' || needs.verify.outputs.authorized_portfolio_economic == 'true' || needs.verify.outputs.authorized_portfolio_holding == 'true' || needs.verify.outputs.authorized_sequence_portfolio == 'true' || needs.verify.outputs.authorized_discovery_program == 'true'))
       ) &&
       needs.verify.result == 'success' &&
       needs.collect.result == 'success'
@@ -531,6 +550,40 @@ jobs:
         with:
           name: sealed-source
           path: sealed-output
+      - name: Raw annual source reconstruction and native integrated discovery program
+        if: needs.verify.outputs.authorized_discovery_program == 'true'
+        run: python -m research.portfolio_discovery_source --readback
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - name: Preserve all contextual groups and full-week programme ceilings
+        if: needs.verify.outputs.authorized_discovery_program == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: integrated-discovery-program-public-only
+          path: portfolio-discovery.public.json
+          if-no-files-found: error
+          retention-days: 90
+      - name: Recover frozen source for native accounting-fact reception only
+        if: needs.verify.outputs.authorized_discovery_program == 'true'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: sqp1-original-bound-encrypted-source
+          path: native-fact-source
+          run-id: 41710960192
+          github-token: ${{ github.token }}
+      - name: Receive frozen intent fill and mark facts in native funded ledger without any research replay
+        if: needs.verify.outputs.authorized_discovery_program == 'true'
+        run: python -m research.native_funded_fact_receipt
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - name: Preserve native cash position restart and idempotence reception evidence
+        if: needs.verify.outputs.authorized_discovery_program == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: native-funded-frozen-facts-public-only
+          path: native-funded-facts.public.json
+          if-no-files-found: error
+          retention-days: 90
       - name: Independent raw sequence-source audit and integrated native-funded portfolio evaluation
         if: needs.verify.outputs.authorized_sequence_portfolio == 'true'
         run: python -m research.sequence_portfolio_source --readback
@@ -545,7 +598,7 @@ jobs:
           if-no-files-found: error
           retention-days: 90
       - name: Existing v2 H1 source readback
-        if: needs.verify.outputs.authorized_economic_request != 'true' && needs.verify.outputs.authorized_intraday_net != 'true' && needs.verify.outputs.authorized_flow_net != 'true' && needs.verify.outputs.authorized_neighbour_net != 'true' && needs.verify.outputs.authorized_volume_net != 'true' && needs.verify.outputs.authorized_m15_anchor_net != 'true' && needs.verify.outputs.authorized_joint_quote_extension != 'true' && needs.verify.outputs.authorized_portfolio_economic != 'true' && needs.verify.outputs.authorized_portfolio_holding != 'true' && needs.verify.outputs.authorized_sequence_portfolio != 'true'
+        if: needs.verify.outputs.authorized_economic_request != 'true' && needs.verify.outputs.authorized_intraday_net != 'true' && needs.verify.outputs.authorized_flow_net != 'true' && needs.verify.outputs.authorized_neighbour_net != 'true' && needs.verify.outputs.authorized_volume_net != 'true' && needs.verify.outputs.authorized_m15_anchor_net != 'true' && needs.verify.outputs.authorized_joint_quote_extension != 'true' && needs.verify.outputs.authorized_portfolio_economic != 'true' && needs.verify.outputs.authorized_portfolio_holding != 'true' && needs.verify.outputs.authorized_sequence_portfolio != 'true' && needs.verify.outputs.authorized_discovery_program != 'true'
         run: python -m research.readback
         env:
           R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
@@ -675,7 +728,7 @@ jobs:
           if-no-files-found: error
           retention-days: 90
       - name: Upload existing original v2 CSharp source receipt
-        if: needs.verify.outputs.authorized_economic_request != 'true' && needs.verify.outputs.authorized_intraday_net != 'true' && needs.verify.outputs.authorized_flow_net != 'true' && needs.verify.outputs.authorized_neighbour_net != 'true' && needs.verify.outputs.authorized_volume_net != 'true' && needs.verify.outputs.authorized_m15_anchor_net != 'true' && needs.verify.outputs.authorized_joint_quote_extension != 'true' && needs.verify.outputs.authorized_portfolio_economic != 'true' && needs.verify.outputs.authorized_portfolio_holding != 'true' && needs.verify.outputs.authorized_sequence_portfolio != 'true'
+        if: needs.verify.outputs.authorized_economic_request != 'true' && needs.verify.outputs.authorized_intraday_net != 'true' && needs.verify.outputs.authorized_flow_net != 'true' && needs.verify.outputs.authorized_neighbour_net != 'true' && needs.verify.outputs.authorized_volume_net != 'true' && needs.verify.outputs.authorized_m15_anchor_net != 'true' && needs.verify.outputs.authorized_joint_quote_extension != 'true' && needs.verify.outputs.authorized_portfolio_economic != 'true' && needs.verify.outputs.authorized_portfolio_holding != 'true' && needs.verify.outputs.authorized_sequence_portfolio != 'true' && needs.verify.outputs.authorized_discovery_program != 'true'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: new-source-custody-public-receipt

@@ -19,6 +19,55 @@ Check(sequencePlan.Length==2 && sequencePlan.All(x=>x.Side==-1 && x.MatureTransi
 var futureSequenceBar=new long[]{129*3600000L,130*3600000L,100000,999999,99998,999998,100};
 Check(sequencePlan.SequenceEqual(SequenceOpportunityResearch.Describe(new[]{sequenceBlock with {Bars=sequenceBars.Append(futureSequenceBar).ToArray()}})),"future bar cannot change prior native sequence forecasts");
 Check(SequenceOpportunityResearch.Describe(new[]{sequenceBlock with {Bars=sequenceBars.Take(128).ToArray()}}).Length==0,"incomplete sequence warmup cannot forecast");
+var ledgerQuote=new LedgerQuote("SYNTH",2000,10,10.01m,1,1,0,.1m,1);
+LedgerEvent Journal(string id,long at,string kind,decimal units=2,decimal price=0,LedgerQuote[]? quotes=null)=>
+    new(id,at,kind,"native-position","SYNTH",1,units,price,.1m,1,0,0,0,1000,"SYNTHETIC_TEST_ONLY",new string('a',64),quotes??Array.Empty<LedgerQuote>());
+var nativeBook=new NativeFundedLedger();
+nativeBook.Apply(Journal("intent",1000,"REQUEST_OPEN"));
+nativeBook=NativeFundedLedger.Restore(nativeBook.Checkpoint());
+nativeBook.Apply(Journal("fill",2000,"OPEN_FILL",price:10.01m,quotes:new[]{ledgerQuote}));
+Check(nativeBook.Summary().OpenPositions==1 && nativeBook.Summary().CashEur==199.9m,"native funded entry charges fee and restores pending intent");
+nativeBook.Apply(Journal("close-intent",3000,"REQUEST_CLOSE"));
+var closeQuote=ledgerQuote with {At=4000,Bid=11,Ask=11.01m};
+nativeBook.Apply(Journal("partial",4000,"CLOSE_FILL",units:1,price:11,quotes:new[]{closeQuote}));
+Check(nativeBook.Summary().OpenPositions==1 && nativeBook.Summary().CompleteRoundTrips==0,"native partial exit is not a round trip");
+nativeBook=NativeFundedLedger.Restore(nativeBook.Checkpoint());
+var finalQuote=closeQuote with {At=5000};var finalFill=Journal("final",5000,"CLOSE_FILL",units:1,price:11,quotes:new[]{finalQuote});
+nativeBook.Apply(finalFill);var nativeBefore=nativeBook.Summary();nativeBook.Apply(finalFill);
+Check(nativeBook.Summary()==nativeBefore && nativeBefore.CompleteRoundTrips==1 && nativeBefore.CashEur==201.68m,
+    "native partial commissions reconcile and duplicate fills are idempotent");
+var nativeConflict=false;try{nativeBook.Apply(finalFill with {FeeEur=.2m});}catch(InvalidOperationException){nativeConflict=true;}
+Check(nativeConflict,"native conflicting duplicate rejected");
+var pendingBook=new NativeFundedLedger();pendingBook.Apply(Journal("request",1000,"REQUEST_OPEN"));
+pendingBook.Apply(Journal("cancel",1500,"CONFIRMED_CANCEL"));
+Check(pendingBook.Summary().PendingIntents==0 && pendingBook.Summary().CashEur==200,"confirmed cancellation retains cash and leaves no invented fill");
+const long bdpSyntheticStart=1762128000000L;
+var bdpSyntheticBars=new List<ProgramBar>();
+void AddProgramWindow(long start,int count)
+{
+    for(int k=0;k<count;k++)
+    {
+        double price=100000*Math.Pow(1.001,k);
+        bdpSyntheticBars.Add(new("SYNTH",start+k*300000L,start+(k+1)*300000L,price/1.001,price*1.0001,price/1.001*.9999,price,100));
+    }
+}
+AddProgramWindow(bdpSyntheticStart,1000);
+for(int w=26;w<52;w++)AddProgramWindow(bdpSyntheticStart+w*604800000L,128);
+var bdpSyntheticInput=new DiscoveryInput(bdpSyntheticBars.ToArray(),new[]{new ProgramCost("SYNTH",.01,1000,10,true,1320,18)},
+    bdpSyntheticStart,bdpSyntheticStart+26*604800000L,bdpSyntheticStart+39*604800000L,bdpSyntheticStart+52*604800000L);
+using var bdpFirst=System.Text.Json.JsonDocument.Parse(System.Text.Json.JsonSerializer.Serialize(PortfolioDiscoveryProgram.Evaluate(bdpSyntheticInput)));
+var bdpChanged=bdpSyntheticInput with {Bars=bdpSyntheticBars.Select(b=>b.Start<bdpSyntheticInput.SelectionEnd?b:
+    b with {Open=1e10/b.Open,High=1e10/b.Low,Low=1e10/b.High,Close=1e10/b.Close}).ToArray()};
+using var bdpSecond=System.Text.Json.JsonDocument.Parse(System.Text.Json.JsonSerializer.Serialize(PortfolioDiscoveryProgram.Evaluate(bdpChanged)));
+string[] SelectionFacts(System.Text.Json.JsonElement root)=>root.GetProperty("Groups").EnumerateArray().Select(g=>
+    g.GetProperty("Id").GetString()+"/"+g.GetProperty("TrainingLabels").GetInt32()+"/"+g.GetProperty("SelectedBeforeAudit").GetBoolean()+"/"+g.GetProperty("Selection").GetRawText()).ToArray();
+Check(bdpFirst.RootElement.GetProperty("Groups").EnumerateArray().Any(g=>g.GetProperty("Selection").GetProperty("Windows").GetInt32()>0),
+    "context programme causality check exercises actual nonempty forecasts");
+Check(SelectionFacts(bdpFirst.RootElement).SequenceEqual(SelectionFacts(bdpSecond.RootElement)),
+    "changing later audit prices cannot alter training or prior selection facts");
+Check(bdpFirst.RootElement.GetProperty("Groups").EnumerateArray().Any(g=>g.GetProperty("Selection").GetProperty("MissingOutcomeWindows").GetInt32()>0 &&
+    g.GetProperty("Selection").GetProperty("ConditionalCostScenarioBpsSum").ValueKind==System.Text.Json.JsonValueKind.Null),
+    "missing future label retains its causal signal and never becomes zero net");
 var good = new RecoveryEvidence(200, 200, 200, true, true, true, false, false);
 Check(Recovery.Assess(good).Mode == RecoveryMode.ReconciledObservation, "complete evidence permits observation only");
 Check(Recovery.Assess(good with { EquityPeakUpperBound = null }).Mode == RecoveryMode.Protective, "missing peak");

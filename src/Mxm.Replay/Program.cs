@@ -1,5 +1,21 @@
 using System.Text.Json;
 using System.Security.Cryptography;
+if (args.Length == 3 && args[2] == "--native-funded-facts")
+{
+    try {
+        var events=JsonSerializer.Deserialize<Mxm.Core.LedgerEvent[]>(File.ReadAllBytes(args[0]),
+            new JsonSerializerOptions {NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString}) ?? throw new ArgumentException();
+        File.WriteAllText(args[1],JsonSerializer.Serialize(Mxm.Core.NativeFundedLedger.ReceiveFacts(events)));return 0;
+    } catch { return 22; }
+}
+if (args.Length == 3 && args[2] == "--portfolio-discovery-program")
+{
+    try {
+        var input=JsonSerializer.Deserialize<Mxm.Core.DiscoveryInput>(File.ReadAllBytes(args[0]),
+            new JsonSerializerOptions {NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString}) ?? throw new ArgumentException();
+        File.WriteAllText(args[1],JsonSerializer.Serialize(Mxm.Core.PortfolioDiscoveryProgram.Evaluate(input)));return 0;
+    } catch { return 23; }
+}
 if (args.Length == 3 && args[2] == "--sequence-portfolio-forecasts")
 {
     try {
