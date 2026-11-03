@@ -103,3 +103,21 @@ are preserved as provenance. A neutral caller-controlled label is now available
 for future dispatchers; old caller defaults and frozen outputs remain unchanged.
 The newly native sequence kernels are compiled into the single observation-only
 .algo; the Cloud adapter and full funded ledger equivalence remain unfinished.
+
+## Integrated programme and native funded-state transfer
+
+BDP1 consolidates192 contextual groups over52 complete weeks in one native discovery
+pass with chronological26/13/13 boundaries, cost/financial support and explicit
+multiplicity/exposure accounting. Conditional BID-bar cost scenarios are an admission
+stage, not funded economic performance. Signal ceilings preserve every full week,
+including zero weeks, and cannot count as HARD21. The existing allocator is retained;
+execution-priced joint allocation and marginal portfolio testing remain later
+requirements for any candidate surviving this programme.
+
+NativeFundedLedger now contains the funded monetary/position state previously only
+in Python. Native facts reception binds existing encrypted evidence and immutable
+intents/fills/marks, checks accounting and sampled equity, and restores after every
+event without invoking old research logic. Hash-bound checkpoints detect accidental
+corruption; they do not authenticate broker history or certify global equity peaks.
+Native modeled fills still require an execution adapter and broker outcome recovery
+before product acceptance. No order path or permanent Python service is introduced.

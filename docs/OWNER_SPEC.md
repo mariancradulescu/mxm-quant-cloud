@@ -39,7 +39,7 @@ link here; older dated directives remain provenance, never competing authority.
   could only be research information in a genuinely prospective portfolio
   hypothesis on independent evidence, never a resurrection mechanism.
 
-## Active methodological policy v5 (prospectively revisable)
+## Active methodological policy v6 (prospectively revisable)
 
 Evidence levels: (1) exploratory economic hypothesis; (2) preliminary predictive
 and economic support; (3) demonstrated possible incremental portfolio contribution;
@@ -431,3 +431,56 @@ the first native protection signal. The independent arithmetic audit preserves
 all original labels and links the cause explicitly; no broker liquidation is
 invented. A metadata-only future dispatcher override removes the misleading study
 name, with old defaults unchanged. No economic result is recomputed or relabeled.
+
+## Integrated discovery and native funded lifecycle after PR44–45
+
+OWNER prioritizes one portfolio programme instead of serial small-calendar probes.
+BDP1 predeclares52 full UTC Monday weeks (2025-11-03 through2026-11-02 exclusive),
+M5 source and complete M15/H1/H4 aggregates, four contextual distribution views and
+one/four-bar horizons:192 groups, no hyperparameter search or closed-model calls.
+26 weeks fit only matured labels;13 selection weeks freeze admissions before13
+chronological audit weeks. All calendars overlap global development exposure:
+there is NO independent confirmation and no annual funded performance claim.
+
+The four fixed27-cell views describe price path, liquidity/volume, scale/regime
+and contemporaneous USD-relative context. They use shrunk development means and
+variances (32-label global prior), no retrospective inversion or winner subset.
+The primary decision screen requires expected gross move minus2-SE and2x the
+minimum-volume current-tariff/development-spread cost scenario to remain positive.
+Selection requires >=26 windows,>=8 active selection weeks and positive descriptive
+5-SE weekly lower value. These screens are conservative research heuristics,
+not multiple-testing qualification. Every group and both cost scenarios are kept.
+
+A source-only pilot covers the oldest, middle and late predeclared chunks and
+three development cost clocks. Each symbol/window needs >=500 real M5 bars;
+each symbol needs >=2 usable cost contexts and >=3 symbols must have current
+minimum-margin capacity below EUR200. No return scoring occurs before expansion.
+Full collection needs963 requests, budget1200, with encrypted checkpoints. All
+observations are read-only from the existing pinned LIVE SCOPE_VIEW account.
+
+Cost contexts are fixed development clocks in three sessions (00/08/16 UTC).
+They combine real route-local BID/ASK with current tariff/minimum-unit assumptions;
+max observed development spread is a scenario, NOT a bound on future/historical
+spread. Current margin is not historical margin; daily funding is conditional.
+Unknown schedules, rollovers and horizons above4h remain financially unadmitted.
+BDP1's BID-close labels and conditional cost bps are NOT executable or financed
+NET EUR. Whole-week signal ceilings are NOT completed round trips or HARD21 proof.
+Any subsequent execution-priced portfolio protocol needs prospective full-week
+quotes and actual open-exposure support; audit outcomes cannot select favorable
+pricing dates or promote a counterfactual subset. No individual HARD21 filter exists.
+
+`NativeFundedLedger` ports the common funded cash/position lifecycle to pure C#:
+intents, latency-bound modeled fills, fees, FX, partial closes, financing facts,
+floating liquidation equity, used margin, deduplication and checkpoint/restore.
+It has no order APIs, deposit/reset permission or certified lifetime-peak flag.
+It does not yet prove broker partial-entry recovery or resolve ambiguous real
+orders; the existing selective-recovery protective requirements still control.
+
+The native reception proof reads immutable SQP1 intent/fill/mark facts and original
+source custody only. It calls NO forecasts, opportunity selector, sizing or exit
+policy, and recomputes no SQP1 economic decision or verdict. Every native monetary
+component and sampled floating DD must match the frozen book within EUR1e-18;
+restart after EVERY event and immediate duplicate replay must preserve native
+state. This is technical accounting equivalence, not new economics or permission
+to rerun SQP1. Original receipts, labels, protocols and ciphertext remain frozen.
+The Cloud adapter remains observation-only; compiler success is not product acceptance.
