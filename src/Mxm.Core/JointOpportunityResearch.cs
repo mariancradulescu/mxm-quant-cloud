@@ -31,6 +31,31 @@ public static class JointOpportunityResearch
         }
         return result.OrderBy(r=>r.Clock).ThenBy(r=>r.Symbol,StringComparer.Ordinal).ThenBy(r=>r.Candidate,StringComparer.Ordinal).ToArray();
     }
+    public static object[] Relationships(Observation[] rows)
+    {
+        var groups=rows.GroupBy(r=>(r.Candidate,r.Symbol)).OrderBy(g=>g.Key.Candidate,StringComparer.Ordinal)
+            .ThenBy(g=>g.Key.Symbol,StringComparer.Ordinal).ToArray();
+        var output=new List<object>();
+        for(int i=0;i<groups.Length;i++)for(int j=i+1;j<groups.Length;j++)
+        {
+            var a=groups[i];var b=groups[j].ToDictionary(r=>r.Clock);
+            var pairs=a.Where(r=>r.GrossBps.HasValue && b.TryGetValue(r.Clock,out var x) && x.GrossBps.HasValue)
+                .Select(r=>(a:r,b:b[r.Clock])).ToArray();
+            double? corr=null;
+            if(pairs.Length>1)
+            {
+                double ma=pairs.Average(p=>p.a.GrossBps!.Value),mb=pairs.Average(p=>p.b.GrossBps!.Value);
+                double va=pairs.Sum(p=>Math.Pow(p.a.GrossBps!.Value-ma,2)),vb=pairs.Sum(p=>Math.Pow(p.b.GrossBps!.Value-mb,2));
+                if(va>0 && vb>0)corr=pairs.Sum(p=>(p.a.GrossBps!.Value-ma)*(p.b.GrossBps!.Value-mb))/Math.Sqrt(va*vb);
+            }
+            output.Add(new {firstCandidate=a.Key.Candidate,firstSymbol=a.Key.Symbol,
+                secondCandidate=groups[j].Key.Candidate,secondSymbol=groups[j].Key.Symbol,commonLabeledClocks=pairs.Length,
+                directionalGrossCorrelation=corr,
+                sameDirectionClocks=pairs.Count(p=>p.a.Side==p.b.Side),
+                status="EXPOSED_GROSS_RELATIONSHIP_NOT_NET_DIVERSIFICATION_OR_INCREMENTAL_EDGE"});
+        }
+        return output.ToArray();
+    }
     public static object Assess(JsonElement source)
     {
         var bars=RegimeDiscovery.Read(source);var rows=Describe(bars);
@@ -57,6 +82,11 @@ public static class JointOpportunityResearch
             opportunities=rows.Length,causalDecisionClocks=rows.Select(r=>r.Clock).Distinct().Count(),
             simultaneousMultiAssetClocks=simultaneous,contradictorySymbolClocks=conflicting,
             sourceInstrumentCount=bars.Select(b=>b.Symbol).Distinct().Count(),
+            pairRelationships=Relationships(rows),
+            availableHistoricalQuoteWindowStartMs=source.GetProperty("tickWindowStart").GetInt64(),
+            availableHistoricalQuoteWindowEndMs=source.GetProperty("tickWindowEnd").GetInt64(),
+            opportunitiesWithBothClocksInQuoteWindow=rows.Count(r=>r.Clock>=source.GetProperty("tickWindowStart").GetInt64() &&
+                r.Exit<=source.GetProperty("tickWindowEnd").GetInt64()),
             results=groups.Select(g=>new {candidate=g.Key.Candidate,symbol=g.Key.Symbol,observations=g.Count(),
                 labeledObservations=g.Count(r=>r.GrossBps.HasValue),
                 meanDirectionalGrossBps=g.Average(r=>r.GrossBps),positiveFraction=g.Any(r=>r.GrossBps.HasValue) ?
