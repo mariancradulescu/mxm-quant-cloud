@@ -930,7 +930,7 @@ jobs:
     needs: verify
     if: >-
       github.ref == 'refs/heads/main' && github.actor == 'mariancradulescu' &&
-      needs.verify.outputs.authorized_holding_diagnosis == 'true'
+      github.event_name == 'push' && needs.verify.outputs.authorized_holding_diagnosis == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     environment: mxm-r3-custody-v1
