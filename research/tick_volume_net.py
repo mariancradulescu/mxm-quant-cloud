@@ -75,12 +75,15 @@ def signals(b):
     slope=sum((s["x"]-mx)*(s["y"]-my) for s in train)/den
     slope*=len(train)/(len(train)+200)
     intercept=my-slope*mx
+    abs_y=sorted(abs(p["y"]) for p in train)
+    tail_abs=abs_y[int((len(abs_y)-1)*0.995)]
     plan=[{"signal":s["signal"],"exit":s["exit"],"side":1 if intercept+slope*s["x"]>0 else -1,
            "forecast":intercept+slope*s["x"],"price":s["price"],"realizedBidCloseReturn":s["y"]}
           for s in sel if abs(intercept+slope*s["x"])>0]
     return {"trainingExamples":len(train),"selectionWindows":len(sel),"plan":plan,
             "trainingCutMs":lo,"selectionEndMs":hi,"fitIntercept":intercept,
-            "fitSlope":slope,"eligibleMondayUtcMs":eligible_weeks(lo,hi)}
+            "fitSlope":slope,"train99p5AbsTwoHourReturn":tail_abs,
+            "eligibleMondayUtcMs":eligible_weeks(lo,hi)}
 
 def commission_eur(c,units,price,eur_bid,eur_ask):
     r=D(str(c["preciseTradingCommissionRate"]));lot=D(str(c["lotSize"]))/100
@@ -121,7 +124,7 @@ def funded_and_diagnostics(bundle):
     spread=D(str(bundle["trainSpreadPrice"]))
     reqcheck(calibrated>0 and spread>=0,"TRAIN_QUOTE_CALIBRATION_MISSING")
     weeks=frozen["eligibleMondayUtcMs"]
-    full=[];missing=0;forecast_rejected=0;first_clock=None
+    full=[];missing=0;forecast_rejected=0
     for p in plan:
         qin=read_quote(bundle,p["signal"]);qout=read_quote(bundle,p["exit"])
         if qin is None or qout is None:
@@ -136,8 +139,7 @@ def funded_and_diagnostics(bundle):
     outcomes=[]
     for mult in SLIP_MULTIPLIERS:
         replay=FundedReplay(starting_eur=D("200"),max_staleness_ms=15000,financing_schedule_proven=financing_proven(c))
-        gross=spread_eur=commission_sum=slip_eur=conversion_sum=0
-        proposed=admitted=quotes_missing=costblocked=0
+        proposed=admitted=costblocked=stressblocked=0
         for p,ein,eout,accepted,g in full:
             proposed+=1
             if not accepted:costblocked+=1;continue
@@ -155,6 +157,15 @@ def funded_and_diagnostics(bundle):
             estimated_exit_fee=commission_eur(c,min_units,q1.bid if p["side"]>0 else q1.ask,q1.bid,q1.ask)
             con=Contract(min_units,step,max_units,margin,entry_fee,estimated_exit_fee,slip,
                 "PEPPERSTONE_CURRENT_CONTRACT_SNAPSHOT_CONDITIONAL_HISTORY")
+            # One predeclared causal training-tail stress, constrained by the
+            # OWNER portfolio 30%-DD objective; never a universal risk-per-entry cap.
+            train_stress_price=D(str(p["price"]))*D(str(frozen["train99p5AbsTwoHourReturn"]))
+            train_stress_price+=spread+D("2")*slip
+            worst_eur=D(min_units)*train_stress_price/q1.bid+entry_fee+estimated_exit_fee
+            stress_peak=max(replay.peak,replay.balance)
+            if replay.balance-worst_eur<=stress_peak*D("0.70"):
+                stressblocked+=1
+                continue
             replay.decide(Decision(p["signal"],p["signal"],frozen["trainingCutMs"]-1,
                 str(p["signal"]),SYMBOL,"OPEN",1000,p["side"],min_units,con))
             replay.quote(q1)
@@ -169,7 +180,7 @@ def funded_and_diagnostics(bundle):
                 ("gross_eur","spread_eur","slippage_eur","conversion_eur","commissions_eur","financing_eur")}
         outcome={"slippageScaleOfTrainQuoteMotion":mult,
                  "eventQuotesPresent":len(full),"missingEntryOrExitEventQuotes":missing,
-                 "forecastCostBlocked":costblocked,
+                 "forecastCostBlocked":costblocked,"trainingTailStressBlocked":stressblocked,
                  "financingCurrentScheduleOutsideHolding":financing_proven(c),
                  "portfolioEur200QuoteReplay":json.loads(json.dumps(report,default=str)),
                  "historicalTariffConfirmed":False,"historicalFillObserved":False,
@@ -188,7 +199,7 @@ def funded_and_diagnostics(bundle):
                   o["financingCurrentScheduleOutsideHolding"] for o in outcomes)
     return {"schema":"mxm-h1-tickvol-cost-funded-selection-v1","model":MODEL,
             "phase":"SELECTION_60_TRAIN_20_SELECT_20_UNSCORED",
-            "trainingExamples":frozen["trainingExamples"],
+            "trainingExamples":frozen["trainingExamples"],"trainTailAbsTwoHourReturn":frozen["train99p5AbsTwoHourReturn"],
             "selectionWindows":frozen["selectionWindows"],
             "selectionCompleteEligibleWeeks":len(weeks),
             "brokerSourceSpanDays":(bundle["end"]-bundle["start"])/DAY,
