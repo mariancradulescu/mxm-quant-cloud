@@ -1,0 +1,83 @@
+{
+  "ablation": "ALL24_CANDIDATE_SYMBOL_REMOVE_ONE_PRIMARY_CASE_NO_SELECTION",
+  "calibrationDays": [
+    "2026-08-04",
+    "2026-08-11",
+    "2026-08-18",
+    "2026-08-25",
+    "2026-09-01",
+    "2026-09-08",
+    "2026-09-15",
+    "2026-09-22"
+  ],
+  "closedStudyDistinction": "FIRST_ORDER_BINARY_TRANSITION_VS_RUN_DURATION_SURVIVAL; NO_JOP1_NO_RIDGE_NO_USD_RANK_REVERSAL_NO_VOLUME_DISLOCATION",
+  "dataExposure": "ALL_DEVELOPMENT_EXPOSED_GLOBALLY; NEW_M15_H1_AND_QUOTES_ARE_NOT_INDEPENDENT_CONFIRMATION",
+  "decisionClock": "FIRST_VALID_EURUSD_ROUTE_EVENT_AFTER_NOMINAL_LATENCY; OTHER_LANES_ASOF_AT_THAT_CLOCK_ONLY_IF_FRESH",
+  "effectiveCalendarBlockAssumption": 8,
+  "effectiveIndependenceDemonstrated": false,
+  "entryClock": "FIRST_VALID_SELECTED_EXPOSURE_UNION_ROUTE_AFTER_DECISION_PLUS1S_WITHIN20S",
+  "exitClock": "NOMINAL_PLUS60MIN_PLUS1S_FIRST_OBSERVABLE_OPEN_EXPOSURE_ROUTE; UNAVAILABLE_EXIT_REMAINS_UNRESOLVED",
+  "families": [
+    "ORDINAL_TRANSITION_V1",
+    "DURATION_HAZARD_V1"
+  ],
+  "historyBars": 129,
+  "holdingClock": "FIRST_VALID_OPEN_EXPOSURE_ROUTE_AFTER_EACH_NOMINAL_MARK_PLUS1S_WITHIN20S; RESPONSE_FROM_SAME_WINDOW_AT_PLUS30S",
+  "horizonMinutes": 60,
+  "id": "SQP1",
+  "inactiveCalibration": "ZERO_STRATEGY_PNL_ONLY_FOR_AUTHENTIC_WARMED_UP_FORECAST_SIDE_ZERO; MISSING_DATA_NEVER_ZERO",
+  "latencyMs": 1000,
+  "markStepMinutes": 15,
+  "maxEvidenceRequests": 1250,
+  "maximumSideAgeMs": 2000,
+  "minimumCompleteCalibrationBlocks": 8,
+  "minimumMatureTransitions": 96,
+  "missingSource": "NO_DATE_REPLACEMENT_NO_INTERPOLATION; OPEN_MARK_GAPS_REQUEST_PROTECTIVE_EXIT_AND_SUSPEND_ENTRIES",
+  "nativeEquivalence": "NATIVE_FORECAST_VALUATION_ALLOCATION_HOLDING_RISK; PYTHON_FUNDED_LEDGER_NOT_FULL_NATIVE_ECONOMIC_EQUIVALENCE",
+  "net": "CONDITIONAL_CURRENT_TARIFF_MARGIN_FUNDING_AND_HYPOTHETICAL_SLIPPAGE; NO_DEPTH_OR_ACTUAL_FILL_CLAIM",
+  "nominalHourUtc": 10,
+  "ordersAllowed": false,
+  "pilotDays": 2,
+  "pilotRule": "EACH_DAY_AT_LEAST4_COMPLETE_ROUTE_PATHS_16_READY_FORECASTS_AND3_MINIMUM_VOLUME_FINANCEABLE_ASSETS_NO_RETURNS",
+  "primary": "2SE_1X_SPREAD",
+  "purpose": "PROSPECTIVE_EXPOSED_DEVELOPMENT_ECONOMICS_NOT_CONFIRMATION",
+  "qualification": false,
+  "referenceStopoutRatio": "0.5_FIXED_REFERENCE_ONLY_NOT_ACCOUNT_TERMS",
+  "replayDays": [
+    "2026-09-29",
+    "2026-09-30",
+    "2026-10-01",
+    "2026-10-02",
+    "2026-10-05",
+    "2026-10-06",
+    "2026-10-07",
+    "2026-10-08"
+  ],
+  "requestFromOffsetMs": -2000,
+  "requestToOffsetMs": 58000,
+  "responseClockBound": "AFTER_LATEST_ACTION_CLOCK_AND_PLANNED_PLUS30S; NEVER_BEYOND_ORIGINAL_PLUS58S_WINDOW",
+  "searchMs": 20000,
+  "slippageMultiples": [
+    "0.5",
+    "1"
+  ],
+  "sourceAllowed": "EXISTING_PINNED_PEPPERSTONE_EU_LIVE_SCOPE_VIEW_ONLY",
+  "stats": "8_SHARED_CALIBRATION_AND8_REPLAY_DAYS_NOT_192_INDEPENDENT_TRIALS; ALL24_GROUPS_ALL4_CASES_DISCLOSED_NO_PROMOTION",
+  "timeframes": {
+    "H1": 60,
+    "M15": 15
+  },
+  "uncertaintyMultipliers": [
+    "2",
+    "0"
+  ],
+  "universe": [
+    "EURUSD",
+    "GBPUSD",
+    "USDJPY",
+    "AUDUSD",
+    "USDCAD",
+    "XAUUSD"
+  ],
+  "volumeQueryPoints": 4
+}

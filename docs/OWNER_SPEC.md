@@ -39,7 +39,7 @@ link here; older dated directives remain provenance, never competing authority.
   could only be research information in a genuinely prospective portfolio
   hypothesis on independent evidence, never a resurrection mechanism.
 
-## Active methodological policy v4 (prospectively revisable)
+## Active methodological policy v5 (prospectively revisable)
 
 Evidence levels: (1) exploratory economic hypothesis; (2) preliminary predictive
 and economic support; (3) demonstrated possible incremental portfolio contribution;
@@ -346,3 +346,49 @@ prospective feature/label/sample/split definition and source pilot on the new
 episodes, common open-position valuation and financing, and declared uncertainty
 bounds. Conditional research may model uncertain costs conservatively; this is
 not permission to certify unknown historical terms or execution depth.
+
+## Economic discovery priority after PR42–43 and SQP1 registration
+
+OWNER accepts CEF1 and prioritizes authentic NET discovery and native convergence,
+not additional preventive infrastructure. `sequence_portfolio_protocol.json`
+registers SQP1 before retrieval: two distinct sequential hypotheses, M15/H1 on all
+six existing instruments, eight August–September calibration days, eight later
+September–October replay days, one-hour request horizon and sampled holding risk.
+No July-success selection, JOP1 reuse or closed-study rescue. All calendars remain
+globally exposed development, never independent confirmation or annual validation.
+
+Native `SequenceOpportunityResearch` implements fixed first-order binary return
+transitions and run-duration survival. Both use the last129 completed bars,
+>=96 contiguous matured sign transitions, Beta/Dirichlet(1) smoothing and one/four
+steps for H1/M15. Gaps/zero signs reset run duration and supply no imputed labels.
+Current neutral forecasts abstain. No probability/parameter grid or direction
+selection follows outcomes. The native allocator retains its verified protective
+path; a distinct conditional research scope admits the declared60-minute request
+horizon without granting execution certification.
+
+An outcome-blind two-day pilot (at most165 source requests) checks warmup, causal
+entry/exit/holding routes, costs/current daily financing and EUR200 minimum-volume
+capacity before the remaining collection (at most1173 total, budget1250). It must
+find >=16 mature forecasts, >=4 complete symbol paths and >=3 financeable minimum
+volumes on EACH pilot day; no returns are inspected. Missing days are retained.
+A failed pilot stops expansion and is conserved. Eight calibration days stay
+fixed; missing candidate paths block that candidate rather than becoming zero.
+Only an authentically warmed-up neutral forecast can have zero strategy exposure.
+
+Decision clocks stop at the first valid EURUSD valuation route. Other available
+candidates are considered only if their own fresh FX/cost routes are observable
+then; no all-six quote gate is imposed. Fill clocks and holding valuations require
+only selected/open exposure and its FX routes. Entry uses a later event after1s;
+holding protection is assessed before pending exits and filled on a later observed
+response within the same bounded window. Missing held-source retains uncertainty,
+queues model protection and suspends admissions while exposure is unresolved.
+
+Report all24 candidate-symbol groups, all four predeclared uncertainty/slippage
+cases, and all24 primary remove-one comparisons. Standalone minimum-volume
+counterfactual sums are unfunded and never pooled into the one EUR200 portfolio.
+Causal sampled-path stress and current queried/repriced margin control allocation;
+volume-grid query extent is evidence support, not an OWNER exposure ceiling.
+No cost-history, liquidity/depth, account stopout, continuous DD or independent edge
+certificate is created. Source quotes are indicative; all NET remains conditional.
+The native forecast/observation/valuation/allocator/holding kernels share C# with
+research, but the funded ledger is still Python and Cloud remains observation-only.

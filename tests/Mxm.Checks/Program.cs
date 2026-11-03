@@ -12,6 +12,13 @@ Check(CausalObservationClock.First(clockWindow with {Complete=false}).At==null,"
 Check(CausalObservationClock.First(clockWindow with {Route=new[]{"X","FX"}}).At==null,"missing conversion route blocks observation");
 Check(CausalObservationClock.First(clockWindow with {Events=clockWindow.Events.Append(new QuoteSideEvent(11000,"X",0,99)).ToArray()}).Status=="AMBIGUOUS_SAME_TIME_SIDE",
     "conflicting simultaneous quote makes window unavailable without inventing event order");
+var sequenceBars=Enumerable.Range(0,129).Select(i=>new long[]{i*3600000L,(i+1)*3600000L,100000,100002,99998,100000+(i%2==0?1:-1),100}).ToArray();
+var sequenceBlock=new SequenceFeatureBlock("SYNTHETIC","X","H1",129*3600000L,sequenceBars);
+var sequencePlan=SequenceOpportunityResearch.Describe(new[]{sequenceBlock});
+Check(sequencePlan.Length==2 && sequencePlan.All(x=>x.Side==-1 && x.MatureTransitions==127),"ordinal and duration forecasts use mature alternating transitions");
+var futureSequenceBar=new long[]{129*3600000L,130*3600000L,100000,999999,99998,999998,100};
+Check(sequencePlan.SequenceEqual(SequenceOpportunityResearch.Describe(new[]{sequenceBlock with {Bars=sequenceBars.Append(futureSequenceBar).ToArray()}})),"future bar cannot change prior native sequence forecasts");
+Check(SequenceOpportunityResearch.Describe(new[]{sequenceBlock with {Bars=sequenceBars.Take(128).ToArray()}}).Length==0,"incomplete sequence warmup cannot forecast");
 var good = new RecoveryEvidence(200, 200, 200, true, true, true, false, false);
 Check(Recovery.Assess(good).Mode == RecoveryMode.ReconciledObservation, "complete evidence permits observation only");
 Check(Recovery.Assess(good with { EquityPeakUpperBound = null }).Mode == RecoveryMode.Protective, "missing peak");

@@ -1,5 +1,12 @@
 using System.Text.Json;
 using System.Security.Cryptography;
+if (args.Length == 3 && args[2] == "--sequence-portfolio-forecasts")
+{
+    try {
+        var blocks=JsonSerializer.Deserialize<Mxm.Core.SequenceFeatureBlock[]>(File.ReadAllBytes(args[0])) ?? throw new ArgumentException();
+        File.WriteAllText(args[1],JsonSerializer.Serialize(Mxm.Core.SequenceOpportunityResearch.Describe(blocks)));return 0;
+    } catch { return 21; }
+}
 if (args.Length == 3 && args[2] == "--assess-holding-risk-batch")
 {
     try {
