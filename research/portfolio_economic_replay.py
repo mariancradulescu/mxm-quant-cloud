@@ -61,7 +61,7 @@ class SynchronizedFundedReplay(FundedReplay):
                     slippage_price_each_side=(q.ask-q.bid)*slip_multiple)
                 self._entry(replace(d,contract=contract),q)
             elif d.position_id in self.open:
-                self._exit(d.position_id,q,'EPA1_FIXED_CLOCK_OBSERVED_QUOTE',fee(point['Quotes'][d.symbol],self.open[d.position_id].request.units))
+                self._exit(d.position_id,q,getattr(self,'modeled_exit_reason','EPA1_FIXED_CLOCK_OBSERVED_QUOTE'),fee(point['Quotes'][d.symbol],self.open[d.position_id].request.units))
         self.pending=rest;self._mark(at)
 
     def before_pending_actions(self,point):

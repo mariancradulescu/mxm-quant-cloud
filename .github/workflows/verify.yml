@@ -12,6 +12,9 @@ permissions:
   contents: read
 jobs:
   verify:
+    permissions:
+      contents: read
+      actions: read
     outputs:
       authorized_source_request: ${{ steps.intent.outputs.authorized_source_request }}
       authorized_cold_source_score: ${{ steps.cold.outputs.authorized_cold_source_score }}
@@ -280,6 +283,17 @@ jobs:
              [[ "$(git diff-tree --no-commit-id --name-only -r HEAD)" == "ops/sequence-portfolio-request.txt" ]]; then
             echo "authorized_sequence_portfolio=true" >> "$GITHUB_OUTPUT"
           fi
+      - name: Recognize exact owner/main original encrypted-source preservation intent
+        id: sqp_preserve
+        shell: bash
+        run: |
+          echo "authorized_sqp_preservation=false" >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_EVENT_NAME" == "push" && "$GITHUB_REF" == "refs/heads/main" &&
+                "$GITHUB_ACTOR" == "mariancradulescu" &&
+                "$(git log -1 --format=%s)" == "MXM_SQP1_ENCRYPTED_SOURCE_PRESERVATION" ]] &&
+             [[ "$(git diff-tree --no-commit-id --name-only -r HEAD)" == "ops/sqp1-preserve-source-request.txt" ]]; then
+            echo "authorized_sqp_preservation=true" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
         with:
           dotnet-version: |
@@ -304,7 +318,7 @@ jobs:
           name: original-archive-public-identity-only
           path: legacy-archive-public-receipt.json
           if-no-files-found: error
-          retention-days: 90
+          retention-days: 30
       - run: dotnet build src/Mxm.Cloud -c Release
       - name: Verify algo produced
         run: test -n "$(find src/Mxm.Cloud/bin/Release -name '*.algo' -print -quit)"
@@ -313,6 +327,33 @@ jobs:
           name: mxm-observation-only-not-authorized-for-activation
           path: src/Mxm.Cloud/bin/Release/**/*.algo
           if-no-files-found: error
+      - name: Recover original SQP1 ciphertext without broker access or decryption
+        if: steps.sqp_preserve.outputs.authorized_sqp_preservation == 'true'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: sealed-source
+          path: sqp1-preserved-source
+          run-id: 41706496201
+          github-token: ${{ github.token }}
+      - name: Verify original source hash without economic replay
+        if: steps.sqp_preserve.outputs.authorized_sqp_preservation == 'true'
+        run: |
+          python - <<'PYHASH'
+          import json,hashlib
+          from pathlib import Path
+          r=json.loads(Path('docs/SQP1_AUTHENTIC_RESULT.json').read_text())
+          assert hashlib.sha256(Path('sqp1-preserved-source/source.envelope.json').read_bytes()).hexdigest()==r['sourceCiphertextSha256']
+          print('SQP1 original ciphertext binding verified; no decryption or economic replay')
+          PYHASH
+      - name: Preserve original bound ciphertext beyond initial retention
+        if: steps.sqp_preserve.outputs.authorized_sqp_preservation == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: sqp1-original-bound-encrypted-source
+          path: sqp1-preserved-source/
+          if-no-files-found: error
+          retention-days: 90
+
   custody_recipient:
     if: >-
       github.ref == 'refs/heads/main' &&
@@ -456,7 +497,7 @@ jobs:
           name: sealed-source
           path: sealed-output/
           if-no-files-found: error
-          retention-days: 30
+          retention-days: 90
   custody:
     # Domain-bound new-source readback, independent of historical archive recipient.
     if: >-
