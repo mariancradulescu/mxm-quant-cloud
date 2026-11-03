@@ -26,6 +26,7 @@ jobs:
       authorized_volume_net: ${{ steps.volume_net.outputs.authorized_volume_net }}
       authorized_policy_attribution: ${{ steps.policy_attribution.outputs.authorized_policy_attribution }}
       authorized_m15_anchor_net: ${{ steps.m15_anchor.outputs.authorized_m15_anchor_net }}
+      authorized_wick_net: ${{ steps.wick.outputs.authorized_wick_net }}
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -183,6 +184,18 @@ jobs:
              [[ "$(git diff-tree --no-commit-id --name-only -r HEAD)" == "ops/m15-anchor-net-request.txt" ]]; then
             echo "authorized_m15_anchor_net=true" >> "$GITHUB_OUTPUT"
           fi
+      - name: Exact owner/main source-reuse wick economics intent, no broker access
+        id: wick
+        shell: bash
+        run: |
+          echo "authorized_wick_net=false" >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_EVENT_NAME" == "push" &&
+                "$GITHUB_REF" == "refs/heads/main" &&
+                "$GITHUB_ACTOR" == "mariancradulescu" &&
+                "$(git log -1 --format=%s)" == "MXM_FROZEN_M15_WICK_SESSION_NET" ]] &&
+             [[ "$(git diff-tree --no-commit-id --name-only -r HEAD)" == "ops/m15-wick-net-request.txt" ]]; then
+            echo "authorized_wick_net=true" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
         with:
           dotnet-version: |
@@ -194,7 +207,7 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install -r research/requirements.txt
-      - run: python -m unittest research.test_pipeline research.test_intraday_net research.test_flow_net research.test_neighbour_net research.test_funded_replay research.test_relative_gross research.test_tick_volume_net research.test_anchor_signal
+      - run: python -m unittest research.test_pipeline research.test_intraday_net research.test_flow_net research.test_neighbour_net research.test_funded_replay research.test_relative_gross research.test_tick_volume_net research.test_anchor_signal research.test_session_wick_signal
       - name: Verify original 100 encrypted archive identities with read-only GitHub API token
         run: python -m research.legacy_manifest_remote
         env:
@@ -692,5 +705,42 @@ jobs:
         with:
           name: frozen-h1-quote-policy-attribution-public-only
           path: volume-policy-attribution.public.json
+          if-no-files-found: error
+          retention-days: 90
+
+  m15_early_wick_six_hour_funded_net:
+    # Reuses existing genuine encrypted broker history. No OAuth secrets here.
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.actor == 'mariancradulescu' &&
+      github.event_name == 'push' &&
+      needs.verify.outputs.authorized_wick_net == 'true'
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: mxm-r3-custody-v1
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: sealed-source
+          path: sealed-output
+          run-id: 41619870283
+          github-token: ${{ github.token }}
+      - name: Score new frozen 6-hour M15 wick model against genuine original quotes and funded EUR200
+        run: python -m research.session_wick_net
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: authentic-m15-wick-session-funded-net-public-only
+          path: session-wick-net.public.json
           if-no-files-found: error
           retention-days: 90
