@@ -95,3 +95,20 @@ rules; `HistoricalPr16Risk` is isolated numerical provenance for its frozen stud
 `FROZEN_*` and `AUTHENTIC_*` records preserve exact study results, not active policy.
 The wick study remains frozen: +10.9583 EUR modeled central NET, negative weekly
 lower bound, concentrated partial-week gain, no promotion or independent edge.
+
+## Execution-evidence extension JQE1 (prospective data policy)
+
+After authentic JOP1 run 41627571731, zero of 11,696 opportunities have both
+entry/exit clocks inside the old 59-second quote window. JQE1 tests bounded
+read-only recovery of BID/ASK events on ALL six existing assets, fixed
+2026-06-02 09:00/13:00 UTC, latency 1s, search 10s and bid/ask as-of age <=2s.
+No missing sample replacement, no new hypothesis scoring or historical strategy
+rerun. Maximum 60 evidence requests excluding OAuth, one pinned existing LIVE
+account, existing v2 custody. Current minimum expected margins are collected
+separately and are explicitly NOT historical margins. All raw replies remain
+encrypted; protected readback reconstructs quote sides and verifies request
+clocks, symbols, minimum volumes and original margin responses.
+
+This is source-access feasibility on exposed development dates, not independent
+confirmation, a complete quote calendar, new NET evidence or a funded portfolio.
+No slippage, historical financing/tariffs or joint-risk samples are invented.

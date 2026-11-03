@@ -40,3 +40,11 @@ The frozen JOP1 multi-asset development probe measures causal opportunity covera
 and conflicts on existing authenticated source. Missing executable historical
 quotes/costs must prevent funded entries. See the active specification for the
 evidence levels, current implementation policy and remaining qualification work.
+
+Authentic [JOP1 result](docs/JOINED_OPPORTUNITY_AUTHENTIC_RESULT.json), protected
+[run 41627571731](https://github.com/mariancradulescu/mxm-quant-cloud/actions/runs/41627571731):
+11,696 opportunities, 978 multi-asset clocks, 66 gross relationships, zero matching
+entry/exit quote-window coverage, and all 11,696 native allocations correctly
+declined. No funded replay was started and no incremental NET edge is claimed.
+JQE1 extends evidence access on a fixed tiny all-six-asset clock grid; it cannot
+qualify historical costs or portfolio performance.
