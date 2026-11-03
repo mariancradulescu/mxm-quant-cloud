@@ -1,0 +1,80 @@
+{
+  "schema": "mxm.authentic-neighbour-selection-public.v1",
+  "observedAtUtc": "2026-11-03T06:57:45Z",
+  "runId": 41592777895,
+  "headSha": "5d3f17e44008312d2f9159b6db4d930ba28c9d75",
+  "originalCustodyCiphertextSha256": "52a455f8845d90c76f5de67ea3c61331750851bc4ce1cd6e69578ca0e4f4f685",
+  "originalCustodyParity": true,
+  "source": "Pepperstone-cTrader-OpenAPI SCOPE_VIEW",
+  "realFills": false,
+  "ordersSubmitted": 0,
+  "study": "H1_CONDITIONAL_NEIGHBOUR_RETURN_K64_V1",
+  "phase": "SELECTION",
+  "confirmationEvaluated": false,
+  "sourceBars": {
+    "EURUSD": 6283,
+    "USDJPY": 6283,
+    "USDCAD": 6283
+  },
+  "sourceSpanDays": {
+    "EURUSD": 370,
+    "USDJPY": 370,
+    "USDCAD": 370
+  },
+  "historicalContractsProven": false,
+  "brokerStopoutObserved": false,
+  "stopoutEquityToMarginAssumed": 1,
+  "initialCapitalEur": 200,
+  "ownerSystemMaximumDrawdown": 0.3,
+  "systemHard21NotDemonstrated": true,
+  "featureWindows": 648,
+  "costRejected": 617,
+  "noForecast": 0,
+  "dataMissingBeforeQuotes": 0,
+  "proposalsTotal": 31,
+  "returnBasedUtilityRejectedTotal": 31,
+  "results": [
+    {
+      "symbol": "USDJPY",
+      "proposals": 13,
+      "utilityRejected": 13,
+      "completeRoundTripsBySlippageScale": {
+        "1": 0,
+        "2": 0,
+        "0.5": 0
+      },
+      "modeledGrossEur": 0,
+      "modeledCostsEur": 0,
+      "modeledNetEur": 0,
+      "eligibleWeeks": 10,
+      "weeksWith21Trades": 0,
+      "eligibleForConfirmation": false
+    },
+    {
+      "symbol": "USDCAD",
+      "proposals": 18,
+      "utilityRejected": 18,
+      "completeRoundTripsBySlippageScale": {
+        "1": 0,
+        "2": 0,
+        "0.5": 0
+      },
+      "modeledGrossEur": 0,
+      "modeledCostsEur": 0,
+      "modeledNetEur": 0,
+      "eligibleWeeks": 10,
+      "weeksWith21Trades": 0,
+      "eligibleForConfirmation": false
+    }
+  ],
+  "selectionSurvivors": [],
+  "exactConfigurationStatus": "CLOSED_NO_ADMITTED_FINANCED_EPISODES_NO_RETUNING",
+  "economicVerdict": "NO_EXECUTABLE_NET_EDGE_DEMONSTRATED_ZERO_TRADES_IS_NOT_ZERO_RETURN_EVIDENCE",
+  "independentConfirmation": false,
+  "uncertainty": "Training-quote motion is a slippage proxy, historical contract terms and execution fills are not proven; finite scenario DD is no global guarantee",
+  "provenance": {
+    "authenticatedRun": "https://github.com/mariancradulescu/mxm-quant-cloud/actions/runs/41592777895",
+    "independentCustodyJobId": 125774103667,
+    "previousFrozenProtocol": "docs/FROZEN_CALIBRATED_NEIGHBOUR_FX_20261103.md"
+  }
+}
