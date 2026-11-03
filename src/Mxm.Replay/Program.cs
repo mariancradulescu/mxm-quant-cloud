@@ -1,5 +1,21 @@
 using System.Text.Json;
 using System.Security.Cryptography;
+if (args.Length == 3 && args[2] == "--holding-market-context")
+{
+    try {
+        using var d=JsonDocument.Parse(File.ReadAllBytes(args[0]));
+        File.WriteAllText(args[1],JsonSerializer.Serialize(Mxm.Core.HoldingPortfolioRisk.MarketContext(d.RootElement)));return 0;
+    } catch { return 18; }
+}
+if (args.Length == 3 && args[2] == "--assess-holding-risk")
+{
+    try {
+        var r=JsonSerializer.Deserialize<Mxm.Core.HoldingRiskInput>(File.ReadAllBytes(args[0]),
+            new JsonSerializerOptions {NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString})
+            ?? throw new ArgumentException();
+        File.WriteAllText(args[1],JsonSerializer.Serialize(Mxm.Core.HoldingPortfolioRisk.Assess(r)));return 0;
+    } catch { return 17; }
+}
 if (args.Length == 3 && args[2] == "--value-portfolio-source")
 {
     try {

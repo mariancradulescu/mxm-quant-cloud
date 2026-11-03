@@ -10,7 +10,7 @@ public static class MultiAssetValuation
     private static int I(JsonElement e,string key)=>e.GetProperty(key).GetInt32();
     public static object Assess(JsonElement root)
     {
-        if(root.GetProperty("schema").GetString()!="mxm-epa1-source-v1" ||
+        if(root.GetProperty("schema").GetString() is not ("mxm-epa1-source-v1" or "mxm-epa2-source-v1") ||
            !root.GetProperty("readOnly").GetBoolean() || root.GetProperty("depositCurrency").GetString()!="EUR")
             throw new ArgumentException("SOURCE_AND_DEPOSIT_CURRENCY_BINDING");
         var symbols=root.GetProperty("symbols");var output=new Dictionary<string,object>();

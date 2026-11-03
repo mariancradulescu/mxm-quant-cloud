@@ -122,3 +122,10 @@ is reserved and are not exclusive standalone failure explanations. The primary
 0.5x case evaluates 35 actual proposals: 3 admitted and 32 declined. Twelve candidate
 slots on Monday have no frozen proposal; another zero/absent proposal occurs later.
 Thursday is separately recorded as a source-driven suspension before selection.
+
+EPA2 is prospectively frozen in [the holding protocol](research/portfolio_holding_protocol.json).
+It separately audits EPA1's fixed positions and cash without rescoring, then tests
+three calendar strata, two holding horizons and active in-position protection
+through the same native allocator and funded ledger. Current leverage/margin
+profiles are observed, while historical used margin and account stopout threshold
+remain unverified. All results remain pending the protected economic execution.
