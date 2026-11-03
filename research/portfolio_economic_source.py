@@ -63,6 +63,7 @@ def audit(b):
     listed=m.ProtoOASymbolsListRes();listed.ParseFromString(base64.b64decode(raw[2]['protobuf']))
     listed_by_name={x.symbolName:x for x in listed.symbol}
     need('pepperstone' in trader.trader.brokerName.lower() and currencies.get(trader.trader.depositAssetId)=='EUR' and b['depositCurrency']=='EUR','EPA1_BROKER_DEPOSIT_BINDING')
+    need(b['accountSwapFreeEffective']==trader.trader.swapFree and b['accountSwapFreeExplicitInWire']==trader.trader.HasField('swapFree'),'EPA1_ACCOUNT_FUNDING_FLAG_BINDING')
     for item in raw:
         q=getattr(m,item['requestType'])();q.ParseFromString(base64.b64decode(item['requestProtobuf']));require_read_only_request(q)
         r=getattr(m,item['type'])();r.ParseFromString(base64.b64decode(item['protobuf']))
@@ -114,7 +115,7 @@ def collect():
         assets={a.assetId:a.name for a in req(m.ProtoOAAssetListReq(ctidTraderAccountId=account),m.ProtoOAAssetListRes)[0].asset}
         need(trader.HasField('brokerName') and 'pepperstone' in trader.brokerName.lower() and assets.get(trader.depositAssetId)=='EUR','EPA1_PEPPERSTONE_EUR')
         symbols={s.symbolName:s for s in req(m.ProtoOASymbolsListReq(ctidTraderAccountId=account,includeArchivedSymbols=False),m.ProtoOASymbolsListRes)[0].symbol if s.enabled}
-        b=dict(schema=SCHEMA,source='Pepperstone-cTrader-OpenAPI',readOnly=True,depositCurrency='EUR',protocolSha256=hashlib.sha256(PROTOCOL.read_bytes()).hexdigest(),symbols={},snapshots={},eventIndices={},raw=raw)
+        b=dict(schema=SCHEMA,source='Pepperstone-cTrader-OpenAPI',readOnly=True,depositCurrency='EUR',accountSwapFreeEffective=trader.swapFree,accountSwapFreeExplicitInWire=trader.HasField('swapFree'),protocolSha256=hashlib.sha256(PROTOCOL.read_bytes()).hexdigest(),symbols={},snapshots={},eventIndices={},raw=raw)
         need(all(s in symbols for s in p['universe']),'EPA1_UNIVERSE_INCOMPLETE')
         for name in p['universe']:
             s=symbols[name];detail,di=req(m.ProtoOASymbolByIdReq(ctidTraderAccountId=account,symbolId=[s.symbolId]),m.ProtoOASymbolByIdRes)

@@ -127,7 +127,7 @@ def run_replay(b,plan,valued,p,z,slip,removed=None,keep_ledger=True):
                 margin=D(terms['currentMarginPerUnitBoundEur'])
                 financial_max=min(maximum,terms['maxQueriedUnits'],minimum+max(0,int((replay.balance/margin-minimum)//step))*step)
                 scenarios=[all_cal[candidate,s][p['calibrationDays'].index(d)] for d in cal_days]
-                valid=(len(cal_days)>=p['minimumCompleteCalibrationBlocks'] and q is not None and all(v is not None for v in scenarios) and funding_condition(c))
+                valid=(len(cal_days)>=p['minimumCompleteCalibrationBlocks'] and q is not None and all(v is not None for v in scenarios) and funding_condition(c) and b['accountSwapFreeEffective'] is False)
                 pid=name+'/'+str(clock)
                 grid=dict(EquityEur=replay.balance,CertifiedPeakEur=0,FreeMarginEur=replay.balance,MinimumUnits=minimum,StepUnits=step,MaximumUnits=financial_max,
                     MarginPerUnitEur=margin,BrokerStopoutEquityToMargin=0,Reconciled=False,CompleteJointRiskEvidence=False,
@@ -187,7 +187,7 @@ def run_replay(b,plan,valued,p,z,slip,removed=None,keep_ledger=True):
         if row.get('units') or 'id' not in row:continue
         day=row['day'];s=row['symbol'];first=point_quotes(valued,day_clock(day));last=point_quotes(valued,day_clock(day)+4*3600000)
         a=valued_quote(first,s);zq=valued_quote(last,s)
-        if a is None or zq is None or not funding_condition(b['symbols'][s]['contract']):row['unfundedMinimumVolumeCounterfactualNetEur']=None;continue
+        if a is None or zq is None or not funding_condition(b['symbols'][s]['contract']) or b['accountSwapFreeEffective'] is not False:row['unfundedMinimumVolumeCounterfactualNetEur']=None;continue
         units=int(b['symbols'][s]['contract']['minVolume'])//100;side=row['side'];sp=(D(str(a['Ask']))-D(str(a['Bid'])))*slip
         entry=D(str(a['Ask'] if side>0 else a['Bid']))+side*sp;exit=D(str(zq['Bid'] if side>0 else zq['Ask']))-side*sp
         row['unfundedMinimumVolumeCounterfactualNetEur']=net_quote(zq,D(side*units)*(exit-entry))-fee(a,units)-fee(zq,units)
@@ -232,6 +232,7 @@ def evaluate(b,original):
                     withoutCandidateRoundTrips=smaller['ledgerReport']['complete_round_trips'],
                     completeFlatLedger=smaller['completeFlatLedger'],interpretation='EXPOSED_DEVELOPMENT_ABLATION_NOT_INDEPENDENT_ALPHA_OR_MODEL_SELECTION'))
     return dict(schema='mxm-epa1-authentic-conditional-portfolio-economics-v1',protocol=p,portfolioScenarios=results,
+        accountSwapFreeEffective=b['accountSwapFreeEffective'],accountSwapFreeExplicitInWire=b['accountSwapFreeExplicitInWire'],
         nativeValuationCoverage={k:dict(valuedAssets=len(v['Quotes']),missing=v['Missing']) for k,v in valued.items()},
         contractFieldAvailability={s:{k:c['contract'].get(k) is not None for k in ['preciseTradingCommissionRate','preciseMinCommission','pnlConversionFeeRate','swapPeriod','swapTime']} for s,c in b['symbols'].items()},
         leaveOneCandidateOut=ablations,allPredeclaredScenariosReported=True,

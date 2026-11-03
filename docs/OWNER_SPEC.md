@@ -159,7 +159,8 @@ endpoint remains protective. No Cloud adapter uses the conditional endpoint.
 `MultiAssetValuation` supplies native C# FX routes, current-tariff adverse-notional
 fee bounds and commission floors. Forecast fees conservatively use slope plus
 floor; quote-time model charges use max(slope*units,floor). Financing is zero only
-conditionally on observed current daily swap outside the holding interval; no
+conditionally on the effective normal-account flag and observed current daily
+swap outside the holding interval (protobuf flag wire presence is disclosed); no
 historical schedule is certified. Slippage and historical tariff continuity are
 uncertain. These limitations remain visible in the unchanged funded ledger's
 incomplete-financing status. Numeric research NET is conditional, never actual

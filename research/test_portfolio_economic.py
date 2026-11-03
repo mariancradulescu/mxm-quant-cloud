@@ -23,7 +23,7 @@ class SourceSynchronization(unittest.TestCase):
 class IntegratedConditionalLedger(unittest.TestCase):
     def fixture(self):
         p=protocol();p['universe']=['EURUSD','GBPUSD'];p['calibrationDays']=p['calibrationDays'][:4];p['replayDays']=p['replayDays'][1:3]
-        b=dict(protocolSha256='synthetic',symbols={s:dict(currentMinMarginEur='10',currentMarginPerUnitBoundEur='10',maxQueriedUnits=1,contract=dict(minVolume=100,stepVolume=100,maxVolume=100,swapPeriod=24,swapTime=1320)) for s in p['universe']})
+        b=dict(protocolSha256='synthetic',accountSwapFreeEffective=False,accountSwapFreeExplicitInWire=True,symbols={s:dict(currentMinMarginEur='10',currentMarginPerUnitBoundEur='10',maxQueriedUnits=1,contract=dict(minVolume=100,stepVolume=100,maxVolume=100,swapPeriod=24,swapTime=1320)) for s in p['universe']})
         v={};plan={}
         for day in p['calibrationDays']+p['replayDays']:
             start=day_clock(day)
@@ -70,6 +70,12 @@ class IntegratedConditionalLedger(unittest.TestCase):
         second=run_replay(b,plan,v,p,D(2),D('.5'))
         self.assertEqual(first['nativeDecisionReceipts'],second['nativeDecisionReceipts'])
         self.assertNotEqual(first['ledgerReport']['closed_net_eur'],second['ledgerReport']['closed_net_eur'])
+
+    def test_unknown_swap_free_administration_is_not_zero_financing(self):
+        b,plan,v,p=self.fixture();b['accountSwapFreeEffective']=True
+        r=run_replay(b,plan,v,p,D(2),D('.5'))
+        self.assertEqual(r['ledgerReport']['complete_round_trips'],0)
+        self.assertTrue(all(x.get('unfundedMinimumVolumeCounterfactualNetEur') is None for x in r['opportunityLedger']))
 
     def test_missing_exit_never_becomes_zero_loss_or_new_admission(self):
         b,plan,v,p=self.fixture();v.pop(str(day_clock(p['replayDays'][0])+4*3600000))
