@@ -142,7 +142,7 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install -r research/requirements.txt
-      - run: python -m unittest research.test_pipeline research.test_intraday_net research.test_flow_net research.test_neighbour_net
+      - run: python -m unittest research.test_pipeline research.test_intraday_net research.test_flow_net research.test_neighbour_net research.test_funded_replay
       - name: Verify original 100 encrypted archive identities with read-only GitHub API token
         run: python -m research.legacy_manifest_remote
         env:
