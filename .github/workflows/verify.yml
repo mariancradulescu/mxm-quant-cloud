@@ -22,6 +22,7 @@ jobs:
       authorized_flow_net: ${{ steps.flow.outputs.authorized_flow_net }}
       authorized_intraday_net: ${{ steps.intraday.outputs.authorized_intraday_net }}
       authorized_net_coverage: ${{ steps.net_cov.outputs.authorized_net_coverage }}
+      authorized_relative_gross: ${{ steps.relative.outputs.authorized_relative_gross }}
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -131,6 +132,18 @@ jobs:
              [[ "$(git diff-tree --no-commit-id --name-only -r HEAD)" == "ops/neighbour-net-request.txt" ]]; then
             echo "authorized_neighbour_net=true" >> "$GITHUB_OUTPUT"
           fi
+      - name: Recognize exact owner/main research-only USD-relative gross request
+        id: relative
+        shell: bash
+        run: |
+          echo "authorized_relative_gross=false" >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_EVENT_NAME" == "push" &&
+                "$GITHUB_REF" == "refs/heads/main" &&
+                "$GITHUB_ACTOR" == "mariancradulescu" &&
+                "$(git log -1 --format=%s)" == "MXM_AUTHENTIC_RELATIVE_GROSS_STUDY" ]] &&
+             [[ "$(git diff-tree --no-commit-id --name-only -r HEAD)" == "ops/relative-gross-request.txt" ]]; then
+            echo "authorized_relative_gross=true" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
         with:
           dotnet-version: |
@@ -142,7 +155,7 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install -r research/requirements.txt
-      - run: python -m unittest research.test_pipeline research.test_intraday_net research.test_flow_net research.test_neighbour_net research.test_funded_replay
+      - run: python -m unittest research.test_pipeline research.test_intraday_net research.test_flow_net research.test_neighbour_net research.test_funded_replay research.test_relative_gross
       - name: Verify original 100 encrypted archive identities with read-only GitHub API token
         run: python -m research.legacy_manifest_remote
         env:
@@ -522,5 +535,46 @@ jobs:
         with:
           name: authentic-wide-regime-development-public-only
           path: regime-discovery*.public.json
+          if-no-files-found: error
+          retention-days: 90
+
+  relative_value_gross_development:
+    # Protected original-source research ONLY. No broker connection and no execution.
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.actor == 'mariancradulescu' &&
+      github.event_name == 'push' &&
+      needs.verify.outputs.authorized_relative_gross == 'true'
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: mxm-r3-custody-v1
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: 8.0.x
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - run: dotnet build src/Mxm.Replay -c Release
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: sealed-source
+          path: sealed-output
+          run-id: 41476636915
+          github-token: ${{ github.token }}
+      - name: Verify original CSharp source parity and execute new causal gross hypothesis
+        run: python -m research.relative_gross
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: authentic-new-relative-value-gross-public-only
+          path: relative-gross.public.json
           if-no-files-found: error
           retention-days: 90
