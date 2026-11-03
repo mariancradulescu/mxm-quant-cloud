@@ -48,3 +48,15 @@ entry/exit quote-window coverage, and all 11,696 native allocations correctly
 declined. No funded replay was started and no incremental NET edge is claimed.
 JQE1 extends evidence access on a fixed tiny all-six-asset clock grid; it cannot
 qualify historical costs or portfolio performance.
+
+Authentic [JQE1 evidence and complete current margin frontier](docs/JOINT_QUOTE_EVIDENCE_AUTHENTIC_RESULT.json),
+[run 41628896432](https://github.com/mariancradulescu/mxm-quant-cloud/actions/runs/41628896432):
+39 evidence requests, all 12 fixed historical quote events recovered, all six
+H4 interval geometries matched, encrypted independent raw readback passed.
+Current minimum margins total EUR164.18 for five FX instruments, EUR174.66 for
+XAUUSD alone, and EUR338.84 for all six. With additive current margins, XAUUSD
+plus the cheapest FX minimum needs EUR204.48 before costs/stress. All64 subsets
+are disclosed; these are current margin-only upper capacity observations, not
+historical margin evidence, risk admission, allocation weights or strategy NET.
+Complete event/holding coverage, cost/FX/financing history, causal joint EUR-risk
+estimation and independent portfolio validation remain necessary.
