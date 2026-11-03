@@ -223,13 +223,20 @@ positions and suspend new admissions. Data gaps suspend entries, request model
 exits and retain execution uncertainty after modeled flat recovery.
 
 Documentation distinguishes broker liquidation from voluntary model protection.
-Pepperstone's public cTrader page describes 50% as normal; EU 2020 terms clause 5.12
-also states 50%. Neither verifies this account's current or historical numeric
-threshold. Current authorized Open API Trader fields expose optional fair/smart
-and position-ordering flags, not the numeric threshold. Margin-call notification
-levels must not be substituted. The 50% ratio is a labeled documentation reference;
-no broker smart/fair liquidation is fabricated if it is crossed. That event flags
-uncertainty and stops further admissions. Sources reviewed 2026-11-03:
+The frozen protocol's 50% reference originated in the public cTrader page and
+EU 2020 terms. Subsequent checking of the current EU legal index found March 2026
+terms: clauses 5.14/5.15 distinguish retail 50% and professional 20%; the default
+100% margin-call notification is a separate mechanism. Neither these public terms
+nor Open API account-type/leverage fields verify this account's contractual client
+classification, applied numeric stopout or historical terms. The authorized Trader
+fields expose optional fair/smart and position-ordering flags, not the numeric
+threshold. The 50% reference remains frozen, with no favorable threshold choice
+or fabricated smart/fair liquidation. A crossing flags uncertainty and stops new
+admissions. Current broker terms also distinguish an indicative quote from an
+accepted order; observed history cannot establish size availability or actual fills.
+Sources reviewed 2026-11-03:
+https://pepperstone.com/en-eu/legal-documents/ ;
+https://eu-assets.contentstack.com/v3/assets/bltaec35894448c7261/bltfaf6f57172dc686e/Pepperstone_EU_Limited_Cyprus_Terms_and_Conditions.pdf ;
 https://pepperstone.com/en/platforms/ctrader ;
 https://files.pepperstone.com/legal/CYSEC/Ts_and_Cs_Pepperstone_EU.pdf ;
 https://help.ctrader.com/trading-with-ctrader/conditions/ .
@@ -242,3 +249,19 @@ between-sample paths, historical terms and executable depth remain unknown.
 Market-context volatility descriptors use only preceding H4 bars and are reported
 without becoming retrospective regime-selection filters. No LIVE/DEMO orders or
 Cloud activation are authorized; verified product admission remains protective.
+
+EPA2 executed in run 41648280262 at code 5f8af6990197467c75175ddc24030b0e0569a644.
+All eight cases and twelve ablations remain frozen in EPA2_AUTHENTIC_HOLDING_RESULT.json:
+zero admitted trades, EUR200 unchanged, all proposals rejected for missing evidence
+except one absent causal proposal per case. Zero exposure is not proof of low DD,
+profitable adaptation or absence of opportunity. The exact evidence bottleneck
+requires broker-free raw custody diagnosis, not retrospective criteria relaxation.
+The EPA1 fixed-book audit reconciles all six original cash totals unchanged. At
+0.5x slippage its sampled primary/central minimum liquidation-equity-to-entry-margin
+ratios are 109.921442%/101.699180%; no sampled 50% reference crossings. The missing
+June 9 12:30 UTC mark and unobserved intervals remain unknown. New current-tier
+margin interpretation requires explicit unit reconciliation; these are conditional
+sensitivities, never historical margin certification. Original raw source bundles
+are re-archived encrypted during the diagnosis with 90-day retention; permanent
+public receipts and hashes remain in git. No new broker requests, allocations,
+source-gap filling or favorable policy selection are authorized by that diagnosis.
