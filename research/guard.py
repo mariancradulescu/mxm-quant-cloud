@@ -6,7 +6,6 @@ class CaptureContractError(Exception):
 ALLOWED = frozenset({"ProtoOAApplicationAuthReq", "ProtoOAGetAccountListByAccessTokenReq",
     "ProtoOAAccountAuthReq", "ProtoOASymbolsListReq", "ProtoOASymbolByIdReq",
     "ProtoOATraderReq", "ProtoOAAssetListReq", "ProtoOAExpectedMarginReq",
-    "ProtoOAReconcileReq", "ProtoOAOrderListReq", "ProtoOADealListReq",
     "ProtoOAGetDynamicLeverageByIDReq", "ProtoOAGetTrendbarsReq", "ProtoOAGetTickDataReq"})
 
 def require_read_only_request(request):

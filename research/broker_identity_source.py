@@ -3,9 +3,8 @@ import base64,hashlib,json,os,sys,time
 from pathlib import Path
 from decimal import Decimal as D
 from .collect import authenticate,HISTORIC_ACCOUNT_FINGERPRINT_COMMITMENT
-from .ctrader_transport import StdlibCTraderTransport
+from .broker_identity_transport import IdentityReadTransport,require_read_only_request
 from .ctrader_proto import OpenApiMessages_pb2 as m,OpenApiModelMessages_pb2 as e
-from .guard import require_read_only_request
 from .decode import need
 from .custody import seal_new,unseal_new
 from .custody_new import checked_public
@@ -37,7 +36,7 @@ def decode(b):
 
 
 def collect():
-    run=os.environ['GITHUB_RUN_ID'];recipient=checked_public(Path('new-source-recipient'),run);t=StdlibCTraderTransport();raw=[]
+    run=os.environ['GITHUB_RUN_ID'];recipient=checked_public(Path('new-source-recipient'),run);t=IdentityReadTransport();raw=[]
     try:
         account=authenticate(t);hi=int(time.time()*1000);lo=hi-7*86400000
         requests=[m.ProtoOATraderReq(ctidTraderAccountId=account),m.ProtoOAReconcileReq(ctidTraderAccountId=account),m.ProtoOAOrderListReq(ctidTraderAccountId=account,fromTimestamp=lo,toTimestamp=hi),m.ProtoOADealListReq(ctidTraderAccountId=account,fromTimestamp=lo,toTimestamp=hi,maxRows=1000),m.ProtoOAReconcileReq(ctidTraderAccountId=account)]
