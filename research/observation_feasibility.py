@@ -56,6 +56,21 @@ def evaluate(b,p):
             for (s,t),r in observed.items() if s==symbol and r['At'] is not None}
         source=dict(schema=b['schema'],readOnly=True,depositCurrency='EUR',symbols=b['symbols'],snapshots=snapshots)
         valued[symbol]=native(source,'--value-portfolio-source')['Snapshots']
+    margin_cache={}
+    def capacity(s,t):
+        if (s,t) in margin_cache:return margin_cache[s,t]
+        observation=observed.get((s,t))
+        if observation is None or observation['At'] is None:return None
+        row=b['symbols'][s];units=D(row['contract']['minVolume'])/100
+        raw={q['Symbol']:dict(bid=q['Bid'],ask=q['Ask']) for q in observation['Quotes']}
+        result=native(dict(EquityEur=200,PeakReferenceEur=200,DataComplete=True,
+            Positions=[dict(Id='CEF1_MINIMUM_CAPACITY/'+s,Symbol=s,Units=units,
+                EntryMarginPerUnitEur=D(row['currentMarginPerUnitBoundEur']),StressLossEur=0)],
+            SourceSymbols=b['symbols'],RawQuotes=raw,
+            AccountLeverage=D(b['riskTerms']['leverageInCents'])/100,
+            DocumentedReferenceStopoutRatio=D('.5'),TierLeverageDivisor=100),'--assess-holding-risk')
+        margin_cache[s,t]=result['UsedMarginEnvelopeEur']
+        return margin_cache[s,t]
     def support(s,t):
         return s in valued.get(s,{}).get(str(t),{}).get('Quotes',{})
     def path(s,day,horizon,replay=False):
@@ -76,10 +91,25 @@ def evaluate(b,p):
             funding=b['accountSwapFreeEffective'] is False and not any(
                 entry<=day0+d*86400000+c['swapTime']*60000<=exit_at for d in (0,1))
         current_min=D(b['symbols'][s]['currentMinMarginEur'])
+        envelopes=[capacity(s,t) for t in keys]
+        margin_complete=all(x is not None for x in envelopes)
+        maximum_margin=max(envelopes) if margin_complete else None
+        q=valued.get(s,{}).get(str(start),{}).get('Quotes',{}).get(s)
+        cost=None
+        if q is not None:
+            units=D(c['minVolume'])/100
+            commission=max(D(q['FeeLinearEurPerUnit'])*units,D(q['FeeFloorEur']))
+            # A source capacity screen at one minimum lot, not modeled P/L.
+            # Spread + 1x entry-spread hypothetical slippage on each side.
+            cost=2*commission+3*(D(q['Ask'])-D(q['Bid']))*units*D(q['EurDebitPerQuote'])
         return dict(day=day,complete=not missing and funding,missingWindowCount=len(missing),
             windowCount=len(keys),fundingCondition=funding,
             currentMinimumMarginEur=str(current_min),currentMinMarginBelowInitial200=current_min<=200,
-            historicalMarginCertified=False,actualFillOrDepthProven=False)
+            historicalMarginCertified=False,actualFillOrDepthProven=False,
+            minimumVolumeCurrentRuleMarginComplete=margin_complete,
+            maximumMinimumVolumeMarginScenarioEur=str(maximum_margin) if maximum_margin is not None else None,
+            minimumVolumeMarginScenarioBelowInitial200=maximum_margin is not None and maximum_margin<200,
+            entryCurrentTariffFrictionAtMinimumVolumeEur=str(cost) if cost is not None else None)
     groups=[]
     for cohort in p['cohorts']:
         for horizon in p['commonHorizonMinutes']:
@@ -106,7 +136,7 @@ def evaluate(b,p):
         fullStudyAdmission=False,
         admissionBlockers=['NEW_PROTOCOL_FEATURE_LABEL_SAMPLE_AND_SPLIT_PLAN_NOT_YET_REGISTERED',
             'NEW_EPISODE_SOURCE_COVERAGE_NOT_YET_PILOTED',
-            'JOINT_HOLDING_EQUITY_MARGIN_REPRICING_NOT_PROVEN_BY_ROUTE_AVAILABILITY',
+            'JOINT_FLOATING_EQUITY_AND_TOTAL_MARGIN_NOT_PROVEN_BY_SINGLE_MINIMUM_VOLUME_SCREENS',
             'HISTORICAL_COSTS_DEPTH_STOP_OUT_AND_BETWEEN_MARK_RISK_UNCERTIFIED'],
         scoresComputed=False,allocationsComputed=False,epa2Replayed=False,
         sourceGapsRepaired=False,independentConfirmation=False,
