@@ -144,7 +144,7 @@ reinvestment; it is a data-query bound, not a universal OWNER position/risk cap.
 Two policies, central-mean sensitivity (0-SE penalty) and an exploratory 2-SE
 uncertainty screen, are both evaluated at 0/0.5/1 times observed entry spread per
 side as hypothetical slippage. All six scenarios and all12 leave-one-candidate-out
-comparisons for each policy at0.5x are disclosed, never selected for promotion.
+comparisons for each policy at 0.5x are disclosed, never selected for promotion.
 These are descriptive exposed-data comparisons with no multiple-testing-adjusted
 statistical qualification. A candidate is evaluated for marginal portfolio utility,
 not required to satisfy individual HARD21 or a separate standalone qualification.
@@ -172,3 +172,22 @@ entry, exit and mark functions; only synchronized dispatch and quote-time fee ma
 are added. Absent exits leave unresolved exposure and suspend subsequent entries.
 A missing future quote is never used to suppress an earlier decision or turn an
 unknown loss into zero. The original frozen replay file/results remain unchanged.
+
+EPA1 execution 41634941443 completed with 1,101 read-only requests and 87/90 complete
+synchronized snapshots. The full original economic result is frozen in
+`EPA1_AUTHENTIC_PORTFOLIO_RESULT.json`; public-ledger arithmetic is checked without
+rescoring by `research/verify_epa1_receipt.py`. The 2-SE primary policy has 3 modeled
+USDJPY trips and +4.408195 EUR at 0.5x spread slippage, concentrated in one final
+trade; central sensitivity has 4 trips, +8.269750 EUR and one genuinely overlapping
+two-instrument modeled allocation after retained gains. All 24 ablations remain
+descriptive exposed-data comparisons. No policy or candidate is promoted.
+
+The incomplete holding mark, source-driven predecision suspension, unverified
+historical financing/tariffs and absent depth/size evidence remain material.
+Simulated quote fills are not liquidity evidence. The common ledger remains
+explicitly incomplete in evidence despite flat, reconciled closing cash. The
+original protocol, missing observations and outcomes are preserved without
+retrospective gap filling, clock changes, exclusion of unfavorable days or
+retuning. Further adaptation/diversification requires genuinely new prospective
+evidence; this pilot does not demonstrate robust regime/performance adaptation
+or independent marginal portfolio edge. OWNER v2.0 requirements remain unchanged.

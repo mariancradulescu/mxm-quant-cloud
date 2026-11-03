@@ -12,6 +12,7 @@
     "docs/AUTHENTIC_NEIGHBOUR_NET_VERDICT_20261103.json": "4e9677ca94afa4c568e9104ebb33768e758b6100ffcfcf128596bdcbb4bfd2b1",
     "docs/AUTHENTIC_RELATIVE_GROSS_VERDICT_20261103.json": "2ed851f41737fd8b4a8963852602137db6aad1bcd187f3fa41a618a71d51812a",
     "docs/AUTHENTIC_WIDE_REGIME_VERDICT_20261103.json": "8ce232c1cb4f8f7dafc014de898ec6752838e5c58190d32eebe0a6c180860a65",
+    "docs/EPA1_AUTHENTIC_PORTFOLIO_RESULT.json": "abfcff3da3f72cba7d355713daf32f61a9a70cc2964f3a3a23b5f5cd58b31984",
     "docs/JOINED_OPPORTUNITY_AUTHENTIC_RESULT.json": "292c3a3d086deee3af9efb3b480a339fa4edf99c3dda58de7559d712cd166187",
     "docs/JOINT_QUOTE_EVIDENCE_AUTHENTIC_RESULT.json": "5df419990d0cd142e7bda794ed2ae791bc0853c4739f6b0286c35c1f62a5403a",
     "docs/NEW_SOURCE_H1_CAUSAL_COLD_VERDICT_20261102.json": "e1a264c8dda8e9f2af3f8b4c1eda51b03fd05be0c98000e23f601c1dd04ffda3",
@@ -86,13 +87,17 @@
       ]
     },
     {
+      "executionRunId": 41634941443,
       "id": "EPA1",
       "independent": false,
       "multiplicity": "ALL6_SCENARIOS_ALL24_ABLATIONS_REPORTED_NO_INFERENTIAL_PROMOTION",
       "phase": "EXPOSED_DEVELOPMENT_CONDITIONAL_FINANCED_REPLAY",
       "protocolFile": "research/portfolio_economic_protocol.json",
       "protocolSha256": "612d4d88aaccd7c65105335dec2fbd7dd7d2e9feb839eaff49646e1e5d32c777",
+      "publicArtifactId": 13230980088,
+      "publicResultSha256": "abfcff3da3f72cba7d355713daf32f61a9a70cc2964f3a3a23b5f5cd58b31984",
       "sourceRunId": 41476636915,
+      "status": "EXECUTED_FROZEN_UNQUALIFIED_WITH_SOURCE_GAPS",
       "tradingQualification": false
     }
   ],
@@ -259,6 +264,35 @@
       "independent": false,
       "scope": "JQE1 all-six-asset fixed event quotes and current expected minimum margins",
       "sourceRunId": 41628896432
+    },
+    {
+      "calibrationDays": [
+        "2026-04-07",
+        "2026-04-14",
+        "2026-04-21",
+        "2026-04-28",
+        "2026-05-05",
+        "2026-05-12",
+        "2026-05-19",
+        "2026-05-26"
+      ],
+      "ciphertextSha256": "f3d57deb06c7906e9390c0229706dda1b99d7cb3ba28f7d2a4a4a793d110156a",
+      "codeCommit": "f3de2f323ba06b7db8a69c1d025a75634a2d8d48",
+      "decisionExposure": [
+        "ALL6_CONDITIONAL_PORTFOLIO_SCENARIOS",
+        "ALL24_LEAVE_ONE_CANDIDATE_OUT_ABLATIONS"
+      ],
+      "exactPublicReceipt": "docs/EPA1_AUTHENTIC_PORTFOLIO_RESULT.json",
+      "independent": false,
+      "replayDays": [
+        "2026-06-08",
+        "2026-06-09",
+        "2026-06-10",
+        "2026-06-11",
+        "2026-06-12"
+      ],
+      "scope": "EPA1 calibration and economic portfolio execution/holding grid; current broker cost and margin scenarios",
+      "sourceRunId": 41634941443
     }
   ],
   "unknownExposurePolicy": "TREAT_AS_EXPOSED_FOR_QUALIFICATION"
