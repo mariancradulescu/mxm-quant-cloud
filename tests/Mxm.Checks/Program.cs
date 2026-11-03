@@ -381,6 +381,10 @@ Check(AdaptivePortfolioRisk.Choose(adaptiveAccount,optimistic.Select(x=>x with {
 Check(AdaptivePortfolioRisk.Choose(adaptiveAccount with {FreeMarginEur=5m},optimistic).Units==0,"broker minimum cannot be fractionally invented");
 Check(AdaptivePortfolioRisk.Choose(adaptiveAccount with {CompleteJointRiskEvidence=false},optimistic).Units==0,"unknown joint risk stops only new exposure");
 Check(AdaptivePortfolioRisk.Choose(adaptiveAccount,optimistic.Select((x,i)=>x with {ProposedNetPerUnitEur=i%2==0?.003m:-.002m})).Units==0,"uncertain mean not enough for new exposure");
+Check(AdaptivePortfolioRisk.Choose(adaptiveAccount,optimistic.Select(x=>x with {ProposedFavorablePeakPerUnitEur=.2m})).Units==0,
+    "favorable portfolio peak scales with candidate volume and consumes subsequent drawdown capacity");
+Check(PortfolioRiskBudget.Assess(new BrokerRiskSnapshot(200m,200m,200m,true,true,true,true),Array.Empty<OpenRiskExposure>(),new ProposedRiskExposure("adaptive",5m,1m,30m)).Admissible,
+    "withdrawn aggregate1 percent does not survive in portfolio observation capacity");
 var anchor=DateTimeOffset.Parse("2025-01-01T00:00:00Z").ToUnixTimeMilliseconds();
 var researchBars=Enumerable.Range(0,1000).Select(i=>{
     double o=100000+10*i+20*Math.Sin(i*.4),c=o+10;

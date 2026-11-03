@@ -4,7 +4,8 @@ namespace Mxm.Core;
 // OpenPortfolioNet includes pending and bounded ambiguous intent losses and costs.
 public sealed record JointRiskScenario(decimal OpenPortfolioNetEur, decimal ProposedNetPerUnitEur,
     decimal ProposedFixedCostEur, decimal IntrahorizonOpenLossEur, decimal IntrahorizonLossPerUnitEur,
-    decimal FavorablePeakEur, decimal ExistingMarginEur, bool InEstimationSample);
+    decimal FavorablePeakEur, decimal ExistingMarginEur, bool InEstimationSample,
+    decimal ProposedFavorablePeakPerUnitEur = 0m);
 public sealed record AdaptiveRiskInputs(decimal EquityEur, decimal CertifiedPeakEur, decimal FreeMarginEur,
     decimal MinimumUnits, decimal StepUnits, decimal MaximumUnits, decimal MarginPerUnitEur,
     decimal BrokerStopoutEquityToMargin, bool Reconciled, bool CompleteJointRiskEvidence,
@@ -27,7 +28,7 @@ public static class AdaptivePortfolioRisk
            a.BrokerStopoutEquityToMargin<0 || a.EffectiveIndependentBlocks<2 || a.UncertaintyMultiplier<0 || s.Length<2 ||
            s.Count(x=>x.InEstimationSample)<2 || a.EffectiveIndependentBlocks>s.Count(x=>x.InEstimationSample) ||
            s.Any(x=>x.ProposedFixedCostEur<0 || x.IntrahorizonOpenLossEur<0 || x.IntrahorizonLossPerUnitEur<0 ||
-                    x.FavorablePeakEur<0 || x.ExistingMarginEur<0))return Deny("INVALID_ADAPTIVE_EVIDENCE");
+                    x.FavorablePeakEur<0 || x.ProposedFavorablePeakPerUnitEur<0 || x.ExistingMarginEur<0))return Deny("INVALID_ADAPTIVE_EVIDENCE");
         decimal max=Math.Min(a.MaximumUnits,a.FreeMarginEur/a.MarginPerUnitEur);
         if(max<a.MinimumUnits)return Deny("BROKER_MINIMUM_NOT_FINANCED");
         int count=(int)Math.Min(10001m,1m+Math.Floor((max-a.MinimumUnits)/a.StepUnits));
@@ -43,7 +44,9 @@ public static class AdaptivePortfolioRisk
                 decimal baseline=a.EquityEur+x.OpenPortfolioNetEur;
                 decimal terminal=baseline+u*x.ProposedNetPerUnitEur-x.ProposedFixedCostEur;
                 decimal low=Math.Min(terminal,a.EquityEur-x.IntrahorizonOpenLossEur-u*x.IntrahorizonLossPerUnitEur-x.ProposedFixedCostEur);
-                decimal peak=Math.Max(a.CertifiedPeakEur,a.EquityEur+x.FavorablePeakEur);
+                // Candidate peak scales with volume; terminal gains also bound the peak.
+                decimal peak=Math.Max(a.CertifiedPeakEur,Math.Max(terminal,
+                    a.EquityEur+x.FavorablePeakEur+u*x.ProposedFavorablePeakPerUnitEur));
                 decimal d=1m-low/peak;worst=Math.Min(worst,low);dd=Math.Max(dd,d);
                 // No correlation/netting discount: each joint adverse state survives.
                 if(baseline<=0 || terminal<=0 || d>=.30m ||
