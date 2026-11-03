@@ -6,7 +6,7 @@ public static class IntradayReversalNet
 {
     public const string Id="EURUSD_M15_HOURLY_SHOCK_REVERSAL_V1_20261103";
     public record Bar(long T,decimal O,decimal H,decimal L,decimal C);
-    public record Proposal(long Entry,long Exit,int Direction,decimal AdverseBid);
+    public record Proposal(long Entry,long Exit,int Direction,decimal AdverseBid,decimal FavorableBid);
     public static Bar[] Bars(JsonElement root) => root.GetProperty("bars").EnumerateArray()
         .Select(b=>new Bar(b.GetProperty("t").GetInt64(),b.GetProperty("o").GetDecimal()/100000m,
             b.GetProperty("h").GetDecimal()/100000m,b.GetProperty("l").GetDecimal()/100000m,
@@ -27,7 +27,8 @@ public static class IntradayReversalNet
             if(range<=0 || Math.Abs(shock)<range || shock==0)continue;
             int direction=shock>0?-1:1;
             var hold=bars.Skip(i).Take(4);
-            result.Add(new(t,t+3600000,direction,direction>0?hold.Min(b=>b.L):hold.Max(b=>b.H)));
+            result.Add(new(t,t+3600000,direction,direction>0?hold.Min(b=>b.L):hold.Max(b=>b.H),
+                direction>0?hold.Max(b=>b.H):hold.Min(b=>b.L)));
         }
         return result.ToArray();
     }
@@ -96,6 +97,10 @@ public static class IntradayReversalNet
                     : worstSwap/100m/360m*units*Math.Max(ea,xa)/Math.Min(eb,xb);
                 decimal net=actual-commission-slip-fx-finance;
                 decimal excursion=p.Direction>0?units*Math.Max(0,ea-p.AdverseBid)/Math.Min(eb,xb):units*Math.Max(0,p.AdverseBid+(xa-xb)-eb)/Math.Min(eb,xb);
+                // Unknown intra-bar ordering: assume favorable extreme precedes adverse
+                // extreme. This raises rather than understates modeled peak DD.
+                decimal favorable=units*Math.Max(0,p.Direction*(p.FavorableBid-(p.Direction>0?ea:eb)))/Math.Min(eb,xb);
+                peak=Math.Max(peak,equity+favorable);
                 maxDd=Math.Max(maxDd,(peak-(equity-excursion-commission-slip-fx-finance))/peak);
                 grossSum+=gross;spreadSum+=spread;commissionSum+=commission;slippageSum+=slip;fxSum+=fx;financingSum+=finance;
                 equity+=net;peak=Math.Max(peak,equity);maxDd=Math.Max(maxDd,(peak-equity)/peak);
