@@ -326,7 +326,8 @@ jobs:
         with:
           name: mxm-observation-only-not-authorized-for-activation
           path: src/Mxm.Cloud/bin/Release/**/*.algo
-          if-no-files-found: error      - name: Recover original SQP1 ciphertext without broker access or decryption
+          if-no-files-found: error
+      - name: Recover original SQP1 ciphertext without broker access or decryption
         if: steps.sqp_preserve.outputs.authorized_sqp_preservation == 'true'
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
