@@ -24,7 +24,7 @@ def route_window_availability(b,p):
                 if not response.hasMore:
                     events.extend((t,symbol,side,price) for t,price in decode_side(response.tickData,nominal+1000,nominal+41000))
         state={};found={0:{},30000:{}}
-        for at,group in groupby(sorted(events),key=lambda x:x[0]):
+        for at,group in groupby(sorted(events,key=lambda x:x[0]),key=lambda x:x[0]):
             for t,symbol,side,price in group:state[symbol,side]=(t,price)
             for offset in (0,30000):
                 if not nominal+offset+1000<=at<=nominal+offset+11000:continue
