@@ -159,6 +159,7 @@
       "id": "SQP1",
       "independent": false,
       "independentMarginalContributionDemonstrated": false,
+      "originalSourceArtifactId": 13266505512,
       "phase": "PREDECLARED_EXPOSED_DEVELOPMENT_INTEGRATED_NET",
       "protocolFile": "research/sequence_portfolio_protocol.json",
       "protocolSha256": "d583e953c17c31e9a9910d3e44b55448de4896b2779b48982696dbf1931b3a11",
@@ -176,8 +177,10 @@
         "2026-10-08"
       ],
       "sourceAllowed": "PINNED_EXISTING_PEPPERSTONE_EU_LIVE_SCOPE_VIEW",
-      "sourceArtifactId": 13266505512,
+      "sourceArtifactId": 13266929850,
       "sourceCiphertextSha256": "a283c79f86a2ce5ceefb371592d743a889c55dfe54be5a093a6c3fda9ed805a3",
+      "sourcePreservationExpiresAt": "2027-02-01T20:15:56Z",
+      "sourcePreservationRunId": 41710960192,
       "status": "CLOSED_EXACT_NONPOSITIVE_PRIMARY_CONFIGURATION_NO_RETUNING",
       "trialCount": 24,
       "trialPolicy": "ALL_GROUPS_ALL_CASES_ALL_PRIMARY_ABLATIONS_NO_FAVORABLE_SELECTION"
@@ -500,7 +503,11 @@
         "2026-10-08"
       ],
       "scope": "SQP1 M15/H1 prior feature windows and actual causal decision/entry/holding/exit events on all16 predeclared development dates",
-      "sourceArtifactId": 13266505512,
+      "sourceArtifactExpiresAt": "2027-02-01T20:15:56Z",
+      "sourceArtifactId": 13266929850,
+      "sourceArtifactName": "sqp1-original-bound-encrypted-source",
+      "sourceArtifactRunId": 41710960192,
+      "sourcePreservationCiphertextHashVerified": true,
       "sourceRunId": 41706496201
     }
   ],
