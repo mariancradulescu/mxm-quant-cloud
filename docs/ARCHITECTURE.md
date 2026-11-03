@@ -106,7 +106,7 @@ The newly native sequence kernels are compiled into the single observation-only
 
 ## Integrated programme and native funded-state transfer
 
-BDP1 consolidates192 contextual groups over52 complete weeks in one native discovery
+BDP1 consolidates192 contextual diagnostics and48 predeclared contextual mixtures over52 complete weeks in one native discovery
 pass with chronological26/13/13 boundaries, cost/financial support and explicit
 multiplicity/exposure accounting. Conditional BID-bar cost scenarios are an admission
 stage, not funded economic performance. Signal ceilings preserve every full week,
@@ -121,3 +121,8 @@ event without invoking old research logic. Hash-bound checkpoints detect acciden
 corruption; they do not authenticate broker history or certify global equity peaks.
 Native modeled fills still require an execution adapter and broker outcome recovery
 before product acceptance. No order path or permanent Python service is introduced.
+
+
+Executed state: source41724643418 and corrected reception41726863225 reconstruct441,240 authentic M5 bars. The initial32-bit calendar defect is disclosed in `BDP1_EXECUTION_REVIEW.md`; original artifact13275041084 remains preserved.64-bit week partitions now pass for all240 groups across both13-week evaluation phases. No mixture passes even the base-cost scenario, so there is no new financed NET or portfolio marginal-NET proof. The exact configuration is closed, without relaxed thresholds or subset promotion. The result is stored verbatim in `BDP1_AUTHENTIC_RESULT.json` and audited in `BDP1_EXECUTION_AUDIT.json`.
+
+Native funded fact confirmation matches the frozen SQP1 cash/costs/sampled drawdown within EUR1e-18, including restart after each of90 events per nonempty scenario and idempotence. Higher causal current margin is respected for new-position admission. This pure C# state is available in the common core; cBot remains observation-only. Actual broker outcome reconciliation, representative simultaneous financed exposure, independent NET, HARD21 and continuous floating-equity certification remain unproved.

@@ -1,0 +1,48 @@
+{
+  "admittedMixtures": 0,
+  "all6240GroupWeekBoundariesAndCountsMatched": true,
+  "cloudActivated": false,
+  "economicRulesRetuned": false,
+  "executionRunId": 41726863225,
+  "fundedNetEur": null,
+  "independentEffectiveSampleSizeClaimed": false,
+  "initialInvalidCalendarPublicArtifactId": 13275041084,
+  "initialInvalidCalendarResultSha256": "180838d4cd9f428e219db27de436e1304bf9f55fdc53d052f28d9bd4a7885bd9",
+  "minimumBaseCostScenarioBps": 1.039699180214388,
+  "nativeFundedConfirmationIdenticalExceptExecutionRun": true,
+  "nativeFundedConfirmationSha256": "388da898c16bfdb740709f3286c018eb95bb80c07b05cc82c332cd9ba56836ea",
+  "newBrokerRequests": 0,
+  "onlyWeekOffsetsAndOutcomeFreeDiagnosticMetadataDiffer": true,
+  "ordersSubmitted": 0,
+  "originalCalendarArtifactPreserved": true,
+  "protocolSha256": "f8715fb32ce260a22ac821621994cb82d786a782b3769fc2a61eff9d228b2867",
+  "qualification": false,
+  "removeOneViewProxyChecks": 192,
+  "resultSha256": "ba33bc4bdd756db85c1c017c6c1f39241facd94408901787ff4db4bd53871cdb",
+  "schema": "mxm-bdp1-technical-receipt-audit-v1",
+  "sourceM5Bars": 441240,
+  "sourceRecollected": false,
+  "sourceRequestsOriginal": 963,
+  "sourceRunId": 41724643418,
+  "supportSummary": [
+    {
+      "baseCostAdmissibleClocks": 0,
+      "maximumTwoSeBeforeCostBps": 0.23473218025912163,
+      "overlappingObservableMixtureClocks": 304062,
+      "phase": "SELECTION",
+      "positiveTwoSeBeforeCostClocks": 3200,
+      "primaryCostAdmissibleClocks": 0,
+      "supportedViewForecasts": 1200586
+    },
+    {
+      "baseCostAdmissibleClocks": 0,
+      "maximumTwoSeBeforeCostBps": 0.20883058619283348,
+      "overlappingObservableMixtureClocks": 304171,
+      "phase": "AUDIT",
+      "positiveTwoSeBeforeCostClocks": 3375,
+      "primaryCostAdmissibleClocks": 0,
+      "supportedViewForecasts": 1201190
+    }
+  ],
+  "trialGroups": 240
+}

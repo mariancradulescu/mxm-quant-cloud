@@ -12,6 +12,7 @@
     "docs/AUTHENTIC_NEIGHBOUR_NET_VERDICT_20261103.json": "4e9677ca94afa4c568e9104ebb33768e758b6100ffcfcf128596bdcbb4bfd2b1",
     "docs/AUTHENTIC_RELATIVE_GROSS_VERDICT_20261103.json": "2ed851f41737fd8b4a8963852602137db6aad1bcd187f3fa41a618a71d51812a",
     "docs/AUTHENTIC_WIDE_REGIME_VERDICT_20261103.json": "8ce232c1cb4f8f7dafc014de898ec6752838e5c58190d32eebe0a6c180860a65",
+    "docs/BDP1_AUTHENTIC_RESULT.json": "ba33bc4bdd756db85c1c017c6c1f39241facd94408901787ff4db4bd53871cdb",
     "docs/CAUSAL_OBSERVATION_FEASIBILITY_RESULT.json": "f6b01ad3220419d7fcdf418c0bc2ddc1270625afb0cb1e114e53cbec30148ce4",
     "docs/EPA1_AUTHENTIC_PORTFOLIO_RESULT.json": "abfcff3da3f72cba7d355713daf32f61a9a70cc2964f3a3a23b5f5cd58b31984",
     "docs/EPA2_AUTHENTIC_HOLDING_RESULT.json": "0c3e9ab22d5471ffa52291c5b66c649f3d4f01a78afe5f6ac37a4597886858ca",
@@ -57,6 +58,9 @@
   "independenceDefault": "NOT_ESTABLISHED",
   "nativeFundedFactReception": {
     "brokerFillRecoveryProven": false,
+    "confirmationArtifactId": 13275477586,
+    "confirmationRunId": 41726863225,
+    "confirmationSha256": "388da898c16bfdb740709f3286c018eb95bb80c07b05cc82c332cd9ba56836ea",
     "eventsPerNonemptyCase": 90,
     "executionRunId": 41724643418,
     "forecastOrAllocationOrExitPolicyRerun": false,
@@ -66,7 +70,8 @@
     "publicArtifactId": 13273872349,
     "receiptSha256": "386146c81cfd6e4e4a73ebed4c85d207f6badf6eb6baa9cafd3ba503e14202ba",
     "restartEveryEventMatched": true,
-    "sourceRunId": 41706496201
+    "sourceRunId": 41706496201,
+    "strongerCurrentMarginAdmissionVerified": true
   },
   "projectWideCalendarRule": "Union of relevant design/research exposures across sources and instruments; overlaps are not independent.",
   "prospectiveStudies": [
@@ -199,21 +204,30 @@
       "trialPolicy": "ALL_GROUPS_ALL_CASES_ALL_PRIMARY_ABLATIONS_NO_FAVORABLE_SELECTION"
     },
     {
+      "admittedMixtures": 0,
       "bidBarCostScenariosAreFundedNet": false,
       "closedStudyModelRerun": false,
       "developmentEnd": 1777852800000,
       "end": 1793577600000,
+      "exactPublicReceipt": "docs/BDP1_AUTHENTIC_RESULT.json",
+      "executionRunId": 41726863225,
+      "fundedNetEur": null,
       "hard21SignalCountsForbidden": true,
       "id": "BDP1",
       "implementationDefect": "INT32_WEEK_MILLISECOND_MULTIPLICATION_OVERFLOW_AFTER_WEEK_INDEX3;NO_PARAMETER_RETUNING",
       "independent": false,
+      "independentMarginalNetDemonstrated": false,
+      "initialCalendarDefectCorrectedWithoutEconomicRuleChange": true,
       "initialPublicArtifactId": 13275041084,
       "initialPublicResultSha256": "180838d4cd9f428e219db27de436e1304bf9f55fdc53d052f28d9bd4a7885bd9",
       "marginalProxyChecks": 192,
       "nativeFactProofSourceRunId": 41706496201,
+      "originalSourcePreservedWithoutRecollection": true,
       "phase": "INTEGRATED_52_WEEK_CONTEXTUAL_DISCOVERY_AND_NATIVE_FUNDED_FACT_RECEPTION",
       "protocolFile": "research/portfolio_discovery_protocol.json",
       "protocolSha256": "f8715fb32ce260a22ac821621994cb82d786a782b3769fc2a61eff9d228b2867",
+      "publicArtifactId": 13274598176,
+      "publicResultSha256": "ba33bc4bdd756db85c1c017c6c1f39241facd94408901787ff4db4bd53871cdb",
       "qualification": false,
       "selectionEnd": 1785715200000,
       "sourceArtifactExpiresAt": "2027-02-01T21:45:22Z",
@@ -222,7 +236,10 @@
       "sourceRunId": 41724643418,
       "split": "26W_DEVELOPMENT_13W_SELECTION_13W_EXPOSED_CHRONOLOGICAL_AUDIT",
       "start": 1762128000000,
-      "status": "SOURCE_EXECUTED_INITIAL_CALENDAR_AGGREGATION_INVALID_CORRECTION_PENDING",
+      "status": "CLOSED_FIXED_CONTEXT_PROGRAM_NO_COST_ADMISSIONS_NO_FINANCED_NET",
+      "technicalSourceCopyArtifactId": 13274796837,
+      "technicalSourceCopyArtifactRunId": 41726863225,
+      "technicalSourceCopyExpiresAt": "2027-02-01T22:00:18Z",
       "trialGroups": 240
     }
   ],
@@ -553,9 +570,11 @@
     {
       "ciphertextSha256": "e47ba7204ca7e07e7bb523ede8a8171f49b216cad09914142ed548839660a370",
       "decisionExposure": [
-        "ALL240_FIXED_CONTEXT_GROUPS_AND192_PROXY_ABLATIONS_INITIAL_INVALID_CALENDAR_REPORT_EXPOSED_NO_RESELECTION"
+        "ALL240_FIXED_CONTEXT_GROUPS_AND192_PROXY_ABLATIONS_INITIAL_INVALID_CALENDAR_REPORT_EXPOSED_NO_RESELECTION",
+        "CORRECTED_ALL240_GROUPS_192_PROXY_ABLATIONS_26_EVALUATION_WEEKS_NO_COST_ADMISSIONS"
       ],
       "end": 1793577600000,
+      "exactPublicReceipt": "docs/BDP1_AUTHENTIC_RESULT.json",
       "independent": false,
       "scope": "BDP1 six assets M5 and derived M15/H1/H4, complete 52-week predeclared calendar plus18 development cost windows",
       "sourceArtifactExpiresAt": "2027-02-01T21:45:22Z",
