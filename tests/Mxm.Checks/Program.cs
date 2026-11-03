@@ -157,15 +157,15 @@ Check(Rejects(()=>fixedSource.Observe(
     Bar(1,1.10m) with {Symbol="GBPUSD"})),"different symbol never shares adaptive weights");
 
 
-var accountRisk = new BrokerRiskSnapshot(220m, 130m, 240m,true,true,true,true);
+var accountRisk = new BrokerRiskSnapshot(220m, 170m, 240m,true,true,true,true);
 var existingRisk = new[]{
-    new OpenRiskExposure("position-1",5m,20m),
-    new OpenRiskExposure("position-2",7m,30m)
+    new OpenRiskExposure("position-1",.5m,20m),
+    new OpenRiskExposure("position-2",.7m,30m)
 };
-var proposalRisk = new ProposedRiskExposure("position-3",8m,2m,35m);
+var proposalRisk = new ProposedRiskExposure("position-3",.8m,.2m,35m);
 var riskOk = PortfolioRiskBudget.Assess(accountRisk,existingRisk,proposalRisk);
 Check(riskOk.Admissible && riskOk.PortfolioPositionCountAfter==3 &&
-    riskOk.DrawdownHeadroomEur==52m && riskOk.TotalStressLossAfterEur==22m,
+    riskOk.DrawdownHeadroomEur==52m && riskOk.TotalStressLossAfterEur==2.2m,
     "dynamic multi-position risk without obsolete per-trade caps");
 Check(!PortfolioRiskBudget.Assess(accountRisk with {CertifiedEquityPeakUpperEur=null},
     existingRisk,proposalRisk).Admissible,"uncertified peak cannot open risk capacity");
@@ -282,15 +282,15 @@ Check(shortScenario.QuoteGrossEur==-1.08m &&
     "shorts sell at bid and cover at ask without favorable fills");
 
 // Multi-lane automatic recovery from independent snapshots; no order calls.
-var safeAccount=new RecoveryPortfolioEvidence(200m,120m,200m,true,true,true,
-    5m,30m,0);
+var safeAccount=new RecoveryPortfolioEvidence(200m,170m,200m,true,true,true,
+    .5m,30m,0);
 var uncertain=new RecoveryLaneEvidence("EURUSD",true,true,false,true,false,
-    10m,10m);
+    1m,10m);
 var other=new RecoveryLaneEvidence("AUDUSD",true,true,false,false,false,null,null);
 var isolation=SelectiveRecovery.Assess(safeAccount,new[]{uncertain,other});
 Check(isolation.MonitoringActive && isolation.CanReviewAnyNewExposure &&
-    isolation.AvailableWorstCaseDrawdownHeadroomEur==45m &&
-    isolation.ReservableFreeMarginEur==80m &&
+    isolation.AvailableWorstCaseDrawdownHeadroomEur==58.5m &&
+    isolation.ReservableFreeMarginEur==40m &&
     isolation.Lanes[0].Mode==RecoveryLaneMode.QuarantinedAmbiguous &&
     !isolation.Lanes[0].EligibleForFurtherRiskReview &&
     isolation.Lanes[1].EligibleForFurtherRiskReview,
@@ -318,7 +318,7 @@ Check(vanishedButUnknown.Lanes[0].Mode==RecoveryLaneMode.QuarantinedAmbiguous,
 var finalReconciliation=SelectiveRecovery.Assess(safeAccount,new[]{
     uncertain with {PositiveBrokerFinalOutcomeReconciled=true},other});
 Check(finalReconciliation.Lanes.All(x=>x.EligibleForFurtherRiskReview) &&
-    finalReconciliation.AvailableWorstCaseDrawdownHeadroomEur==55m,
+    finalReconciliation.AvailableWorstCaseDrawdownHeadroomEur==59.5m,
     "affirmative terminal broker proof releases adverse reservation automatically");
 var inFlightFull=SelectiveRecovery.Assess(
     safeAccount with {VerifiedCurrentInFlightRequests=1},new[]{other});
@@ -350,7 +350,7 @@ Check(Rejects(()=>IntradayReversalNet.Propose(reversalBars.Concat(new[]{reversal
     "duplicate source cannot create additional modeled trades");
 
 // OWNER material correction: preventive stop/gap/cost risk BEFORE entry.
-var executionTerms=new StopExecutionTerms(1000m,1000m,100000m,.001m,.002m,.0001m,.001m,.0004m,.0002m,
+var executionTerms=new StopExecutionTerms(1000m,1000m,100000m,.001m,.002m,.0001m,.0003m,.0002m,.0001m,
     1m/1.08m,.0001m,0m,.04m,true,true);
 var preventive=PreventiveExecutionRisk.Size(200m,200m,200m,Array.Empty<ReservedPositionRisk>(),executionTerms);
 Check(preventive.Units>=1000m && preventive.StressDrawdown<.30m && !preventive.AbsoluteGuarantee,
@@ -358,8 +358,8 @@ Check(preventive.Units>=1000m && preventive.StressDrawdown<.30m && !preventive.A
 Check(PreventiveExecutionRisk.Size(141m,200m,141m,Array.Empty<ReservedPositionRisk>(),executionTerms).Units==0,
     "minimum lot blocked BEFORE entry when remaining DD cannot absorb stop plus gap");
 var portfolioReserved=new[]{new ReservedPositionRisk("GBP",2m,4m,40m),new ReservedPositionRisk("AUD",2m,4m,20m)};
-Check(PreventiveExecutionRisk.Size(200m,200m,140m,portfolioReserved,executionTerms).Units>=1000m,
-    "correlated risk reserves support multiple positions without historic single-position restriction");
+Check(PreventiveExecutionRisk.Size(200m,200m,140m,portfolioReserved,executionTerms).Units==0,
+    "existing aggregate risk above 1 percent cannot admit another position");
 Check(PreventiveExecutionRisk.Size(200m,200m,200m,Array.Empty<ReservedPositionRisk>(),executionTerms with {MinimumUnits=100000m,StepUnits=100000m}).Units==0,
     "broker minimum larger than funded risk budget rejected without rounding up");
 Check(PreventiveExecutionRisk.Size(200m,200m,200m,Array.Empty<ReservedPositionRisk>(),executionTerms with {MinimumBrokerStopDistance=.002m}).Units==0,
@@ -368,4 +368,13 @@ Check(PreventiveExecutionRisk.Size(200m,200m,200m,Array.Empty<ReservedPositionRi
     "unknown account inhibits new exposure without changing selective monitor recovery");
 Check(PreventiveExecutionRisk.Size(200m,200m,20m,new[]{new ReservedPositionRisk("other",1m,0,180m)},executionTerms).Units==0,
     "open portfolio margin and potential loss reserved before minimum lot");
+Check(OwnerRiskLimits.Check(200m,160m,1m,40m,1m,40m).Allowed,"aggregate two-position exact 1/40/60 boundary admitted");
+Check(!OwnerRiskLimits.Check(200m,160m,1.01m,40m,1m,40m).Allowed,"aggregate risk counts open plus proposed without correlation discount");
+Check(!OwnerRiskLimits.Check(200m,160m,0,40m,1m,40.01m).Allowed,"margin 40 percent boundary enforced");
+Check(!OwnerRiskLimits.Check(200m,120m,0,20m,1m,1m).Allowed,"actual free reserve below60 blocks even with low reported aggregate margin");
+Check(OwnerRiskLimits.Check(300m,240m,1.5m,60m,1.5m,60m).Allowed,"limits scale on reconciled current equity after reinvestment");
+Check(!OwnerRiskLimits.Check(150m,120m,1m,30m,.51m,10m).Allowed,"risk budget contracts with current equity loss");
+Check(!SelectiveRecovery.Assess(safeAccount with {ExistingStressLossEur=2.1m},new[]{other}).CanReviewAnyNewExposure &&
+    SelectiveRecovery.Assess(safeAccount with {ExistingStressLossEur=2.1m},new[]{other}).MonitoringActive,
+    "owner risk exhaustion blocks new risk but monitoring and recovery continue");
 Console.WriteLine($"PASS {passed} recovery/accounting/portfolio/causal-H1/dynamic-risk/source-calendar/causal-score checks; synthetic, no economic qualification.");

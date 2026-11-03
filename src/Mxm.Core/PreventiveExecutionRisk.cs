@@ -29,16 +29,18 @@ public static class PreventiveExecutionRisk
         decimal existingLoss=open.Sum(p=>p.AdditionalLossEur),existingPeak=open.Sum(p=>p.FavorablePeakEur);
         decimal headroom=equity-.70m*Math.Max(peak,equity+existingPeak)-existingLoss;
         if(headroom<=terms.FixedRoundTripCostEur)return Deny("NO_STRESS_DRAWDOWN_HEADROOM");
-        // Dynamic 2% equity / 20% remaining headroom is a policy, not historical OWNER EUR2 cap.
-        decimal budget=Math.Min(.02m*equity,.20m*headroom);
-        decimal units=Math.Min(terms.MaximumUnits,Math.Min((budget-terms.FixedRoundTripCostEur)/lossPerUnit,freeMargin/terms.MarginPerUnitEur));
+        // Latest explicit OWNER mandate is binding, at aggregate current equity.
+        decimal budget=Math.Min(OwnerRiskLimits.RiskFraction*equity-existingLoss,headroom);
+        decimal availableMargin=Math.Min(OwnerRiskLimits.MarginFraction*equity-open.Sum(p=>p.MarginEur),freeMargin-OwnerRiskLimits.ReserveFraction*equity);
+        if(budget<=terms.FixedRoundTripCostEur || availableMargin<=0)return Deny("OWNER_AGGREGATE_CAPACITY_EXHAUSTED");
+        decimal units=Math.Min(terms.MaximumUnits,Math.Min((budget-terms.FixedRoundTripCostEur)/lossPerUnit,availableMargin/terms.MarginPerUnitEur));
         units=terms.MinimumUnits+Math.Floor((units-terms.MinimumUnits)/terms.StepUnits)*terms.StepUnits;
         while(units>=terms.MinimumUnits)
         {
             decimal stress=existingLoss+units*lossPerUnit+terms.FixedRoundTripCostEur;
             decimal stressedPeak=Math.Max(peak,equity+existingPeak+units*gainPerUnit);
             decimal dd=1m-(equity-stress)/stressedPeak;
-            if(dd<.30m && open.Sum(p=>p.MarginEur)+units*terms.MarginPerUnitEur+stress<=equity && units*terms.MarginPerUnitEur<=freeMargin)
+            if(dd<.30m && OwnerRiskLimits.Check(equity,freeMargin,existingLoss,open.Sum(p=>p.MarginEur),units*lossPerUnit+terms.FixedRoundTripCostEur,units*terms.MarginPerUnitEur).Allowed)
                 return new(units,stress-existingLoss,stressedPeak,dd,units*terms.MarginPerUnitEur,"SIZED_WITHIN_DECLARED_STOP_GAP_COST_STRESS",false);
             units-=terms.StepUnits;
         }
