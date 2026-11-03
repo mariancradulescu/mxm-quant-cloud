@@ -1,6 +1,17 @@
 using Mxm.Core;
 var passed = 0;
 void Check(bool condition, string name) { if (!condition) throw new Exception(name); passed++; }
+var clockWindow=new ObservationWindow(10000,1000,10000,2000,new[]{"X"},new[]{
+    new QuoteSideEvent(11000,"X",0,100),new QuoteSideEvent(11000,"X",1,102),
+    new QuoteSideEvent(12000,"X",0,1)},true);
+var firstClock=CausalObservationClock.First(clockWindow);
+Check(firstClock.At==11000 && firstClock.Quotes[0].Bid==100,"first causal event ignores later favorable price");
+Check(CausalObservationClock.First(clockWindow with {Events=clockWindow.Events.Take(2).ToArray()}).At==firstClock.At,
+    "observation prefix invariant");
+Check(CausalObservationClock.First(clockWindow with {Complete=false}).At==null,"incomplete tick page never usable");
+Check(CausalObservationClock.First(clockWindow with {Route=new[]{"X","FX"}}).At==null,"missing conversion route blocks observation");
+Check(CausalObservationClock.First(clockWindow with {Events=clockWindow.Events.Append(new QuoteSideEvent(11000,"X",0,99)).ToArray()}).Status=="AMBIGUOUS_SAME_TIME_SIDE",
+    "conflicting simultaneous quote makes window unavailable without inventing event order");
 var good = new RecoveryEvidence(200, 200, 200, true, true, true, false, false);
 Check(Recovery.Assess(good).Mode == RecoveryMode.ReconciledObservation, "complete evidence permits observation only");
 Check(Recovery.Assess(good with { EquityPeakUpperBound = null }).Mode == RecoveryMode.Protective, "missing peak");
@@ -447,3 +458,4 @@ Check(Rejects(()=>OpportunityOrchestrator.Estimate(estimatedRequest with {Common
 Check(OpportunityOrchestrator.Estimate(estimatedRequest with {LedgerReconciled=false}).Allocations.Length==0,
     "conditional research still refuses unreconciled capital");
 Console.WriteLine($"PASS {passed} recovery/accounting/portfolio/causal-H1/dynamic-risk/source-calendar/causal-score checks; synthetic, no economic qualification.");
+

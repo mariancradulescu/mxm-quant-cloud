@@ -120,6 +120,17 @@
       "sourceRunId": 41476636915,
       "statisticalPromotion": false,
       "status": "CLOSED_FROZEN_ZERO_ADMISSIONS_FIXED_ASOF_CALIBRATION_GAPS_IDENTIFIED"
+    },
+    {
+      "allocationsAllowed": false,
+      "epa2ReplacementAllowed": false,
+      "fullStudyAdmission": false,
+      "id": "CEF1",
+      "independent": false,
+      "netEstimateAllowed": false,
+      "phase": "NATIVE_CAUSAL_OBSERVATION_FEASIBILITY_ON_EXPOSED_SOURCE",
+      "sourceRunId": 41648280262,
+      "trialCountPolicy": "UNIQUE_ROUTE_HORIZON_COHORT_COVERAGE_NOT_STRATEGY_REPLICATED_SAMPLE_SIZE"
     }
   ],
   "schema": "mxm-project-data-exposure-v1",

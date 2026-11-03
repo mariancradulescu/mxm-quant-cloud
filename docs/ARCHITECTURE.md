@@ -10,7 +10,7 @@ Status below describes implementation, not economic or activation acceptance.
 | Native opportunity selection | Common joint scenarios, greedy marginal utility, causal clocks, redundancy/conflict rejection, shared risk/margin reservation | Research heuristic; no authentic incremental portfolio validation |
 | Python funded replay | One EUR200 chronological event ledger, overlapping positions, bid/ask, supplied FX/fees/slippage/financing, aggregate round trips | Sampled marks; no certified continuous drawdown or historical execution proof |
 | Native C# economics | NET accounting/acceptance, source admission, forecasts and adaptive scenario sizing | Full native execution replay equivalence remains incomplete |
-| Native Cloud adapter | Single observation-only cBot, native inventory and immediate stop | No trading authority, autonomous trading recovery or device acceptance |
+| Native Cloud adapter | Single observation-only cBot, native inventory and timer reconciliation | No trading authority, autonomous trading recovery or device acceptance |
 
 Flow: authentic source → causal opportunities → predictive evidence → common
 native selection → shared allocation/risk → funded chronological replay →
@@ -42,3 +42,23 @@ Adaptation must be a bounded deterministic function of causally available, order
 - https://help.ctrader.com/open-api/ — OAuth, read-only scope, historical API and limits.
 
 Linux compilation is distinct from Cloud-host runtime and Android device acceptance. Those runtime tests remain blocked by the absence of activation authorization, not by a Desktop requirement.
+
+
+## Prospective observation feasibility
+
+EPA1 and EPA2 retain their frozen receipts, methods and outcomes. The current
+research sequence starts with source and economic support, before substantial
+collection. `CausalObservationClock` selects the first valid atomic event using
+only prior route state. It requires explicit complete pagination and fresh valid
+BID/ASK plus conversion sides. It never selects a price extremum or fabricates
+missing observations. CEF1 compares every authenticated event-window result with
+the independent Python reference, then checks route-local costs and funding
+support separately from common portfolio observation coverage. Counts are unique
+symbol/horizon/cohort paths, not duplicated across candidate families.
+
+CEF1 cannot approve a full economic study: new feature/label sample sizes and
+chronological trial registration, new-episode pilot, joint holding valuation and
+repriced financing remain required. Missing historical tariffs, depth, account
+stop-out and intramark risk remain explicit. The Cloud adapter still does not use
+the new clock or manage open risk; the existing native risk implementation only
+runs in research/replay. No economic qualification follows from compilation.
