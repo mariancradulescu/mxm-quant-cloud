@@ -4,9 +4,18 @@ from .test_anchor_signal import fixture
 from .session_wick_signal import signals,Q,MODEL
 from .tick_volume_net import DAY
 
+def asymmetric_wick_fixture():
+    b=fixture()
+    # Generic OHLC fixture had exactly symmetric wicks, unsuitable for a
+    # wick-specific variance guard. These remain SYNTHETIC TESTS ONLY.
+    for i,row in enumerate(b["bars"]):
+        row["h"]+=i%7
+        row["l"]-=i%11
+    return b
+
 class M15WickCausality(unittest.TestCase):
     def test_holdout_mutation_never_changes_train_or_selection(self):
-        b=fixture()
+        b=asymmetric_wick_fixture()
         first=signals(b)
         cut=b["start"]+296*DAY
         for x in b["bars"]:
@@ -18,7 +27,7 @@ class M15WickCausality(unittest.TestCase):
 
     def test_wick_entry_is_09_and_exit_is_15_utc(self):
         from datetime import datetime,timezone
-        b=fixture();p=signals(b)
+        b=asymmetric_wick_fixture();p=signals(b)
         self.assertEqual(MODEL,"EURUSD_M15_EARLY_SESSION_WICK_REJECTION_TO_15UTC_V1")
         self.assertTrue(all(datetime.fromtimestamp(x["signal"]/1000,timezone.utc).hour==9 for x in p["plan"]))
         self.assertTrue(all(x["exit"]-x["signal"]==24*Q for x in p["plan"]))
