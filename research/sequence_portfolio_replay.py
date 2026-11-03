@@ -271,7 +271,8 @@ def evaluate(b,p):
                 for candidate,s in candidate_groups:
                     removed=candidate+'/'+s;other=run_case(b,p,book,plan,calibrations,z,slip,removed,False)
                     ablations.append(dict(removedCandidate=removed,fullConditionalNetEur=result['ledgerReport']['closed_net_eur'],
-                        withoutConditionalNetEur=other['ledgerReport']['closed_net_eur'],incrementalConditionalNetEur=result['ledgerReport']['closed_net_eur']-other['ledgerReport']['closed_net_eur'],
+                        withoutConditionalNetEur=other['ledgerReport']['closed_net_eur'],incrementalConditionalNetEur=(result['ledgerReport']['closed_net_eur']-other['ledgerReport']['closed_net_eur']) if result['completeFlatLedger'] and other['completeFlatLedger'] else None,
+                        fullOutcomeUncertain=result['executionOutcomeUncertain'],withoutOutcomeUncertain=other['executionOutcomeUncertain'],
                         fullFlat=result['completeFlatLedger'],withoutFlat=other['completeFlatLedger'],withoutRoundTrips=other['ledgerReport']['complete_round_trips'],
                         independentMarginalEdge=False))
     group_summaries={}
