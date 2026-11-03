@@ -95,13 +95,16 @@ class PipelineChecks(unittest.TestCase):
         # Static regression against accidentally exposing environment jobs on PR.
         # This is defense-in-depth, not a replacement for GitHub environment rules.
         workflow=Path('.github/workflows/verify.yml').read_text()
-        self.assertEqual(workflow.count("github.actor == 'mariancradulescu'"),8)
-        self.assertEqual(workflow.count("github.ref == 'refs/heads/main'"),8)
+        self.assertEqual(workflow.count("github.actor == 'mariancradulescu'"),9)
+        self.assertEqual(workflow.count("github.ref == 'refs/heads/main'"),9)
         self.assertEqual(workflow.count("needs.verify.outputs.authorized_source_request == 'true'"),3)
         self.assertIn('git diff-tree --no-commit-id --name-only -r HEAD',workflow)
         self.assertIn('== "ops/collect-request.txt"',workflow)
         self.assertIn('fetch-depth: 2',workflow)
         self.assertIn('authorized_relative_gross',workflow)
+        self.assertIn('authorized_policy_attribution',workflow)
+        self.assertIn('== "ops/volume-policy-attribution-request.txt"',workflow)
+        self.assertIn('run-id: 41614667957',workflow)
         self.assertIn('== "ops/relative-gross-request.txt"',workflow)
         self.assertIn('run-id: 41476636915',workflow)
         self.assertEqual(workflow.count("inputs.collect == true"),3)
