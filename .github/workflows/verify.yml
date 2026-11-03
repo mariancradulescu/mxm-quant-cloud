@@ -23,6 +23,7 @@ jobs:
       authorized_intraday_net: ${{ steps.intraday.outputs.authorized_intraday_net }}
       authorized_net_coverage: ${{ steps.net_cov.outputs.authorized_net_coverage }}
       authorized_relative_gross: ${{ steps.relative.outputs.authorized_relative_gross }}
+      authorized_volume_net: ${{ steps.volume_net.outputs.authorized_volume_net }}
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -144,6 +145,18 @@ jobs:
              [[ "$(git diff-tree --no-commit-id --name-only -r HEAD)" == "ops/relative-gross-request.txt" ]]; then
             echo "authorized_relative_gross=true" >> "$GITHUB_OUTPUT"
           fi
+      - name: Recognize exact owner/main H1 volume dislocation quote NET request
+        id: volume_net
+        shell: bash
+        run: |
+          echo "authorized_volume_net=false" >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_EVENT_NAME" == "push" &&
+                "$GITHUB_REF" == "refs/heads/main" &&
+                "$GITHUB_ACTOR" == "mariancradulescu" &&
+                "$(git log -1 --format=%s)" == "MXM_AUTHENTIC_H1_VOLUME_NET_STUDY" ]] &&
+             [[ "$(git diff-tree --no-commit-id --name-only -r HEAD)" == "ops/volume-net-request.txt" ]]; then
+            echo "authorized_volume_net=true" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
         with:
           dotnet-version: |
@@ -155,7 +168,7 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install -r research/requirements.txt
-      - run: python -m unittest research.test_pipeline research.test_intraday_net research.test_flow_net research.test_neighbour_net research.test_funded_replay research.test_relative_gross
+      - run: python -m unittest research.test_pipeline research.test_intraday_net research.test_flow_net research.test_neighbour_net research.test_funded_replay research.test_relative_gross research.test_tick_volume_net
       - name: Verify original 100 encrypted archive identities with read-only GitHub API token
         run: python -m research.legacy_manifest_remote
         env:
@@ -181,7 +194,7 @@ jobs:
       (
         (github.event_name == 'workflow_dispatch' && inputs.collect == true) ||
         (github.event_name == 'push' &&
-          (needs.verify.outputs.authorized_source_request == 'true' || needs.verify.outputs.authorized_economic_request == 'true' || needs.verify.outputs.authorized_intraday_net == 'true' || needs.verify.outputs.authorized_flow_net == 'true' || needs.verify.outputs.authorized_neighbour_net == 'true'))
+          (needs.verify.outputs.authorized_source_request == 'true' || needs.verify.outputs.authorized_economic_request == 'true' || needs.verify.outputs.authorized_intraday_net == 'true' || needs.verify.outputs.authorized_flow_net == 'true' || needs.verify.outputs.authorized_neighbour_net == 'true' || needs.verify.outputs.authorized_volume_net == 'true'))
       )
     needs: verify
     runs-on: ubuntu-24.04
@@ -212,7 +225,7 @@ jobs:
       (
         (github.event_name == 'workflow_dispatch' && inputs.collect == true) ||
         (github.event_name == 'push' &&
-          (needs.verify.outputs.authorized_source_request == 'true' || needs.verify.outputs.authorized_economic_request == 'true' || needs.verify.outputs.authorized_intraday_net == 'true' || needs.verify.outputs.authorized_flow_net == 'true' || needs.verify.outputs.authorized_neighbour_net == 'true'))
+          (needs.verify.outputs.authorized_source_request == 'true' || needs.verify.outputs.authorized_economic_request == 'true' || needs.verify.outputs.authorized_intraday_net == 'true' || needs.verify.outputs.authorized_flow_net == 'true' || needs.verify.outputs.authorized_neighbour_net == 'true' || needs.verify.outputs.authorized_volume_net == 'true'))
       )
     needs: [verify, custody_recipient]
     runs-on: ubuntu-24.04
@@ -236,7 +249,7 @@ jobs:
           name: new-source-recipient-public-only
           path: new-source-recipient
       - name: Existing bounded source H1 collection (non-economic request only)
-        if: needs.verify.outputs.authorized_economic_request != 'true' && needs.verify.outputs.authorized_intraday_net != 'true' && needs.verify.outputs.authorized_flow_net != 'true' && needs.verify.outputs.authorized_neighbour_net != 'true'
+        if: needs.verify.outputs.authorized_economic_request != 'true' && needs.verify.outputs.authorized_intraday_net != 'true' && needs.verify.outputs.authorized_flow_net != 'true' && needs.verify.outputs.authorized_neighbour_net != 'true' && needs.verify.outputs.authorized_volume_net != 'true'
         run: python -m research.collect
         env:
           R3_CTRADER_CLIENT_ID: ${{ secrets.R3_CTRADER_CLIENT_ID }}
@@ -270,6 +283,13 @@ jobs:
           R3_CTRADER_CLIENT_ID: ${{ secrets.R3_CTRADER_CLIENT_ID }}
           R3_CTRADER_CLIENT_SECRET: ${{ secrets.R3_CTRADER_CLIENT_SECRET }}
           R3_CTRADER_ACCESS_TOKEN: ${{ secrets.R3_CTRADER_ACCESS_TOKEN }}
+      - name: Authentic H1 tick-volume dislocation research with funded EUR200 event replay
+        if: needs.verify.outputs.authorized_volume_net == 'true'
+        run: python -m research.tick_volume_net
+        env:
+          R3_CTRADER_CLIENT_ID: ${{ secrets.R3_CTRADER_CLIENT_ID }}
+          R3_CTRADER_CLIENT_SECRET: ${{ secrets.R3_CTRADER_CLIENT_SECRET }}
+          R3_CTRADER_ACCESS_TOKEN: ${{ secrets.R3_CTRADER_ACCESS_TOKEN }}
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: sealed-source
@@ -284,7 +304,7 @@ jobs:
       (
         (github.event_name == 'workflow_dispatch' && inputs.collect == true) ||
         (github.event_name == 'push' &&
-          (needs.verify.outputs.authorized_source_request == 'true' || needs.verify.outputs.authorized_economic_request == 'true' || needs.verify.outputs.authorized_intraday_net == 'true' || needs.verify.outputs.authorized_flow_net == 'true' || needs.verify.outputs.authorized_neighbour_net == 'true'))
+          (needs.verify.outputs.authorized_source_request == 'true' || needs.verify.outputs.authorized_economic_request == 'true' || needs.verify.outputs.authorized_intraday_net == 'true' || needs.verify.outputs.authorized_flow_net == 'true' || needs.verify.outputs.authorized_neighbour_net == 'true' || needs.verify.outputs.authorized_volume_net == 'true'))
       ) &&
       needs.verify.result == 'success' &&
       needs.collect.result == 'success'
@@ -307,7 +327,7 @@ jobs:
           name: sealed-source
           path: sealed-output
       - name: Existing v2 H1 source readback
-        if: needs.verify.outputs.authorized_economic_request != 'true' && needs.verify.outputs.authorized_intraday_net != 'true' && needs.verify.outputs.authorized_flow_net != 'true' && needs.verify.outputs.authorized_neighbour_net != 'true'
+        if: needs.verify.outputs.authorized_economic_request != 'true' && needs.verify.outputs.authorized_intraday_net != 'true' && needs.verify.outputs.authorized_flow_net != 'true' && needs.verify.outputs.authorized_neighbour_net != 'true' && needs.verify.outputs.authorized_volume_net != 'true'
         run: python -m research.readback
         env:
           R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
@@ -316,6 +336,19 @@ jobs:
         run: python -m research.economic_readback
         env:
           R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - name: Independently decrypt and reproduce authentic H1 funded quote replay
+        if: needs.verify.outputs.authorized_volume_net == 'true'
+        run: python -m research.tick_volume_net --readback
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - name: Preserve authenticated H1 volume funded NET public-only result
+        if: needs.verify.outputs.authorized_volume_net == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: authentic-h1-volume-funded-net-public-only
+          path: volume-net.public.json
+          if-no-files-found: error
+          retention-days: 90
       - name: Independently decrypt and reconcile native NET without broker access
         if: needs.verify.outputs.authorized_intraday_net == 'true'
         run: python -m research.intraday_net --readback
@@ -356,7 +389,7 @@ jobs:
           if-no-files-found: error
           retention-days: 90
       - name: Upload existing original v2 CSharp source receipt
-        if: needs.verify.outputs.authorized_economic_request != 'true' && needs.verify.outputs.authorized_intraday_net != 'true' && needs.verify.outputs.authorized_flow_net != 'true' && needs.verify.outputs.authorized_neighbour_net != 'true'
+        if: needs.verify.outputs.authorized_economic_request != 'true' && needs.verify.outputs.authorized_intraday_net != 'true' && needs.verify.outputs.authorized_flow_net != 'true' && needs.verify.outputs.authorized_neighbour_net != 'true' && needs.verify.outputs.authorized_volume_net != 'true'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: new-source-custody-public-receipt
