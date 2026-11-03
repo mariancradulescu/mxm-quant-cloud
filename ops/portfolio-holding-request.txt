@@ -1,0 +1,3 @@
+OWNER continuation B–E after PR37–38: execute the prospectively frozen EPA2 holding-risk economic protocol, all predeclared cases and primary candidate ablations. Reuse original encrypted H4 and EPA1 sources; no EPA1 retuning or source-gap repair. Bounded read-only Pepperstone evidence, one simulated EUR200 capital, conditional current-margin/cost scenarios, unknown account numeric stopout retained. No LIVE/DEMO orders, Cloud activation, promotion or independent-confirmation claims.
+Protocol: research/portfolio_holding_protocol.json
+Protocol SHA256: ee824da8da5a0c0c0351ee528b7cb75b4f44448447055792e80b887f2d87ae76
