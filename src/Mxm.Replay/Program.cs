@@ -1,5 +1,13 @@
 using System.Text.Json;
 using System.Security.Cryptography;
+if (args.Length == 3 && args[2] == "--native-frozen-money-recovery")
+{
+    try {
+        var cases=JsonSerializer.Deserialize<Mxm.Core.FrozenMoneyRecoveryCase[]>(File.ReadAllBytes(args[0]),
+            new JsonSerializerOptions {NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString})!;
+        File.WriteAllText(args[1],JsonSerializer.Serialize(Mxm.Core.FrozenMoneyRecoveryReceipt.Receive(cases)));return 0;
+    } catch { return 27; }
+}
 if (args.Length == 3 && args[2] == "--auction-source-support")
 {
     try {

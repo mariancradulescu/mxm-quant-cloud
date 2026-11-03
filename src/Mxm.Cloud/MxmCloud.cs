@@ -70,6 +70,11 @@ public class MxmCloud : Robot
             var broker=new BrokerIdentitySnapshot(_accountBinding,Stamp(Server.TimeInUtc),0,Stamp(Server.TimeInUtc),
                 inventory==_lastInventory,false,false,mappedOrders,mappedDeals,mappedPositions);
             _lastInventory=inventory;
+            // Current surfaces do not prove initial funding, complete cashflows,
+            // per-deal monetary legs or funding history. Keep those facts UNKNOWN.
+            // This attempts the same atomic recovery gate; it cannot invent money.
+            var money=_fundedSession?.ReconcileMoney(new MoneyRecoveryBatch(_accountBinding,"BROKER_EXECUTION_FACT",broker,
+                System.Array.Empty<AttributedMoneyFact>(),(decimal)Account.Balance,false,false,false,false,null));
             var funded=_fundedSession?.Observe(broker,(decimal)Account.Balance);
             if(!_journalFault && _fundedSession!=null) {
                 LocalStorage.SetString(JournalKey,_fundedSession.Checkpoint(),LocalStorageScope.Instance);

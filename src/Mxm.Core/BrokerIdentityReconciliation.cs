@@ -64,7 +64,7 @@ public static class BrokerIdentityReconciliation
             results.Add(new(intent.IntentId,o.OrderId,o.PositionId,status,units,affirmative,affirmative && units>0));
         }
         var attributed=intents.Where(i=>!string.IsNullOrEmpty(i.PositionId)).Select(i=>i.PositionId)
-            .Concat(results.Where(r=>r.PositiveTerminalEvidence).Select(r=>r.PositionId)).ToHashSet(StringComparer.Ordinal);
+            .Concat(results.Where(r=>r.PositiveTerminalEvidence || r.State=="ACTIVE_OR_UNKNOWN_NO_RESUBMIT"&&r.ConfirmedUnits>0).Select(r=>r.PositionId)).ToHashSet(StringComparer.Ordinal);
         foreach(string id in attributed.Where(x=>!string.IsNullOrEmpty(x)))
         {
             var localOpening=intents.Where(x=>!x.Closing && x.PositionId==id).ToArray();
@@ -85,12 +85,12 @@ public static class BrokerIdentityReconciliation
 
 public sealed record NativeSessionReport(IdentityReconciliationResult Identity,LedgerSummary ModelLedger,
     bool JournalContinuityProven,bool ModelCashMatchesBroker,bool PositionInventoryMatchesModel,bool CanConsiderNewExposure,string Status,
-    bool GlobalDrawdownCertified=false,bool OrdersEnabled=false);
-public sealed class NativeFundedSession
+    bool GlobalDrawdownCertified=false,bool OrdersEnabled=false,string MonetaryDomain="MODEL_REPLAY");
+public sealed partial class NativeFundedSession
 {
     public string AccountBinding {get;}
-    public NativeFundedLedger Ledger {get;}
-    public LocalIntentIdentity[] Intents {get;}
+    public NativeFundedLedger Ledger {get;private set;}
+    public LocalIntentIdentity[] Intents {get;private set;}
     public bool JournalContinuityProven {get;}
     // New/missing journals never silently acquire historical continuity.
     public NativeFundedSession(string accountBinding,NativeFundedLedger? ledger=null,LocalIntentIdentity[]? intents=null,bool journalContinuityProven=false)
@@ -102,6 +102,12 @@ public sealed class NativeFundedSession
     {
         if(snapshot.AccountBinding!=AccountBinding)throw new InvalidOperationException("SESSION_ACCOUNT_MISMATCH");
         var identity=BrokerIdentityReconciliation.Assess(snapshot,Intents);var book=Ledger.Summary(snapshot.At);
+        var settled=identity.Intents.Select(r=>{
+            var executions=snapshot.Deals.Where(d=>d.OrderId==r.OrderId).ToArray();
+            bool imported=executions.Length>0&&executions.All(d=>Ledger.FactHashes.ContainsKey("MONEY/deal/"+d.DealId));
+            return imported?r with {LedgerImportRequired=false,State=r.PositiveTerminalEvidence?"TERMINAL_EXECUTIONS_MONETARILY_RECONCILED":"ACTIVE_PARTIAL_BOOKED_NO_RESUBMIT"}:r;
+        }).ToArray();
+        identity=identity with {Intents=settled,UnresolvedIntents=settled.Count(r=>!r.PositiveTerminalEvidence||r.LedgerImportRequired)};
         bool cash=brokerCash.HasValue && Math.Abs(book.CashEur-brokerCash.Value)<.00000001m;
         var modelPositions=Ledger.PositionSnapshot();
         var bindings=Intents.Where(i=>!string.IsNullOrEmpty(i.LedgerPositionId)).Select(i=>{
@@ -117,7 +123,7 @@ public sealed class NativeFundedSession
         // unpriced fills or promote the observed peak to a lifetime certificate.
         return new(identity,book,JournalContinuityProven,cash,positions,false,
             !JournalContinuityProven?"PROTECTIVE_JOURNAL_CONTINUITY_UNKNOWN":!identity.SnapshotConsistent || identity.UnresolvedIntents>0?"PROTECTIVE_BROKER_IDENTITIES_UNRESOLVED":
-            !positions?"PROTECTIVE_MODEL_BROKER_POSITION_MISMATCH":book.LiquidationEquityEur is null?"PROTECTIVE_FLOATING_VALUATION_MISSING":!cash?"PROTECTIVE_CASH_MISMATCH":"PROTECTIVE_PEAK_AND_EXECUTION_AUTHORITY_UNPROVEN");
+            !positions?"PROTECTIVE_MODEL_BROKER_POSITION_MISMATCH":book.LiquidationEquityEur is null?"PROTECTIVE_FLOATING_VALUATION_MISSING":!cash?"PROTECTIVE_CASH_MISMATCH":"PROTECTIVE_PEAK_AND_EXECUTION_AUTHORITY_UNPROVEN",MonetaryDomain:Ledger.MonetaryDomain);
     }
     static string Hash(string x)=>Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(x))).ToLowerInvariant();
     public string Checkpoint()

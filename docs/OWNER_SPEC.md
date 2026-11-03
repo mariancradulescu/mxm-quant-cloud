@@ -39,7 +39,7 @@ link here; older dated directives remain provenance, never competing authority.
   could only be research information in a genuinely prospective portfolio
   hypothesis on independent evidence, never a resurrection mechanism.
 
-## Active methodological policy v7 (prospectively revisable)
+## Active methodological policy v8 (prospectively revisable)
 
 Evidence levels: (1) exploratory economic hypothesis; (2) preliminary predictive
 and economic support; (3) demonstrated possible incremental portfolio contribution;
@@ -540,3 +540,47 @@ before/after current inventory, and seven-day order/deal lists. Empty bounded
 history cannot establish a lifetime empty book or real fill recovery. Raw replies
 stay encrypted under original scope/account custody. No orders, new credentials,
 external runtime services, Cloud activation or economic certification follow.
+
+
+## After PR48: selective research and atomic native monetary reconciliation
+
+OWNER v2.0 requirements remain unchanged. AIP1 is closed, with no uncertainty
+admissions before costs. There is no sufficiently justified new economic hypothesis
+admitted in this change; no new market collection, annual study or closed-study
+rerun follows. Future substantial collection requires a distinct causal premise,
+observable inputs, sufficient effective temporal support, plausible amplitude vs
+realistic costs, EUR200 financial support and a reproducible common funded replay.
+These are programme-level admission questions, never individual HARD21/profit gates.
+The unresolved NET objective is explicit; rejected recipes do not reject the system.
+
+Native monetary reconciliation imports only positively attributed execution and
+funding records into the SAME NativeFundedLedger. Partial entries, partial closes,
+fees, causal currency conversion and funding cashflows are explicit. Missing costs
+or conversions, conflicting/deleted old financial facts, unknown initial funding,
+extra external cashflows, identity/volume or account-cash mismatches block atomic
+adoption. Real observed fills must not be discarded merely because they would fail
+a pre-entry modeled margin check; they must be accounted for and exposure kept
+protective. No balancing cash entry or reset to EUR200 repairs a mismatch.
+
+A full reconstruction must preserve all previously accepted financial event hashes
+and the retained observed risk peak. Complete cash history does NOT establish a
+complete floating-equity path. Unknown spread/slippage decomposition, entry price,
+margin or liquidation evidence remains unknown. Broker and frozen MODELED settlement
+domains are distinct. Model events cannot be mixed into a recovered execution book.
+Old v1 native checkpoints migrate while retaining cash, positions and applied IDs;
+checksums remain integrity checks, not encrypted custody or source authentication.
+
+Technical verification uses immutable public SQP1 settlement receipts only, in an
+explicit MODELED namespace. It invokes no forecasts, allocator, sizing, exit policy,
+new source requests or old economic study. Monetary rehydration/restore/idempotence
+must preserve original cash and NET within EUR1e-18; it does not preserve or certify
+missing intraposition paths. Deterministic contracts additionally cover split entry,
+partial close, funding, unavailable cost, stale conversion and atomic rejection.
+None constitutes real nonempty broker recovery or Cloud persistence proof.
+
+The native cBot reaches the same monetary gate with UNKNOWN history/funding/cost
+fields, rather than setting them true from empty bounded history or local storage.
+Current authentic source has no nonempty broker lifecycle with complete monetary
+legs; that certification remains impossible without new genuine evidence, and
+no LIVE/DEMO orders may be requested to manufacture it. Observation/protection
+continues; real monetary adoption and trading authority remain unproved.

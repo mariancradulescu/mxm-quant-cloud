@@ -21,6 +21,22 @@
     "sourceArtifactId": 13278617985,
     "sourceCiphertextSha256": "2e6e4b1072130d1df23ca66f0cf9c0ff2a2f174c9e0ef33fc0d3c96d0ed298ac"
   },
+  "economicPriorityDecision": {
+    "closedConfigurationsRetained": [
+      "EPA1",
+      "EPA2",
+      "CEF1",
+      "SQP1",
+      "BDP1",
+      "AIP1"
+    ],
+    "economicEdgeStillOpen": true,
+    "newHypothesisAdmitted": false,
+    "newMarketCollectionAuthorizedByThisChange": false,
+    "notProofOfSystemInfeasibility": true,
+    "ownerDecisionAfter": "PR48",
+    "reason": "No distinct hypothesis with demonstrated causal support, effective sample, cost amplitude and a financed common replay path is sufficiently justified at this execution; prioritize the material native monetary reconciliation gap."
+  },
   "frozenFileSha256": {
     "docs/AIP1_AUTHENTIC_RESULT.json": "ed23b6d7ce289ce1eeede6626ef8d9bce09d2cfbdb59fd6fe4b4493a75a4bd3c",
     "docs/AIP1_SOURCE_TECHNICAL_INTERRUPTION.json": "4fcb577b7b9de96f6d722ed2fd30e0560e3512898bc92961f60e09345e45c9e6",

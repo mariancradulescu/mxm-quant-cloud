@@ -10,16 +10,17 @@ public sealed record LedgerEvent(string EventId,long At,string Kind,string Posit
     decimal Units,decimal ExecutionPrice,decimal FeeEur,decimal MarginPerUnit,decimal SlippagePerSide,
     long AvailableAt,long CalibratedThrough,long LatencyMs,string Reason,string EvidenceHash,LedgerQuote[] Quotes,
     decimal SignedFinancingEur=0);
-public sealed record LedgerPosition(string Id,string Symbol,int Side,decimal Units,decimal EntryPrice,long EntryAt,
-    decimal EntryFeeRemaining,decimal MarginPerUnit,decimal SlippagePerSide,LedgerQuote EntryQuote,decimal FinancingRemaining);
+public sealed record LedgerPosition(string Id,string Symbol,int Side,decimal Units,decimal? EntryPrice,long EntryAt,
+    decimal EntryFeeRemaining,decimal MarginPerUnit,decimal SlippagePerSide,LedgerQuote? EntryQuote,decimal FinancingRemaining,
+    decimal EntryConversionRemaining=0,string MonetaryDomain="MODEL_REPLAY");
 public sealed record LedgerClosedFragment(string PositionId,string Symbol,long OpenedAt,long ClosedAt,decimal Units,
-    decimal GrossEur,decimal SpreadEur,decimal SlippageEur,decimal ConversionEur,decimal CommissionsEur,
+    decimal GrossEur,decimal? SpreadEur,decimal? SlippageEur,decimal? ConversionEur,decimal CommissionsEur,
     decimal FinancingEur,decimal NetEur,bool CompletesRoundTrip,string Reason);
 public sealed record LedgerState(string Version,decimal InitialCashEur,decimal CashEur,long Clock,decimal ObservedPeakEur,
     decimal MaximumSampledDrawdown,bool HistoryEvidenceIncomplete,Dictionary<string,LedgerQuote> Quotes,
     Dictionary<string,LedgerPosition> Positions,Dictionary<string,LedgerEvent> Pending,
     Dictionary<string,string> AppliedEventHashes,HashSet<string> UsedPositionIds,List<LedgerClosedFragment> Closed,
-    string EventChainHash);
+    string EventChainHash,string MonetaryDomain="MODEL_REPLAY");
 public sealed record LedgerSummary(decimal CashEur,decimal? LiquidationEquityEur,decimal? UsedMarginEur,
     decimal? FreeMarginEur,decimal ObservedPeakEur,decimal MaximumSampledDrawdown,int OpenPositions,int PendingIntents,
     int CompleteRoundTrips,decimal ClosedNetEur,bool HistoryEvidenceIncomplete,string EventChainHash,
@@ -28,9 +29,9 @@ public sealed record LedgerSummary(decimal CashEur,decimal? LiquidationEquityEur
 // Native funded position/cash lifecycle. Research/model execution facts are
 // explicit inputs; this class submits no orders and manufactures no execution,
 // historical-cost, source-authenticity or lifetime-peak certificate.
-public sealed class NativeFundedLedger
+public sealed partial class NativeFundedLedger
 {
-    const string Version="mxm-native-funded-ledger-v1";
+    const string Version="mxm-native-funded-ledger-v2";
     static readonly JsonSerializerOptions Options=new(){NumberHandling=JsonNumberHandling.AllowReadingFromString};
     LedgerState state=new(Version,200,200,-1,200,0,false,new(),new(),new(),new(),new(),new(),new string('0',64));
     readonly long maximumStalenessMs;
@@ -50,19 +51,21 @@ public sealed class NativeFundedLedger
     }
     decimal Floating(LedgerPosition p,LedgerQuote q)
     {
+        if(p.MonetaryDomain!="MODEL_REPLAY")throw new InvalidOperationException("BROKER_FLOATING_AND_EXIT_COST_EVIDENCE_NOT_SUPPLIED");
         decimal liquidation=p.Side>0?q.Bid-p.SlippagePerSide:q.Ask+p.SlippagePerSide;
-        return ConvertQuote(q,p.Side*p.Units*(liquidation-p.EntryPrice))-Fee(q,p.Units);
+        return ConvertQuote(q,p.Side*p.Units*(liquidation-(p.EntryPrice??throw new InvalidOperationException("ENTRY_BASIS_UNKNOWN"))))-Fee(q,p.Units);
     }
     decimal Equity(Dictionary<string,LedgerQuote> quotes,long at)=>state.CashEur+
         state.Positions.Values.Sum(p=>Floating(p,Quote(quotes,p.Symbol,at)));
     void Reconcile()
     {
-        decimal expected=200+state.Closed.Sum(t=>t.NetEur)-state.Positions.Values.Sum(p=>p.EntryFeeRemaining)+
+        decimal expected=200+state.Closed.Sum(t=>t.NetEur)-state.Positions.Values.Sum(p=>p.EntryFeeRemaining+p.EntryConversionRemaining)+
             state.Positions.Values.Sum(p=>p.FinancingRemaining);
         if(Math.Abs(expected-state.CashEur)>.000000001m)throw new InvalidOperationException("NATIVE_LEDGER_CASH_IDENTITY");
     }
     public void Apply(LedgerEvent e)
     {
+        if(state.MonetaryDomain!="MODEL_REPLAY")throw new InvalidOperationException("EXECUTION_DOMAIN_MISMATCH_NO_MODEL_FILL_ON_RECOVERED_BOOK");
         string hash=Hash(JsonSerializer.Serialize(e));
         if(state.AppliedEventHashes.TryGetValue(e.EventId,out var seen))
         {
@@ -114,14 +117,15 @@ public sealed class NativeFundedLedger
                 if(!state.Positions.TryGetValue(e.PositionId,out var closedPosition) || !state.Pending.TryGetValue(e.PositionId,out var close) ||
                     close.Kind!="REQUEST_CLOSE" || close.Symbol!=e.Symbol || e.At<close.At+close.LatencyMs || e.Units<=0 || e.Units>closedPosition.Units || e.FeeEur<0)
                     throw new ArgumentException("NATIVE_LEDGER_CLOSE_FILL");
+                var entry=closedPosition.EntryQuote??throw new InvalidOperationException("MODEL_ENTRY_QUOTE_UNKNOWN");
                 var q=Quote(quotes,closedPosition.Symbol,e.At);decimal outPrice=closedPosition.Side>0?q.Bid-closedPosition.SlippagePerSide:q.Ask+closedPosition.SlippagePerSide;
                 if(e.ExecutionPrice!=outPrice || Math.Abs(e.FeeEur-Fee(q,e.Units))>.000000001m)
                     throw new ArgumentException("NATIVE_LEDGER_MODELED_EXIT_COST_BINDING");
                 decimal fraction=e.Units/closedPosition.Units,entryFee=closedPosition.EntryFeeRemaining*fraction,finance=closedPosition.FinancingRemaining*fraction;
-                decimal converted=ConvertQuote(q,closedPosition.Side*e.Units*(outPrice-closedPosition.EntryPrice));
+                decimal converted=ConvertQuote(q,closedPosition.Side*e.Units*(outPrice-(closedPosition.EntryPrice??throw new InvalidOperationException("ENTRY_BASIS_UNKNOWN"))));
                 decimal reference=(q.EurCredit+q.EurDebit)/2;
-                decimal gross=closedPosition.Side*e.Units*((q.Bid+q.Ask)/2-(closedPosition.EntryQuote.Bid+closedPosition.EntryQuote.Ask)/2)*reference;
-                decimal spread=e.Units*((closedPosition.EntryQuote.Ask-closedPosition.EntryQuote.Bid)+(q.Ask-q.Bid))/2*reference;
+                decimal gross=closedPosition.Side*e.Units*((q.Bid+q.Ask)/2-(entry.Bid+entry.Ask)/2)*reference;
+                decimal spread=e.Units*((entry.Ask-entry.Bid)+(q.Ask-q.Bid))/2*reference;
                 decimal slip=e.Units*2*closedPosition.SlippagePerSide*reference;
                 decimal conversion=gross-spread-slip-converted;
                 if(conversion<-.000000001m)throw new InvalidOperationException("NATIVE_LEDGER_CONVERSION_COST");
@@ -178,8 +182,12 @@ public sealed class NativeFundedLedger
         using var d=JsonDocument.Parse(checkpoint);var root=d.RootElement;string payload=root.GetProperty("Payload").GetString()!;
         if(Hash(payload)!=root.GetProperty("Sha256").GetString())throw new ArgumentException("NATIVE_LEDGER_CHECKPOINT_HASH");
         var restored=JsonSerializer.Deserialize<LedgerState>(payload,Options) ?? throw new ArgumentException("NATIVE_LEDGER_CHECKPOINT_STATE");
-        if(restored.Version!=Version || restored.InitialCashEur!=200 || restored.ObservedPeakEur<200 || restored.MaximumSampledDrawdown<0)
+        if(restored.Version is not ("mxm-native-funded-ledger-v1" or Version) || restored.InitialCashEur!=200 || restored.ObservedPeakEur<200 || restored.MaximumSampledDrawdown<0)
             throw new ArgumentException("NATIVE_LEDGER_CHECKPOINT_VERSION_OR_CAPITAL");
+        restored=restored with {Version=Version,MonetaryDomain=restored.MonetaryDomain??"MODEL_REPLAY"};
+        if(restored.MonetaryDomain is not ("MODEL_REPLAY" or "BROKER_EXECUTION_FACT" or "FROZEN_MODELED_SETTLEMENT"))
+            throw new ArgumentException("NATIVE_LEDGER_CHECKPOINT_MONETARY_DOMAIN");
+        foreach(var key in restored.Positions.Keys.ToArray())restored.Positions[key]=restored.Positions[key] with {MonetaryDomain=restored.Positions[key].MonetaryDomain??"MODEL_REPLAY"};
         var ledger=new NativeFundedLedger(root.GetProperty("MaximumStalenessMs").GetInt64()){state=restored};ledger.Reconcile();return ledger;
     }
     public static object ReceiveFacts(LedgerEvent[] events)
