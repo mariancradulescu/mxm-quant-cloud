@@ -1,0 +1,658 @@
+{
+  "brokerIdentityProbe": {
+    "absentOrderIsCancellation": false,
+    "historyDays": 7,
+    "lifetimeHistoryClaim": false,
+    "maxEvidenceRequests": 5,
+    "maxRows": 1000,
+    "readOnlyRequests": [
+      "ProtoOATraderReq",
+      "ProtoOAReconcileReq",
+      "ProtoOAOrderListReq",
+      "ProtoOADealListReq",
+      "ProtoOAReconcileReq"
+    ]
+  },
+  "cloudActivated": false,
+  "conversionSymbols": [
+    "EURUSD",
+    "GBPUSD",
+    "AUDUSD",
+    "USDJPY"
+  ],
+  "costClocks": [
+    1762212600000,
+    1762216200000,
+    1762245000000,
+    1762268400000,
+    1767655800000,
+    1767659400000,
+    1767688200000,
+    1767711600000,
+    1772494200000,
+    1772497800000,
+    1772526600000,
+    1772550000000
+  ],
+  "developmentEnd": 1777852800000,
+  "end": 1793577600000,
+  "hypothesis": "Cash-market opening introduces new inventory/liquidity. Overnight gap acceptance in first30 minutes may predict next120 minutes. One pooled standardized five-feature ridge model, not calendar means, closed breakout/reversal rules or BDP1 cells.",
+  "id": "AIP1",
+  "independence": "Globally exposed development; neither AIP1 nor BDP1 calendars are independent confirmation.",
+  "input": "M5 Pepperstone CFD bid OHLC/tick counts; tick count is not exchange volume; no claim of auction print or official cash index.",
+  "maxEvidenceRequests": 1400,
+  "model": {
+    "clip": 4,
+    "costGate": "abs(mean)-2*weeklyJackknifeSE-2*current/development minimum-volume cost scenario>0; baseline1x sensitivity disclosed never selected",
+    "entry": "cashOpen+30minutes",
+    "exit": "cashOpen+150minutes",
+    "features": [
+      "intercept",
+      "overnight gap / prior10 complete cash session mean range",
+      "first30 return / same range",
+      "gap x first30 return",
+      "log first30 tick-count / prior10 first30 tick-count"
+    ],
+    "fit": "All26 development weeks, only labels matured strictly before boundary; zero-centred slope prior, no parameter grid",
+    "marginal": "All remove-one-asset conditional cost proxies, no refitting. Not financed marginal NET.",
+    "priors": "Ten complete prior cash sessions. Missing expected session clears warmup; future missing labels retain earlier forecasts.",
+    "ridge": 20,
+    "selection": "One complete predeclared portfolio recipe, no winner asset selection. Any cost-admitted selection episodes require authentic quote-priced common-capital replay before any economic promotion.",
+    "uncertainty": "Leave-one-development-week-out jackknife; minimum20 training weeks and200 pooled labels, at least2 assets with40 labels; each predicted asset needs40 labels"
+  },
+  "ordersSubmitted": 0,
+  "pilot": "Current terms/minimum-volume margin first. Fixed first10 three-day chunks plus oldest/middle/late windows, no outcome scoring. Expand only if at least2 current-financeable assets have>=3 complete feature episodes in first30 days and>=2 viable cost contexts. Retain all asset failure reasons. No favorable replacement.",
+  "pilotChunkIndices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    61,
+    120
+  ],
+  "pilotCostClocks": [
+    1762212600000,
+    1762216200000,
+    1762245000000,
+    1762268400000,
+    1767655800000
+  ],
+  "pricing": "Only after causal primary plans exist: predeclare all required selection entry/holding/exit windows, budgets and common risk before authentic execution pricing. Bar labels are never simulated fills. FundedNet remains null until that phase.",
+  "schema": "mxm-aip1-source-v1",
+  "selectionEnd": 1785715200000,
+  "sessionSpecs": [
+    {
+      "CloseHour": 16,
+      "CloseMinute": 0,
+      "OpenHour": 9,
+      "OpenMinute": 30,
+      "TimeZone": "America/New_York",
+      "aliases": [
+        "US500",
+        "US500.cash",
+        "SPX500"
+      ],
+      "canonical": "US500"
+    },
+    {
+      "CloseHour": 16,
+      "CloseMinute": 0,
+      "OpenHour": 9,
+      "OpenMinute": 30,
+      "TimeZone": "America/New_York",
+      "aliases": [
+        "NAS100",
+        "NAS100.cash",
+        "USTEC"
+      ],
+      "canonical": "NAS100"
+    },
+    {
+      "CloseHour": 17,
+      "CloseMinute": 30,
+      "OpenHour": 9,
+      "OpenMinute": 0,
+      "TimeZone": "Europe/Berlin",
+      "aliases": [
+        "GER40",
+        "GER40.cash",
+        "DE40"
+      ],
+      "canonical": "GER40"
+    },
+    {
+      "CloseHour": 16,
+      "CloseMinute": 30,
+      "OpenHour": 8,
+      "OpenMinute": 0,
+      "TimeZone": "Europe/London",
+      "aliases": [
+        "UK100",
+        "UK100.cash"
+      ],
+      "canonical": "UK100"
+    },
+    {
+      "CloseHour": 16,
+      "CloseMinute": 0,
+      "OpenHour": 10,
+      "OpenMinute": 0,
+      "TimeZone": "Australia/Sydney",
+      "aliases": [
+        "AUS200",
+        "AUS200.cash"
+      ],
+      "canonical": "AUS200"
+    },
+    {
+      "CloseHour": 15,
+      "CloseMinute": 0,
+      "OpenHour": 9,
+      "OpenMinute": 0,
+      "TimeZone": "Asia/Tokyo",
+      "aliases": [
+        "JPN225",
+        "JPN225.cash",
+        "JP225"
+      ],
+      "canonical": "JPN225"
+    }
+  ],
+  "sourceChunks": [
+    [
+      1762128000000,
+      1762387200000
+    ],
+    [
+      1762387200000,
+      1762646400000
+    ],
+    [
+      1762646400000,
+      1762905600000
+    ],
+    [
+      1762905600000,
+      1763164800000
+    ],
+    [
+      1763164800000,
+      1763424000000
+    ],
+    [
+      1763424000000,
+      1763683200000
+    ],
+    [
+      1763683200000,
+      1763942400000
+    ],
+    [
+      1763942400000,
+      1764201600000
+    ],
+    [
+      1764201600000,
+      1764460800000
+    ],
+    [
+      1764460800000,
+      1764720000000
+    ],
+    [
+      1764720000000,
+      1764979200000
+    ],
+    [
+      1764979200000,
+      1765238400000
+    ],
+    [
+      1765238400000,
+      1765497600000
+    ],
+    [
+      1765497600000,
+      1765756800000
+    ],
+    [
+      1765756800000,
+      1766016000000
+    ],
+    [
+      1766016000000,
+      1766275200000
+    ],
+    [
+      1766275200000,
+      1766534400000
+    ],
+    [
+      1766534400000,
+      1766793600000
+    ],
+    [
+      1766793600000,
+      1767052800000
+    ],
+    [
+      1767052800000,
+      1767312000000
+    ],
+    [
+      1767312000000,
+      1767571200000
+    ],
+    [
+      1767571200000,
+      1767830400000
+    ],
+    [
+      1767830400000,
+      1768089600000
+    ],
+    [
+      1768089600000,
+      1768348800000
+    ],
+    [
+      1768348800000,
+      1768608000000
+    ],
+    [
+      1768608000000,
+      1768867200000
+    ],
+    [
+      1768867200000,
+      1769126400000
+    ],
+    [
+      1769126400000,
+      1769385600000
+    ],
+    [
+      1769385600000,
+      1769644800000
+    ],
+    [
+      1769644800000,
+      1769904000000
+    ],
+    [
+      1769904000000,
+      1770163200000
+    ],
+    [
+      1770163200000,
+      1770422400000
+    ],
+    [
+      1770422400000,
+      1770681600000
+    ],
+    [
+      1770681600000,
+      1770940800000
+    ],
+    [
+      1770940800000,
+      1771200000000
+    ],
+    [
+      1771200000000,
+      1771459200000
+    ],
+    [
+      1771459200000,
+      1771718400000
+    ],
+    [
+      1771718400000,
+      1771977600000
+    ],
+    [
+      1771977600000,
+      1772236800000
+    ],
+    [
+      1772236800000,
+      1772496000000
+    ],
+    [
+      1772496000000,
+      1772755200000
+    ],
+    [
+      1772755200000,
+      1773014400000
+    ],
+    [
+      1773014400000,
+      1773273600000
+    ],
+    [
+      1773273600000,
+      1773532800000
+    ],
+    [
+      1773532800000,
+      1773792000000
+    ],
+    [
+      1773792000000,
+      1774051200000
+    ],
+    [
+      1774051200000,
+      1774310400000
+    ],
+    [
+      1774310400000,
+      1774569600000
+    ],
+    [
+      1774569600000,
+      1774828800000
+    ],
+    [
+      1774828800000,
+      1775088000000
+    ],
+    [
+      1775088000000,
+      1775347200000
+    ],
+    [
+      1775347200000,
+      1775606400000
+    ],
+    [
+      1775606400000,
+      1775865600000
+    ],
+    [
+      1775865600000,
+      1776124800000
+    ],
+    [
+      1776124800000,
+      1776384000000
+    ],
+    [
+      1776384000000,
+      1776643200000
+    ],
+    [
+      1776643200000,
+      1776902400000
+    ],
+    [
+      1776902400000,
+      1777161600000
+    ],
+    [
+      1777161600000,
+      1777420800000
+    ],
+    [
+      1777420800000,
+      1777680000000
+    ],
+    [
+      1777680000000,
+      1777939200000
+    ],
+    [
+      1777939200000,
+      1778198400000
+    ],
+    [
+      1778198400000,
+      1778457600000
+    ],
+    [
+      1778457600000,
+      1778716800000
+    ],
+    [
+      1778716800000,
+      1778976000000
+    ],
+    [
+      1778976000000,
+      1779235200000
+    ],
+    [
+      1779235200000,
+      1779494400000
+    ],
+    [
+      1779494400000,
+      1779753600000
+    ],
+    [
+      1779753600000,
+      1780012800000
+    ],
+    [
+      1780012800000,
+      1780272000000
+    ],
+    [
+      1780272000000,
+      1780531200000
+    ],
+    [
+      1780531200000,
+      1780790400000
+    ],
+    [
+      1780790400000,
+      1781049600000
+    ],
+    [
+      1781049600000,
+      1781308800000
+    ],
+    [
+      1781308800000,
+      1781568000000
+    ],
+    [
+      1781568000000,
+      1781827200000
+    ],
+    [
+      1781827200000,
+      1782086400000
+    ],
+    [
+      1782086400000,
+      1782345600000
+    ],
+    [
+      1782345600000,
+      1782604800000
+    ],
+    [
+      1782604800000,
+      1782864000000
+    ],
+    [
+      1782864000000,
+      1783123200000
+    ],
+    [
+      1783123200000,
+      1783382400000
+    ],
+    [
+      1783382400000,
+      1783641600000
+    ],
+    [
+      1783641600000,
+      1783900800000
+    ],
+    [
+      1783900800000,
+      1784160000000
+    ],
+    [
+      1784160000000,
+      1784419200000
+    ],
+    [
+      1784419200000,
+      1784678400000
+    ],
+    [
+      1784678400000,
+      1784937600000
+    ],
+    [
+      1784937600000,
+      1785196800000
+    ],
+    [
+      1785196800000,
+      1785456000000
+    ],
+    [
+      1785456000000,
+      1785715200000
+    ],
+    [
+      1785715200000,
+      1785974400000
+    ],
+    [
+      1785974400000,
+      1786233600000
+    ],
+    [
+      1786233600000,
+      1786492800000
+    ],
+    [
+      1786492800000,
+      1786752000000
+    ],
+    [
+      1786752000000,
+      1787011200000
+    ],
+    [
+      1787011200000,
+      1787270400000
+    ],
+    [
+      1787270400000,
+      1787529600000
+    ],
+    [
+      1787529600000,
+      1787788800000
+    ],
+    [
+      1787788800000,
+      1788048000000
+    ],
+    [
+      1788048000000,
+      1788307200000
+    ],
+    [
+      1788307200000,
+      1788566400000
+    ],
+    [
+      1788566400000,
+      1788825600000
+    ],
+    [
+      1788825600000,
+      1789084800000
+    ],
+    [
+      1789084800000,
+      1789344000000
+    ],
+    [
+      1789344000000,
+      1789603200000
+    ],
+    [
+      1789603200000,
+      1789862400000
+    ],
+    [
+      1789862400000,
+      1790121600000
+    ],
+    [
+      1790121600000,
+      1790380800000
+    ],
+    [
+      1790380800000,
+      1790640000000
+    ],
+    [
+      1790640000000,
+      1790899200000
+    ],
+    [
+      1790899200000,
+      1791158400000
+    ],
+    [
+      1791158400000,
+      1791417600000
+    ],
+    [
+      1791417600000,
+      1791676800000
+    ],
+    [
+      1791676800000,
+      1791936000000
+    ],
+    [
+      1791936000000,
+      1792195200000
+    ],
+    [
+      1792195200000,
+      1792454400000
+    ],
+    [
+      1792454400000,
+      1792713600000
+    ],
+    [
+      1792713600000,
+      1792972800000
+    ],
+    [
+      1792972800000,
+      1793232000000
+    ],
+    [
+      1793232000000,
+      1793491200000
+    ],
+    [
+      1793491200000,
+      1793577600000
+    ]
+  ],
+  "start": 1762128000000
+}

@@ -1,5 +1,37 @@
 using System.Text.Json;
 using System.Security.Cryptography;
+if (args.Length == 3 && args[2] == "--auction-source-support")
+{
+    try {
+        var input=JsonSerializer.Deserialize<Mxm.Core.AuctionInput>(File.ReadAllBytes(args[0]),
+            new JsonSerializerOptions {NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString})!;
+        var episodes=Mxm.Core.AuctionInventoryResearch.Episodes(input);
+        File.WriteAllText(args[1],JsonSerializer.Serialize(input.Sessions.Select(s=>new {s.Symbol,FeatureEpisodes=episodes.Count(x=>x.Symbol==s.Symbol),KnownLabels=episodes.Count(x=>x.Symbol==s.Symbol&&x.Outcome.HasValue)})));return 0;
+    } catch { return 26; }
+}
+if (args.Length == 3 && args[2] == "--auction-inventory-program")
+{
+    try {
+        var input=JsonSerializer.Deserialize<Mxm.Core.AuctionInput>(File.ReadAllBytes(args[0]),
+            new JsonSerializerOptions {NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString})!;
+        File.WriteAllText(args[1],JsonSerializer.Serialize(Mxm.Core.AuctionInventoryResearch.Evaluate(input)));return 0;
+    } catch { return 24; }
+}
+if (args.Length == 3 && args[2] == "--broker-identity-reception")
+{
+    try {
+        using var root=JsonDocument.Parse(File.ReadAllBytes(args[0]));
+        var snapshot=JsonSerializer.Deserialize<Mxm.Core.BrokerIdentitySnapshot>(root.RootElement.GetProperty("Snapshot").GetRawText(),
+            new JsonSerializerOptions {NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString})!;
+        var session=new Mxm.Core.NativeFundedSession(snapshot.AccountBinding);
+        decimal? cash=root.RootElement.GetProperty("BrokerCashEur").ValueKind==JsonValueKind.Null?null:decimal.Parse(root.RootElement.GetProperty("BrokerCashEur").GetString()!,System.Globalization.CultureInfo.InvariantCulture);
+        var first=session.Observe(snapshot,cash);var resumed=Mxm.Core.NativeFundedSession.Restore(session.Checkpoint(),snapshot.AccountBinding);
+        var second=resumed.Observe(snapshot,cash);
+        bool same=JsonSerializer.Serialize(first)==JsonSerializer.Serialize(second);
+        if(!same)throw new ArgumentException();
+        File.WriteAllText(args[1],JsonSerializer.Serialize(new {Report=first,RestoredReportMatched=same,ActualBrokerCashImported=false,OrdersSubmitted=0}));return 0;
+    } catch { return 25; }
+}
 if (args.Length == 3 && args[2] == "--native-funded-facts")
 {
     try {

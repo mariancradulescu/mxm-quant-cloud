@@ -10,7 +10,7 @@ public static class MultiAssetValuation
     private static int I(JsonElement e,string key)=>e.GetProperty(key).GetInt32();
     public static object Assess(JsonElement root)
     {
-        if(root.GetProperty("schema").GetString() is not ("mxm-epa1-source-v1" or "mxm-epa2-source-v1" or "mxm-sqp1-source-v1" or "mxm-bdp1-source-v1" or "mxm-frozen-observed-facts-v1") ||
+        if(root.GetProperty("schema").GetString() is not ("mxm-epa1-source-v1" or "mxm-epa2-source-v1" or "mxm-sqp1-source-v1" or "mxm-bdp1-source-v1" or "mxm-frozen-observed-facts-v1" or "mxm-aip1-source-v1") ||
            !root.GetProperty("readOnly").GetBoolean() || root.GetProperty("depositCurrency").GetString()!="EUR")
             throw new ArgumentException("SOURCE_AND_DEPOSIT_CURRENCY_BINDING");
         var symbols=root.GetProperty("symbols");var output=new Dictionary<string,object>();
@@ -20,7 +20,7 @@ public static class MultiAssetValuation
             var snapshot=point.Value;long nominal=long.Parse(point.Name),at=snapshot.GetProperty("at").GetInt64();
             var quotes=snapshot.GetProperty("quotes");
             if(root.GetProperty("schema").GetString()=="mxm-frozen-observed-facts-v1" ? at!=nominal :
-               at<nominal+1000 || at>nominal+(root.GetProperty("schema").GetString() is "mxm-sqp1-source-v1" or "mxm-bdp1-source-v1"?21000:11000))throw new ArgumentException("QUOTE_LATENCY");
+               at<nominal+1000 || at>nominal+(root.GetProperty("schema").GetString() is "mxm-sqp1-source-v1" or "mxm-bdp1-source-v1" or "mxm-aip1-source-v1"?21000:11000))throw new ArgumentException("QUOTE_LATENCY");
             foreach(var q in quotes.EnumerateObject())
             {
                 if(N(q.Value,"bid")<=0 || N(q.Value,"ask")<N(q.Value,"bid") ||
@@ -33,6 +33,8 @@ public static class MultiAssetValuation
             Rates Convert(string currency)=>currency switch {
                 "EUR"=>new(1,1,Ask("EURUSD")),
                 "USD"=>new(1/Ask("EURUSD"),1/Bid("EURUSD"),1),
+                "GBP"=>new(Bid("GBPUSD")/Ask("EURUSD"),Ask("GBPUSD")/Bid("EURUSD"),Ask("GBPUSD")),
+                "AUD"=>new(Bid("AUDUSD")/Ask("EURUSD"),Ask("AUDUSD")/Bid("EURUSD"),Ask("AUDUSD")),
                 "JPY"=>new(1/(Ask("USDJPY")*Ask("EURUSD")),1/(Bid("USDJPY")*Bid("EURUSD")),1/Bid("USDJPY")),
                 "CAD"=>new(1/(Ask("USDCAD")*Ask("EURUSD")),1/(Bid("USDCAD")*Bid("EURUSD")),1/Bid("USDCAD")),
                 _=>throw new ArgumentException("UNSUPPORTED_FX_ROUTE")};

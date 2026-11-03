@@ -39,7 +39,7 @@ link here; older dated directives remain provenance, never competing authority.
   could only be research information in a genuinely prospective portfolio
   hypothesis on independent evidence, never a resurrection mechanism.
 
-## Active methodological policy v6 (prospectively revisable)
+## Active methodological policy v7 (prospectively revisable)
 
 Evidence levels: (1) exploratory economic hypothesis; (2) preliminary predictive
 and economic support; (3) demonstrated possible incremental portfolio contribution;
@@ -499,3 +499,44 @@ observed gap price changes as known history. Weekend gaps must not structurally
 erase H4 features. Future gap-crossing outcomes remain unknown, cannot suppress
 an earlier feature signal and prevent selection admission if any active outcome
 is missing. No absent bar, price, trade or label is imputed.
+
+
+## After PR46–47: distinct economics and native identity convergence
+
+OWNER v2.0 requirements remain unchanged. BDP1 is closed with no cost admissions;
+original and corrected reports remain frozen. No calendar-mean, closed breakout,
+reversal, cross-currency or BDP1 recipe is called by the next study.
+
+AIP1 predeclares a different economic hypothesis: scheduled index cash-opening
+price discovery may reveal overnight inventory acceptance. The first30-minute
+gap/return interaction and tick-count activity forecast the next120 minutes,
+using one pooled five-feature ridge fit on26 earlier weeks with weekly jackknife
+uncertainty. No exchange volume/auction prints are invented from CFD tick counts.
+All six fixed index roles, aliases, timezone/DST schedules, cost rules and26/13/13
+exposed calendar splits are fixed in `auction_inventory_protocol.json` before
+any retrieval. First inspect current fractional minimum units, EUR margin and
+route-local current-tariff cost contexts; then an outcome-blind source/label pilot.
+If it fails, do not expand. Missing or unaffordable instruments are disclosed,
+not statistically rejected or retrospectively excluded from favorable reporting.
+A complete bar-label study is not execution pricing or funded NET. Any causal
+cost-admitted selection plans require a prospectively bound common-capital quote
+replay, with real held-position observations and risk, before economic promotion.
+No individual asset needs standalone profit or HARD21; no audit winner may change
+the pooled learner or financial evidence rules. Global calendar exposure remains.
+
+NativeFundedSession connects NativeFundedLedger with explicit order/deal/position
+identities. Duplicate executions deduplicate; conflicts, unmatched/partial volumes,
+unknown submissions and missing history remain protective. An absent order is NOT
+a terminal receipt. Positive identity outcomes still require priced monetary import;
+identity matching never manufactures cash, broker fills or a historical peak.
+The cBot enumerates native deal/order/position surfaces, uses account-bound checked
+local checkpoints, and preserves unknown historical continuity as unknown after
+restart. Missing/corrupt/wrong-account storage cannot silently reset the portfolio
+or promote EUR200 model initial cash to real broker equity. LocalStorage retention
+and actual Cloud migration/restart remain unproved. No orders are available.
+
+A five-request authenticated read-only broker probe captures trader metadata,
+before/after current inventory, and seven-day order/deal lists. Empty bounded
+history cannot establish a lifetime empty book or real fill recovery. Raw replies
+stay encrypted under original scope/account custody. No orders, new credentials,
+external runtime services, Cloud activation or economic certification follow.

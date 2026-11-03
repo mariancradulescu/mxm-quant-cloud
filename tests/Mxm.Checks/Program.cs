@@ -1,6 +1,49 @@
 using Mxm.Core;
 var passed = 0;
 void Check(bool condition, string name) { if (!condition) throw new Exception(name); passed++; }
+// Material identity/recovery contracts: no synthetic profitability claim.
+var localIdentity=new LocalIntentIdentity("intent-A","order-A","position-A","SYNTH",1,2,false,1000);
+var brokerOrder=new BrokerOrderIdentity("order-A","intent-A","position-A","SYNTH",1,2,2,false,"FILLED",2000);
+var brokerDeals=new[]{new BrokerDealIdentity("deal-A","order-A","position-A","SYNTH",1,1,false,1500),new BrokerDealIdentity("deal-B","order-A","position-A","SYNTH",1,1,false,2000)};
+var brokerIdentity=new BrokerIdentitySnapshot("TEST_ACCOUNT",3000,0,3000,true,true,true,new[]{brokerOrder},brokerDeals,new[]{new BrokerPositionIdentity("position-A","SYNTH",1,2)});
+var matchedIdentity=BrokerIdentityReconciliation.Assess(brokerIdentity,new[]{localIdentity});
+Check(matchedIdentity.SnapshotConsistent && matchedIdentity.Intents[0].PositiveTerminalEvidence && matchedIdentity.Intents[0].LedgerImportRequired,
+    "split entry deals match order/position identities but do not manufacture monetary import");
+var repeatedIdentity=BrokerIdentityReconciliation.Assess(brokerIdentity with {Deals=brokerDeals.Append(brokerDeals[0]).ToArray()},new[]{localIdentity});
+Check(repeatedIdentity.SnapshotConsistent && repeatedIdentity.BrokerDeals==2,"duplicate broker executions count once");
+Check(!BrokerIdentityReconciliation.Assess(brokerIdentity with {Positions=new[]{new BrokerPositionIdentity("position-A","SYNTH",1,1)}},new[]{localIdentity}).SnapshotConsistent,
+    "partial position volume must equal positively linked open/close deals");
+Check(!BrokerIdentityReconciliation.Assess(brokerIdentity with {Deals=brokerDeals.Append(brokerDeals[0] with {Units=2}).ToArray()},new[]{localIdentity}).SnapshotConsistent,
+    "conflicting repeated deal cannot be reconciled");
+var absentIdentity=BrokerIdentityReconciliation.Assess(brokerIdentity with {Orders=Array.Empty<BrokerOrderIdentity>(),Deals=Array.Empty<BrokerDealIdentity>(),Positions=Array.Empty<BrokerPositionIdentity>()},new[]{localIdentity});
+Check(absentIdentity.UnresolvedIntents==1 && absentIdentity.Intents[0].State=="UNKNOWN_NO_RESUBMIT","empty complete query cannot cancel an unknown submission");
+var identitySession=new NativeFundedSession("TEST_ACCOUNT",intents:new[]{localIdentity});
+var restoredIdentitySession=NativeFundedSession.Restore(identitySession.Checkpoint(),"TEST_ACCOUNT");
+Check(!restoredIdentitySession.Observe(brokerIdentity,200).CanConsiderNewExposure && !restoredIdentitySession.JournalContinuityProven,
+    "checkpoint cannot promote unknown historical continuity or authorize orders");
+bool wrongAccountBlocked=false;try{NativeFundedSession.Restore(identitySession.Checkpoint(),"OTHER_ACCOUNT");}catch(ArgumentException){wrongAccountBlocked=true;}
+Check(wrongAccountBlocked,"checkpoint is account scoped");
+// AIP1 real nonempty forecasts for causality and missing-label behavior.
+const long auctionTestStart=1762128000000L;var auctionBars=new List<ProgramBar>();
+for(int day=0;day<364;day++){
+    var date=DateTimeOffset.FromUnixTimeMilliseconds(auctionTestStart+day*86400000L);if(date.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday)continue;
+    foreach(string symbol in new[]{"SYNTH1","SYNTH2"})for(int k=0;k<72;k++){
+        double price=10000+day*50+k*2;long at=auctionTestStart+day*86400000L+6*3600000L+k*300000L;
+        auctionBars.Add(new(symbol,at,at+300000,price,price+3,price-1,price+2,100+k));
+    }
+}
+var auctionTest=new AuctionInput(auctionBars.ToArray(),new[]{new ProgramCost("SYNTH1",.01,10,1,true,1320,5),new ProgramCost("SYNTH2",.01,10,1,true,1320,5)},
+    new[]{new AuctionSpec("SYNTH1","UTC",6,0,12,0),new AuctionSpec("SYNTH2","UTC",6,0,12,0)},auctionTestStart,auctionTestStart+26*604800000L,auctionTestStart+39*604800000L,auctionTestStart+52*604800000L);
+using var auctionReceipt=System.Text.Json.JsonDocument.Parse(System.Text.Json.JsonSerializer.Serialize(AuctionInventoryResearch.Evaluate(auctionTest)));
+Check(auctionReceipt.RootElement.GetProperty("TrainingSupportPassed").GetBoolean() && auctionReceipt.RootElement.GetProperty("Selection").GetProperty("PrimaryEpisodes").GetInt32()>0,
+    "auction causality check exercises mature nonempty primary forecasts");
+var futureAuction=auctionTest with {Bars=auctionTest.Bars.Select(b=>b.Start<auctionTest.SelectionEnd?b:b with {Open=1e10/b.Open,High=1e10/b.Low,Low=1e10/b.High,Close=1e10/b.Close}).ToArray()};
+using var futureAuctionReceipt=System.Text.Json.JsonDocument.Parse(System.Text.Json.JsonSerializer.Serialize(AuctionInventoryResearch.Evaluate(futureAuction)));
+Check(auctionReceipt.RootElement.GetProperty("Selection").GetRawText()==futureAuctionReceipt.RootElement.GetProperty("Selection").GetRawText(),"future audit prices cannot change earlier auction policy selection");
+long firstAuction=auctionReceipt.RootElement.GetProperty("Forecasts").EnumerateArray().First(x=>x.GetProperty("Primary").GetBoolean()).GetProperty("At").GetInt64();
+using var missingAuction=System.Text.Json.JsonDocument.Parse(System.Text.Json.JsonSerializer.Serialize(AuctionInventoryResearch.Evaluate(auctionTest with {Bars=auctionTest.Bars.Where(b=>b.Start!=firstAuction+300000L).ToArray()})));
+Check(missingAuction.RootElement.GetProperty("Forecasts").EnumerateArray().Any(x=>x.GetProperty("At").GetInt64()==firstAuction&&x.GetProperty("Primary").GetBoolean()&&x.GetProperty("OutcomeBps").ValueKind==System.Text.Json.JsonValueKind.Null),
+    "missing auction exit information preserves earlier forecast and unknown monetary outcome");
 var clockWindow=new ObservationWindow(10000,1000,10000,2000,new[]{"X"},new[]{
     new QuoteSideEvent(11000,"X",0,100),new QuoteSideEvent(11000,"X",1,102),
     new QuoteSideEvent(12000,"X",0,1)},true);

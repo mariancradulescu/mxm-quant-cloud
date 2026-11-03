@@ -241,6 +241,17 @@
       "technicalSourceCopyArtifactRunId": 41726863225,
       "technicalSourceCopyExpiresAt": "2027-02-01T22:00:18Z",
       "trialGroups": 240
+    },
+    {
+      "fundedNetEur": null,
+      "id": "AIP1",
+      "independent": false,
+      "ordersSubmitted": 0,
+      "phase": "POOLED_INDEX_CASH_OPENING_INVENTORY_ACCEPTANCE_WITH_BROKER_IDENTITY_RECEIPT",
+      "protocolFile": "research/auction_inventory_protocol.json",
+      "protocolSha256": "45ba828356d149bc48dd8e17908d2e55c62e5c6dd72346742caae47c7011ab13",
+      "selection": "One pooled model; no asset winner subset; common quote-priced allocation required after causal plans",
+      "status": "PROSPECTIVE_SOURCE_AND_FINANCIAL_PILOT_BEFORE_EXPANSION"
     }
   ],
   "schema": "mxm-project-data-exposure-v1",
