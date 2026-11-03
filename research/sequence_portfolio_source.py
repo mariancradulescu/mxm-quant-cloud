@@ -2,7 +2,7 @@
 import base64,hashlib,json,os,sys
 from pathlib import Path
 from decimal import Decimal as D
-from .collect import authenticate
+from .collect import authenticate,HISTORIC_ACCOUNT_FINGERPRINT_COMMITMENT
 from .ctrader_transport import StdlibCTraderTransport
 from .ctrader_proto import OpenApiMessages_pb2 as m,OpenApiModelMessages_pb2 as e
 from .decode import need,decode_bars,decode_side
@@ -49,10 +49,12 @@ def audit(b,p):
         decoded.append((q,r))
     trader=decoded[0][1].trader;account=decoded[0][1].ctidTraderAccountId
     need(all(q.ctidTraderAccountId==account for q,r in decoded),'SQP1_SINGLE_ACCOUNT')
+    fingerprint=hashlib.sha256(f'ctrader-account:{int(account)}'.encode('ascii')).hexdigest()
+    need(hashlib.sha256(fingerprint.encode('ascii')).hexdigest()==HISTORIC_ACCOUNT_FINGERPRINT_COMMITMENT,'SQP1_ORIGINAL_ACCOUNT_COMMITMENT')
     assets={a.assetId:a.name for a in decoded[1][1].asset}
     listing={s.symbolName:s for s in decoded[2][1].symbol}
     need('pepperstone' in trader.brokerName.lower() and assets[trader.depositAssetId]=='EUR' and
-         b['accountSwapFreeEffective']==trader.swapFree and b['riskTerms']==risk_terms(trader),'SQP1_BROKER_TERMS')
+         b['accountSwapFreeEffective']==trader.swapFree and b['accountSwapFreeExplicitInWire']==trader.HasField('swapFree') and b['riskTerms']==risk_terms(trader),'SQP1_BROKER_TERMS')
     need(sorted(b['symbols'])==sorted(p['universe']),'SQP1_UNIVERSE')
     for s,row in b['symbols'].items():
         light=listing[s];q,r=decoded[row['contractRawIndex']]
@@ -93,7 +95,7 @@ def audit(b,p):
                          r.HasField('hasMore'),'SQP1_EVENT_WINDOW')
     need(blocks==b['featureBlocks'] and sorted(expected_ticks)==sorted(b['eventIndices']) and
          all(sorted(v)==sorted(p['universe']) for v in b['eventIndices'].values()),'SQP1_INDEPENDENT_RAW_RECONSTRUCTION')
-    return dict(evidenceRequests=len(raw),completedDays=len(expected_days),featureBlocks=len(blocks),
+    return dict(originalAccountBindingRechecked=True,evidenceRequests=len(raw),completedDays=len(expected_days),featureBlocks=len(blocks),
                 requestWindows=len(expected_ticks),pilotPassed=b['pilotPassed'],protocolSha256=b['protocolSha256'])
 
 
@@ -114,7 +116,7 @@ def collect():
         need('pepperstone' in trader.brokerName.lower() and assets[trader.depositAssetId]=='EUR','SQP1_PEPPERSTONE_EUR')
         listing={s.symbolName:s for s in req(m.ProtoOASymbolsListReq(ctidTraderAccountId=account,includeArchivedSymbols=False),m.ProtoOASymbolsListRes)[0].symbol if s.enabled}
         b=dict(schema=SCHEMA,readOnly=True,depositCurrency='EUR',accountSwapFreeEffective=trader.swapFree,
-            riskTerms=risk_terms(trader),protocolSha256=hashlib.sha256(PROTOCOL.read_bytes()).hexdigest(),
+            accountSwapFreeExplicitInWire=trader.HasField('swapFree'),riskTerms=risk_terms(trader),protocolSha256=hashlib.sha256(PROTOCOL.read_bytes()).hexdigest(),
             symbols={},featureBlocks=[],featureIndices={},eventIndices={},completedDays=[],pilotPassed=False,raw=raw)
         for s in p['universe']:
             light=listing[s];detail,di=req(m.ProtoOASymbolByIdReq(ctidTraderAccountId=account,symbolId=[light.symbolId]),m.ProtoOASymbolByIdRes)
@@ -174,7 +176,9 @@ def readback():
     from .sequence_portfolio_replay import evaluate,preflight
     need(preflight(b,p,p['pilotDays'])==b['pilotSupport'],'SQP1_PILOT_RECONCILIATION')
     result=evaluate(b,p)
-    result.update(sourceRunId=int(run),sourceCiphertextSha256=public['sha256'],rawReadbackMatched=True,sourceAudit=b['auditReceipt'])
+    result.update(sourceRunId=int(run),sourceCiphertextSha256=public['sha256'],rawReadbackMatched=True,sourceAudit=b['auditReceipt'],accountSwapFreeEffective=b['accountSwapFreeEffective'],
+        accountSwapFreeExplicitInWire=b['accountSwapFreeExplicitInWire'],historicalFinancingVerified=False,
+        financingAssumption='CURRENT_EFFECTIVE_PROTOBUF_NORMAL_ACCOUNT_AND_CURRENT_DAILY_SWAP_OUTSIDE_HOLDING;HISTORICAL_TERMS_UNVERIFIED')
     Path('sequence-portfolio.public.json').write_text(json.dumps(result,sort_keys=True,indent=2,default=str)+'\n')
     print('SQP1_AUTHENTIC_ECONOMIC_RESULT '+json.dumps(result,sort_keys=True,default=str),flush=True)
 
