@@ -1,3 +1,5 @@
+> Historical/technical record. Current OWNER requirements and methodology: [OWNER_SPEC.md](OWNER_SPEC.md). Frozen results retain their original rules.
+
 # Source pipeline implementation receipt — 2026-11-02
 
 Implementation commit: 0fe831be2e1e0a8a8d649e76eb79f4d57f03fdc0.

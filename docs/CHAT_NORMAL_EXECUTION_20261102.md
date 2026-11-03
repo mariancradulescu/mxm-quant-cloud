@@ -1,3 +1,5 @@
+> Historical/technical record. Current OWNER requirements and methodology: [OWNER_SPEC.md](OWNER_SPEC.md). Frozen results retain their original rules.
+
 # Chat-normal GitHub Actions handoff — 2026-11-02
 
 ## Scope and authority

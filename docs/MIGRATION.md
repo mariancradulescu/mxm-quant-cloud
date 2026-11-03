@@ -1,3 +1,5 @@
+> Historical/technical record. Current OWNER requirements and methodology: [OWNER_SPEC.md](OWNER_SPEC.md). Frozen results retain their original rules.
+
 # Selective migration manifest — 2026-11-02
 
 Source: mariancradulescu/mxm-quant-greenfield, isolated commit `6a4e56758d985f00020cd13ef264e8dc84fc6a9b`; official historical branch `467fb68a965305c935806e28c08f0465620ccb45`. This repository currently contains newly written foundation code, not a completed port of the components below.

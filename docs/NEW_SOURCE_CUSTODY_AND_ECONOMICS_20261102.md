@@ -1,3 +1,5 @@
+> Historical/technical record. Current OWNER requirements and methodology: [OWNER_SPEC.md](OWNER_SPEC.md). Frozen results retain their original rules.
+
 # MXM B–E — new-source custody and original Pepperstone account binding (2026-11-02)
 
 ## Architectural decision: NEW source is independent of historic R3 ciphertext

@@ -1,3 +1,5 @@
+> Historical/technical record. Current OWNER requirements and methodology: [OWNER_SPEC.md](OWNER_SPEC.md). Frozen results retain their original rules.
+
 # MXM — EUR 200 genuine NET gap and selective Cloud recovery (2026-11-02)
 
 ## Economic finding boundary, fixed before accessing sealed broker contracts

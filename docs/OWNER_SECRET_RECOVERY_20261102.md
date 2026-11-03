@@ -1,3 +1,5 @@
+> Historical/technical record. Current OWNER requirements and methodology: [OWNER_SPEC.md](OWNER_SPEC.md). Frozen results retain their original rules.
+
 # OWNER secret reconciliation — 2026-11-02
 
 This is a **two-value repair**, not an OAuth registration, new keypair, broker request, or a new architecture. No secret values may be committed, emailed, printed, or pasted into chat.

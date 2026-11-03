@@ -1,19 +1,23 @@
-# Approved direction and current boundary
+# Architecture status under OWNER specification v2.0
 
-The OWNER selected a new PUBLIC repository. The old repository remains untouched. Only sanitized source, public documentation and synthetic checks belong here. No account identifiers, original account data, market datasets, OAuth values, custody keys or decrypted artifacts may be committed or uploaded as public CI artifacts.
+Controlling requirements and methodology: [OWNER_SPEC.md](OWNER_SPEC.md).
+Status below describes implementation, not economic or activation acceptance.
 
-## Components
-
-| Component | Responsibility | Current status |
+| Component | Implemented | Material limitation |
 |---|---|---|
-| Machine-side collector | Existing Open API application, read-only authenticated account selection, bounded requests, encrypted custody | Selective extraction pending |
-| Research | Temporal split, immutable data provenance, predeclared eligibility, distinct hypotheses | No new experiments started |
-| Mxm.Core | Shared economic decisions, accounting, recovery and risk | Initial protective recovery and round-trip counter |
-| C# replay | Same core; authentic costs, conversion, funding, executable bid/ask and margin | Pending implementation and data |
-| Mxm.Cloud | Native account recovery and single portfolio; no external decision service | Observation-only adapter, stops immediately |
-| Android | Import `.algo`, manage one Cloud instance, owner stop | Officially documented path; device acceptance pending |
+| Read-only authenticated collector | Original LIVE binding, SCOPE_VIEW, bounded Open API, v2 encrypted custody and C# receipt/readback | Source-specific quote coverage and historical cost evidence remain incomplete |
+| Research | Several frozen causal studies, genuine preliminary positive wick NET, broad development across six instruments/timeframes | No independently confirmed NET edge; shared exposed calendars |
+| Native opportunity selection | Common joint scenarios, greedy marginal utility, causal clocks, redundancy/conflict rejection, shared risk/margin reservation | Research heuristic; no authentic incremental portfolio validation |
+| Python funded replay | One EUR200 chronological event ledger, overlapping positions, bid/ask, supplied FX/fees/slippage/financing, aggregate round trips | Sampled marks; no certified continuous drawdown or historical execution proof |
+| Native C# economics | NET accounting/acceptance, source admission, forecasts and adaptive scenario sizing | Full native execution replay equivalence remains incomplete |
+| Native Cloud adapter | Single observation-only cBot, native inventory and immediate stop | No trading authority, autonomous trading recovery or device acceptance |
 
-No strategy is active. No historical numeric risk, margin, reserve or position-count caps are inherited. Python may support machine-side collection but is never a runtime requirement for the cBot.
+Flow: authentic source → causal opportunities → predictive evidence → common
+native selection → shared allocation/risk → funded chronological replay →
+independent confirmation → fully equivalent native C# → single Cloud cBot.
+
+Historical recovery proof obligations below remain applicable. The prior status
+table was superseded without deleting its git history.
 
 ## Restart proof obligations
 

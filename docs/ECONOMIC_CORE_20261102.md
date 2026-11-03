@@ -1,3 +1,5 @@
+> Historical/technical record. Current OWNER requirements and methodology: [OWNER_SPEC.md](OWNER_SPEC.md). Frozen results retain their original rules.
+
 # Economic and native causal core — November 2, 2026
 
 ## Material implementation (not an acceptance claim)

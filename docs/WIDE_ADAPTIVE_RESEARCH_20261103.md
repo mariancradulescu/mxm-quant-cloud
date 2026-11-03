@@ -1,3 +1,5 @@
+> Historical/technical record. Current OWNER requirements and methodology: [OWNER_SPEC.md](OWNER_SPEC.md). Frozen results retain their original rules.
+
 # OWNER mandate correction and broad adaptive development — 2026-11-03
 
 The latest explicit OWNER directive withdraws EUR2/80/120 and universal 1%/2%

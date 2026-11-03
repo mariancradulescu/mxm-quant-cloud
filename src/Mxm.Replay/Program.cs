@@ -1,5 +1,22 @@
 using System.Text.Json;
 using System.Security.Cryptography;
+if (args.Length == 3 && args[2] == "--orchestrate-opportunities")
+{
+    try {
+        var r=JsonSerializer.Deserialize<Mxm.Core.OrchestrationRequest>(File.ReadAllBytes(args[0]), new JsonSerializerOptions {NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString})
+            ?? throw new ArgumentException();
+        File.WriteAllText(args[1],JsonSerializer.Serialize(Mxm.Core.OpportunityOrchestrator.Select(r.Clock,r.Account,r.Baseline,r.Opportunities)));
+        return 0;
+    } catch { return 13; }
+}
+if (args.Length == 3 && args[2] == "--joint-opportunity-research")
+{
+    try {
+        using var d=JsonDocument.Parse(File.ReadAllBytes(args[0]));
+        File.WriteAllText(args[1],JsonSerializer.Serialize(Mxm.Core.JointOpportunityResearch.Assess(d.RootElement)));
+        return 0;
+    } catch { return 12; }
+}
 if (args.Length == 3 && args[2].StartsWith("--neighbour-"))
 {
     try {using var d=JsonDocument.Parse(File.ReadAllBytes(args[0]));

@@ -1,8 +1,8 @@
 # MXM Quant Cloud
 
-Public greenfield implementation under OWNER specification v1.0 and the 2026-11-02 public-repository decision. Initial capital EUR 200, no additional deposits; maximum drawdown control objective 30%; HARD21 means at least 21 fully closed round trips per objectively eligible week, never forced trades.
+Public implementation under the single [active OWNER specification v2.0](docs/OWNER_SPEC.md), updated after PR30–33 on 2026-11-03. Initial capital EUR 200, no additional deposits; maximum drawdown control objective 30%; HARD21 means at least 21 fully closed round trips per objectively eligible week, never forced trades.
 
-**Status: native foundation only. No qualified strategy, no profitability claim, no trading authority. Do not activate the artifact in Cloud, LIVE or DEMO.** The current cBot reads native account collections then stops; it contains no order submission, cancellation or position modification functions.
+**Status: authentic exploratory research and native portfolio research kernels; No qualified strategy, no profitability claim, no trading authority. Do not activate the artifact in Cloud, LIVE or DEMO.** The current cBot reads native account collections then stops; it contains no order submission, cancellation or position modification functions.
 
 The repository contains a shared C# core, an observation-only cBot and focused accounting/recovery checks. One Linux workflow builds the `.algo` artifact without secrets. GitHub is development infrastructure, not the future trading decision engine. The final product will be one native cBot controlled from Android.
 
@@ -25,3 +25,18 @@ GitHub Actions [#41467047520](https://github.com/mariancradulescu/mxm-quant-clou
 ## Authentic multi-resolution economic measurement (2026-11-02)
 
 The original pinned Pepperstone Europe LIVE account and installed private-key-derived v2 custody successfully collected and independently replayed the **new** fixed universe of EURUSD, GBPUSD, USDJPY, AUDUSD, USDCAD and XAUUSD on H4 and M15 in [Actions #41476636915](https://github.com/mariancradulescu/mxm-quant-cloud/actions/runs/41476636915): **15,113 genuine bars**, H4 observations in **13 calendar months per symbol** and one-minute authentic broker BID/ASK source samples. A completely distinct, predefined native C# 12-bar breakout with fourth-bar price-only exit was evaluated *without recollection* under protection in [Actions #41478328221](https://github.com/mariancradulescu/mxm-quant-cloud/actions/runs/41478328221): **386 H4** and **433 M15** gross OHLC proxy episodes across **all six symbols**, with **five positive and seven negative** mean gross-pip groups. No cross-instrument pip sum or positive-only selection is allowed. This is solely exploratory on previously research-exposed historical dates: historical spread samples are **not** entry/exit fills, broker margin/cost completeness and 200 EUR funded executable NET are **unproven**, and no independent confirmation, HARD21 or 30% global DD certificate follows. See [exact cold economic evidence](docs/AUTHENTIC_ECONOMIC_BREAKOUT_VERDICT_20261102.json). **No new orders or Cloud activation.**
+
+## Integrated system research (OWNER v2.0)
+
+The shared native `OpportunityOrchestrator` consumes causal economic opportunities
+and aligned joint scenarios, uses `AdaptivePortfolioRisk`, reserves common margin
+and risk, then reranks remaining opportunities. A thin Python adapter connects
+its decisions to the existing chronological `FundedReplay`. Both are research
+components; no authentic portfolio incremental edge or qualified adaptation has
+been demonstrated. `research/evidence_registry.json` conservatively tracks global
+data exposure; no existing historical partition is automatically independent.
+
+The frozen JOP1 multi-asset development probe measures causal opportunity coverage
+and conflicts on existing authenticated source. Missing executable historical
+quotes/costs must prevent funded entries. See the active specification for the
+evidence levels, current implementation policy and remaining qualification work.
