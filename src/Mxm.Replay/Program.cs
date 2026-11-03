@@ -1,5 +1,17 @@
 using System.Text.Json;
 using System.Security.Cryptography;
+if (args.Length == 3 && args[2].StartsWith("--neighbour-"))
+{
+    try {using var d=JsonDocument.Parse(File.ReadAllBytes(args[0]));
+        object result=args[2] switch {
+            "--neighbour-plan"=>Mxm.Core.NeighbourFxResearch.MakePlan(d.RootElement).Plans,
+            "--neighbour-confirm-plan"=>Mxm.Core.NeighbourFxResearch.MakePlan(d.RootElement,true).Plans,
+            "--neighbour-selection"=>Mxm.Core.NeighbourFxResearch.Evaluate(d.RootElement),
+            "--neighbour-confirmation"=>Mxm.Core.NeighbourFxResearch.Evaluate(d.RootElement,true),
+            _=>throw new ArgumentException()};
+        File.WriteAllText(args[1],JsonSerializer.Serialize(result));return 0;
+    }catch{return 11;}
+}
 if (args.Length == 3 && args[2].StartsWith("--flow-"))
 {
     try {
