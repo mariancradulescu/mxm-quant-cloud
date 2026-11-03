@@ -416,6 +416,9 @@ jobs:
           (needs.verify.outputs.authorized_source_request == 'true' || needs.verify.outputs.authorized_economic_request == 'true' || needs.verify.outputs.authorized_intraday_net == 'true' || needs.verify.outputs.authorized_flow_net == 'true' || needs.verify.outputs.authorized_neighbour_net == 'true' || needs.verify.outputs.authorized_volume_net == 'true' || needs.verify.outputs.authorized_m15_anchor_net == 'true' || needs.verify.outputs.authorized_joint_quote_extension == 'true' || needs.verify.outputs.authorized_portfolio_economic == 'true' || needs.verify.outputs.authorized_portfolio_holding == 'true' || needs.verify.outputs.authorized_sequence_portfolio == 'true' || needs.verify.outputs.authorized_discovery_program == 'true'))
       )
     needs: [verify, custody_recipient]
+    permissions:
+      contents: read
+      actions: read
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     environment: mxm-r3-pepperstone-v1
