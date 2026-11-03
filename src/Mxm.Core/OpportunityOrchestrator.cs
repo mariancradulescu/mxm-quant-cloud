@@ -20,6 +20,21 @@ public static class OpportunityOrchestrator
 {
     public static OrchestrationResult Select(long clock, AdaptiveRiskInputs account,
         PortfolioScenario[] baseline, EconomicOpportunity[] opportunities)
+        => SelectCore(clock,account,baseline,opportunities,null);
+
+    public static OrchestrationResult Estimate(ResearchOrchestrationRequest request)
+    {
+        if(request.Scope!="EPA1_CONDITIONAL_RESEARCH_NOT_CERTIFIED" || request.CommonHorizonMinutes!=240)
+            throw new ArgumentException("UNDECLARED_CONDITIONAL_RESEARCH_SCOPE");
+        // No certificate is manufactured: the verified DTO retains zero peak
+        // and false evidence flags. Conditional sizing uses its separate DTO.
+        var a=request.Account;
+        var unverified=new AdaptiveRiskInputs(a.EquityEur,0,a.FreeMarginEur,a.MinimumUnits,a.StepUnits,
+            a.MaximumUnits,a.MarginPerUnitEur,0,false,false,a.EffectiveIndependentBlocks,a.UncertaintyMultiplier);
+        return SelectCore(request.Clock,unverified,request.Baseline,request.Opportunities,request);
+    }
+    private static OrchestrationResult SelectCore(long clock,AdaptiveRiskInputs account,
+        PortfolioScenario[] baseline,EconomicOpportunity[] opportunities,ResearchOrchestrationRequest? research)
     {
         if (clock <= 0 || baseline.Length < 2 || baseline.Any(s => string.IsNullOrWhiteSpace(s.StateId) ||
             s.KnownAt >= clock || s.LossEur < 0 || s.PeakEur < 0 || s.MarginEur < 0) ||
@@ -43,7 +58,7 @@ public static class OpportunityOrchestrator
                     o.Direction is not (-1 or 1) || o.Level < EvidenceLevel.Exploratory || o.Level > EvidenceLevel.NativeReady ||
                     o.AvailableAt > clock || o.AvailableAt < 0 || o.CalibratedThrough >= o.AvailableAt || o.CalibratedThrough < 0
                     ? "INVALID_OR_NONCAUSAL_OPPORTUNITY" :
-                    !o.ExecutionEvidenceComplete ? "EXECUTION_NET_EVIDENCE_MISSING" :
+                    !o.ExecutionEvidenceComplete && (research==null || !research.ScenarioCompleteOpportunityIds.Contains(o.Id,StringComparer.Ordinal)) ? "EXECUTION_NET_EVIDENCE_MISSING" :
                     keys.Contains(o.RedundancyKey) ? "REDUNDANT_OPPORTUNITY" :
                     symbols.TryGetValue(o.Symbol, out var direction) && direction != o.Direction ? "CONTRADICTORY_SYMBOL_EXPOSURE" : null;
                 if (invalid != null) { reasons[o.Id] = invalid; continue; }
@@ -60,7 +75,12 @@ public static class OpportunityOrchestrator
                     FreeMarginEur=account.FreeMarginEur-reserved,
                     Reconciled=account.Reconciled && o.VolumeGrid.Reconciled,
                     CompleteJointRiskEvidence=account.CompleteJointRiskEvidence && o.VolumeGrid.CompleteJointRiskEvidence};
-                var choice = AdaptivePortfolioRisk.Choose(grid, joint);
+                var choice = research==null ? AdaptivePortfolioRisk.Choose(grid, joint) :
+                    AdaptivePortfolioRisk.Estimate(AdaptivePortfolioRisk.ToScenario(o.VolumeGrid) with {
+                        EquityEur=research.Account.EquityEur,PeakReferenceEur=research.Account.PeakReferenceEur,
+                        FreeMarginEur=research.Account.FreeMarginEur-reserved,
+                        MarginCoverageScenarioRatio=research.Account.MarginCoverageScenarioRatio},joint,
+                        research.LedgerReconciled,research.ScenarioCompleteOpportunityIds.Contains(o.Id,StringComparer.Ordinal));
                 reasons[o.Id] = choice.Reason;
                 if (choice.Units > 0 && (best == null || choice.UtilityLowerBound > best.UtilityLowerBound))
                     { winner=o; best=choice; }
@@ -81,9 +101,13 @@ public static class OpportunityOrchestrator
             reserved+=sized.MarginEur; keys.Add(selected.RedundancyKey); symbols[selected.Symbol]=selected.Direction;
             remaining.Remove(selected);
         }
-        return new(chosen.ToArray(),declined.ToArray(),reserved,false,"UNQUALIFIED_RESEARCH_ALLOCATION_ONLY");
+        return new(chosen.ToArray(),declined.ToArray(),reserved,false,research==null ? "UNQUALIFIED_RESEARCH_ALLOCATION_ONLY" : "CONDITIONAL_RESEARCH_ESTIMATE_NO_CERTIFICATE_NO_TRADING_QUALIFICATION");
     }
 }
 
 public sealed record OrchestrationRequest(long Clock, AdaptiveRiskInputs Account,
     PortfolioScenario[] Baseline, EconomicOpportunity[] Opportunities);
+
+public sealed record ResearchOrchestrationRequest(string Scope,int CommonHorizonMinutes,long Clock,
+    ScenarioSizingInputs Account,PortfolioScenario[] Baseline,EconomicOpportunity[] Opportunities,
+    bool LedgerReconciled,string[] ScenarioCompleteOpportunityIds);

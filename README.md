@@ -60,3 +60,11 @@ are disclosed; these are current margin-only upper capacity observations, not
 historical margin evidence, risk admission, allocation weights or strategy NET.
 Complete event/holding coverage, cost/FX/financing history, causal joint EUR-risk
 estimation and independent portfolio validation remain necessary.
+
+EPA1 connects a bounded predefined economic source grid to native C# FX/commission
+valuation, the common selector and the existing funded account ledger. Its
+[prospective protocol](research/portfolio_economic_protocol.json) compares central
+and uncertainty-screened conditional policies and all candidate ablations. It
+uses an explicit research-estimate endpoint; sampled risk references never become
+certificates or verified product admission. Authentic results remain pending until
+the separately authorized protected source/readback execution completes.
