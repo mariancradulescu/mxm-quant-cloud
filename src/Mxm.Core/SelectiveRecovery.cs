@@ -80,9 +80,10 @@ public static class SelectiveRecovery
             Math.Max(0m,account.EquityEur-
                  .70m*account.CertifiedPeakUpperEur!.Value-adverseLoss):0m;
         decimal margin=global && allBounded ?
-            Math.Max(0m,account.FreeMarginEur-adverseMargin):0m;
+            Math.Max(0m,Math.Min(OwnerRiskLimits.MarginFraction*account.EquityEur-adverseMargin,account.FreeMarginEur-OwnerRiskLimits.ReserveFraction*account.EquityEur-unresolved.Sum(x=>x.WorstCaseUnknownOrderMarginEur ?? 0m))):0m;
         bool admissibleBase=global && allBounded &&
-            headroom>0m && margin>0m &&
+            headroom>0m && margin>0m && adverseLoss<OwnerRiskLimits.RiskFraction*account.EquityEur &&
+            OwnerRiskLimits.Check(account.EquityEur,account.FreeMarginEur,adverseLoss,adverseMargin,0m,0m).Allowed &&
             account.VerifiedCurrentInFlightRequests<MaxConcurrentRequests;
         var result=new List<RecoveryLaneDecision>(list.Length);
         foreach(var x in list)

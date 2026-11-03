@@ -19,8 +19,8 @@ public sealed record PortfolioRiskObservation(bool Admissible, string Reason,
     decimal DrawdownHeadroomEur, decimal TotalStressLossAfterEur,
     decimal FreeMarginAfterEur, int PortfolioPositionCountAfter);
 
-// Intentionally no per-entry 2 EUR cap, 80 EUR margin limit, 120 EUR reserve,
-// or fixed number of positions. Unknown broker data => protective refusal.
+// Mandatory current-equity aggregate OWNER 1% risk /40% margin /60% reserve.
+// Unknown broker data refuses new exposure; no fixed position-count restriction.
 public static class PortfolioRiskBudget
 {
     public static PortfolioRiskObservation Assess(
@@ -61,9 +61,10 @@ public static class PortfolioRiskBudget
         decimal combinedStress = rows.Sum(x => x.WorstAdditionalLossEur) +
             proposed.StopAndGapLossEur + proposed.EntryExitCostBoundEur;
         decimal freeAfter = account.FreeMarginEur - proposed.RequiredMarginEur;
-        bool withinRisk = headroom > 0m && combinedStress < headroom;
+        var owner=OwnerRiskLimits.Check(account.EquityEur,account.FreeMarginEur,rows.Sum(x=>x.WorstAdditionalLossEur),rows.Sum(x=>x.MarginEur),proposed.StopAndGapLossEur+proposed.EntryExitCostBoundEur,proposed.RequiredMarginEur);
+        bool withinRisk = headroom > 0m && combinedStress < headroom && owner.Allowed;
         bool withinMargin = proposed.RequiredMarginEur > 0m && freeAfter >= 0m;
-        string reason = !withinRisk ? "CORRELATED_STRESS_EXCEEDS_DRAWDOWN_BUFFER" :
+        string reason = !owner.Allowed ? owner.Reason : !withinRisk ? "CORRELATED_STRESS_EXCEEDS_DRAWDOWN_BUFFER" :
             !withinMargin ? "BROKER_MARGIN_NOT_AVAILABLE" :
             "OBSERVATION_ONLY_RISK_CAPACITY_WITHIN_BOUNDS";
         return new PortfolioRiskObservation(withinRisk && withinMargin, reason,
