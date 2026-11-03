@@ -9,7 +9,7 @@ public sealed record BrokerDealIdentity(string DealId,string OrderId,string Posi
     decimal Units,bool Closing,long At);
 public sealed record BrokerPositionIdentity(string PositionId,string Symbol,int Side,decimal Units);
 public sealed record LocalIntentIdentity(string IntentId,string OrderId,string PositionId,string Symbol,int Side,
-    decimal RequestedUnits,bool Closing,long SubmittedAt);
+    decimal RequestedUnits,bool Closing,long SubmittedAt,string LedgerPositionId="");
 public sealed record BrokerIdentitySnapshot(string AccountBinding,long At,long HistoryFrom,long HistoryThrough,
     bool InventoryStable,bool OrdersComplete,bool DealsComplete,BrokerOrderIdentity[] Orders,BrokerDealIdentity[] Deals,
     BrokerPositionIdentity[] Positions);
@@ -84,7 +84,7 @@ public static class BrokerIdentityReconciliation
 }
 
 public sealed record NativeSessionReport(IdentityReconciliationResult Identity,LedgerSummary ModelLedger,
-    bool JournalContinuityProven,bool ModelCashMatchesBroker,bool CanConsiderNewExposure,string Status,
+    bool JournalContinuityProven,bool ModelCashMatchesBroker,bool PositionInventoryMatchesModel,bool CanConsiderNewExposure,string Status,
     bool GlobalDrawdownCertified=false,bool OrdersEnabled=false);
 public sealed class NativeFundedSession
 {
@@ -103,11 +103,21 @@ public sealed class NativeFundedSession
         if(snapshot.AccountBinding!=AccountBinding)throw new InvalidOperationException("SESSION_ACCOUNT_MISMATCH");
         var identity=BrokerIdentityReconciliation.Assess(snapshot,Intents);var book=Ledger.Summary();
         bool cash=brokerCash.HasValue && Math.Abs(book.CashEur-brokerCash.Value)<.00000001m;
+        var modelPositions=Ledger.PositionSnapshot();
+        var bindings=Intents.Where(i=>!string.IsNullOrEmpty(i.LedgerPositionId)).Select(i=>{
+            string position=!string.IsNullOrEmpty(i.PositionId)?i.PositionId:identity.Intents.FirstOrDefault(r=>r.IntentId==i.IntentId&&r.PositiveTerminalEvidence)?.PositionId??"";
+            return (Model:i.LedgerPositionId,Broker:position);
+        }).Where(x=>!string.IsNullOrEmpty(x.Broker)).Distinct().ToArray();
+        bool positions=bindings.GroupBy(x=>x.Model).All(g=>g.Count()==1)&&bindings.GroupBy(x=>x.Broker).All(g=>g.Count()==1)&&
+            modelPositions.Length==snapshot.Positions.Length && modelPositions.All(p=>{
+                var bind=bindings.FirstOrDefault(x=>x.Model==p.Id);var actual=snapshot.Positions.FirstOrDefault(x=>x.PositionId==bind.Broker);
+                return actual!=null && actual.Symbol==p.Symbol && actual.Side==p.Side && actual.Units==p.Units;
+            });
         // Reconciliation has no authority to invent missing cash flows, import
         // unpriced fills or promote the observed peak to a lifetime certificate.
-        return new(identity,book,JournalContinuityProven,cash,false,
+        return new(identity,book,JournalContinuityProven,cash,positions,false,
             !JournalContinuityProven?"PROTECTIVE_JOURNAL_CONTINUITY_UNKNOWN":!identity.SnapshotConsistent || identity.UnresolvedIntents>0?"PROTECTIVE_BROKER_IDENTITIES_UNRESOLVED":
-            !cash?"PROTECTIVE_CASH_MISMATCH":"PROTECTIVE_PEAK_AND_EXECUTION_AUTHORITY_UNPROVEN");
+            !positions?"PROTECTIVE_MODEL_BROKER_POSITION_MISMATCH":!cash?"PROTECTIVE_CASH_MISMATCH":"PROTECTIVE_PEAK_AND_EXECUTION_AUTHORITY_UNPROVEN");
     }
     static string Hash(string x)=>Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(x))).ToLowerInvariant();
     public string Checkpoint()

@@ -70,6 +70,16 @@ nativeBook.Apply(Journal("intent",1000,"REQUEST_OPEN"));
 nativeBook=NativeFundedLedger.Restore(nativeBook.Checkpoint());
 nativeBook.Apply(Journal("fill",2000,"OPEN_FILL",price:10.01m,quotes:new[]{ledgerQuote}));
 Check(nativeBook.Summary().OpenPositions==1 && nativeBook.Summary().CashEur==199.9m,"native funded entry charges fee and restores pending intent");
+var positionBridge=new NativeFundedSession("TEST_ACCOUNT",nativeBook,new[]{localIdentity with {LedgerPositionId="native-position"}},true);
+Check(positionBridge.Observe(brokerIdentity with {Positions=new[]{new BrokerPositionIdentity("position-A","SYNTH",1,2)}},199.9m).PositionInventoryMatchesModel,
+    "broker position identities join the actual funded model position, symbol side and remaining units");
+Check(!positionBridge.Observe(brokerIdentity with {Positions=new[]{new BrokerPositionIdentity("position-A","SYNTH",1,1)}},199.9m).PositionInventoryMatchesModel,
+    "a broker partial close cannot silently retain the model's previous volume");
+var missingMarkBook=NativeFundedLedger.Restore(nativeBook.Checkpoint());missingMarkBook.Apply(Journal("missing-held",4000,"MARK"));
+bool missingEntryRejected=false;
+try{missingMarkBook.Apply(Journal("unsafe-new",4001,"REQUEST_OPEN") with {PositionId="different-position"});}catch(ArgumentException){missingEntryRejected=true;}
+Check(missingMarkBook.Summary().HistoryEvidenceIncomplete && missingEntryRejected,"missing held quote remains unknown and blocks further model entry");
+
 nativeBook.Apply(Journal("close-intent",3000,"REQUEST_CLOSE"));
 var closeQuote=ledgerQuote with {At=4000,Bid=11,Ask=11.01m};
 nativeBook.Apply(Journal("partial",4000,"CLOSE_FILL",units:1,price:11,quotes:new[]{closeQuote}));

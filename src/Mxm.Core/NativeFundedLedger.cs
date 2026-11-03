@@ -165,6 +165,7 @@ public sealed class NativeFundedLedger
             state.Positions.Count,state.Pending.Count,state.Closed.Count(t=>t.CompletesRoundTrip),state.Closed.Sum(t=>t.NetEur),
             state.HistoryEvidenceIncomplete,state.EventChainHash);
     }
+    internal LedgerPosition[] PositionSnapshot()=>state.Positions.Values.ToArray();
     public LedgerClosedFragment[] ClosedFragments()=>state.Closed.ToArray();
     public string Checkpoint()
     {
