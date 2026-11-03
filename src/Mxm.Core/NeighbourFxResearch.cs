@@ -5,7 +5,7 @@ namespace Mxm.Core;
 public static class NeighbourFxResearch
 {
     public record Bar(long T,decimal O,decimal H,decimal L,decimal C);
-    public record Sample(double[] X,decimal Y);
+    public record Sample(double[] X,decimal Y,long Entry,decimal LowReturn,decimal HighReturn);
     public record Plan(string Symbol,long Entry,long Horizon,long Exit,int Direction,decimal Reference,
         decimal Stop,decimal Target,decimal Forecast,bool MinuteComplete,decimal Adverse,decimal Favorable);
     public record Planning(Plan[] Plans,int FeatureWindows,int NoForecast,int CostRejected,int DataMissing);
@@ -35,7 +35,7 @@ public static class NeighbourFxResearch
     {
         var samples=new List<Sample>();
         for(int i=48;i+2<b.Length;i++)if(Slot(b[i].T) && b[i+1].T==b[i].T+3600000 && b[i+1].T+3600000<cut)
-        {var x=Features(b,i);if(x!=null)samples.Add(new(x,b[i+1].C/b[i].O-1m));}
+        {var x=Features(b,i);if(x!=null)samples.Add(new(x,b[i+1].C/b[i].O-1m,b[i].T,Math.Min(b[i].L,b[i+1].L)/b[i].O-1m,Math.Max(b[i].H,b[i+1].H)/b[i].O-1m));}
         if(samples.Count<128)throw new ArgumentException("NEIGHBOUR_TRAINING_SUPPORT");return samples;
     }
     static decimal Predict(List<Sample> fit,double[] x)
@@ -113,10 +113,12 @@ public static class NeighbourFxResearch
         foreach(string symbol in new[]{"USDJPY","USDCAD"}.Where(s=>allowed.Contains(s)))
         {
             var c=r.GetProperty("contracts").GetProperty(symbol);var cal=r.GetProperty("calibration").GetProperty(symbol);var scenarios=new List<object>();bool all=true;
+            var sourceBars=Bars(r)[symbol];var fit=Train(sourceBars,start+(end-start)*6/10);
+            var sourceIndex=sourceBars.Select((b,i)=>(b.T,i)).ToDictionary(x=>x.T,x=>x.i);
             foreach(decimal scale in new[]{.5m,1m,2m})
             {
                 decimal equity=200,peak=200,dd=0,gross=0,spread=0,comm=0,slippage=0,carry=0,fx=0,maxRiskRatio=0,maxMarginRatio=0,minReserveRatio=1;
-                int n=0,noData=0,riskBlocked=0,technical=0,stressExceeded=0;long lastExit=0;var rows=new List<(string w,decimal net)>();
+                int n=0,noData=0,riskBlocked=0,utilityRejected=0,technical=0,stressExceeded=0;long lastExit=0;var rows=new List<(string w,decimal net)>();
                 foreach(var p in planning.Plans.Where(p=>p.Symbol==symbol))
                 {
                     if(p.Entry<lastExit){technical++;continue;}
@@ -130,12 +132,25 @@ public static class NeighbourFxResearch
                     decimal conversion=1m/pairFloor/eurFloor,gap=D(cal,"gap"),slipStress=4*D(cal,"move"),spreadStress=D(cal,"spreadStress");
                     decimal unitCosts=(2*Commission(c,D(c,"minVolume")/100m,eb,fa)+CarryUsd(c,D(c,"minVolume")/100m,eb))/(D(c,"minVolume")/100m)/eurFloor+(stop+gap)*conversion*D(c,"pnlConversionFeeRate")/10000m;
                     decimal minUnits=D(c,"minVolume")/100m,marginRate=Math.Max(D(r.GetProperty("margins"),symbol)/minUnits,1m/fb/D(r.GetProperty("leverage"),symbol));
-                    var size=PreventiveExecutionRisk.Size(equity,peak,equity,Array.Empty<ReservedPositionRisk>(),new(minUnits,D(c,"stepVolume")/100m,D(c,"maxVolume")/100m,
-                        stop,p.Target,MinDistance(c,p.Reference,"slDistance"),gap,slipStress,spreadStress,conversion,unitCosts,0,marginRate,true,true));
-                    if(size.Units<=0){riskBlocked++;continue;}decimal u=size.Units;
-                    var authority=OwnerRiskLimits.Check(equity,equity,0,0,size.StressLossEur,size.MarginEur);
-                    if(!authority.Allowed)throw new ArgumentException("OWNER_ADMISSION_BYPASS");
-                    maxRiskRatio=Math.Max(maxRiskRatio,size.StressLossEur/equity);maxMarginRatio=Math.Max(maxMarginRatio,size.MarginEur/equity);minReserveRatio=Math.Min(minReserveRatio,authority.FreeReserveAfterEur/equity);
+                    var features=Features(sourceBars,sourceIndex[p.Entry])!;
+                    var nearest=fit.Select((sample,index)=>new {sample,index,d=sample.X.Select((v,j)=>(v-features[j])*(v-features[j])).Sum()})
+                        .OrderBy(x=>x.d).ThenBy(x=>x.index).Take(64).Select(x=>x.sample).ToArray();
+                    int blocks=nearest.Select(x=>DateTimeOffset.FromUnixTimeMilliseconds(x.Entry).UtcDateTime.Date).Distinct().Count();
+                    var states=nearest.Select(x=> {
+                        decimal netPerUnit=p.Direction*x.Y/(1+x.Y)/eurFloor-unitCosts-(2*scale*D(cal,"move")+D(cal,"spread"))*conversion;
+                        decimal low=p.Direction>0?Math.Max(0,-x.LowReturn/(1+x.LowReturn)):Math.Max(0,x.HighReturn/(1+x.HighReturn));
+                        decimal favorable=p.Direction>0?Math.Max(0,x.HighReturn/(1+x.HighReturn)):Math.Max(0,-x.LowReturn/(1+x.LowReturn));
+                        return new JointRiskScenario(0,netPerUnit,0,0,low/eurFloor+unitCosts,0,0,true,favorable/eurFloor);
+                    }).ToList();
+                    decimal stressPerUnit=(stop+gap+slipStress+spreadStress)*conversion+unitCosts;
+                    states.Add(new JointRiskScenario(0,-stressPerUnit,0,0,stressPerUnit,0,0,false,(p.Target+gap)*conversion));
+                    // The 100%-margin stopout envelope is an explicit conditional scenario,
+                    // NOT an observed broker stopout term or certified funded execution.
+                    var size=AdaptivePortfolioRisk.Choose(new(equity,peak,equity,minUnits,D(c,"stepVolume")/100m,D(c,"maxVolume")/100m,marginRate,
+                        1m,true,true,blocks,2m),states);
+                    if(size.Units<=0){if(size.FeasibleVolumes>0)utilityRejected++;else riskBlocked++;continue;}decimal u=size.Units;
+                    decimal reserved=Math.Max(0,equity-size.WorstEquityEur),reserve=equity-size.MarginEur;
+                    maxRiskRatio=Math.Max(maxRiskRatio,reserved/equity);maxMarginRatio=Math.Max(maxMarginRatio,size.MarginEur/equity);minReserveRatio=Math.Min(minReserveRatio,reserve/equity);
                     decimal pricePnl=p.Direction*u*((p.Direction>0?xb:xa)-(p.Direction>0?ea:eb));
                     decimal g=EurQuote(p.Direction*u*((xb+xa-eb-ea)/2),xb,xa,zb,za),quoted=EurQuote(pricePnl,xb,xa,zb,za);
                     decimal fees=Commission(c,u,p.Direction>0?ea:eb,fa)/fb+Commission(c,u,p.Direction>0?xb:xa,za)/zb;
@@ -144,14 +159,14 @@ public static class NeighbourFxResearch
                     decimal adverse=u*Math.Max(0,p.Direction>0?ea-p.Adverse:p.Adverse+Math.Max(ea-eb,xa-xb)-eb)/Math.Min(eb,xb)/Math.Min(fb,zb);
                     decimal favorable=u*Math.Max(0,p.Direction*(p.Favorable-(p.Direction>0?ea:eb)))/Math.Min(eb,xb)/Math.Min(fb,zb);
                     peak=Math.Max(peak,equity+favorable);dd=Math.Max(dd,1-(equity-adverse-fees-slip-fin-conversionFee)/peak);
-                    if(adverse+fees+slip+fin+conversionFee>size.StressLossEur||peak>size.StressPeakEur||xb<pairFloor||zb<eurFloor||xa-xb>spreadStress)stressExceeded++;
+                    if(adverse+fees+slip+fin+conversionFee>reserved||1m-(equity-adverse-fees-slip-fin-conversionFee)/peak>size.WorstScenarioDrawdown||xb<pairFloor||zb<eurFloor||xa-xb>spreadStress)stressExceeded++;
                     equity+=net;peak=Math.Max(peak,equity);dd=Math.Max(dd,1-equity/peak);gross+=g;spread+=g-quoted;comm+=fees;slippage+=slip;carry+=fin;fx+=conversionFee;n++;lastExit=p.Exit;
                     var d=DateTimeOffset.FromUnixTimeMilliseconds(p.Exit).UtcDateTime;rows.Add(($"{System.Globalization.ISOWeek.GetYear(d)}-{System.Globalization.ISOWeek.GetWeekOfYear(d):00}",net));
                 }
                 var wnet=weeks.Select(w=>rows.Where(x=>x.w==w).Sum(x=>x.net)).ToArray();decimal mean=wnet.Length>0?wnet.Average():0;
                 double se=wnet.Length>1?Math.Sqrt(wnet.Sum(v=>(double)((v-mean)*(v-mean)))/(wnet.Length-1)/wnet.Length):0;decimal lower=mean-(decimal)(2.6*se);
                 bool pass=n>=30&&noData==0&&equity>200&&lower>0&&dd<=.3m&&stressExceeded==0;all&=pass;
-                scenarios.Add(new{slippageCalibrationScale=scale,completeModeledRoundTrips=n,dataMissing=noData,riskBlocked,technicalBlocked=technical,declaredStressExceeded=stressExceeded,
+                scenarios.Add(new{slippageCalibrationScale=scale,completeModeledRoundTrips=n,dataMissing=noData,riskBlocked,utilityRejected,technicalBlocked=technical,declaredStressExceeded=stressExceeded,
                     grossEur=gross,spreadEur=spread,commissionEur=comm,slippageEur=slippage,financingEur=carry,conversionEur=fx,totalCostEur=spread+comm+slippage+carry+fx,netEur=equity-200,maxModeledDrawdown=dd,
                     maxAggregateReservedRiskRatio=maxRiskRatio,maxAggregateMarginRatio=maxMarginRatio,minFreeReserveRatio=minReserveRatio,eligibleWeeks=weeks.Count,
                     weeksWith21ModeledRoundTrips=weeks.Count(w=>rows.Count(x=>x.w==w)>=21),weeklyMeanLowerConservativeEur=lower,passesSelection=pass,
@@ -161,7 +176,7 @@ public static class NeighbourFxResearch
         }
         return new{schema="mxm-neighbour-net-public-v1",phase=confirmation?"CONFIRMATION":"SELECTION",results,selectionSurvivors=survivors,
             diagnosticCounters=new{planning.FeatureWindows,planning.NoForecast,planning.CostRejected,planning.DataMissing},
-            sourceBars=Bars(r).ToDictionary(x=>x.Key,x=>x.Value.Length),observedSpanDays=Bars(r).ToDictionary(x=>x.Key,x=>(x.Value.Last().T+3600000-x.Value.First().T)/86400000m),phaseStart=lo,phaseEnd=hi,calibration=r.GetProperty("calibration"),authority=OwnerRiskLimits.Authority,initialCapitalEur=200,ownerAggregateRisk=.01m,ownerMargin=.40m,ownerReserve=.60m,
+            sourceBars=Bars(r).ToDictionary(x=>x.Key,x=>x.Value.Length),observedSpanDays=Bars(r).ToDictionary(x=>x.Key,x=>(x.Value.Last().T+3600000-x.Value.First().T)/86400000m),phaseStart=lo,phaseEnd=hi,calibration=r.GetProperty("calibration"),authority=OwnerRiskAuthority.Authority,initialCapitalEur=200,ownerMaxSystemDrawdown=.30m,brokerStopoutObserved=false,assumedStopoutEquityToMargin=1m,riskPolicy="TRAIN_NEIGHBOUR_JOINT_SCENARIOS_AND_ADAPTIVE_LOWER_LOG_UTILITY; NO_UNIVERSAL_FIXED_PERCENTAGES",
             riskStressParameters="AUTHENTIC_TRAINING_M1_AND_QUOTE_SAMPLES; MODEL_SPECIFIC_NOT_OWNER_LIMITS",confirmationEvaluated=confirmation,ordersSubmitted=0,
             independentFinalQualification=false,absoluteDrawdownGuarantee=false,realFills=false,historicContractScheduleProven=false};
     }

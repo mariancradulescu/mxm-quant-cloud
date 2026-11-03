@@ -1,6 +1,6 @@
 namespace Mxm.Core;
 // Frozen PR16 evaluator only. Not an authorized admission path.
-internal static class HistoricalPr16Risk
+public static class HistoricalPr16Risk
 {
     public static PreventiveSize Size(decimal equity,decimal peak,decimal freeMargin,
         IEnumerable<ReservedPositionRisk> positions,StopExecutionTerms terms)

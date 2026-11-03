@@ -17,6 +17,7 @@ jobs:
       authorized_cold_source_score: ${{ steps.cold.outputs.authorized_cold_source_score }}
       authorized_economic_request: ${{ steps.economic.outputs.authorized_economic_request }}
       authorized_economic_screen: ${{ steps.econ_screen.outputs.authorized_economic_screen }}
+      authorized_regime_discovery: ${{ steps.regime.outputs.authorized_regime_discovery }}
       authorized_neighbour_net: ${{ steps.neighbour.outputs.authorized_neighbour_net }}
       authorized_flow_net: ${{ steps.flow.outputs.authorized_flow_net }}
       authorized_intraday_net: ${{ steps.intraday.outputs.authorized_intraday_net }}
@@ -107,6 +108,17 @@ jobs:
                 "$(git log -1 --format=%s)" == "MXM_CAUSAL_FLOW_NET_STUDY" ]] &&
              [[ "$(git diff-tree --no-commit-id --name-only -r HEAD)" == "ops/flow-net-request.txt" ]]; then
             echo "authorized_flow_net=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Verify owner exact broad development intent without broker access
+        id: regime
+        shell: bash
+        run: |
+          echo "authorized_regime_discovery=false" >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_EVENT_NAME" == "push" && "$GITHUB_REF" == "refs/heads/main" &&
+                "$GITHUB_ACTOR" == "mariancradulescu" &&
+                "$(git log -1 --format=%s)" == "MXM_WIDE_REGIME_DISCOVERY" ]] &&
+             [[ "$(git diff-tree --no-commit-id --name-only -r HEAD)" == "ops/regime-discovery-request.txt" ]]; then
+            echo "authorized_regime_discovery=true" >> "$GITHUB_OUTPUT"
           fi
       - name: Verify exact OWNER calibrated H1 neighbour NET study intent
         id: neighbour
@@ -238,7 +250,7 @@ jobs:
           R3_CTRADER_CLIENT_ID: ${{ secrets.R3_CTRADER_CLIENT_ID }}
           R3_CTRADER_CLIENT_SECRET: ${{ secrets.R3_CTRADER_CLIENT_SECRET }}
           R3_CTRADER_ACCESS_TOKEN: ${{ secrets.R3_CTRADER_ACCESS_TOKEN }}
-      - name: New H1 conditional-neighbour NET with authentic train-calibrated execution and OWNER budgets
+      - name: H1 conditional-neighbour NET with TRAIN calibration and adaptive portfolio risk
         if: needs.verify.outputs.authorized_neighbour_net == 'true'
         run: python -m research.neighbour_net
         env:
@@ -317,7 +329,7 @@ jobs:
           path: flow-net.public.json
           if-no-files-found: error
           retention-days: 90
-      - name: Independently reconcile calibrated H1 native NET under binding OWNER risk limits
+      - name: Independent native calibrated neighbour NET custody parity
         if: needs.verify.outputs.authorized_neighbour_net == 'true'
         run: python -m research.neighbour_net --readback
         env:
@@ -470,3 +482,45 @@ jobs:
           path: authenticated-net-gap.public.json
           if-no-files-found: error
           retention-days: 30
+
+  broad_regime_discovery:
+    # Existing custody and original source. No broker or order access.
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.actor == 'mariancradulescu' &&
+      github.event_name == 'push' &&
+      needs.verify.outputs.authorized_regime_discovery == 'true'
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment: mxm-r3-custody-v1
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: 8.0.x
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - run: dotnet build src/Mxm.Replay -c Release
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: sealed-source
+          path: sealed-output
+          run-id: 41476636915
+          github-token: ${{ github.token }}
+      - name: Native causal multi-family regime development on original authentic source
+        run: python -m research.regime_discovery
+        env:
+          MXM_REGIME_SOURCE_RUN_ID: '41476636915'
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: authentic-wide-regime-development-public-only
+          path: regime-discovery*.public.json
+          if-no-files-found: error
+          retention-days: 90

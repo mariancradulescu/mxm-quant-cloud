@@ -1,0 +1,3 @@
+Protocol: docs/WIDE_ADAPTIVE_RESEARCH_20261103.md
+Existing source run: 41476636915; DEVELOPMENT ONLY; no broker request.
+OWNER authorized continuation 2026-11-03: execute first frozen broad study after PR19 integration 44baec50cf1662241f1a311bf306440f66f02779 and successful final-head CI; preserve all cells and custody parity. No closed strategy evaluation, orders or Cloud activation.
