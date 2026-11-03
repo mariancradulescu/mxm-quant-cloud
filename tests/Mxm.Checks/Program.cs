@@ -349,4 +349,23 @@ Check(IntradayReversalNet.Propose(alteredFuture).Select(p=>(p.Entry,p.Exit,p.Dir
 Check(Rejects(()=>IntradayReversalNet.Propose(reversalBars.Concat(new[]{reversalBars[0]}).ToArray())),
     "duplicate source cannot create additional modeled trades");
 
+// OWNER material correction: preventive stop/gap/cost risk BEFORE entry.
+var executionTerms=new StopExecutionTerms(1000m,1000m,100000m,.001m,.002m,.0001m,.001m,.0004m,.0002m,
+    1m/1.08m,.0001m,0m,.04m,true,true);
+var preventive=PreventiveExecutionRisk.Size(200m,200m,200m,Array.Empty<ReservedPositionRisk>(),executionTerms);
+Check(preventive.Units>=1000m && preventive.StressDrawdown<.30m && !preventive.AbsoluteGuarantee,
+    "pre-entry native stop gap slip FX cost and favorable-peak scenario capacity; residual gaps not guaranteed");
+Check(PreventiveExecutionRisk.Size(141m,200m,141m,Array.Empty<ReservedPositionRisk>(),executionTerms).Units==0,
+    "minimum lot blocked BEFORE entry when remaining DD cannot absorb stop plus gap");
+var portfolioReserved=new[]{new ReservedPositionRisk("GBP",2m,4m,40m),new ReservedPositionRisk("AUD",2m,4m,20m)};
+Check(PreventiveExecutionRisk.Size(200m,200m,140m,portfolioReserved,executionTerms).Units>=1000m,
+    "correlated risk reserves support multiple positions without historic single-position restriction");
+Check(PreventiveExecutionRisk.Size(200m,200m,200m,Array.Empty<ReservedPositionRisk>(),executionTerms with {MinimumUnits=100000m,StepUnits=100000m}).Units==0,
+    "broker minimum larger than funded risk budget rejected without rounding up");
+Check(PreventiveExecutionRisk.Size(200m,200m,200m,Array.Empty<ReservedPositionRisk>(),executionTerms with {MinimumBrokerStopDistance=.002m}).Units==0,
+    "invalid broker stop rejected before exposure");
+Check(PreventiveExecutionRisk.Size(200m,200m,200m,Array.Empty<ReservedPositionRisk>(),executionTerms with {ReconciledAccount=false}).Units==0,
+    "unknown account inhibits new exposure without changing selective monitor recovery");
+Check(PreventiveExecutionRisk.Size(200m,200m,20m,new[]{new ReservedPositionRisk("other",1m,0,180m)},executionTerms).Units==0,
+    "open portfolio margin and potential loss reserved before minimum lot");
 Console.WriteLine($"PASS {passed} recovery/accounting/portfolio/causal-H1/dynamic-risk/source-calendar/causal-score checks; synthetic, no economic qualification.");
