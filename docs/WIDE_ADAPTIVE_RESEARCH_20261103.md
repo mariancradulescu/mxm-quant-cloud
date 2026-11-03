@@ -19,7 +19,7 @@ No closed breakout, hourly shock reversal, session drift, cross-currency
 GBP-minus-AUD or PRIMARY145 configuration is called or retuned.
 
 Features: completed returns at 1/4/16 lags, candle body/location, 8-vs32 RMS
-volatility, 16-bar path efficiency, volatility interaction, contemporaneously
+volatility, 16-bar path efficiency, observed past gap fraction, volatility interaction, contemporaneously
 completed same-timeframe peer returns, and cyclic hour. Peer availability is
 checked as-of; absence is represented by count, not fabricated observations.
 Regime descriptors: efficiency >.35 and short RMS > long RMS (four cells).
@@ -34,8 +34,9 @@ refit0–70/test70–80. Purge all training labels ending at/after test start;
 exclude test labels reaching next fold boundary. Last20% has no performance
 calculation. This does NOT recover independence from prior historical exposure.
 Per-model entries do not overlap; prediction at completed close, proxy entry
-next contiguous bar open, exit horizon close. Missing intervals are excluded
-from feature/target windows, explicitly making results conditional on continuity.
+next contiguous bar open, exit horizon close. Past observed returns across weekend/gaps remain available with a gap feature.
+No missing bars are filled. Discontinuous execution target windows are excluded,
+explicitly making execution proxies conditional on target continuity.
 Weekend/gap opportunities remain untested, not assumed absent in deployment.
 No optimized stops or entry confidence thresholds. Report every attempted cell.
 

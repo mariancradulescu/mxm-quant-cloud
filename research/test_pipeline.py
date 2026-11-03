@@ -300,6 +300,16 @@ class PipelineChecks(unittest.TestCase):
         self.assertNotIn("PlaceLimitOrder(",bot)
         self.assertNotIn("Stop();",bot)
 
+    def test_broad_research_custody_has_no_broker_credentials(self):
+        workflow=Path('.github/workflows/verify.yml').read_text()
+        job=workflow.split('  broad_regime_discovery:')[1]
+        self.assertIn("needs.verify.outputs.authorized_regime_discovery == 'true'",job)
+        self.assertNotIn('R3_CTRADER_',job)
+        self.assertIn('run-id: 41476636915',job)
+        risk=Path('src/Mxm.Core/OwnerRiskLimits.cs').read_text()
+        self.assertNotIn('RiskFraction=',risk)
+        self.assertIn('ADAPTIVE_PORTFOLIO',risk)
+
     def test_schema_completion(self):
         self.assertEqual(m.ProtoOAGetTrendbarsRes.DESCRIPTOR.fields_by_name['hasMore'].number,7)
 

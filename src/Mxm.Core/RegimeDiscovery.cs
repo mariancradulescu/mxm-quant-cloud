@@ -7,7 +7,7 @@ public static class RegimeDiscovery
     public record Bar(string Symbol,string Tf,long T,long End,double O,double H,double L,double C,double V);
     public record Point(long Entry,long Exit,double[] X,double Y,int Regime);
     public static readonly string[] Families={"INTERCEPT_BASELINE","TREND_RIDGE","CANDLE_REVERSION_RIDGE","VOLATILITY_INTERACTION_RIDGE","INTERMARKET_RIDGE","POOLED_RIDGE","REGIME_SPECIALIST_RIDGE","FIXED_EQUAL_ENSEMBLE"};
-    static readonly int[][] Columns={new[]{0},new[]{0,1,2,3},new[]{0,1,4,5},new[]{0,1,6,7,8},new[]{0,9,10,11},Enumerable.Range(0,14).ToArray(),Enumerable.Range(0,14).ToArray()};
+    static readonly int[][] Columns={new[]{0},new[]{0,1,2,3},new[]{0,1,4,5},new[]{0,1,6,7,8},new[]{0,9,10,11},Enumerable.Range(0,15).ToArray(),Enumerable.Range(0,15).ToArray()};
     public static Bar[] Read(JsonElement root)
     {
         _=EconomicSourceAdmission.ReadReceipt(root);
@@ -32,8 +32,9 @@ public static class RegimeDiscovery
         var peerMaps=peers.Where(k=>k.Key!=a[0].Symbol).Select(k=>k.Value.OrderBy(b=>b.End).ToArray()).ToArray();
         for(int i=32;i+horizon<a.Length;i++)
         {
-            // Reject missing intervals, including discontinuous target windows.
-            if(!Enumerable.Range(i-31,32+horizon).All(j=>a[j].T==a[j-1].End))continue;
+            // Past observed weekend/gap returns are valid features; never fill bars.
+            // Require contiguous execution proxy targets, disclose excluded gaps.
+            if(!Enumerable.Range(i+1,horizon).All(j=>a[j].T==a[j-1].End))continue;
             double R(int n)=>(a[i].C/a[i-n].C-1)*10000;
             var returns=Enumerable.Range(i-31,32).Select(j=>(a[j].C/a[j-1].C-1)*10000).ToArray();
             double vol=Math.Sqrt(returns.Select(r=>r*r).Average())+1e-9;
@@ -55,7 +56,8 @@ public static class RegimeDiscovery
             var dt=DateTimeOffset.FromUnixTimeMilliseconds(a[i].End).UtcDateTime;
             double[] x={1,R(1)/vol,R(4)/vol,R(16)/vol,imbalance,closeLocation,
                 shortVol/vol,efficiency,R(1)/vol*(shortVol/vol-1),peer,peer*R(4)/vol,cross.Count,
-                Math.Sin(2*Math.PI*dt.Hour/24),Math.Cos(2*Math.PI*dt.Hour/24)};
+                Math.Sin(2*Math.PI*dt.Hour/24),Math.Cos(2*Math.PI*dt.Hour/24),
+                Enumerable.Range(i-31,32).Count(j=>a[j].T!=a[j-1].End)/32.0};
             // Regimes use causal dimensionless features, with thresholds frozen as
             // experimental descriptors, never universal trading/risk constraints.
             int regime=(efficiency>.35?1:0)+(shortVol>vol?2:0);
