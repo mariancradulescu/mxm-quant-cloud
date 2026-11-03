@@ -39,7 +39,7 @@ link here; older dated directives remain provenance, never competing authority.
   could only be research information in a genuinely prospective portfolio
   hypothesis on independent evidence, never a resurrection mechanism.
 
-## Active methodological policy v3 (prospectively revisable)
+## Active methodological policy v4 (prospectively revisable)
 
 Evidence levels: (1) exploratory economic hypothesis; (2) preliminary predictive
 and economic support; (3) demonstrated possible incremental portfolio contribution;
@@ -301,3 +301,29 @@ The three original ciphertext bindings were re-archived as artifact13238468011,
 run41654064703, expiring2027-02-01. Public receipts stay permanently versioned.
 Neither zero-exposure ablations nor synthetic protective exits demonstrate
 incremental economic edge or validated adaptive holding performance.
+
+
+## Prospective feasibility correction after PR39–41
+
+The new OWNER continuation requires short informational AND economic feasibility
+checks before substantial authentic collections. Preserve EPA1/EPA2 exactly;
+EPA2 remains closed, including its sampling method and zero-admission verdict.
+A causal event clock must stop at the first complete observable route after the
+predeclared latency, within a fixed deadline; no favorable-price search, later
+information or replacement dates. Test feature/label maturity, calibration sample
+support, entry/exit/holding quotes, FX, costs, financing and capital before a large
+study. Route availability alone cannot admit an economic experiment.
+
+`CausalObservationClock` is a native C# kernel with an independent Python reference.
+CEF1 exercises it on already exposed encrypted source without broker access,
+returns, allocations or EPA2 replacement snapshots. It reports distinct route
+and common portfolio clocks, complete economic support paths and remaining
+admission blockers. This is a new method feasibility evaluation, not a repaired
+EPA2, new profitable candidate, independent confirmation or trading admission.
+New hypotheses need their own prospective feature/split/multiplicity registration
+and bounded pilot on the new episodes; broad multi-timeframe/multi-family research
+remains authorized, with no requirement to inherit JOP1 or an EPA3 identity.
+
+The existing holding-risk kernel is research infrastructure. It is not yet wired
+to native Cloud position management; neither a compiled clock nor source support
+is full C# replay equivalence. No trades or Cloud activation are authorized.

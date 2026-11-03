@@ -1,5 +1,14 @@
 using System.Text.Json;
 using System.Security.Cryptography;
+if (args.Length == 3 && args[2] == "--causal-observation-windows")
+{
+    try {
+        var windows=JsonSerializer.Deserialize<Mxm.Core.ObservationWindow[]>(File.ReadAllBytes(args[0]))
+            ?? throw new ArgumentException();
+        File.WriteAllText(args[1],JsonSerializer.Serialize(windows.Select(Mxm.Core.CausalObservationClock.First).ToArray()));
+        return 0;
+    } catch { return 19; }
+}
 if (args.Length == 3 && args[2] == "--holding-market-context")
 {
     try {
@@ -295,3 +304,4 @@ try
     return 0;
 }
 catch { return 1; }
+
