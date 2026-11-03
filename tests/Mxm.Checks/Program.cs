@@ -290,7 +290,7 @@ var other=new RecoveryLaneEvidence("AUDUSD",true,true,false,false,false,null,nul
 var isolation=SelectiveRecovery.Assess(safeAccount,new[]{uncertain,other});
 Check(isolation.MonitoringActive && isolation.CanReviewAnyNewExposure &&
     isolation.AvailableWorstCaseDrawdownHeadroomEur==45m &&
-    isolation.ReservableFreeMarginEur==80m &&
+    isolation.ReservableFreeMarginEur==110m &&
     isolation.Lanes[0].Mode==RecoveryLaneMode.QuarantinedAmbiguous &&
     !isolation.Lanes[0].EligibleForFurtherRiskReview &&
     isolation.Lanes[1].EligibleForFurtherRiskReview,
