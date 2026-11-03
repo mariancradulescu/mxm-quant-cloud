@@ -399,4 +399,34 @@ var noLookahead=RegimeDiscovery.Features(researchBars.Take(500).ToArray(),new Di
 Check(noLookahead.Zip(featurePoints.Take(noLookahead.Length)).All(p=>p.First.X.SequenceEqual(p.Second.X)),"future source cannot alter historical features");
 var incomplete=RegimeDiscovery.Aggregate(researchBars.Where((b,i)=>i!=2),"D1",86400000);
 Check(incomplete.All(b=>b.T!=anchor),"incomplete higher timeframe never fabricated");
+// Joint allocation economic invariants, not economic performance evidence.
+var jointClock=100L;
+var jointBase=Enumerable.Range(0,8).Select(i=>new PortfolioScenario($"s{i}",1,true,0,0,0,0)).ToArray();
+EconomicOpportunity Opp(string id,string symbol,string key,decimal gain) => new(id,id,symbol,key,1,100,90,
+    EvidenceLevel.Exploratory,true,adaptiveAccount with {MaximumUnits=1000},
+    Enumerable.Range(0,8).Select(i=>new OpportunityScenario($"s{i}",50,true,gain,0,.002m,0)).ToArray());
+var jo=Opp("A","EURUSD","same",.001m);var jb=Opp("B","GBPUSD","other",.001m);
+var multi=OpportunityOrchestrator.Select(jointClock,adaptiveAccount,jointBase,new[]{jo,jb});
+Check(multi.Allocations.Length==2 && multi.ReservedMarginEur==20 && !multi.Qualified,
+    "native joint selector admits financed simultaneous research allocations without component HARD21");
+Check(OpportunityOrchestrator.Select(jointClock,adaptiveAccount,jointBase,new[]{jo,jo with {Id="duplicate"}}).Allocations.Length==1,
+    "redundant opportunity is not independently funded");
+Check(OpportunityOrchestrator.Select(jointClock,adaptiveAccount,jointBase,new[]{jo,jb with {Symbol="EURUSD",Direction=-1}}).Allocations.Length==1,
+    "contradictory same symbol exposure withheld");
+Check(OpportunityOrchestrator.Select(jointClock,adaptiveAccount,jointBase,new[]{jo with {ExecutionEvidenceComplete=false}}).Allocations.Length==0,
+    "gross source descriptor cannot acquire invented execution evidence");
+Check(OpportunityOrchestrator.Select(jointClock,adaptiveAccount,jointBase,new[]{jo with {CalibratedThrough=101}}).Allocations.Length==0,
+    "future calibration cannot rank current opportunities");
+Check(Rejects(()=>OpportunityOrchestrator.Select(jointClock,adaptiveAccount,jointBase,new[]{jo with {
+    Scenarios=jo.Scenarios.Select(x=>x with {KnownAt=101}).ToArray()}})),"future outcome cannot enter joint estimate");
+var tight=OpportunityOrchestrator.Select(jointClock,adaptiveAccount with {FreeMarginEur=15},jointBase,new[]{jo,jb});
+Check(tight.Allocations.Length==1 && tight.ReservedMarginEur==10,"shared capital reserved before ranking remaining opportunities");
+Check(OpportunityOrchestrator.Select(jointClock,adaptiveAccount,jointBase,new[]{jo with {
+    Scenarios=jo.Scenarios.Select(x=>x with {LossPerUnitEur=.04m}).ToArray()},jb with {
+    Scenarios=jb.Scenarios.Select(x=>x with {LossPerUnitEur=.04m}).ToArray()}}).Allocations.Length==1,
+    "joint correlated stress prevents independently feasible allocations exceeding common drawdown capacity");
+var descriptors=JointOpportunityResearch.Describe(researchBars);
+var futureMutated=researchBars.Select((x,i)=>i>=900?x with {C=x.C*2}:x).ToArray();
+Check(System.Text.Json.JsonSerializer.Serialize(descriptors)==System.Text.Json.JsonSerializer.Serialize(JointOpportunityResearch.Describe(futureMutated)),
+    "unscored late source cannot influence joint research descriptors");
 Console.WriteLine($"PASS {passed} recovery/accounting/portfolio/causal-H1/dynamic-risk/source-calendar/causal-score checks; synthetic, no economic qualification.");

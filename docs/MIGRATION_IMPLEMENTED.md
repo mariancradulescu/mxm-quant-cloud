@@ -1,3 +1,5 @@
+> Historical/technical record. Current OWNER requirements and methodology: [OWNER_SPEC.md](OWNER_SPEC.md). Frozen results retain their original rules.
+
 # Selective migration implemented
 
 Historical source pin: mariancradulescu/mxm-quant-greenfield@6a4e56758d985f00020cd13ef264e8dc84fc6a9b.

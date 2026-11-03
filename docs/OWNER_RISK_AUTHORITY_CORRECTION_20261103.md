@@ -1,3 +1,5 @@
+> Historical/technical record. Current OWNER requirements and methodology: [OWNER_SPEC.md](OWNER_SPEC.md). Frozen results retain their original rules.
+
 # Superseded risk authority correction — 2026-11-03
 
 The fixed 1%/40%/60% directive recorded below is SUPERSEDED by the latest explicit

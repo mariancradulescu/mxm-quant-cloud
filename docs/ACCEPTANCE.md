@@ -1,4 +1,9 @@
-# Acceptance gates
+# System qualification gates
+
+Authority: [OWNER_SPEC.md](OWNER_SPEC.md). These gates apply to the final
+portfolio/product, not individually to every exploratory candidate. Candidate
+evidence levels and prospective methodological policy are defined there.
+No fixed split ratio is a system requirement.
 
 1. Public-source review: no credentials, identity-bearing records or original market data. Preserve old repository and all rejected-model evidence. No automatic historical strategy imports.
 2. Linux CI: shared core checks and actual `.algo` compilation. Inspect artifact contents and dependency closure. Current synthetic checks prove only specified protective behavior and round-trip accounting cases.

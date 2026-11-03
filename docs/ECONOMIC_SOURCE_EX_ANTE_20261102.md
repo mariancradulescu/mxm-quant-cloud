@@ -1,3 +1,5 @@
+> Historical/technical record. Current OWNER requirements and methodology: [OWNER_SPEC.md](OWNER_SPEC.md). Frozen results retain their original rules.
+
 # MXM economic data development — ex-ante protocol, 2026-11-02
 
 ## Fixed intended measurement BEFORE any economic collection

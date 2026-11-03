@@ -1,3 +1,5 @@
+> Historical/technical record. Current OWNER requirements and methodology: [OWNER_SPEC.md](OWNER_SPEC.md). Frozen results retain their original rules.
+
 # cTrader CLI backtesting — bounded feasibility verification (2026-11-03)
 
 Official Spotware documentation (checked on 2026-11-03):
