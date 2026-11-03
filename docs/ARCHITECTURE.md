@@ -87,3 +87,19 @@ state IDs align common decision/exit request horizons, not fictitious identical
 fill timestamps; loss/peak aggregation grants no diversification credit. Independent
 incremental NET, continuous risk evidence and full native ledger equivalence remain
 unresolved; compilation of these kernels is not final Cloud product acceptance.
+
+SQP1 run41706496201 completed real source collection, raw custody reconstruction,
+native forecasting/selection/holding protection and funded chronological evaluation.
+The primary uncertainty screen abstained; central sensitivities admitted seven
+closed modeled trips and lost about EUR2.13/EUR2.43. Maximum overlap was one:
+implementation supports shared simultaneous exposure but this study does not
+validate its economic diversification. All24 primary ablations are zero from
+abstention, not evidence of incremental alpha. SQP1 is closed without retuning.
+
+The frozen book audit reconciles cash and every cost, confirms the native early
+capacity-protection signal precedes the XAUUSD close, and distinguishes factual
+trade attribution from marginal reallocation. Original generic EPA1 close labels
+are preserved as provenance. A neutral caller-controlled label is now available
+for future dispatchers; old caller defaults and frozen outputs remain unchanged.
+The newly native sequence kernels are compiled into the single observation-only
+.algo; the Cloud adapter and full funded ledger equivalence remain unfinished.

@@ -1,0 +1,148 @@
+{
+  "brokerRequests": 0,
+  "cases": [
+    {
+      "accounting": {
+        "commissions_eur": "0",
+        "conversion_eur": "0",
+        "financing_eur": "0",
+        "gross_eur": "0",
+        "net_eur": "0",
+        "slippage_eur": "0",
+        "spread_eur": "0"
+      },
+      "attributionIsNotMarginalReallocation": true,
+      "candidateFixedBookAttribution": {},
+      "endingCashEur": "200",
+      "executionOutcomeUncertain": false,
+      "holdingSourceGapCount": 0,
+      "maximumSimultaneousPositions": 0,
+      "protectiveExitsConfirmedFromClockAndRiskLedger": [],
+      "roundTrips": 0,
+      "sampledDrawdown": "0",
+      "slippageMultiple": "0.5",
+      "uncertaintyMultiplier": "2"
+    },
+    {
+      "accounting": {
+        "commissions_eur": "1.341521955924397788451965774",
+        "conversion_eur": "0.000033511074813816757263128",
+        "financing_eur": "0",
+        "gross_eur": "-0.171147263757423682385831987",
+        "net_eur": "-2.133207931385917715545502750",
+        "slippage_eur": "0.3014498996459055732947240663",
+        "spread_eur": "0.3190553009833768546557177936"
+      },
+      "attributionIsNotMarginalReallocation": true,
+      "candidateFixedBookAttribution": {
+        "DURATION_HAZARD_V1/M15/AUDUSD": {
+          "netEur": "2.918390500718551706657578486",
+          "trades": 6
+        },
+        "DURATION_HAZARD_V1/M15/XAUUSD": {
+          "netEur": "-5.051598432104469422203081236",
+          "trades": 1
+        }
+      },
+      "endingCashEur": "197.8667920686140822844544972",
+      "executionOutcomeUncertain": false,
+      "holdingSourceGapCount": 0,
+      "maximumSimultaneousPositions": 1,
+      "protectiveExitsConfirmedFromClockAndRiskLedger": [
+        {
+          "closedAt": 1790678731128,
+          "firstProtectiveSignalAt": 1790678701291,
+          "id": "DURATION_HAZARD_V1/M15/XAUUSD/2026-09-29",
+          "interpretedCause": "MODEL_CAPACITY_PROTECTION_NOT_BROKER_LIQUIDATION",
+          "legacyExitLabel": "EPA1_FIXED_CLOCK_OBSERVED_QUOTE"
+        }
+      ],
+      "roundTrips": 7,
+      "sampledDrawdown": "0.0344359031941548313107951815",
+      "slippageMultiple": "0.5",
+      "uncertaintyMultiplier": "0"
+    },
+    {
+      "accounting": {
+        "commissions_eur": "0",
+        "conversion_eur": "0",
+        "financing_eur": "0",
+        "gross_eur": "0",
+        "net_eur": "0",
+        "slippage_eur": "0",
+        "spread_eur": "0"
+      },
+      "attributionIsNotMarginalReallocation": true,
+      "candidateFixedBookAttribution": {},
+      "endingCashEur": "200",
+      "executionOutcomeUncertain": false,
+      "holdingSourceGapCount": 0,
+      "maximumSimultaneousPositions": 0,
+      "protectiveExitsConfirmedFromClockAndRiskLedger": [],
+      "roundTrips": 0,
+      "sampledDrawdown": "0",
+      "slippageMultiple": "1",
+      "uncertaintyMultiplier": "2"
+    },
+    {
+      "accounting": {
+        "commissions_eur": "1.341521955924397788451965774",
+        "conversion_eur": "0.000033349353285648328574298",
+        "financing_eur": "0",
+        "gross_eur": "-0.171147263757423682385831987",
+        "net_eur": "-2.434657669310295120411537984",
+        "slippage_eur": "0.6028997992918111465894481324",
+        "spread_eur": "0.3190553009833768546557177936"
+      },
+      "attributionIsNotMarginalReallocation": true,
+      "candidateFixedBookAttribution": {
+        "DURATION_HAZARD_V1/M15/AUDUSD": {
+          "netEur": "2.705100861533484889819401843",
+          "trades": 6
+        },
+        "DURATION_HAZARD_V1/M15/XAUUSD": {
+          "netEur": "-5.139758530843780010230939827",
+          "trades": 1
+        }
+      },
+      "endingCashEur": "197.5653423306897048795884619",
+      "executionOutcomeUncertain": false,
+      "holdingSourceGapCount": 0,
+      "maximumSimultaneousPositions": 1,
+      "protectiveExitsConfirmedFromClockAndRiskLedger": [
+        {
+          "closedAt": 1790678731128,
+          "firstProtectiveSignalAt": 1790678701291,
+          "id": "DURATION_HAZARD_V1/M15/XAUUSD/2026-09-29",
+          "interpretedCause": "MODEL_CAPACITY_PROTECTION_NOT_BROKER_LIQUIDATION",
+          "legacyExitLabel": "EPA1_FIXED_CLOCK_OBSERVED_QUOTE"
+        }
+      ],
+      "roundTrips": 7,
+      "sampledDrawdown": "0.035230258564851532058144759",
+      "slippageMultiple": "1",
+      "uncertaintyMultiplier": "0"
+    }
+  ],
+  "completeStandaloneReplayRowsPerSensitivity": {
+    "0.5": 180,
+    "1": 180
+  },
+  "economicQualification": false,
+  "executionCommitSha": "626a9baaca98f0b0bb018b521cba83f9836add06",
+  "globalDrawdownCertified": false,
+  "independentConfirmation": false,
+  "independentMarginalContributionDemonstrated": false,
+  "modelOrAllocationRerun": false,
+  "originalLegacyExitLabelsPreserved": true,
+  "originalResultSha256": "b38208eaf5afc245c00c63e0a2771063755c5c9688c79a4cd9a113d11fdb1a36",
+  "primaryAblationsAllZeroFromAbstention": true,
+  "primaryDeclineReasons": {
+    "CONDITIONAL_ESTIMATE_NO_POSITIVE_UNCERTAINTY_ADJUSTED_INCREMENTAL_UTILITY": 96,
+    "EXECUTION_NET_EVIDENCE_MISSING": 78,
+    "NO_MATURE_NONNEUTRAL_FORECAST": 18
+  },
+  "scheduledStandaloneReplayRowsPerSensitivity": 192,
+  "schema": "mxm-sqp1-frozen-public-receipt-audit-v1",
+  "sourceRunId": 41706496201
+}

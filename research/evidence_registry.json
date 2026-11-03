@@ -20,6 +20,8 @@
     "docs/JOINT_QUOTE_EVIDENCE_AUTHENTIC_RESULT.json": "5df419990d0cd142e7bda794ed2ae791bc0853c4739f6b0286c35c1f62a5403a",
     "docs/NEW_SOURCE_H1_CAUSAL_COLD_VERDICT_20261102.json": "e1a264c8dda8e9f2af3f8b4c1eda51b03fd05be0c98000e23f601c1dd04ffda3",
     "docs/PRIMARY145_H1_CLOCK_ONLY_COLD_RECEIPT_20261102.json": "318ee501f75448fe1a5a18e3dd8923623ed436da4304aa9bd53f577ed1dcd50d",
+    "docs/SQP1_AUTHENTIC_RESULT.json": "b38208eaf5afc245c00c63e0a2771063755c5c9688c79a4cd9a113d11fdb1a36",
+    "docs/SQP1_FROZEN_RECEIPT_AUDIT.json": "abfb5171e2b32f894668ca1f818b082d03306254b1ad040e28a2cb12784b2c08",
     "research/__init__.py": "0d524308d52bc92170dcffc9bd8ecef86dd00dc31113674faffc51f95662ad74",
     "research/anchor_balance_net.py": "01f5cf3121bbb6c66159a797ea586336260c6e12b581d1427d7e5a1c61208c3e",
     "research/anchor_signal.py": "40e1e48b7555d9e1cc567217e0fca58e3c59d6d7540b7f171eabe38329dcd2b6",
@@ -45,10 +47,12 @@
     "research/relative_gross.py": "b81d9a4b87535d31bbb1e4ca592c64f41c648935fb01ba11d02823df7a09e94b",
     "research/score_economic_source.py": "e9f145a2f31d7e76779879c09dcb922d7fe194aa466e31af9e6fc47107d38601",
     "research/score_existing_source.py": "480abcd05ca8cbbf8813aa85b356d4e803401eaf4607eb3dedb4c1dd78353ae7",
+    "research/sequence_portfolio_protocol.json": "d583e953c17c31e9a9910d3e44b55448de4896b2779b48982696dbf1931b3a11",
     "research/session_wick_net.py": "21ca7186dc9a39d9dac9250b430dded2c585376fab93c70ea20103cfc236e721",
     "research/session_wick_signal.py": "009fde0f32554db684c1fb0474a665f3afc8f06db588aae26632a4740465aa9c",
     "research/tick_volume_net.py": "2747ef20609c4a1e82e4fb225d8c55e49b60b4e5c2c7327ca730666157fa93ed",
-    "research/volume_policy_attribution.py": "5684498045923c37af76b35f47a49c9f8cef4b98aeab8213f9e88d0020c2b04d"
+    "research/volume_policy_attribution.py": "5684498045923c37af76b35f47a49c9f8cef4b98aeab8213f9e88d0020c2b04d",
+    "src/Mxm.Core/SequenceOpportunityResearch.cs": "75131c62df5e6a2b3276548bb70e2d98399f2cbec6a3889745ed5e7abf32acb7"
   },
   "independenceDefault": "NOT_ESTABLISHED",
   "projectWideCalendarRule": "Union of relevant design/research exposures across sources and instruments; overlaps are not independent.",
@@ -149,12 +153,17 @@
         "2026-09-22"
       ],
       "caseCount": 4,
+      "executionCommitSha": "626a9baaca98f0b0bb018b521cba83f9836add06",
+      "executionRunId": 41706496201,
       "featureLookbacks": "7D_M15_AND14D_H1_PRIOR_TO_EACH_PREDECLARED_DATE; GLOBAL_H4_OVERLAP_EXPOSED",
       "id": "SQP1",
       "independent": false,
+      "independentMarginalContributionDemonstrated": false,
       "phase": "PREDECLARED_EXPOSED_DEVELOPMENT_INTEGRATED_NET",
       "protocolFile": "research/sequence_portfolio_protocol.json",
       "protocolSha256": "d583e953c17c31e9a9910d3e44b55448de4896b2779b48982696dbf1931b3a11",
+      "publicArtifactId": 13265966241,
+      "publicResultSha256": "b38208eaf5afc245c00c63e0a2771063755c5c9688c79a4cd9a113d11fdb1a36",
       "qualification": false,
       "replayDays": [
         "2026-09-29",
@@ -167,6 +176,9 @@
         "2026-10-08"
       ],
       "sourceAllowed": "PINNED_EXISTING_PEPPERSTONE_EU_LIVE_SCOPE_VIEW",
+      "sourceArtifactId": 13266505512,
+      "sourceCiphertextSha256": "a283c79f86a2ce5ceefb371592d743a889c55dfe54be5a093a6c3fda9ed805a3",
+      "status": "CLOSED_EXACT_NONPOSITIVE_PRIMARY_CONFIGURATION_NO_RETUNING",
       "trialCount": 24,
       "trialPolicy": "ALL_GROUPS_ALL_CASES_ALL_PRIMARY_ABLATIONS_NO_FAVORABLE_SELECTION"
     }
@@ -453,6 +465,43 @@
       "sourceArtifactId": 13237520831,
       "sourceArtifactInitialExpiresAt": "2026-12-03T14:09:13Z",
       "sourceRunId": 41648280262
+    },
+    {
+      "calibrationDays": [
+        "2026-08-04",
+        "2026-08-11",
+        "2026-08-18",
+        "2026-08-25",
+        "2026-09-01",
+        "2026-09-08",
+        "2026-09-15",
+        "2026-09-22"
+      ],
+      "ciphertextSha256": "a283c79f86a2ce5ceefb371592d743a889c55dfe54be5a093a6c3fda9ed805a3",
+      "decisionExposure": [
+        "ALL24_SEQUENCE_CANDIDATES_ALL4_CASES_ALL24_PRIMARY_ABLATIONS",
+        "UNFUNDED_STANDALONE_CONDITIONAL_NET_AND_BRIER",
+        "FROZEN_ADMITTED_BOOK_ACCOUNTING_AND_PROTECTION_CLOCK_AUDIT_ONLY_NO_REPLAY"
+      ],
+      "exactPublicReceipt": "docs/SQP1_AUTHENTIC_RESULT.json",
+      "featureLookbacks": "7D_M15_AND14D_H1",
+      "independent": false,
+      "originalSourceArtifactExpiresAt": "2026-12-03T19:54:25Z",
+      "originalSourceArtifactId": 13266505512,
+      "preservationRequestFile": "ops/sqp1-preserve-source-request.txt",
+      "replayDays": [
+        "2026-09-29",
+        "2026-09-30",
+        "2026-10-01",
+        "2026-10-02",
+        "2026-10-05",
+        "2026-10-06",
+        "2026-10-07",
+        "2026-10-08"
+      ],
+      "scope": "SQP1 M15/H1 prior feature windows and actual causal decision/entry/holding/exit events on all16 predeclared development dates",
+      "sourceArtifactId": 13266505512,
+      "sourceRunId": 41706496201
     }
   ],
   "unknownExposurePolicy": "TREAT_AS_EXPOSED_FOR_QUALIFICATION"

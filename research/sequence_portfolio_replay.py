@@ -146,6 +146,8 @@ def standalone(book,p,forecasts,slip):
 
 def run_case(b,p,book,plan,calibrations,z,slip,removed=None,retain=True):
     engine=HoldingReplay(max_staleness_ms=1000,financing_schedule_proven=False)
+    # Neutral metadata for future reuse; frozen SQP1 original labels are retained.
+    engine.modeled_exit_reason='SQP1_MODEL_CLOSE_REQUEST_AT_OBSERVED_QUOTE'
     ledger=[];risk=[];daily=[];decisions=[];stress={};gaps=[];suspend=False;uncertain=False;maximum_positions=0
     through=max(clock(p,d)+60*60000+58000 for d in p['calibrationDays'])
     for day in p['replayDays']:

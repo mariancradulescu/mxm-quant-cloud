@@ -392,3 +392,42 @@ No cost-history, liquidity/depth, account stopout, continuous DD or independent 
 certificate is created. Source quotes are indicative; all NET remains conditional.
 The native forecast/observation/valuation/allocator/holding kernels share C# with
 research, but the funded ledger is still Python and Cloud remains observation-only.
+
+SQP1 executed at code626a9baaca98f0b0bb018b521cba83f9836add06 in run41706496201.
+The outcome-blind pilot passed on both predeclared days (six complete/financeable
+routes each,22 mature forecasts/day). The source used1173 requests,192 feature
+blocks and80 tick windows; custody rechecked the original account commitment and
+reconstructed all raw data.372/384 planned forecasts matured;180/192 scheduled
+standalone replay paths per slippage sensitivity were evaluable. These are shared
+calendar observations, never372 or360 independent economic episodes.
+
+All four cases and24 primary ablations are frozen in SQP1_AUTHENTIC_RESULT.json.
+The2-SE cases admitted no positions (NET0); central0-SE sensitivities each closed7
+trips: NET-2.1332079314 EUR at0.5x and-2.4346576693 EUR at1x entry-spread slippage.
+All books closed, without missing held marks, unresolved exposures or modeled
+entry rejections. These findings do NOT erase candidate information gaps: primary
+ledger reasons include96 nonpositive utility screens,78 incomplete execution/NET
+inputs and18 absent/neutral mature forecasts. Missing candidate paths stay missing.
+
+All24 primary ablation deltas are0 because the primary policy abstained. They
+supply no economically validated marginal contribution. No post-result central
+reallocation ablations are added. The separate frozen receipt audit only decomposes
+the unchanged admitted book: at1x the six AUDUSD M15 duration trades sum+2.7051008615
+EUR and one XAUUSD M15 duration trade-5.1397585308 EUR. This is factual attribution,
+not marginal reallocating contribution or permission to drop gold retrospectively.
+No favorable standalone subset or less conservative sensitivity is promoted.
+
+The central1x sampled DD is3.5230258565%, with at most one simultaneous position.
+Neither a full multi-position economic diversification proof nor continuous DD
+certification follows. The exact nonpositive primary configuration is closed,
+without retuning, inversion or replay. All calendar/source/protocol hashes and
+complete outputs remain conserved. New economic hypotheses require distinct
+prospective identity and protection against repeated exposed-data selection.
+
+The original inherited dispatcher labels every close EPA1_FIXED_CLOCK_OBSERVED_QUOTE.
+That label is semantically generic in SQP1: the risk ledger and actual clocks prove
+one early XAUUSD capacity-protection exit per central sensitivity, about29.8s after
+the first native protection signal. The independent arithmetic audit preserves
+all original labels and links the cause explicitly; no broker liquidation is
+invented. A metadata-only future dispatcher override removes the misleading study
+name, with old defaults unchanged. No economic result is recomputed or relabeled.
