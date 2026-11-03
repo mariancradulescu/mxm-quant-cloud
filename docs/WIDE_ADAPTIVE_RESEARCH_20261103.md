@@ -1,7 +1,7 @@
 # OWNER mandate correction and broad adaptive development — 2026-11-03
 
 The latest explicit OWNER directive withdraws EUR2/80/120 and universal 1%/2%
-constraints. PR18 was closed without integration, branch preserved. Initial
+constraints. PR18 was integrated as 07497fc and then superseded by PR19; its branch/history are preserved. Initial
 capital remains EUR200 without deposits; system HARD21 and maximum DD30% remain.
 No LIVE/DEMO orders, activation, new credentials, or broker correspondence.
 
