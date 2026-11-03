@@ -1,3 +1,11 @@
+# Superseded risk authority correction — 2026-11-03
+
+The fixed 1%/40%/60% directive recorded below is SUPERSEDED by the latest explicit
+OWNER mandate in this continuation. It must not control future admission.
+See WIDE_ADAPTIVE_RESEARCH_20261103.md for the controlling adaptive mandate.
+The intervening main commit 07497fc was reconciled without rewriting history.
+Prior exact model verdicts remain unchanged. Original historical text follows:
+
 # Controlling OWNER risk authority after PR16–17 — 2026-11-03
 
 The explicit OWNER correction in the current thread is controlling: aggregate risk <=1% capital, aggregate margin <=40%, free reserve >=60%. Earlier conversation summaries conflict about whether historical absolute EUR2/80/120 values were OWNER constraints or DIRECTOR parameters. Do not fabricate a clean historical revocation chain from a code comment. This current directive supplies unambiguous authority for all future admission; DIRECTOR may choose stricter operational policies, never relax these percentages unilaterally.

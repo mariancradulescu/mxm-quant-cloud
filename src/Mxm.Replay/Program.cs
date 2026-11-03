@@ -1,5 +1,13 @@
 using System.Text.Json;
 using System.Security.Cryptography;
+if (args.Length == 3 && args[2] == "--regime-discovery")
+{
+    try {
+        using var d=JsonDocument.Parse(File.ReadAllBytes(args[0]));
+        File.WriteAllText(args[1],JsonSerializer.Serialize(Mxm.Core.RegimeDiscovery.Assess(d.RootElement)));
+        return 0;
+    } catch { return 11; }
+}
 if (args.Length == 3 && args[2].StartsWith("--flow-"))
 {
     try {
