@@ -1,0 +1,201 @@
+{
+  "actualFundedPortfolioEurNetNotRecomputed": true,
+  "completeSourceHistoryH1": 6283,
+  "countOriginalProposals": 216,
+  "counterfactualPortfolioFinanced": false,
+  "currentBrokerSwapScheduleOutsideHours": true,
+  "futureConfirmationUntouched": true,
+  "historicBrokerTariffsCertified": false,
+  "hypothesis": "EURUSD_H1_TICK_VOLUME_PRICE_DISLOCATION_V1",
+  "interpretation": "Historical BID/ASK quote-crossing min-lot thought experiment for all FROZEN proposals; groups reflect original TRAIN-only cost admission. Summed independent no-overlap quote outcomes are NOT independently funded EUR200 portfolio, real fills, or permission to remove original risk/cost filters.",
+  "modelRetunedOrPromoted": false,
+  "ordersSubmitted": 0,
+  "originalAdmittedCount": 9,
+  "originalClosedVerdictUnchanged": true,
+  "originalCustodyRunStatus": "INDEPENDENT_READBACK_SUCCESS_FROM_ORIGINAL_RUN",
+  "originalFrozenSelectionNETEur1x": "-3.447705994561608406501900127",
+  "originalRejectedCount": 207,
+  "originalSourceCiphertextSha256": "7037ea5dc6e4eccc4905baf38028ecec01f22bc9c0a938425e2e6d85cc9e635a",
+  "schema": "mxm.frozen-h1-policy-cost-attribution.v1",
+  "slippageIsHalfTrainObservedSpreadProxyNotMeasuredFill": true,
+  "slippageScenarios": {
+    "1": {
+      "groups": {
+        "TRAIN_COST_ADMITTED": {
+          "completeQuoteBasedCounterfactualEpisodes": 9,
+          "eligibleWeeks": 10,
+          "meanNetPerEpisodeEur": "-0.3830784438401787118335444584",
+          "positiveGrossEpisodes": 5,
+          "positiveNetEpisodes": 5,
+          "positiveNetWeeks": 2,
+          "sumCommissionEur": "0.4689377438456069955526923745",
+          "sumConversionEur": "0.0000078590093846093894870220",
+          "sumGrossEur": "-2.713996299120140379554763495",
+          "sumNetEur": "-3.447705994561608406501900126",
+          "sumSlippageAssumptionEur": "0.2344467424900887725818131138",
+          "sumSpreadEur": "0.03031735009638764942314411982",
+          "weeklyNetEur": [
+            "-3.156101170886364503455155438",
+            "1.788645386050288455432885845",
+            "0",
+            "-1.681999510374622997666303858",
+            "0.1227240467925848562541368085",
+            "0",
+            "0",
+            "-1.317557185473218822330860668",
+            "0",
+            "0"
+          ]
+        },
+        "TRAIN_COST_REJECTED": {
+          "completeQuoteBasedCounterfactualEpisodes": 207,
+          "eligibleWeeks": 10,
+          "meanNetPerEpisodeEur": "-0.1105851002961102886051903763",
+          "positiveGrossEpisodes": 100,
+          "positiveNetEpisodes": 91,
+          "positiveNetWeeks": 4,
+          "sumCommissionEur": "10.82275892070004285543933359",
+          "sumConversionEur": "0.000279965169076653036578499061",
+          "sumGrossEur": "-5.942093221535287878151906671",
+          "sumNetEur": "-22.89111576129482974127440790",
+          "sumSlippageAssumptionEur": "5.411181391915461040782382559",
+          "sumSpreadEur": "0.7148022619749613138642065201",
+          "weeklyNetEur": [
+            "2.077161240633449477129787033",
+            "-4.612887181728209265117921512",
+            "-1.290372529134700239574964069",
+            "-10.60270994168072732588754050",
+            "-5.039914074777194359911734484",
+            "7.042863041804022364197196556",
+            "0.8426841682634287084361589566",
+            "-1.873977977764603070569930159",
+            "-3.294791948295286179404963320",
+            "1.748591628902761435352252718"
+          ]
+        }
+      },
+      "hypotheticalSlippageScale": "1",
+      "missingEventQuotePairs": 0
+    },
+    "2": {
+      "groups": {
+        "TRAIN_COST_ADMITTED": {
+          "completeQuoteBasedCounterfactualEpisodes": 9,
+          "eligibleWeeks": 10,
+          "meanNetPerEpisodeEur": "-0.4091280695591351886419715733",
+          "positiveGrossEpisodes": 5,
+          "positiveNetEpisodes": 5,
+          "positiveNetWeeks": 2,
+          "sumCommissionEur": "0.4689377438456069955526923745",
+          "sumConversionEur": "0.0000077479899041280835179421",
+          "sumGrossEur": "-2.713996299120140379554763495",
+          "sumNetEur": "-3.682152626032216697777744160",
+          "sumSlippageAssumptionEur": "0.4688934849801775451636262276",
+          "sumSpreadEur": "0.03031735009638764942314411982",
+          "weeklyNetEur": [
+            "-3.234029618825683382324185302",
+            "1.762470801571817051166428575",
+            "0",
+            "-1.708281410030330112176540658",
+            "0.09642717261436217432359561887",
+            "0",
+            "0",
+            "-1.369626519394313420216543457",
+            "0",
+            "0"
+          ]
+        },
+        "TRAIN_COST_REJECTED": {
+          "completeQuoteBasedCounterfactualEpisodes": 207,
+          "eligibleWeeks": 10,
+          "meanNetPerEpisodeEur": "-0.1367260820452178528209015441",
+          "positiveGrossEpisodes": 100,
+          "positiveNetEpisodes": 91,
+          "positiveNetWeeks": 4,
+          "sumCommissionEur": "10.82275892070004285543933359",
+          "sumConversionEur": "0.000281795318881404906407759257",
+          "sumGrossEur": "-5.942093221535287878151906671",
+          "sumNetEur": "-28.30229898336009553392661963",
+          "sumSlippageAssumptionEur": "10.82236278383092208156476510",
+          "sumSpreadEur": "0.7148022619749613138642065201",
+          "weeklyNetEur": [
+            "1.635511748505503904318222046",
+            "-5.106217015290946610133991346",
+            "-1.817182053983521966838499363",
+            "-11.10200263520518528032122498",
+            "-5.538732031503514890006134482",
+            "6.517947585762719116812890242",
+            "0.3166213826605910936687494078",
+            "-2.346942227062137561378612170",
+            "-3.815111891032280544874273813",
+            "1.228882412050466513206868898"
+          ]
+        }
+      },
+      "hypotheticalSlippageScale": "2",
+      "missingEventQuotePairs": 0
+    },
+    "0.5": {
+      "groups": {
+        "TRAIN_COST_ADMITTED": {
+          "completeQuoteBasedCounterfactualEpisodes": 9,
+          "eligibleWeeks": 10,
+          "meanNetPerEpisodeEur": "-0.3700536309807004734293309012",
+          "positiveGrossEpisodes": 5,
+          "positiveNetEpisodes": 5,
+          "positiveNetWeeks": 2,
+          "sumCommissionEur": "0.4689377438456069955526923745",
+          "sumConversionEur": "0.0000079145191248500424715626",
+          "sumGrossEur": "-2.713996299120140379554763495",
+          "sumNetEur": "-3.330482678826304260863978111",
+          "sumSlippageAssumptionEur": "0.1172233712450443862909065570",
+          "sumSpreadEur": "0.03031735009638764942314411982",
+          "weeklyNetEur": [
+            "-3.117136946916705064020640506",
+            "1.801732678289524157566114480",
+            "0",
+            "-1.668858560546769440411185458",
+            "0.1358724838816961972194074034",
+            "0",
+            "0",
+            "-1.291522518512671523388019275",
+            "0",
+            "0"
+          ]
+        },
+        "TRAIN_COST_REJECTED": {
+          "completeQuoteBasedCounterfactualEpisodes": 207,
+          "eligibleWeeks": 10,
+          "meanNetPerEpisodeEur": "-0.09751461016381465424837656696",
+          "positiveGrossEpisodes": 100,
+          "positiveNetEpisodes": 92,
+          "positiveNetWeeks": 4,
+          "sumCommissionEur": "10.82275892070004285543933359",
+          "sumConversionEur": "0.000279203741610861567311314666",
+          "sumGrossEur": "-5.942093221535287878151906671",
+          "sumNetEur": "-20.18552430390963342941394936",
+          "sumSlippageAssumptionEur": "2.705590695957730520391191278",
+          "sumSpreadEur": "0.7148022619749613138642065201",
+          "weeklyNetEur": [
+            "2.297985986697422263535569527",
+            "-4.366222264946840592609886596",
+            "-1.026967766710289375943196425",
+            "-10.35306359491849834867069827",
+            "-4.790505096414034094864534486",
+            "7.305320769824673987889349711",
+            "1.105715407417410931354216293",
+            "-1.637495853115835825165589152",
+            "-3.034631976926788996670308072",
+            "2.008446237328908896424944629"
+          ]
+        }
+      },
+      "hypotheticalSlippageScale": "0.5",
+      "missingEventQuotePairs": 0
+    }
+  },
+  "sourceRunId": 41614667957,
+  "authenticAttributionRunId": 41616506235,
+  "authenticAttributionArtifactUrl": "https://github.com/mariancradulescu/mxm-quant-cloud/actions/runs/41616506235/artifacts/13220873569",
+  "freezeStatus": "CLOSED_MODEL_REMAINS_CLOSED_NONPROMOTIONAL_POLICY_ATTRIBUTION"
+}
