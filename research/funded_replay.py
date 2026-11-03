@@ -273,6 +273,8 @@ class FundedReplay:
             if d.weekday() != 0 or d.hour or d.minute or d.second or d.microsecond:
                 raise IncompleteEvidence('ELIGIBLE_WEEK_NOT_FULL_UTC_MONDAY')
             counts[w] = sum(w <= t['closed_at'] < w + 7*86400000 for t in self.trades)
+        if not self.open and not self.pending and abs(self.starting_eur + sum((t['net_eur'] for t in self.trades),D('0')) - self.balance) > D('0.000000001'):
+            raise IncompleteEvidence('FUNDED_ACCOUNTING_NOT_RECONCILED')
         return {'initial_eur':self.starting_eur,'balance_eur':self.balance,
                 'closed_net_eur':sum((t['net_eur'] for t in self.trades),D('0')),
                 'complete_round_trips':len(self.trades),'rejected':list(self.rejected),
