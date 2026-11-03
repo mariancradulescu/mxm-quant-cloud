@@ -1,0 +1,165 @@
+{
+  "purpose": "CONDITIONAL_INTEGRATED_ECONOMIC_RESEARCH_NOT_TRADING_QUALIFICATION",
+  "universe": [
+    "EURUSD",
+    "GBPUSD",
+    "USDJPY",
+    "AUDUSD",
+    "USDCAD",
+    "XAUUSD"
+  ],
+  "families": [
+    "JOP1_SIX_BAR_DRIFT",
+    "JOP1_LAST_BAR_REVERSAL"
+  ],
+  "sourceRunId": 41476636915,
+  "sourceSha256": "50e40f62156f598d715d6052e466ae7ef77b9bc39117cad37472c7f0f505e61d",
+  "commonHorizonMinutes": [
+    120,
+    240
+  ],
+  "calibrationMarkStepMinutes": 60,
+  "replayMarkStepMinutes": 15,
+  "latencyMs": 1000,
+  "quoteSearchMs": 40000,
+  "maximumSideAgeMs": 2000,
+  "maxEvidenceRequests": 4000,
+  "slippageMultiplesOfObservedEntrySpreadEachSide": [
+    "0.5",
+    "1"
+  ],
+  "margin": "MAX_ENTRY_QUERIED_BOUND_AND_CURRENT_LEVERAGE_REPRICED_NOTIONAL_SCENARIO",
+  "funding": "ZERO_ONLY_CONDITIONAL_ON_CURRENT_NORMAL_ACCOUNT_DAILY_SWAP_OUTSIDE_ACTUAL_HOLDING_INTERVAL",
+  "peak": "SAMPLED_RESEARCH_REFERENCE_NOT_CERTIFICATE",
+  "net": "OBSERVED_QUOTES_AND_FX_CURRENT_TARIFF_SCENARIOS_NOT_ACTUAL_FILLS",
+  "independence": false,
+  "hard21": "NOT_QUALIFIED_TWELVE_PREDECLARED_DEVELOPMENT_DAYS_NOT_SYSTEM_WEEKLY_VALIDATION",
+  "modelPromotion": false,
+  "minimumCompleteCalibrationBlocks": 6,
+  "missingHoldingSource": "FLAG_INCOMPLETE_NO_INTERPOLATION",
+  "missingExitSource": "UNRESOLVED_EXPOSURE_SUSPEND_NEW_ENTRIES_NO_ZERO_PNL_ASSUMPTION",
+  "missingEntrySource": "EXPIRE_MODELED_ENTRY_AFTER_PREDECLARED_WINDOW_AND_DISCLOSE_UNOBSERVED_EXECUTION",
+  "commissionForecast": "CONSERVATIVE_SLOPE_PLUS_FLOOR_BOUND_ACTUAL_MODEL_FEES_MAX_SLOPE_FLOOR",
+  "marginCoverageScenarioRatio": "1",
+  "volumeQueryMarginReferenceEur": "200",
+  "extraVolumeStepsForReinvestment": 2,
+  "maxVolumeQueryPoints": 12,
+  "selectFavorablePolicyAfterResults": false,
+  "id": "EPA2",
+  "cohorts": [
+    {
+      "id": "2026-01",
+      "calibrationDays": [
+        "2025-11-25",
+        "2025-12-02",
+        "2025-12-09",
+        "2025-12-16",
+        "2025-12-23",
+        "2025-12-30"
+      ],
+      "replayDays": [
+        "2026-01-06",
+        "2026-01-07",
+        "2026-01-08",
+        "2026-01-09"
+      ]
+    },
+    {
+      "id": "2026-04",
+      "calibrationDays": [
+        "2026-03-03",
+        "2026-03-10",
+        "2026-03-17",
+        "2026-03-24",
+        "2026-03-31",
+        "2026-04-07"
+      ],
+      "replayDays": [
+        "2026-04-14",
+        "2026-04-15",
+        "2026-04-16",
+        "2026-04-17"
+      ]
+    },
+    {
+      "id": "2026-07",
+      "calibrationDays": [
+        "2026-05-26",
+        "2026-06-02",
+        "2026-06-09",
+        "2026-06-16",
+        "2026-06-23",
+        "2026-06-30"
+      ],
+      "replayDays": [
+        "2026-07-07",
+        "2026-07-08",
+        "2026-07-09",
+        "2026-07-10"
+      ]
+    }
+  ],
+  "calibrationDays": [
+    "2025-11-25",
+    "2025-12-02",
+    "2025-12-09",
+    "2025-12-16",
+    "2025-12-23",
+    "2025-12-30",
+    "2026-03-03",
+    "2026-03-10",
+    "2026-03-17",
+    "2026-03-24",
+    "2026-03-31",
+    "2026-04-07",
+    "2026-05-26",
+    "2026-06-02",
+    "2026-06-09",
+    "2026-06-16",
+    "2026-06-23",
+    "2026-06-30"
+  ],
+  "replayDays": [
+    "2026-01-06",
+    "2026-01-07",
+    "2026-01-08",
+    "2026-01-09",
+    "2026-04-14",
+    "2026-04-15",
+    "2026-04-16",
+    "2026-04-17",
+    "2026-07-07",
+    "2026-07-08",
+    "2026-07-09",
+    "2026-07-10"
+  ],
+  "preDecisionQuoteSeconds": 20,
+  "preDecisionRequestSeconds": 50,
+  "monitorOffsetMs": 11000,
+  "responseOffsetMs": 41000,
+  "snapshotMethod": "FIXED_ASOF_ROUTE_LOCAL_NO_UNRELATED_ASSET_GATE",
+  "uncertaintyMultipliers": [
+    "2"
+  ],
+  "holdingPolicies": [
+    "FIXED_EXIT_REFERENCE",
+    "ACTIVE_CAPACITY_PROTECTION"
+  ],
+  "ablation": "ALL12_REMOVE_ONE_PRIMARY_240M_ACTIVE_1X_NO_SELECTION",
+  "documentedReferenceStopoutRatio": "0.5",
+  "accountStopoutThresholdKnown": false,
+  "referenceSources": [
+    "https://files.pepperstone.com/legal/CYSEC/Ts_and_Cs_Pepperstone_EU.pdf",
+    "https://help.ctrader.com/trading-with-ctrader/conditions/"
+  ],
+  "sourceScope": "CALENDAR_STRATIFIED_EXPOSED_DEVELOPMENT_NOT_CONFIRMATION",
+  "oldEpa1Run": 41634941443,
+  "oldEpa1SourceSha256": "f3d57deb06c7906e9390c0229706dda1b99d7cb3ba28f7d2a4a4a793d110156a",
+  "oldEpa1PublicSha256": "abfcff3da3f72cba7d355713daf32f61a9a70cc2964f3a3a23b5f5cd58b31984",
+  "controller": "REUSE_OWNER30_AND_FULL_MARGIN_STRESS_BUFFER_EXIT_LARGEST_MARGIN_PLUS_STRESS_FIRST",
+  "protectiveExitTiming": "FIRST_SUBSEQUENT_OBSERVED_PLANNED_ASOF_USUALLY30S_AFTER_PRIMARY_NEVER_SAME_QUOTE",
+  "holdingUnknownPolicy": "SUSPEND_ENTRIES_QUEUE_PROTECTIVE_EXIT_RESUME_ONLY_WHEN_MODEL_FLAT_AND_FRESH_PREDECISION; RETAIN_EXECUTION_UNCERTAINTY_FLAG",
+  "referenceStopoutCrossedPolicy": "OUTCOME_UNCERTAIN_SUSPEND_FURTHER_ADMISSIONS_NO_FAKE_BROKER_LIQUIDATION",
+  "entryClockRule": "FIRST_AUTHENTIC_EURUSD_H4_CLOSE_BETWEEN09_AND13_UTC_EACH_PREDECLARED_DAY_NO_PRICE_OR_RETURN_FILTER",
+  "calendarRequestBudget": 30
+}

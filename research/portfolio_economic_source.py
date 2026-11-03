@@ -1,4 +1,5 @@
-"""EPA1 bounded source collection and independent encrypted raw readback.
+"""Shared bounded economic source collection and encrypted raw readback.
+EPA1 default semantics remain frozen; EPA2 adds route-local holding evidence.
 Only predeclared economically used clocks are requested; no strategy selection.
 """
 import base64, hashlib, json, os, sys
@@ -20,13 +21,15 @@ SCHEMA='mxm-epa1-source-v1'
 
 
 def protocol():return json.loads(PROTOCOL.read_text())
+def protocol_file(p):return Path('research/portfolio_holding_protocol.json') if p['id']=='EPA2' else PROTOCOL
 def day_clock(day,hour=9):return int(datetime.fromisoformat(day).replace(hour=hour,tzinfo=timezone.utc).timestamp()*1000)
-def clocks(p):
+def clocks(p,decision_clocks=None):
     result=[]
     for phase,step in [('calibrationDays',p['calibrationMarkStepMinutes']),('replayDays',p['replayMarkStepMinutes'])]:
         for day in p[phase]:
-            start=day_clock(day)
-            if phase=='replayDays':result.append(start-p['preDecisionQuoteSeconds']*1000)
+            start=decision_clocks[day] if decision_clocks is not None else day_clock(day)
+            if start is None:continue
+            if phase=='replayDays':result.append(start-p.get('preDecisionRequestSeconds',p['preDecisionQuoteSeconds'])*1000)
             result.extend(start+i*60000 for i in range(0,241,step))
     return sorted(set(result))
 
@@ -45,6 +48,22 @@ def synchronized_snapshot(sides,nominal,universe,max_age=2000):
     return None
 
 
+def partial_snapshot(sides,at,universe,max_age=2000):
+    # Fixed as-of clock; no future tick can improve this snapshot. Missing
+    # unrelated assets do not erase available price/FX routes.
+    quotes={}
+    for symbol in universe:
+        state=[]
+        for side in (0,1):
+            rows=sides[symbol][side]
+            prior=[r for r in rows or [] if r[0]<=at]
+            state.append(prior[-1] if prior else None)
+        if any(x is None or at-x[0]>max_age for x in state):continue
+        bid,ask=state
+        if bid[1]>0 and ask[1]>=bid[1]:quotes[symbol]=dict(bid=bid[1],ask=ask[1],bidAt=bid[0],askAt=ask[0])
+    return dict(at=at,quotes=quotes)
+
+
 def contract_snapshot(c):
     out=snapshot_contract(c)
     # These defaults are explicit in the official protobuf, not invented costs.
@@ -54,8 +73,9 @@ def contract_snapshot(c):
     return out
 
 
-def audit(b):
-    p=protocol();need(b['schema']==SCHEMA and b['readOnly'] is True and b['protocolSha256']==hashlib.sha256(PROTOCOL.read_bytes()).hexdigest(),'EPA1_PROTOCOL_BINDING')
+def audit(b,p=None):
+    p=p or protocol();holding=p['id']=='EPA2';expected_schema='mxm-epa2-source-v1' if holding else SCHEMA
+    need(b['schema']==expected_schema and b['readOnly'] is True and b['protocolSha256']==hashlib.sha256(protocol_file(p).read_bytes()).hexdigest(),'EPA1_PROTOCOL_BINDING')
     raw=b['raw'];need(len(raw)<=p['maxEvidenceRequests'],'EPA1_REQUEST_BUDGET')
     trader=m.ProtoOATraderRes();trader.ParseFromString(base64.b64decode(raw[0]['protobuf']))
     assets=m.ProtoOAAssetListRes();assets.ParseFromString(base64.b64decode(raw[1]['protobuf']))
@@ -68,7 +88,10 @@ def audit(b):
         q=getattr(m,item['requestType'])();q.ParseFromString(base64.b64decode(item['requestProtobuf']));require_read_only_request(q)
         r=getattr(m,item['type'])();r.ParseFromString(base64.b64decode(item['protobuf']))
         need(r.IsInitialized() and r.ctidTraderAccountId==account and q.ctidTraderAccountId==account,'EPA1_RAW_ACCOUNT_BINDING')
-    need(sorted(b['symbols'])==sorted(p['universe']) and sorted(map(int,b['snapshots']))==clocks(p),'EPA1_FIXED_GRID_UNIVERSE')
+    expected_keys=sorted(set(t+offset for t in clocks(p,b.get('decisionClocks')) for offset in ([0,30000] if holding else [0])))
+    need(sorted(b['symbols'])==sorted(p['universe']) and sorted(map(int,b['snapshots']))==expected_keys,'EPA1_FIXED_GRID_UNIVERSE')
+    if holding:
+        need(b['riskTerms']==risk_terms(trader.trader),'EPA2_TRADER_RISK_TERMS_BINDING')
     for s,row in b['symbols'].items():
         light=listed_by_name[s]
         need(light.symbolId==row['symbolId'] and currencies.get(light.baseAssetId)==row['baseAsset'] and
@@ -88,21 +111,46 @@ def audit(b):
         bound=max(bound,margin/(D(row['contract']['minVolume'])/100))
         need(str(bound)==row['currentMarginPerUnitBoundEur'] and row['maxQueriedUnits']==max(profile_req.volume)//100,
              'EPA1_MARGIN_CURVE_BOUND_RECONCILIATION')
-    for t in clocks(p):
+        if holding:
+            lev=m.ProtoOAGetDynamicLeverageByIDRes();lev.ParseFromString(base64.b64decode(raw[row['dynamicLeverageRawIndex']]['protobuf']))
+            need(lev.leverage.leverageId==row['contract']['leverageId'] and row['dynamicLeverage']==
+                 [dict(volume=x.volume,leverage=x.leverage) for x in lev.leverage.tiers],'EPA2_LEVERAGE_RAW_BINDING')
+    if holding:
+        need(sorted(b['decisionClocks'])==sorted(set(p['calibrationDays']+p['replayDays'])),'EPA2_CALENDAR_COVERAGE')
+        need(sorted(b['calendarRawIndices'])==sorted(b['decisionClocks']),'EPA2_CALENDAR_RAW_COVERAGE')
+        for day,ix in b['calendarRawIndices'].items():
+            q=m.ProtoOAGetTrendbarsReq();q.ParseFromString(base64.b64decode(raw[ix]['requestProtobuf']))
+            r=m.ProtoOAGetTrendbarsRes();r.ParseFromString(base64.b64decode(raw[ix]['protobuf']))
+            midnight=day_clock(day,0)
+            need(q.symbolId==b['symbols']['EURUSD']['symbolId'] and q.period==e.H4 and q.fromTimestamp==midnight and q.toTimestamp==midnight+13*3600000 and r.HasField('hasMore') and not r.hasMore and r.period==e.H4,'EPA2_CALENDAR_REQUEST_BINDING')
+            possible=[x.utcTimestampInMinutes*60000+14400000 for x in r.trendbar if x.HasField('utcTimestampInMinutes')]
+            possible=[t for t in possible if midnight+9*3600000<=t<=midnight+13*3600000]
+            need(b['decisionClocks'][day]==(min(possible) if possible else None),'EPA2_PRICE_INDEPENDENT_CLOCK_BINDING')
+    for t in clocks(p,b.get('decisionClocks')):
         sides={}
         for s in p['universe']:
             sides[s]=[];row=b['symbols'][s]
             for side,i in zip((e.BID,e.ASK),b['eventIndices'][str(t)][s]):
                 req=m.ProtoOAGetTickDataReq();req.ParseFromString(base64.b64decode(raw[i]['requestProtobuf']))
                 res=m.ProtoOAGetTickDataRes();res.ParseFromString(base64.b64decode(raw[i]['protobuf']))
-                need(req.symbolId==row['symbolId'] and req.type==side and req.fromTimestamp==t+1000 and req.toTimestamp==t+11000 and res.HasField('hasMore'),'EPA1_EVENT_REQUEST_BINDING')
-                sides[s].append(None if res.hasMore else decode_side(res.tickData,t+1000,t+11000))
-        need(synchronized_snapshot(sides,t,p['universe'],p['maximumSideAgeMs'])==b['snapshots'][str(t)],'EPA1_RAW_SNAPSHOT_RECONCILIATION')
+                need(req.symbolId==row['symbolId'] and req.type==side and req.fromTimestamp==t+1000 and req.toTimestamp==t+1000+p['quoteSearchMs'] and res.HasField('hasMore'),'EPA1_EVENT_REQUEST_BINDING')
+                sides[s].append(None if res.hasMore else decode_side(res.tickData,t+1000,t+1000+p['quoteSearchMs']))
+        if holding:
+            for offset in [0,30000]:
+                need(partial_snapshot(sides,t+offset+11000,p['universe'],p['maximumSideAgeMs'])==b['snapshots'][str(t+offset)],'EPA2_RAW_PARTIAL_ASOF_RECONCILIATION')
+        else:need(synchronized_snapshot(sides,t,p['universe'],p['maximumSideAgeMs'])==b['snapshots'][str(t)],'EPA1_RAW_SNAPSHOT_RECONCILIATION')
+    if holding:return dict(evidenceRequests=len(raw),requestWindows=len(clocks(p,b['decisionClocks'])),requestedSnapshots=len(expected_keys),fullUniverseSnapshots=sum(len(x['quotes'])==len(p['universe']) for x in b['snapshots'].values()),partialOrFullSnapshots=sum(bool(x['quotes']) for x in b['snapshots'].values()),protocolSha256=b['protocolSha256'])
     return dict(evidenceRequests=len(raw),requestedSnapshots=len(clocks(p)),completeSnapshots=sum(x is not None for x in b['snapshots'].values()),protocolSha256=b['protocolSha256'])
 
 
-def collect():
-    p=protocol();run=os.environ['GITHUB_RUN_ID'];recipient=checked_public(Path('new-source-recipient'),run)
+def risk_terms(trader):
+    return {k:(getattr(trader,k) if trader.HasField(k) else None) for k in
+            ['leverageInCents','totalMarginCalculationType','fairStopOut','stopOutStrategy','accountType']}
+
+
+def collect(p=None):
+    p=p or protocol();holding=p['id']=='EPA2'
+    run=os.environ['GITHUB_RUN_ID'];recipient=checked_public(Path('new-source-recipient'),run)
     raw=[];transport=StdlibCTraderTransport()
     def req(q,kind):
         need(len(raw)<p['maxEvidenceRequests'],'EPA1_REQUEST_BUDGET')
@@ -115,7 +163,7 @@ def collect():
         assets={a.assetId:a.name for a in req(m.ProtoOAAssetListReq(ctidTraderAccountId=account),m.ProtoOAAssetListRes)[0].asset}
         need(trader.HasField('brokerName') and 'pepperstone' in trader.brokerName.lower() and assets.get(trader.depositAssetId)=='EUR','EPA1_PEPPERSTONE_EUR')
         symbols={s.symbolName:s for s in req(m.ProtoOASymbolsListReq(ctidTraderAccountId=account,includeArchivedSymbols=False),m.ProtoOASymbolsListRes)[0].symbol if s.enabled}
-        b=dict(schema=SCHEMA,source='Pepperstone-cTrader-OpenAPI',readOnly=True,depositCurrency='EUR',accountSwapFreeEffective=trader.swapFree,accountSwapFreeExplicitInWire=trader.HasField('swapFree'),protocolSha256=hashlib.sha256(PROTOCOL.read_bytes()).hexdigest(),symbols={},snapshots={},eventIndices={},raw=raw)
+        b=dict(schema='mxm-epa2-source-v1' if holding else SCHEMA,source='Pepperstone-cTrader-OpenAPI',readOnly=True,depositCurrency='EUR',accountSwapFreeEffective=trader.swapFree,accountSwapFreeExplicitInWire=trader.HasField('swapFree'),protocolSha256=hashlib.sha256(protocol_file(p).read_bytes()).hexdigest(),symbols={},snapshots={},eventIndices={},raw=raw)
         need(all(s in symbols for s in p['universe']),'EPA1_UNIVERSE_INCOMPLETE')
         for name in p['universe']:
             s=symbols[name];detail,di=req(m.ProtoOASymbolByIdReq(ctidTraderAccountId=account,symbolId=[s.symbolId]),m.ProtoOASymbolByIdRes)
@@ -133,22 +181,46 @@ def collect():
             bound=max(bound,min_margin/(D(c.minVolume)/100))
             b['symbols'][name]=dict(symbolId=s.symbolId,baseAsset=assets[s.baseAssetId],quoteAsset=assets[s.quoteAssetId],contractRawIndex=di,marginRawIndex=mi,marginProfileRawIndex=pi,
                 contract=contract_snapshot(c),currentMinMarginEur=str(min_margin),currentMarginPerUnitBoundEur=str(bound),maxQueriedUnits=max(volumes)//100)
-        for index,t in enumerate(clocks(p)):
+        if holding:
+            b['riskTerms']=risk_terms(trader)
+            need(trader.HasField('leverageInCents') and trader.leverageInCents>0,'EPA2_ACCOUNT_LEVERAGE_REQUIRED')
+            cached={}
+            for name in p['universe']:
+                row=b['symbols'][name];lid=row['contract']['leverageId'];need(lid is not None,'EPA2_LEVERAGE_ID_REQUIRED')
+                if lid not in cached:
+                    lev,li=req(m.ProtoOAGetDynamicLeverageByIDReq(ctidTraderAccountId=account,leverageId=lid),m.ProtoOAGetDynamicLeverageByIDRes)
+                    need(lev.leverage.leverageId==lid and len(lev.leverage.tiers)>0,'EPA2_LEVERAGE_PROFILE_REQUIRED')
+                    cached[lid]=(li,[dict(volume=x.volume,leverage=x.leverage) for x in lev.leverage.tiers])
+                row['dynamicLeverageRawIndex'],row['dynamicLeverage']=cached[lid]
+        if holding:
+            b['decisionClocks']={};b['calendarRawIndices']={}
+            for day in sorted(set(p['calibrationDays']+p['replayDays'])):
+                midnight=day_clock(day,0)
+                response,ix=req(m.ProtoOAGetTrendbarsReq(ctidTraderAccountId=account,symbolId=symbols['EURUSD'].symbolId,period=e.H4,fromTimestamp=midnight,toTimestamp=midnight+13*3600000),m.ProtoOAGetTrendbarsRes)
+                need(response.HasField('hasMore') and not response.hasMore and response.period==e.H4,'EPA2_CALENDAR_PAGE_COMPLETE')
+                possible=[x.utcTimestampInMinutes*60000+14400000 for x in response.trendbar if x.HasField('utcTimestampInMinutes')]
+                possible=[t for t in possible if midnight+9*3600000<=t<=midnight+13*3600000]
+                b['decisionClocks'][day]=min(possible) if possible else None;b['calendarRawIndices'][day]=ix
+        request_clocks=clocks(p,b.get('decisionClocks'))
+        for index,t in enumerate(request_clocks):
             sides={};indices={}
             for name in p['universe']:
                 sides[name]=[];indices[name]=[]
                 for side in (e.BID,e.ASK):
-                    r,i=req(m.ProtoOAGetTickDataReq(ctidTraderAccountId=account,symbolId=symbols[name].symbolId,type=side,fromTimestamp=t+1000,toTimestamp=t+11000),m.ProtoOAGetTickDataRes)
+                    r,i=req(m.ProtoOAGetTickDataReq(ctidTraderAccountId=account,symbolId=symbols[name].symbolId,type=side,fromTimestamp=t+1000,toTimestamp=t+1000+p['quoteSearchMs']),m.ProtoOAGetTickDataRes)
                     need(r.HasField('hasMore'),'EPA1_TICK_PAGE_DECLARATION');indices[name].append(i)
-                    sides[name].append(None if r.hasMore else decode_side(r.tickData,t+1000,t+11000))
-            b['snapshots'][str(t)]=synchronized_snapshot(sides,t,p['universe'],p['maximumSideAgeMs']);b['eventIndices'][str(t)]=indices
-            if index%15==0:print('EPA1_FIXED_ECONOMIC_GRID_PROGRESS '+str(index)+'/'+str(len(clocks(p))),flush=True)
-        b['auditReceipt']=audit(b)
+                    sides[name].append(None if r.hasMore else decode_side(r.tickData,t+1000,t+1000+p['quoteSearchMs']))
+            if holding:
+                for offset in [0,30000]:b['snapshots'][str(t+offset)]=partial_snapshot(sides,t+offset+11000,p['universe'],p['maximumSideAgeMs'])
+            else:b['snapshots'][str(t)]=synchronized_snapshot(sides,t,p['universe'],p['maximumSideAgeMs'])
+            b['eventIndices'][str(t)]=indices
+            if index%15==0:print(p['id']+'_FIXED_ECONOMIC_GRID_PROGRESS '+str(index)+'/'+str(len(request_clocks)),flush=True)
+        b['auditReceipt']=audit(b,p)
         cipher=seal_new(json.dumps(b,sort_keys=True).encode(),recipient,run)
         dest=Path('sealed-output');dest.mkdir(exist_ok=True)
         (dest/'source.envelope.json').write_bytes(cipher)
-        (dest/'receipt.public.json').write_text(json.dumps(dict(schema=SCHEMA,runId=run,sha256=hashlib.sha256(cipher).hexdigest(),protocolSha256=b['protocolSha256'],ordersSubmitted=0)))
-        print('EPA1_AUTHENTIC_ECONOMIC_SOURCE_SEALED '+json.dumps(b['auditReceipt'],sort_keys=True),flush=True)
+        (dest/'receipt.public.json').write_text(json.dumps(dict(schema=b['schema'],runId=run,sha256=hashlib.sha256(cipher).hexdigest(),protocolSha256=b['protocolSha256'],ordersSubmitted=0)))
+        print(p['id']+'_AUTHENTIC_ECONOMIC_SOURCE_SEALED '+json.dumps(b['auditReceipt'],sort_keys=True),flush=True)
     finally:transport.close()
 
 

@@ -39,7 +39,7 @@ link here; older dated directives remain provenance, never competing authority.
   could only be research information in a genuinely prospective portfolio
   hypothesis on independent evidence, never a resurrection mechanism.
 
-## Active methodological policy v2 (prospectively revisable)
+## Active methodological policy v3 (prospectively revisable)
 
 Evidence levels: (1) exploratory economic hypothesis; (2) preliminary predictive
 and economic support; (3) demonstrated possible incremental portfolio contribution;
@@ -191,3 +191,54 @@ retrospective gap filling, clock changes, exclusion of unfavorable days or
 retuning. Further adaptation/diversification requires genuinely new prospective
 evidence; this pilot does not demonstrate robust regime/performance adaptation
 or independent marginal portfolio edge. OWNER v2.0 requirements remain unchanged.
+
+## EPA2 prospective holding-risk and representativeness policy
+
+OWNER continuation after PR37–38 keeps v2.0 requirements and frozen EPA1 evidence.
+`portfolio_holding_protocol.json` predeclares three calendar strata: January, April
+and July 2026, six earlier weekly calibration episodes per stratum and twelve total
+replay days. Dates are fixed without return selection and remain globally exposed
+development data, never independent confirmation. Both 120/240-minute holding
+horizons, fixed/active holding policies and 0.5/1-spread slippage scenarios are
+reported. Twelve primary 240-minute active 1x candidate ablations are descriptive.
+No winning policy is selected, EPA1 retuned, source gap repaired or asset blacklisted.
+
+The first authentic EURUSD H4 close between 09–13 UTC anchors each fixed day, based
+only on bar timestamps. At most 30 calendar requests prevent requesting economic
+quotes at a clock absent from the cached broker features. No eligible close means
+a retained no-source day, not a replacement date. Budget is 4,000 evidence requests;
+calendar preflight plus the full grid needs at most 3,729. Marks occur every 15 minutes.
+One 40-second tick window supplies fixed primary/response as-of states at+11/+41s.
+Each side must have been observed and be <=2s old; currency routes are local to
+the instrument, so missing unrelated assets no longer erase valid routes.
+
+`HoldingPortfolioRisk` reuses the 30% OWNER objective and full-margin stress buffer
+in the existing allocator. It checks sampled liquidation equity against the sum
+of the queried entry margin bounds and an adverse current-leverage repricing
+envelope. This is a conditional upper margin model, not actual historical used
+margin. Leverage uses observed account caps and the least leverage in touched
+current tiers, with no cross-symbol credit. Pending protective exits are filled
+only on a later observed planned quote; unavailable exits retain unresolved
+positions and suspend new admissions. Data gaps suspend entries, request model
+exits and retain execution uncertainty after modeled flat recovery.
+
+Documentation distinguishes broker liquidation from voluntary model protection.
+Pepperstone's public cTrader page describes 50% as normal; EU 2020 terms clause 5.12
+also states 50%. Neither verifies this account's current or historical numeric
+threshold. Current authorized Open API Trader fields expose optional fair/smart
+and position-ordering flags, not the numeric threshold. Margin-call notification
+levels must not be substituted. The 50% ratio is a labeled documentation reference;
+no broker smart/fair liquidation is fabricated if it is crossed. That event flags
+uncertainty and stops further admissions. Sources reviewed 2026-11-03:
+https://pepperstone.com/en/platforms/ctrader ;
+https://files.pepperstone.com/legal/CYSEC/Ts_and_Cs_Pepperstone_EU.pdf ;
+https://help.ctrader.com/trading-with-ctrader/conditions/ .
+
+A separate EPA1 fixed-book audit recovers original authenticated quotes and fixed
+admissions, checks unchanged closing cash, and measures sampled equity/margin.
+It does not rerun model selection or alter original results. New current-leverage
+revaluation of that fixed book is explicitly a scenario sensitivity. Unknown
+between-sample paths, historical terms and executable depth remain unknown.
+Market-context volatility descriptors use only preceding H4 bars and are reported
+without becoming retrospective regime-selection filters. No LIVE/DEMO orders or
+Cloud activation are authorized; verified product admission remains protective.

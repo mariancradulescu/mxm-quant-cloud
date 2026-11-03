@@ -36,6 +36,7 @@
     "research/neighbour_net.py": "d08bad5f66dba229810e6aeaab12dbd95ff33305f660047595fdf4dcce8de460",
     "research/net_coverage.py": "003fd14a95646fd88d9738ef3b96314dfd4dc4aac7589d3f5d3267f677dde8ae",
     "research/portfolio_economic_protocol.json": "612d4d88aaccd7c65105335dec2fbd7dd7d2e9feb839eaff49646e1e5d32c777",
+    "research/portfolio_holding_protocol.json": "ee824da8da5a0c0c0351ee528b7cb75b4f44448447055792e80b887f2d87ae76",
     "research/readback.py": "817f92efbd2c5cfff16cedfa471fc916d2437b0688e2fdea67652b60069c16c5",
     "research/regime_discovery.py": "fecd008e3b6baa69a0f89ef44cbbbfebfa7c30826d828e17677289d98f667103",
     "research/relative_gross.py": "b81d9a4b87535d31bbb1e4ca592c64f41c648935fb01ba11d02823df7a09e94b",
@@ -99,6 +100,17 @@
       "sourceRunId": 41476636915,
       "status": "EXECUTED_FROZEN_UNQUALIFIED_WITH_SOURCE_GAPS",
       "tradingQualification": false
+    },
+    {
+      "criteria": "ALL8_PORTFOLIO_CASES_ALL12_PRIMARY_ABLATIONS_NO_SELECTION",
+      "id": "EPA2",
+      "independent": false,
+      "originalEpa1FixedBookAuditOnly": true,
+      "phase": "CALENDAR_STRATIFIED_CONDITIONAL_HOLDING_RISK_RESEARCH",
+      "protocolFile": "research/portfolio_holding_protocol.json",
+      "protocolSha256": "ee824da8da5a0c0c0351ee528b7cb75b4f44448447055792e80b887f2d87ae76",
+      "sourceRunId": 41476636915,
+      "statisticalPromotion": false
     }
   ],
   "schema": "mxm-project-data-exposure-v1",
