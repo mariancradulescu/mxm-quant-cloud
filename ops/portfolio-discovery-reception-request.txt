@@ -1,0 +1,1 @@
+Receive BDP1 original sealed source from run41724643418 after correcting int32 calendar overflow. Preserve protocol f8715fb32ce260a22ac821621994cb82d786a782b3769fc2a61eff9d228b2867 and all economic rules. Zero new broker requests. Recheck native ledger facts only; no SQP1 forecast/allocator/exit policy rerun. No orders or activation.
