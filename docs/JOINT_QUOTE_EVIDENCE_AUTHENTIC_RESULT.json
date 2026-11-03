@@ -1,0 +1,713 @@
+{
+  "brokerEvidenceRequestsExcludingOAuth": 39,
+  "brokerNetEur": null,
+  "clocks": [
+    1780390800000,
+    1780405200000
+  ],
+  "contracts": [
+    {
+      "currentMinimumMarginAloneBelowInitialCapital": true,
+      "currentMinimumMarginEur": "33.33",
+      "entryExitQuotePairAvailable": true,
+      "historicalMarginConfirmed": false,
+      "historicalTariffConfirmed": false,
+      "minVolumeAndStepKnown": true,
+      "missingJointRiskSamples": true,
+      "quoteEventsAvailable": 2,
+      "quoteEventsRequested": 2,
+      "symbol": "EURUSD"
+    },
+    {
+      "currentMinimumMarginAloneBelowInitialCapital": true,
+      "currentMinimumMarginEur": "39.98",
+      "entryExitQuotePairAvailable": true,
+      "historicalMarginConfirmed": false,
+      "historicalTariffConfirmed": false,
+      "minVolumeAndStepKnown": true,
+      "missingJointRiskSamples": true,
+      "quoteEventsAvailable": 2,
+      "quoteEventsRequested": 2,
+      "symbol": "GBPUSD"
+    },
+    {
+      "currentMinimumMarginAloneBelowInitialCapital": true,
+      "currentMinimumMarginEur": "29.82",
+      "entryExitQuotePairAvailable": true,
+      "historicalMarginConfirmed": false,
+      "historicalTariffConfirmed": false,
+      "minVolumeAndStepKnown": true,
+      "missingJointRiskSamples": true,
+      "quoteEventsAvailable": 2,
+      "quoteEventsRequested": 2,
+      "symbol": "USDJPY"
+    },
+    {
+      "currentMinimumMarginAloneBelowInitialCapital": true,
+      "currentMinimumMarginEur": "31.23",
+      "entryExitQuotePairAvailable": true,
+      "historicalMarginConfirmed": false,
+      "historicalTariffConfirmed": false,
+      "minVolumeAndStepKnown": true,
+      "missingJointRiskSamples": true,
+      "quoteEventsAvailable": 2,
+      "quoteEventsRequested": 2,
+      "symbol": "AUDUSD"
+    },
+    {
+      "currentMinimumMarginAloneBelowInitialCapital": true,
+      "currentMinimumMarginEur": "29.82",
+      "entryExitQuotePairAvailable": true,
+      "historicalMarginConfirmed": false,
+      "historicalTariffConfirmed": false,
+      "minVolumeAndStepKnown": true,
+      "missingJointRiskSamples": true,
+      "quoteEventsAvailable": 2,
+      "quoteEventsRequested": 2,
+      "symbol": "USDCAD"
+    },
+    {
+      "currentMinimumMarginAloneBelowInitialCapital": true,
+      "currentMinimumMarginEur": "174.66",
+      "entryExitQuotePairAvailable": true,
+      "historicalMarginConfirmed": false,
+      "historicalTariffConfirmed": false,
+      "minVolumeAndStepKnown": true,
+      "missingJointRiskSamples": true,
+      "quoteEventsAvailable": 2,
+      "quoteEventsRequested": 2,
+      "symbol": "XAUUSD"
+    }
+  ],
+  "derivedCurrentSnapshotCapacityOnly": {
+    "allSixMinimumMarginEur": "338.84",
+    "assumption": "Additive current per-symbol minimum expected margins; no unverified cross-symbol margin credit",
+    "feasibleNotEquivalentToRiskAdmissible": true,
+    "fiveFxMinimumMarginEur": "164.18",
+    "maxDistinctMinimumPositionsBeforeCostsAndRisk": 5,
+    "subsets": [
+      {
+        "below200BeforeCostsAndRisk": true,
+        "minimumAdditiveMarginEur": "0",
+        "symbols": []
+      },
+      {
+        "below200BeforeCostsAndRisk": true,
+        "minimumAdditiveMarginEur": "31.23",
+        "symbols": [
+          "AUDUSD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": true,
+        "minimumAdditiveMarginEur": "33.33",
+        "symbols": [
+          "EURUSD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": true,
+        "minimumAdditiveMarginEur": "39.98",
+        "symbols": [
+          "GBPUSD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": true,
+        "minimumAdditiveMarginEur": "29.82",
+        "symbols": [
+          "USDCAD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": true,
+        "minimumAdditiveMarginEur": "29.82",
+        "symbols": [
+          "USDJPY"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": true,
+        "minimumAdditiveMarginEur": "174.66",
+        "symbols": [
+          "XAUUSD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": true,
+        "minimumAdditiveMarginEur": "64.56",
+        "symbols": [
+          "AUDUSD",
+          "EURUSD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": true,
+        "minimumAdditiveMarginEur": "71.21",
+        "symbols": [
+          "AUDUSD",
+          "GBPUSD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": true,
+        "minimumAdditiveMarginEur": "61.05",
+        "symbols": [
+          "AUDUSD",
+          "USDCAD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": true,
+        "minimumAdditiveMarginEur": "61.05",
+        "symbols": [
+          "AUDUSD",
+          "USDJPY"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": false,
+        "minimumAdditiveMarginEur": "205.89",
+        "symbols": [
+          "AUDUSD",
+          "XAUUSD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": true,
+        "minimumAdditiveMarginEur": "73.31",
+        "symbols": [
+          "EURUSD",
+          "GBPUSD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": true,
+        "minimumAdditiveMarginEur": "63.15",
+        "symbols": [
+          "EURUSD",
+          "USDCAD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": true,
+        "minimumAdditiveMarginEur": "63.15",
+        "symbols": [
+          "EURUSD",
+          "USDJPY"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": false,
+        "minimumAdditiveMarginEur": "207.99",
+        "symbols": [
+          "EURUSD",
+          "XAUUSD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": true,
+        "minimumAdditiveMarginEur": "69.80",
+        "symbols": [
+          "GBPUSD",
+          "USDCAD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": true,
+        "minimumAdditiveMarginEur": "69.80",
+        "symbols": [
+          "GBPUSD",
+          "USDJPY"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": false,
+        "minimumAdditiveMarginEur": "214.64",
+        "symbols": [
+          "GBPUSD",
+          "XAUUSD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": true,
+        "minimumAdditiveMarginEur": "59.64",
+        "symbols": [
+          "USDCAD",
+          "USDJPY"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": false,
+        "minimumAdditiveMarginEur": "204.48",
+        "symbols": [
+          "USDCAD",
+          "XAUUSD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": false,
+        "minimumAdditiveMarginEur": "204.48",
+        "symbols": [
+          "USDJPY",
+          "XAUUSD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": true,
+        "minimumAdditiveMarginEur": "104.54",
+        "symbols": [
+          "AUDUSD",
+          "EURUSD",
+          "GBPUSD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": true,
+        "minimumAdditiveMarginEur": "94.38",
+        "symbols": [
+          "AUDUSD",
+          "EURUSD",
+          "USDCAD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": true,
+        "minimumAdditiveMarginEur": "94.38",
+        "symbols": [
+          "AUDUSD",
+          "EURUSD",
+          "USDJPY"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": false,
+        "minimumAdditiveMarginEur": "239.22",
+        "symbols": [
+          "AUDUSD",
+          "EURUSD",
+          "XAUUSD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": true,
+        "minimumAdditiveMarginEur": "101.03",
+        "symbols": [
+          "AUDUSD",
+          "GBPUSD",
+          "USDCAD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": true,
+        "minimumAdditiveMarginEur": "101.03",
+        "symbols": [
+          "AUDUSD",
+          "GBPUSD",
+          "USDJPY"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": false,
+        "minimumAdditiveMarginEur": "245.87",
+        "symbols": [
+          "AUDUSD",
+          "GBPUSD",
+          "XAUUSD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": true,
+        "minimumAdditiveMarginEur": "90.87",
+        "symbols": [
+          "AUDUSD",
+          "USDCAD",
+          "USDJPY"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": false,
+        "minimumAdditiveMarginEur": "235.71",
+        "symbols": [
+          "AUDUSD",
+          "USDCAD",
+          "XAUUSD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": false,
+        "minimumAdditiveMarginEur": "235.71",
+        "symbols": [
+          "AUDUSD",
+          "USDJPY",
+          "XAUUSD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": true,
+        "minimumAdditiveMarginEur": "103.13",
+        "symbols": [
+          "EURUSD",
+          "GBPUSD",
+          "USDCAD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": true,
+        "minimumAdditiveMarginEur": "103.13",
+        "symbols": [
+          "EURUSD",
+          "GBPUSD",
+          "USDJPY"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": false,
+        "minimumAdditiveMarginEur": "247.97",
+        "symbols": [
+          "EURUSD",
+          "GBPUSD",
+          "XAUUSD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": true,
+        "minimumAdditiveMarginEur": "92.97",
+        "symbols": [
+          "EURUSD",
+          "USDCAD",
+          "USDJPY"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": false,
+        "minimumAdditiveMarginEur": "237.81",
+        "symbols": [
+          "EURUSD",
+          "USDCAD",
+          "XAUUSD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": false,
+        "minimumAdditiveMarginEur": "237.81",
+        "symbols": [
+          "EURUSD",
+          "USDJPY",
+          "XAUUSD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": true,
+        "minimumAdditiveMarginEur": "99.62",
+        "symbols": [
+          "GBPUSD",
+          "USDCAD",
+          "USDJPY"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": false,
+        "minimumAdditiveMarginEur": "244.46",
+        "symbols": [
+          "GBPUSD",
+          "USDCAD",
+          "XAUUSD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": false,
+        "minimumAdditiveMarginEur": "244.46",
+        "symbols": [
+          "GBPUSD",
+          "USDJPY",
+          "XAUUSD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": false,
+        "minimumAdditiveMarginEur": "234.30",
+        "symbols": [
+          "USDCAD",
+          "USDJPY",
+          "XAUUSD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": true,
+        "minimumAdditiveMarginEur": "134.36",
+        "symbols": [
+          "AUDUSD",
+          "EURUSD",
+          "GBPUSD",
+          "USDCAD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": true,
+        "minimumAdditiveMarginEur": "134.36",
+        "symbols": [
+          "AUDUSD",
+          "EURUSD",
+          "GBPUSD",
+          "USDJPY"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": false,
+        "minimumAdditiveMarginEur": "279.20",
+        "symbols": [
+          "AUDUSD",
+          "EURUSD",
+          "GBPUSD",
+          "XAUUSD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": true,
+        "minimumAdditiveMarginEur": "124.20",
+        "symbols": [
+          "AUDUSD",
+          "EURUSD",
+          "USDCAD",
+          "USDJPY"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": false,
+        "minimumAdditiveMarginEur": "269.04",
+        "symbols": [
+          "AUDUSD",
+          "EURUSD",
+          "USDCAD",
+          "XAUUSD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": false,
+        "minimumAdditiveMarginEur": "269.04",
+        "symbols": [
+          "AUDUSD",
+          "EURUSD",
+          "USDJPY",
+          "XAUUSD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": true,
+        "minimumAdditiveMarginEur": "130.85",
+        "symbols": [
+          "AUDUSD",
+          "GBPUSD",
+          "USDCAD",
+          "USDJPY"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": false,
+        "minimumAdditiveMarginEur": "275.69",
+        "symbols": [
+          "AUDUSD",
+          "GBPUSD",
+          "USDCAD",
+          "XAUUSD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": false,
+        "minimumAdditiveMarginEur": "275.69",
+        "symbols": [
+          "AUDUSD",
+          "GBPUSD",
+          "USDJPY",
+          "XAUUSD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": false,
+        "minimumAdditiveMarginEur": "265.53",
+        "symbols": [
+          "AUDUSD",
+          "USDCAD",
+          "USDJPY",
+          "XAUUSD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": true,
+        "minimumAdditiveMarginEur": "132.95",
+        "symbols": [
+          "EURUSD",
+          "GBPUSD",
+          "USDCAD",
+          "USDJPY"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": false,
+        "minimumAdditiveMarginEur": "277.79",
+        "symbols": [
+          "EURUSD",
+          "GBPUSD",
+          "USDCAD",
+          "XAUUSD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": false,
+        "minimumAdditiveMarginEur": "277.79",
+        "symbols": [
+          "EURUSD",
+          "GBPUSD",
+          "USDJPY",
+          "XAUUSD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": false,
+        "minimumAdditiveMarginEur": "267.63",
+        "symbols": [
+          "EURUSD",
+          "USDCAD",
+          "USDJPY",
+          "XAUUSD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": false,
+        "minimumAdditiveMarginEur": "274.28",
+        "symbols": [
+          "GBPUSD",
+          "USDCAD",
+          "USDJPY",
+          "XAUUSD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": true,
+        "minimumAdditiveMarginEur": "164.18",
+        "symbols": [
+          "AUDUSD",
+          "EURUSD",
+          "GBPUSD",
+          "USDCAD",
+          "USDJPY"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": false,
+        "minimumAdditiveMarginEur": "309.02",
+        "symbols": [
+          "AUDUSD",
+          "EURUSD",
+          "GBPUSD",
+          "USDCAD",
+          "XAUUSD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": false,
+        "minimumAdditiveMarginEur": "309.02",
+        "symbols": [
+          "AUDUSD",
+          "EURUSD",
+          "GBPUSD",
+          "USDJPY",
+          "XAUUSD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": false,
+        "minimumAdditiveMarginEur": "298.86",
+        "symbols": [
+          "AUDUSD",
+          "EURUSD",
+          "USDCAD",
+          "USDJPY",
+          "XAUUSD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": false,
+        "minimumAdditiveMarginEur": "305.51",
+        "symbols": [
+          "AUDUSD",
+          "GBPUSD",
+          "USDCAD",
+          "USDJPY",
+          "XAUUSD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": false,
+        "minimumAdditiveMarginEur": "307.61",
+        "symbols": [
+          "EURUSD",
+          "GBPUSD",
+          "USDCAD",
+          "USDJPY",
+          "XAUUSD"
+        ]
+      },
+      {
+        "below200BeforeCostsAndRisk": false,
+        "minimumAdditiveMarginEur": "338.84",
+        "symbols": [
+          "AUDUSD",
+          "EURUSD",
+          "GBPUSD",
+          "USDCAD",
+          "USDJPY",
+          "XAUUSD"
+        ]
+      }
+    ],
+    "xauPlusCheapestFxMinimumMarginEur": "204.48"
+  },
+  "economicQualification": false,
+  "fundedReplay": false,
+  "hard21Proven": false,
+  "historicalCalendarIndependent": false,
+  "independentCustodyReadbackMatched": true,
+  "maxRequests": 60,
+  "ordersSubmitted": 0,
+  "originalFrozenModelReplayed": false,
+  "originalH4IntervalGeometryMatchedSymbols": [
+    "EURUSD",
+    "GBPUSD",
+    "USDJPY",
+    "AUDUSD",
+    "USDCAD",
+    "XAUUSD"
+  ],
+  "originalSourceCiphertextSha256": "50e40f62156f598d715d6052e466ae7ef77b9bc39117cad37472c7f0f505e61d",
+  "publicArtifactId": 13227307080,
+  "readOnly": true,
+  "remaining": "Full opportunity calendar quotes and synchronized holding marks, historical costs/FX/financing, causal joint EUR-risk estimation and independent portfolio validation",
+  "schema": "mxm-joint-quote-evidence-extension-v1",
+  "source": "Pepperstone-cTrader-OpenAPI",
+  "sourceCiphertextSha256": "93b1820d6abb14df6a6a6c13e83ac6338555cbf03ba8516b000b473c375e55cd",
+  "sourcePurpose": "EXECUTION_EVIDENCE_ACCESS_FEASIBILITY_NOT_MODEL_SCORING",
+  "sourceRunId": 41628896432,
+  "sourceRunUrl": "https://github.com/mariancradulescu/mxm-quant-cloud/actions/runs/41628896432",
+  "synchronization": [
+    {
+      "allSixPresent": true,
+      "clock": 1780390800000,
+      "maxObservedTimeSkewMs": 1777
+    },
+    {
+      "allSixPresent": true,
+      "clock": 1780405200000,
+      "maxObservedTimeSkewMs": 495
+    }
+  ],
+  "universe": [
+    "EURUSD",
+    "GBPUSD",
+    "USDJPY",
+    "AUDUSD",
+    "USDCAD",
+    "XAUUSD"
+  ]
+}

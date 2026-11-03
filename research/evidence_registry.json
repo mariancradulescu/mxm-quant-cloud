@@ -13,6 +13,7 @@
     "docs/AUTHENTIC_RELATIVE_GROSS_VERDICT_20261103.json": "2ed851f41737fd8b4a8963852602137db6aad1bcd187f3fa41a618a71d51812a",
     "docs/AUTHENTIC_WIDE_REGIME_VERDICT_20261103.json": "8ce232c1cb4f8f7dafc014de898ec6752838e5c58190d32eebe0a6c180860a65",
     "docs/JOINED_OPPORTUNITY_AUTHENTIC_RESULT.json": "292c3a3d086deee3af9efb3b480a339fa4edf99c3dda58de7559d712cd166187",
+    "docs/JOINT_QUOTE_EVIDENCE_AUTHENTIC_RESULT.json": "5df419990d0cd142e7bda794ed2ae791bc0853c4739f6b0286c35c1f62a5403a",
     "docs/NEW_SOURCE_H1_CAUSAL_COLD_VERDICT_20261102.json": "e1a264c8dda8e9f2af3f8b4c1eda51b03fd05be0c98000e23f601c1dd04ffda3",
     "docs/PRIMARY145_H1_CLOCK_ONLY_COLD_RECEIPT_20261102.json": "318ee501f75448fe1a5a18e3dd8923623ed436da4304aa9bd53f577ed1dcd50d",
     "research/__init__.py": "0d524308d52bc92170dcffc9bd8ecef86dd00dc31113674faffc51f95662ad74",
@@ -232,6 +233,21 @@
       "scope": "EURUSD M15 370-day anchor and wick; original 60/20/20 unchanged",
       "sourceRunId": 41619870283,
       "unscoredLocalFinal20IsIndependent": false
+    },
+    {
+      "calendarUtcMs": [
+        1780390800000,
+        1780405200000
+      ],
+      "ciphertextSha256": "93b1820d6abb14df6a6a6c13e83ac6338555cbf03ba8516b000b473c375e55cd",
+      "decisionExposure": [
+        "execution-evidence feasibility",
+        "current additive margin frontier, all64 subsets"
+      ],
+      "exactPublicReceipt": "docs/JOINT_QUOTE_EVIDENCE_AUTHENTIC_RESULT.json",
+      "independent": false,
+      "scope": "JQE1 all-six-asset fixed event quotes and current expected minimum margins",
+      "sourceRunId": 41628896432
     }
   ],
   "unknownExposurePolicy": "TREAT_AS_EXPOSED_FOR_QUALIFICATION"
