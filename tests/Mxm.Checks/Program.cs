@@ -330,4 +330,23 @@ Check(!SelectiveRecovery.Assess(
     "30 percent drawdown boundary remains protective but timer can continue");
 
 
+// Material causality and currency-cost invariants for new quote NET engine.
+var shockBars=Enumerable.Range(0,25).Select(i=>new IntradayReversalNet.Bar(
+    new DateTimeOffset(2026,1,5,2,0,0,TimeSpan.Zero).ToUnixTimeMilliseconds()+i*900000L,
+    1.10m,1.101m,1.099m,i>=12?1.104m:1.10m)).ToArray();
+// Build valid high/low geometry and a preceding one-hour upward shock at 06 UTC.
+shockBars=shockBars.Select((b,i)=>b with {H=1.109m,L=1.099m,C=i>=12?1.108m:1.10m}).ToArray();
+Check(IntradayReversalNet.Propose(shockBars).Length==0,"subthreshold hour never forced to satisfy HARD21");
+shockBars=shockBars.Select((b,i)=>b with {H=1.12m,C=i==15?1.12m:1.10m}).ToArray();
+Check(IntradayReversalNet.Propose(shockBars).Length==0,"range threshold is causal and honored");
+var reversalBars=Enumerable.Range(0,25).Select(i=>new IntradayReversalNet.Bar(shockBars[i].T,
+    1.10m,i==15?1.105m:1.101m,1.099m,i==15?1.105m:1.10m)).ToArray();
+var frozenPlans=IntradayReversalNet.Propose(reversalBars);
+Check(frozenPlans.Length==1 && frozenPlans[0].Direction==-1,"predeclared large upward shock is faded at six UTC");
+var alteredFuture=reversalBars.Select((b,i)=>i>=16?b with {C=1.2m,H=1.3m,L=1.0m}:b).ToArray();
+Check(IntradayReversalNet.Propose(alteredFuture).Select(p=>(p.Entry,p.Exit,p.Direction)).SequenceEqual(
+    frozenPlans.Select(p=>(p.Entry,p.Exit,p.Direction))),"future holding returns cannot change frozen signal");
+Check(Rejects(()=>IntradayReversalNet.Propose(reversalBars.Concat(new[]{reversalBars[0]}).ToArray())),
+    "duplicate source cannot create additional modeled trades");
+
 Console.WriteLine($"PASS {passed} recovery/accounting/portfolio/causal-H1/dynamic-risk/source-calendar/causal-score checks; synthetic, no economic qualification.");

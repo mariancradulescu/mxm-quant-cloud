@@ -1,5 +1,14 @@
 using System.Text.Json;
 using System.Security.Cryptography;
+if (args.Length == 3 && (args[2] == "--intraday-plan" || args[2] == "--intraday-net"))
+{
+    try {
+        using var d=System.Text.Json.JsonDocument.Parse(System.IO.File.ReadAllBytes(args[0]));
+        object r=args[2]=="--intraday-plan" ? Mxm.Core.IntradayReversalNet.Propose(Mxm.Core.IntradayReversalNet.Bars(d.RootElement)) : Mxm.Core.IntradayReversalNet.Assess(d.RootElement);
+        System.IO.File.WriteAllText(args[1],System.Text.Json.JsonSerializer.Serialize(r));
+        return 0;
+    } catch { return 9; }
+}
 if (args.Length == 3 && args[2] == "--economic-net-coverage")
 {
     try
