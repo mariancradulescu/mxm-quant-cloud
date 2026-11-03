@@ -198,10 +198,15 @@ class FundedReplay:
         self.balance -= c.entry_commission_eur
         self.open[d.position_id] = temp
 
-    def _exit(self, position_id, q, reason):
+    def _exit(self, position_id, q, reason, observed_exit_commission_eur=None):
         p = self.open.pop(position_id)
         d = p.request
         c = d.contract
+        # Only an entry-time fee estimate is available before opening.
+        # True quote-dependent exit fee is supplied after the exit quote appears.
+        exit_fee = c.exit_commission_eur if observed_exit_commission_eur is None else observed_exit_commission_eur
+        if exit_fee < 0:
+            raise IncompleteEvidence('INVALID_OBSERVED_EXIT_COMMISSION')
         out = q.bid - c.slippage_price_each_side if d.side == 1 else q.ask + c.slippage_price_each_side
         actual_quote = d.side * d.units * (out - p.entry_exec)
         raw_mid_quote = d.side * d.units * (q.mid - p.entry_quote.mid)
@@ -213,19 +218,19 @@ class FundedReplay:
         if conversion < -D('0.000000001'):
             raise IncompleteEvidence('INCONSISTENT_FX_CONVERSION_COST')
         conversion = max(D('0'), conversion)
-        net = converted - c.entry_commission_eur - c.exit_commission_eur + p.financing_paid_eur
-        self.balance += converted - c.exit_commission_eur
+        net = converted - c.entry_commission_eur - exit_fee + p.financing_paid_eur
+        self.balance += converted - exit_fee
         trade = {'id':position_id, 'symbol':d.symbol, 'opened_at':p.entry_at, 'closed_at':q.t,
                  'side':d.side, 'units':d.units, 'exit_reason':reason,
                  'gross_eur':gross, 'spread_eur':spread, 'slippage_eur':slip,
-                 'conversion_eur':conversion, 'commissions_eur':c.entry_commission_eur+c.exit_commission_eur,
+                 'conversion_eur':conversion, 'commissions_eur':c.entry_commission_eur+exit_fee,
                  'financing_eur':-p.financing_paid_eur, 'net_eur':net}
         expected = gross - spread - slip - conversion - trade['commissions_eur'] - trade['financing_eur']
         if abs(expected-net) > D('0.000000001'):
             raise IncompleteEvidence('ACCOUNTING_NOT_CONSERVED')
         self.trades.append(trade)
 
-    def quote(self, q: Quote):
+    def quote(self, q: Quote, *, observed_exit_commission_eur=None):
         q.check()
         self._clock(q.t)
         previous = self.quotes.get(q.symbol)
@@ -248,7 +253,7 @@ class FundedReplay:
                 continue
             if d.action == 'CLOSE':
                 if d.position_id in self.open:
-                    self._exit(d.position_id,q,'DELAYED_EXIT_AT_OBSERVED_QUOTE')
+                    self._exit(d.position_id,q,'DELAYED_EXIT_AT_OBSERVED_QUOTE',observed_exit_commission_eur)
             else:
                 self._entry(d,q)
         self.pending = rest
