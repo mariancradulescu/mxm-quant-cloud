@@ -1,4 +1,5 @@
-CEF1 prospective methodology feasibility, authorized OWNER continuation after PR39–41.
-Reuse exposed authentic custody 41648280262 only; zero broker requests, zero returns or allocations.
-Native/Python first-observable-event parity and minimum-volume cost/margin path support.
-Do not replace EPA2 snapshots, rerun its policies, select favorable paths or claim confirmation.
+CEF1 exact original support receipt verification after batch optimization.
+Authorized OWNER continuation after PR39–41; no new broker requests or economic rescoring.
+Require complete original receipt equality, excluding execution ID and added status histogram only.
+Original run41695561224; public artifact13261641379; SHA256 f6b01ad3220419d7fcdf418c0bc2ddc1270625afb0cb1e114e53cbec30148ce4.
+No EPA2 replacement, model selection, orders or Cloud activation.
