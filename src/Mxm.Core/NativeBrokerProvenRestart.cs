@@ -38,18 +38,24 @@ public sealed partial class NativeFundedSession
            orders.Any(o=>o.SubmittedAt is not long sent ||
                sent<founding.At || sent>o.UpdatedAt ||
                o.PositionId.Length==0 || o.Closing is null ||
-               o.Status!="FILLED" || o.ExecutedUnits!=o.RequestedUnits ||
-               o.RequestedUnits<=0))
+               o.Status is not ("FILLED" or "CANCELLED" or "EXPIRED" or "REJECTED") ||
+               o.RequestedUnits<=0 || o.ExecutedUnits<0 ||
+               o.ExecutedUnits>o.RequestedUnits ||
+               o.Status=="FILLED" && o.ExecutedUnits!=o.RequestedUnits ||
+               o.Status=="REJECTED" && o.ExecutedUnits!=0))
             return Reject("BROKER_RESTART_SUBMITTED_ORDER_OR_TERMINAL_IDENTITY_UNKNOWN");
         // All historical deal facts, including expenses and funding, must be
         // positively supplied, not made up from current balance or position PnL.
         var dealGroups=input.Snapshot.Deals.GroupBy(d=>d.OrderId)
             .ToDictionary(g=>g.Key,g=>g.ToArray(),StringComparer.Ordinal);
-        if(orders.Any(o=>!dealGroups.TryGetValue(o.OrderId,out var ds) ||
-             ds.Sum(d=>d.Units)!=o.ExecutedUnits ||
-             ds.Any(d=>d.At<o.SubmittedAt || d.At>o.UpdatedAt ||
-                d.PositionId!=o.PositionId || d.Symbol!=o.Symbol ||
-                d.Side!=o.Side || d.Closing!=o.Closing)))
+        if(orders.Any(o=>{
+            bool hasDeals=dealGroups.TryGetValue(o.OrderId,out var ds);
+            if(o.ExecutedUnits==0)return hasDeals; // positive unfilled terminal
+            return !hasDeals || ds!.Sum(d=>d.Units)!=o.ExecutedUnits ||
+                ds!.Any(d=>d.At<o.SubmittedAt || d.At>o.UpdatedAt ||
+                    d.PositionId!=o.PositionId || d.Symbol!=o.Symbol ||
+                    d.Side!=o.Side || d.Closing!=o.Closing);
+        }))
             return Reject("BROKER_RESTART_DEALS_NOT_POSITIVELY_LINKED");
         var facts=input.Facts.Where(f=>f.Kind is "OPEN" or "CLOSE").ToArray();
         if(facts.Length!=input.Snapshot.Deals.Length ||
@@ -65,7 +71,8 @@ public sealed partial class NativeFundedSession
             "BROKER_CONFIRMED_ORDER/"+o.OrderId,o.OrderId,o.PositionId,o.Symbol,
             o.Side,o.RequestedUnits,o.Closing!.Value,o.SubmittedAt!.Value,
             mappings.TryGetValue(o.PositionId,out var ledger)?ledger[0]:"")).ToArray();
-        if(intents.Any(i=>string.IsNullOrWhiteSpace(i.LedgerPositionId)))
+        if(intents.Any(i=>orders.Any(o=>o.OrderId==i.OrderId &&
+            o.ExecutedUnits>0 && string.IsNullOrWhiteSpace(i.LedgerPositionId))))
             return Reject("BROKER_RESTART_OPEN_POSITION_LEDGER_ID_UNKNOWN");
         var candidate=new NativeFundedSession(input.AccountBinding,
             intents:intents,journalContinuityProven:true);

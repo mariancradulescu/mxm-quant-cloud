@@ -89,6 +89,36 @@ internal static class MonetaryRecoveryChecks
             "positive native broker order clocks and complete monetary facts recover a continuous EUR200 book without local checkpoint");
         check(restoredBroker.Recovered!.Intents.All(i=>i.IntentId.StartsWith("BROKER_CONFIRMED_ORDER/")),
             "recovered intent attribution comes from exact broker-native historical order identity");
+        var partiallyFilledTerminal=withSubmitted with {
+            Snapshot=withSubmitted.Snapshot with {
+                Orders=withSubmitted.Snapshot.Orders.Select(o=>o.OrderId=="open"
+                    ?o with {Status="CANCELLED",RequestedUnits=3m,ExecutedUnits=2m}
+                    :o).ToArray()
+            }
+        };
+        var partialRestart=NativeFundedSession.RebuildFromProvenBrokerHistory(
+            partiallyFilledTerminal,new[]{originalFunding});
+        check(partialRestart.Adopted&&partialRestart.Recovered!.Ledger.Summary().CashEur==200.51m &&
+              partialRestart.Recovered.Ledger.Summary().CompleteRoundTrips==1,
+            "positively canceled unfilled order remainder does not erase partial historical executions");
+        var terminalZero=new BrokerOrderIdentity("no-fill","","unused","SYNTH",1,
+            1m,0m,false,"CANCELLED",2100,1900);
+        var withUnfilled=withSubmitted with {
+            Snapshot=withSubmitted.Snapshot with {
+                Orders=withSubmitted.Snapshot.Orders.Append(terminalZero).ToArray()
+            }
+        };
+        var zeroRestart=NativeFundedSession.RebuildFromProvenBrokerHistory(
+            withUnfilled,new[]{originalFunding});
+        check(zeroRestart.Adopted&&zeroRestart.Recovered!.Ledger.Summary().CashEur==200.51m &&
+              zeroRestart.Recovered.Intents.Any(i=>i.OrderId=="no-fill"),
+            "affirmatively unfilled terminal broker order is retained without manufacturing an execution");
+        check(!NativeFundedSession.RebuildFromProvenBrokerHistory(
+            withUnfilled with {Snapshot=withUnfilled.Snapshot with {
+                Orders=withUnfilled.Snapshot.Orders.Select(o=>o.OrderId=="no-fill"
+                    ?o with {Status="ACTIVE"}:o).ToArray()
+            }},new[]{originalFunding}).Adopted,
+            "unresolved pending order is not silently converted into a terminal broker receipt");
         check(!NativeFundedSession.RebuildFromProvenBrokerHistory(
             final,new[]{originalFunding}).Adopted,
             "missing submitted time is not replaced by a modeled execution clock");
