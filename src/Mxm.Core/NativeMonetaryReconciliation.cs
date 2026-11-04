@@ -3,12 +3,12 @@ namespace Mxm.Core;
 
 // Source monetary amounts, never inferred from a changed account balance.
 // Conversion quotes must have existed at the monetary event, not at restart.
-public sealed record MonetaryLeg(decimal Amount,string Currency,decimal EurPerUnit,long RateAt,string EvidenceHash);
+public sealed record MonetaryLeg(decimal? Amount,string Currency,decimal? EurPerUnit,long? RateAt,string EvidenceHash);
 public sealed record AttributedMoneyFact(string AccountBinding,string Domain,string Kind,string EventId,
     string DealId,string OrderId,string PositionId,string LedgerPositionId,string Symbol,int Side,decimal Units,
     long At,long AvailableAt,long Sequence,decimal? ExecutionPrice,MonetaryLeg? Gross,MonetaryLeg? Commission,
     MonetaryLeg? ConversionFee,MonetaryLeg? Financing,string EvidenceHash);
-public sealed record ConfirmedFundingEvent(string RecordId,string PositionId,string Symbol,long At,decimal Amount,string Currency,long AvailableAt,string EvidenceHash);
+public sealed record ConfirmedFundingEvent(string RecordId,string PositionId,string Symbol,long At,decimal? Amount,string Currency,long AvailableAt,string EvidenceHash);
 public sealed record MoneyRecoveryBatch(string AccountBinding,string Domain,BrokerIdentitySnapshot Snapshot,
     AttributedMoneyFact[] Facts,decimal? BrokerCashEur,bool InitialCapital200Proven,bool CashflowHistoryComplete,
     bool FinancingHistoryComplete,bool AdditionalExternalCashflowDetected,ConfirmedFundingEvent[]? FundingRecords,long? BrokerCashObservedAt);
@@ -24,10 +24,11 @@ public sealed partial class NativeFundedLedger
     internal IReadOnlyDictionary<string,string> FactHashes=>state.AppliedEventHashes;
     static decimal Eur(MonetaryLeg? leg,long at)
     {
-        if(leg is null || string.IsNullOrWhiteSpace(leg.Currency) || leg.EurPerUnit<=0 || leg.RateAt>at || at-leg.RateAt>2000 ||
-            leg.EvidenceHash.Length!=64 || !leg.EvidenceHash.All(Uri.IsHexDigit) || leg.Currency=="EUR"&&leg.EurPerUnit!=1)
+        if(leg is null || leg.Amount is not decimal value || leg.EurPerUnit is not decimal rate || leg.RateAt is not long rateAt ||
+            string.IsNullOrWhiteSpace(leg.Currency) || rate<=0 || rateAt>at || at-rateAt>2000 || string.IsNullOrEmpty(leg.EvidenceHash) ||
+            leg.EvidenceHash.Length!=64 || !leg.EvidenceHash.All(Uri.IsHexDigit) || leg.Currency=="EUR"&&rate!=1)
             throw new ArgumentException("MONETARY_AMOUNT_OR_CAUSAL_CONVERSION_UNKNOWN");
-        return leg.Amount*leg.EurPerUnit;
+        return value*rate;
     }
     static object? LegIdentity(MonetaryLeg? l)=>l is null?null:new {l.Amount,l.Currency,l.EurPerUnit,l.RateAt};
     internal static string EconomicFactHash(AttributedMoneyFact f)=>Hash(JsonSerializer.Serialize(new {

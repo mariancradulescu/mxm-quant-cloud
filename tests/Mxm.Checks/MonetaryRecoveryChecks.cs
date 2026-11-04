@@ -42,6 +42,15 @@ internal static class MonetaryRecoveryChecks
             "positive partial execution imports its cash debit without waiting for full order completion");
         check(accepted.RetainedLedger.LiquidationEquityEur is null&&!accepted.OrdersEnabled,
             "missing broker floating liquidation evidence cannot become a zero loss or trading permission");
+        var omittedNode=System.Text.Json.Nodes.JsonNode.Parse(JsonSerializer.Serialize(first with {BrokerCashEur=200}))!;
+        omittedNode["Facts"]![0]!["Commission"]!.AsObject().Remove("Amount");
+        var omittedAmount=JsonSerializer.Deserialize<MoneyRecoveryBatch>(omittedNode.ToJsonString())!;
+        var noSilentZero=new NativeFundedSession(account,intents:intents,journalContinuityProven:true);
+        check(!noSilentZero.ReconcileMoney(omittedAmount).Adopted&&noSilentZero.Ledger.Summary().CashEur==200,
+            "an omitted JSON monetary Amount is unknown, never a default zero commission");
+        var explicitZero=first with {Facts=new[]{f1 with {Commission=Leg(0,2000)}},BrokerCashEur=200};
+        check(noSilentZero.ReconcileMoney(explicitZero).Adopted,
+            "an explicitly evidenced zero commission remains distinct from an omitted amount");
         var before=session.Checkpoint();var repeated=session.ReconcileMoney(first);
         check(repeated.Adopted&&session.Checkpoint()==before,"same financial snapshot is idempotent");
         var missingCost=Batch(new[]{f1,f2 with {Commission=null}},199.8m,6000);
