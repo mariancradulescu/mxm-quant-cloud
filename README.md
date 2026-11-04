@@ -200,3 +200,22 @@ weekly dispersion and missing outcomes; exact IMT1 is closed without
 retuning or audit winner selection. Original artifact hashes and the
 sanitized summary are frozen; no new funded NET, HARD21, independent
 confirmation or Cloud/trading authorization is claimed.
+
+
+**Integrated predictive portfolio IPF1 (authentic readback, closed)** —
+[full economic and predictive evidence](docs/IPF1_RESULT.md) from
+[run #41829664972](https://github.com/mariancradulescu/mxm-quant-cloud/actions/runs/41829664972).
+Original 836,087 Pepperstone M5 OHLCV/tick-activity bars, multi-timeframe
+online predictive families and neutral forecast baselines were evaluated
+in the existing native C# **joint** EUR200 risk/selector research endpoint.
+One continuous modeled selection+exposed-audit common book, 74 modeled
+round trips, ended EUR193.72 (conditional −EUR6.28; sampled drawdown
+22.14%; three concurrent symbols maximum). Among 36 FUSION
+symbol/horizon selection groups, 3 improved MSE versus zero drift.
+A predeclared counterfactual that omitted cross-asset relative
+ended modeled EUR213.79, **but lost EUR53.11 in the globally exposed audit**,
+so it is **not** promoted, retuned or construed as independent NET.
+All original artifact hashes are frozen; no authentic broker fills,
+historical cash certification, independent confirmation, HARD21
+or Cloud order permission follows. The native selector/ledger
+and OWNER v2.0 boundaries remain unchanged.
