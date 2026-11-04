@@ -101,7 +101,9 @@
     "research/session_wick_signal.py": "009fde0f32554db684c1fb0474a665f3afc8f06db588aae26632a4740465aa9c",
     "research/tick_volume_net.py": "2747ef20609c4a1e82e4fb225d8c55e49b60b4e5c2c7327ca730666157fa93ed",
     "research/volume_policy_attribution.py": "5684498045923c37af76b35f47a49c9f8cef4b98aeab8213f9e88d0020c2b04d",
-    "src/Mxm.Core/SequenceOpportunityResearch.cs": "75131c62df5e6a2b3276548bb70e2d98399f2cbec6a3889745ed5e7abf32acb7"
+    "src/Mxm.Core/SequenceOpportunityResearch.cs": "75131c62df5e6a2b3276548bb70e2d98399f2cbec6a3889745ed5e7abf32acb7",
+    "research/intermarket_transmission_protocol.json": "33ec38c3f011f1a3edc81ba6b4c7e8befb54422b76f744105f0f89a7661251bc",
+    "docs/IMT1_CONDITIONAL_RESULT.json": "23da3224dd063ad352dd56fdaf171333f95c560ae1120bae48577a04772e8ce1"
   },
   "independenceDefault": "NOT_ESTABLISHED",
   "nativeFundedFactReception": {
@@ -435,7 +437,7 @@
       "id": "IMT1",
       "phase": "EXPOSED_PROSPECTIVE_INTERMARKET_RISK_TRANSMISSION_AND_UNDERREACTION",
       "protocolFile": "research/intermarket_transmission_protocol.json",
-      "status": "PREDECLARED_NO_SCORING",
+      "status": "CLOSED_EXACT_NO_SELECTION_SUPPORT",
       "independent": false,
       "qualification": false,
       "sourceRuns": [
@@ -457,7 +459,22 @@
       "fundedNetEur": null,
       "ordersSubmitted": 0,
       "jointPortfolioFundedAllocation": "NOT_YET_ALLOWED_ON_MISSING_FILL_HISTORY",
-      "referenceOwnerDecision": "OWNER_20261104_AFTER_PR57_58"
+      "referenceOwnerDecision": "OWNER_20261104_AFTER_PR57_58",
+      "executionRunId": 41823243326,
+      "executionCommit": "dcd42aa27148ecba8d3196f623e653ae3048ec25",
+      "originalResultArtifactId": 13318246698,
+      "originalZipSha256": "3ae765c64c58c3e507cb466cc3bb774169a955305b68079c31ca6afb7574e47f",
+      "originalPublicResultJsonSha256": "62680f17a20e49883feae3e16963b4757d8a9048b6f7e65ce5f71422b2b13c06",
+      "protocolSha256": "33ec38c3f011f1a3edc81ba6b4c7e8befb54422b76f744105f0f89a7661251bc",
+      "exactPublicReceipt": "docs/IMT1_CONDITIONAL_RESULT.json",
+      "costClass": "CONDITIONAL_COST_MODEL",
+      "conditionalGroupRows": 108,
+      "sourceBars": 836087,
+      "sourceObservedCostContexts": 166,
+      "selectionSupport": [],
+      "hard21Proven": false,
+      "independentMarginalContributionDemonstrated": false,
+      "noOrdersOrCloudActivation": true
     }
   ],
   "schema": "mxm-project-data-exposure-v1",
