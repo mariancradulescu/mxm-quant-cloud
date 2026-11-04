@@ -52,7 +52,7 @@ public sealed partial class NativeFundedSession
             bool hasDeals=dealGroups.TryGetValue(o.OrderId,out var ds);
             if(o.ExecutedUnits==0)return hasDeals; // positive unfilled terminal
             return !hasDeals || ds!.Sum(d=>d.Units)!=o.ExecutedUnits ||
-                ds.Any(d=>d.At<o.SubmittedAt || d.At>o.UpdatedAt ||
+                ds!.Any(d=>d.At<o.SubmittedAt || d.At>o.UpdatedAt ||
                     d.PositionId!=o.PositionId || d.Symbol!=o.Symbol ||
                     d.Side!=o.Side || d.Closing!=o.Closing);
         }))
