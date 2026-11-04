@@ -1,0 +1,13 @@
+MXM_RCP1_CAUSAL_DELAYED_ENTRY_GLOBAL_PORTFOLIO_RESEARCH
+Authority: docs/OWNER_SPEC.md OWNER v2.0 and current OWNER decision after PR61-62.
+One exact prospective RCP1 original-source economic execution with closed IPF1 untouched.
+Protocol: research/rcp1_protocol.json (registered globally before any outcomes).
+Evidence: sealed Pepperstone LIVE scope-view BDP1 #41724643418, AIP1 #41735441128.
+Research: structural range compression, cross-asset dispersion and tail pressure; 4h/24h/72h.
+Execution correction: decide at H4 end, model future entry at independently complete next M5 bar; abstain if missing.
+Joint scenarios: all open positions plus proposed instrument, shared margin/cash/risk on one EUR200 model book.
+Counterfactuals FULL/3 fixed omissions/FULL_STRESS/FLAT_NEUTRAL, no retrospective winner.
+All 26 weekly system HARD21 eligibility periods and missing outcomes retained, no trades forced.
+All source globally exposed, not independent. Models and priced executions conditional, not broker fills.
+No historical study reruns, new broker source, orders, external services or Cloud activation.
+Exactly once: commit only ops/rcp1-research-request.txt on owner/main.
