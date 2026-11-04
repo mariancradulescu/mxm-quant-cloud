@@ -169,7 +169,8 @@ class Book:
         if len(self.admissionExamples)<8:
             self.admissionExamples.append(dict(id=key,signalAt=t,
                 entryAt=entryAt,side=side,units=units,marginEur=margin,
-                modeledNextM5Price=entry,entryWasUnknownAtDecision=True))
+                actualM5EntryClockWasAfterSignal=True,
+                entryWasUnknownAtDecision=True))
         self.mark(entryAt,views,cost)
         return True
     def finish(self,end,views,cost,p):
