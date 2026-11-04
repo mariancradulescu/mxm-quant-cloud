@@ -49,6 +49,7 @@ class Twc1Contracts(unittest.TestCase):
             prices[old]=100.
             prices[old+MS]=100.01
             for h in range(1,5):
+                prices[old+h*HR]=100.0+h*.01
                 prices[old+MS+h*HR]=100.01+h*.01
             prices[old+MS+4*HR]=100.05
         view={"EURUSD":{"price":prices}}
