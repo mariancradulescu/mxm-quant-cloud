@@ -21,7 +21,7 @@ public sealed record BrokerFlatReadbackReport(bool Adopted,bool BrokerCashIdenti
 public sealed partial class NativeFundedLedger
 {
     internal static NativeFundedLedger RebuildFlatBrokerHistory(BrokerFlatReadback b,
-        decimal retainedObservedPeak)
+        decimal retainedObservedPeak,decimal retainedWorstSampledDrawdown)
     {
         var closed=b.Closed.OrderBy(x=>x.ClosedAt).ThenBy(x=>x.ClosingDealId,StringComparer.Ordinal).ToArray();
         var ledger=new NativeFundedLedger();
@@ -48,7 +48,8 @@ public sealed partial class NativeFundedLedger
         maximum=Math.Max(maximum,Math.Max(200m,b.EquityEur));
         ledger.state=ledger.state with {
             CashEur=b.BalanceEur,Clock=b.At,ObservedPeakEur=maximum,
-            MaximumSampledDrawdown=0,HistoryEvidenceIncomplete=true,
+            MaximumSampledDrawdown=Math.Max(retainedWorstSampledDrawdown,
+                1m-b.EquityEur/maximum),HistoryEvidenceIncomplete=true,
             Positions=new(),Pending=new(),Closed=fragments,
             UsedPositionIds=closed.Select(x=>x.PositionId).ToHashSet(StringComparer.Ordinal),
             AppliedEventHashes=hashes,EventChainHash=chain,MonetaryDomain="BROKER_EXECUTION_FACT"
@@ -100,9 +101,12 @@ public sealed partial class NativeFundedSession
             return Reject("NATIVE_NONFLAT_LEDGER_HISTORY_CANNOT_BE_REPLACED");
         NativeFundedLedger candidate;
         try {
-            decimal previousPeak=Math.Max(Ledger.Summary().ObservedPeakEur,
+            var oldState=Ledger.Summary();
+            decimal previousPeak=Math.Max(oldState.ObservedPeakEur,
                 PortfolioObservation.State.ObservedPeakEur??200m);
-            candidate=NativeFundedLedger.RebuildFlatBrokerHistory(b,previousPeak);
+            decimal previousDrawdown=Math.Max(oldState.MaximumSampledDrawdown,
+                PortfolioObservation.State.WorstSampledDrawdown??0m);
+            candidate=NativeFundedLedger.RebuildFlatBrokerHistory(b,previousPeak,previousDrawdown);
             foreach(var old in Ledger.FactHashes)
                 if(!candidate.FactHashes.TryGetValue(old.Key,out var h)||h!=old.Value)
                     return Reject("NATIVE_OLD_FINANCIAL_EVIDENCE_CANNOT_BE_DROPPED");
