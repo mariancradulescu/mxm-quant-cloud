@@ -17,7 +17,13 @@ def native(data,mode):
         inp,out=Path(tmp)/'input.json',Path(tmp)/'output.json'
         inp.write_text(json.dumps(data,sort_keys=True,default=str));inp.chmod(0o600)
         env={k:v for k,v in os.environ.items() if not k.startswith(('R3_','CTRADER_','MXM_V4_'))}
-        subprocess.run(['dotnet',DLL,str(inp),str(out),mode],check=True,env=env,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+        proc=subprocess.run(['dotnet',DLL,str(inp),str(out),mode],check=False,env=env,
+                            stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,text=True)
+        if proc.returncode:
+            import re
+            match=re.search(r'BATCH_RESEARCH_ERROR:([A-Za-z][A-Za-z0-9]{0,80})',proc.stderr or '')
+            category=match.group(1) if match else 'UNKNOWN'
+            raise RuntimeError(f'NATIVE_REPLAY_FAILED mode={mode} exit={proc.returncode} category={category}')
         return json.loads(out.read_text(),parse_float=D)
 
 
