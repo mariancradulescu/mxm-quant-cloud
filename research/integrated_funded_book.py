@@ -84,7 +84,15 @@ class Book:
                 conditionalFinancingEur=round(charge,8),
                 conditionalNetEur=round(net,8),conditionalOnly=True))
             del self.open[pid]
+    def book_identity(self):
+        # No additional capital wallet or balancing transfer: all entries,
+        # closed net and reserved friction belong to the same EUR200 book.
+        expected=200.+self.netClosed-sum(x["friction"] for x in self.open.values())
+        return abs(self.cash-expected)<=.00001
+
     def mark(self,t,views,cost):
+        if not self.book_identity():
+            raise ValueError("IPF1_COMMON_EUR200_LEDGER_CASH_IDENTITY_MISMATCH")
         floating=0.;used=0.
         for p in self.open.values():
             price=views[p["symbol"]]["price"].get(t)
@@ -243,7 +251,7 @@ def request_for(book,t,forecasts,views,cost,p,variant):
         EffectiveIndependentBlocks=4,UncertaintyMultiplier=1)
     req=dict(Scope="IPF1_MULTI_HORIZON_CONDITIONAL_RESEARCH_NOT_CERTIFIED",
         CommonHorizonMinutes=0,Clock=t,Account=account,Baseline=baseline,
-        Opportunities=opp,LedgerReconciled=not book.freezeOnDD,
+        Opportunities=opp,LedgerReconciled=book.book_identity() and not book.freezeOnDD,
         ScenarioCompleteOpportunityIds=complete)
     return req,lookup
 
