@@ -4,3 +4,4 @@ All original six symbols. One180-second socket observation; first30seconds warmu
 At most20 evidence requests excluding OAuth and100000 complete market-data events.
 No outcome labels, forecasts, model replay, orders, reconnect, recurring capture or Cloud activation.
 Exact protocol: research/depth_channel_protocol.json.
+Execution request: one bounded capture after verified PR52; no retry or parameter change.
