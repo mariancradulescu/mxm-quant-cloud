@@ -267,13 +267,16 @@ def evaluate(views,forecasts,cost,p):
     for t in clocks:
         stage=("development" if t<p["calendar"]["developmentEnd"] else
                "selection" if t<p["calendar"]["selectionEnd"] else "exposed_audit")
+        # Settle all positively observed completed holdings *before* the
+        # next phase cash snapshot and next native allocation. No reset.
+        for book in books.values():
+            book.settle(t,views,cost)
         if stage!=priorPhase:
             for book in books.values():
                 book.cashAtPhase[stage]=round(book.cash,7)
             priorPhase=stage
         requests=[];lookups=[]
         for v,book in books.items():
-            book.settle(t,views,cost)
             req,look=request_for(book,t,forecasts[t],views,cost,p,v)
             if req is None:
                 book.rejected["COMMON_MARK_OR_HISTORIC_STATE_UNKNOWN"]+=1
@@ -295,6 +298,8 @@ def evaluate(views,forecasts,cost,p):
             book=books[v]
             book.nativeCalls+=1;book.nativeProposed+=len(lookup)
             if allocation.get("Qualified",True):raise ValueError("IPF1_NATIVE_QUALIFICATION_ESCALATION")
+            for rejected in allocation.get("Declined",[]):
+                book.rejected["NATIVE_"+str(rejected["Reason"])]+=1
             for a in allocation["Allocations"]:
                 book.open_selected(t,a,lookup,views,cost)
     return {v:book.snapshot(p["calendar"]["end"],views,cost) for v,book in books.items()}
