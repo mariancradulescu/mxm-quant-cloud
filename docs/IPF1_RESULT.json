@@ -1,0 +1,168 @@
+{
+  "schema": "IPF1_SANITIZED_INTEGRATED_ECONOMIC_RESULT_V1",
+  "status": "CLOSED_EXACT_MODELLED_PORTFOLIO_NET_NEGATIVE_NO_INDEPENDENT_CONFIRMATION",
+  "authority": "docs/OWNER_SPEC.md OWNER v2.0",
+  "study": "IPF1",
+  "executionRunId": 41829664972,
+  "executedOnCommit": "b175364897eab4e556d45feb37a6168371db2356",
+  "originalSourceRuns": [
+    41724643418,
+    41735441128
+  ],
+  "authenticatedM5Bars": 836087,
+  "sourceSymbols": 12,
+  "developmentAuthenticCostContexts": 166,
+  "originalArtifact": {
+    "id": 13322761389,
+    "name": "ipf1-integrated-predictive-common-cash-public-only",
+    "url": "https://github.com/mariancradulescu/mxm-quant-cloud/actions/runs/41829664972/artifacts/13322761389",
+    "originalZipSha256": "3737eb05456934efbfcbcb343d93453481a3fb48878f9c581d0e8a8c6ba276bf",
+    "originalJsonSha256": "5d5f9fdc8f3ac74c769018275ab26a2a30bf92019dda6590f9fed056d570e55a"
+  },
+  "protocolFile": "research/integrated_predictive_funded_protocol.json",
+  "protocolSha256": "2a4e4e649bc69cb3bebeba1fd5757761e48315744fb69c2f05f806228dbe28f2",
+  "research": {
+    "sourceGloballyExposed": true,
+    "independentConfirmation": false,
+    "featureTimeframesMinutes": [
+      60,
+      240,
+      1440
+    ],
+    "holdingHorizonsMinutes": [
+      240,
+      1440,
+      4320
+    ],
+    "families": [
+      "MULTISCALE_REPRICING",
+      "ACTIVITY_VOLATILITY_REGIME",
+      "CROSS_ASSET_RELATIVE"
+    ],
+    "ensemble": "PREQUENTIAL_CAUSAL_MATURED_LABELS",
+    "modelStates": 108,
+    "allPhaseGroupRows": 432,
+    "forecastDecisionClocks": 292,
+    "totalConsideredClocks": 516,
+    "candidateEpisodeCounts": {
+      "development": 4092,
+      "selection": 3111,
+      "exposed_audit": 3117
+    },
+    "missingTargetOutcomes": 3169,
+    "fusionMseSkillPositiveAmong36": {
+      "development": 8,
+      "selection": 3,
+      "exposed_audit": 7
+    },
+    "fusionBrierBetterThanNeutralAmong36": {
+      "development": 12,
+      "selection": 10,
+      "exposed_audit": 7
+    },
+    "fusionInformationCoefficientPositiveAmong36": {
+      "development": 15,
+      "selection": 8,
+      "exposed_audit": 15
+    },
+    "noteworthyExposedUnqualified": [
+      {
+        "symbol": "NAS100",
+        "horizonMinutes": 4320,
+        "selectionNormalizedMseSkillVsZero": 0.0577,
+        "selectionComplete": 36,
+        "exposedAuditMseSkillVsZero": 0.1309,
+        "exposedAuditComplete": 36
+      },
+      {
+        "symbol": "US500",
+        "horizonMinutes": 1440,
+        "selectionNormalizedMseSkillVsZero": 0.0524,
+        "selectionComplete": 64,
+        "exposedAuditMseSkillVsZero": 0.0494,
+        "exposedAuditComplete": 64
+      }
+    ]
+  },
+  "modeledCommonCapital": {
+    "initialEur": 200,
+    "capitalResetDuringEvaluation": false,
+    "financedReplayStart": "SELECTION_AFTER_DEVELOPMENT_COST_CONTEXT",
+    "modeledAccountingOnly": true,
+    "verifiedNativeCSharpOpportunityOrchestrator": true,
+    "actualHistoricalBrokerFills": false,
+    "actualHistoricalCommissionFundingAndConversionCertified": false,
+    "nativeFundedLedgerReplayParityCertified": false,
+    "riskPeakContinuousCertified": false,
+    "scenarios": {
+      "FULL": {
+        "closedNetEur": -6.2818511,
+        "endCashEur": 193.7181489,
+        "modeledCompleteRoundTrips": 74,
+        "nativeSelectorCalls": 182,
+        "nativeAllocations": 74,
+        "maxConcurrentPositions": 3,
+        "maximumModeledMarginEur": 119.88,
+        "sampledPeakEur": 248.8167493,
+        "sampledMaxDrawdown": 0.221442,
+        "observedPositionsRemaining": 0,
+        "selectionModeledEur": 30.7085139,
+        "exposedAuditModeledEur": -36.990365
+      },
+      "WITHOUT_MULTISCALE_REPRICING": {
+        "closedNetEur": -35.1102571,
+        "endCashEur": 164.8897429,
+        "modeledCompleteRoundTrips": 61,
+        "nativeSelectorCalls": 182,
+        "nativeAllocations": 61,
+        "sampledMaxDrawdown": 0.224998,
+        "selectionModeledEur": -20.6896656,
+        "exposedAuditModeledEur": -14.4205915
+      },
+      "WITHOUT_ACTIVITY_VOLATILITY_REGIME": {
+        "closedNetEur": -24.3489862,
+        "endCashEur": 175.6510138,
+        "modeledCompleteRoundTrips": 84,
+        "nativeSelectorCalls": 182,
+        "nativeAllocations": 84,
+        "sampledMaxDrawdown": 0.244543,
+        "selectionModeledEur": 17.9069021,
+        "exposedAuditModeledEur": -42.2558883
+      },
+      "WITHOUT_CROSS_ASSET_RELATIVE": {
+        "closedNetEur": 13.7850942,
+        "endCashEur": 213.7850942,
+        "modeledCompleteRoundTrips": 82,
+        "nativeSelectorCalls": 182,
+        "nativeAllocations": 82,
+        "sampledMaxDrawdown": 0.230487,
+        "selectionModeledEur": 66.8954501,
+        "exposedAuditModeledEur": -53.1103559
+      }
+    },
+    "conditionalPolicyAblationEur": {
+      "removingMultiscaleRepricingCost": -28.828406,
+      "removingActivityVolatilityCost": -18.0671351,
+      "removingCrossAssetRelativeImprovement": 20.0669453
+    },
+    "distinction": "Policy-level leave-one-family-out differences are path-dependent counterfactual EUR outcomes, not additive or independent family alpha contributions."
+  },
+  "sourceAndRiskLimitations": {
+    "newBrokerRequests": 0,
+    "closedModelReruns": 0,
+    "liveOrders": 0,
+    "demoOrders": 0,
+    "cloudActivated": false,
+    "priceEntryAndExit": "COMPLETE_M5_BAR_CLOSE_WITH_STATISTICAL_CURRENT_TARIFF_FRICTION_NOT_BROKER_EXECUTION",
+    "marginBasis": "AUTHENTIC_CURRENT_BROKER_MINIMUM_CONTEXT_NOT_HISTORIC_EXECUTABILITY",
+    "financingBasis": "CONDITIONAL_CURRENT_SCHEDULE_DAILY_DEBIT_WITH_CONSERVATIVE_MULTIPLIER",
+    "drawdownBasis": "DISCRETE_SAMPLED_MARKS_NOT_LIFETIME_EXTREMA",
+    "hard21SystemProven": false,
+    "fundingNetEurCertified": false,
+    "twelveMonthIndependentConfirmation": false,
+    "tradingQualification": false
+  },
+  "verdict": "CLOSE_EXACT_IPF1_CONFIG_NO_RETUNING_OR_POSITIVE_ABLATION_PROMOTION",
+  "followupCandidates": [],
+  "evidenceRule": "No new promotion from exposed audit or leave-one-out winner. Preserve positive skill observations only as exposed exploratory context for separately justified new hypotheses."
+}
