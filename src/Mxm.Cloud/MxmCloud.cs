@@ -13,6 +13,8 @@ public class MxmCloud : Robot
     private string _lastInventory="";
     private string _lastNativeCashFingerprint="";
     private string _lastNativeOpenInventoryFingerprint="";
+    private long _nextWarmupPollAt;
+    private string _lastWarmupStatus="";
     private static long Stamp(System.DateTime t)=>new System.DateTimeOffset(System.DateTime.SpecifyKind(t,System.DateTimeKind.Utc)).ToUnixTimeMilliseconds();
 
 
@@ -150,6 +152,54 @@ public class MxmCloud : Robot
                 .Append(SymbolName)
                 .Distinct(System.StringComparer.Ordinal)
                 .ToArray();
+            // Recover bounded causal feature prefixes from native broker bars
+            // without replaying annual research or loading a local checkpoint.
+            // Each lane is independent: missing market history cannot suppress
+            // ongoing financial monitoring and risk observation.
+            long warmupNow=Stamp(Server.TimeInUtc);
+            if(warmupNow>=_nextWarmupPollAt)
+            {
+                _nextWarmupPollAt=warmupNow+300000;
+                int ready=0,total=0;
+                var frames=new (TimeFrame Frame,int Minutes,string Name)[]{
+                    (TimeFrame.Minute5,5,"M5"),(TimeFrame.Hour,60,"H1"),
+                    (TimeFrame.Hour4,240,"H4"),(TimeFrame.Daily,1440,"D1")};
+                foreach(var name in symbols)
+                foreach(var frame in frames)
+                {
+                    total++;
+                    try
+                    {
+                        var bars=MarketData.GetBars(frame.Frame,name);
+                        if(bars.Count<NativeCausalWarmup.WindowBars+1)continue;
+                        int last=bars.Count-2; // newest bar may still be forming
+                        var prefix=new NativeClosedMarketBar[NativeCausalWarmup.WindowBars];
+                        for(int j=0;j<prefix.Length;j++)
+                        {
+                            int i=last-(prefix.Length-1-j);
+                            long start=Stamp(bars.OpenTimes[i]);
+                            prefix[j]=new NativeClosedMarketBar(start,
+                                start+(long)frame.Minutes*60000L,
+                                (decimal)bars.OpenPrices[i],(decimal)bars.HighPrices[i],
+                                (decimal)bars.LowPrices[i],(decimal)bars.ClosePrices[i],
+                                (long)bars.TickVolumes[i]);
+                        }
+                        if(NativeCausalWarmup.Rebuild(new(name,frame.Name,frame.Minutes,
+                            warmupNow,prefix)).Ready)ready++;
+                    }
+                    catch(System.Exception)
+                    {
+                        // Incomplete symbol/timeframe history is a local
+                        // observation gap. Retry at the next bounded poll.
+                    }
+                }
+                string warmupStatus=ready+"/"+total;
+                if(warmupStatus!=_lastWarmupStatus)
+                {
+                    Print("MXM native bounded causal feature warmup: {0}; no forecast or orders enabled.",warmupStatus);
+                    _lastWarmupStatus=warmupStatus;
+                }
+            }
             var lanes=symbols.Select(symbol=>new RecoveryLaneEvidence(
                 symbol,
                 // A price snapshot on another symbol must be checked separately.
