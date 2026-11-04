@@ -21,6 +21,22 @@
     "sourceArtifactId": 13278617985,
     "sourceCiphertextSha256": "2e6e4b1072130d1df23ca66f0cf9c0ff2a2f174c9e0ef33fc0d3c96d0ed298ac"
   },
+  "economicPriorityDecision": {
+    "closedConfigurationsRetained": [
+      "EPA1",
+      "EPA2",
+      "CEF1",
+      "SQP1",
+      "BDP1",
+      "AIP1"
+    ],
+    "economicEdgeStillOpen": true,
+    "newHypothesisAdmitted": false,
+    "newMarketCollectionAuthorizedByThisChange": false,
+    "notProofOfSystemInfeasibility": true,
+    "ownerDecisionAfter": "PR48",
+    "reason": "No distinct hypothesis with demonstrated causal support, effective sample, cost amplitude and a financed common replay path is sufficiently justified at this execution; prioritize the material native monetary reconciliation gap."
+  },
   "frozenFileSha256": {
     "docs/AIP1_AUTHENTIC_RESULT.json": "ed23b6d7ce289ce1eeede6626ef8d9bce09d2cfbdb59fd6fe4b4493a75a4bd3c",
     "docs/AIP1_SOURCE_TECHNICAL_INTERRUPTION.json": "4fcb577b7b9de96f6d722ed2fd30e0560e3512898bc92961f60e09345e45c9e6",
@@ -42,6 +58,8 @@
     "docs/EPA2_EXECUTION_DIAGNOSIS.json": "74054ec4cd11368cf5635c0e1b5b5b21b7b69a59547b65b79f112ea981df2a31",
     "docs/JOINED_OPPORTUNITY_AUTHENTIC_RESULT.json": "292c3a3d086deee3af9efb3b480a339fa4edf99c3dda58de7559d712cd166187",
     "docs/JOINT_QUOTE_EVIDENCE_AUTHENTIC_RESULT.json": "5df419990d0cd142e7bda794ed2ae791bc0853c4739f6b0286c35c1f62a5403a",
+    "docs/NATIVE_MONETARY_RECOVERY_AUDIT.json": "dc790c83ca0ab826f21c93e046e8bfaf383d702409da1ca6c20c0091dd459ce4",
+    "docs/NATIVE_MONETARY_RECOVERY_RECEIPT.json": "8d51f7149f60b3ad0d108ba9e24818b084ce814fb1db55c5e07ca497e48d920f",
     "docs/NEW_SOURCE_H1_CAUSAL_COLD_VERDICT_20261102.json": "e1a264c8dda8e9f2af3f8b4c1eda51b03fd05be0c98000e23f601c1dd04ffda3",
     "docs/PRIMARY145_H1_CLOCK_ONLY_COLD_RECEIPT_20261102.json": "318ee501f75448fe1a5a18e3dd8923623ed436da4304aa9bd53f577ed1dcd50d",
     "docs/SQP1_AUTHENTIC_RESULT.json": "b38208eaf5afc245c00c63e0a2771063755c5c9688c79a4cd9a113d11fdb1a36",
@@ -95,6 +113,34 @@
     "restartEveryEventMatched": true,
     "sourceRunId": 41706496201,
     "strongerCurrentMarginAdmissionVerified": true
+  },
+  "nativeMonetaryRecovery": {
+    "artifactExpiresAt": "2027-02-02T00:04:56Z",
+    "cases": 4,
+    "cashAndNetToleranceEur": "1e-18",
+    "closedStudyReplayed": false,
+    "cloudActivated": false,
+    "firstAndFinalCodePassReceiptIdentical": true,
+    "floatingEquityMarginAndLifetimePeakUncertified": true,
+    "initialFundingInContractTestsIsAssumption": true,
+    "monetaryFactsPerNonemptyCase": 14,
+    "monetaryRecoveryCuts": 30,
+    "newEconomicExperiment": false,
+    "newEconomicNetEvidence": false,
+    "newMarketRequests": 0,
+    "nonemptyCases": 2,
+    "ordersSubmitted": 0,
+    "pricesNotInFrozenSourceRemainUnknown": true,
+    "publicArtifactId": 13282214113,
+    "realBrokerFillRecoveryProven": false,
+    "realBrokerOrdersInvented": false,
+    "receiptSha256": "8d51f7149f60b3ad0d108ba9e24818b084ce814fb1db55c5e07ca497e48d920f",
+    "schema": "mxm-native-monetary-recovery-audit-v1",
+    "sourceDomain": "FROZEN_MODELED_SETTLEMENT",
+    "sourceFile": "docs/NATIVE_FUNDED_FACT_CONFIRMATION.json",
+    "sourceSha256": "388da898c16bfdb740709f3286c018eb95bb80c07b05cc82c332cd9ba56836ea",
+    "verificationCommit": "ecc90d4f86aefbfbdd60d3d93c15f0fac3c90dba",
+    "verificationRunId": 41744102992
   },
   "projectWideCalendarRule": "Union of relevant design/research exposures across sources and instruments; overlaps are not independent.",
   "prospectiveStudies": [

@@ -342,6 +342,15 @@ jobs:
       - run: python -m research.verify_holding_receipt
       - run: python -m pip install -r research/requirements.txt
       - run: python -m unittest research.test_pipeline research.test_intraday_net research.test_flow_net research.test_neighbour_net research.test_funded_replay research.test_relative_gross research.test_tick_volume_net research.test_anchor_signal research.test_session_wick_signal research.test_orchestrated_replay research.test_joint_quote_extension research.test_portfolio_economic research.test_holding_economic research.test_causal_observation
+      - name: Verify native monetary reconstruction from frozen public settlement facts only
+        run: python -m research.verify_frozen_money_recovery
+      - name: Preserve native monetary reconstruction receipt without broker requests
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: native-monetary-recovery-frozen-public-only
+          path: native-monetary-recovery.public.json
+          if-no-files-found: error
+          retention-days: 90
       - name: Verify original 100 encrypted archive identities with read-only GitHub API token
         run: python -m research.legacy_manifest_remote
         env:
