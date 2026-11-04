@@ -74,4 +74,13 @@ class Twc1Contracts(unittest.TestCase):
         adverse,_=request(Book("STRESS"),t,[dict(row,predBps=4.)],
                           view,cost,p,"FULL_STRESS")
         self.assertEqual(adverse["Opportunities"],[])
+        # Actual Python -> JSON -> native C# batch -> shared selector integration.
+        # Synthetic causal fixtures only; no Pepperstone data or study rerun.
+        from .portfolio_economic_replay import native
+        outputs=native([req,denied,adverse],"--estimate-portfolio-opportunities-batch")
+        self.assertEqual(len(outputs),3)
+        self.assertTrue(all(not result["Qualified"] for result in outputs))
+        self.assertTrue(all(result["Status"].startswith("CONDITIONAL_RESEARCH_") for result in outputs))
+        self.assertEqual(outputs[1]["Allocations"],[])
+        self.assertEqual(outputs[2]["Allocations"],[])
 if __name__=="__main__":unittest.main()
