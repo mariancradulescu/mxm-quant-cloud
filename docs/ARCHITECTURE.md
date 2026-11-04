@@ -197,10 +197,11 @@ requirements; no open position is discarded to manufacture flatness.
 account-bound current cash record and permits causal *research/observation*
 to continue without storage. It does not establish lifetime cashflow-history
 completeness, filled-order attribution, HARD21, a continuous equity path or an
-upper bound on the historical peak. Transaction `MaxEquity` and any earlier observed sampled drawdown are retained without reduction as an equity-peak floor and loss history; each current equity mark is checked against that retained peak. The historical lifetime upper bound remains unknown. 
-historical closing balances are not equity marks when other positions may have
-been open. An unknown larger
-intra-trade equity peak must not be reset to the balance after restart.
+upper bound on the historical peak. Transaction `MaxEquity` contributes only an equity-peak **lower bound**.
+Previously observed sampled drawdown and peak are never reduced by a newer
+cash readback. Historical closing balances are not equity marks when other
+positions may have been open. The unknown lifetime peak **upper bound** is
+not reconstructed or reset after restart.
 Recovered historical closing rows are deliberately not counted as certified
 complete funded round trips without their complete opening/fill chain.
 New orders and trading Cloud activation remain impossible.
