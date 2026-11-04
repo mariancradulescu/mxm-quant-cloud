@@ -1,6 +1,6 @@
 # MXM Quant Cloud
 
-Public implementation under the single [active OWNER specification v2.0](docs/OWNER_SPEC.md), updated after PR30–33 on 2026-11-03. Initial capital EUR 200, no additional deposits; maximum drawdown control objective 30%; HARD21 means at least 21 fully closed round trips per objectively eligible week, never forced trades.
+Public implementation under the single [active OWNER specification v2.0](docs/OWNER_SPEC.md), updated with the 2026-11-04 integrated OWNER decision. Initial capital EUR 200, no additional deposits; maximum drawdown control objective 30%; HARD21 means at least 21 fully closed round trips per objectively eligible week, never forced trades.
 
 **Status: authentic exploratory research and native portfolio research kernels; No qualified strategy, no profitability claim, no trading authority. Do not activate the artifact in Cloud, LIVE or DEMO.** The current cBot reads native account collections then stops; it contains no order submission, cancellation or position modification functions.
 
@@ -16,7 +16,7 @@ The native C# core now includes a strictly evidenced EUR 200 portfolio NET/HARD2
 
 ## New-source custody separation (2026-11-02)
 
-The existing installed custody PRIVATE key is now used to derive a **new-source v2 PUBLIC recipient**, only within the protected GitHub Actions pipeline. The older historical RSA recipient is preserved for historical archives and is NOT required for collection of new Pepperstone source. The authentic original LIVE account fingerprint is bound by its immutable double-SHA256 commitment in `research/collect.py` and no longer selected by the previously malformed fingerprint environment secret; OAuth app and SCOPE_VIEW remain unchanged. Details: [new-source custody and account binding](docs/NEW_SOURCE_CUSTODY_AND_ECONOMICS_20261102.md). No data collection is claimed until the new protected GitHub run actually succeeds.
+The existing installed custody PRIVATE key is now used to derive a **new-source v2 PUBLIC recipient**, only within the protected GitHub Actions pipeline. The older historical RSA recipient is preserved for historical archives and is NOT required for collection of new Pepperstone source. The authentic original LIVE account fingerprint is bound by its immutable double-SHA256 commitment in `research/collect.py` and no longer selected by the previously malformed fingerprint environment secret; OAuth app and SCOPE_VIEW remain unchanged. Details: [new-source custody and account binding](docs/NEW_SOURCE_CUSTODY_AND_ECONOMICS_20261102.md). This paragraph records the original pre-execution boundary; the authenticated runs documented below supersede that historical status.
 
 ## First authenticated new-source predictive result (2026-11-02)
 
@@ -128,7 +128,7 @@ It separately audits EPA1's fixed positions and cash without rescoring, then tes
 three calendar strata, two holding horizons and active in-position protection
 through the same native allocator and funded ledger. Current leverage/margin
 profiles are observed, while historical used margin and account stopout threshold
-remain unverified. All results remain pending the protected economic execution.
+remain unverified. The protected economic execution has completed; its frozen verdict follows immediately below.
 
 EPA2 authenticated run [41648280262](https://github.com/mariancradulescu/mxm-quant-cloud/actions/runs/41648280262)
 completed 12 fixed January/April/July development days and both 2/4-hour horizons.
