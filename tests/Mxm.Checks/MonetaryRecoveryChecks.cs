@@ -12,7 +12,7 @@ internal static class MonetaryRecoveryChecks
         var f1=Fact("d1","open","p","local","OPEN",1,1,2000,0,.1m);
         var f2=Fact("d2","open","p","local","OPEN",1,1,3000,0,.1m,price:12);
         var funding=new AttributedMoneyFact(account,"BROKER_EXECUTION_FACT","FUNDING","funding/swap","swap","","p","local","SYNTH",1,0,3500,3500,3500,null,null,null,null,Leg(-.04m,3500),proof);
-        var close1=Fact("d3","close1","p","local","CLOSE",-1,1,4000,1,.1m,.02m,13);
+        var close1=Fact("d3","close1","p","local","CLOSE",-1,1,4000,-1,.1m,.02m,13);
         var close2=Fact("d4","close2","p","local","CLOSE",-1,1,5000,2,.1m,.03m,14);
         var intents=new[]{new LocalIntentIdentity("request-open","open","p","SYNTH",1,2,false,1000,"local"),
             new LocalIntentIdentity("request-close1","close1","p","SYNTH",-1,1,true,3800,"local"),
@@ -54,20 +54,24 @@ internal static class MonetaryRecoveryChecks
         var afterTwo=Batch(new[]{f1,f2},199.8m,6000);accepted=session.ReconcileMoney(afterTwo);
         check(accepted.Adopted&&session.Ledger.Summary().CompleteRoundTrips==0,"split entries accumulate in one position, not two round trips");
         session=NativeFundedSession.Restore(session.Checkpoint(),account);
-        var partial=Batch(new[]{f1,f2,funding,close1},200.64m,6000);accepted=session.ReconcileMoney(partial);
+        var partial=Batch(new[]{f1,f2,funding,close1},198.64m,6000);accepted=session.ReconcileMoney(partial);
         check(accepted.Adopted&&accepted.RetainedLedger.CompleteRoundTrips==0&&accepted.RetainedLedger.OpenPositions==1,
             "cash funding and conversion costs survive restart and partial closing");
         var fragments=session.Ledger.ClosedFragments();
         check(fragments[0].SpreadEur is null&&fragments[0].SlippageEur is null,
             "broker realized price PNL cannot invent spread/slippage decomposition");
-        var final=Batch(all,202.51m,6000);accepted=session.ReconcileMoney(final);
-        check(accepted.Adopted&&accepted.RetainedLedger.CompleteRoundTrips==1&&accepted.RetainedLedger.ClosedNetEur==2.51m,
+        var final=Batch(all,200.51m,6000);accepted=session.ReconcileMoney(final);
+        check(accepted.Adopted&&accepted.RetainedLedger.CompleteRoundTrips==1&&accepted.RetainedLedger.ClosedNetEur==.51m,
             "full lifecycle cash equals200 plus net after commissions conversion and financing");
-        check(session.Observe(final.Snapshot,202.51m).Identity.UnresolvedIntents==0,
+        check(session.Observe(final.Snapshot,200.51m).Identity.UnresolvedIntents==0,
             "monetarily imported terminal executions no longer remain import-required");
         var checkpoint=session.Checkpoint();
         rejected=session.ReconcileMoney(final with {Facts=all.Skip(1).ToArray()});
         check(!rejected.Adopted&&session.Checkpoint()==checkpoint,"history truncation cannot drop an earlier entry fee or loss");
+        rejected=session.ReconcileMoney(final with {Facts=Array.Empty<AttributedMoneyFact>(),FundingRecords=Array.Empty<ConfirmedFundingEvent>(),
+            BrokerCashEur=200,Snapshot=final.Snapshot with {Orders=Array.Empty<BrokerOrderIdentity>(),Deals=Array.Empty<BrokerDealIdentity>(),Positions=Array.Empty<BrokerPositionIdentity>()}});
+        check(!rejected.Adopted&&session.Checkpoint()==checkpoint,
+            "even a fully truncated supposedly-complete broker snapshot cannot reset a previously losing journal to200");
         rejected=session.ReconcileMoney(final with {Facts=all.Select(f=>f.EventId==f2.EventId?f with {Commission=Leg(.1m,3000,"USD",.9m,4000)}:f).ToArray()});
         check(!rejected.Adopted,"conversion observed after the monetary event cannot value an earlier debit");
         var unknown=new NativeFundedSession(account,intents:intents);
