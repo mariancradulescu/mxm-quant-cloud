@@ -10,9 +10,8 @@ public class MxmCloud : Robot
     private bool _transientFault;
     private NativeFundedSession? _fundedSession;
     private string _accountBinding="";
-    private bool _journalFault;
     private string _lastInventory="";
-    private const string JournalKey="MXM_NATIVE_FUNDED_SESSION_V1";
+    private string _lastNativeCashFingerprint="";
     private static long Stamp(System.DateTime t)=>new System.DateTimeOffset(System.DateTime.SpecifyKind(t,System.DateTimeKind.Utc)).ToUnixTimeMilliseconds();
 
 
@@ -23,10 +22,10 @@ public class MxmCloud : Robot
         // Timer resumes native reconciliation after a recoverable exception.
         _accountBinding=System.Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(
             System.Text.Encoding.UTF8.GetBytes("ctrader-native-account:"+Account.Number))).ToLowerInvariant();
-        try {
-            var saved=LocalStorage.GetString(JournalKey,LocalStorageScope.Instance);
-            _fundedSession=string.IsNullOrEmpty(saved)?new NativeFundedSession(_accountBinding):NativeFundedSession.Restore(saved,_accountBinding);
-        } catch { _journalFault=true; } // never overwrite a corrupt/wrong-account journal
+        // cTrader Cloud LocalStorage is in-memory only and GetString on an
+        // unset key may raise LocalStorageException. Do not load any checkpoint
+        // as the restart authority. Reconstruct from native broker facts.
+        _fundedSession=new NativeFundedSession(_accountBinding);
         Timer.Start(15);
         ObserveNative();
     }
@@ -78,11 +77,35 @@ public class MxmCloud : Robot
             var broker=new BrokerIdentitySnapshot(_accountBinding,Stamp(Server.TimeInUtc),0,Stamp(Server.TimeInUtc),
                 inventory==_lastInventory,false,false,mappedOrders,mappedDeals,mappedPositions);
             _lastInventory=inventory;
-            // Current surfaces do not prove initial funding, complete cashflows,
-            // per-deal monetary legs or funding history. Keep those facts UNKNOWN.
-            // This attempts the same atomic recovery gate; it cannot invent money.
-            var money=_fundedSession?.ReconcileMoney(new MoneyRecoveryBatch(_accountBinding,"BROKER_EXECUTION_FACT",broker,
-                System.Array.Empty<AttributedMoneyFact>(),(decimal)Account.Balance,false,false,false,false,null,null));
+            // Native deposit/withdrawal and HistoricalTrade monetary facts are
+            // available on cTrader Cloud. Rebuild ONLY a stable, entirely flat
+            // EUR200 account from these facts, with cash+NET cross-checked against
+            // the broker balance. Never interpret history enumeration as proof of
+            // complete lifetime deals, or transaction MaxEquity as an upper bound.
+            var cashflows=transactions.Select(t=>new BrokerNativeCashflow(
+                t.Id.ToString(),Stamp(t.Time),t.Type.ToString().ToUpperInvariant(),
+                (decimal)t.Amount,(decimal)t.Balance,
+                t.MaxEquity.HasValue?(decimal)t.MaxEquity.Value:null)).ToArray();
+            var settlements=closed.Select(t=>new BrokerNativeClosedTrade(
+                t.ClosingDealId.ToString(),t.PositionId.ToString(),t.SymbolName,
+                Stamp(t.EntryTime),Stamp(t.ClosingTime),(decimal)t.GrossProfit,
+                System.Math.Abs((decimal)t.Commissions),(decimal)t.Swap,
+                (decimal)t.NetProfit,(decimal)t.Balance)).ToArray();
+            string nativeCashFingerprint=System.Text.Json.JsonSerializer.Serialize(new {
+                Cash=Account.Balance,Equity=Account.Equity,Credit=Account.Credit,Margin=Account.Margin,
+                Positions=positions.Select(p=>new {p.Id,p.SymbolName,p.VolumeInUnits}).OrderBy(x=>x.Id).ToArray(),
+                Pending=pending.Select(p=>p.Id).OrderBy(x=>x).ToArray(),
+                Cashflows=cashflows.OrderBy(t=>t.Id).ToArray(),
+                Closed=settlements.OrderBy(t=>t.ClosingDealId).ToArray()
+            });
+            bool cashSnapshotStable=nativeCashFingerprint==_lastNativeCashFingerprint && !_transientFault;
+            _lastNativeCashFingerprint=nativeCashFingerprint;
+            BrokerFlatReadbackReport? flat=null;
+            if(cashSnapshotStable && positions.Length==0 && pending.Length==0)
+                flat=_fundedSession?.ReconcileBrokerFlat(new BrokerFlatReadback(
+                    _accountBinding,Stamp(Server.TimeInUtc),true,
+                    (decimal)Account.Balance,(decimal)Account.Equity,(decimal)Account.Margin,
+                    (decimal)Account.Credit,positions.Length,pending.Length,cashflows,settlements));
             var funded=_fundedSession?.Observe(broker,(decimal)Account.Balance);
             // Independent native current marks, never inferred from the monetary
             // book or used to certify missing lifetime history/Cloud persistence.
@@ -101,10 +124,6 @@ public class MxmCloud : Robot
                 riskAt,riskAvailable,riskCash,riskEquity,riskMargin,riskFree,riskCredit,stableRisk,true,riskPositions,
                 null,null,null,.01m,riskHash),riskAvailable);
 
-            if(!_journalFault && _fundedSession!=null) {
-                LocalStorage.SetString(JournalKey,_fundedSession.Checkpoint(),LocalStorageScope.Instance);
-                LocalStorage.Flush(LocalStorageScope.Instance);
-            }
             var symbols=positions.Select(x=>x.SymbolName)
                 .Concat(pending.Select(x=>x.SymbolName))
                 .Append(SymbolName)
@@ -122,7 +141,13 @@ public class MxmCloud : Robot
                 // cashflow reconciliation or certified lifetime equity peak.
                 false,false,false,0m,0m,0);
             var result=SelectiveRecovery.Assess(snapshot,lanes);
-            var mode=_journalFault?"PROTECTIVE_JOURNAL_UNAVAILABLE":risk?.ReviewReductionIds.Length>0?"PROTECTIVE_RISK_REDUCTION_REVIEW/"+risk.Reason:funded?.Status??result.Status;
+            var mode=risk?.ReviewReductionIds.Length>0
+                ?"PROTECTIVE_RISK_REDUCTION_REVIEW/"+risk.Reason
+                :flat?.Adopted==true?flat.Status
+                :funded?.Status??result.Status;
+            // Missing instance storage is NOT a liveness gate.
+            // Flat readback readiness enables causal research/observation only;
+            // no certified historic peak or order admission is created.
             if(mode!=_lastMode)
             {
                 Print("MXM observation-only recovery: {0}; lanes {1}; native evidence {2}/{3}/{4}/{5}/{6}; orders disabled.",
