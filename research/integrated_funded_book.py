@@ -21,8 +21,6 @@ def candidate_prediction(f,variant):
 
 def swap_debit(c,side,start,end,notional):
     if end<=start:return 0.
-    if end-start < 5*3600000:return 0. # still verify true swap clock below
-    if not c["fundingKnown"]:return None
     # The current published swap minute, not inferred actual historical debit;
     # deliberately 3x directional current debit per crossing.
     minute=c["swapMinute"]
@@ -31,6 +29,8 @@ def swap_debit(c,side,start,end,notional):
     cycles=0
     while t<=end:
         cycles+=1;t+=DAY
+    if cycles==0:return 0.
+    if not c["fundingKnown"]:return None
     bps=c["longDailyDebitBps"] if side>0 else c["shortDailyDebitBps"]
     return 3.*bps*notional*cycles/10000.
 
