@@ -19,6 +19,9 @@ criteria; at least three were required. Do not lower that threshold, select the
 two favorable source instruments for an automatic extension, repeat another time
 window or present this source result as an economic rejection or validation.
 DCP1 is closed exactly, with all six instruments retained in the receipt.
+The three-symbol threshold is this pilot's prospective expansion heuristic, not
+an OWNER minimum asset count or an individual HARD21/profit requirement. Its failure
+does not show that a two-instrument mechanism could never contribute economically.
 
 | Instrument | Depth events after warmup | Valid two-sided associated states | Imbalance changes at unchanged BID/ASK | Source criterion met |
 |---|---:|---:|---:|---|
