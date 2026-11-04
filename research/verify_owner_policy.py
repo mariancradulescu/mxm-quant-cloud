@@ -32,7 +32,7 @@ def check():
             assert s.get('qualification') is not True, 'PROXY_PROMOTED_TO_CERTIFICATE: ' + s['id']
     msp = next(s for s in r['prospectiveStudies'] if s['id'] == 'MSP1')
     assert msp['status'].startswith('CLOSED_EXACT_') and msp['followupCandidates'] == []
-    assert msp['ordersSubmitted'] if 'ordersSubmitted' in msp else True  # not a trade claim
+    assert msp.get('ordersSubmitted', 0) == 0, 'UNAUTHORIZED_MSP1_TRADING_CLAIM'
 
     # These values belong to the single native system, not to each candidate.
     risk = Path('src/Mxm.Core/OwnerRiskLimits.cs').read_text()
@@ -52,7 +52,7 @@ def check():
     forbidden = ('ExecuteMarketOrder', 'ExecuteMarketRangeOrder', 'PlaceLimitOrder',
                  'PlaceStopOrder', 'PlaceStopLimitOrder', 'ModifyPosition',
                  'ClosePosition', 'CancelPendingOrder', 'ReversePosition')
-    assert all(not re.search(r'\\b' + call + r'\\s*\\(', cloud)
+    assert all(not re.search(r'\b' + call + r'\s*\(', cloud)
                for call in forbidden), 'UNAUTHORIZED_CLOUD_TRADING_CALL'
     print('PASS OWNER v2.0 contract, frozen evidence, native funding and no-order boundary; no NET qualification')
 
