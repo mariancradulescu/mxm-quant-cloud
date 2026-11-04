@@ -1,0 +1,7 @@
+MSP1 integrated multiscale economic research under explicit OWNER conditional-cost policy.
+Reuse only the two original encrypted BDP1/AIP1 source bundles. No closed-model calls.
+Raw account/bar/quote reconstruction; observed development spread samples and current broker terms.
+New structural persistent/transitory/zero-drift mixture, all12 assets, four timeframes, two horizons.
+Report all variants/cost scenarios; no independent confirmation or funded EUR claims from proxies.
+No broker requests, orders, runtime service, threshold rescue or Cloud activation.
+Protocol: research/multiscale_conditional_protocol.json.

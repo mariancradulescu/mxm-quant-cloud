@@ -1,5 +1,13 @@
 using System.Text.Json;
 using System.Security.Cryptography;
+if (args.Length == 3 && args[2] == "--multiscale-conditional-program")
+{
+    try {
+        var input=System.Text.Json.JsonSerializer.Deserialize<Mxm.Core.MultiscaleInput>(File.ReadAllBytes(args[0]),
+            new System.Text.Json.JsonSerializerOptions {NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString})!;
+        File.WriteAllText(args[1],System.Text.Json.JsonSerializer.Serialize(Mxm.Core.MultiscaleConditionalResearch.Evaluate(input)));return 0;
+    } catch (Exception ex) { Console.Error.WriteLine(ex.GetType().Name);return 30; }
+}
 if (args.Length == 3 && args[2] == "--carry-cycle-preflight")
 {
     try {
