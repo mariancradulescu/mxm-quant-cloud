@@ -1,6 +1,7 @@
 using Mxm.Core;
 var passed = 0;
 MonetaryRecoveryChecks.Run(Check);
+FundedDecisionCycleChecks.Run(Check);
 BrokerFlatReadbackChecks.Run(Check);
 ConditionalDiscoveryChecks.Run(Check);
 PortfolioObservationChecks.Run(Check);

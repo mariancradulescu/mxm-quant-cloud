@@ -128,7 +128,7 @@ public sealed partial class NativeFundedSession
     static string Hash(string x)=>Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(x))).ToLowerInvariant();
     public string Checkpoint()
     {
-        string payload=JsonSerializer.Serialize(new {Version=2,AccountBinding,Ledger=Ledger.Checkpoint(),Intents,JournalContinuityProven,Risk=PortfolioObservation.State});
+        string payload=JsonSerializer.Serialize(new {Version=3,AccountBinding,Ledger=Ledger.Checkpoint(),Intents,JournalContinuityProven,Risk=PortfolioObservation.State,ResearchDecisions});
         return JsonSerializer.Serialize(new {Payload=payload,Sha256=Hash(payload)});
     }
     public static NativeFundedSession Restore(string checkpoint,string expectedAccountBinding)
@@ -136,11 +136,13 @@ public sealed partial class NativeFundedSession
         using var d=JsonDocument.Parse(checkpoint);string payload=d.RootElement.GetProperty("Payload").GetString()!;
         if(Hash(payload)!=d.RootElement.GetProperty("Sha256").GetString())throw new ArgumentException("SESSION_CHECKPOINT_HASH");
         using var p=JsonDocument.Parse(payload);var root=p.RootElement;
-        if(root.GetProperty("Version").GetInt32() is not (1 or 2) || root.GetProperty("AccountBinding").GetString()!=expectedAccountBinding)
+        if(root.GetProperty("Version").GetInt32() is not (1 or 2 or 3) || root.GetProperty("AccountBinding").GetString()!=expectedAccountBinding)
             throw new ArgumentException("SESSION_CHECKPOINT_ACCOUNT_OR_VERSION");
         var session=new NativeFundedSession(expectedAccountBinding,NativeFundedLedger.Restore(root.GetProperty("Ledger").GetString()!),
             JsonSerializer.Deserialize<LocalIntentIdentity[]>(root.GetProperty("Intents").GetRawText()),root.GetProperty("JournalContinuityProven").GetBoolean());
         if(root.TryGetProperty("Risk",out var risk))session.PortfolioObservation=NativePortfolioObservation.Restore(JsonSerializer.Deserialize<PortfolioObservationState>(risk.GetRawText())!,expectedAccountBinding);
+        if(root.TryGetProperty("ResearchDecisions",out var decisions))
+            session.ResearchDecisions=JsonSerializer.Deserialize<Dictionary<string,NativeResearchDecisionReceipt>>(decisions.GetRawText())!;
         return session;
     }
 }

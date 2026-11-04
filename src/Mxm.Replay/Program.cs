@@ -1,5 +1,23 @@
 using System.Text.Json;
 using System.Security.Cryptography;
+if (args.Length == 3 && args[2] == "--native-funded-decision-cycle")
+{
+    try {
+        var frames=System.Text.Json.JsonSerializer.Deserialize<Mxm.Core.NativeResearchFrame[]>(File.ReadAllBytes(args[0]),
+            new System.Text.Json.JsonSerializerOptions {NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString})!;
+        var session=new Mxm.Core.NativeFundedSession("CONDITIONAL_DEVELOPMENT_ONLY");
+        var receipts=new List<object>();
+        foreach(var frame in frames) {
+            session.ApplyResearchFacts(frame.Facts);
+            var decision=frame.Decision is null?null:session.DecideResearch(frame.Decision);
+            session=Mxm.Core.NativeFundedSession.Restore(session.Checkpoint(),session.AccountBinding);
+            receipts.Add(new {Decision=decision,Ledger=session.Ledger.Summary()});
+        }
+        File.WriteAllText(args[1],System.Text.Json.JsonSerializer.Serialize(new {Receipts=receipts,
+            Trades=session.Ledger.ClosedFragments(),OrdersSubmitted=0,CloudActivated=false,
+            ActualBrokerNetEur=(decimal?)null,IndependentConfirmation=false}));return 0;
+    } catch {return 31;}
+}
 if (args.Length == 3 && args[2] == "--multiscale-conditional-program")
 {
     try {

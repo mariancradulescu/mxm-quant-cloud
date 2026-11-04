@@ -88,10 +88,15 @@ public sealed partial class NativeFundedLedger
         switch(e.Kind)
         {
             case "REQUEST_OPEN":
-                if(state.HistoryEvidenceIncomplete || string.IsNullOrWhiteSpace(e.PositionId) || string.IsNullOrWhiteSpace(e.Symbol) || e.Side is not (-1 or 1) ||
+                if(string.IsNullOrWhiteSpace(e.PositionId) || string.IsNullOrWhiteSpace(e.Symbol) || e.Side is not (-1 or 1) ||
                     e.Units<=0 || e.AvailableAt>e.At || e.CalibratedThrough>e.AvailableAt || e.CalibratedThrough<0 ||
                     e.LatencyMs<=0 || state.UsedPositionIds.Contains(e.PositionId) || state.Pending.ContainsKey(e.PositionId))
                     throw new ArgumentException("NATIVE_LEDGER_OPEN_INTENT");
+                // A past missing mark remains disclosed, but must not permanently
+                // prevent conditional model decisions once current marks recover.
+                // No broker/trading certificate follows from this research path.
+                try { _=Equity(quotes,e.At); }
+                catch(InvalidOperationException) { throw new ArgumentException("NATIVE_LEDGER_CURRENT_HOLDING_MARK_UNKNOWN"); }
                 state.Pending.Add(e.PositionId,e);state.UsedPositionIds.Add(e.PositionId);break;
             case "REQUEST_CLOSE":
                 if(!state.Positions.TryGetValue(e.PositionId,out var closePosition) || closePosition.Symbol!=e.Symbol ||
@@ -101,7 +106,7 @@ public sealed partial class NativeFundedLedger
             case "OPEN_FILL":
                 if(!state.Pending.TryGetValue(e.PositionId,out var request) || request.Kind!="REQUEST_OPEN" ||
                     request.Symbol!=e.Symbol || request.Side!=e.Side || request.Units!=e.Units || e.At<request.At+request.LatencyMs ||
-                    e.ExecutionPrice<=0 || e.FeeEur<0 || e.MarginPerUnit<=0 || e.SlippagePerSide<0)
+                    e.ExecutionPrice<=0 || e.FeeEur<0 || e.MarginPerUnit<=0 || e.SlippagePerSide<0 || e.SlippagePerSide!=request.SlippagePerSide)
                     throw new ArgumentException("NATIVE_LEDGER_OPEN_FILL");
                 var entryQuote=Quote(quotes,e.Symbol,e.At);
                 decimal expectedPrice=e.Side>0?entryQuote.Ask+e.SlippagePerSide:entryQuote.Bid-e.SlippagePerSide;

@@ -28,6 +28,7 @@ public static class OpportunityOrchestrator
              (request.Scope=="EPA2_CONDITIONAL_RESEARCH_NOT_CERTIFIED" && request.CommonHorizonMinutes is 120 or 240) ||
              (request.Scope=="SQP1_CONDITIONAL_RESEARCH_NOT_CERTIFIED" && request.CommonHorizonMinutes==60) ||
              (request.Scope=="IPF1_MULTI_HORIZON_CONDITIONAL_RESEARCH_NOT_CERTIFIED" && request.CommonHorizonMinutes==0) ||
+             (request.Scope=="NATIVE_FUNDED_CYCLE_DEVELOPMENT_NOT_CERTIFIED" && request.CommonHorizonMinutes==0) ||
              (request.Scope=="RCP1_GLOBAL_RISK_DELAYED_FILL_CONDITIONAL_NOT_CERTIFIED" && request.CommonHorizonMinutes==0)))
             throw new ArgumentException("UNDECLARED_CONDITIONAL_RESEARCH_SCOPE");
         // No certificate is manufactured: the verified DTO retains zero peak
