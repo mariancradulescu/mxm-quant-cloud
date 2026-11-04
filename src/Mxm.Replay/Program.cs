@@ -140,7 +140,9 @@ if (args.Length == 3 && args[2] == "--estimate-portfolio-opportunities-batch")
             File.ReadAllBytes(args[0]),new JsonSerializerOptions {
                 NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString})
             ?? throw new ArgumentException();
-        if(requests.Length>5 || requests.Any(r=>r.Scope!="IPF1_MULTI_HORIZON_CONDITIONAL_RESEARCH_NOT_CERTIFIED" ||
+        if(requests.Length>5 || requests.Any(r=>
+            !(r.Scope=="IPF1_MULTI_HORIZON_CONDITIONAL_RESEARCH_NOT_CERTIFIED" ||
+              r.Scope=="RCP1_GLOBAL_RISK_DELAYED_FILL_CONDITIONAL_NOT_CERTIFIED") ||
             r.CommonHorizonMinutes!=0))throw new ArgumentException();
         File.WriteAllText(args[1],JsonSerializer.Serialize(requests.Select(Mxm.Core.OpportunityOrchestrator.Estimate).ToArray()));
         return 0;
