@@ -47,8 +47,8 @@ internal static class BrokerFlatReadbackChecks
             recovered.Ledger.Summary().CompleteRoundTrips==0&&
             recovered.Ledger.ClosedFragments().Length==2,
             "two closed broker outcomes rebuild one continuous cash book without inventing certified round trips");
-        check(result.ObservedPeakLowerBoundEur>=203m&&!result.HistoricalEquityPeakCertified,
-            "reported account balance peaks are retained lower bounds, not a certified lifetime upper bound");
+        check(result.ObservedPeakLowerBoundEur==202m&&!result.HistoricalEquityPeakCertified,
+            "historical cash balances cannot masquerade as observed equity peaks");
         var before=recovered.Checkpoint();
         var mismatched=both with {Closed=new[]{gain,loss with {NetEur=-2m}}};
         check(!recovered.ReconcileBrokerFlat(mismatched).Adopted&&recovered.Checkpoint()==before,
@@ -60,9 +60,12 @@ internal static class BrokerFlatReadbackChecks
             "unexplained costs cannot be inserted to make the broker NET fit");
         check(recovered.ReconcileBrokerFlat(both).Adopted&&recovered.Checkpoint()==before,
             "the same native facts are deterministic under repeated full readback");
+        var seenHigh=both with {Cashflows=new[]{deposits[0] with {ReportedMaximumEquityEur=250m}}};
+        check(recovered.ReconcileBrokerFlat(seenHigh).ObservedPeakLowerBoundEur==250m,
+            "native transaction MaxEquity is retained as an observed historical equity floor");
         recovered=NativeFundedSession.Restore(before,account);
         check(recovered.ReconcileBrokerFlat(both).Adopted&&
-              recovered.Ledger.Summary().ObservedPeakEur>=203m,
+              recovered.Ledger.Summary().ObservedPeakEur>=202m,
             "retained historical lower-bound peak survives available local checkpoint");
         // A fresh process without a checkpoint also reconstructs a documented
         // lower bound from historical broker records, but never claims the
