@@ -1,0 +1,6 @@
+DCP1 prospective displayed-liquidity information-channel pilot, preregistered after PR51.
+Original bound Pepperstone LIVE account; explicit SCOPE_VIEW; encrypted v2 custody.
+All original six symbols. One180-second socket observation; first30seconds warmup.
+At most20 evidence requests excluding OAuth and100000 complete market-data events.
+No outcome labels, forecasts, model replay, orders, reconnect, recurring capture or Cloud activation.
+Exact protocol: research/depth_channel_protocol.json.
