@@ -40,13 +40,11 @@ public sealed partial class NativeFundedLedger
         foreach(var pair in hashes.OrderBy(x=>x.Key,StringComparer.Ordinal))
             chain=Hash(chain+pair.Key+pair.Value);
         decimal maximum=retainedObservedPeak;
+        // Historical closing BALANCE is not an equity mark if other
+        // positions were open then. It cannot establish a peak-equity floor.
         foreach(var f in b.Cashflows)
-        {
-            maximum=Math.Max(maximum,f.BalanceAfterEur);
             if(f.ReportedMaximumEquityEur.HasValue)
                 maximum=Math.Max(maximum,f.ReportedMaximumEquityEur.Value);
-        }
-        foreach(var f in closed)maximum=Math.Max(maximum,f.BalanceAfterEur);
         maximum=Math.Max(maximum,Math.Max(200m,b.EquityEur));
         ledger.state=ledger.state with {
             CashEur=b.BalanceEur,Clock=b.At,ObservedPeakEur=maximum,
