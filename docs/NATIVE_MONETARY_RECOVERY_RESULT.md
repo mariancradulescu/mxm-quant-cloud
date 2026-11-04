@@ -20,7 +20,7 @@ All four original modeled cases are included: two zero-exposure cases and two se
 
 No forecast, allocation, sizing, exit rule, quote selection, broker request or old economic study is run. The displayed old negative NET is technical reconciliation, not a new economic result or candidate promotion.
 
-Focused deterministic contracts cover split entries, a losing partial exit, another closing fragment, explicit funding, missing fees, stale conversions/cash, changed historical facts, fully truncated history, no cash patch, domain isolation and nonempty v1 migration. Their initial funding/completeness declarations are TEST assumptions, not real broker evidence.
+Focused deterministic contracts cover split entries, a losing partial exit, another closing fragment, explicit funding, missing fees (including an omitted numeric JSON Amount rather than an explicit zero), stale conversions/cash, changed historical facts, fully truncated history, no cash patch, domain isolation and nonempty v1 migration. A separate two-symbol contract holds simultaneous positions in ONE EUR200 wallet, closes one losing exposure while retaining the other, then reconciles final cash EUR198.37 and net-EUR1.63. This proves shared bookkeeping only, not actual simultaneous broker financing or economic alpha. Their initial funding/completeness declarations are TEST assumptions, not real broker evidence.
 
 ## Current operational limits
 

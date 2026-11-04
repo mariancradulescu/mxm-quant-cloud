@@ -96,6 +96,32 @@ internal static class MonetaryRecoveryChecks
         try{restored.Ledger.Apply(new LedgerEvent("forbidden",7000,"MARK","","",0,0,0,0,0,0,7000,7000,1,"TEST",proof,Array.Empty<LedgerQuote>()));}
         catch(InvalidOperationException){modelFillBlocked=true;}
         check(modelFillBlocked,"a recovered execution book cannot accept a modeled event as a real broker cash fact");
+        // Two symbols share exactly one cash book; a partial account snapshot
+        // must never create a separate EUR200 wallet for the second position.
+        var aOpen=Fact("a-open","a-o","a-p","a-local","OPEN",1,1,2000,0,.1m);
+        var bOpen=Fact("b-open","b-o","b-p","b-local","OPEN",-1,2,2500,0,.2m,price:20) with {Symbol="OTHER"};
+        var aClose=Fact("a-close","a-c","a-p","a-local","CLOSE",-1,1,4000,-3,.1m,.01m,7);
+        var bClose=Fact("b-close","b-c","b-p","b-local","CLOSE",1,2,5000,2,.2m,.02m,19) with {Symbol="OTHER"};
+        var jointFacts=new[]{aOpen,bOpen,aClose,bClose};
+        var jointIntents=jointFacts.Select(f=>new LocalIntentIdentity("i/"+f.OrderId,f.OrderId,f.PositionId,f.Symbol,f.Side,f.Units,f.Kind=="CLOSE",f.At-1000,f.LedgerPositionId)).ToArray();
+        MoneyRecoveryBatch Joint(int count,decimal cash){
+            var fs=jointFacts.Take(count).ToArray();
+            var os=fs.Select(f=>new BrokerOrderIdentity(f.OrderId,"i/"+f.OrderId,f.PositionId,f.Symbol,f.Side,f.Units,f.Units,f.Kind=="CLOSE","FILLED",f.At)).ToArray();
+            var ds=fs.Select(f=>new BrokerDealIdentity(f.DealId,f.OrderId,f.PositionId,f.Symbol,f.Side,f.Units,f.Kind=="CLOSE",f.At)).ToArray();
+            var ps=fs.GroupBy(f=>f.PositionId).Where(g=>g.Sum(f=>f.Kind=="OPEN"?f.Units:-f.Units)>0)
+                .Select(g=>new BrokerPositionIdentity(g.Key,g.First().Symbol,g.First().Side,g.Sum(f=>f.Kind=="OPEN"?f.Units:-f.Units))).ToArray();
+            return new(account,"BROKER_EXECUTION_FACT",new(account,8000,0,8000,true,true,true,os,ds,ps),fs,cash,true,true,true,false,Array.Empty<ConfirmedFundingEvent>(),8000);
+        }
+        var joint=new NativeFundedSession(account,intents:jointIntents,journalContinuityProven:true);
+        var jointReport=joint.ReconcileMoney(Joint(2,199.7m));
+        check(jointReport.Adopted&&jointReport.RetainedLedger.OpenPositions==2&&jointReport.RetainedLedger.CashEur==199.7m,
+            "simultaneous symbols reserve their actual fee debits in one continuous200 EUR cash book");
+        joint=NativeFundedSession.Restore(joint.Checkpoint(),account);jointReport=joint.ReconcileMoney(Joint(3,196.59m));
+        check(jointReport.Adopted&&jointReport.RetainedLedger.OpenPositions==1&&jointReport.RetainedLedger.CompleteRoundTrips==1,
+            "closing one losing exposure leaves the other position and common cash intact after restart");
+        jointReport=joint.ReconcileMoney(Joint(4,198.37m));
+        check(jointReport.Adopted&&jointReport.RetainedLedger.CompleteRoundTrips==2&&jointReport.RetainedLedger.ClosedNetEur==-1.63m,
+            "the combined book reconciles to200 minus total economic loss, never summed separate wallets");
         // Old v1 native modeled checkpoints remain loadable without changing event IDs.
         var model=new NativeFundedLedger();
         var request=new LedgerEvent("old-request",1000,"REQUEST_OPEN","old-position","OLD",1,1,0,0,0,0,0,0,1000,"TEST",proof,Array.Empty<LedgerQuote>());
