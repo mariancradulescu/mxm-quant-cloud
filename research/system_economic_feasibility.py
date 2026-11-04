@@ -92,7 +92,8 @@ def _build():
         costContextRows=rows,
         temporalCapacityIdentities=throughput,
         ccp1FrozenCurrentCapacity=dict(
-            rows=len(capacity), positiveRawFundingRows=0,
+            rows=len(capacity),
+            positiveRawFundingRows=sum(Decimal(r['RawCarryPerOrdinaryChargeEur']) > 0 for r in capacity),
             rawFundingMinPerOrdinaryChargeEur=number(min(Decimal(r['RawCarryPerOrdinaryChargeEur']) for r in capacity)),
             rawFundingMaxPerOrdinaryChargeEur=number(max(Decimal(r['RawCarryPerOrdinaryChargeEur']) for r in capacity)),
             crossBasketNettingEvaluated=False,
