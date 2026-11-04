@@ -594,6 +594,12 @@ Check(OpportunityOrchestrator.Estimate(ipfConditional).Allocations.Length==1 &&
     "IPF1 multi-horizon reuses unchanged conditional common-capital kernel without trading promotion");
 Check(Rejects(()=>OpportunityOrchestrator.Estimate(ipfConditional with {CommonHorizonMinutes=240})),
     "IPF1 mixed-horizon research requires explicit zero sentinel not a fabricated common horizon");
+var rcpConditional=ipfConditional with {Scope="RCP1_GLOBAL_RISK_DELAYED_FILL_CONDITIONAL_NOT_CERTIFIED"};
+Check(OpportunityOrchestrator.Estimate(rcpConditional).Allocations.Length==1 &&
+      !OpportunityOrchestrator.Estimate(rcpConditional).Qualified,
+    "RCP1 reuses native C# joint EUR200 conditional selector without qualification");
+Check(Rejects(()=>OpportunityOrchestrator.Estimate(rcpConditional with {CommonHorizonMinutes=240})),
+    "RCP1 cannot disguise mixed horizons as a single common execution horizon");
 Check(OpportunityOrchestrator.Estimate(estimatedRequest with {LedgerReconciled=false}).Allocations.Length==0,
     "conditional research still refuses unreconciled capital");
 Console.WriteLine($"PASS {passed} recovery/accounting/portfolio/causal-H1/dynamic-risk/source-calendar/causal-score checks; synthetic, no economic qualification.");
