@@ -92,7 +92,8 @@ public class MxmCloud : Robot
             decimal riskCash=(decimal)Account.Balance,riskEquity=(decimal)Account.Equity,riskMargin=(decimal)Account.Margin,
                 riskFree=(decimal)Account.FreeMargin,riskCredit=(decimal)Account.Credit;
             var afterRisk=Positions.ToArray();
-            bool stableRisk=afterRisk.Length==positions.Length&&positions.All(p=>afterRisk.Any(q=>q.Id==p.Id&&q.VolumeInUnits==p.VolumeInUnits));
+            bool stableRisk=afterRisk.Length==riskPositions.Length&&riskPositions.All(p=>afterRisk.Any(q=>q.Id.ToString()==p.PositionId&&q.SymbolName==p.Symbol&&
+                (decimal)q.VolumeInUnits==p.Units&&(q.TradeType==TradeType.Buy?1:-1)==p.Side));
             long riskAvailable=Stamp(Server.TimeInUtc);
             string riskHash=System.Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(
                 System.Text.Json.JsonSerializer.Serialize(new {riskAt,riskCash,riskEquity,riskMargin,riskFree,riskCredit,riskPositions})))).ToLowerInvariant();

@@ -66,7 +66,8 @@ public sealed class NativePortfolioObservation
         bool marginPressure=valid&&(m.EquityEur<=m.MarginEur || stressed.HasValue&&
             (stressed<=m.MarginEur || State.ObservedPeakEur>0&&stressed<=.70m*State.ObservedPeakEur));
         bool reduction=!valid||crossed==true||ddBreach||marginPressure;
-        string reason=!valid?"OBSERVATION_INCOMPLETE_OR_INCONSISTENT":ddBreach?"OBSERVED_DRAWDOWN_LOWER_BOUND_REACHES_OWNER_LIMIT":
+        string reason=!valid?"OBSERVATION_INCOMPLETE_OR_INCONSISTENT":ddBreach?
+            (m.Domain=="BROKER_PLATFORM_OBSERVATION"?"OBSERVED_PLATFORM_EQUITY_DECLINE_REACHES_REFERENCE_CASHFLOW_HISTORY_UNPROVEN":"OBSERVED_DRAWDOWN_LOWER_BOUND_REACHES_OWNER_LIMIT"):
             crossed==true?"PLATFORM_REPORTED_MARGIN_REFERENCE_CROSSED_NOT_LIQUIDATION_CERTIFICATE":marginPressure?"OBSERVED_OR_DECLARED_STRESS_MARGIN_DRAWDOWN_COVERAGE_LOST":
             liquidation is null?"CURRENT_MARK_OBSERVED_EXIT_COST_OR_LIQUIDITY_UNKNOWN":"CONDITIONAL_EXIT_EQUITY_OBSERVED_NOT_CONTINUOUS_CERTIFICATE";
         return new(valid?m.EquityEur:null,liquidation,valid?m.MarginEur:null,ratio,stressed,State.ObservedPeakEur,

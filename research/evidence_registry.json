@@ -35,7 +35,7 @@
     "newMarketCollectionAuthorizedByThisChange": true,
     "notProofOfSystemInfeasibility": true,
     "ownerDecisionAfter": "PR49",
-    "reason": "Admit only bounded CCP1 current-term joint funding/cost/capacity preflight before any price-return study; no full economic study or model is admitted. Close native floating-equity observation gap using immutable modeled marks, without replaying closed studies."
+    "reason": "CCP1 current-term three-leg financing premise rejected on all86 fixed grid/orientation rows, including24 conditional EUR200 capacity rows, before trading costs. No price-return study, cross-basket netting evaluation or new predictive model admitted. Native open-equity/margin observation and restored sampled peak are verified separately; NET edge remains open."
   },
   "frozenFileSha256": {
     "docs/AIP1_AUTHENTIC_RESULT.json": "ed23b6d7ce289ce1eeede6626ef8d9bce09d2cfbdb59fd6fe4b4493a75a4bd3c",
@@ -53,11 +53,13 @@
     "docs/BDP1_AUTHENTIC_RESULT.json": "ba33bc4bdd756db85c1c017c6c1f39241facd94408901787ff4db4bd53871cdb",
     "docs/BROKER_IDENTITY_AUTHENTIC_RECEIPT.json": "0312f98e9dba98eda06e29607792098d7b37db956b533a8096a7447c7998d6f1",
     "docs/CAUSAL_OBSERVATION_FEASIBILITY_RESULT.json": "f6b01ad3220419d7fcdf418c0bc2ddc1270625afb0cb1e114e53cbec30148ce4",
+    "docs/CCP1_AUTHENTIC_PREFLIGHT.json": "bfa87e175d9e384d32ecd9f93e67541ae6e3c9257af1a1f3a8b43d6ce6b6c708",
     "docs/EPA1_AUTHENTIC_PORTFOLIO_RESULT.json": "abfcff3da3f72cba7d355713daf32f61a9a70cc2964f3a3a23b5f5cd58b31984",
     "docs/EPA2_AUTHENTIC_HOLDING_RESULT.json": "0c3e9ab22d5471ffa52291c5b66c649f3d4f01a78afe5f6ac37a4597886858ca",
     "docs/EPA2_EXECUTION_DIAGNOSIS.json": "74054ec4cd11368cf5635c0e1b5b5b21b7b69a59547b65b79f112ea981df2a31",
     "docs/JOINED_OPPORTUNITY_AUTHENTIC_RESULT.json": "292c3a3d086deee3af9efb3b480a339fa4edf99c3dda58de7559d712cd166187",
     "docs/JOINT_QUOTE_EVIDENCE_AUTHENTIC_RESULT.json": "5df419990d0cd142e7bda794ed2ae791bc0853c4739f6b0286c35c1f62a5403a",
+    "docs/NATIVE_HOLDING_OBSERVATION_RECEIPT.json": "96621da38f811c185ee154e82f731a41d4c241f2eb22de47596b134050a4101b",
     "docs/NATIVE_MONETARY_RECOVERY_AUDIT.json": "dc790c83ca0ab826f21c93e046e8bfaf383d702409da1ca6c20c0091dd459ce4",
     "docs/NATIVE_MONETARY_RECOVERY_RECEIPT.json": "8d51f7149f60b3ad0d108ba9e24818b084ce814fb1db55c5e07ca497e48d920f",
     "docs/NEW_SOURCE_H1_CAUSAL_COLD_VERDICT_20261102.json": "e1a264c8dda8e9f2af3f8b4c1eda51b03fd05be0c98000e23f601c1dd04ffda3",
@@ -114,6 +116,20 @@
     "sourceRunId": 41706496201,
     "strongerCurrentMarginAdmissionVerified": true
   },
+  "nativeHoldingObservation": {
+    "cloudPersistenceProven": false,
+    "continuousDrawdownCertified": false,
+    "frozenModeledHoldingObservations": 124,
+    "newEconomicNetEvidence": false,
+    "observations": 128,
+    "originalStudyRerun": false,
+    "publicArtifactExpiresAt": "2027-02-02T04:40:02Z",
+    "publicArtifactId": 13296885271,
+    "realBrokerEquityCertified": false,
+    "receipt": "docs/NATIVE_HOLDING_OBSERVATION_RECEIPT.json",
+    "receiptSha256": "96621da38f811c185ee154e82f731a41d4c241f2eb22de47596b134050a4101b",
+    "verificationRunId": 41774577191
+  },
   "nativeMonetaryRecovery": {
     "artifactExpiresAt": "2027-02-02T00:04:56Z",
     "cases": 4,
@@ -146,12 +162,25 @@
   "prospectiveCarryPreflight": {
     "budget": 60,
     "calendarIndependentConfirmation": false,
+    "currentConditionalCapacityRows": 24,
+    "evaluatedGridRows": 86,
+    "executionRunId": 41774823771,
     "fullStudyAdmitted": false,
     "id": "CCP1",
+    "independentConfirmation": false,
+    "jointCrossBasketNettingEvaluated": false,
     "newEconomicNetEvidence": false,
+    "positiveRawCarryCapacityRows": 0,
     "protocol": "research/carry_cycle_preflight_protocol.json",
     "protocolSha256": "4de25bcaa4347805dc175469382bce360e054bb5b11a0c5892445d43bf624354",
-    "status": "PREREGISTERED_BEFORE_CURRENT_TERM_CAPTURE"
+    "publicArtifactId": 13297050462,
+    "receipt": "docs/CCP1_AUTHENTIC_PREFLIGHT.json",
+    "receiptSha256": "bfa87e175d9e384d32ecd9f93e67541ae6e3c9257af1a1f3a8b43d6ce6b6c708",
+    "sourceArtifactExpiresAt": "2027-02-02T04:42:33Z",
+    "sourceArtifactId": 13296372221,
+    "sourceCiphertextSha256": "d0d080c94fa1208a2973bd230b9727a14b3596ccbdb81b373ae2df4361e3ce52",
+    "sourceRequests": 39,
+    "status": "CLOSED_EXACT_CURRENT_TERM_PROFILE_NO_RETUNING"
   },
   "prospectiveStudies": [
     {
@@ -700,6 +729,21 @@
       "sourceArtifactId": 13278617985,
       "sourceRunId": 41735441128,
       "start": 1762128000000
+    },
+    {
+      "ciphertextSha256": "d0d080c94fa1208a2973bd230b9727a14b3596ccbdb81b373ae2df4361e3ce52",
+      "decisionExposure": [
+        "ALL4_TRIANGLES_BOTH_ORIENTATIONS_ALL86_CURRENT_TERM_ROWS",
+        "ALL24_CONDITIONAL_CAPACITY_ROWS_NO_MODEL_OR_FULL_STUDY_ADMISSION"
+      ],
+      "exactPublicReceipt": "docs/CCP1_AUTHENTIC_PREFLIGHT.json",
+      "independent": false,
+      "quoteContextNominal": 1793765700000,
+      "scope": "CCP1 current original-account terms, nine FX minimum-volume/margin grids and four route-local previous completed15-minute quote contexts; no return labels or annual bars",
+      "sourceArtifactExpiresAt": "2027-02-02T04:42:33Z",
+      "sourceArtifactId": 13296372221,
+      "sourceRunId": 41774823771,
+      "termsKnownOnlyAtCaptureNotAtQuoteContext": true
     }
   ],
   "unknownExposurePolicy": "TREAT_AS_EXPOSED_FOR_QUALIFICATION"

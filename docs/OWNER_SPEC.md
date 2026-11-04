@@ -391,7 +391,8 @@ volume-grid query extent is evidence support, not an OWNER exposure ceiling.
 No cost-history, liquidity/depth, account stopout, continuous DD or independent edge
 certificate is created. Source quotes are indicative; all NET remains conditional.
 The native forecast/observation/valuation/allocator/holding kernels share C# with
-research, but the funded ledger is still Python and Cloud remains observation-only.
+research. SQP1 originally used the Python funded ledger; subsequent native monetary
+and holding-observation integration is described below. Cloud remains observation-only.
 
 SQP1 executed at code626a9baaca98f0b0bb018b521cba83f9836add06 in run41706496201.
 The outcome-blind pilot passed on both predeclared days (six complete/financeable

@@ -9,7 +9,7 @@ Status below describes implementation, not economic or activation acceptance.
 | Research | Several frozen causal studies, genuine preliminary positive wick NET, broad development across six instruments/timeframes | No independently confirmed NET edge; shared exposed calendars |
 | Native opportunity selection | Common joint scenarios, greedy marginal utility, causal clocks, redundancy/conflict rejection, shared risk/margin reservation | Research heuristic; no authentic incremental portfolio validation |
 | Python funded replay | One EUR200 chronological event ledger, overlapping positions, bid/ask, supplied FX/fees/slippage/financing, aggregate round trips | Sampled marks; no certified continuous drawdown or historical execution proof |
-| Native C# economics | NET accounting/acceptance, source admission, forecasts and adaptive scenario sizing | Full native execution replay equivalence remains incomplete |
+| Native C# economics | Common funded ledger/session, attributed monetary reconstruction, open-equity/margin observation, forecasts and shared allocation | Authentic filled broker recovery, full execution equivalence and continuous risk remain unproved |
 | Native Cloud adapter | Single observation-only cBot, native inventory and timer reconciliation | No trading authority, autonomous trading recovery or device acceptance |
 
 Flow: authentic source → causal opportunities → predictive evidence → common
@@ -59,9 +59,10 @@ symbol/horizon/cohort paths, not duplicated across candidate families.
 CEF1 cannot approve a full economic study: new feature/label sample sizes and
 chronological trial registration, new-episode pilot, joint holding valuation and
 repriced financing remain required. Missing historical tariffs, depth, account
-stop-out and intramark risk remain explicit. The Cloud adapter still does not use
-the new clock or manage open risk; the existing native risk implementation only
-runs in research/replay. No economic qualification follows from compilation.
+stop-out and intramark risk remain explicit. The CEF1 event clock and holding-risk
+policy run in research/replay. The current Cloud adapter additionally observes
+platform open equity/margin through NativePortfolioObservation; it does not
+transmit protective closes. No economic qualification follows from compilation.
 
 CEF1 run41695561224 verified native/reference parity on4284 authentic windows.
 It found570/612 common all-six clocks and8/36 fully supported unique paths under
@@ -132,7 +133,7 @@ Native funded fact confirmation matches the frozen SQP1 cash/costs/sampled drawd
 
 AIP1 is closed on authentic run41735441128: six index CFDs,394,847 M5 bars,456 matured training labels,22 training weeks and646 later session episodes. No forecast passes the predeclared uncertainty screen even before costs. There is no new financed NET, marginal portfolio benefit or independent confirmation. Original successful receipts and the earlier Decimal custody interruption are preserved in `AIP1_AND_NATIVE_IDENTITY_RESULT.md` and JSON records. Old studies remain unchanged.
 
-NativeFundedSession is wired into the one observation-only cBot: order/deal/position identity contracts, account-bound checksummed local checkpoint, model/broker remaining-unit mapping and broker-clock freshness for modeled floating equity. NativeFundedLedger remains a modeled monetary book; identity facts alone do not create priced broker fills or authenticated money. Missing held marks block further model entries. Unknown journal history remains unknown after restore. The genuine current/seven-day empty broker receipt verifies protection and normalization; nonempty partial-fill monetary import, durable Cloud restart, actual peak/equity history and operational product acceptance remain absent. No transmission/order code is introduced.
+NativeFundedSession is wired into the one observation-only cBot: order/deal/position identity contracts, account-bound checksummed local checkpoint, model/broker remaining-unit mapping and broker-clock freshness for modeled floating equity. At PR48 the ledger was a modeled monetary book; PR49 added attributed monetary reconstruction, while identity facts alone still cannot create priced broker fills or authenticated money. Missing held marks block further model entries. Unknown journal history remains unknown after restore. The genuine current/seven-day empty broker receipt verifies protection and normalization; nonempty partial-fill monetary import, durable Cloud restart, actual peak/equity history and operational product acceptance remain absent. No transmission/order code is introduced.
 
 
 ## Atomic monetary reconstruction after PR49
