@@ -141,6 +141,7 @@ def cost_context(samples):
             adverseBps=p90+1.25*c+2*(.5*p90+2*v),
             stressBps=2*p90+2*c+2*(p90+3*v),
             fundingKnown=all(bool(x["DailyFundingKnown"]) for x in rs),
+            swapMinute=int(rs[0]["SwapMinute"]),
             longDailyDebitBps=max(float(x["LongDailyDebitBps"]) for x in rs),
             shortDailyDebitBps=max(float(x["ShortDailyDebitBps"]) for x in rs),
             observedSpreadP90Bps=p90,
@@ -271,6 +272,10 @@ def main():
     score=score_market(views,p)
     from .integrated_funded_book import evaluate
     economy=evaluate(views,score["forecasts"],cost,p)
+    full=economy["FULL"]
+    marginal={k:(round(full["closedNetEur"]-v["closedNetEur"],7)
+                 if full["unresolvedPositions"]==0 and v["unresolvedPositions"]==0
+                 else None) for k,v in economy.items() if k!="FULL"}
     data=dict(schema="IPF1_INTEGRATED_EXPOSED_CONDITIONAL_ECONOMICS",
         authority=p["authority"],run=int(os.environ["GITHUB_RUN_ID"]),
         originalM5Bars=bars,originalDevelopmentCostContexts=sum(x["contexts"] for x in sources),
@@ -282,7 +287,8 @@ def main():
         modelStates=score["numberModels"],forecastDecisionClocks=score["candidateClocks"],
         prospectiveProposalsByPhase=score["proposalsByPhase"],
         missingTargetOutcomes=score["missingOutcomes"],originalCosts=cost,
-        modeledFundedScenarios=economy,qualified=False)
+        modeledFundedScenarios=economy,modeledMarginalEurAgainstFixedAblations=marginal,
+        nativeExecutionLedgerReconciliationCertified=False,qualified=False)
     Path("ipf1-integrated-public.json").write_text(
         json.dumps(data,sort_keys=True,allow_nan=False,separators=(",",":"))+"\n")
     summary=dict(run=data["run"],bars=bars,predictiveGroups=len(score["rows"]),
