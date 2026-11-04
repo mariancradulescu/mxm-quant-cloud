@@ -188,3 +188,15 @@ conserved bars across12 assets, four timeframes and three statistical-cost cases
 166 genuine development quote contexts support explicitly uncertain cost estimates.
 No selection-adverse followup is supported; exact profile is closed. Native
 ledger/orchestrator/session remain unchanged; no funded NET or HARD21 is claimed.
+
+
+[Authentic IMT1 intermarket conditional economics](docs/IMT1_RESULT.md):
+the two original 12-asset annual M5 sources were reconstructed in [Actions #41823243326](https://github.com/mariancradulescu/mxm-quant-cloud/actions/runs/41823243326)
+without new broker requests or closed-model reruns. Across nine targets,
+two fixed causal response families and two horizons, all 36 predeclared
+groups failed the prospectively fixed adverse weekly selection support.
+A single positive adverse mean in exposed selection was unsupported by
+weekly dispersion and missing outcomes; exact IMT1 is closed without
+retuning or audit winner selection. Original artifact hashes and the
+sanitized summary are frozen; no new funded NET, HARD21, independent
+confirmation or Cloud/trading authorization is claimed.

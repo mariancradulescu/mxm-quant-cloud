@@ -32,6 +32,14 @@ def check():
             assert s.get('qualification') is not True, 'PROXY_PROMOTED_TO_CERTIFICATE: ' + s['id']
     msp = next(s for s in r['prospectiveStudies'] if s['id'] == 'MSP1')
     assert msp['status'].startswith('CLOSED_EXACT_') and msp['followupCandidates'] == []
+    imt = next(s for s in r['prospectiveStudies'] if s['id'] == 'IMT1')
+    imt_receipt = json.loads(Path('docs/IMT1_CONDITIONAL_RESULT.json').read_text())
+    assert imt['status'] == 'CLOSED_EXACT_NO_SELECTION_SUPPORT'
+    assert imt['selectionSupport'] == [] and imt['fundedNetEur'] is None
+    assert imt['independent'] is False and imt['qualification'] is False
+    assert imt_receipt['selectionFollowupCandidateIds'] == []
+    assert imt_receipt['fundedNetEur'] is None and imt_receipt['independentConfirmation'] is False
+    assert imt_receipt['originalResult']['protocolSha256'] == imt['protocolSha256']
     assert msp.get('ordersSubmitted', 0) == 0, 'UNAUTHORIZED_MSP1_TRADING_CLAIM'
 
     # These values belong to the single native system, not to each candidate.

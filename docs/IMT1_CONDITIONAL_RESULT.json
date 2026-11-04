@@ -1,0 +1,120 @@
+{
+  "schema": "IMT1_FROZEN_CONDITIONAL_PUBLIC_SUMMARY_V1",
+  "authority": "docs/OWNER_SPEC.md v2.0",
+  "study": "IMT1",
+  "status": "CLOSED_EXACT_NO_SELECTION_SUPPORT",
+  "sourceCodeCommit": "dcd42aa27148ecba8d3196f623e653ae3048ec25",
+  "executionRunId": 41823243326,
+  "sourceRuns": [
+    41724643418,
+    41735441128
+  ],
+  "sourceOriginalM5Bars": 836087,
+  "sourceCostContexts": {
+    "BDP1": 108,
+    "AIP1": 58,
+    "total": 166
+  },
+  "rawBrokerRequestCount": 0,
+  "closedModelReruns": 0,
+  "ordersSubmitted": 0,
+  "cloudActivated": false,
+  "originalResult": {
+    "artifactId": 13318246698,
+    "zipSha256": "3ae765c64c58c3e507cb466cc3bb774169a955305b68079c31ca6afb7574e47f",
+    "decompressedJsonSha256": "62680f17a20e49883feae3e16963b4757d8a9048b6f7e65ce5f71422b2b13c06",
+    "protocolSha256": "33ec38c3f011f1a3edc81ba6b4c7e8befb54422b76f744105f0f89a7661251bc",
+    "artifactUrl": "https://github.com/mariancradulescu/mxm-quant-cloud/actions/runs/41823243326/artifacts/13318246698"
+  },
+  "studyDesign": {
+    "targets": 9,
+    "families": 2,
+    "horizonsMinutes": [
+      60,
+      240
+    ],
+    "predeclaredGroups": 36,
+    "phases": [
+      "development",
+      "selection",
+      "exposed_audit"
+    ],
+    "phaseGroupRows": 108,
+    "split": "26/13/13 globally exposed weeks; no independent confirmation",
+    "brokerCostClass": "CONDITIONAL_COST_MODEL",
+    "phasesMayOverlapAcrossGroups": true,
+    "groupingNotFundedOrIndependent": true
+  },
+  "sourceGates": {
+    "candidateIndexClocks": 9274,
+    "usableIndexBreadthClocks": 6534,
+    "unavailableIndexClocks": 2740,
+    "jointCandidateClocks": 4511,
+    "maxDistinctTargetsAtClock": 9
+  },
+  "phaseResults": [
+    {
+      "phase": "development",
+      "proposed": 17412,
+      "complete": 17318,
+      "unknown": 94,
+      "meanPositiveGroups": {
+        "gross": 14,
+        "central": 2,
+        "adverse": 0,
+        "stress": 0
+      },
+      "weeklyAdverseTenthPercentilePositiveGroups": 0
+    },
+    {
+      "phase": "selection",
+      "proposed": 8860,
+      "complete": 8794,
+      "unknown": 66,
+      "meanPositiveGroups": {
+        "gross": 11,
+        "central": 2,
+        "adverse": 1,
+        "stress": 0
+      },
+      "weeklyAdverseTenthPercentilePositiveGroups": 0
+    },
+    {
+      "phase": "exposed_audit",
+      "proposed": 8932,
+      "complete": 8877,
+      "unknown": 55,
+      "meanPositiveGroups": {
+        "gross": 18,
+        "central": 2,
+        "adverse": 0,
+        "stress": 0
+      },
+      "weeklyAdverseTenthPercentilePositiveGroups": 0
+    }
+  ],
+  "onlyAdverseMeanPositiveSelectionGroup": {
+    "symbol": "JPN225",
+    "family": "RISK_IMPULSE_TRANSFER",
+    "horizonMinutes": 240,
+    "proposals": 185,
+    "complete": 182,
+    "unknown": 3,
+    "activeWeeks": 13,
+    "grossMeanBps": 7.2397336646543184,
+    "centralConditionalMeanBps": 3.0956784925872594,
+    "adverseConditionalMeanBps": 0.16792003798033897,
+    "stressConditionalMeanBps": -4.726268510154082,
+    "tenthPercentileWeeklyAdverseSumBps": -261.0504735437363,
+    "selectionSupport": false
+  },
+  "selectionFollowupCandidateIds": [],
+  "verdict": "NO_PREDECLARED_SELECTION_ADVERSE_WEEKLY_SUPPORT_EXACT_CONFIGURATION_CLOSED",
+  "fundedNetEur": null,
+  "systemHARD21Proven": false,
+  "independentConfirmation": false,
+  "marginalPortfolioContributionFundedEur": null,
+  "finalNativeCbotQualified": false,
+  "interpretation": "All reported means/sums are overlapping, standalone bid-bar conditional cost proxies, not financed broker execution or additive EUR200 portfolio performance. Audit globally exposed and unusable for independent promotion.",
+  "frozenPolicy": "No model inversion, threshold relaxation, audit winner, partial-outcome rescue, cost-case substitution, rerun or retrospective portfolio promotion."
+}
