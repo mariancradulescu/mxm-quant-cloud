@@ -28,6 +28,10 @@ internal static class BrokerFlatReadbackChecks
             "an open broker position requires nonflat execution reconstruction");
         check(!first.ReconcileBrokerFlat(empty with {PendingOrders=1}).Adopted,
             "a pending order cannot be assumed absent on restart");
+        var unresolved=new NativeFundedSession(account,intents:new[]{
+            new LocalIntentIdentity("client-1","","","EURUSD",1,1000m,false,1500,"ledger-id")});
+        check(!unresolved.ReconcileBrokerFlat(empty).Adopted,
+            "an unresolved historical order intent is never cleared by an empty current inventory");
 
         var gain=new BrokerNativeClosedTrade("close-1","position-A","EURUSD",2000,3000,
             3.5m,.5m,0m,3m,203m);
