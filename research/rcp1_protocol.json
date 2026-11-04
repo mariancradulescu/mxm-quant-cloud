@@ -92,10 +92,12 @@
       "WITHOUT_RANGE_COMPRESSION_RELEASE",
       "WITHOUT_RELATIVE_DISPERSION_REPAIR",
       "WITHOUT_TAIL_VOLATILITY_UNWIND",
+      "FULL_STRESS",
       "FLAT_NEUTRAL"
     ],
     "contrasts": "Native C# selector applied independently to fixed policy alternatives from same EUR200 starting capital and same source. Difference in EUR is path-dependent marginal policy contrast, not summable alpha.",
-    "independentNet": "Impossible on globally exposed conditional book without authenticated historic bid/ask actual fills and full funding + independent external untouched evaluation; never claim."
+    "independentNet": "Impossible on globally exposed conditional book without authenticated historic bid/ask actual fills and full funding + independent external untouched evaluation; never claim.",
+    "fullStressSensitivity": "Same exact causal candidate predictions and 200 EUR book but stress rather than adverse total friction applied to both C# admission and booked costs; never chosen after results"
   },
   "benchmark": {
     "mse": [
