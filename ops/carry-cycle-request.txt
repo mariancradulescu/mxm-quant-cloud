@@ -1,0 +1,6 @@
+CCP1 bounded read-only current-term portfolio financing preflight.
+Protocol SHA256 4de25bcaa4347805dc175469382bce360e054bb5b11a0c5892445d43bf624354
+Four fixed FX triangles, both orientations, queried1..6 minimum-volume grids.
+One previous completed15-minute quote window selected before requests.
+Maximum60 source requests, no annual bars, no orders or Cloud activation.
+No full-study admission and no historical/future NET claim from this preflight.
