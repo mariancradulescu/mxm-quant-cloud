@@ -52,7 +52,7 @@ class Rcp1Checks(unittest.TestCase):
         self.assertGreater(scores["decisionClocks"],0)
         self.assertTrue(all(q["knownAt"] in scores["clockForecasts"]
             for group in scores["clockForecasts"].values() for q in group))
-        self.assertGreater(scores["missingOutcomes"],0)
+        self.assertGreater(scores["unknownOutcomes"],0)
 
     def test_separate_future_entry_and_one_cash_with_existing_positions(self):
         p,_=self.fixture(100)
@@ -69,6 +69,7 @@ class Rcp1Checks(unittest.TestCase):
         v={"EURUSD":market_view(rows)}
         c={"EURUSD":self.cost()}
         book=Book("FULL")
+        book.advance(t,v,c)  # Same normal predecision observation as production replay
         alloc=dict(Id="RCP1TEST/1",Units=1)
         lookup={alloc["Id"]:dict(symbol="EURUSD",family="RANGE_COMPRESSION_RELEASE",
                 side=1,horizon=240)}
