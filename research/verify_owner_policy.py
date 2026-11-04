@@ -40,6 +40,20 @@ def check():
     assert imt_receipt['selectionFollowupCandidateIds'] == []
     assert imt_receipt['fundedNetEur'] is None and imt_receipt['independentConfirmation'] is False
     assert imt_receipt['originalResult']['protocolSha256'] == imt['protocolSha256']
+    ipf = next(s for s in r['prospectiveStudies'] if s['id'] == 'IPF1')
+    ipf_receipt = json.loads(Path('docs/IPF1_RESULT.json').read_text())
+    assert ipf['status'].startswith('CLOSED_EXACT_')
+    assert ipf['qualification'] is False and ipf['independent'] is False
+    assert ipf['followupCandidates'] == [] and ipf['brokerFundedNetCertified'] is False
+    assert ipf_receipt['modeledCommonCapital']['scenarios']['FULL']['closedNetEur'] < 0
+    assert ipf_receipt['sourceAndRiskLimitations']['fundingNetEurCertified'] is False
+    assert ipf_receipt['sourceAndRiskLimitations']['tradingQualification'] is False
+    assert ipf_receipt['originalArtifact']['originalJsonSha256'] == ipf['originalPublicJsonSha256']
+    assert ipf_receipt['protocolSha256'] == ipf['protocolSha256']
+    assert ipf_receipt['followupCandidates'] == []
+    assert not ipf_receipt['modeledCommonCapital']['nativeFundedLedgerReplayParityCertified']
+    assert 'IPF1_MULTI_HORIZON_CONDITIONAL_RESEARCH_NOT_CERTIFIED' in Path('src/Mxm.Core/OpportunityOrchestrator.cs').read_text()
+    assert 'LocalStorage.' not in Path('src/Mxm.Cloud/MxmCloud.cs').read_text()
     assert msp.get('ordersSubmitted', 0) == 0, 'UNAUTHORIZED_MSP1_TRADING_CLAIM'
 
     # These values belong to the single native system, not to each candidate.
