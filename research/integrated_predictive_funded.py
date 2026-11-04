@@ -148,6 +148,13 @@ def cost_context(samples):
             currentCommissionMaxBps=c)
     return res
 
+def information_coefficient(rows):
+    if len(rows)<3:return None
+    x=[v["forecast"] for v in rows];y=[v["actual"] for v in rows]
+    mx=mean(x);my=mean(y)
+    sx=sum((z-mx)**2 for z in x);sy=sum((z-my)**2 for z in y)
+    return sum((a-mx)*(b-my) for a,b in zip(x,y))/sqrt(sx*sy) if sx>0 and sy>0 else None
+
 def score_market(views,p):
     names=p["sourceSymbols"]
     clocks=sorted(set(t for s in names for t in views[s]["price"]
@@ -227,7 +234,8 @@ def score_market(views,p):
                         rows.append(dict(phase=stage,symbol=s,horizonMinutes=h,family=fam,
                             complete=0,missing=errors[(stage,s,h)],meanSqError=None,
                             normalizedSkillVsZero=None,meanBrier=None,neutralBrier=.25,
-                            meanGrossSignAlignedBps=None,naiveSquaredError=None))
+                            meanGrossSignAlignedBps=None,naiveSquaredError=None,
+                            prequentialInformationCoefficient=None))
                         continue
                     mse=mean((v["actual"]-v["forecast"])**2 for v in a)
                     zero=mean(v["actual"]**2 for v in a)
@@ -238,7 +246,8 @@ def score_market(views,p):
                         meanBrier=mean(x["brier"] for x in a),neutralBrier=.25,
                         meanGrossSignAlignedBps=mean((1 if v["forecast"]>0 else -1)*
                                                     v["actual"] for v in a),
-                        naiveSquaredError=naïve))
+                        naiveSquaredError=naïve,
+                        prequentialInformationCoefficient=information_coefficient(a)))
     return dict(rows=rows,clocks=len(clocks),forecasts=forecasts,
                 candidateClocks=len(forecasts),proposalsByPhase={
                     stage:sum(v for (phase,_,_),v in proposalCount.items() if phase==stage)
