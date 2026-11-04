@@ -164,7 +164,9 @@ continuous drawdown/restart proof, and Android/Cloud acceptance remain outstandi
 
 ## Historical and experimental provenance
 
-The dated experiment subsections below record protocol-specific prospective decisions\nand frozen execution provenance, not additional universal OWNER invariants.\nAll dated docs except this file are evidence/technical records. If they describe
+The dated experiment subsections below record protocol-specific prospective decisions
+and frozen execution provenance, not additional universal OWNER invariants.
+All dated docs except this file are evidence/technical records. If they describe
 older authority or component status, this file controls. In particular
 `OWNER_RISK_AUTHORITY_CORRECTION_20261103.md` contains explicitly superseded 1/40/60
 rules; `HistoricalPr16Risk` is isolated numerical provenance for its frozen study.
