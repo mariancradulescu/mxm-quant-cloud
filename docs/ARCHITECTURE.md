@@ -183,9 +183,10 @@ monetary components reject the readback. Prior accepted settlement fingerprints
 cannot disappear or change. No second capital ledger, new risk allowance or
 synthetic balancing transfer is introduced.
 
-Cloud LocalStorage is optional opportunistic checkpointing, **not required for
-this broker-flat readback**. A corrupt/missing instance checkpoint no longer
-prevents repeated read-only attempts; monitoring resumes on the normal timer.
+Cloud cBot does **not read or write LocalStorage**: the official Cloud runtime
+keeps it in memory, GetString on an unset key can raise an exception and Flush
+cannot persist. The native broker readback begins afresh on each restart and
+retries automatically on the normal timer.
 Known unresolved local order intents, held positions, pending broker orders,
 additional cashflows, unsettled commissions and unexplained cash differences
 still prevent this exact *flat* adoption. A nonflat account stays under
