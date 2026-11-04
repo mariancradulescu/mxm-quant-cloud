@@ -165,3 +165,53 @@ Instrument universes are research eligibility, not mandatory simultaneous positi
 The native common allocator, monetary ledger and portfolio observation session
 remain the single implementation route; independently certified full lifecycle,
 continuous drawdown and durable Cloud restart remain outstanding.
+
+### Native broker flat-state reconstruction without durable LocalStorage (after PR56)
+
+The existing native Cloud cBot now reads the documented cTrader Algo
+`Transactions` (`Transaction.Id/Time/Type/Amount/Balance/MaxEquity`) and
+`History` (`HistoricalTrade.ClosingDealId/PositionId/EntryTime/ClosingTime/
+GrossProfit/Commissions/Swap/NetProfit/Balance`) in addition to
+`Positions`, `PendingOrders` and current account balance/equity/margin.
+After two identical source-fingerprint polls, an **entirely flat** account
+with a single positively observed initial EUR200 deposit and no other observed
+cashflows may be reconstructed atomically into the **existing**
+`NativeFundedLedger`. Each distinct closing trade's reported net is summed
+with the same initial EUR200 and compared against the current broker balance.
+The reported gross, swap and commission must explain its net; missing/ambiguous
+monetary components reject the readback. Prior accepted settlement fingerprints
+cannot disappear or change. No second capital ledger, new risk allowance or
+synthetic balancing transfer is introduced.
+
+Cloud LocalStorage is optional opportunistic checkpointing, **not required for
+this broker-flat readback**. A corrupt/missing instance checkpoint no longer
+prevents repeated read-only attempts; monitoring resumes on the normal timer.
+Known unresolved local order intents, held positions, pending broker orders,
+additional cashflows, unsettled commissions and unexplained cash differences
+still prevent this exact *flat* adoption. A nonflat account stays under
+`NativeFundedSession.ReconcileMoney`'s positive execution-history evidence
+requirements; no open position is discarded to manufacture flatness.
+
+**Separate certificates:** a successful flat cash identity restores an
+account-bound current cash record and permits causal *research/observation*
+to continue without storage. It does not establish lifetime cashflow-history
+completeness, filled-order attribution, HARD21, a continuous equity path or an
+upper bound on the historical peak. Transaction `MaxEquity` and historical
+closing balances are retained only as **lower bounds**; an unknown larger
+intra-trade equity peak must not be reset to the balance after restart.
+Recovered historical closing rows are deliberately not counted as certified
+complete funded round trips without their complete opening/fill chain.
+New orders and trading Cloud activation remain impossible.
+
+Official API contracts:
+https://help.ctrader.com/ctrader-algo/references/Account/Transactions/Transaction/ ;
+https://help.ctrader.com/ctrader-algo/references/Trading/History/HistoricalTrade/ ;
+https://help.ctrader.com/ctrader-algo/references/Trading/Positions/Position/ ;
+https://help.ctrader.com/ctrader-algo/documentation/cbots/cloud-requirements/ .
+
+CI `BrokerFlatReadbackChecks` covers restart without checkpoint,
+funded wins/losses in one EUR200 book, repeated polls, stale/truncated history,
+unknown financial legs, extra transfers, pending orders, unreconciled intents
+and evidence of an earlier observed equity peak. These are deterministic
+contracts, not broker execution, actual Cloud restart acceptance or
+predictive economic validation.
