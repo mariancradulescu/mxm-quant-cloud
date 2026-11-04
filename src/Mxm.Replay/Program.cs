@@ -165,7 +165,7 @@ if (args.Length == 3 && args[2] == "--estimate-portfolio-opportunities-batch")
             r.CommonHorizonMinutes!=0))throw new ArgumentException();
         File.WriteAllText(args[1],JsonSerializer.Serialize(requests.Select(Mxm.Core.OpportunityOrchestrator.Estimate).ToArray()));
         return 0;
-    } catch (Exception ex) { Console.Error.WriteLine($"BATCH_RESEARCH_ERROR:{ex.GetType().Name}:{ex.Message}"); return 32; }
+    } catch (Exception ex) { Console.Error.WriteLine($"BATCH_RESEARCH_ERROR:{ex.GetType().Name}"); return 32; }
 }
 if (args.Length == 3 && args[2] == "--estimate-portfolio-opportunities")
 {
