@@ -213,6 +213,7 @@ def score_market(views,p):
                 if decisionAvailable:
                     forecasts[t].append(dict(symbol=s,horizon=h,phase=stage,
                         familyPredBps={f:pr[f]*scale for f in FAMS},
+                        familyWeights={f:raw[i]/total for i,f in enumerate(FAMS)},
                         predictedBps=combo*scale,scale=scale,
                         confidenceBlocks=min(m.n for m in models),clock=t))
     rows=[]
