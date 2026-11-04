@@ -43,12 +43,17 @@ public static class NativeCausalWarmup
                 return Reject("WARMUP_DUPLICATED_OR_REVERSED_BAR");
             if(rows[i].OpenAt!=rows[i-1].CloseAt)gaps++;
         }
-        if(gaps>0)return Reject("WARMUP_UNFILLED_SESSION_GAP",gaps);
         if(input.ObservedAt-rows[^1].CloseAt>2*width)
             return Reject("WARMUP_LAST_BAR_STALE");
+        // Weekends and exchange holidays are real time gaps, not fictional
+        // zero-volume bars. Exclude their cross-gap returns without inventing
+        // an opening price or a broker market-hours history.
         decimal abs=0m,net=0m,range=0m,volume=0m;
+        int observedTransitions=0;
         for(int i=1;i<rows.Length;i++)
         {
+            if(rows[i].OpenAt!=rows[i-1].CloseAt)continue;
+            observedTransitions++;
             decimal prev=rows[i-1].Close;
             decimal r=rows[i].Close/prev-1m;
             net+=r;
@@ -56,13 +61,18 @@ public static class NativeCausalWarmup
             range+=(rows[i].High-rows[i].Low)/rows[i].Open;
             volume+=rows[i].TickVolume;
         }
+        if(observedTransitions<16)
+            return Reject("WARMUP_TOO_FEW_UNBROKEN_RETURNS",gaps);
         decimal current=rows[^1].TickVolume;
-        decimal? activity=volume>0 ? current*WindowReturns/volume:null;
+        decimal? activity=volume>0 ? current*observedTransitions/volume:null;
         var hash=Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(
             JsonSerializer.Serialize(new {input.Symbol,input.Timeframe,Rows=rows}))))
             .ToLowerInvariant();
-        return new(true,"WARMUP_CAUSAL_FEATURE_PREFIX_ONLY_NOT_MODEL_READY",
-            input.Symbol,input.Timeframe,rows[^1].CloseAt,WindowBars,0,
-            net/WindowReturns,abs/WindowReturns,range/WindowReturns,activity,hash);
+        return new(true,gaps>0
+                ?"WARMUP_GAPPED_OBSERVATIONS_EXCLUDED_NOT_MODEL_READY"
+                :"WARMUP_CAUSAL_FEATURE_PREFIX_ONLY_NOT_MODEL_READY",
+            input.Symbol,input.Timeframe,rows[^1].CloseAt,WindowBars,gaps,
+            net/observedTransitions,abs/observedTransitions,
+            range/observedTransitions,activity,hash);
     }
 }

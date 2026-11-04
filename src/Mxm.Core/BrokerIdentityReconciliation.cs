@@ -4,7 +4,8 @@ using System.Text.Json;
 namespace Mxm.Core;
 
 public sealed record BrokerOrderIdentity(string OrderId,string ClientIntentId,string PositionId,string Symbol,int Side,
-    decimal RequestedUnits,decimal ExecutedUnits,bool? Closing,string Status,long UpdatedAt);
+    decimal RequestedUnits,decimal ExecutedUnits,bool? Closing,string Status,long UpdatedAt,
+    long? SubmittedAt=null);
 public sealed record BrokerDealIdentity(string DealId,string OrderId,string PositionId,string Symbol,int Side,
     decimal Units,bool Closing,long At);
 public sealed record BrokerPositionIdentity(string PositionId,string Symbol,int Side,decimal Units);

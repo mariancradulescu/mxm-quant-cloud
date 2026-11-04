@@ -36,6 +36,25 @@ internal static class NativeCausalWarmupChecks
         check(!NativeCausalWarmup.Rebuild(input with {ClosedBars=bars.Take(32).Append(
             bars[^1] with {High=0}).ToArray()}).Ready,
             "invalid OHLC geometry is not interpreted as a market signal");
+        // Daily FX/session bars routinely skip weekends. Do not claim a
+        // 48-hour hold is a single-bar observation, and do not require full
+        // annual history to warm a valid recent prefix.
+        var weekend=bars.Select((b,i)=>i>=16?b with {
+            OpenAt=b.OpenAt+2*span,CloseAt=b.CloseAt+2*span
+        }:b).ToArray();
+        var weekendRead=NativeCausalWarmup.Rebuild(input with {
+            ObservedAt=weekend[^1].CloseAt+1000,ClosedBars=weekend
+        });
+        check(weekendRead.Ready && weekendRead.MissingIntervals==1 &&
+            weekendRead.NormalizedDrift!=ready.NormalizedDrift &&
+            !weekendRead.BrokerDecisionEligible,
+            "native session gap stays explicit, excludes cross-gap return and never creates a trading signal");
+        var sparse=bars.Select((b,i)=>b with {
+            OpenAt=b.OpenAt+i*span,CloseAt=b.CloseAt+i*span
+        }).ToArray();
+        check(!NativeCausalWarmup.Rebuild(input with {
+            ObservedAt=sparse[^1].CloseAt+1000,ClosedBars=sparse
+        }).Ready,"insufficient connected observations still block a gapped feature prefix");
         var zeros=bars.Select(b=>b with {TickVolume=0}).ToArray();
         var quiet=NativeCausalWarmup.Rebuild(input with {ClosedBars=zeros});
         check(quiet.Ready&&quiet.RelativeTickActivity is null,
