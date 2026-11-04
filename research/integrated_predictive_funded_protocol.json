@@ -1,0 +1,152 @@
+{
+  "id": "IPF1",
+  "status": "REGISTERED_UNSCORED",
+  "authority": "docs/OWNER_SPEC.md OWNER v2.0",
+  "purpose": "Integrated Predictive and Funded portfolio economic evaluation across asset/regime/activity timeframes and shared EUR200 cash, not standalone threshold signal development",
+  "sourceRuns": [
+    41724643418,
+    41735441128
+  ],
+  "sourceHashes": [
+    "e47ba7204ca7e07e7bb523ede8a8171f49b216cad09914142ed548839660a370",
+    "fa684ca1de58c6d1e8bdee410834855d05389af0c0ae4523b095367dce0e5331"
+  ],
+  "sourceSymbols": [
+    "EURUSD",
+    "GBPUSD",
+    "USDJPY",
+    "AUDUSD",
+    "USDCAD",
+    "XAUUSD",
+    "US500",
+    "NAS100",
+    "GER40",
+    "UK100",
+    "AUS200",
+    "JPN225"
+  ],
+  "universePolicy": "All instruments authentic in two preserved annual runs; broker expansion is not capped at twelve when extra source has a distinct justified premise. No data from unseen instruments invented.",
+  "sourceBarPeriodMinutes": 5,
+  "featureTimeframesMinutes": [
+    60,
+    240,
+    1440
+  ],
+  "holdingHorizonsMinutes": [
+    240,
+    1440,
+    4320
+  ],
+  "factorFamilies": [
+    "MULTISCALE_REPRICING",
+    "ACTIVITY_VOLATILITY_REGIME",
+    "CROSS_ASSET_RELATIVE"
+  ],
+  "ensemble": "Causal online equal-prior exp(-matured normalized squared loss) weighting with fixed decay, zero-skill prior; no hindsight selection of best feature family",
+  "predictiveMethod": "Per symbol/family/horizon online six-feature bounded squared-loss SGD, fixed learning rate and shrinkage; matured forward labels only; standardization from causally previous observed hourly volatility, no completed label from current or future horizon.",
+  "training": {
+    "warmupWeeks": 8,
+    "learningRate": 0.025,
+    "weightDecay": 0.003,
+    "targetClipSigma": 3,
+    "featureClip": 3,
+    "ensembleDecay": 0.985,
+    "modelWeightPrior": 1,
+    "minimumMaturedObservations": 12
+  },
+  "clock": {
+    "utcHours": [
+      8,
+      16
+    ],
+    "minute": 0,
+    "knownAt": "end of complete M5 bar",
+    "featureMinimumObservedHours4h": 3,
+    "featureMinimumObservedHours24h": 15,
+    "featureMinimumObservedHours72h": 40,
+    "futureNoForecastErase": true
+  },
+  "costs": {
+    "class": "CONDITIONAL_COST_MODEL_ONLY",
+    "source": "original development synchronized BID/ASK and current broker contract details",
+    "sides": [
+      "spread one round trip",
+      "two-sided slippage",
+      "commission",
+      "conservative observed current-term funding when overnight"
+    ],
+    "scenarios": [
+      "central",
+      "adverse",
+      "stress"
+    ],
+    "commission": "current max of authentic cost contexts",
+    "fundingMissing": "mark unknown and disallow funded book exposure; never treat as zero",
+    "executionPrices": "M5 complete-bar bid-like price with modeled spread/latency; not genuine historical fills, not broker verified gross/cost NET",
+    "noFutureCost": "Frozen true development quote/commission/funding contexts only applied in selection and exposed audit financed decision clocks, never to an earlier capital decision"
+  },
+  "portfolio": {
+    "startingCashEur": 200,
+    "noReset": true,
+    "riskDrawdownLimit": 0.3,
+    "maxPositionsByCapitalOnly": true,
+    "oneCommonNativeOrchestrator": true,
+    "nativeResearchScope": "IPF1_MULTI_HORIZON_CONDITIONAL_RESEARCH_NOT_CERTIFIED",
+    "volumeGrid": "authentic current-minimum margin/notional from preserved synchronized source; 1-3 broker-minimum-sized units only when financed; no fixed historical 12-symbol ceiling",
+    "positionConflict": "at most one current position per instrument, but several different instruments simultaneously; held money/risk is shared",
+    "marginalPolicy": "same frozen forecast and calibration, replay FULL and 3 leave-one-family-out books from the same initial EUR200; difference is conditional marginal EUR not independent net edge",
+    "referencePolicies": [
+      "FLAT_NEUTRAL",
+      "SINGLE_FAMILY",
+      "ZERO_DRIFT_FORECAST",
+      "PRIOR_4H_MOMENTUM"
+    ],
+    "economicExecution": "Native C# scenario allocator with joint historical stress states and one common cash/positions replay model, no LIVE/DEMO order; C# LedgerEvent replay to check funded lifecycle where feasible",
+    "portfolioAdmission": "forecast net expected after adverse friction positive; no family required independently positive; native common selector may reject; no hard21 family quota",
+    "hypotheticalFinancing": "max of broker current minimum margin and adverse scenario sizing, 30 percent sampled-risk reference without lifetime risk qualification",
+    "financedReplayStart": "selection phase first eligible clock after the predeclared development cost calibration; no trades in development, continuous EUR200 through exposed audit; no later capital reset"
+  },
+  "calendar": {
+    "start": 1762128000000,
+    "developmentEnd": 1777852800000,
+    "selectionEnd": 1785715200000,
+    "end": 1793577600000,
+    "phaseWeeks": [
+      26,
+      13,
+      13
+    ],
+    "exposure": "ALL prior studies have exposed entire dataset. Audit is descriptive globally exposed, never independent confirmation.",
+    "boundary": "No order opens if known clock+horizon crosses current phase; unknown observed future close is an unknown model outcome, never padded or dropped retroactively from forecasts."
+  },
+  "evaluation": {
+    "prequentialSkill": [
+      "normalized mean squared error vs zero drift and 4h momentum",
+      "Brier probability above zero vs neutral 0.5",
+      "directional accuracy",
+      "information coefficient by phase and family",
+      "forecast coverage and missing maturation"
+    ],
+    "economicAmplitude": [
+      "absolute prior horizon move distribution vs current conditional scenario cost",
+      "expected forecast bps and realized gross bps",
+      "per-trade modeled EUR at real current minimum volume",
+      "shared capital and margin utilization, peak and floating sampled drawdown"
+    ],
+    "qualification": "None on globally exposed source; no historic fills, certified lifetime peak, complete execution or independent 12-month holdout.",
+    "noPromotion": "Selection cannot adapt thresholds after seeing results; scenario/portfolio adverse failures prohibit promotion; AUDIT may not choose favorable portfolio or substitute the best ablation."
+  },
+  "ordersAllowed": false,
+  "cloudActivated": false,
+  "newBrokerRequests": 0,
+  "noReruns": [
+    "MSP1",
+    "IMT1",
+    "BDP1",
+    "AIP1",
+    "SQP1",
+    "EPA1",
+    "EPA2",
+    "DCP1"
+  ]
+}

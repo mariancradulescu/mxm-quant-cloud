@@ -585,6 +585,15 @@ Check(Rejects(()=>OpportunityOrchestrator.Estimate(estimatedRequest with {Scope=
     "conditional endpoint requires explicit research scope");
 Check(Rejects(()=>OpportunityOrchestrator.Estimate(estimatedRequest with {CommonHorizonMinutes=15})),
     "EPA1 cannot compare different economic holding horizons");
+var ipfConditional=estimatedRequest with {
+    Scope="IPF1_MULTI_HORIZON_CONDITIONAL_RESEARCH_NOT_CERTIFIED",
+    CommonHorizonMinutes=0
+};
+Check(OpportunityOrchestrator.Estimate(ipfConditional).Allocations.Length==1 &&
+      !OpportunityOrchestrator.Estimate(ipfConditional).Qualified,
+    "IPF1 multi-horizon reuses unchanged conditional common-capital kernel without trading promotion");
+Check(Rejects(()=>OpportunityOrchestrator.Estimate(ipfConditional with {CommonHorizonMinutes=240})),
+    "IPF1 mixed-horizon research requires explicit zero sentinel not a fabricated common horizon");
 Check(OpportunityOrchestrator.Estimate(estimatedRequest with {LedgerReconciled=false}).Allocations.Length==0,
     "conditional research still refuses unreconciled capital");
 Console.WriteLine($"PASS {passed} recovery/accounting/portfolio/causal-H1/dynamic-risk/source-calendar/causal-score checks; synthetic, no economic qualification.");

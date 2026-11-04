@@ -133,6 +133,19 @@ if (args.Length == 3 && args[2] == "--value-portfolio-source")
         return 0;
     } catch { return 16; }
 }
+if (args.Length == 3 && args[2] == "--estimate-portfolio-opportunities-batch")
+{
+    try {
+        var requests=JsonSerializer.Deserialize<Mxm.Core.ResearchOrchestrationRequest[]>(
+            File.ReadAllBytes(args[0]),new JsonSerializerOptions {
+                NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString})
+            ?? throw new ArgumentException();
+        if(requests.Length>5 || requests.Any(r=>r.Scope!="IPF1_MULTI_HORIZON_CONDITIONAL_RESEARCH_NOT_CERTIFIED" ||
+            r.CommonHorizonMinutes!=0))throw new ArgumentException();
+        File.WriteAllText(args[1],JsonSerializer.Serialize(requests.Select(Mxm.Core.OpportunityOrchestrator.Estimate).ToArray()));
+        return 0;
+    } catch { return 32; }
+}
 if (args.Length == 3 && args[2] == "--estimate-portfolio-opportunities")
 {
     try {
