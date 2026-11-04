@@ -623,3 +623,26 @@ amplitude against costs, capital support and prospective evidence design justify
 No new safety/model layer is added merely to create activity. Report economic value,
 EUR200/HARD21 feasibility, necessary product work, missing independent evidence and
 structural limits separately. Trading stays disabled.
+
+
+## Distinct information-channel discovery after PR51
+
+OWNER accepts PR51 and directs real discovery using existing authorized source
+capabilities, without repetitive negative reports or decorative modules. DCP1
+registers one outcome-blind180-second live displayed-depth/BID-ASK source pilot on
+all six original instruments, before capture. The economic premise is liquidity
+provider information in displayed size changes, not exchange trades, tick counts
+or a refit of closed price-bar models. The existing request transport discards
+unsolicited messages; a narrow read-only capture adapter retains complete market
+events, local receive clocks and original protobuf custody without changing it.
+
+The protocol fixes warmup, count/variation gates, budgets, current minimum-margin
+context and failure preservation. No return labels/model/NET are evaluated. A
+positive source gate only establishes observed channel variation; it cannot admit
+a full study, prove a complete order book, exchange timing, executable size, an
+independent economic effect or a historical depth panel. The pinned protocol has
+no historical DOM request; depth events have no broker timestamp/sequence fields.
+Native C# kernels and trading prohibitions remain intact. Economic model/portfolio
+work requires a separately prospectively defined, cost-aware hypothesis after
+source support, without inspecting pilot returns to select a recipe. This bounded
+source test adds no recurring service and needs no new credentials or sources.
