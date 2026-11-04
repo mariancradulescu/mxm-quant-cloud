@@ -48,6 +48,14 @@ public class MxmCloud : Robot
     {
         try
         {
+            // Native balances are in the deposit asset, not automatically EUR.
+            if(Account.Asset.Name!="EUR")
+            {
+                if(_lastMode!="PROTECTIVE_DEPOSIT_CURRENCY_UNVERIFIED")
+                    Print("MXM protective observation: EUR deposit currency not established; no monetary import.");
+                _lastMode="PROTECTIVE_DEPOSIT_CURRENCY_UNVERIFIED";
+                return;
+            }
             var positions=Positions.ToArray();
             var pending=PendingOrders.ToArray();
             var closed=History.ToArray();
