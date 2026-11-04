@@ -1,0 +1,75 @@
+{
+  "id": "IMT1",
+  "authority": "docs/OWNER_SPEC.md v2.0",
+  "status": "PROSPECTIVE_UNSCORED",
+  "economicPremise": "Causal, sufficiently broad equity-index risk impulse may transmit with a delay into cross-asset FX/gold and non-source index prices. A separate relative-underreaction rule requires the target's preceding one-hour movement to oppose the predeclared index-implied side. Both are falsifiable across all targets.",
+  "sourceRuns": [
+    41724643418,
+    41735441128
+  ],
+  "sourceCiphertextSha256": [
+    "e47ba7204ca7e07e7bb523ede8a8171f49b216cad09914142ed548839660a370",
+    "fa684ca1de58c6d1e8bdee410834855d05389af0c0ae4523b095367dce0e5331"
+  ],
+  "sourceScopes": [
+    "mxm-bdp1-source-v1",
+    "mxm-aip1-source-v1"
+  ],
+  "newBrokerRequests": 0,
+  "closedForecastsCalled": 0,
+  "ordersAllowed": false,
+  "cloudActivated": false,
+  "start": 1762128000000,
+  "developmentEnd": 1777852800000,
+  "selectionEnd": 1785715200000,
+  "end": 1793577600000,
+  "sourceIndices": [
+    "US500",
+    "NAS100",
+    "GER40"
+  ],
+  "targets": {
+    "EURUSD": 1,
+    "GBPUSD": 1,
+    "AUDUSD": 1,
+    "USDJPY": 1,
+    "USDCAD": -1,
+    "XAUUSD": -1,
+    "UK100": 1,
+    "AUS200": 1,
+    "JPN225": 1
+  },
+  "families": [
+    "RISK_IMPULSE_TRANSFER",
+    "TARGET_UNDERREACTION"
+  ],
+  "horizonsMinutes": [
+    60,
+    240
+  ],
+  "sampling": {
+    "hourUtcMin": 8,
+    "hourUtcMaxInclusive": 16,
+    "minutes": [
+      0,
+      15,
+      30,
+      45
+    ],
+    "factorLookbackMinutes": 60,
+    "requireIndices": 2,
+    "minIndexImpulseAbsBps": 5,
+    "minUnderreactionAbsBps": 5,
+    "requireExactHistoricalBarClocks": true,
+    "requireAllIntermediateTargetBars": true
+  },
+  "phaseCalendar": "26/13/13 complete predeclared weeks; last thirteen globally exposed audit, never independent; all clock failures count as evidence gaps",
+  "signalPolicy": "At each completed M5 End clock, require at least two index prior-hour changes of same sign and abs>=5bps, all known at decision time. Take that sign times fixed target response. Underreaction additionally requires prior target 60m return >=5bps opposite implied side. No outcome-based sign fitting, no threshold search, no return-based subset exclusion.",
+  "costs": "Separate conditional central/adverse/stress spreads from development true BID/ASK quote contexts and maximum currently observed tariff commission. Central: mean spread + max commission + two sides (0.25 mean spread + one second diffusion proxy). Adverse: p90 spread + 1.25 max commission + two sides (0.5 p90 spread + 2 times one-second vol). Stress: 2 p90 spread + 2 max commission + two sides (p90 spread + 3 times one-second vol). No historical ASK/fills or historical funding asserted; avoid crossing UTC date. Accounts denominated EUR not derivable from standalone bps.",
+  "missing": "No complete index/target hour history, exact forward completion, current cost context or funding support: unknown or abstain; never zero-fill or optimize missing outcomes.",
+  "multipleTests": "All 9 targets x 2 families x 2 horizons x 3 cost cases, plus every weekly observation: 36 predeclared groups, no after-the-fact winner, overlap not independent.",
+  "followup": "Selection-only >=30 complete episodes in >=8 active weeks and adverse weekly mean lower proxy >0 may justify a NEW independently registered native EUR200 incremental funded portfolio study, not qualification; audit may never choose a winner.",
+  "allocator": "No separate account per group; joint clock opportunity/funding coverage only; no summed proxy bps to EUR200, no funded NET or HARD21 claim; native orchestrator remains sole eventual selector",
+  "nativeTradingAuthorized": false,
+  "independentConfirmation": false
+}

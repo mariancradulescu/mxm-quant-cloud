@@ -430,6 +430,34 @@
         41735441128
       ],
       "status": "CLOSED_EXACT_NO_SELECTION_ADVERSE_FOLLOWUP_SUPPORT_NO_RETUNING_OR_ABLATION_RESCUE"
+    },
+    {
+      "id": "IMT1",
+      "phase": "EXPOSED_PROSPECTIVE_INTERMARKET_RISK_TRANSMISSION_AND_UNDERREACTION",
+      "protocolFile": "research/intermarket_transmission_protocol.json",
+      "status": "PREDECLARED_NO_SCORING",
+      "independent": false,
+      "qualification": false,
+      "sourceRuns": [
+        41724643418,
+        41735441128
+      ],
+      "originalSourceReuse": true,
+      "closedModelsCalled": 0,
+      "sourceRecollected": false,
+      "brokerRequests": 0,
+      "trialGroups": 36,
+      "costScenarios": [
+        "central",
+        "adverse",
+        "stress"
+      ],
+      "selectionProtocol": "PREDECLARED_26_13_13_ALL_GLOBALLY_EXPOSED",
+      "holdoutIndependent": false,
+      "fundedNetEur": null,
+      "ordersSubmitted": 0,
+      "jointPortfolioFundedAllocation": "NOT_YET_ALLOWED_ON_MISSING_FILL_HISTORY",
+      "referenceOwnerDecision": "OWNER_20261104_AFTER_PR57_58"
     }
   ],
   "schema": "mxm-project-data-exposure-v1",
