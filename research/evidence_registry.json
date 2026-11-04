@@ -538,6 +538,59 @@
       "followupCandidates": [],
       "noPromotion": true,
       "reason": "Full modeled common EUR200 book negative; sole positive predeclared ablation loses strongly in exposed audit. Exact IPF1 sealed, no independent holdout or true historical execution fills."
+    },
+    {
+      "id": "RCP1",
+      "status": "REGISTERED_BEFORE_FIRST_AUTHENTIC_SCORE",
+      "phase": "EXPOSED_CAUSAL_LIQUIDITY_PRESSURE_RELATIVE_DISPERSION_AND_TAIL_REGIME_PORTFOLIO",
+      "protocolFile": "research/rcp1_protocol.json",
+      "originalSourceRuns": [
+        41724643418,
+        41735441128
+      ],
+      "sourceReuseOnly": true,
+      "newBrokerRequests": 0,
+      "closedPredictiveModelsReused": false,
+      "newModelClass": "THREE_STRUCTURAL_CAUSAL_PRESSURE_STATES_ONLINE_BAYESIAN_SLOPES",
+      "decisionToEntryLagMs": 300000,
+      "historicalOpenPositionRiskInJointNativeState": true,
+      "nativeSelectorShared": true,
+      "originalCSharpCoreUnmodifiedExceptResearchScope": true,
+      "initialCapitalEur": 200,
+      "noReset": true,
+      "lookbackTimeframesMinutes": [
+        240,
+        1440,
+        7200
+      ],
+      "holdingHorizonsMinutes": [
+        240,
+        1440,
+        4320
+      ],
+      "familyIds": [
+        "RANGE_COMPRESSION_RELEASE",
+        "RELATIVE_DISPERSION_REPAIR",
+        "TAIL_VOLATILITY_UNWIND"
+      ],
+      "sixPredeclaredPortfolioPolicies": [
+        "FULL",
+        "WITHOUT_RANGE_COMPRESSION_RELEASE",
+        "WITHOUT_RELATIVE_DISPERSION_REPAIR",
+        "WITHOUT_TAIL_VOLATILITY_UNWIND",
+        "FULL_STRESS",
+        "FLAT_NEUTRAL"
+      ],
+      "costClass": "CONDITIONAL_COST_MODEL",
+      "historicalBrokerExecutionProven": false,
+      "sourceGloballyExposed": true,
+      "independent": false,
+      "qualification": false,
+      "fundedBrokerNetEur": null,
+      "systemHard21Certified": false,
+      "ordersSubmitted": 0,
+      "cloudActivated": false,
+      "researchNote": "Not IPF1 retune. Exposed retrospective data; no independent confirmation. Delayed next M5 prices and all held open risk modeled, not certified broker fills. Complete enrolled weeks, no family-specific HARD21 constraint. Full adverse and stress portfolio counterfactuals registered before outcome."
     }
   ],
   "schema": "mxm-project-data-exposure-v1",

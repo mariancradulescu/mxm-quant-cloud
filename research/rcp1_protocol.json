@@ -1,0 +1,121 @@
+{
+  "schema": "mxm-rcp1-protocol-v1",
+  "id": "RCP1",
+  "status": "REGISTERED_UNSCORED",
+  "authority": "docs/OWNER_SPEC.md v2.0",
+  "researchOnly": true,
+  "economicQuestion": "Can causally observed liquidity-pressure, cross-asset dispersion and volatility-tail states predict future returns and add net economic contribution in one capital-limited EUR200 multi-asset portfolio after a separately observed next-bar entry and joint open-position risk?",
+  "distinction": "New explanatory event-state Bayesian conditional regression rather than IPF1's multi-resolution 6-feature SGD; no IPF1 forecast, model, weights, parameters, backtest or ablation re-execution.",
+  "sourceRuns": [
+    41724643418,
+    41735441128
+  ],
+  "sourceSha256": [
+    "e47ba7204ca7e07e7bb523ede8a8171f49b216cad09914142ed548839660a370",
+    "fa684ca1de58c6d1e8bdee410834855d05389af0c0ae4523b095367dce0e5331"
+  ],
+  "sourceSchemas": [
+    "mxm-bdp1-source-v1",
+    "mxm-aip1-source-v1"
+  ],
+  "sourceReuse": "Only encrypted original Pepperstone readback and causal source cost-context functions. Already exposed yearly calendar: no independent holdout.",
+  "universe": "All authentic original Pepperstone symbols; new economically justified symbols may be collected in a different, separately registered research protocol; never infer missing source.",
+  "decisionClock": "Every complete H4 UTC closing clock among [0,4,8,12,16,20] hours for all authentic instruments, with no forward-fill of absent M5 bars.",
+  "executionClock": "Exactly one completed and independently observed next M5 bar end at DecisionClock+300000ms, AFTER signal. Missing next bar means no fill/no trade; not a fill at the known signal bar.",
+  "exitClock": "Exactly ObservedEntryClock+HoldingMinutes*60000; no estimated fill if missing. Later positively observed exit is an unresolved/delayed scenario with additional funding or withheld accounting, never a guaranteed scheduled fill.",
+  "targetForLearning": "Forward completed next-M5-entry-to-prespecified-exit log return, matured only when both exact entry and exit source marks are known and their future clock has passed.",
+  "timeframesMinutes": [
+    240,
+    1440,
+    7200
+  ],
+  "holdingHorizonsMinutes": [
+    240,
+    1440,
+    4320
+  ],
+  "families": [
+    {
+      "id": "RANGE_COMPRESSION_RELEASE",
+      "hypothesis": "When prior 4h trading ranges compress relative to five days but activity accelerates and price closes at a range extreme, latent inventory repricing may persist or reverse with time; regression learns the historical sign with shrinkage."
+    },
+    {
+      "id": "RELATIVE_DISPERSION_REPAIR",
+      "hypothesis": "Excess 24h normalized price displacement vs a broad causal developed-index factor can predict later convergence/continuation without ex-post estimating index betas."
+    },
+    {
+      "id": "TAIL_VOLATILITY_UNWIND",
+      "hypothesis": "Activity-heavy H4 asymmetric wicks combined with true-range expansion represent transient trade-pressure proxy; posterior learns forward direction. It is not actual DOM or dealer inventory."
+    }
+  ],
+  "model": {
+    "type": "EXPONENTIAL_DISCOUNT_BAYESIAN_SLOPE_WITH_ZERO_PRIOR",
+    "priorSlope": 0,
+    "priorInformation": 16,
+    "decayPerMaturedOutcome": 0.995,
+    "featureCap": 3,
+    "returnClipVolUnits": 3,
+    "minimumMaturedObservations": 20,
+    "probability": "sigmoid(2*predictedNormalizedReturn), neutral reference probability 0.5",
+    "ensemble": "equal weights three family slopes, zero baseline retained; no retrospective winner",
+    "intervals": "posterior variability descriptive, not certified probability"
+  },
+  "phase": {
+    "start": 1762128000000,
+    "developmentEnd": 1777852800000,
+    "selectionEnd": 1785715200000,
+    "end": 1793577600000,
+    "splits": "26 weeks development/13 selection/13 exposed audit, ALL globally exposed",
+    "firstModelWarmupWeeks": 8,
+    "forbidTradeBefore": 1777852800000,
+    "historyMustMatureBeforeDecision": true,
+    "forbidPhaseCrossingExposure": true
+  },
+  "economics": {
+    "initialContinuousCapitalEur": 200,
+    "maxSystemDrawdown": 0.3,
+    "hard21SystemRoundTripsPerEligibleWeek": 21,
+    "positionSizer": "Existing C# OpportunityOrchestrator.Estimate/AdaptivePortfolioRisk. No family-level quota.",
+    "nativeResearchScope": "RCP1_GLOBAL_RISK_DELAYED_FILL_CONDITIONAL_NOT_CERTIFIED",
+    "jointScenarios": "Eight predecision weekly historical aligned states, including each existing open position's incremental future return, intrahorizon downside, favorable equity and remaining margin. No independent or zero-existing baseline assumption.",
+    "entryCostScenarios": [
+      "central",
+      "adverse",
+      "stress"
+    ],
+    "modeledAdmission": "forecast net after adverse 2-side spread/slippage and current-term commission/funding; reject when expected net non-positive; no broker fill certificate",
+    "quoteAndSizing": "Actual original development BID/ASK context, current broker contract minimum volume and margin; no historic synthetic real fill. One broker-minimum step per scenario, max 3 only if funded by same capital; no symbol-level independent wallets.",
+    "markPolicy": "Observation of every full H1 time in actual available market while positions open, with no missing equitization; unknown exposure prevents new entries but may be reobserved later. Historical lifetime DD not certified.",
+    "eligibilityWeeks": "All 13 complete selection weeks and 13 exposed audit weeks recorded; no outcome-based exclusion. Count modeled complete round trips at system level. HARD21 proof remains false.",
+    "counterfactuals": [
+      "FULL",
+      "WITHOUT_RANGE_COMPRESSION_RELEASE",
+      "WITHOUT_RELATIVE_DISPERSION_REPAIR",
+      "WITHOUT_TAIL_VOLATILITY_UNWIND",
+      "FULL_STRESS",
+      "FLAT_NEUTRAL"
+    ],
+    "contrasts": "Native C# selector applied independently to fixed policy alternatives from same EUR200 starting capital and same source. Difference in EUR is path-dependent marginal policy contrast, not summable alpha.",
+    "independentNet": "Impossible on globally exposed conditional book without authenticated historic bid/ask actual fills and full funding + independent external untouched evaluation; never claim.",
+    "fullStressSensitivity": "Same exact causal candidate predictions and 200 EUR book but stress rather than adverse total friction applied to both C# admission and booked costs; never chosen after results"
+  },
+  "benchmark": {
+    "mse": [
+      "ZERO_DRIFT",
+      "PRIOR_24H_MOMENTUM"
+    ],
+    "brierNeutral": 0.25,
+    "pairedInformation": "Full prequential completed outcomes per family/phase, with unknown target and historical scenario gaps reported, do not select winner."
+  },
+  "proofs": {
+    "closedStudiesImmutable": true,
+    "newBrokerRequests": 0,
+    "liveOrders": 0,
+    "demoOrders": 0,
+    "cloudActivation": false,
+    "ownerQualification": false,
+    "independentConfirmation": false,
+    "brokerConfirmedNetEur": null
+  },
+  "researchOutput": "Complete family, phase, horizon, missingness, MSE/Brier and 5-policy EUR200 modeled book; negative/zero result is material; no automatic promotion based on exposed ablation."
+}
