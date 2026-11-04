@@ -1,0 +1,11 @@
+MXM_TWC1_EXPOSED_CALENDAR_ECONOMIC_SCORE
+Authority: docs/OWNER_SPEC.md v2.0; OWNER continuation after PR68-70.
+One prospective original-source TWC1 result after frozen registration in research/twc1_protocol.json and global evidence_registry.json.
+Distinct calendar-weekday x UTC H4 clock seasonality, not IPF1/RCP1 retuning.
+Sealed authentic Pepperstone sources BDP1 #41724643418 and AIP1 #41735441128; no new external market source.
+All 12 original symbols, 60/240m exact next-M5 entry/exit; online matured labels; zero/momentum benchmarks.
+Conservative development BID/ASK cost samples, one EUR200 shared native allocator, joint existing position risk, adverse/stress portfolios, HARD21 system-wide 26 weeks.
+All 52 weeks globally exposed. No independent holdout, no genuine broker fills or certified historic NET. Do not promote posthoc favorites.
+No changes to closed models, orders, Cloud activation, extra workflow file or external services.
+Trigger exactly once only by OWNER-authorized commit of this file on main with exact subject MXM_TWC1_EXPOSED_CALENDAR_ECONOMIC_SCORE.
+Status: REGISTERED_UNSCORED; do not execute until separate exact owner/main request commit.

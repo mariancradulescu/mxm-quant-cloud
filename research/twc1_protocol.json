@@ -1,0 +1,94 @@
+{
+  "schema": "mxm-twc1-protocol-v1",
+  "id": "TWC1",
+  "status": "REGISTERED_UNSCORED",
+  "authority": "docs/OWNER_SPEC.md OWNER v2.0",
+  "researchOnly": true,
+  "economicQuestion": "Does a causal instrument-specific weekday/UTC 4-hour-slot conditional mean predict next 1h/4h returns beyond zero and 24h momentum sufficiently to pay pessimistic current-term costs at Pepperstone minimum volumes and contribute to ONE EUR200 native-allocated book without exceeding aggregate sampled drawdown and with system-level HARD21 potential?",
+  "distinction": "Calendar-time conditional seasonality; no OHLCV pressure factor, IPF1/RCP1 model/forecast/weights/signal reuse, or refit of any frozen hypothesis. Original broker OHLCV and costs only are decoded and authenticated.",
+  "sourceRuns": [
+    41724643418,
+    41735441128
+  ],
+  "sourceSha256": [
+    "e47ba7204ca7e07e7bb523ede8a8171f49b216cad09914142ed548839660a370",
+    "fa684ca1de58c6d1e8bdee410834855d05389af0c0ae4523b095367dce0e5331"
+  ],
+  "sourceSchemas": [
+    "mxm-bdp1-source-v1",
+    "mxm-aip1-source-v1"
+  ],
+  "sourceSymbols": [
+    "EURUSD",
+    "GBPUSD",
+    "USDJPY",
+    "AUDUSD",
+    "USDCAD",
+    "XAUUSD",
+    "US500",
+    "NAS100",
+    "GER40",
+    "UK100",
+    "AUS200",
+    "JPN225"
+  ],
+  "sourceReuse": "Cryptographically restored ORIGINAL sealed Pepperstone M5 source and separately authenticated broker current-term quote/margin samples; all dates globally exposed. No historical closed-model scoring and no new broker request in first experiment.",
+  "feature": "Only UTC weekday and fixed four-hour close slot at signal bar end (six slots Mon-Fri); no fitted technical indicator or outcome-derived session exclusion. Lookback for naive momentum uses exact previously observed price 24h earlier.",
+  "decisionClock": "Any actually observed complete M5 close exactly divisible by 4h at 00/04/08/12/16/20 UTC, no synthetic market hours. Any absent clock remains absent, no forward fill.",
+  "executionClock": "At signal+300000ms, first exact complete next M5 bar close. Missing entry suppresses model fill; never treat signal price as entry.",
+  "targets": "Future log-price return next observed entry+60/240min at exact clock. No replacement after missing future bar or crossing phase boundaries.",
+  "holdingHorizonsMinutes": [
+    60,
+    240
+  ],
+  "predictor": {
+    "method": "ONLINE_BUCKET_MEAN_WITH_FIXED_ZERO_PRIOR",
+    "buckets": "symbol x horizon x UTC weekday x 4h slot",
+    "priorZeroCount": 12,
+    "minimumMaturedLabels": 8,
+    "retClipAbsBps": 500,
+    "training": "Only target labels matured by decision clock. All symbols/buckets mandatory; no selection of calendar winners.",
+    "decision": "Side is sign of shrunk conditional mean; no event whose learned expected signed gross is not strictly above adverse all-in costs is offered to native capital selector.",
+    "comparison": [
+      "ZERO_DRIFT",
+      "PREVIOUS_EXACT_24H_MOMENTUM_HORIZON_SCALED"
+    ],
+    "brierNeutral": 0.25
+  },
+  "phase": {
+    "start": 1762128000000,
+    "developmentEnd": 1777852800000,
+    "selectionEnd": 1785715200000,
+    "end": 1793577600000,
+    "firstModelWarmupWeeks": 8,
+    "splits": "26 weeks development;13 selection;13 globally exposed audit. No independent holdout.",
+    "eligibleWeeks": "All 26 complete selection+audit weeks, no outcome exclusion; 21 funded closed round trips at total system level required."
+  },
+  "economics": {
+    "initialCapitalEur": 200,
+    "maxSystemDrawdown": 0.3,
+    "hard21SystemPerEligibleWeek": 21,
+    "sourceCosts": "Current broker-observed development bid/ask + current tariff commissions + hypothetical 0.5x/2x adverse slippage, conservative historical cost envelope; not broker fills.",
+    "feePolicy": "Use original ex ante cost_context adverseBps for entry/exit; funding exposure known conditionally only to current observed rates, never certified historic.",
+    "margin": "Minimum broker volumes/notionals/margin from same genuine source, maximum 3 minimum-volume increments only if financed. One capital wallet and existing Native C# selector.",
+    "jointRisk": "Eight aligned weekly past states, including all existing open positions, intrahorizon downside, peak and margin; future outcomes never affect predecision selector state.",
+    "negativeTest": "If no candidate clears adverse cost, retain zero native allocations and stop funded scoring. No capacity/HARD21 claims from mere proposal count.",
+    "comparators": [
+      "TWC1_FULL",
+      "FLAT_NEUTRAL",
+      "TWC1_ADVERSE_SLIPPAGE_STRESS"
+    ],
+    "newNativeScope": "TWC1_CALENDAR_CONDITIONAL_RESEARCH_NOT_CERTIFIED",
+    "limits": "Sampled H1 equity is not global DD; current expected margin is not historical financing; model M5 closes do not establish broker executions."
+  },
+  "multiplicity": "12 symbols x 5 weekdays x 6 UTC slots x 2 horizons are all declared, no post-hoc best symbol/bucket/time/horizon, no individual HARD21 gate.",
+  "falsification": "Report all paired prequential errors versus zero/momentum for development,selection,audit; all admitted/rejected opportunities; each 26 weekly round-trip count; funded EUR NET and adverse scenario if available. If conditional expected EUR is below conservative friction, do not trade solely for frequency.",
+  "qualification": {
+    "independentConfirmation": false,
+    "brokerConfirmedNetEur": null,
+    "ordersSubmitted": 0,
+    "cloudActivated": false,
+    "newExternalSources": false,
+    "closedStudiesRescored": false
+  }
+}
