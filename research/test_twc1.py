@@ -83,4 +83,16 @@ class Twc1Contracts(unittest.TestCase):
         self.assertTrue(all(result["Status"].startswith("CONDITIONAL_RESEARCH_") for result in outputs))
         self.assertEqual(outputs[1]["Allocations"],[])
         self.assertEqual(outputs[2]["Allocations"],[])
+        # A deliberately profitable, causally aligned synthetic joint state must
+        # actually allocate, not merely pass CLI scope admission.
+        import copy
+        positive=copy.deepcopy(req)
+        positive["Baseline"]=[dict(s,NetEur=0,LossEur=0,PeakEur=0,MarginEur=0)
+                              for s in positive["Baseline"]]
+        for opportunity in positive["Opportunities"]:
+            opportunity["Scenarios"]=[dict(s,NetPerUnitEur=5.,FixedCostEur=0,
+                LossPerUnitEur=.01,PeakPerUnitEur=5.) for s in opportunity["Scenarios"]]
+        allocated=native([positive],"--estimate-portfolio-opportunities-batch")[0]
+        self.assertFalse(allocated["Qualified"])
+        self.assertTrue(any(float(a["Units"])>0 for a in allocated["Allocations"]))
 if __name__=="__main__":unittest.main()
