@@ -15,7 +15,7 @@ public sealed record BrokerOpenReadback(
 public sealed record BrokerOpenReadbackReport(
     bool OpenExposureMonitoringReady,bool BrokerEquityIdentityMatched,
     bool ExecutionHistoryReconstructed,bool LifetimePeakCertified,bool OrdersEnabled,
-    int PositionsObserved,string Status);
+    int PositionsObserved,string Status,bool RequiresRiskReductionReview=false);
 
 public sealed partial class NativeFundedSession
 {
@@ -33,8 +33,9 @@ public sealed partial class NativeFundedSession
             return Reject("OPEN_READBACK_NO_OPEN_POSITIONS_USE_FLAT_PATH");
         if(!b.InventoryStable)
             return Reject("OPEN_READBACK_INVENTORY_PENDING_STABLE_REPOLL");
-        if(b.PendingOrders<0 || b.BalanceEur<=0m || b.EquityEur<=0m ||
-            b.MarginEur<0m || b.FreeMarginEur<0m || b.CreditEur<0m)
+        // Distress is NOT absence of evidence: underwater accounts and negative
+        // free margin must remain observable, and route to risk reduction review.
+        if(b.PendingOrders<0 || b.MarginEur<0m)
             return Reject("OPEN_READBACK_INVALID_ACCOUNT_MARK");
         if(b.Positions.Any(p=>string.IsNullOrWhiteSpace(p.PositionId) ||
             string.IsNullOrWhiteSpace(p.Symbol) || p.Side is not (-1 or 1) ||
@@ -52,10 +53,16 @@ public sealed partial class NativeFundedSession
                     b.Positions.Sum(p=>p.NetPnlEur)-b.EquityEur)>.01m)
             return Reject("OPEN_READBACK_BROKER_FLOATING_EQUITY_MISMATCH");
         // Foreign or prior-instance positions remain monitored, not silently
-        // attributed to this bot. Pending orders stay unresolved.
+        // attributed to this bot. Pending orders stay unresolved. Observed
+        // distressed cash/equity triggers reduction REVIEW only, never orders.
+        bool distressed=b.EquityEur<=0m || b.FreeMarginEur<=0m ||
+            b.EquityEur<=b.MarginEur;
         return new(true,true,false,false,false,b.Positions.Length,
-            b.PendingOrders>0
-                ?"OPEN_BROKER_EXPOSURES_MONITORED_PENDING_ORDERS_UNRESOLVED"
-                :"OPEN_BROKER_EXPOSURES_MONITORED_EXECUTION_HISTORY_UNPROVEN");
+            distressed
+                ?"OPEN_BROKER_EXPOSURES_DISTRESSED_RISK_REDUCTION_REVIEW"
+                :b.PendingOrders>0
+                    ?"OPEN_BROKER_EXPOSURES_MONITORED_PENDING_ORDERS_UNRESOLVED"
+                    :"OPEN_BROKER_EXPOSURES_MONITORED_EXECUTION_HISTORY_UNPROVEN",
+            distressed);
     }
 }

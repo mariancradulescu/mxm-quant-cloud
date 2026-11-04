@@ -39,6 +39,21 @@ internal static class BrokerOpenReadbackChecks
             "flat account recovery must take the separately validated flat path");
         check(session.ReconcileBrokerOpen(observed with {PendingOrders=1}).Status.Contains("PENDING_ORDERS_UNRESOLVED"),
             "pending broker orders remain unresolved despite positively observed open positions");
+        // A stressed existing position must remain observable after restart.
+        // Refusing to look at it because equity/free margin is negative would
+        // blind risk monitoring at exactly the wrong time.
+        var distressed=observed with {
+            EquityEur=-5m,FreeMarginEur=-75m,
+            Positions=new[]{two[0] with {NetPnlEur=-202m},two[1]}
+        };
+        var stressedReport=session.ReconcileBrokerOpen(distressed);
+        check(stressedReport.OpenExposureMonitoringReady&&stressedReport.RequiresRiskReductionReview&&
+              stressedReport.Status.Contains("DISTRESSED")&&!stressedReport.OrdersEnabled,
+            "underwater broker exposure is monitored and flagged for reduction review, never new orders");
+        check(session.Ledger.Summary().CashEur==200m,
+            "negative observed floating equity cannot patch or reset the native monetary ledger");
+        check(!session.ReconcileBrokerOpen(distressed with {FreeMarginEur=-74m}).OpenExposureMonitoringReady,
+            "distressed account still needs an exact broker equity-margin-free margin identity");
         var afterCrash=new NativeFundedSession(account);
         check(afterCrash.ReconcileBrokerOpen(observed).OpenExposureMonitoringReady&&
             afterCrash.Ledger.Summary().OpenPositions==0,
