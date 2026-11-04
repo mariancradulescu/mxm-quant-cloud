@@ -1,26 +1,61 @@
-"""Focused policy wiring/evidence integrity CI, not economic validation."""
-import hashlib,json
+"""Focused active OWNER/ledger/evidence boundary checks, not economic validation."""
+import hashlib
+import json
+import re
 from pathlib import Path
 
 
 def check():
-    r=json.loads(Path('research/evidence_registry.json').read_text())
-    assert r['authority']=='docs/OWNER_SPEC.md'
-    assert r['independenceDefault']=='NOT_ESTABLISHED'
-    assert all(not s['independent'] for s in r['sources'])
-    for name,expected in r['frozenFileSha256'].items():
-        assert hashlib.sha256(Path(name).read_bytes()).hexdigest()==expected, 'FROZEN_EVIDENCE_CHANGED: '+name
-    for name in ['README.md','docs/ARCHITECTURE.md','docs/ACCEPTANCE.md']:
-        assert 'OWNER_SPEC.md' in Path(name).read_text(), 'MISSING_ACTIVE_AUTHORITY: '+name
-    # Legacy sizing is allowed only in the preserved exact historical study and
-    # regression checks; new integrated decisions must use the shared allocator.
-    for name in ['src/Mxm.Core/OpportunityOrchestrator.cs','src/Mxm.Core/JointOpportunityResearch.cs']:
-        s=Path(name).read_text()
+    r = json.loads(Path('research/evidence_registry.json').read_text())
+    assert r['authority'] == 'docs/OWNER_SPEC.md'
+    assert r['independenceDefault'] == 'NOT_ESTABLISHED'
+    assert all(s.get('independent') is False for s in r['sources'])
+    for name, expected in r['frozenFileSha256'].items():
+        assert hashlib.sha256(Path(name).read_bytes()).hexdigest() == expected, 'FROZEN_EVIDENCE_CHANGED: ' + name
+
+    owner = Path('docs/OWNER_SPEC.md').read_text()
+    assert owner.startswith('# Active OWNER specification v2.0')
+    assert 'OWNER decision 2026-11-04' in owner
+    for name in ('README.md', 'docs/ARCHITECTURE.md', 'docs/ACCEPTANCE.md'):
+        s = Path(name).read_text()
+        assert 'OWNER_SPEC.md' in s, 'MISSING_ACTIVE_AUTHORITY: ' + name
+        assert 'OWNER v3.0' not in s, 'CONCURRENT_NORMATIVE_AUTHORITY: ' + name
+
+    # Closed experiments cannot silently become an independent/funded certificate.
+    # A future genuinely new prospectively registered study is not pre-rejected.
+    for s in r['prospectiveStudies']:
+        if s.get('status', '').startswith('CLOSED_'):
+            assert s.get('independent') is False, 'CLOSED_STUDY_FALSE_INDEPENDENCE: ' + s['id']
+            assert s.get('qualification') is not True, 'CLOSED_STUDY_SILENT_PROMOTION: ' + s['id']
+        if s.get('costClass') == 'CONDITIONAL_COST_MODEL':
+            assert s.get('fundedNetEur') is None, 'PROXY_PROMOTED_TO_FUNDED_NET: ' + s['id']
+            assert s.get('qualification') is not True, 'PROXY_PROMOTED_TO_CERTIFICATE: ' + s['id']
+    msp = next(s for s in r['prospectiveStudies'] if s['id'] == 'MSP1')
+    assert msp['status'].startswith('CLOSED_EXACT_') and msp['followupCandidates'] == []
+    assert msp['ordersSubmitted'] if 'ordersSubmitted' in msp else True  # not a trade claim
+
+    # These values belong to the single native system, not to each candidate.
+    risk = Path('src/Mxm.Core/OwnerRiskLimits.cs').read_text()
+    ledger = Path('src/Mxm.Core/NativeFundedLedger.cs').read_text()
+    assert 'InitialCapitalEur=200m' in risk and 'MaximumSystemDrawdown=.30m' in risk
+    assert 'MinimumSystemRoundTripsPerEligibleWeek=21' in risk
+    assert 'state=new(Version,200,200,-1,200' in ledger
+    for name in ('src/Mxm.Core/OpportunityOrchestrator.cs',
+                 'src/Mxm.Core/JointOpportunityResearch.cs'):
+        s = Path(name).read_text()
         assert 'HistoricalPr16Risk' not in s and 'PreventiveExecutionRisk.Size' not in s
     assert 'AdaptivePortfolioRisk.Choose' in Path('src/Mxm.Core/OpportunityOrchestrator.cs').read_text()
     assert '--orchestrate-opportunities' in Path('research/orchestrated_replay.py').read_text()
-    print('PASS active authority wiring and frozen-evidence hashes; not economic qualification')
+
+    # Delivered Cloud adapter remains strictly observation-only pending OWNER consent.
+    cloud = Path('src/Mxm.Cloud/MxmCloud.cs').read_text()
+    forbidden = ('ExecuteMarketOrder', 'ExecuteMarketRangeOrder', 'PlaceLimitOrder',
+                 'PlaceStopOrder', 'PlaceStopLimitOrder', 'ModifyPosition',
+                 'ClosePosition', 'CancelPendingOrder', 'ReversePosition')
+    assert all(not re.search(r'\\b' + call + r'\\s*\\(', cloud)
+               for call in forbidden), 'UNAUTHORIZED_CLOUD_TRADING_CALL'
+    print('PASS OWNER v2.0 contract, frozen evidence, native funding and no-order boundary; no NET qualification')
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     check()
