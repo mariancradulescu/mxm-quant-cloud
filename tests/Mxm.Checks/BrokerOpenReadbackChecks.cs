@@ -44,7 +44,7 @@ internal static class BrokerOpenReadbackChecks
         // blind risk monitoring at exactly the wrong time.
         var distressed=observed with {
             EquityEur=-5m,FreeMarginEur=-75m,
-            Positions=new[]{two[0] with {NetPnlEur=-203m},two[1]}
+            Positions=new[]{two[0] with {NetPnlEur=-202m},two[1]}
         };
         var stressedReport=session.ReconcileBrokerOpen(distressed);
         check(stressedReport.OpenExposureMonitoringReady&&stressedReport.RequiresRiskReductionReview&&
