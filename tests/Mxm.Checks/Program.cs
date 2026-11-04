@@ -2,6 +2,7 @@ using Mxm.Core;
 var passed = 0;
 MonetaryRecoveryChecks.Run(Check);
 BrokerFlatReadbackChecks.Run(Check);
+BrokerOpenReadbackChecks.Run(Check);
 ConditionalDiscoveryChecks.Run(Check);
 PortfolioObservationChecks.Run(Check);
 void Check(bool condition, string name) { if (!condition) throw new Exception(name); passed++; }
