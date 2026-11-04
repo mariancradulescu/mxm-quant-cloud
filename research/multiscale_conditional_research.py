@@ -128,7 +128,7 @@ def extract_costs(b,decoded):
 
 
 def main():
-    need(not Path('docs/MSP1_AUTHENTIC_CONDITIONAL_RESULT.json').exists(),'MSP1_FROZEN_NO_RERUN')
+    need(not Path('docs/MSP1_AUTHENTIC_CONDITIONAL_RESULT.json').exists() and not Path('docs/MSP1_AUTHENTIC_CONDITIONAL_RESULT.json.gz').exists(),'MSP1_FROZEN_NO_RERUN')
     p=json.loads(P.read_text());bars=[];costs=[];audits=[];coverage=[]
     specs=[('bdp-source','mxm-bdp1-source-v1','research/portfolio_discovery_protocol.json'),
            ('aip-source','mxm-aip1-source-v1','research/auction_inventory_protocol.json')]

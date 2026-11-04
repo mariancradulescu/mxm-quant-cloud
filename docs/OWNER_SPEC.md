@@ -695,3 +695,19 @@ slippage/latency/funding uncertainties remain explicit. No synthetic ASK or bps
 proxy constitutes an authentic fill, financed NET or HARD21. Followup support is
 fixed from selection only; audit outcomes cannot choose a favorable new recipe.
 The preserved native monetary/selection kernels are not reconstructed.
+
+
+MSP1 executed in run41790872494 at228285a2f7a6238e55efb630d87f75e2de21718d,
+reconstructing836087 original M5 bars and166 complete development cost contexts
+without new broker requests or closed-model calls. All288 group/variant combinations
+and three CONDITIONAL_COST_MODEL cases are preserved. Price amplitudes exist;
+primary median Brier is0.251156 selection/0.250806 exposed audit against0.25 neutral.
+Adverse selection has23 complete active groups, all negative;54 incomplete groups
+remain unknown,19 abstain. No predeclared primary followup is supported. No variant
+or cost case has a positive descriptive90-percent weekly lower proxy in either
+phase. MSP1 is closed exactly, without retuning, inversions, cost relaxation,
+source-gap rescue, audit winner or ablation promotion. No funded EUR/round-trip,
+HARD21 or independent confirmation is created. Statistical cost methodology remains
+a research capability, not a historical execution certificate or permission to
+relaunch MSP1. Original JSON bytes are preserved compressed with hash/audit in
+MSP1_CONDITIONAL_ECONOMIC_RESULT.md and the global exposure registry.

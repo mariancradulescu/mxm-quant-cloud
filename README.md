@@ -180,3 +180,11 @@ retained5,871 original spot/depth events on all six instruments with independent
 protected raw readback. The fixed source gate failed (2 of required3 supported
 symbols); no returns/model/NET were evaluated and no expansion is admitted. This
 removes an event-capture obstacle, not the unresolved economic-evidence requirement.
+
+
+[Multiscale conditional economics](docs/MSP1_CONDITIONAL_ECONOMIC_RESULT.md): MSP1
+evaluated new persistent/transitory/zero-drift structural forecasts on836087
+conserved bars across12 assets, four timeframes and three statistical-cost cases.
+166 genuine development quote contexts support explicitly uncertain cost estimates.
+No selection-adverse followup is supported; exact profile is closed. Native
+ledger/orchestrator/session remain unchanged; no funded NET or HARD21 is claimed.
