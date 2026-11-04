@@ -54,6 +54,7 @@ def check():
                  'ClosePosition', 'CancelPendingOrder', 'ReversePosition')
     assert all(not re.search(r'\b' + call + r'\s*\(', cloud)
                for call in forbidden), 'UNAUTHORIZED_CLOUD_TRADING_CALL'
+    assert 'LocalStorage.' not in cloud, 'CLOUD_LOCAL_STORAGE_NOT_DURABLE_RESTART_SOURCE'
     print('PASS OWNER v2.0 contract, frozen evidence, native funding and no-order boundary; no NET qualification')
 
 
