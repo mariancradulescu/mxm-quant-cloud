@@ -84,6 +84,22 @@ public class MxmCloud : Robot
             var money=_fundedSession?.ReconcileMoney(new MoneyRecoveryBatch(_accountBinding,"BROKER_EXECUTION_FACT",broker,
                 System.Array.Empty<AttributedMoneyFact>(),(decimal)Account.Balance,false,false,false,false,null,null));
             var funded=_fundedSession?.Observe(broker,(decimal)Account.Balance);
+            // Independent native current marks, never inferred from the monetary
+            // book or used to certify missing lifetime history/Cloud persistence.
+            long riskAt=Stamp(Server.TimeInUtc);
+            var riskPositions=positions.Select(p=>new PositionRiskMark(p.Id.ToString(),p.SymbolName,p.TradeType==TradeType.Buy?1:-1,
+                (decimal)p.VolumeInUnits,(decimal)p.NetProfit)).ToArray();
+            decimal riskCash=(decimal)Account.Balance,riskEquity=(decimal)Account.Equity,riskMargin=(decimal)Account.Margin,
+                riskFree=(decimal)Account.FreeMargin,riskCredit=(decimal)Account.Credit;
+            var afterRisk=Positions.ToArray();
+            bool stableRisk=afterRisk.Length==positions.Length&&positions.All(p=>afterRisk.Any(q=>q.Id==p.Id&&q.VolumeInUnits==p.VolumeInUnits));
+            long riskAvailable=Stamp(Server.TimeInUtc);
+            string riskHash=System.Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(
+                System.Text.Json.JsonSerializer.Serialize(new {riskAt,riskCash,riskEquity,riskMargin,riskFree,riskCredit,riskPositions})))).ToLowerInvariant();
+            var risk=_fundedSession?.ObservePortfolio(new PortfolioRiskMark(_accountBinding,"BROKER_PLATFORM_OBSERVATION","PLATFORM_MARK_EQUITY",
+                riskAt,riskAvailable,riskCash,riskEquity,riskMargin,riskFree,riskCredit,stableRisk,true,riskPositions,
+                null,null,null,.01m,riskHash),riskAvailable);
+
             if(!_journalFault && _fundedSession!=null) {
                 LocalStorage.SetString(JournalKey,_fundedSession.Checkpoint(),LocalStorageScope.Instance);
                 LocalStorage.Flush(LocalStorageScope.Instance);
@@ -105,7 +121,7 @@ public class MxmCloud : Robot
                 // cashflow reconciliation or certified lifetime equity peak.
                 false,false,false,0m,0m,0);
             var result=SelectiveRecovery.Assess(snapshot,lanes);
-            var mode=_journalFault?"PROTECTIVE_JOURNAL_UNAVAILABLE":funded?.Status??result.Status;
+            var mode=_journalFault?"PROTECTIVE_JOURNAL_UNAVAILABLE":risk?.ReviewReductionIds.Length>0?"PROTECTIVE_RISK_REDUCTION_REVIEW/"+risk.Reason:funded?.Status??result.Status;
             if(mode!=_lastMode)
             {
                 Print("MXM observation-only recovery: {0}; lanes {1}; native evidence {2}/{3}/{4}/{5}/{6}; orders disabled.",

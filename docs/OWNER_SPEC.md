@@ -39,7 +39,7 @@ link here; older dated directives remain provenance, never competing authority.
   could only be research information in a genuinely prospective portfolio
   hypothesis on independent evidence, never a resurrection mechanism.
 
-## Active methodological policy v8 (prospectively revisable)
+## Active methodological policy v9 (prospectively revisable)
 
 Evidence levels: (1) exploratory economic hypothesis; (2) preliminary predictive
 and economic support; (3) demonstrated possible incremental portfolio contribution;
@@ -584,3 +584,18 @@ Current authentic source has no nonempty broker lifecycle with complete monetary
 legs; that certification remains impossible without new genuine evidence, and
 no LIVE/DEMO orders may be requested to manufacture it. Observation/protection
 continues; real monetary adoption and trading authority remain unproved.
+
+## Prospective continuation after PR49
+
+Do not expand safety infrastructure without a material acceptance gap. The native
+session now separately observes open portfolio equity/margin and retains its
+sampled peak across checkpoints. Missing holding marks mean unknown drawdown;
+one mark is not a measured path. Platform equity, conditional liquidation equity,
+monetary reconciliation, lifetime/continuous risk and Cloud persistence are distinct.
+No observation or reduction review enables orders. Unknown exit costs stay unknown.
+
+CCP1 is a bounded current-term FX portfolio funding/cost/minimum-grid capacity
+preflight, not an annual price-return experiment or new NET result. Four fixed
+triangles and both orientations are registered before capture; no closed study is
+reused or optimized. Even positive flat-basis financing arithmetic cannot admit a
+full study or trade without predictive, residual-risk and execution evidence.

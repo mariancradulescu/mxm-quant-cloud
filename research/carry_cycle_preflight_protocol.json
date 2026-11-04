@@ -1,0 +1,57 @@
+{
+  "annualCollection": false,
+  "authority": "docs/OWNER_SPEC.md v2.0",
+  "budget": 60,
+  "capture": "Current original-account contracts and queried1..6 minimum-volume grids. One fixed previous completed15-minute quote window selected before requests; first causal complete route after1s, deadline20s, sides<=2s. Metadata and past quote context are known only at capture, not at historical quote time.",
+  "closedStudyRerun": false,
+  "cycles": [
+    {
+      "BaseJpy": "EURJPY",
+      "BaseUsd": "EURUSD",
+      "Name": "EUR-USD-JPY"
+    },
+    {
+      "BaseJpy": "GBPJPY",
+      "BaseUsd": "GBPUSD",
+      "Name": "GBP-USD-JPY"
+    },
+    {
+      "BaseJpy": "AUDJPY",
+      "BaseUsd": "AUDUSD",
+      "Name": "AUD-USD-JPY"
+    },
+    {
+      "BaseJpy": "NZDJPY",
+      "BaseUsd": "NZDUSD",
+      "Name": "NZD-USD-JPY"
+    }
+  ],
+  "decision": "No full study or trade admission from a favorable counterfactual. If every current-capacity row has raw carry<=0, reject carry-only premise under observed terms before costs. Otherwise price/basis risk, actual simultaneous finance, fee history, rate continuity and independent predictive evidence remain required.",
+  "financing": "Per single ORDINARY unmultiplied charge.1/3/5 charge scenarios are not calendar forecasts; no triple-day or future-rate persistence assumed. Positive credits rounded down, debits away from zero to observed account money quantum.",
+  "fullStudyAdmitted": false,
+  "gridMultiples": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+  ],
+  "id": "CCP1",
+  "newOrders": false,
+  "premise": "A current-term discrepancy in financing among three FX legs might supply net cashflow to a partially currency-matched portfolio. No positive spot return, basis convergence or risk-free hedge is assumed.",
+  "sizing": "Both orientations fixed (+baseUSD,-baseJPY,+USDJPY) and its opposite. Equal base units from both queried grids; floor/ceil queried USDJPY units around baseUSD notional. Retain lot residuals; no automatic neutrality claim. Sum sign-specific queried margins and full2commission+3spread roundtrip cost against one200EUR capital.",
+  "sourceSchema": "mxm-carry-cycle-source-v1",
+  "swapUnits": "Accept explicit PIPS type0, daily24-hour current schedule and normal-account effective flag only. units*swapPips*10^(-pipPosition)*quoteToEUR. Other/absent fields unknown.",
+  "universe": [
+    "EURUSD",
+    "USDJPY",
+    "EURJPY",
+    "GBPUSD",
+    "GBPJPY",
+    "AUDUSD",
+    "AUDJPY",
+    "NZDUSD",
+    "NZDJPY"
+  ]
+}

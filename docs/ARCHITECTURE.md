@@ -140,3 +140,16 @@ NativeFundedSession is wired into the one observation-only cBot: order/deal/posi
 NativeFundedSession now connects positively attributed deal/funding monetary facts to the SAME NativeFundedLedger through atomic whole-journal reconstruction, with partial entries/exits, fees, causal EUR conversion and funding. Missing costs/history, stale cash, mismatches or deleted old facts reject adoption without balance repair or capital reset. v1 checkpoints migrate; MODELED/BROKER financial domains remain distinct. The cBot reaches this gate with unknown current history/financial evidence and remains observation-only.
 
 `NATIVE_MONETARY_RECOVERY_RESULT.md` separates the executed immutable MODELED settlement proof (four cases,30 recovery cuts, EUR1e-18 cash/NET tolerance) from deterministic funding/partial-fill contracts and unavailable genuine nonempty broker recovery. No new economic experiment or source request occurred. Open-position liquidation/margin evidence and lifetime peak remain unknown; checksum-bound local state is not encrypted custody or proof of Cloud durability. Economic qualification and all final OWNER targets remain outstanding.
+
+### Continuation after PR49: open-equity integration
+
+`NativeFundedSession` now owns `NativePortfolioObservation` as well as the common
+monetary ledger. The observation-only cBot supplies current account equity/margin,
+position quantities and net PNL, checks their independent reconciliation, and
+persists the sampled observed peak in its versioned session checkpoint. It emits
+entry suspension and reduction-review identities, never order requests. Current
+platform marks exclude any unknown extra exit/liquidity cost; no lifetime peak,
+continuous drawdown, actual liquidation or Cloud persistence is certified.
+Frozen SQP1 holding valuations exercise this path without rerunning its signals,
+allocator, exits or NET. CCP1 uses the same native valuation in a bounded financing
+preflight; it supplies no return model and promotes no counterfactual to a strategy.

@@ -1,5 +1,24 @@
 using System.Text.Json;
 using System.Security.Cryptography;
+if (args.Length == 3 && args[2] == "--carry-cycle-preflight")
+{
+    try {
+        var input=JsonSerializer.Deserialize<Mxm.Core.CarryPreflightInput>(File.ReadAllBytes(args[0]),new JsonSerializerOptions {NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString})!;
+        File.WriteAllText(args[1],JsonSerializer.Serialize(Mxm.Core.CarryCyclePreflight.Evaluate(input)));return 0;
+    } catch { return 28; }
+}
+if (args.Length == 3 && args[2] == "--native-risk-observations")
+{
+    try {
+        var input=JsonSerializer.Deserialize<Mxm.Core.PortfolioRiskMark[][]>(File.ReadAllBytes(args[0]),new JsonSerializerOptions {NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString})!;
+        var output=input.Select(marks=>{
+            var session=new Mxm.Core.NativeFundedSession(marks[0].AccountBinding);var results=new List<Mxm.Core.PortfolioRiskReport>();
+            foreach(var m in marks){var r=session.ObservePortfolio(m,m.AvailableAt);session=Mxm.Core.NativeFundedSession.Restore(session.Checkpoint(),m.AccountBinding);
+                var same=session.ObservePortfolio(m,m.AvailableAt);if(JsonSerializer.Serialize(r)!=JsonSerializer.Serialize(same))throw new ArgumentException("RISK_RESTART_PARITY");results.Add(r);}
+            return new {Reports=results,State=session.PortfolioObservation.State,RestartMatched=true};
+        }).ToArray();File.WriteAllText(args[1],JsonSerializer.Serialize(output));return 0;
+    } catch { return 29; }
+}
 if (args.Length == 3 && args[2] == "--native-frozen-money-recovery")
 {
     try {

@@ -32,10 +32,10 @@
     ],
     "economicEdgeStillOpen": true,
     "newHypothesisAdmitted": false,
-    "newMarketCollectionAuthorizedByThisChange": false,
+    "newMarketCollectionAuthorizedByThisChange": true,
     "notProofOfSystemInfeasibility": true,
-    "ownerDecisionAfter": "PR48",
-    "reason": "No distinct hypothesis with demonstrated causal support, effective sample, cost amplitude and a financed common replay path is sufficiently justified at this execution; prioritize the material native monetary reconciliation gap."
+    "ownerDecisionAfter": "PR49",
+    "reason": "Admit only bounded CCP1 current-term joint funding/cost/capacity preflight before any price-return study; no full economic study or model is admitted. Close native floating-equity observation gap using immutable modeled marks, without replaying closed studies."
   },
   "frozenFileSha256": {
     "docs/AIP1_AUTHENTIC_RESULT.json": "ed23b6d7ce289ce1eeede6626ef8d9bce09d2cfbdb59fd6fe4b4493a75a4bd3c",
@@ -143,6 +143,16 @@
     "verificationRunId": 41744102992
   },
   "projectWideCalendarRule": "Union of relevant design/research exposures across sources and instruments; overlaps are not independent.",
+  "prospectiveCarryPreflight": {
+    "budget": 60,
+    "calendarIndependentConfirmation": false,
+    "fullStudyAdmitted": false,
+    "id": "CCP1",
+    "newEconomicNetEvidence": false,
+    "protocol": "research/carry_cycle_preflight_protocol.json",
+    "protocolSha256": "4de25bcaa4347805dc175469382bce360e054bb5b11a0c5892445d43bf624354",
+    "status": "PREREGISTERED_BEFORE_CURRENT_TERM_CAPTURE"
+  },
   "prospectiveStudies": [
     {
       "allocation": "FIRST80_ONLY_NO_PERFORMANCE_IN_LAST20",
