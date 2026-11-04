@@ -619,6 +619,45 @@
       "closedExactNoRetuning": true,
       "followupCandidates": [],
       "verdict": "Positive modeled result based on only 3 round trips; no 21/week, no real broker execution, no independent confirmation."
+    },
+    {
+      "id": "TWC1",
+      "status": "REGISTERED_UNSCORED",
+      "phase": "EXPOSED_WEEKDAY_UTC_SESSION_CALENDAR_SEASONALITY_GROSS_AND_SHARED_EUR200_CONDITIONAL_NET",
+      "protocolFile": "research/twc1_protocol.json",
+      "protocolGitBlobSha": "40de64b6f781fb43c3c4af4533c725bdbcca4901",
+      "sourceRuns": [
+        41724643418,
+        41735441128
+      ],
+      "originalSourceReuseOnly": true,
+      "underlyingBarsAlreadyGloballyExposed": true,
+      "independent": false,
+      "sourceSha256": [
+        "e47ba7204ca7e07e7bb523ede8a8171f49b216cad09914142ed548839660a370",
+        "fa684ca1de58c6d1e8bdee410834855d05389af0c0ae4523b095367dce0e5331"
+      ],
+      "model": "FIXED_ZERO_PRIOR_WEEKDAY_FOUR_HOUR_BUCKET_LEARN_ONLY_AFTER_TARGET_MATURE",
+      "timeClock": "UTC weekdays six H4 close slots; next M5 completed entry, exact 60/240min exit",
+      "holdingHorizonsMinutes": [
+        60,
+        240
+      ],
+      "all12OriginalInstruments": true,
+      "multiplicity": "12 symbols x 5 weekdays x 6 UTC slots x 2 holding periods; all exposed and disclosed; no winner rescue",
+      "originalCostContexts": 166,
+      "costStatus": "CURRENT_TERM_CONDITIONAL_ADVERSE_AND_STRESS_NOT_HISTORICAL_FILLS",
+      "nativeSelectorShared": true,
+      "oneCapitalEur": 200,
+      "hard21SystemOnly": true,
+      "noIndependentHoldout": true,
+      "ordersSubmitted": 0,
+      "cloudActivated": false,
+      "qualification": false,
+      "newBrokerRequests": 0,
+      "closedModelsCalled": 0,
+      "runExecuted": false,
+      "note": "New calendar-only economic mechanism, not closed price-pressure/SGD model refit; register exact source/protocol and all cells before scoring; selection and audit globally exposed development only."
     }
   ],
   "schema": "mxm-project-data-exposure-v1",
