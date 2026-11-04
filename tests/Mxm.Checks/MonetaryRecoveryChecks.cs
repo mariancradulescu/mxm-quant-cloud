@@ -70,6 +70,44 @@ internal static class MonetaryRecoveryChecks
         check(fragments[0].SpreadEur is null&&fragments[0].SlippageEur is null,
             "broker realized price PNL cannot invent spread/slippage decomposition");
         var final=Batch(all,200.51m,6000);accepted=session.ReconcileMoney(final);
+        // A completely proven broker history can reconstruct submitted
+        // intent identities and the SAME monetary ledger after lost LocalStorage.
+        // These positive history-completeness facts are synthetic assumptions.
+        var withSubmitted=final with {Snapshot=final.Snapshot with {
+            Orders=final.Snapshot.Orders.Select(o=>o with {
+                SubmittedAt=intents.Single(i=>i.OrderId==o.OrderId).SubmittedAt
+            }).ToArray()
+        }};
+        var originalFunding=new BrokerNativeCashflow("deposit",500,"DEPOSIT",200m,200m,null);
+        var restoredBroker=NativeFundedSession.RebuildFromProvenBrokerHistory(
+            withSubmitted,new[]{originalFunding});
+        check(restoredBroker.Adopted && restoredBroker.Recovered is not null &&
+            restoredBroker.Monetary?.Adopted==true &&
+            restoredBroker.Recovered.Ledger.Summary().CashEur==200.51m &&
+            restoredBroker.Recovered.Ledger.Summary().CompleteRoundTrips==1 &&
+            !restoredBroker.OrdersEnabled,
+            "positive native broker order clocks and complete monetary facts recover a continuous EUR200 book without local checkpoint");
+        check(restoredBroker.Recovered!.Intents.All(i=>i.IntentId.StartsWith("BROKER_CONFIRMED_ORDER/")),
+            "recovered intent attribution comes from exact broker-native historical order identity");
+        check(!NativeFundedSession.RebuildFromProvenBrokerHistory(
+            final,new[]{originalFunding}).Adopted,
+            "missing submitted time is not replaced by a modeled execution clock");
+        check(!NativeFundedSession.RebuildFromProvenBrokerHistory(
+            withSubmitted,new[]{originalFunding,
+                new BrokerNativeCashflow("extra",1000,"DEPOSIT",20m,220m,null)}).Adopted,
+            "unverified external capitalization prevents broker monetary restore");
+        check(!NativeFundedSession.RebuildFromProvenBrokerHistory(
+            withSubmitted with {CashflowHistoryComplete=false},
+            new[]{originalFunding}).Adopted,
+            "partial native transaction history is not promoted to continuous funding proof");
+        check(!NativeFundedSession.RebuildFromProvenBrokerHistory(
+            withSubmitted with {Facts=all.Skip(1).ToArray()},
+            new[]{originalFunding}).Adopted,
+            "omitting historical entry execution cannot be patched from current balance");
+        check(!NativeFundedSession.RebuildFromProvenBrokerHistory(
+            withSubmitted with {BrokerCashEur=201m},
+            new[]{originalFunding}).Adopted,
+            "a broker cash mismatch rejects rebuilt execution history atomically");
         check(accepted.Adopted&&accepted.RetainedLedger.CompleteRoundTrips==1&&accepted.RetainedLedger.ClosedNetEur==.51m,
             "full lifecycle cash equals200 plus net after commissions conversion and financing");
         check(session.Observe(final.Snapshot,200.51m).Identity.UnresolvedIntents==0,
