@@ -661,3 +661,37 @@ evaluated. The source gate's failure does not reject all DOM hypotheses or the
 system. No historical depth panel, complete book, exchange timing, executable
 size or Cloud/runtime qualification follows. The exact receipt and all source
 limitations are preserved in DCP1_CHANNEL_RESULT.md/JSON and the global registry.
+
+
+## OWNER expansion: full historical research and statistical costs after PR53
+
+The explicit OWNER strategic continuation authorizes statistical estimates of
+missing historical costs for CONDITIONAL_COST_MODEL research. Prefer authentic
+historical BID/ASK; where missing, estimate spread from representative real
+Pepperstone samples with declared time/volatility cells, fallback, uncertainty
+and central/adverse/stress cases. Model slippage separately; quotes alone cannot
+measure fills, latency or size. Never double-charge spread on ASK/BID executions.
+Current commission/margin/volume/FX/funding metadata is not historical certification;
+unknown financing requires conservative scenarios or justified horizon restriction.
+Approximation may enable exploration but cannot grant final qualification.
+
+Predictive discovery is not contingent on precise quotes at every historical clock
+or a universal2-SE screen. OHLC, tick counts, indicators, multiple timeframes and
+regime/intermarket information remain eligible. Closed exact BDP1/AIP1/SQP1/etc
+recipes remain frozen, not a prohibition on their entire feature/method classes.
+Use the existing capital/orchestrator/ledger/session; no reset, source expansion,
+orders or Cloud activation. Technical references are the current official cTrader
+Open API/model/messages/symbol-data and Algo API/Cloud requirements documentation.
+
+MSP1 predeclares a new structural prequential mixture of persistent repricing,
+transitory deviation and zero-drift skeptic, using the two preserved authentic
+annual M5 sources on all12 FX/gold/index assets. Four complete-bar timeframes and
+one/four-bar horizons are evaluated with no closed forecast calls or parameter
+search. All likelihood weights update causally; all variants and three cost
+scenarios are disclosed. Reusing exposed source does not create confirmation.
+Development movement amplitudes are reported separately from predictability.
+Observed development BID/ASK cost samples support statistical spread estimation;
+slippage/latency/funding uncertainties remain explicit. No synthetic ASK or bps
+proxy constitutes an authentic fill, financed NET or HARD21. Followup support is
+fixed from selection only; audit outcomes cannot choose a favorable new recipe.
+The preserved native monetary/selection kernels are not reconstructed.
