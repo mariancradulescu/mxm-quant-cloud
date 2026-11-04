@@ -1,6 +1,7 @@
 using Mxm.Core;
 var passed = 0;
 MonetaryRecoveryChecks.Run(Check);
+PortfolioObservationChecks.Run(Check);
 void Check(bool condition, string name) { if (!condition) throw new Exception(name); passed++; }
 // Material identity/recovery contracts: no synthetic profitability claim.
 var localIdentity=new LocalIntentIdentity("intent-A","order-A","position-A","SYNTH",1,2,false,1000);

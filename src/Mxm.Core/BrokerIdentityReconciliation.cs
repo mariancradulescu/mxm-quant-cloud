@@ -96,7 +96,7 @@ public sealed partial class NativeFundedSession
     public NativeFundedSession(string accountBinding,NativeFundedLedger? ledger=null,LocalIntentIdentity[]? intents=null,bool journalContinuityProven=false)
     {
         if(string.IsNullOrWhiteSpace(accountBinding))throw new ArgumentException("SESSION_ACCOUNT_BINDING");
-        AccountBinding=accountBinding;Ledger=ledger??new();Intents=intents??Array.Empty<LocalIntentIdentity>();JournalContinuityProven=journalContinuityProven;
+        AccountBinding=accountBinding;PortfolioObservation=new(accountBinding);Ledger=ledger??new();Intents=intents??Array.Empty<LocalIntentIdentity>();JournalContinuityProven=journalContinuityProven;
     }
     public NativeSessionReport Observe(BrokerIdentitySnapshot snapshot,decimal? brokerCash)
     {
@@ -128,7 +128,7 @@ public sealed partial class NativeFundedSession
     static string Hash(string x)=>Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(x))).ToLowerInvariant();
     public string Checkpoint()
     {
-        string payload=JsonSerializer.Serialize(new {Version=1,AccountBinding,Ledger=Ledger.Checkpoint(),Intents,JournalContinuityProven});
+        string payload=JsonSerializer.Serialize(new {Version=2,AccountBinding,Ledger=Ledger.Checkpoint(),Intents,JournalContinuityProven,Risk=PortfolioObservation.State});
         return JsonSerializer.Serialize(new {Payload=payload,Sha256=Hash(payload)});
     }
     public static NativeFundedSession Restore(string checkpoint,string expectedAccountBinding)
@@ -136,9 +136,11 @@ public sealed partial class NativeFundedSession
         using var d=JsonDocument.Parse(checkpoint);string payload=d.RootElement.GetProperty("Payload").GetString()!;
         if(Hash(payload)!=d.RootElement.GetProperty("Sha256").GetString())throw new ArgumentException("SESSION_CHECKPOINT_HASH");
         using var p=JsonDocument.Parse(payload);var root=p.RootElement;
-        if(root.GetProperty("Version").GetInt32()!=1 || root.GetProperty("AccountBinding").GetString()!=expectedAccountBinding)
+        if(root.GetProperty("Version").GetInt32() is not (1 or 2) || root.GetProperty("AccountBinding").GetString()!=expectedAccountBinding)
             throw new ArgumentException("SESSION_CHECKPOINT_ACCOUNT_OR_VERSION");
-        return new(expectedAccountBinding,NativeFundedLedger.Restore(root.GetProperty("Ledger").GetString()!),
+        var session=new NativeFundedSession(expectedAccountBinding,NativeFundedLedger.Restore(root.GetProperty("Ledger").GetString()!),
             JsonSerializer.Deserialize<LocalIntentIdentity[]>(root.GetProperty("Intents").GetRawText()),root.GetProperty("JournalContinuityProven").GetBoolean());
+        if(root.TryGetProperty("Risk",out var risk))session.PortfolioObservation=NativePortfolioObservation.Restore(JsonSerializer.Deserialize<PortfolioObservationState>(risk.GetRawText())!,expectedAccountBinding);
+        return session;
     }
 }
