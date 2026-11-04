@@ -43,8 +43,13 @@ def decode(name, raw):
 class ChannelCapture:
     # This isolated, exact subscription allowlist does not widen the existing
     # historical transport guard or expose any order/cancel/refresh operation.
-    def __init__(self, transport, bundle, account, symbols):
+    def __init__(self, transport, bundle, account, symbols, limits=None):
         self.t, self.b, self.account, self.symbols = transport, bundle, account, set(symbols)
+        limits = limits or {}
+        self.max_events = limits.get('maximumEvents', 100000)
+        self.max_bytes = limits.get('maximumEncodedEvidenceBytes', 60000000)
+        self.encoded_bytes = sum(len(r[key]) for r in bundle.get('metadata', [])
+                                 for key in ('protobuf', 'requestProtobuf'))
 
     def record_event(self, envelope):
         q = extract_payload(envelope)
@@ -54,8 +59,11 @@ class ChannelCapture:
              'DCP1_EVENT_ACCOUNT_OR_SYMBOL')
         # The call site is immediately after complete frame reception. These are
         # availability observations; broker event creation clocks are not invented.
+        raw = encode(q)
+        need(len(self.b['events']) < self.max_events and self.encoded_bytes+len(raw) <= self.max_bytes, 'DCP1_EVENT_BUDGET')
+        self.encoded_bytes += len(raw)
         self.b['events'].append(dict(sequence=len(self.b['events']), type=type(q).__name__,
-                                     protobuf=encode(q), receivedMonoNs=time.monotonic_ns(),
+                                     protobuf=raw, receivedMonoNs=time.monotonic_ns(),
                                      receivedUtcNs=time.time_ns()))
 
     def receive(self, deadline, wanted=None):
@@ -85,6 +93,8 @@ class ChannelCapture:
                 continue
             need(type(response) is SUBSCRIPTIONS[type(request)] and response.IsInitialized() and
                  response.ctidTraderAccountId == self.account, 'DCP1_SUBSCRIPTION_RESPONSE')
+            self.encoded_bytes += len(encode(request))+len(encode(response))
+            need(self.encoded_bytes <= self.max_bytes, 'DCP1_EVENT_BUDGET')
             self.b['subscriptions'].append(dict(requestType=type(request).__name__, requestProtobuf=encode(request),
                                                  type=type(response).__name__, protobuf=encode(response)))
             return
@@ -219,7 +229,9 @@ def audit(bundle, protocol):
             need(q.HasField('subscribeToSpotTimestamp') and q.subscribeToSpotTimestamp, 'DCP1_TIMESTAMP_REQUEST')
     need(len(reconstructed)+2 <= protocol['maximumEvidenceRequestsExcludingOAuth'] and
          len(bundle['events']) <= protocol['maximumEvents'] and
-         sum(len(x['protobuf']) for x in bundle['events']) <= protocol['maximumEncodedEvidenceBytes'], 'DCP1_BUDGET')
+         sum(len(x['protobuf']) for x in bundle['events']) +
+         sum(len(x[k]) for x in bundle['metadata']+bundle['subscriptions'] for k in ('protobuf', 'requestProtobuf'))
+         <= protocol['maximumEncodedEvidenceBytes'], 'DCP1_BUDGET')
     if bundle['captureComplete']:
         need(bundle['observationEndMonoNs'] >= bundle['observationStartMonoNs'] + protocol['captureSeconds']*10**9, 'DCP1_DURATION')
     return dict(evidenceRequestsExcludingOAuth=len(reconstructed)+2, retainedEvents=len(bundle['events']),
@@ -265,7 +277,7 @@ def collect():
         need(bool(b['symbols']), 'DCP1_NO_SYMBOLS')
         ids = [x['symbolId'] for x in b['symbols'].values()]
         b['observationStartMonoNs'] = time.monotonic_ns(); b['observationStartUtcNs'] = time.time_ns()
-        stream = ChannelCapture(t, b, account, ids)
+        stream = ChannelCapture(t, b, account, ids, protocol)
         stream.subscribe(m.ProtoOASubscribeSpotsReq(ctidTraderAccountId=account, symbolId=ids, subscribeToSpotTimestamp=True))
         stream.subscribe(m.ProtoOASubscribeDepthQuotesReq(ctidTraderAccountId=account, symbolId=ids))
         deadline = b['observationStartMonoNs']/10**9 + protocol['captureSeconds']
