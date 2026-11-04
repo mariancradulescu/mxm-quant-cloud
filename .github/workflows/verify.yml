@@ -17,6 +17,7 @@ jobs:
       actions: read
     outputs:
       authorized_multiscale_conditional: ${{ steps.msp.outputs.authorized_multiscale_conditional }}
+      authorized_intermarket_exposed: ${{ steps.imt.outputs.authorized_intermarket_exposed }}
       authorized_depth_channel: ${{ steps.dcp.outputs.authorized_depth_channel }}
       authorized_source_request: ${{ steps.intent.outputs.authorized_source_request }}
       authorized_cold_source_score: ${{ steps.cold.outputs.authorized_cold_source_score }}
@@ -363,6 +364,17 @@ jobs:
              [[ "$(git diff-tree --no-commit-id --name-only -r HEAD)" == "ops/multiscale-conditional-request.txt" ]]; then
             echo "authorized_multiscale_conditional=true" >> "$GITHUB_OUTPUT"
           fi
+      - name: Verify exact owner/main IMT1 exposed original-source economic intent
+        id: imt
+        shell: bash
+        run: |
+          echo "authorized_intermarket_exposed=false" >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_EVENT_NAME" == "push" && "$GITHUB_REF" == "refs/heads/main" &&
+                "$GITHUB_ACTOR" == "mariancradulescu" &&
+                "$(git log -1 --format=%s)" == "MXM_IMT1_ORIGINAL_SOURCE_ECONOMIC_RESEARCH" ]] &&
+             [[ "$(git diff-tree --no-commit-id --name-only -r HEAD)" == "ops/intermarket-request.txt" ]]; then
+            echo "authorized_intermarket_exposed=true" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
         with:
           dotnet-version: |
@@ -381,6 +393,7 @@ jobs:
       - run: python -m research.verify_epa1_receipt
       - run: python -m research.verify_holding_receipt
       - run: python -m pip install -r research/requirements.txt
+      - run: python -m unittest research.test_intermarket_transmission -v
       - run: python -m unittest research.test_depth_channel_pilot -v
       - run: python -m unittest research.test_pipeline research.test_intraday_net research.test_flow_net research.test_neighbour_net research.test_funded_replay research.test_relative_gross research.test_tick_volume_net research.test_anchor_signal research.test_session_wick_signal research.test_orchestrated_replay research.test_joint_quote_extension research.test_portfolio_economic research.test_holding_economic research.test_causal_observation
       - name: Verify native open-equity monitor from immutable modeled holding marks
@@ -1419,5 +1432,50 @@ jobs:
         with:
           name: multiscale-conditional-public-only
           path: multiscale-conditional.public.json
+          if-no-files-found: error
+          retention-days: 90
+
+  intermarket_exposed_economics:
+    # Reuse original sealed Pepperstone source only; no API requests/orders.
+    if: >-
+      github.ref == 'refs/heads/main' && github.actor == 'mariancradulescu' &&
+      github.event_name == 'push' && needs.verify.outputs.authorized_intermarket_exposed == 'true'
+    needs: verify
+    environment: mxm-r3-custody-v1
+    permissions:
+      contents: read
+      actions: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: 8.0.x
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - run: dotnet build src/Mxm.Replay -c Release
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: sealed-source
+          run-id: 41724643418
+          github-token: ${{ github.token }}
+          path: bdp-source
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: sealed-source
+          run-id: 41735441128
+          github-token: ${{ github.token }}
+          path: aip-source
+      - name: Reconstruct original source and score distinct causal cross-asset families without funded claims
+        run: python -m research.intermarket_transmission
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: imt1-intermarket-public-conditional-only
+          path: intermarket-public.json
           if-no-files-found: error
           retention-days: 90
