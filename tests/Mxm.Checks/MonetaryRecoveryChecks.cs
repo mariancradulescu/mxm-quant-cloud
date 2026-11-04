@@ -12,7 +12,7 @@ internal static class MonetaryRecoveryChecks
         var f1=Fact("d1","open","p","local","OPEN",1,1,2000,0,.1m);
         var f2=Fact("d2","open","p","local","OPEN",1,1,3000,0,.1m,price:12);
         var funding=new AttributedMoneyFact(account,"BROKER_EXECUTION_FACT","FUNDING","funding/swap","swap","","p","local","SYNTH",1,0,3500,3500,3500,null,null,null,null,Leg(-.04m,3500),proof);
-        var close1=Fact("d3","close1","p","local","CLOSE",-1,1,4000,-1,.1m,.02m,13);
+        var close1=Fact("d3","close1","p","local","CLOSE",-1,1,4000,-1,.1m,.02m,9);
         var close2=Fact("d4","close2","p","local","CLOSE",-1,1,5000,2,.1m,.03m,14);
         var intents=new[]{new LocalIntentIdentity("request-open","open","p","SYNTH",1,2,false,1000,"local"),
             new LocalIntentIdentity("request-close1","close1","p","SYNTH",-1,1,true,3800,"local"),
@@ -31,12 +31,12 @@ internal static class MonetaryRecoveryChecks
             var positions=remaining>0?new[]{new BrokerPositionIdentity("p","SYNTH",1,remaining)}:Array.Empty<BrokerPositionIdentity>();
             var s=new BrokerIdentitySnapshot(account,at,0,at,true,true,true,orders,deals,positions);
             var funds=facts.Where(f=>f.Kind=="FUNDING").Select(f=>new ConfirmedFundingEvent(f.DealId,f.PositionId,f.Symbol,f.At,f.Financing!.Amount,f.Financing.Currency,f.AvailableAt,proof)).ToArray();
-            return new(account,"BROKER_EXECUTION_FACT",s,facts,cash,true,true,true,false,funds);
+            return new(account,"BROKER_EXECUTION_FACT",s,facts,cash,true,true,true,false,funds,at);
         }
         var session=new NativeFundedSession(account,intents:intents,journalContinuityProven:true);
         var first=Batch(new[]{f1},199.9m,2500);
         // Only intents already submitted may occur in a current snapshot.
-        first=first with {Snapshot=first.Snapshot with {At=6000,HistoryThrough=6000}};
+        first=first with {BrokerCashObservedAt=6000,Snapshot=first.Snapshot with {At=6000,HistoryThrough=6000}};
         var accepted=session.ReconcileMoney(first);
         check(accepted.Adopted&&accepted.RetainedLedger.CashEur==199.9m&&accepted.RetainedLedger.OpenPositions==1,
             "positive partial execution imports its cash debit without waiting for full order completion");
@@ -76,6 +76,8 @@ internal static class MonetaryRecoveryChecks
         check(!rejected.Adopted,"conversion observed after the monetary event cannot value an earlier debit");
         var unknown=new NativeFundedSession(account,intents:intents);
         check(!unknown.ReconcileMoney(final).Adopted,"an empty or restored journal does not certify actual initial funding");
+        check(!session.ReconcileMoney(final with {BrokerCashObservedAt=1000}).Adopted,
+            "matching but stale broker cash cannot certify current financial reconciliation");
         check(!session.ReconcileMoney(final with {AdditionalExternalCashflowDetected=true}).Adopted,
             "external funding cannot be silently absorbed into the continuous owner capital");
         // The initial200 and cash history here are TEST assumptions, not broker certificates.

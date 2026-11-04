@@ -104,7 +104,7 @@ public sealed partial class NativeFundedSession
         var identity=BrokerIdentityReconciliation.Assess(snapshot,Intents);var book=Ledger.Summary(snapshot.At);
         var settled=identity.Intents.Select(r=>{
             var executions=snapshot.Deals.Where(d=>d.OrderId==r.OrderId).ToArray();
-            bool imported=executions.Length>0&&executions.All(d=>Ledger.FactHashes.ContainsKey("MONEY/deal/"+d.DealId));
+            bool imported=Ledger.MonetaryDomain is ("BROKER_EXECUTION_FACT" or "FROZEN_MODELED_SETTLEMENT")&&executions.Length>0&&executions.All(d=>Ledger.FactHashes.ContainsKey("MONEY/deal/"+d.DealId));
             return imported?r with {LedgerImportRequired=false,State=r.PositiveTerminalEvidence?"TERMINAL_EXECUTIONS_MONETARILY_RECONCILED":"ACTIVE_PARTIAL_BOOKED_NO_RESUBMIT"}:r;
         }).ToArray();
         identity=identity with {Intents=settled,UnresolvedIntents=settled.Count(r=>!r.PositiveTerminalEvidence||r.LedgerImportRequired)};

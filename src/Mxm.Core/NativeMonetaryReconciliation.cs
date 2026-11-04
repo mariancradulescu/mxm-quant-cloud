@@ -11,7 +11,7 @@ public sealed record AttributedMoneyFact(string AccountBinding,string Domain,str
 public sealed record ConfirmedFundingEvent(string RecordId,string PositionId,string Symbol,long At,decimal Amount,string Currency,long AvailableAt,string EvidenceHash);
 public sealed record MoneyRecoveryBatch(string AccountBinding,string Domain,BrokerIdentitySnapshot Snapshot,
     AttributedMoneyFact[] Facts,decimal? BrokerCashEur,bool InitialCapital200Proven,bool CashflowHistoryComplete,
-    bool FinancingHistoryComplete,bool AdditionalExternalCashflowDetected,ConfirmedFundingEvent[]? FundingRecords);
+    bool FinancingHistoryComplete,bool AdditionalExternalCashflowDetected,ConfirmedFundingEvent[]? FundingRecords,long? BrokerCashObservedAt);
 public sealed record MoneyRecoveryReport(bool Adopted,string[] Reasons,LedgerSummary RetainedLedger,
     decimal? ReconstructedCashEur,int ConfirmedExecutionFacts,int AppliedFundingFacts,bool PositionInventoryMatched,
     bool BrokerExecutionRecoveryCertified=false,bool GlobalDrawdownCertified=false,bool OrdersEnabled=false);
@@ -111,6 +111,8 @@ public sealed partial class NativeFundedSession
         if(b.AdditionalExternalCashflowDetected)reasons.Add("EXTERNAL_CASHFLOW_OUTSIDE_OWNER_BOOK");
         if(!b.Snapshot.InventoryStable||!b.Snapshot.OrdersComplete||!b.Snapshot.DealsComplete||b.BrokerCashEur is null)
             reasons.Add("CURRENT_INVENTORY_OR_ACCOUNT_CASH_UNPROVEN");
+        if(b.BrokerCashObservedAt is not long cashAt || cashAt>b.Snapshot.At || b.Snapshot.At-cashAt>2000 || b.Snapshot.HistoryThrough<cashAt)
+            reasons.Add("ACCOUNT_CASH_CLOCK_OR_HISTORY_COVERAGE_UNPROVEN");
         if(Ledger.AppliedCount>0&&Ledger.MonetaryDomain!=b.Domain)reasons.Add("EXISTING_LEDGER_DOMAIN_CANNOT_BE_RESET_OR_REPLACED");
         var identity=BrokerIdentityReconciliation.Assess(b.Snapshot,Intents);
         if(!identity.SnapshotConsistent)reasons.AddRange(identity.Reasons);

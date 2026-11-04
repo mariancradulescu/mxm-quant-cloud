@@ -74,7 +74,7 @@ public class MxmCloud : Robot
             // per-deal monetary legs or funding history. Keep those facts UNKNOWN.
             // This attempts the same atomic recovery gate; it cannot invent money.
             var money=_fundedSession?.ReconcileMoney(new MoneyRecoveryBatch(_accountBinding,"BROKER_EXECUTION_FACT",broker,
-                System.Array.Empty<AttributedMoneyFact>(),(decimal)Account.Balance,false,false,false,false,null));
+                System.Array.Empty<AttributedMoneyFact>(),(decimal)Account.Balance,false,false,false,false,null,null));
             var funded=_fundedSession?.Observe(broker,(decimal)Account.Balance);
             if(!_journalFault && _fundedSession!=null) {
                 LocalStorage.SetString(JournalKey,_fundedSession.Checkpoint(),LocalStorageScope.Instance);

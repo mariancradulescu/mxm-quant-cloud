@@ -36,7 +36,7 @@ def verify():
                 if closing:positions.pop(f['PositionId'])
                 else:positions[f['PositionId']]=dict(PositionId=f['PositionId'],Symbol=f['Symbol'],Side=f['Side'],Units=f['Units'])
             snapshot=dict(AccountBinding=account,At=known,HistoryFrom=0,HistoryThrough=known,InventoryStable=True,OrdersComplete=True,DealsComplete=True,Orders=orders,Deals=deals,Positions=list(positions.values()))
-            batches.append(dict(AccountBinding=account,Domain='FROZEN_MODELED_SETTLEMENT',Snapshot=snapshot,Facts=list(fills),BrokerCashEur=str(cash),InitialCapital200Proven=True,CashflowHistoryComplete=True,FinancingHistoryComplete=True,AdditionalExternalCashflowDetected=False,FundingRecords=[]))
+            batches.append(dict(AccountBinding=account,Domain='FROZEN_MODELED_SETTLEMENT',Snapshot=snapshot,Facts=list(fills),BrokerCashEur=str(cash),InitialCapital200Proven=True,CashflowHistoryComplete=True,FinancingHistoryComplete=True,AdditionalExternalCashflowDetected=False,FundingRecords=[],BrokerCashObservedAt=known))
         for ix,(trade,entry) in enumerate(zip(old['Trades'],entries)):
             # Price is NOT published in the frozen receipt: retain unknown.
             pid='MODELED_POSITION/'+trade['PositionId'];local='MODELED_LOCAL/'+trade['PositionId'];side=next(t['side'] for c in json.loads(Path('docs/SQP1_AUTHENTIC_RESULT.json').read_text())['portfolioCases'] if c['uncertaintyMultiplier']==str(old['uncertaintyMultiplier']) and c['slippageMultiple']==str(old['slippageMultiple']) for t in c['completedTrades'] if t['id']==trade['PositionId'])
