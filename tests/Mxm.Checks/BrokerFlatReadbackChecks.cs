@@ -61,8 +61,13 @@ internal static class BrokerFlatReadbackChecks
         check(recovered.ReconcileBrokerFlat(both).Adopted&&recovered.Checkpoint()==before,
             "the same native facts are deterministic under repeated full readback");
         var seenHigh=both with {Cashflows=new[]{deposits[0] with {ReportedMaximumEquityEur=250m}}};
-        check(recovered.ReconcileBrokerFlat(seenHigh).ObservedPeakLowerBoundEur==250m,
-            "native transaction MaxEquity is retained as an observed historical equity floor");
+        check(recovered.ReconcileBrokerFlat(seenHigh).ObservedPeakLowerBoundEur==250m &&
+            recovered.Ledger.Summary().MaximumSampledDrawdown>=.192m,
+            "native reported equity high is preserved with its current observed drawdown");
+        check(recovered.ReconcileBrokerFlat(both).Adopted &&
+            recovered.Ledger.Summary().ObservedPeakEur==250m &&
+            recovered.Ledger.Summary().MaximumSampledDrawdown>=.192m,
+            "later readback without repeated peak evidence cannot reset observed risk");
         recovered=NativeFundedSession.Restore(before,account);
         check(recovered.ReconcileBrokerFlat(both).Adopted&&
               recovered.Ledger.Summary().ObservedPeakEur>=202m,
