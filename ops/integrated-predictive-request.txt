@@ -1,0 +1,11 @@
+MXM_IPF1_INTEGRATED_PREDICTIVE_FUNDED_RESEARCH
+OWNER SPEC v2.0 is exclusive authority; user directive after PR59-60.
+Prospective registered IPF1 protocol: research/integrated_predictive_funded_protocol.json.
+Source: original encrypted authenticated Pepperstone BDP1 #41724643418 and AIP1 #41735441128.
+Only original source, no new OAuth/broker collection, no closed model calls or retuning.
+Three causal OHLCV/activity/relative market families, 4h/24h/72h horizons.
+Prequential skill vs zero and momentum; native joint risk allocation, four frozen counterfactual EUR200 research books.
+All periods globally exposed; research model uses conditional historical spread/commission/financing scenarios; no actual fills.
+Never claim broker NET, independent confirmation, HARD21, certified equity peak or Cloud admission.
+No LIVE/DEMO orders or Cloud activation.
+Exactly once owner/main request.
