@@ -23,7 +23,7 @@ def native(data,mode):
             import re
             match=re.search(r'BATCH_RESEARCH_ERROR:([A-Za-z][A-Za-z0-9]{0,80})',proc.stderr or '')
             category=match.group(1) if match else 'UNKNOWN'
-            raise RuntimeError(f'NATIVE_REPLAY_FAILED mode={mode} exit={proc.returncode} category={category}')
+            raise subprocess.CalledProcessError(proc.returncode,['dotnet',mode],stderr=f'NATIVE_REPLAY_FAILED:{category}')
         return json.loads(out.read_text(),parse_float=D)
 
 
