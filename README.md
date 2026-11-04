@@ -164,3 +164,12 @@ conservative hundredths scenario. Original raw-scale EPA2 audit remains frozen.
 All three ciphertexts were re-archived encrypted through 2027-02-01. Incremental
 edge, live holding adaptation, HARD21, continuous DD and 12-month independent
 validation remain unproved; no policy or candidate is promoted.
+
+
+## Systemic economic decision after PR50
+
+[System economic feasibility](docs/SYSTEM_ECONOMIC_FEASIBILITY.md) quantifies all12
+existing cost contexts, EUR200 concentration and HARD21 occupation-time identities.
+It makes no source/model calls, admits no unsupported new study and claims neither
+independent edge nor system impossibility. OWNER_SPEC.md remains the authority;
+closed studies, native core and observation-only trading prohibition are preserved.

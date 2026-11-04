@@ -600,3 +600,26 @@ preflight, not an annual price-return experiment or new NET result. Four fixed
 triangles and both orientations are registered before capture; no closed study is
 reused or optimized. Even positive flat-basis financing arithmetic cannot admit a
 full study or trade without predictive, residual-risk and execution evidence.
+
+
+## Economic priority after PR50
+
+The explicit OWNER continuation accepts PR50 and closes CCP1 exactly. NET discovery,
+EUR200/HARD21 systemic feasibility and necessary native convergence take priority
+over more preliminary studies or protective infrastructure without a material gap.
+EPA1/EPA2/SQP1/BDP1/AIP1/CCP1 and all other closed exact recipes remain frozen; no
+retuning, inversion or hindsight portfolio promotion. Internal specialized modules
+are optional and need an identifiable prospective economic/risk contribution in
+the same single C# cBot. No external AI/runtime service or new source is authorized.
+
+`SYSTEM_ECONOMIC_FEASIBILITY.md` and its reproducible JSON quantify existing cost,
+capital and occupation-time scenarios without rescoring any economic study. They
+admit no new hypothesis or collection and assert neither independent NET nor system
+impossibility. The Director currently has no sufficiently supported distinct new
+economic premise to expand. This does not terminate the mandate, require repetitive
+OWNER approval or change any requirement. Future research remains authorized within
+the existing scope when a distinct causal premise and useful information, plausible
+amplitude against costs, capital support and prospective evidence design justify it.
+No new safety/model layer is added merely to create activity. Report economic value,
+EUR200/HARD21 feasibility, necessary product work, missing independent evidence and
+structural limits separately. Trading stays disabled.
