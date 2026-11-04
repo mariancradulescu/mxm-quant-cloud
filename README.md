@@ -173,3 +173,10 @@ existing cost contexts, EUR200 concentration and HARD21 occupation-time identiti
 It makes no source/model calls, admits no unsupported new study and claims neither
 independent edge nor system impossibility. OWNER_SPEC.md remains the authority;
 closed studies, native core and observation-only trading prohibition are preserved.
+
+
+[Authentic displayed-depth discovery pilot](docs/DCP1_CHANNEL_RESULT.md): DCP1
+retained5,871 original spot/depth events on all six instruments with independent
+protected raw readback. The fixed source gate failed (2 of required3 supported
+symbols); no returns/model/NET were evaluated and no expansion is admitted. This
+removes an event-capture obstacle, not the unresolved economic-evidence requirement.
