@@ -250,7 +250,11 @@ def request_for(book,t,forecasts,views,cost,p,variant):
 def evaluate(views,forecasts,cost,p):
     variants=("FULL",)+tuple("WITHOUT_"+s for s in FAMS)
     books={v:Book(v) for v in variants}
-    clocks=sorted(t for t in forecasts if p["calendar"]["start"]<=t<p["calendar"]["end"])
+    # Cost/contract scenarios were observed in DEVELOPMENT; no historical
+    # book decisions may use those later quotes before that calibration clock.
+    # From selection onward the single EUR200 book is continuous through
+    # exposed audit, without a later reset or separate per-family capital.
+    clocks=sorted(t for t in forecasts if p["calendar"]["developmentEnd"]<=t<p["calendar"]["end"])
     priorPhase=None;callCount=0
     for t in clocks:
         stage=("development" if t<p["calendar"]["developmentEnd"] else
