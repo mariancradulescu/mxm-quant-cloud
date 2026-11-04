@@ -6,7 +6,7 @@ Status below describes implementation, not economic or activation acceptance.
 | Component | Implemented | Material limitation |
 |---|---|---|
 | Read-only authenticated collector | Original LIVE binding, SCOPE_VIEW, bounded Open API, v2 encrypted custody and C# receipt/readback | Source-specific quote coverage and historical cost evidence remain incomplete |
-| Research | Several frozen causal studies, genuine preliminary positive wick NET, broad development across six instruments/timeframes | No independently confirmed NET edge; shared exposed calendars |
+| Research | Frozen causal studies, a positive conditional modeled wick fragment and MSP1 development across 12 instruments/multiple timeframes | No independently confirmed NET edge; shared exposed calendars |
 | Native opportunity selection | Common joint scenarios, greedy marginal utility, causal clocks, redundancy/conflict rejection, shared risk/margin reservation | Research heuristic; no authentic incremental portfolio validation |
 | Python funded replay | One EUR200 chronological event ledger, overlapping positions, bid/ask, supplied FX/fees/slippage/financing, aggregate round trips | Sampled marks; no certified continuous drawdown or historical execution proof |
 | Native C# economics | Common funded ledger/session, attributed monetary reconstruction, open-equity/margin observation, forecasts and shared allocation | Authentic filled broker recovery, full execution equivalence and continuous risk remain unproved |
@@ -154,3 +154,14 @@ continuous drawdown, actual liquidation or Cloud persistence is certified.
 Frozen SQP1 holding valuations exercise this path without rerunning its signals,
 allocator, exits or NET. CCP1 uses the same native valuation in a bounded financing
 preflight; it supplies no return model and promotes no counterfactual to a strategy.
+
+## Current integrated status after MSP1 (2026-11-04)
+
+MSP1 evaluated 12 instruments and multiple timeframes only in exposed historical
+CONDITIONAL_COST_MODEL research. It has no adverse selection support and is
+closed exactly. Its modeled bps cannot flow into the native EUR200 allocator as
+financed NET; no additional models, orders or Cloud activation followed.
+Instrument universes are research eligibility, not mandatory simultaneous positions.
+The native common allocator, monetary ledger and portfolio observation session
+remain the single implementation route; independently certified full lifecycle,
+continuous drawdown and durable Cloud restart remain outstanding.
