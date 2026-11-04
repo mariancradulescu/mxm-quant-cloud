@@ -1,0 +1,222 @@
+{
+  "captureComplete": true,
+  "captureError": null,
+  "cloudActivated": false,
+  "currentMinimumFinancialContext": [
+    {
+      "currentBuyMarginEur": "31.06",
+      "currentSellMarginEur": "31.06",
+      "historicalOrRiskAdmission": false,
+      "minimumUnits": "1000",
+      "symbol": "AUDUSD"
+    },
+    {
+      "currentBuyMarginEur": "33.33",
+      "currentSellMarginEur": "33.33",
+      "historicalOrRiskAdmission": false,
+      "minimumUnits": "1000",
+      "symbol": "EURUSD"
+    },
+    {
+      "currentBuyMarginEur": "39.93",
+      "currentSellMarginEur": "39.93",
+      "historicalOrRiskAdmission": false,
+      "minimumUnits": "1000",
+      "symbol": "GBPUSD"
+    },
+    {
+      "currentBuyMarginEur": "29.69",
+      "currentSellMarginEur": "29.69",
+      "historicalOrRiskAdmission": false,
+      "minimumUnits": "1000",
+      "symbol": "USDCAD"
+    },
+    {
+      "currentBuyMarginEur": "29.69",
+      "currentSellMarginEur": "29.69",
+      "historicalOrRiskAdmission": false,
+      "minimumUnits": "1000",
+      "symbol": "USDJPY"
+    },
+    {
+      "currentBuyMarginEur": "176.45",
+      "currentSellMarginEur": "176.41",
+      "historicalOrRiskAdmission": false,
+      "minimumUnits": "1",
+      "symbol": "XAUUSD"
+    }
+  ],
+  "economicModelEvaluated": false,
+  "exchangeTimingOrLatencyProven": false,
+  "executableSizeProven": false,
+  "fullBookCompletenessProven": false,
+  "fullStudyAdmitted": false,
+  "fundedNetEur": null,
+  "hard21Proven": false,
+  "historicalDepthPanelEstablished": false,
+  "independentEconomicConfirmation": false,
+  "ordersSubmitted": 0,
+  "protocol": {
+    "authority": "docs/OWNER_SPEC.md v2.0; OWNER continuation after PR51",
+    "bootstrap": "Observed ID book only, not a verified complete DOM snapshot. Unknown deletions, crossed observed books and mismatches to spot retained. No reconnection, backfill or event imputation. Final partial frame at deadline is outside the retained complete-message set; continuity not certified.",
+    "captureSeconds": 180,
+    "clocks": "Record a single connection's strictly ordered local receive sequence, monotonic nanoseconds and UTC receive nanoseconds. Spot timestamps requested and their wire presence reported. Depth has no timestamp or sequence field in the pinned protocol. Local receipt supports causal availability, not exchange timing, latency, completeness or synchronized broker books.",
+    "cloudActivation": false,
+    "depthStatistic": "For each received depth delta, delete listed IDs then replace new quote IDs. Sum positive sizes at the best three DISTINCT observed bid/ask prices; imbalance=(bidSize-askSize)/(bidSize+askSize). Missing/bootstrap levels are not imputed. Source-only variation counts use fresh received spot sides and an unchanged BID/ASK pair between successive associated depth states.",
+    "economicModel": null,
+    "financialContext": "Capture all6 current minimum contracts and directional minimum-margin responses under the same original EUR account. No historical margin, risk permission or executable depth/fill guarantee follows.",
+    "fullStudyAdmitted": false,
+    "gate": "At least3 of ALL6 fixed symbols must each meet the three post-warmup count thresholds, with no malformed depth quotes and complete bounded capture. Report all6, never select instruments by returns. Passing authorizes neither a full study nor a trade.",
+    "historicalDepth": "No historical DOM request exists in the repository's pinned protocol. Existing sparse archives or declarations do not establish a continuous price-aligned depth panel.",
+    "id": "DCP1",
+    "independentEconomicConfirmation": false,
+    "maximumEncodedEvidenceBytes": 60000000,
+    "maximumEvents": 100000,
+    "maximumEvidenceRequestsExcludingOAuth": 20,
+    "maximumSpotSideReceiveAgeMs": 10000,
+    "minimumDepthEventsAfterWarmup": 100,
+    "minimumSizeImbalanceChangesAtUnchangedSpot": 10,
+    "minimumSupportedSymbols": 3,
+    "minimumTwoSidedAssociatedStates": 50,
+    "newExternalSource": false,
+    "newOrders": false,
+    "premise": "Changes in broker-displayed bid/ask depth sizes might reveal liquidity-provider inventory or adverse-selection pressure not recoverable from BID OHLC or tick counts. Neither actual traded flow nor a predictable price move is assumed.",
+    "purpose": "Outcome-blind, bounded prospective information-channel pilot; remove the current transport's unsolicited-event discard obstacle before any economic model or extensive capture.",
+    "retryOrRecurringCapture": false,
+    "returnsInspected": false,
+    "universe": [
+      "EURUSD",
+      "GBPUSD",
+      "USDJPY",
+      "AUDUSD",
+      "USDCAD",
+      "XAUUSD"
+    ],
+    "warmupSeconds": 30
+  },
+  "protocolSha256": "38e447116cd910c670fd5f81c500bd7f82762159a23b854572a0791de42e73cc",
+  "rawReadbackMatched": true,
+  "returnsInspected": false,
+  "rows": [
+    {
+      "available": true,
+      "counts": {
+        "crossedObservedBooks": 85,
+        "crossedSpotStates": 0,
+        "depthEventsAfterWarmup": 360,
+        "malformedDepthQuotes": 0,
+        "observedTopDiffersFromSpot": 0,
+        "sizeImbalanceChangesAtUnchangedSpot": 33,
+        "spotEventsAfterWarmup": 277,
+        "spotEventsWithBrokerTimestamp": 277,
+        "totalReceivedEvents": 775,
+        "twoSidedAssociatedStates": 275,
+        "unknownDeletedIdsAfterWarmup": 0
+      },
+      "informationChannelSupported": true,
+      "symbol": "EURUSD"
+    },
+    {
+      "available": true,
+      "counts": {
+        "crossedObservedBooks": 0,
+        "crossedSpotStates": 0,
+        "depthEventsAfterWarmup": 441,
+        "malformedDepthQuotes": 0,
+        "observedTopDiffersFromSpot": 0,
+        "sizeImbalanceChangesAtUnchangedSpot": 2,
+        "spotEventsAfterWarmup": 376,
+        "spotEventsWithBrokerTimestamp": 376,
+        "totalReceivedEvents": 991,
+        "twoSidedAssociatedStates": 441,
+        "unknownDeletedIdsAfterWarmup": 0
+      },
+      "informationChannelSupported": false,
+      "symbol": "GBPUSD"
+    },
+    {
+      "available": true,
+      "counts": {
+        "crossedObservedBooks": 1,
+        "crossedSpotStates": 0,
+        "depthEventsAfterWarmup": 402,
+        "malformedDepthQuotes": 0,
+        "observedTopDiffersFromSpot": 0,
+        "sizeImbalanceChangesAtUnchangedSpot": 0,
+        "spotEventsAfterWarmup": 352,
+        "spotEventsWithBrokerTimestamp": 352,
+        "totalReceivedEvents": 919,
+        "twoSidedAssociatedStates": 401,
+        "unknownDeletedIdsAfterWarmup": 0
+      },
+      "informationChannelSupported": false,
+      "symbol": "USDJPY"
+    },
+    {
+      "available": true,
+      "counts": {
+        "crossedObservedBooks": 14,
+        "crossedSpotStates": 0,
+        "depthEventsAfterWarmup": 353,
+        "malformedDepthQuotes": 0,
+        "observedTopDiffersFromSpot": 0,
+        "sizeImbalanceChangesAtUnchangedSpot": 27,
+        "spotEventsAfterWarmup": 281,
+        "spotEventsWithBrokerTimestamp": 281,
+        "totalReceivedEvents": 772,
+        "twoSidedAssociatedStates": 339,
+        "unknownDeletedIdsAfterWarmup": 0
+      },
+      "informationChannelSupported": true,
+      "symbol": "AUDUSD"
+    },
+    {
+      "available": true,
+      "counts": {
+        "crossedObservedBooks": 0,
+        "crossedSpotStates": 0,
+        "depthEventsAfterWarmup": 377,
+        "malformedDepthQuotes": 0,
+        "observedTopDiffersFromSpot": 0,
+        "sizeImbalanceChangesAtUnchangedSpot": 2,
+        "spotEventsAfterWarmup": 310,
+        "spotEventsWithBrokerTimestamp": 310,
+        "totalReceivedEvents": 834,
+        "twoSidedAssociatedStates": 377,
+        "unknownDeletedIdsAfterWarmup": 0
+      },
+      "informationChannelSupported": false,
+      "symbol": "USDCAD"
+    },
+    {
+      "available": true,
+      "counts": {
+        "crossedObservedBooks": 0,
+        "crossedSpotStates": 0,
+        "depthEventsAfterWarmup": 663,
+        "malformedDepthQuotes": 0,
+        "observedTopDiffersFromSpot": 0,
+        "sizeImbalanceChangesAtUnchangedSpot": 0,
+        "spotEventsAfterWarmup": 653,
+        "spotEventsWithBrokerTimestamp": 653,
+        "totalReceivedEvents": 1580,
+        "twoSidedAssociatedStates": 663,
+        "unknownDeletedIdsAfterWarmup": 0
+      },
+      "informationChannelSupported": false,
+      "symbol": "XAUUSD"
+    }
+  ],
+  "schema": "mxm-depth-channel-pilot-result-v1",
+  "sourceAudit": {
+    "evidenceRequestsExcludingOAuth": 17,
+    "oauthScope": "EXPLICIT_VIEW_AT_AUTHENTICATION",
+    "originalAccountBindingRechecked": true,
+    "rawReadbackMatched": true,
+    "retainedEvents": 5871
+  },
+  "sourceCiphertextSha256": "2e9bc8b47bf5caa77b35577005a33e4cc1d3fd08a4a5729d3dacde1f55d4e428",
+  "sourcePilotPassed": false,
+  "sourceRunId": 41779527411,
+  "verdict": "PREDECLARED_DISPLAYED_DEPTH_CHANNEL_SOURCE_GATE_NOT_MET"
+}

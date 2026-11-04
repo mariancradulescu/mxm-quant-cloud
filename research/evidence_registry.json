@@ -54,6 +54,7 @@
     "docs/BROKER_IDENTITY_AUTHENTIC_RECEIPT.json": "0312f98e9dba98eda06e29607792098d7b37db956b533a8096a7447c7998d6f1",
     "docs/CAUSAL_OBSERVATION_FEASIBILITY_RESULT.json": "f6b01ad3220419d7fcdf418c0bc2ddc1270625afb0cb1e114e53cbec30148ce4",
     "docs/CCP1_AUTHENTIC_PREFLIGHT.json": "bfa87e175d9e384d32ecd9f93e67541ae6e3c9257af1a1f3a8b43d6ce6b6c708",
+    "docs/DCP1_AUTHENTIC_CHANNEL_RESULT.json": "b72b12fdcfac7ce82e97ee367c907d68036e6f99fb180bc000703ce84d426769",
     "docs/EPA1_AUTHENTIC_PORTFOLIO_RESULT.json": "abfcff3da3f72cba7d355713daf32f61a9a70cc2964f3a3a23b5f5cd58b31984",
     "docs/EPA2_AUTHENTIC_HOLDING_RESULT.json": "0c3e9ab22d5471ffa52291c5b66c649f3d4f01a78afe5f6ac37a4597886858ca",
     "docs/EPA2_EXECUTION_DIAGNOSIS.json": "74054ec4cd11368cf5635c0e1b5b5b21b7b69a59547b65b79f112ea981df2a31",
@@ -75,6 +76,7 @@
     "research/custody_new.py": "65e32555da5b65976d1bbc7aef8cde2eb55a072421dba1d8e6e35295d6b6f18b",
     "research/custody_preflight.py": "53c13a4bbcd2da46abb11aece285994d5cebc35be84b1fae27616502bae2f57a",
     "research/decode.py": "5e679210236a5e1823108bfdc4d6cbe6188a319cc16c4ca68972dfef1881bae9",
+    "research/depth_channel_protocol.json": "38e447116cd910c670fd5f81c500bd7f82762159a23b854572a0791de42e73cc",
     "research/economic_readback.py": "3fa42b1387e931b3e32661042b7974935d0e2b62f2192f4c0e83caf25c10badc",
     "research/economic_source.py": "46d5c6f143aa510204ebfe6a8ee1beea1127008d539f95cec7cc682f5c2c7ad1",
     "research/flow_net.py": "c50899ba8d272d03e535cd824df8ed18f5c79d307c1e2b9959cabb4131ed96e9",
@@ -375,6 +377,28 @@
       "status": "CLOSED_NO_UNCERTAINTY_ADMISSIONS_BEFORE_COST_NO_RETUNING",
       "trainingLabels": 456,
       "trainingWeeks": 22
+    },
+    {
+      "executionCommit": "1becfc7a1d67a05080c01b5025fc210b3e05b817",
+      "executionRunId": 41779527411,
+      "fundedNetEur": null,
+      "id": "DCP1",
+      "independent": false,
+      "modelEvaluated": false,
+      "phase": "OUTCOME_BLIND_PROSPECTIVE_DISPLAYED_DEPTH_CHANNEL_PILOT",
+      "protocolFile": "research/depth_channel_protocol.json",
+      "protocolSha256": "38e447116cd910c670fd5f81c500bd7f82762159a23b854572a0791de42e73cc",
+      "publicArtifactId": 13299240283,
+      "publicResultSha256": "b72b12fdcfac7ce82e97ee367c907d68036e6f99fb180bc000703ce84d426769",
+      "qualification": false,
+      "requiredSupportedSymbols": 3,
+      "retainedEvents": 5871,
+      "returnsInspected": false,
+      "sourceArtifactExpiresAt": "2027-02-02T05:29:13Z",
+      "sourceArtifactId": 13298288376,
+      "sourceCiphertextSha256": "2e9bc8b47bf5caa77b35577005a33e4cc1d3fd08a4a5729d3dacde1f55d4e428",
+      "status": "CLOSED_EXACT_SOURCE_GATE_2_SUPPORTED_SYMBOLS_BELOW_PREDECLARED_3_NO_EXPANSION",
+      "supportedSymbols": 2
     }
   ],
   "schema": "mxm-project-data-exposure-v1",
@@ -744,6 +768,21 @@
       "sourceArtifactId": 13296372221,
       "sourceRunId": 41774823771,
       "termsKnownOnlyAtCaptureNotAtQuoteContext": true
+    },
+    {
+      "ciphertextSha256": "2e9bc8b47bf5caa77b35577005a33e4cc1d3fd08a4a5729d3dacde1f55d4e428",
+      "conservativeExposedUtcDay": "2026-11-04",
+      "decisionExposure": [
+        "ALL6_SOURCE_VARIATION_GATES_NO_RETURN_SCORING",
+        "LOCAL_RECEIVE_CLOCK_AND_OBSERVED_BOOK_INFORMATION_ONLY"
+      ],
+      "exactPublicReceipt": "docs/DCP1_AUTHENTIC_CHANNEL_RESULT.json",
+      "historicalDepthPanelEstablished": false,
+      "independent": false,
+      "scope": "DCP1 one180-second prospective spot/displayed-depth capture, all original6 instruments; current contracts/minimum margins; no return-label study",
+      "sourceArtifactExpiresAt": "2027-02-02T05:29:13Z",
+      "sourceArtifactId": 13298288376,
+      "sourceRunId": 41779527411
     }
   ],
   "unknownExposurePolicy": "TREAT_AS_EXPOSED_FOR_QUALIFICATION"

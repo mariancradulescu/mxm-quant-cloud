@@ -646,3 +646,18 @@ Native C# kernels and trading prohibitions remain intact. Economic model/portfol
 work requires a separately prospectively defined, cost-aware hypothesis after
 source support, without inspecting pilot returns to select a recipe. This bounded
 source test adds no recurring service and needs no new credentials or sources.
+
+
+DCP1 executed in run41779527411 at1becfc7a1d67a05080c01b5025fc210b3e05b817.
+The180-second authenticated source retained5871 events and17 read-only evidence
+requests. Separate raw readback matched original protobuf/account/contract/margin
+and receive-order reconstruction. Two of six instruments met the predeclared
+source-variation criterion (EURUSD33 and AUDUSD27 size-imbalance changes at unchanged
+spot); at least three were required. DCP1 is closed exactly with no expansion,
+threshold reduction, favorable source-subset selection or repeat capture. This
+removes the unsolicited-event capture obstacle and shows bounded displayed-size
+variation; no return labels, economic model, funded NET or independent edge was
+evaluated. The source gate's failure does not reject all DOM hypotheses or the
+system. No historical depth panel, complete book, exchange timing, executable
+size or Cloud/runtime qualification follows. The exact receipt and all source
+limitations are preserved in DCP1_CHANNEL_RESULT.md/JSON and the global registry.
