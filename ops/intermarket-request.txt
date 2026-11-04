@@ -1,0 +1,9 @@
+MXM_IMT1_ORIGINAL_SOURCE_ECONOMIC_RESEARCH
+Authority: docs/OWNER_SPEC.md v2.0; explicit OWNER continuation after PR57-58.
+Exact prospective protocol: research/intermarket_transmission_protocol.json.
+Registered study: IMT1, globally exposed only, no independent confirmation.
+Source: sealed original Pepperstone scope-view BDP1 run41724643418 and AIP1 run41735441128.
+Research only: causal intermarket breadth and target underreaction; 36 fixed groups, all costs, 26/13/13 global exposed.
+No new broker access, no reruns of closed models, no orders, no Cloud activation.
+Outputs are conditional cost proxies, never funded EUR200 NET or complete HARD21 round trips.
+Dispatch once on this exact owner/main commit only.
