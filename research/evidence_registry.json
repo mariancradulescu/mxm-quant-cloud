@@ -475,6 +475,46 @@
       "hard21Proven": false,
       "independentMarginalContributionDemonstrated": false,
       "noOrdersOrCloudActivation": true
+    },
+    {
+      "id": "IPF1",
+      "phase": "INTEGRATED_PREDICTIVE_SKILL_AND_NATIVE_SHARED_EUR200_CONDITIONAL_PORTFOLIO",
+      "status": "REGISTERED_BEFORE_ECONOMIC_SCORE",
+      "protocolFile": "research/integrated_predictive_funded_protocol.json",
+      "sourceRuns": [
+        41724643418,
+        41735441128
+      ],
+      "originalSourceReuse": true,
+      "newBrokerRequests": 0,
+      "closedModelsCalled": 0,
+      "independent": false,
+      "qualification": false,
+      "sourcePriceBars": 836087,
+      "sourceGlobalExposure": true,
+      "featurePeriodsMinutes": [
+        60,
+        240,
+        1440
+      ],
+      "holdingHorizonsMinutes": [
+        240,
+        1440,
+        4320
+      ],
+      "families": 3,
+      "researchPortfolioCounterfactuals": [
+        "FULL",
+        "WITHOUT_MULTISCALE_REPRICING",
+        "WITHOUT_ACTIVITY_VOLATILITY_REGIME",
+        "WITHOUT_CROSS_ASSET_RELATIVE"
+      ],
+      "nativeCommonCapitalEur": 200,
+      "nativeSelectorShared": true,
+      "nativeExecutionLedgerCertified": false,
+      "costClass": "CONDITIONAL_COST_MODEL",
+      "fundedBrokerNetEur": null,
+      "notes": "Protocol registered before execution; research native allocator supports conditional joint scenarios but no actual broker fills/Cloud activation or independent evidence. No family-level HARD21 burden; no hindsight ablation chosen for promotion."
     }
   ],
   "schema": "mxm-project-data-exposure-v1",
