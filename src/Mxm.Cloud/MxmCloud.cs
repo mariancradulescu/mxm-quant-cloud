@@ -10,10 +10,8 @@ public class MxmCloud : Robot
     private bool _transientFault;
     private NativeFundedSession? _fundedSession;
     private string _accountBinding="";
-    private bool _journalFault;
     private string _lastInventory="";
     private string _lastNativeCashFingerprint="";
-    private const string JournalKey="MXM_NATIVE_FUNDED_SESSION_V1";
     private static long Stamp(System.DateTime t)=>new System.DateTimeOffset(System.DateTime.SpecifyKind(t,System.DateTimeKind.Utc)).ToUnixTimeMilliseconds();
 
 
@@ -24,16 +22,10 @@ public class MxmCloud : Robot
         // Timer resumes native reconciliation after a recoverable exception.
         _accountBinding=System.Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(
             System.Text.Encoding.UTF8.GetBytes("ctrader-native-account:"+Account.Number))).ToLowerInvariant();
-        try {
-            var saved=LocalStorage.GetString(JournalKey,LocalStorageScope.Instance);
-            _fundedSession=string.IsNullOrEmpty(saved)?new NativeFundedSession(_accountBinding):NativeFundedSession.Restore(saved,_accountBinding);
-        } catch {
-            // LocalStorage is disposable in Cloud. Keep an untrusted checkpoint
-            // quarantined but continue native broker readback on each timer.
-            _journalFault=true;
-            _fundedSession=new NativeFundedSession(_accountBinding);
-            Print("MXM local checkpoint unusable; account-bound native recovery continues. Orders disabled.");
-        }
+        // cTrader Cloud LocalStorage is in-memory only and GetString on an
+        // unset key may raise LocalStorageException. Do not load any checkpoint
+        // as the restart authority. Reconstruct from native broker facts.
+        _fundedSession=new NativeFundedSession(_accountBinding);
         Timer.Start(15);
         ObserveNative();
     }
@@ -132,10 +124,6 @@ public class MxmCloud : Robot
                 riskAt,riskAvailable,riskCash,riskEquity,riskMargin,riskFree,riskCredit,stableRisk,true,riskPositions,
                 null,null,null,.01m,riskHash),riskAvailable);
 
-            if(!_journalFault && _fundedSession!=null) {
-                LocalStorage.SetString(JournalKey,_fundedSession.Checkpoint(),LocalStorageScope.Instance);
-                LocalStorage.Flush(LocalStorageScope.Instance);
-            }
             var symbols=positions.Select(x=>x.SymbolName)
                 .Concat(pending.Select(x=>x.SymbolName))
                 .Append(SymbolName)
@@ -157,7 +145,7 @@ public class MxmCloud : Robot
                 ?"PROTECTIVE_RISK_REDUCTION_REVIEW/"+risk.Reason
                 :flat?.Adopted==true?flat.Status
                 :funded?.Status??result.Status;
-            // Missing/corrupt instance storage is NOT a permanent liveness gate.
+            // Missing instance storage is NOT a liveness gate.
             // Flat readback readiness enables causal research/observation only;
             // no certified historic peak or order admission is created.
             if(mode!=_lastMode)
