@@ -75,4 +75,37 @@ class IntegratedPredictiveFundedChecks(unittest.TestCase):
         self.assertAlmostEqual(candidate_prediction(x,"FULL"),2.)
         self.assertAlmostEqual(candidate_prediction(x,"WITHOUT_CROSS_ASSET_RELATIVE"),4.)
 
+    def test_same_native_selector_batch_no_certificate(self):
+        from .portfolio_economic_replay import native
+        clock=1000000
+        states=[dict(StateId="IPF1/check/"+str(i),KnownAt=100+i,
+            Estimation=True,NetEur=0,LossEur=0,PeakEur=0,MarginEur=0) for i in range(8)]
+        scenarios=[dict(StateId="IPF1/check/"+str(i),KnownAt=100+i,
+            Estimation=True,NetPerUnitEur=.8,FixedCostEur=0,
+            LossPerUnitEur=.5,PeakPerUnitEur=.5) for i in range(8)]
+        grid=dict(EquityEur=200,CertifiedPeakEur=0,FreeMarginEur=200,
+            MinimumUnits=1,StepUnits=1,MaximumUnits=3,MarginPerUnitEur=30,
+            BrokerStopoutEquityToMargin=0,Reconciled=False,
+            CompleteJointRiskEvidence=False,EffectiveIndependentBlocks=4,UncertaintyMultiplier=1)
+        opp=dict(Id="IPF1/modelled-1",Candidate="FUSION",Symbol="EURUSD",
+            RedundancyKey="EURUSD/check",Direction=1,AvailableAt=clock,
+            CalibratedThrough=200,Level=1,ExecutionEvidenceComplete=False,
+            VolumeGrid=grid,Scenarios=scenarios)
+        account=dict(EquityEur=200,PeakReferenceEur=200,FreeMarginEur=200,
+            MinimumUnits=1,StepUnits=1,MaximumUnits=3,
+            MarginPerUnitEur=30,MarginCoverageScenarioRatio=1,
+            EffectiveIndependentBlocks=4,UncertaintyMultiplier=1)
+        req=dict(Scope="IPF1_MULTI_HORIZON_CONDITIONAL_RESEARCH_NOT_CERTIFIED",
+            CommonHorizonMinutes=0,Clock=clock,Account=account,
+            Baseline=states,Opportunities=[opp],LedgerReconciled=True,
+            ScenarioCompleteOpportunityIds=[opp["Id"]])
+        result=native([req]*4,"--estimate-portfolio-opportunities-batch")
+        self.assertEqual(len(result),4)
+        self.assertTrue(all(not x["Qualified"] for x in result))
+        self.assertTrue(all(x["Status"].startswith("CONDITIONAL_RESEARCH_") for x in result))
+        self.assertTrue(all(x["Allocations"] for x in result))
+        self.assertTrue(all(float(x["Allocations"][0]["Units"])<=3 for x in result))
+        # The verified endpoint remains blocked without broker certificates.
+        self.assertTrue(all(not a.get("OrdersEnabled",False) for a in result))
+
 if __name__=="__main__":unittest.main()
