@@ -54,7 +54,7 @@ class IntegratedPredictiveFundedChecks(unittest.TestCase):
                 altered[symbol]["price"][clock]*=1.5
         later=score_market(altered,p)
         self.assertEqual(a,later["forecasts"][t])
-        self.assertEqual(early["modelStates"],later["modelStates"])
+        self.assertEqual(early["numberModels"],later["numberModels"])
 
     def test_same_cash_invariants_and_swap_unknown(self):
         p,v,cs=self.fixture(160)
