@@ -5,3 +5,4 @@ New structural persistent/transitory/zero-drift mixture, all12 assets, four time
 Report all variants/cost scenarios; no independent confirmation or funded EUR claims from proxies.
 No broker requests, orders, runtime service, threshold rescue or Cloud activation.
 Protocol: research/multiscale_conditional_protocol.json.
+Execution: one preregistered original-custody evaluation after verified PR54; no parameter changes.
