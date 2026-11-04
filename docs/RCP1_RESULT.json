@@ -1,0 +1,171 @@
+{
+  "schema": "RCP1_FROZEN_SANITIZED_EXPOSED_CONDITIONAL_ECONOMICS_V1",
+  "authority": "docs/OWNER_SPEC.md OWNER v2.0",
+  "study": "RCP1",
+  "status": "CLOSED_EXACT_MODELED_POSITIVE_THREE_TRADES_HARD21_NOT_SUPPORTED_NO_EXECUTION_OR_INDEPENDENCE",
+  "preregisteredProtocol": "research/rcp1_protocol.json",
+  "preregisteredProtocolSha256": "183d723f01556c1c8b81ec88be8a6c0126c17ccb7e65e375665b71ff6b8c1a91",
+  "executionRunId": 41837460057,
+  "executionSourceCommit": "5547665eb29c78dd3d20982a267f449e8b781643",
+  "originalSourceRuns": [
+    41724643418,
+    41735441128
+  ],
+  "authenticatedOriginalM5Bars": 836087,
+  "originalDevelopmentBidAskCostContexts": 166,
+  "rawBrokerRequests": 0,
+  "closedModelCalls": 0,
+  "orderSubmissions": 0,
+  "cloudActivated": false,
+  "originalPublicResult": {
+    "artifactId": 13326782174,
+    "artifactName": "rcp1-causal-nextbar-joint-portfolio-public-only",
+    "artifactUrl": "https://github.com/mariancradulescu/mxm-quant-cloud/actions/runs/41837460057/artifacts/13326782174",
+    "zipSha256": "9c056776d363c3042adc29fe0943a88186295e55c5a67e7e87a00597c6714d34",
+    "innerJsonSha256": "e2650ca0c591b4b591be1c700c9a490470f661b1d7ad2651e95689651eaa2e29",
+    "publicJsonRows": "432 per-family/phase/asset/horizon predictive skill cells plus five modeled policy books and neutral baseline; exact raw source not published",
+    "originalArtifactRetentionDays": 90
+  },
+  "causalResearch": {
+    "sourcesGloballyExposed": true,
+    "independentConfirmation": false,
+    "families": [
+      "RANGE_COMPRESSION_RELEASE",
+      "RELATIVE_DISPERSION_REPAIR",
+      "TAIL_VOLATILITY_UNWIND"
+    ],
+    "causalResolutionMinutes": [
+      240,
+      1440,
+      7200
+    ],
+    "holdingHorizonsMinutes": [
+      240,
+      1440,
+      4320
+    ],
+    "forecastDecisionClocks": 1100,
+    "consideredDecisionClocks": 1314,
+    "allPredeclaredForecastOutcomes": 35694,
+    "missingForwardOutcomes": 10059,
+    "phaseFusionPositiveMseSkillVsZeroAmong36": {
+      "development": 6,
+      "selection": 10,
+      "exposedAudit": 12
+    },
+    "phaseFusionPositiveMseSkillVsPriorMomentumAmong36": {
+      "development": 32,
+      "selection": 33,
+      "exposedAudit": 34
+    },
+    "phaseFusionBetterBrierThanNeutralAmong36": {
+      "development": 10,
+      "selection": 10,
+      "exposedAudit": 12
+    },
+    "exactM5DecisionToEntryLagMs": 300000,
+    "completeNextBarObservedBeforeModeledFill": true,
+    "allExistingPositionsProjectedInJointHistoricalRiskScenarios": true,
+    "closedStudyIPF1NotScoredAgain": true
+  },
+  "modeledCommonCapital": {
+    "capitalInitialEur": 200,
+    "capitalResetWithinPolicy": false,
+    "noPortfolioSummationAcrossCounterfactuals": true,
+    "moneySource": "CURRENT_BROKER_TARIFF_AND_REAL_AUTHENTIC_M5_BAR_QUOTES_CONDITIONAL_MODEL_NOT_ACTUAL_FILLED_BID_ASK",
+    "independentEquityHistoryCertificate": false,
+    "currentMarginNotHistoricalProof": true,
+    "selectionWeeks": 13,
+    "exposedAuditWeeks": 13,
+    "eligibleWeeksPredeclared": 26,
+    "full": {
+      "cashEur": 212.23947513,
+      "modeledTotalNetEur": 12.23947513,
+      "modeledCompleteRoundTrips": 3,
+      "selectionRoundTrips": 2,
+      "exposedAuditRoundTrips": 1,
+      "selectionModeledNetEur": 5.090493438112362,
+      "exposedAuditModeledNetEur": 7.148981690495396,
+      "nativeCSharpSelectorCalls": 676,
+      "nativeAllocations": 3,
+      "maximumConcurrentPositions": 1,
+      "maximumModeledMarginEur": 126.5,
+      "sampledMaxDrawdown": 0.049831,
+      "unresolvedPositions": 0,
+      "originalCapitalReconciled": true,
+      "unknownHoldingMarks": 0,
+      "delayedExitScenarios": 0,
+      "weeksPassingSystemHARD21": 0,
+      "minimumModeledRoundTripsPerEligibleWeek": 0,
+      "brokerExecutedRoundTripsVerified": 0
+    },
+    "alternatives": {
+      "FULL_STRESS": {
+        "netEur": 7.76322943,
+        "modeledRoundTrips": 2,
+        "sampledMaxDrawdown": 0.05087
+      },
+      "WITHOUT_RANGE_COMPRESSION_RELEASE": {
+        "netEur": 12.23947513,
+        "modeledRoundTrips": 3,
+        "sampledMaxDrawdown": 0.049831
+      },
+      "WITHOUT_RELATIVE_DISPERSION_REPAIR": {
+        "netEur": 0.98827481,
+        "modeledRoundTrips": 1,
+        "sampledMaxDrawdown": 0.050839
+      },
+      "WITHOUT_TAIL_VOLATILITY_UNWIND": {
+        "netEur": 11.25120031,
+        "modeledRoundTrips": 2,
+        "sampledMaxDrawdown": 0.040803
+      },
+      "FLAT_NEUTRAL": {
+        "netEur": 0,
+        "modeledRoundTrips": 0,
+        "sampledMaxDrawdown": 0
+      }
+    },
+    "completeFullModeledTrades": [
+      {
+        "symbol": "NAS100",
+        "family": "RELATIVE_DISPERSION_REPAIR",
+        "horizonMinutes": 240,
+        "modelNetEur": 4.102218623793577
+      },
+      {
+        "symbol": "USDJPY",
+        "family": "TAIL_VOLATILITY_UNWIND",
+        "horizonMinutes": 1440,
+        "modelNetEur": 0.988274814318785
+      },
+      {
+        "symbol": "USDJPY",
+        "family": "RELATIVE_DISPERSION_REPAIR",
+        "horizonMinutes": 1440,
+        "modelNetEur": 7.148981690495396
+      }
+    ],
+    "fullNoAdverseHistoricalSkillPromoted": true,
+    "fullSourceRejectionCounts": {
+      "modeledForecastGrossBelowAdverseAllInCosts": 60642,
+      "alignedHistoricalJointStatesMissing": 3069,
+      "historicalDelayedEntryPathsMissing": 547,
+      "brokerMinimumMarginNotFinanced": 61,
+      "nativeUncertaintyAdjustedUtilityNotPositive": 370
+    }
+  },
+  "economicVerdict": {
+    "genuineBrokerFundedNetEur": null,
+    "demonstratedIndependentNetEdge": false,
+    "systemHARD21Proven": false,
+    "continuousMaxDrawdownBoundProven": false,
+    "completeOriginalBrokerExecutedHistory": false,
+    "fivePolicyCounterfactualResultsNotAdditive": true,
+    "noRetuningOrAblationPromotion": true,
+    "noIndependentHoldout": true,
+    "qualifiedForOrders": false,
+    "conclusion": "Positive conditional cash scenario is only three completed modeled round trips across 26 predeclared weeks; none satisfies HARD21 and no genuine Pepperstone fills/financing/executability or independent confirmation proves an economic advantage. Exact study closed without retuning."
+  },
+  "nextWork": "Different economically motivated prospectively registered information mechanism and eventually real authorized bid/ask/fill-price coverage, not IPF1/RCP1 reoptimization. Native Cloud nonflat financial recovery and decision-state restart remain separate unresolved qualification."
+}
