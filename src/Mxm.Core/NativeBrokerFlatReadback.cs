@@ -73,6 +73,9 @@ public sealed partial class NativeFundedSession
         if(!b.SnapshotStable) return Reject("NATIVE_FLAT_SNAPSHOT_NOT_STABLE_RETRY");
         if(b.OpenPositions!=0||b.PendingOrders!=0)
             return Reject("NATIVE_NONFLAT_REQUIRES_OPEN_EXECUTION_RECONCILIATION");
+        if(Intents.Length!=0 || Ledger.Summary().PendingIntents!=0 ||
+           Ledger.Summary().OpenPositions!=0)
+            return Reject("NATIVE_UNRECONCILED_LOCAL_INTENT_OR_HELD_POSITION");
         if(b.BalanceEur<=0||b.MarginEur!=0||b.CreditEur!=0||
             Math.Abs(b.EquityEur-b.BalanceEur)>.01m)
             return Reject("NATIVE_FLAT_CASH_EQUITY_MARGIN_MISMATCH");
