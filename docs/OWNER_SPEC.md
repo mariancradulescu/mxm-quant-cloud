@@ -1,4 +1,4 @@
-# Active OWNER specification v2.0 — 2026-11-03 after PR30–33
+# Active OWNER specification v2.0 — updated 2026-11-04 (single normative authority)
 
 Authority: explicit OWNER system-orchestration decision in this continuation.
 This is the single current specification. README, architecture and acceptance
@@ -39,7 +39,7 @@ link here; older dated directives remain provenance, never competing authority.
   could only be research information in a genuinely prospective portfolio
   hypothesis on independent evidence, never a resurrection mechanism.
 
-## Active methodological policy v9 (prospectively revisable)
+## Active methodological policy v10 (prospectively revisable)
 
 Evidence levels: (1) exploratory economic hypothesis; (2) preliminary predictive
 and economic support; (3) demonstrated possible incremental portfolio contribution;
@@ -62,6 +62,82 @@ exposure means not independent. Register trial families/universe, policy and spl
 before scoring; account for multiplicity and shared data. No universal 60/20/20
 ratio. Freeze each existing study's own allocation. Future studies justify their
 own separation, embargo and sample size. Do not manufacture annual performance.
+
+## OWNER decision 2026-11-04 — authority classes and integrated economic direction
+
+This is an amendment **inside OWNER v2.0**, not a new specification or a
+second authority. Classify every operative statement by scope:
+
+1. **OWNER invariant:** only an explicit subsequent OWNER decision can change
+   EUR200 continuous initial capital, systemic HARD21, maximum 30% drawdown
+   objective including floating equity and costs, authentic evaluation and
+   uncontaminated confirmation, one final native cBot, approved sources and the
+   no-orders/no-Cloud-activation boundary.
+2. **Active methodology:** prospectively revisable portfolio research policy,
+   without altering frozen decisions. It has no universal candidate-level HARD21,
+   2-SE threshold, fixed 12-symbol roster or withdrawn historical risk ceilings.
+3. **Exact prospective protocol:** binds the recorded candidate, hypothesis,
+   source, splits, costs, gates and multiplicity for that experiment alone.
+4. **Frozen historical evidence:** original outcomes, protocols and hashes are
+   immutable provenance; no retrospective retuning, subset rescue, reactivation,
+   or reclassification as independent proof.
+5. **Implementation status:** source, native component and CI acceptance show
+   precisely what works; they cannot confer economic or trading authority.
+
+Technical cTrader/Spotware documentation governs API contracts, not OWNER goals.
+README, ARCHITECTURE, ACCEPTANCE, workflow descriptions and evidence registry are
+subordinate. Interpret disagreements by decision date, scope and whether the
+statement was prospective, active or historical. Block only the affected unsafe
+action when a material contradiction is evidenced; do not invent a broad new
+governance framework.
+
+**Integrated prospective economic programme:** select falsifiable and genuinely
+distinct economic premises across eligible Pepperstone instruments and relevant
+timeframes, rather than choosing an arbitrary instrument/model count. Causal
+completed OHLC/price, activity, volatility, regime, trend, reversion,
+cross-instrument or native broker information may justify a new hypothesis.
+Indicator substitution by itself does not. Record each research programme's
+families, eligibility, feature maturity, available broker contracts, common
+portfolio decision/holding clocks, chronology, embargo, trial multiplicity
+and evidence exposure before seeing new scoring outcomes. Existing exposed
+calendars remain development evidence even if a later model did not directly
+use them. A fresh independent confirmation requires genuinely unexposed,
+chronologically subsequent material, not a re-labelled audit partition.
+
+Use conserved authentic source before seeking additional data; selectively query
+only already authorized read-only Pepperstone Open API where a missing symbol
+contract, cost, quote, bar, tick, conversion, margin or funding fact could change
+the economic decision. Theoretical endpoint availability is not proof of account
+support or historical coverage. Symbol IDs, volume units, conversions, cost
+currency, notional, risk timestamps and financing must bind to the same
+as-observed instrument contract; unsupported evidence remains unknown.
+
+Compare causal forecasts against declared reference policies and plausible
+central/adverse costs before proceeding to common-capital finance. Estimated
+historical costs enable **CONDITIONAL_COST_MODEL** exploration only: observed
+quotes are not execution fills, current terms are not historical tariffs and
+unobserved slippage remains modeled. In the existing native selector / one
+funded ledger, compare *marginal* portfolio NET and adverse aggregate risk
+under identical joint states, exposure overlap, margin and financing constraints.
+No independent strategy accounts or automatic diversification credit. Count
+only fully closed funded position round trips in prospectively eligible system
+weeks; do not force HARD21. Adaptive sizing or abstention must be economically
+defensible. Do not impose any universal 2-SE gate on candidates.
+
+Promote a candidate or portfolio only to its supported evidence level, after
+independent validation appropriate to that level. Research may continue without
+pre-demonstrated profit, but conditional bps, proxy costs, compilation, receipt
+parity and synthetic tests never become certified EUR NET. Preserve the one
+native OpportunityOrchestrator / NativeFundedLedger / NativeFundedSession path.
+The Cloud cBot remains observation-only. Cloud local checkpoints are not proof
+of durable financial-state recovery; Linux .algo compilation is not Cloud
+runtime or Android acceptance. Do not add AI agents, external services or
+parallel allocators to represent conceptual responsibilities.
+
+**Execution priority:** targeted material contract consistency; integrated
+economic discovery with selective data access; necessary native convergence;
+focused regression checks. No bulk rewrite, repeated closed study, speculative
+model promotion, orders, or Cloud activation.
 
 ## Temporary implementation decisions and present limits
 
@@ -88,7 +164,7 @@ continuous drawdown/restart proof, and Android/Cloud acceptance remain outstandi
 
 ## Historical and experimental provenance
 
-All dated docs except this file are evidence/technical records. If they describe
+The dated experiment subsections below record protocol-specific prospective decisions\nand frozen execution provenance, not additional universal OWNER invariants.\nAll dated docs except this file are evidence/technical records. If they describe
 older authority or component status, this file controls. In particular
 `OWNER_RISK_AUTHORITY_CORRECTION_20261103.md` contains explicitly superseded 1/40/60
 rules; `HistoricalPr16Risk` is isolated numerical provenance for its frozen study.
@@ -96,7 +172,7 @@ rules; `HistoricalPr16Risk` is isolated numerical provenance for its frozen stud
 The wick study remains frozen: +10.9583 EUR modeled central NET, negative weekly
 lower bound, concentrated partial-week gain, no promotion or independent edge.
 
-## Execution-evidence extension JQE1 (prospective data policy)
+### Execution-evidence extension JQE1 (prospective data policy)
 
 After authentic JOP1 run 41627571731, zero of 11,696 opportunities have both
 entry/exit clocks inside the old 59-second quote window. JQE1 tests bounded
@@ -123,7 +199,7 @@ samples, continuous drawdown evidence or independent confirmation. Cross-timefra
 allocation additionally needs demonstrably aligned common economic horizons;
 state identifiers alone are not a proof of those horizons.
 
-## EPA1 integrated conditional economics (prospective protocol)
+### EPA1 integrated conditional economics (prospective protocol)
 
 The OWNER continuation after PR34–36 prioritizes an economically executable common
 portfolio research replay. OWNER v2.0 requirements above remain unchanged.
@@ -192,7 +268,7 @@ retuning. Further adaptation/diversification requires genuinely new prospective
 evidence; this pilot does not demonstrate robust regime/performance adaptation
 or independent marginal portfolio edge. OWNER v2.0 requirements remain unchanged.
 
-## EPA2 prospective holding-risk and representativeness policy
+### EPA2 prospective holding-risk and representativeness policy
 
 OWNER continuation after PR37–38 keeps v2.0 requirements and frozen EPA1 evidence.
 `portfolio_holding_protocol.json` predeclares three calendar strata: January, April
@@ -303,7 +379,7 @@ Neither zero-exposure ablations nor synthetic protective exits demonstrate
 incremental economic edge or validated adaptive holding performance.
 
 
-## Prospective feasibility correction after PR39–41
+### Prospective feasibility correction after PR39–41
 
 The new OWNER continuation requires short informational AND economic feasibility
 checks before substantial authentic collections. Preserve EPA1/EPA2 exactly;
@@ -347,7 +423,7 @@ episodes, common open-position valuation and financing, and declared uncertainty
 bounds. Conditional research may model uncertain costs conservatively; this is
 not permission to certify unknown historical terms or execution depth.
 
-## Economic discovery priority after PR42–43 and SQP1 registration
+### Economic discovery priority after PR42–43 and SQP1 registration
 
 OWNER accepts CEF1 and prioritizes authentic NET discovery and native convergence,
 not additional preventive infrastructure. `sequence_portfolio_protocol.json`
@@ -433,7 +509,7 @@ all original labels and links the cause explicitly; no broker liquidation is
 invented. A metadata-only future dispatcher override removes the misleading study
 name, with old defaults unchanged. No economic result is recomputed or relabeled.
 
-## Integrated discovery and native funded lifecycle after PR44–45
+### Integrated discovery and native funded lifecycle after PR44–45
 
 OWNER prioritizes one portfolio programme instead of serial small-calendar probes.
 BDP1 predeclares52 full UTC Monday weeks (2025-11-03 through2026-11-02 exclusive),
@@ -502,7 +578,7 @@ an earlier feature signal and prevent selection admission if any active outcome
 is missing. No absent bar, price, trade or label is imputed.
 
 
-## After PR46–47: distinct economics and native identity convergence
+### After PR46–47: distinct economics and native identity convergence
 
 OWNER v2.0 requirements remain unchanged. BDP1 is closed with no cost admissions;
 original and corrected reports remain frozen. No calendar-mean, closed breakout,
@@ -543,7 +619,7 @@ stay encrypted under original scope/account custody. No orders, new credentials,
 external runtime services, Cloud activation or economic certification follow.
 
 
-## After PR48: selective research and atomic native monetary reconciliation
+### After PR48: selective research and atomic native monetary reconciliation
 
 OWNER v2.0 requirements remain unchanged. AIP1 is closed, with no uncertainty
 admissions before costs. There is no sufficiently justified new economic hypothesis
@@ -586,7 +662,7 @@ legs; that certification remains impossible without new genuine evidence, and
 no LIVE/DEMO orders may be requested to manufacture it. Observation/protection
 continues; real monetary adoption and trading authority remain unproved.
 
-## Prospective continuation after PR49
+### Prospective continuation after PR49
 
 Do not expand safety infrastructure without a material acceptance gap. The native
 session now separately observes open portfolio equity/margin and retains its
@@ -602,7 +678,7 @@ reused or optimized. Even positive flat-basis financing arithmetic cannot admit 
 full study or trade without predictive, residual-risk and execution evidence.
 
 
-## Economic priority after PR50
+### Economic priority after PR50
 
 The explicit OWNER continuation accepts PR50 and closes CCP1 exactly. NET discovery,
 EUR200/HARD21 systemic feasibility and necessary native convergence take priority
@@ -625,7 +701,7 @@ EUR200/HARD21 feasibility, necessary product work, missing independent evidence 
 structural limits separately. Trading stays disabled.
 
 
-## Distinct information-channel discovery after PR51
+### Distinct information-channel discovery after PR51
 
 OWNER accepts PR51 and directs real discovery using existing authorized source
 capabilities, without repetitive negative reports or decorative modules. DCP1
@@ -663,7 +739,7 @@ size or Cloud/runtime qualification follows. The exact receipt and all source
 limitations are preserved in DCP1_CHANNEL_RESULT.md/JSON and the global registry.
 
 
-## OWNER expansion: full historical research and statistical costs after PR53
+### OWNER expansion: full historical research and statistical costs after PR53
 
 The explicit OWNER strategic continuation authorizes statistical estimates of
 missing historical costs for CONDITIONAL_COST_MODEL research. Prefer authentic
