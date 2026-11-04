@@ -12,6 +12,7 @@ public class MxmCloud : Robot
     private string _accountBinding="";
     private string _lastInventory="";
     private string _lastNativeCashFingerprint="";
+    private string _lastNativeOpenInventoryFingerprint="";
     private static long Stamp(System.DateTime t)=>new System.DateTimeOffset(System.DateTime.SpecifyKind(t,System.DateTimeKind.Utc)).ToUnixTimeMilliseconds();
 
 
@@ -100,6 +101,26 @@ public class MxmCloud : Robot
             });
             bool cashSnapshotStable=nativeCashFingerprint==_lastNativeCashFingerprint && !_transientFault;
             _lastNativeCashFingerprint=nativeCashFingerprint;
+            // Position inventory, unlike floating P&L, can remain stable
+            // between market observations. Verify this separately from cash.
+            // The current monetary mark must still reconcile within its own read.
+            string openInventory=System.Text.Json.JsonSerializer.Serialize(positions
+                .Select(p=>new {p.Id,p.SymbolName,p.TradeType,p.VolumeInUnits,
+                    p.EntryPrice,p.EntryTime,p.StopLoss,p.TakeProfit})
+                .OrderBy(p=>p.Id).ToArray());
+            bool openInventoryStable=openInventory==_lastNativeOpenInventoryFingerprint && !_transientFault;
+            _lastNativeOpenInventoryFingerprint=openInventory;
+            BrokerOpenReadbackReport? open=null;
+            if(positions.Length>0)
+                open=_fundedSession?.ReconcileBrokerOpen(new BrokerOpenReadback(
+                    _accountBinding,Stamp(Server.TimeInUtc),openInventoryStable,
+                    (decimal)Account.Balance,(decimal)Account.Equity,(decimal)Account.Margin,
+                    (decimal)Account.FreeMargin,(decimal)Account.Credit,pending.Length,
+                    positions.Select(p=>new BrokerOpenPositionFact(
+                        p.Id.ToString(),p.SymbolName,p.TradeType==TradeType.Buy?1:-1,
+                        (decimal)p.VolumeInUnits,Stamp(p.EntryTime),(decimal)p.EntryPrice,
+                        (decimal)p.Margin,(decimal)p.NetProfit,
+                        (decimal?)p.StopLoss,(decimal?)p.TakeProfit)).ToArray()));
             BrokerFlatReadbackReport? flat=null;
             if(cashSnapshotStable && positions.Length==0 && pending.Length==0)
                 flat=_fundedSession?.ReconcileBrokerFlat(new BrokerFlatReadback(
@@ -143,6 +164,7 @@ public class MxmCloud : Robot
             var result=SelectiveRecovery.Assess(snapshot,lanes);
             var mode=risk?.ReviewReductionIds.Length>0
                 ?"PROTECTIVE_RISK_REDUCTION_REVIEW/"+risk.Reason
+                :open is not null?open.Status
                 :flat?.Adopted==true?flat.Status
                 :funded?.Status??result.Status;
             // Missing instance storage is NOT a liveness gate.
