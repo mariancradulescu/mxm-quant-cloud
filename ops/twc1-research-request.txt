@@ -9,3 +9,5 @@ All 52 weeks globally exposed. No independent holdout, no genuine broker fills o
 No changes to closed models, orders, Cloud activation, extra workflow file or external services.
 Trigger exactly once only by OWNER-authorized commit of this file on main with exact subject MXM_TWC1_EXPOSED_CALENDAR_ECONOMIC_SCORE.
 Status: REGISTERED_UNSCORED; do not execute until separate exact owner/main request commit.
+
+Execution: OWNER-authorized exact main-only one-time original-source TWC1 score requested; public result only, no orders, all globally exposed.
