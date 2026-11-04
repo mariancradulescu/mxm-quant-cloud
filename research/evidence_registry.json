@@ -103,7 +103,9 @@
     "research/volume_policy_attribution.py": "5684498045923c37af76b35f47a49c9f8cef4b98aeab8213f9e88d0020c2b04d",
     "src/Mxm.Core/SequenceOpportunityResearch.cs": "75131c62df5e6a2b3276548bb70e2d98399f2cbec6a3889745ed5e7abf32acb7",
     "research/intermarket_transmission_protocol.json": "33ec38c3f011f1a3edc81ba6b4c7e8befb54422b76f744105f0f89a7661251bc",
-    "docs/IMT1_CONDITIONAL_RESULT.json": "23da3224dd063ad352dd56fdaf171333f95c560ae1120bae48577a04772e8ce1"
+    "docs/IMT1_CONDITIONAL_RESULT.json": "23da3224dd063ad352dd56fdaf171333f95c560ae1120bae48577a04772e8ce1",
+    "research/integrated_predictive_funded_protocol.json": "2a4e4e649bc69cb3bebeba1fd5757761e48315744fb69c2f05f806228dbe28f2",
+    "docs/IPF1_RESULT.json": "19c995caaeac544bd75dfb0cadcb19e03ec5deabf50eaeae13a55c3f232da948"
   },
   "independenceDefault": "NOT_ESTABLISHED",
   "nativeFundedFactReception": {
@@ -479,7 +481,7 @@
     {
       "id": "IPF1",
       "phase": "INTEGRATED_PREDICTIVE_SKILL_AND_NATIVE_SHARED_EUR200_CONDITIONAL_PORTFOLIO",
-      "status": "REGISTERED_BEFORE_ECONOMIC_SCORE",
+      "status": "CLOSED_EXACT_MODELLED_PORTFOLIO_NET_NEGATIVE_NO_INDEPENDENT_CONFIRMATION",
       "protocolFile": "research/integrated_predictive_funded_protocol.json",
       "sourceRuns": [
         41724643418,
@@ -514,7 +516,28 @@
       "nativeExecutionLedgerCertified": false,
       "costClass": "CONDITIONAL_COST_MODEL",
       "fundedBrokerNetEur": null,
-      "notes": "Protocol registered before execution; research native allocator supports conditional joint scenarios but no actual broker fills/Cloud activation or independent evidence. No family-level HARD21 burden; no hindsight ablation chosen for promotion."
+      "notes": "Protocol registered before execution; research native allocator supports conditional joint scenarios but no actual broker fills/Cloud activation or independent evidence. No family-level HARD21 burden; no hindsight ablation chosen for promotion.",
+      "executionRunId": 41829664972,
+      "executionCommit": "b175364897eab4e556d45feb37a6168371db2356",
+      "exactResultFile": "docs/IPF1_RESULT.json",
+      "exactResultMd": "docs/IPF1_RESULT.md",
+      "protocolSha256": "2a4e4e649bc69cb3bebeba1fd5757761e48315744fb69c2f05f806228dbe28f2",
+      "originalPublicArtifactId": 13322761389,
+      "originalPublicJsonSha256": "5d5f9fdc8f3ac74c769018275ab26a2a30bf92019dda6590f9fed056d570e55a",
+      "originalArtifactZipSha256": "3737eb05456934efbfcbcb343d93453481a3fb48878f9c581d0e8a8c6ba276bf",
+      "observedAuthenticM5Bars": 836087,
+      "observedAuthenticCostContexts": 166,
+      "modelReturnComparisons": 432,
+      "nativeCSharpSelectorCalls": 182,
+      "modeledFundedConditionalNetEur": -6.2818511,
+      "modeledFundedConditionalRoundTrips": 74,
+      "modeledMaxSampledDd": 0.221442,
+      "modeledAblationWinnerPositiveOnlyOnGloballyExposedData": true,
+      "brokerFundedNetCertified": false,
+      "independentPortfolioHARD21Demonstrated": false,
+      "followupCandidates": [],
+      "noPromotion": true,
+      "reason": "Full modeled common EUR200 book negative; sole positive predeclared ablation loses strongly in exposed audit. Exact IPF1 sealed, no independent holdout or true historical execution fills."
     }
   ],
   "schema": "mxm-project-data-exposure-v1",
