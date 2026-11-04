@@ -82,7 +82,8 @@
     ],
     "commission": "current max of authentic cost contexts",
     "fundingMissing": "mark unknown and disallow funded book exposure; never treat as zero",
-    "executionPrices": "M5 complete-bar bid-like price with modeled spread/latency; not genuine historical fills, not broker verified gross/cost NET"
+    "executionPrices": "M5 complete-bar bid-like price with modeled spread/latency; not genuine historical fills, not broker verified gross/cost NET",
+    "noFutureCost": "Frozen true development quote/commission/funding contexts only applied in selection and exposed audit financed decision clocks, never to an earlier capital decision"
   },
   "portfolio": {
     "startingCashEur": 200,
@@ -102,7 +103,8 @@
     ],
     "economicExecution": "Native C# scenario allocator with joint historical stress states and one common cash/positions replay model, no LIVE/DEMO order; C# LedgerEvent replay to check funded lifecycle where feasible",
     "portfolioAdmission": "forecast net expected after adverse friction positive; no family required independently positive; native common selector may reject; no hard21 family quota",
-    "hypotheticalFinancing": "max of broker current minimum margin and adverse scenario sizing, 30 percent sampled-risk reference without lifetime risk qualification"
+    "hypotheticalFinancing": "max of broker current minimum margin and adverse scenario sizing, 30 percent sampled-risk reference without lifetime risk qualification",
+    "financedReplayStart": "selection phase first eligible clock after the predeclared development cost calibration; no trades in development, continuous EUR200 through exposed audit; no later capital reset"
   },
   "calendar": {
     "start": 1762128000000,
