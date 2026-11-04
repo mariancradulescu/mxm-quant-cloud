@@ -53,6 +53,24 @@ def check():
     assert ipf_receipt['followupCandidates'] == []
     assert not ipf_receipt['modeledCommonCapital']['nativeFundedLedgerReplayParityCertified']
     assert 'IPF1_MULTI_HORIZON_CONDITIONAL_RESEARCH_NOT_CERTIFIED' in Path('src/Mxm.Core/OpportunityOrchestrator.cs').read_text()
+    rcp = next(s for s in r['prospectiveStudies'] if s['id'] == 'RCP1')
+    rcp_result = json.loads(Path('docs/RCP1_RESULT.json').read_text())
+    assert rcp['status'].startswith('CLOSED_EXACT_') and rcp['closedExactNoRetuning']
+    assert rcp['independent'] is False and rcp['qualification'] is False
+    assert rcp['hard21Proven'] is False and rcp['weeksPassingHard21'] == 0
+    assert rcp['actualBrokerFundedNetEur'] is None and rcp['followupCandidates'] == []
+    assert rcp_result['originalPublicResult']['innerJsonSha256'] == rcp['originalPublicJsonSha256']
+    assert rcp_result['preregisteredProtocolSha256'] == rcp['protocolSha256']
+    assert rcp_result['modeledCommonCapital']['full']['modeledCompleteRoundTrips'] == 3
+    assert rcp_result['modeledCommonCapital']['full']['weeksPassingSystemHARD21'] == 0
+    assert rcp_result['modeledCommonCapital']['full']['maximumConcurrentPositions'] == 1
+    assert rcp_result['economicVerdict']['genuineBrokerFundedNetEur'] is None
+    assert rcp_result['economicVerdict']['qualifiedForOrders'] is False
+    assert rcp_result['economicVerdict']['noIndependentHoldout'] is True
+    assert 'RCP1_GLOBAL_RISK_DELAYED_FILL_CONDITIONAL_NOT_CERTIFIED' in Path('src/Mxm.Core/OpportunityOrchestrator.cs').read_text()
+    new_replay = Path('research/rcp1_portfolio.py').read_text()
+    assert 'entryAt=t+MS' in new_replay and 'openCurves[pid]=records' in new_replay
+    assert rcp_result['modeledCommonCapital']['full']['originalCapitalReconciled']
     assert 'LocalStorage.' not in Path('src/Mxm.Cloud/MxmCloud.cs').read_text()
     assert msp.get('ordersSubmitted', 0) == 0, 'UNAUTHORIZED_MSP1_TRADING_CLAIM'
 

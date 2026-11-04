@@ -105,7 +105,9 @@
     "research/intermarket_transmission_protocol.json": "33ec38c3f011f1a3edc81ba6b4c7e8befb54422b76f744105f0f89a7661251bc",
     "docs/IMT1_CONDITIONAL_RESULT.json": "23da3224dd063ad352dd56fdaf171333f95c560ae1120bae48577a04772e8ce1",
     "research/integrated_predictive_funded_protocol.json": "2a4e4e649bc69cb3bebeba1fd5757761e48315744fb69c2f05f806228dbe28f2",
-    "docs/IPF1_RESULT.json": "19c995caaeac544bd75dfb0cadcb19e03ec5deabf50eaeae13a55c3f232da948"
+    "docs/IPF1_RESULT.json": "19c995caaeac544bd75dfb0cadcb19e03ec5deabf50eaeae13a55c3f232da948",
+    "research/rcp1_protocol.json": "183d723f01556c1c8b81ec88be8a6c0126c17ccb7e65e375665b71ff6b8c1a91",
+    "docs/RCP1_RESULT.json": "e82fcb9233ef3754a63c40eb6dc151a026528268166f524a62421757c47c6a36"
   },
   "independenceDefault": "NOT_ESTABLISHED",
   "nativeFundedFactReception": {
@@ -541,7 +543,7 @@
     },
     {
       "id": "RCP1",
-      "status": "REGISTERED_BEFORE_FIRST_AUTHENTIC_SCORE",
+      "status": "CLOSED_EXACT_MODELED_POSITIVE_THREE_TRADES_HARD21_NOT_SUPPORTED_NO_EXECUTION_OR_INDEPENDENCE",
       "phase": "EXPOSED_CAUSAL_LIQUIDITY_PRESSURE_RELATIVE_DISPERSION_AND_TAIL_REGIME_PORTFOLIO",
       "protocolFile": "research/rcp1_protocol.json",
       "originalSourceRuns": [
@@ -590,7 +592,33 @@
       "systemHard21Certified": false,
       "ordersSubmitted": 0,
       "cloudActivated": false,
-      "researchNote": "Not IPF1 retune. Exposed retrospective data; no independent confirmation. Delayed next M5 prices and all held open risk modeled, not certified broker fills. Complete enrolled weeks, no family-specific HARD21 constraint. Full adverse and stress portfolio counterfactuals registered before outcome."
+      "researchNote": "Not IPF1 retune. Exposed retrospective data; no independent confirmation. Delayed next M5 prices and all held open risk modeled, not certified broker fills. Complete enrolled weeks, no family-specific HARD21 constraint. Full adverse and stress portfolio counterfactuals registered before outcome.",
+      "executionRunId": 41837460057,
+      "executionSourceCommit": "5547665eb29c78dd3d20982a267f449e8b781643",
+      "protocolSha256": "183d723f01556c1c8b81ec88be8a6c0126c17ccb7e65e375665b71ff6b8c1a91",
+      "exactResultFile": "docs/RCP1_RESULT.json",
+      "exactResultMd": "docs/RCP1_RESULT.md",
+      "resultReceiptSha256": "e82fcb9233ef3754a63c40eb6dc151a026528268166f524a62421757c47c6a36",
+      "originalPublicArtifactId": 13326782174,
+      "originalPublicJsonSha256": "e2650ca0c591b4b591be1c700c9a490470f661b1d7ad2651e95689651eaa2e29",
+      "originalZipSha256": "9c056776d363c3042adc29fe0943a88186295e55c5a67e7e87a00597c6714d34",
+      "originalAuthenticM5Bars": 836087,
+      "observedCostContexts": 166,
+      "modeledFullCapitalEur": 212.23947513,
+      "modeledFullConditionalNetEur": 12.23947513,
+      "modeledFullRoundTrips": 3,
+      "nativeCSharpSelectorCalls": 676,
+      "modeledMaxOpenPositions": 1,
+      "modeledSampledDrawdown": 0.049831,
+      "predeclaredEligibleWeeks": 26,
+      "weeksPassingHard21": 0,
+      "hard21Proven": false,
+      "actualBrokerFundedNetEur": null,
+      "independentConfirmation": false,
+      "nativeLedgerExecutedFillParityCertified": false,
+      "closedExactNoRetuning": true,
+      "followupCandidates": [],
+      "verdict": "Positive modeled result based on only 3 round trips; no 21/week, no real broker execution, no independent confirmation."
     }
   ],
   "schema": "mxm-project-data-exposure-v1",

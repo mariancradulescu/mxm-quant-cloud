@@ -219,3 +219,18 @@ All original artifact hashes are frozen; no authentic broker fills,
 historical cash certification, independent confirmation, HARD21
 or Cloud order permission follows. The native selector/ledger
 and OWNER v2.0 boundaries remain unchanged.
+
+[Authentic RCP1 causal delayed-entry integrated research](docs/RCP1_RESULT.md)
+([Actions #41837460057](https://github.com/mariancradulescu/mxm-quant-cloud/actions/runs/41837460057)):
+three separate structural OHLCV event-state prediction families were scored
+on the original sealed Pepperstone sources, with a **next observed M5 bar**
+price after each decision and open-position historical joint-risk exposures
+passed to the existing native C# selector. Five predeclared common-EUR200
+research books plus neutral were compared. FULL ended conditionally
+at **212.239475 EUR** after **three** modeled round trips and 676 native
+selector calls; FULL_STRESS ended at 207.763229 EUR after two. This does
+**not** qualify an edge: 0/26 prospectively eligible system weeks met HARD21,
+historical execution/fills and full costs remain modeled, the yearly source
+was already research-exposed, and continuous equity/global risk
+certificates do not exist. The exact RCP1 model is frozen without retuning
+or retrospective policy switching. No order or Cloud activation is permitted.
