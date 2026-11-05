@@ -1,0 +1,6 @@
+PVE1 one-time read-only authentic original Pepperstone OHLCV scoring request
+Owner authority: docs/OWNER_SPEC.md v2.0; prospectively initial EUR300
+Protocol already registered on main: research/pve1_protocol.json
+No changed predictor, thresholds, cost calibration, split or signal after source exposure.
+Only original immutable encrypted runs 41724643418 and 41735441128.
+No broker orders, no new broker data request, no Cloud activation, no independent holdout claim.
