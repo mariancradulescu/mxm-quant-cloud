@@ -20,6 +20,8 @@ def check():
         s = Path(name).read_text()
         assert 'OWNER_SPEC.md' in s, 'MISSING_ACTIVE_AUTHORITY: ' + name
         assert 'OWNER v3.0' not in s, 'CONCURRENT_NORMATIVE_AUTHORITY: ' + name
+    assert 'Prospective initial capital EUR 300' in Path('README.md').read_text(), 'STALE_README_PROSPECTIVE_CAPITAL'
+    assert 'continuous EUR 300 prospective initial capital' in Path('docs/ACCEPTANCE.md').read_text(), 'STALE_ACCEPTANCE_PROSPECTIVE_CAPITAL'
 
     # Closed experiments cannot silently become an independent/funded certificate.
     # A future genuinely new prospectively registered study is not pre-rejected.
