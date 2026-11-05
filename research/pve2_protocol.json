@@ -1,0 +1,112 @@
+{
+  "schema": "mxm-pve2-daily-hourly-disagreement-v1",
+  "id": "PVE2",
+  "status": "PREDECLARED_UNSCORED",
+  "authority": "docs/OWNER_SPEC.md v2.0 EUR300 amendment 2026-11-05",
+  "economicPremise": "A dominant prior fully observed daily directional repricing can resume after a completed counter-directional H1 pullback; the pullback may reflect temporary position liquidation rather than information reversal. A falsifiable fixed-side rule across ALL authenticated instruments; this is not PVE1 four-hour tick-volume efficiency/absorption, IPF1 trained multiscale mixture, RCP1 fitted states, or IMT1 cross-index impulse.",
+  "immutableSource": [
+    {
+      "folder": "bdp-source",
+      "run": 41724643418,
+      "hash": "e47ba7204ca7e07e7bb523ede8a8171f49b216cad09914142ed548839660a370",
+      "schema": "mxm-bdp1-source-v1",
+      "protocol": "research/portfolio_discovery_protocol.json"
+    },
+    {
+      "folder": "aip-source",
+      "run": 41735441128,
+      "hash": "fa684ca1de58c6d1e8bdee410834855d05389af0c0ae4523b095367dce0e5331",
+      "schema": "mxm-aip1-source-v1",
+      "protocol": "research/auction_inventory_protocol.json"
+    }
+  ],
+  "sourceSymbols": [
+    "EURUSD",
+    "GBPUSD",
+    "USDJPY",
+    "AUDUSD",
+    "USDCAD",
+    "XAUUSD",
+    "US500",
+    "NAS100",
+    "GER40",
+    "UK100",
+    "AUS200",
+    "JPN225"
+  ],
+  "fixedSignal": {
+    "clockUtcMinutes": 240,
+    "hourM5BarsRequired": 13,
+    "dailyReferenceMinutes": 1440,
+    "side": "sign(log(P_t/P_(t-24h))) only if the last completed contiguous H1 return is strictly opposite in sign, the absolute daily return strictly exceeds the absolute hourly pullback, both nonzero, and exact historical observed closes exist at t,t-60m,t-24h. No indicator fitting, cost-derived side, tick-volume or post-hoc asset/hours subset.",
+    "M15": "last three completed M5 bars included within exact H1 path, not an independent fitted predictor",
+    "H4": "UTC 4h decision clock, no completed H4-pattern or threshold inherited from PVE1",
+    "missing": "Never interpolate endpoints. Unknown entry, exit or positions counted separately, not zero-label successes.",
+    "delayedEntryMinutes": 5,
+    "holdingMinutes": [
+      60,
+      240
+    ]
+  },
+  "calendar": {
+    "start": 1762128000000,
+    "developmentEnd": 1777852800000,
+    "selectionEnd": 1785715200000,
+    "end": 1793577600000,
+    "phaseWeeks": [
+      26,
+      13,
+      13
+    ],
+    "eligibleWeeks": 13,
+    "independent": false,
+    "exposure": "ALL 52 source weeks globally exposed by earlier research, so last 13 are only exposed audit, not independent confirmation",
+    "noCrossPhaseOutcomes": true
+  },
+  "benchmark": {
+    "neutral": "ZERO_DRIFT; no trade when rule inactive",
+    "unconditional": "PREVIOUS_COMPLETED_24H_MOMENTUM on every otherwise valid 4h UTC clock, not only PVE2 signal clocks, each charged the same current-term modeled adverse cost",
+    "matched": "LAST_H1_MOMENTUM on PVE2 signal clocks, disclosed only; opposite to the PVE2 side by construction; daily side is identical to signal on matched clocks and is NEVER counted as incremental predictive skill",
+    "aggregation": "For each asset and ISO calendar week, calculate a mean across all eligible completed, causal clock/target labels; then equal-weight assets within a week, then equal-weight weeks. Signal inactivity is zero gross/cost, never a fabricated future return."
+  },
+  "statisticalPolicy": {
+    "primaryTests": 2,
+    "oneSidedComparisons": 2,
+    "multiplicity": "four fixed tests: 2 horizons x (gross > zero and gross strategy minus unconditional previous-24h momentum > 0); Bonferroni alpha=0.05/4; 12 asset exploratory rows never select a winner",
+    "minimumSelectionWeeks": 10,
+    "minimumInstrumentsPerWeek": 8,
+    "minimumSelectionSignals": 50,
+    "minimumKnownLabelCoverage": 0.8,
+    "gate": "Both gross weekly-block p <= 0.0125, selection gross >0, incremental gross >0, selection adverse modeled net > 0, and net improvement vs all-clock daily momentum adverse >0, after all predeclared weeks/asset weights; reject otherwise",
+    "weeklyTest": "Student-t distribution with 10+ week clusters if available; no zero-variance p-value manufacturing. Single one-sided test for each declared comparison; no posthoc threshold relaxation",
+    "outcome": "Next M5 close entry and exact t+entryDelay+horizon bar exit; outcome labels never enter the same decision signal; selection determines only which horizon may be evaluated later in audit",
+    "unselected": "Always report all 12x2 rows as descriptive and all miss reasons; never trade a good-looking individual row when the global horizon gate fails."
+  },
+  "economicPolicy": {
+    "initialCapitalEur": 300,
+    "singleContinuousBook": true,
+    "hard21SystemPerEligibleWeek": 21,
+    "maxSystemDrawdown": 0.3,
+    "noReset": true,
+    "brokerCosts": "Previously archived authenticated Pepperstone development tariff/BID-ASK cost contexts; central/adverse/stress remain *modeled current-term estimates*, not historical bid/ask fills; no cost-unknown candidate may enter native funding",
+    "funding": "Current known swap times/rates only; unknown overnight funding blocks model allocation. Never assert actual broker account EUR300 funding.",
+    "replay": "Only selection-supported horizons can emit exposed-audit proposals, with fixed selection mean signed gross as horizon-level expected value and pre-declared per-symbol current adverse/stress cost gate. Use existing native C# OpportunityOrchestrator.Estimate + shared native risk-accounting primitives; no independent allocator or permanent Python runtime in final Cloud cBot.",
+    "riskProof": "Equity sampled at observed hourly points and execution closings; not continuous max-DD proof, broker cash proof, or certified NET. All 13 exposed weeks predeclared eligible regardless of trades.",
+    "maxMinimumVolumeMultiples": 3,
+    "stressCostComparator": true,
+    "neutralBook": "No trade, EUR300 continuous cash."
+  },
+  "sourcePolicy": {
+    "newBrokerRequests": 0,
+    "credentials": "Original Pepperstone Europe LIVE SCOPE_VIEW private-key read-only custody; only existing sealed source artifacts",
+    "ordersSubmitted": 0,
+    "cloudActivated": false,
+    "closedStrategiesRescored": false
+  },
+  "qualification": {
+    "independentConfirmation": false,
+    "brokerCertifiedNetEur": null,
+    "continuousDrawdownCertified": false,
+    "tradingQualified": false
+  }
+}
