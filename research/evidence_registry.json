@@ -722,6 +722,43 @@
       "fundedNetEur": null,
       "hard21Proven": false,
       "modelClosed": true
+    },
+    {
+      "id": "MBF1",
+      "status": "REGISTERED_UNSCORED",
+      "phase": "PROSPECTIVE_FOUR_FAMILY_EIGHT_GROUP_SINGLE_AUTHENTIC_SOURCE",
+      "protocolFile": "research/mbf1_protocol.json",
+      "source": "original Pepperstone cTrader SCOPE_VIEW bound account",
+      "universe": [
+        "GBPJPY",
+        "ETHUSD",
+        "HK50",
+        "JPN225-F"
+      ],
+      "families": [
+        "ASIA_INDEX_RISK_HANDOFF",
+        "TOKYO_LONDON_FX_POSITION_UNWIND",
+        "CRYPTO_WEEKEND_SHOCK_DRIFT",
+        "CRYPTO_TO_FX_RISK_DELEVERAGING"
+      ],
+      "holdingHorizonsHours": [
+        2,
+        4
+      ],
+      "sourceWeeks": 52,
+      "developmentCostWeeks": 13,
+      "split": "26 development 13 selection 13 globally exposed audit",
+      "independent": false,
+      "globalCalendarExposed": true,
+      "returnsInspectedBeforeProtocol": false,
+      "selectionOnlyMultiplicity": "3_SE_EIGHT_GROUPS",
+      "grossNotCash": true,
+      "fundedNetEur": null,
+      "systemHard21Required": true,
+      "cloudActivated": false,
+      "ordersSubmitted": 0,
+      "ERP1Rescored": false,
+      "closedStudiesRescored": false
     }
   ],
   "schema": "mxm-project-data-exposure-v1",

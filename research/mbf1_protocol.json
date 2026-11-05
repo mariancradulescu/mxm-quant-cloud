@@ -1,0 +1,43 @@
+{
+  "schema":"mxm-mbf1-protocol-v1",
+  "id":"MBF1",
+  "status":"REGISTERED_UNSCORED",
+  "authority":"docs/OWNER_SPEC.md OWNER v2.0",
+  "economicPurpose":"Single prospective multi-family screen for gross amplitude, realistic conditional cost capacity and systemwide EUR200 feasibility, not individual HARD21 or funded trade proof",
+  "universe":["GBPJPY","ETHUSD","HK50","JPN225-F"],
+  "candidateFamilies":[
+    {"id":"ASIA_INDEX_RISK_HANDOFF","target":"HK50","premise":"Tokyo large directional risk repricing may precede weaker Hong Kong repricing during overlapping Asian morning; JPN225-F supplies only already completed four-hour history","decisionUtcHours":[4],"weekdays":[0,1,2,3,4],"source":"JPN225-F","source4hAbsBpsMin":20,"target4hAbsRatioMax":0.5},
+    {"id":"TOKYO_LONDON_FX_POSITION_UNWIND","target":"GBPJPY","premise":"The European liquidity handoff may unwind a sufficiently large GBPJPY Tokyo-hours inventory displacement measured strictly by completed overnight closes","decisionUtcHours":[8],"weekdays":[0,1,2,3,4],"overnightAbsBpsMin":15},
+    {"id":"CRYPTO_WEEKEND_SHOCK_DRIFT","target":"ETHUSD","premise":"A weekend information shock with thinner liquidity may continue directionally over short subsequent hours; weekend timing and sign are fixed","decisionUtcHours":[0,4,8,12,16,20],"weekdays":[5,6],"source4hAbsBpsMin":90},
+    {"id":"CRYPTO_TO_FX_RISK_DELEVERAGING","target":"GBPJPY","premise":"A sharp crypto deleveraging proxy may lead a subsequent flight from JPY crosses when GBPJPY has not yet fallen equivalently","decisionUtcHours":[8,12,16],"weekdays":[0,1,2,3,4],"eth4hBpsMax":-100,"gbpjpy4hBpsMin":-25}
+  ],
+  "entryLagHours":1,
+  "holdingHorizonsHours":[2,4],
+  "decisionClock":"H1 completed UTC closes at the fixed hour listed per family; at most one candidate per family per four-hour clock; entry at next completed close, exact continuous hold marks required",
+  "startUtcMs":1762128000000,
+  "developmentEndUtcMs":1777852800000,
+  "selectionEndUtcMs":1785715200000,
+  "endUtcMs":1793577600000,
+  "sourceWindowsWeeks":52,
+  "barPeriod":"H1",
+  "costDevelopmentWeeks":13,
+  "developmentQuoteUtcWeeklyHourOffsets":[3,51,156],
+  "costClocksInterpretation":"Mon 03:00, Wed 03:00 and Sun 12:00 UTC of first 13 development weeks; all 4 instruments observed at every clock regardless of tradability; do not reuse CSP1's clock results",
+  "tickWindowBeforeClockMs":60000,
+  "maximumQuoteAgeAtClockMs":2000,
+  "maximumBidAskTimeSkewMs":2000,
+  "minimumCostPairsPerTarget":8,
+  "costScenarios":{
+    "central":{"spreadReference":"median","slippageSpreadMultiple":0.5,"hypotheticalCommissionPerSideBps":2,"hypotheticalConversionPerSideBps":1},
+    "adverse":{"spreadReference":"p90","slippageSpreadMultiple":1,"hypotheticalCommissionPerSideBps":4,"hypotheticalConversionPerSideBps":2},
+    "stress":{"spreadReference":"max","slippageSpreadMultiple":2,"hypotheticalCommissionPerSideBps":8,"hypotheticalConversionPerSideBps":4}
+  },
+  "sourceRequestCount":531,
+  "maxRequests":600,
+  "multiplicity":"Eight fixed groups (4 mechanisms x 2 holding horizons); no winner selection from audit. Screening lower proxy applies 3.0 standard errors to weekly block means and controls the full eight-group family. Not a proof of positive alpha or independent validation.",
+  "phases":"26/13/13 weeks; all previously exposed calendar dates and these newly inspected returns are permanently exposed after this study; no confirmation claim",
+  "promotionScreenSelectionOnly":{"minimumCompleteEpisodes":40,"minimumActiveSelectionWeeks":8,"minimumTargetCostSamples":8,"adverseWeeklyLowerBoundMustExceedBps":0},
+  "costLimitation":"Authentic paired BID/ASK historical clock samples only where valid; commission, FX conversion, slippage and financing are hypothetical or unverified. Price-close gross bps not trade fills; current min-volume margin not historical cash execution. Missing quotes are UNKNOWN and cannot create zero cost.",
+  "postScreen":"If and only if one or more fixed groups pass selection adverse statistical cost screen, plan a distinct prespecified native C# single EUR200 funded incremental replay using existing selector and monetary ledger. Audit never selects a group. No mechanism is charged HARD21 alone.",
+  "ordersSubmitted":0,"cloudActivated":false,"researchOnly":true,"closedModelsCalled":false,"noNewExternalSources":true
+}
