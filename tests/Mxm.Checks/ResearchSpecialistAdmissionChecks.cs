@@ -24,7 +24,7 @@ static class ResearchSpecialistAdmissionChecks
             "known research EUR cost and uncertainty must clear neutral benchmark");
         var priced=ResearchSpecialistAdmission.Inspect(clock,opp,e with {
             PricesAlreadyContainBidAsk=true});
-        check(priced.AdditionalSpreadEur==0m && priced.IncrementalLowerEur==.4m,
+        check(priced.ExtraSpreadEur==0m && priced.IncrementalLowerEur==.4m,
             "already executable BID/ASK price cannot charge spread again");
         check(ResearchSpecialistAdmission.Inspect(clock,opp,e with {
             FinancingEur=null}).Reason=="SPECIALIST_UNKNOWN_EUR_COST_OR_FINANCING",
