@@ -152,7 +152,14 @@ public sealed partial class NativeFundedSession
             (b.FundingRecords??Array.Empty<ConfirmedFundingEvent>()).Any(r=>!facts.Any(f=>f.Kind=="FUNDING"&&f.DealId==r.RecordId)))reasons.Add("FUNDING_HISTORY_MISSING_OR_DUPLICATED");
         if(deals.Keys.Any(id=>!facts.Any(f=>(f.Kind is "OPEN" or "CLOSE")&&f.DealId==id)))reasons.Add("MISSING_MONETARY_FACT_FOR_CONFIRMED_EXECUTION");
         if(reasons.Count>0)return Reject();
-        var candidate=new NativeFundedLedger();
+        // The immutable EUR200 monetary receipt is reconstructed only in its
+        // explicitly historical, NON-BROKER model domain. Prospective native
+        // and authenticated broker books always reconstruct from EUR300.
+        var candidate=b.Domain=="FROZEN_MODELED_SETTLEMENT" &&
+            b.FrozenHistoricalInitialCapital200Proven &&
+            Ledger.MonetaryDomain=="FROZEN_MODELED_SETTLEMENT"
+            ? NativeFundedLedger.ForFrozenHistorical200Receipt()
+            : new NativeFundedLedger();
         try {
             // Explicit sequence resolves equal timestamps; no favorable price/order search.
             var ordered=facts.OrderBy(f=>f.At).ThenBy(f=>f.Sequence).ToArray();
