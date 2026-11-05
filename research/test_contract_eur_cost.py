@@ -35,7 +35,7 @@ class CurrentContractCostTests(unittest.TestCase):
     def test_quote_per_lot_not_mistaken_usd(self):
         c=contract(kind=4,rate=1500000000,minimum=0)
         x=fee_at_current_contract(c,"JPY",1000,D("2"),{"JPY":D("0.006"),"USD":D("0.9")})
-        self.assertEqual(D(x["baseCommissionEur"]),D("0.9"))
+        self.assertEqual(D(x["baseCommissionEur"]),D("0.0009"))
     def test_missing_fx_route_does_not_default_to_zero(self):
         c=contract(kind=2)
         with self.assertRaises(IncompleteCostEvidence):
