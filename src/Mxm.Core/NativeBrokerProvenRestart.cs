@@ -20,18 +20,18 @@ public sealed partial class NativeFundedSession
             input.Snapshot.At<=0 || input.Snapshot.HistoryFrom<0 ||
             input.Snapshot.HistoryThrough<input.Snapshot.At-2000 ||
             !input.Snapshot.InventoryStable || !input.Snapshot.OrdersComplete ||
-            !input.Snapshot.DealsComplete || !input.InitialCapital200Proven ||
+            !input.Snapshot.DealsComplete || !input.InitialCapitalProven ||
             !input.CashflowHistoryComplete || !input.FinancingHistoryComplete ||
             input.AdditionalExternalCashflowDetected || input.FundingRecords is null)
             return Reject("BROKER_RESTART_COMPLETE_HISTORY_NOT_ATTESTED");
         if(nativeCashflows is null || nativeCashflows.Length!=1)
             return Reject("BROKER_RESTART_ORIGINAL_FUNDING_NOT_EXCLUSIVE");
         var founding=nativeCashflows[0];
-        if(founding.Kind!="DEPOSIT" || founding.AmountEur!=200m ||
-            Math.Abs(founding.BalanceAfterEur-200m)>.01m ||
+        if(founding.Kind!="DEPOSIT" || founding.AmountEur!=OwnerRiskAuthority.InitialCapitalEur ||
+            Math.Abs(founding.BalanceAfterEur-OwnerRiskAuthority.InitialCapitalEur)>.01m ||
             string.IsNullOrWhiteSpace(founding.Id) || founding.At<=0 ||
             founding.At>input.Snapshot.At || input.Snapshot.HistoryFrom>founding.At)
-            return Reject("BROKER_RESTART_POSITIVE_EUR200_FUNDING_UNPROVEN");
+            return Reject("BROKER_RESTART_PROSPECTIVE_FOUNDING_CAPITAL_UNPROVEN");
         var orders=input.Snapshot.Orders;
         if(orders.Length==0 || input.Facts.Length==0 ||
            orders.Select(x=>x.OrderId).Distinct(StringComparer.Ordinal).Count()!=orders.Length ||

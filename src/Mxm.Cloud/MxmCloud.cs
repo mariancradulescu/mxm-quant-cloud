@@ -82,7 +82,7 @@ public class MxmCloud : Robot
             _lastInventory=inventory;
             // Native deposit/withdrawal and HistoricalTrade monetary facts are
             // available on cTrader Cloud. Rebuild ONLY a stable, entirely flat
-            // EUR200 account from these facts, with cash+NET cross-checked against
+            // prospective EUR300 account from these facts, with cash+NET cross-checked against
             // the broker balance. Never interpret history enumeration as proof of
             // complete lifetime deals, or transaction MaxEquity as an upper bound.
             var cashflows=transactions.Select(t=>new BrokerNativeCashflow(

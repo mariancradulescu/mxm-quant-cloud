@@ -77,13 +77,13 @@ var nativeBook=new NativeFundedLedger();
 nativeBook.Apply(Journal("intent",1000,"REQUEST_OPEN"));
 nativeBook=NativeFundedLedger.Restore(nativeBook.Checkpoint());
 nativeBook.Apply(Journal("fill",2000,"OPEN_FILL",price:10.01m,quotes:new[]{ledgerQuote}));
-Check(nativeBook.Summary().OpenPositions==1 && nativeBook.Summary().CashEur==199.9m,"native funded entry charges fee and restores pending intent");
+Check(nativeBook.Summary().OpenPositions==1 && nativeBook.Summary().CashEur==299.9m,"native funded entry charges fee and restores pending intent");
 var positionBridge=new NativeFundedSession("TEST_ACCOUNT",nativeBook,new[]{localIdentity with {LedgerPositionId="native-position"}},true);
-Check(positionBridge.Observe(brokerIdentity with {Positions=new[]{new BrokerPositionIdentity("position-A","SYNTH",1,2)}},199.9m).PositionInventoryMatchesModel,
+Check(positionBridge.Observe(brokerIdentity with {Positions=new[]{new BrokerPositionIdentity("position-A","SYNTH",1,2)}},299.9m).PositionInventoryMatchesModel,
     "broker position identities join the actual funded model position, symbol side and remaining units");
-Check(!positionBridge.Observe(brokerIdentity with {Positions=new[]{new BrokerPositionIdentity("position-A","SYNTH",1,1)}},199.9m).PositionInventoryMatchesModel,
+Check(!positionBridge.Observe(brokerIdentity with {Positions=new[]{new BrokerPositionIdentity("position-A","SYNTH",1,1)}},299.9m).PositionInventoryMatchesModel,
     "a broker partial close cannot silently retain the model's previous volume");
-Check(positionBridge.Observe(brokerIdentity with {At=5000},199.9m).ModelLedger.LiquidationEquityEur is null,
+Check(positionBridge.Observe(brokerIdentity with {At=5000},299.9m).ModelLedger.LiquidationEquityEur is null,
     "a previously fresh model mark cannot become current broker-clock floating equity after an interruption");
 var missingMarkBook=NativeFundedLedger.Restore(nativeBook.Checkpoint());missingMarkBook.Apply(Journal("missing-held",4000,"MARK"));
 bool missingEntryRejected=false;
@@ -97,18 +97,18 @@ Check(nativeBook.Summary().OpenPositions==1 && nativeBook.Summary().CompleteRoun
 nativeBook=NativeFundedLedger.Restore(nativeBook.Checkpoint());
 var finalQuote=closeQuote with {At=5000};var finalFill=Journal("final",5000,"CLOSE_FILL",units:1,price:11,quotes:new[]{finalQuote});
 nativeBook.Apply(finalFill);var nativeBefore=nativeBook.Summary();nativeBook.Apply(finalFill);
-Check(nativeBook.Summary()==nativeBefore && nativeBefore.CompleteRoundTrips==1 && nativeBefore.CashEur==201.68m,
+Check(nativeBook.Summary()==nativeBefore && nativeBefore.CompleteRoundTrips==1 && nativeBefore.CashEur==301.68m,
     "native partial commissions reconcile and duplicate fills are idempotent");
 var nativeConflict=false;try{nativeBook.Apply(finalFill with {FeeEur=.2m});}catch(InvalidOperationException){nativeConflict=true;}
 Check(nativeConflict,"native conflicting duplicate rejected");
 var pendingBook=new NativeFundedLedger();pendingBook.Apply(Journal("request",1000,"REQUEST_OPEN"));
 pendingBook.Apply(Journal("cancel",1500,"CONFIRMED_CANCEL"));
-Check(pendingBook.Summary().PendingIntents==0 && pendingBook.Summary().CashEur==200,"confirmed cancellation retains cash and leaves no invented fill");
+Check(pendingBook.Summary().PendingIntents==0 && pendingBook.Summary().CashEur==300,"confirmed cancellation retains cash and leaves no invented fill");
 var highMarginBook=new NativeFundedLedger();highMarginBook.Apply(Journal("margin-intent",1000,"REQUEST_OPEN"));
 var rejectsHigherCurrentMargin=false;
-try{highMarginBook.Apply(Journal("margin-fill",2000,"OPEN_FILL",price:10.01m,quotes:new[]{ledgerQuote with {MarginPerUnit=101}}));}
+try{highMarginBook.Apply(Journal("margin-fill",2000,"OPEN_FILL",price:10.01m,quotes:new[]{ledgerQuote with {MarginPerUnit=151}}));}
 catch(InvalidOperationException){rejectsHigherCurrentMargin=true;}
-Check(rejectsHigherCurrentMargin && highMarginBook.Summary().OpenPositions==0 && highMarginBook.Summary().CashEur==200,
+Check(rejectsHigherCurrentMargin && highMarginBook.Summary().OpenPositions==0 && highMarginBook.Summary().CashEur==300,
     "new native fill cannot use lower recorded margin when current causal margin is higher");
 const long bdpSyntheticStart=1762128000000L;
 var bdpSyntheticBars=new List<ProgramBar>();
@@ -146,11 +146,11 @@ Check(SelectionFacts(bdpFirst.RootElement).SequenceEqual(SelectionFacts(bdpSecon
 Check(bdpFirst.RootElement.GetProperty("Groups").EnumerateArray().Any(g=>g.GetProperty("Selection").GetProperty("MissingOutcomeWindows").GetInt32()>0 &&
     g.GetProperty("Selection").GetProperty("ConditionalCostScenarioBpsSum").ValueKind==System.Text.Json.JsonValueKind.Null),
     "missing future label retains its causal signal and never becomes zero net");
-var good = new RecoveryEvidence(200, 200, 200, true, true, true, false, false);
+var good = new RecoveryEvidence(300, 300, 300, true, true, true, false, false);
 Check(Recovery.Assess(good).Mode == RecoveryMode.ReconciledObservation, "complete evidence permits observation only");
 Check(Recovery.Assess(good with { EquityPeakUpperBound = null }).Mode == RecoveryMode.Protective, "missing peak");
-Check(Recovery.Assess(good with { Equity = 140 }).Mode == RecoveryMode.Protective, "exact 30 percent boundary");
-Check(Recovery.Assess(good with { EquityPeakUpperBound = 300 }).Mode == RecoveryMode.Protective, "profit peak survives restart");
+Check(Recovery.Assess(good with { Equity = 210 }).Mode == RecoveryMode.Protective, "exact 30 percent boundary");
+Check(Recovery.Assess(good with { EquityPeakUpperBound = 450 }).Mode == RecoveryMode.Protective, "profit peak survives restart");
 Check(Recovery.Assess(good with { AmbiguousOrder = true }).Mode == RecoveryMode.Protective, "ambiguous order never retried");
 Check(Recovery.Assess(good with { CashflowsVerified = false }).Mode == RecoveryMode.Protective, "cashflow uncertainty");
 Check(Recovery.Assess(good with { AdaptationRebuilt = false }).Mode == RecoveryMode.Protective, "rebuild uncertainty");
@@ -164,9 +164,9 @@ Check(RoundTrips.Count(t,t.AddDays(7),new[]{a,b},volumes,new HashSet<long>{10}) 
 var ledger=new NetLedger();
 var settlement=new NetSettlement("deal-1",5m,1m,-0.5m,0.2m,new string('a',64));
 ledger.Apply(settlement);
-Check(ledger.Balance==203.3m,"net settlement in EUR includes all supplied costs");
+Check(ledger.Balance==303.3m,"net settlement in EUR includes all supplied costs");
 ledger.Apply(settlement);
-Check(ledger.Balance==203.3m,"duplicate settlement idempotency");
+Check(ledger.Balance==303.3m,"duplicate settlement idempotency");
 var conflict=false;
 try { ledger.Apply(settlement with { GrossEur=6m }); } catch (InvalidOperationException) { conflict=true; }
 Check(conflict,"conflicting economic evidence rejected");
@@ -175,7 +175,7 @@ Check(conflict,"conflicting economic evidence rejected");
 var missingCosts=FundedBrokerCostScreen.Assess(new FundedBrokerQuote(
     "EURUSD",1.10000m,1.10010m,1000m,null,null,null,null,null,null,null,true,true));
 Check(!missingCosts.Complete && missingCosts.Status=="OBSERVED_BID_ASK_MARGIN_OR_COST_MISSING",
-    "no assumed currency conversion commission slippage or margin at EUR200");
+    "no assumed currency conversion commission slippage or margin at EUR300");
 var costScenario=FundedBrokerCostScreen.Assess(new FundedBrokerQuote(
     "SYNTH",1.10000m,1.10010m,1000m,.90m,.10m,.10m,.05m,0m,45m,.02m,true,true));
 Check(costScenario.Complete && costScenario.CanFundFromInitialCapital &&
@@ -183,10 +183,24 @@ Check(costScenario.Complete && costScenario.CanFundFromInitialCapital &&
     costScenario.MinimumNonnegativeProfitMoveInQuote==.0004m,
     "cost-adjusted break-even from executable bid ask for minimum volume");
 var marginBlocked=FundedBrokerCostScreen.Assess(new FundedBrokerQuote(
-    "SYNTH",1.1m,1.1001m,1000m,.90m,.10m,.10m,.05m,0m,205m,.02m,true,true));
+    "SYNTH",1.1m,1.1001m,1000m,.90m,.10m,.10m,.05m,0m,305m,.02m,true,true));
 Check(marginBlocked.Complete && !marginBlocked.CanFundFromInitialCapital &&
-    marginBlocked.Status=="INITIAL_200_EUR_OR_MAX_DRAWDOWN_INCOMPATIBLE",
-    "minimum broker margin above EUR200 is not fundable");
+    marginBlocked.Status=="INITIAL_CAPITAL_OR_MAX_DRAWDOWN_INCOMPATIBLE",
+    "minimum broker margin above initial EUR300 is not fundable");
+
+
+Check(FundedBrokerCostScreen.Assess(new FundedBrokerQuote(
+    "SYNTH",1.1m,1.1001m,1000m,.90m,.10m,.10m,.05m,0m,250m,.02m,true,true))
+    .CanFundFromInitialCapital,
+    "new EUR300 initial capacity can finance a EUR250 minimum contract; no alpha implied");
+Check(ExecutableNet.Evaluate(quoted with {RequiredMarginEur=250m}).FundableWithAvailableMargin,
+    "EUR250 margin can be financed by EUR300 available equity without static EUR200 refusal");
+
+Check(OwnerRiskAuthority.InitialCapitalEur==300m &&
+    PortfolioEconomics.OwnerInitialCapitalEur==300m &&
+    FundedBrokerCostScreen.InitialEur==300m &&
+    FundedBrokerCostScreen.MaxDrawdownEur==90m,
+    "all active capital, risk and initial feasibility references use a single EUR300 authority");
 
 // Synthetic-only portfolio evaluation: input truth flags are NOT evidence.
 DateTime UTC(int year,int month,int day) => new(year,month,day,0,0,0,DateTimeKind.Utc);
@@ -196,18 +210,18 @@ var syntheticTrades = Enumerable.Range(1,21).Select(i => new CompletedPortfolioT
     i, week.AddHours(i), week.AddHours(i+1),
     1m, .1m, .1m, .1m, 0m, .1m, new string('a',64), true)).ToArray();
 var observed = new [] {
-    new LiquidationEquityMark(study.DevelopmentStartUtc,200m,true),
-    new LiquidationEquityMark(study.ConfirmationStartUtc,200m,true),
-    new LiquidationEquityMark(study.EndUtc,212.6m,true)
+    new LiquidationEquityMark(study.DevelopmentStartUtc,300m,true),
+    new LiquidationEquityMark(study.ConfirmationStartUtc,300m,true),
+    new LiquidationEquityMark(study.EndUtc,312.6m,true)
 };
 var unproven = new EconomicProof(false,false,false,false,false,false,false,false,null,null);
 var observedOnly = PortfolioEconomics.Evaluate(study, syntheticTrades, observed,
     new[]{week}, unproven);
-Check(observedOnly.StartCapitalEur==200m && observedOnly.ClosedNetEur==12.6m &&
-    observedOnly.FinalRealizedBalanceEur==212.6m, "continuous funded EUR200 cost ledger");
+Check(observedOnly.StartCapitalEur==300m && observedOnly.ClosedNetEur==12.6m &&
+    observedOnly.FinalRealizedBalanceEur==312.6m, "continuous funded EUR300 cost ledger");
 Check(observedOnly.MinimumCompleteRoundTripsPerEligibleWeek==21 && !observedOnly.Pass &&
     observedOnly.Verdict=="AUTHENTIC_SOURCE_NOT_PROVEN", "synthetic profits cannot qualify");
-var completeFlags = new EconomicProof(true,true,true,true,true,true,true,true,199m,220m);
+var completeFlags = new EconomicProof(true,true,true,true,true,true,true,true,299m,320m);
 // Even with assertions set to true, this is ONLY a test of the gate's logic.
 // No synthetic assertions are attached to real source evidence.
 var logicalPass = PortfolioEconomics.Evaluate(study,syntheticTrades,observed,
@@ -216,7 +230,7 @@ Check(!logicalPass.Pass && logicalPass.Verdict=="EVIDENCE_CHAIN_NOT_VERIFIED" &&
     logicalPass.CertifiedMaxDrawdownUpperBound is > 0m and < .30m,
     "manufactured true proof cannot qualify an economically attractive fixture");
 var tooFew = PortfolioEconomics.Evaluate(study,syntheticTrades.Take(20),
-    new [] {observed[0],observed[1],observed[2] with {EquityEur=212m}},
+    new [] {observed[0],observed[1],observed[2] with {EquityEur=312m}},
     new[]{week},completeFlags);
 Check(!tooFew.Pass && tooFew.Verdict=="HARD21_NOT_DEMONSTRATED",
     "HARD21 counts complete positions at portfolio level");
@@ -225,13 +239,13 @@ var uncertified = PortfolioEconomics.Evaluate(study,syntheticTrades,observed,
 Check(uncertified.Verdict=="GLOBAL_DRAWDOWN_BOUND_NOT_PROVEN" && !uncertified.Pass,
     "sampled equity is not certified max drawdown");
 var breached = PortfolioEconomics.Evaluate(study,syntheticTrades,observed,
-    new[]{week},completeFlags with {CertifiedGlobalEquityFloorEur=140m});
+    new[]{week},completeFlags with {CertifiedGlobalEquityFloorEur=200m});
 Check(!breached.Pass && breached.Verdict=="DRAWDOWN_LIMIT",
     "conservative liquidation-extrema bound enforces owner maximum");
 var noNet = PortfolioEconomics.Evaluate(study,
     syntheticTrades.Select(x=>x with {GrossEur=.1m}),
-    new[]{observed[0],observed[1],observed[2] with {EquityEur=193.7m}},
-    new[]{week},completeFlags with {CertifiedGlobalEquityFloorEur=190m});
+    new[]{observed[0],observed[1],observed[2] with {EquityEur=293.7m}},
+    new[]{week},completeFlags with {CertifiedGlobalEquityFloorEur=290m});
 Check(!noNet.Pass && noNet.Verdict=="CONFIRMATION_NET_NOT_POSITIVE",
     "broker economic costs are never suppressed for favorable score");
 var noFullYear = PortfolioEconomics.Evaluate(study with {DevelopmentStartUtc=UTC(2026,1,1)},
@@ -255,7 +269,7 @@ Check(Rejects(()=>PortfolioEconomics.Evaluate(study,
     "eligible weeks must be unique and predeclared");
 Check(Rejects(()=>PortfolioEconomics.Evaluate(study,
     syntheticTrades,observed,new[]{week},completeFlags
-        with {CertifiedGlobalEquityPeakUpperEur=200m})),
+        with {CertifiedGlobalEquityPeakUpperEur=300m})),
     "claimed peak certificate cannot contradict observed equity");
 
 
@@ -401,9 +415,9 @@ DateTime e0=new(2026,11,2,12,0,0,DateTimeKind.Utc);
 var quoted=new ExecutableQuoteEvidence("SYNTH",PositionDirection.Buy,
     e0,e0.AddMinutes(15),1.1000m,1.1002m,1.1010m,1.1012m,
     1000m,1000m,1000m,.9m,.1m,.1m,.1m,.2m,.1m,
-    20m,200m,new string('f',64),true,true,true,true);
+    20m,300m,new string('f',64),true,true,true,true);
 var priced=ExecutableNet.Evaluate(quoted);
-Check(priced.FullyPriced && priced.FundableAt200Eur &&
+Check(priced.FullyPriced && priced.FundableWithAvailableMargin &&
     priced.QuoteGrossEur==.72m &&
     priced.TotalCostUpperEur==.6m &&
     priced.AdverseNetLowerEur==.12m && !priced.EconomicQualified,
@@ -415,10 +429,10 @@ Check(!ExecutableNet.Evaluate(quoted with {BothQuoteEventsVerified=false}).Fully
     "bar-open or one-minute disconnected quotes do not price roundtrip");
 Check(!ExecutableNet.Evaluate(quoted with {Units=1200m}).FullyPriced,
     "minimum broker volume step enforced exactly");
-Check(!ExecutableNet.Evaluate(quoted with {RequiredMarginEur=250m}).FundableAt200Eur,
-    "EUR200 cannot fund broker-required margin");
-Check(!ExecutableNet.Evaluate(quoted with {Original200EurNoDepositsReconciled=false}).FullyPriced,
-    "no synthetic 200 EUR funded account identity");
+Check(!ExecutableNet.Evaluate(quoted with {RequiredMarginEur=350m}).FundableWithAvailableMargin,
+    "EUR300 current free margin cannot fund oversized broker-required margin");
+Check(!ExecutableNet.Evaluate(quoted with {Original300EurNoDepositsReconciled=false}).FullyPriced,
+    "no synthetic 300 EUR funded account identity");
 Check(Rejects(()=>ExecutableNet.Evaluate(quoted with {EntryAsk=1.099m})),
     "crossed impossible original bid ask is rejected");
 var shortScenario=ExecutableNet.Evaluate(quoted with {Direction=PositionDirection.Sell});
@@ -427,14 +441,14 @@ Check(shortScenario.QuoteGrossEur==-1.08m &&
     "shorts sell at bid and cover at ask without favorable fills");
 
 // Multi-lane automatic recovery from independent snapshots; no order calls.
-var safeAccount=new RecoveryPortfolioEvidence(200m,120m,200m,true,true,true,
+var safeAccount=new RecoveryPortfolioEvidence(300m,120m,300m,true,true,true,
     5m,30m,0);
 var uncertain=new RecoveryLaneEvidence("EURUSD",true,true,false,true,false,
     10m,10m);
 var other=new RecoveryLaneEvidence("AUDUSD",true,true,false,false,false,null,null);
 var isolation=SelectiveRecovery.Assess(safeAccount,new[]{uncertain,other});
 Check(isolation.MonitoringActive && isolation.CanReviewAnyNewExposure &&
-    isolation.AvailableWorstCaseDrawdownHeadroomEur==45m &&
+    isolation.AvailableWorstCaseDrawdownHeadroomEur==75m &&
     isolation.ReservableFreeMarginEur==110m &&
     isolation.Lanes[0].Mode==RecoveryLaneMode.QuarantinedAmbiguous &&
     !isolation.Lanes[0].EligibleForFurtherRiskReview &&
@@ -463,7 +477,7 @@ Check(vanishedButUnknown.Lanes[0].Mode==RecoveryLaneMode.QuarantinedAmbiguous,
 var finalReconciliation=SelectiveRecovery.Assess(safeAccount,new[]{
     uncertain with {PositiveBrokerFinalOutcomeReconciled=true},other});
 Check(finalReconciliation.Lanes.All(x=>x.EligibleForFurtherRiskReview) &&
-    finalReconciliation.AvailableWorstCaseDrawdownHeadroomEur==55m,
+    finalReconciliation.AvailableWorstCaseDrawdownHeadroomEur==85m,
     "affirmative terminal broker proof releases adverse reservation automatically");
 var inFlightFull=SelectiveRecovery.Assess(
     safeAccount with {VerifiedCurrentInFlightRequests=1},new[]{other});
@@ -471,7 +485,7 @@ Check(!inFlightFull.CanReviewAnyNewExposure &&
     inFlightFull.Lanes[0].Mode==RecoveryLaneMode.ReadyForObservation,
     "one global in-flight slot prevents overlapping ambiguous requests");
 Check(!SelectiveRecovery.Assess(
-    safeAccount with {EquityEur=140m},new[]{other}).CanReviewAnyNewExposure,
+    safeAccount with {EquityEur=210m},new[]{other}).CanReviewAnyNewExposure,
     "30 percent drawdown boundary remains protective but timer can continue");
 
 
@@ -515,20 +529,20 @@ Check(HistoricalPr16Risk.Size(200m,200m,20m,new[]{new ReservedPositionRisk("othe
     "open portfolio margin and potential loss reserved before minimum lot");
 
 // Material new economic/risk logic: causal forecasts and joint portfolio shocks.
-var adaptiveAccount=new AdaptiveRiskInputs(200m,200m,200m,1000m,1000m,10000m,.01m,.5m,true,true,8,2m);
+var adaptiveAccount=new AdaptiveRiskInputs(300m,300m,300m,1000m,1000m,10000m,.01m,.5m,true,true,8,2m);
 var optimistic=Enumerable.Range(0,8).Select(i=>new JointRiskScenario(0,.001m,0,0,.002m,0,0,true)).ToArray();
 var adaptive=AdaptivePortfolioRisk.Choose(adaptiveAccount,optimistic);
 Check(adaptive.Units>0 && adaptive.WorstScenarioDrawdown<.30m,"adaptive funded positive utility chooses broker steps");
 Check(adaptive.Units%1000m==0,"adaptive volume respects broker step");
 Check(AdaptivePortfolioRisk.Choose(adaptiveAccount,optimistic.Select(x=>x with {ProposedNetPerUnitEur=-.001m})).Units==0,"negative net scenarios suspend exposure");
 Check(AdaptivePortfolioRisk.Choose(adaptiveAccount,optimistic.Append(new JointRiskScenario(-10,-.1m,0,10,.1m,0,0,false))).Units==0,"unweighted tail stress blocks despite positive estimation sample");
-Check(AdaptivePortfolioRisk.Choose(adaptiveAccount,optimistic.Select(x=>x with {IntrahorizonOpenLossEur=59m})).Units==0,"existing correlated portfolio risk consumes capacity");
+Check(AdaptivePortfolioRisk.Choose(adaptiveAccount,optimistic.Select(x=>x with {IntrahorizonOpenLossEur=89m})).Units==0,"existing correlated portfolio risk consumes capacity");
 Check(AdaptivePortfolioRisk.Choose(adaptiveAccount with {FreeMarginEur=5m},optimistic).Units==0,"broker minimum cannot be fractionally invented");
 Check(AdaptivePortfolioRisk.Choose(adaptiveAccount with {CompleteJointRiskEvidence=false},optimistic).Units==0,"unknown joint risk stops only new exposure");
 Check(AdaptivePortfolioRisk.Choose(adaptiveAccount,optimistic.Select((x,i)=>x with {ProposedNetPerUnitEur=i%2==0?.003m:-.002m})).Units==0,"uncertain mean not enough for new exposure");
 Check(AdaptivePortfolioRisk.Choose(adaptiveAccount,optimistic.Select(x=>x with {ProposedFavorablePeakPerUnitEur=.2m})).Units==0,
     "favorable portfolio peak scales with candidate volume and consumes subsequent drawdown capacity");
-Check(PortfolioRiskBudget.Assess(new BrokerRiskSnapshot(200m,200m,200m,true,true,true,true),Array.Empty<OpenRiskExposure>(),new ProposedRiskExposure("adaptive",5m,1m,30m)).Admissible,
+Check(PortfolioRiskBudget.Assess(new BrokerRiskSnapshot(300m,300m,300m,true,true,true,true),Array.Empty<OpenRiskExposure>(),new ProposedRiskExposure("adaptive",5m,1m,30m)).Admissible,
     "withdrawn aggregate1 percent does not survive in portfolio observation capacity");
 var anchor=DateTimeOffset.Parse("2025-01-01T00:00:00Z").ToUnixTimeMilliseconds();
 var researchBars=Enumerable.Range(0,1000).Select(i=>{

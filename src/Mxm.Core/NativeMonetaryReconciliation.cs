@@ -10,7 +10,7 @@ public sealed record AttributedMoneyFact(string AccountBinding,string Domain,str
     MonetaryLeg? ConversionFee,MonetaryLeg? Financing,string EvidenceHash);
 public sealed record ConfirmedFundingEvent(string RecordId,string PositionId,string Symbol,long At,decimal? Amount,string Currency,long AvailableAt,string EvidenceHash);
 public sealed record MoneyRecoveryBatch(string AccountBinding,string Domain,BrokerIdentitySnapshot Snapshot,
-    AttributedMoneyFact[] Facts,decimal? BrokerCashEur,bool InitialCapital200Proven,bool CashflowHistoryComplete,
+    AttributedMoneyFact[] Facts,decimal? BrokerCashEur,bool InitialCapitalProven,bool CashflowHistoryComplete,
     bool FinancingHistoryComplete,bool AdditionalExternalCashflowDetected,ConfirmedFundingEvent[]? FundingRecords,long? BrokerCashObservedAt);
 public sealed record MoneyRecoveryReport(bool Adopted,string[] Reasons,LedgerSummary RetainedLedger,
     decimal? ReconstructedCashEur,int ConfirmedExecutionFacts,int AppliedFundingFacts,bool PositionInventoryMatched,
@@ -107,7 +107,7 @@ public sealed partial class NativeFundedSession
         var reasons=new List<string>();
         if(b.AccountBinding!=AccountBinding||b.Snapshot.AccountBinding!=AccountBinding)reasons.Add("ACCOUNT_BINDING_MISMATCH");
         if(b.Domain is not ("BROKER_EXECUTION_FACT" or "FROZEN_MODELED_SETTLEMENT")||b.Facts.Any(f=>f.Domain!=b.Domain||f.AccountBinding!=AccountBinding))reasons.Add("MONETARY_SOURCE_DOMAIN_MISMATCH");
-        if(!JournalContinuityProven||!b.InitialCapital200Proven||!b.CashflowHistoryComplete||!b.FinancingHistoryComplete||b.FundingRecords is null)
+        if(!JournalContinuityProven||!b.InitialCapitalProven||!b.CashflowHistoryComplete||!b.FinancingHistoryComplete||b.FundingRecords is null)
             reasons.Add("JOURNAL_INITIAL_FUNDING_OR_CASHFLOW_HISTORY_UNPROVEN");
         if(b.AdditionalExternalCashflowDetected)reasons.Add("EXTERNAL_CASHFLOW_OUTSIDE_OWNER_BOOK");
         if(!b.Snapshot.InventoryStable||!b.Snapshot.OrdersComplete||!b.Snapshot.DealsComplete||b.BrokerCashEur is null)

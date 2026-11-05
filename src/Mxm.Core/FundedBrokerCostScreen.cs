@@ -22,8 +22,8 @@ public sealed record FundedEntryScreen(
 
 public static class FundedBrokerCostScreen
 {
-    public const decimal InitialEur=200m;
-    public const decimal MaxDrawdownEur=60m;
+    public const decimal InitialEur=OwnerRiskAuthority.InitialCapitalEur;
+    public const decimal MaxDrawdownEur=InitialEur*OwnerRiskAuthority.MaximumSystemDrawdown;
     public static FundedEntryScreen Assess(FundedBrokerQuote q)
     {
         ArgumentNullException.ThrowIfNull(q);
@@ -51,6 +51,6 @@ public static class FundedBrokerCostScreen
         bool affordable=margin<=InitialEur && cost<=MaxDrawdownEur;
         return new(true,affordable,move,cost,MaxDrawdownEur,
             affordable ? "COST_FLOOR_ONLY_NO_STRATEGY_OR_NET_CLAIM":
-                         "INITIAL_200_EUR_OR_MAX_DRAWDOWN_INCOMPATIBLE");
+                         "INITIAL_CAPITAL_OR_MAX_DRAWDOWN_INCOMPATIBLE");
     }
 }

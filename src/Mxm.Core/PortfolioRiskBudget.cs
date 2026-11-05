@@ -43,7 +43,7 @@ public static class PortfolioRiskBudget
             !account.ProposedMarginAndLossBoundsVerified)
             return Deny("UNVERIFIED_RISK_OR_EXECUTION_BOUNDS");
         if (account.CertifiedEquityPeakUpperEur is not decimal peak ||
-            peak < 200m || peak < account.EquityEur)
+            peak < OwnerRiskAuthority.InitialCapitalEur || peak < account.EquityEur)
             return Deny("UNCERTIFIED_EQUITY_PEAK");
         if (string.IsNullOrWhiteSpace(proposed.ProposalKey) ||
             rows.Any(x => string.IsNullOrWhiteSpace(x.PositionKey)) ||

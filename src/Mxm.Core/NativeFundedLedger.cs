@@ -31,9 +31,9 @@ public sealed record LedgerSummary(decimal CashEur,decimal? LiquidationEquityEur
 // historical-cost, source-authenticity or lifetime-peak certificate.
 public sealed partial class NativeFundedLedger
 {
-    const string Version="mxm-native-funded-ledger-v2";
+    const string Version="mxm-native-funded-ledger-v3";
     static readonly JsonSerializerOptions Options=new(){NumberHandling=JsonNumberHandling.AllowReadingFromString};
-    LedgerState state=new(Version,200,200,-1,200,0,false,new(),new(),new(),new(),new(),new(),new string('0',64));
+    LedgerState state=new(Version,OwnerRiskAuthority.InitialCapitalEur,OwnerRiskAuthority.InitialCapitalEur,-1,OwnerRiskAuthority.InitialCapitalEur,0,false,new(),new(),new(),new(),new(),new(),new string('0',64));
     readonly long maximumStalenessMs;
     public NativeFundedLedger(long maximumStalenessMs=1000)
     {
@@ -59,7 +59,7 @@ public sealed partial class NativeFundedLedger
         state.Positions.Values.Sum(p=>Floating(p,Quote(quotes,p.Symbol,at)));
     void Reconcile()
     {
-        decimal expected=200+state.Closed.Sum(t=>t.NetEur)-state.Positions.Values.Sum(p=>p.EntryFeeRemaining+p.EntryConversionRemaining)+
+        decimal expected=state.InitialCashEur+state.Closed.Sum(t=>t.NetEur)-state.Positions.Values.Sum(p=>p.EntryFeeRemaining+p.EntryConversionRemaining)+
             state.Positions.Values.Sum(p=>p.FinancingRemaining);
         if(Math.Abs(expected-state.CashEur)>.000000001m)throw new InvalidOperationException("NATIVE_LEDGER_CASH_IDENTITY");
     }
@@ -187,7 +187,7 @@ public sealed partial class NativeFundedLedger
         using var d=JsonDocument.Parse(checkpoint);var root=d.RootElement;string payload=root.GetProperty("Payload").GetString()!;
         if(Hash(payload)!=root.GetProperty("Sha256").GetString())throw new ArgumentException("NATIVE_LEDGER_CHECKPOINT_HASH");
         var restored=JsonSerializer.Deserialize<LedgerState>(payload,Options) ?? throw new ArgumentException("NATIVE_LEDGER_CHECKPOINT_STATE");
-        if(restored.Version is not ("mxm-native-funded-ledger-v1" or Version) || restored.InitialCashEur!=200 || restored.ObservedPeakEur<200 || restored.MaximumSampledDrawdown<0)
+        if(restored.Version is not ("mxm-native-funded-ledger-v1" or "mxm-native-funded-ledger-v2" or Version) || restored.InitialCashEur!=OwnerRiskAuthority.InitialCapitalEur || restored.ObservedPeakEur<OwnerRiskAuthority.InitialCapitalEur || restored.MaximumSampledDrawdown<0)
             throw new ArgumentException("NATIVE_LEDGER_CHECKPOINT_VERSION_OR_CAPITAL");
         restored=restored with {Version=Version,MonetaryDomain=restored.MonetaryDomain??"MODEL_REPLAY"};
         if(restored.MonetaryDomain is not ("MODEL_REPLAY" or "BROKER_EXECUTION_FACT" or "FROZEN_MODELED_SETTLEMENT"))

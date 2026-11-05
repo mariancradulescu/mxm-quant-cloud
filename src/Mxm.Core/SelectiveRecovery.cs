@@ -62,7 +62,7 @@ public static class SelectiveRecovery
 
         bool global=account.EquityEur>0m && account.FreeMarginEur>=0m &&
             account.CertifiedPeakUpperEur is decimal peak &&
-            peak>=200m && peak>=account.EquityEur &&
+            peak>=OwnerRiskAuthority.InitialCapitalEur && peak>=account.EquityEur &&
             account.CompleteNativeAccountInventory &&
             account.CashFlowsReconciled &&
             account.HistoricalInFlightIntentsCertified;

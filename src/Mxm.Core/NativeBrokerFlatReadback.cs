@@ -45,7 +45,7 @@ public sealed partial class NativeFundedLedger
         foreach(var f in b.Cashflows)
             if(f.ReportedMaximumEquityEur.HasValue)
                 maximum=Math.Max(maximum,f.ReportedMaximumEquityEur.Value);
-        maximum=Math.Max(maximum,Math.Max(200m,b.EquityEur));
+        maximum=Math.Max(maximum,Math.Max(OwnerRiskAuthority.InitialCapitalEur,b.EquityEur));
         ledger.state=ledger.state with {
             CashEur=b.BalanceEur,Clock=b.At,ObservedPeakEur=maximum,
             MaximumSampledDrawdown=Math.Max(retainedWorstSampledDrawdown,
@@ -81,8 +81,8 @@ public sealed partial class NativeFundedSession
         // Positive initial funding only. API collection length does not certify
         // lifetime transaction completeness; the report does not claim that.
         if(b.Cashflows.Length!=1 || b.Cashflows[0].Kind!="DEPOSIT" ||
-            b.Cashflows[0].AmountEur!=200m ||
-            Math.Abs(b.Cashflows[0].BalanceAfterEur-200m)>.01m ||
+            b.Cashflows[0].AmountEur!=OwnerRiskAuthority.InitialCapitalEur ||
+            Math.Abs(b.Cashflows[0].BalanceAfterEur-OwnerRiskAuthority.InitialCapitalEur)>.01m ||
             b.Cashflows[0].At<=0||b.Cashflows[0].At>b.At ||
             string.IsNullOrWhiteSpace(b.Cashflows[0].Id))
             return Reject("NATIVE_FOUNDING_DEPOSIT_OR_EXTRA_CASHFLOW_UNPROVEN");
@@ -93,7 +93,7 @@ public sealed partial class NativeFundedSession
                x.CommissionEur<0||
                Math.Abs((x.GrossEur+x.SwapEur-x.CommissionEur)-x.NetEur)>.01m))
             return Reject("NATIVE_CLOSED_TRADE_IDENTITY_OR_NET_COMPONENTS_UNKNOWN");
-        decimal reconstructed=200m+b.Closed.Sum(x=>x.NetEur);
+        decimal reconstructed=OwnerRiskAuthority.InitialCapitalEur+b.Closed.Sum(x=>x.NetEur);
         if(Math.Abs(reconstructed-b.BalanceEur)>.01m)
             return Reject("NATIVE_CLOSED_TRADES_DO_NOT_RECONCILE_ACCOUNT_CASH");
         if(Ledger.AppliedCount>0 &&
@@ -103,7 +103,7 @@ public sealed partial class NativeFundedSession
         try {
             var oldState=Ledger.Summary();
             decimal previousPeak=Math.Max(oldState.ObservedPeakEur,
-                PortfolioObservation.State.ObservedPeakEur??200m);
+                PortfolioObservation.State.ObservedPeakEur??OwnerRiskAuthority.InitialCapitalEur);
             decimal previousDrawdown=Math.Max(oldState.MaximumSampledDrawdown,
                 PortfolioObservation.State.WorstSampledDrawdown??0m);
             candidate=NativeFundedLedger.RebuildFlatBrokerHistory(b,previousPeak,previousDrawdown);

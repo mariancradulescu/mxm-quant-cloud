@@ -15,7 +15,7 @@ def check():
 
     owner = Path('docs/OWNER_SPEC.md').read_text()
     assert owner.startswith('# Active OWNER specification v2.0')
-    assert 'OWNER decision 2026-11-04' in owner
+    assert 'OWNER decision 2026-11-04' in owner and 'OWNER prospective initial-capital amendment — 2026-11-05' in owner
     for name in ('README.md', 'docs/ARCHITECTURE.md', 'docs/ACCEPTANCE.md'):
         s = Path(name).read_text()
         assert 'OWNER_SPEC.md' in s, 'MISSING_ACTIVE_AUTHORITY: ' + name
@@ -77,9 +77,9 @@ def check():
     # These values belong to the single native system, not to each candidate.
     risk = Path('src/Mxm.Core/OwnerRiskLimits.cs').read_text()
     ledger = Path('src/Mxm.Core/NativeFundedLedger.cs').read_text()
-    assert 'InitialCapitalEur=200m' in risk and 'MaximumSystemDrawdown=.30m' in risk
+    assert 'InitialCapitalEur=300m' in risk and 'MaximumSystemDrawdown=.30m' in risk
     assert 'MinimumSystemRoundTripsPerEligibleWeek=21' in risk
-    assert 'state=new(Version,200,200,-1,200' in ledger
+    assert 'new(Version,OwnerRiskAuthority.InitialCapitalEur,OwnerRiskAuthority.InitialCapitalEur,-1,OwnerRiskAuthority.InitialCapitalEur' in ledger
     for name in ('src/Mxm.Core/OpportunityOrchestrator.cs',
                  'src/Mxm.Core/JointOpportunityResearch.cs'):
         s = Path(name).read_text()

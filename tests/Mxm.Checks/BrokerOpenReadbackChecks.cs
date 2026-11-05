@@ -9,7 +9,7 @@ internal static class BrokerOpenReadbackChecks
             new BrokerOpenPositionFact("pos1","EURUSD",1,1000m,1000,1.08m,30m,1m,1.05m,1.12m),
             new BrokerOpenPositionFact("pos2","USDJPY",-1,1000m,1100,148m,40m,-3m,null,null)
         };
-        var observed=new BrokerOpenReadback(account,6000,true,200m,198m,70m,128m,0m,0,two);
+        var observed=new BrokerOpenReadback(account,6000,true,300m,298m,70m,228m,0m,0,two);
         var session=new NativeFundedSession(account);
         var first=session.ReconcileBrokerOpen(observed with {InventoryStable=false});
         check(!first.OpenExposureMonitoringReady&&!first.OrdersEnabled,
@@ -19,15 +19,15 @@ internal static class BrokerOpenReadbackChecks
               stable.PositionsObserved==2&&!stable.ExecutionHistoryReconstructed&&
               !stable.LifetimePeakCertified&&!stable.OrdersEnabled,
             "two actual broker open positions can be monitored without reconstructing their missing execution journal");
-        check(session.Ledger.Summary().CashEur==200m&&session.Ledger.Summary().OpenPositions==0,
-            "unproven open fills never mutate the existing native EUR200 ledger or invent recovered capital");
+        check(session.Ledger.Summary().CashEur==300m&&session.Ledger.Summary().OpenPositions==0,
+            "unproven open fills never mutate the existing native EUR300 ledger or invent recovered capital");
         check(session.ReconcileBrokerOpen(observed with {Positions=two.Reverse().ToArray()}).OpenExposureMonitoringReady,
             "native open positions are stable independent of collection order");
         check(!session.ReconcileBrokerOpen(observed with {AccountBinding="OTHER_ACCOUNT"}).OpenExposureMonitoringReady,
             "open exposure readback rejects incorrect broker account binding");
-        check(!session.ReconcileBrokerOpen(observed with {EquityEur=199m}).OpenExposureMonitoringReady,
+        check(!session.ReconcileBrokerOpen(observed with {EquityEur=299m}).OpenExposureMonitoringReady,
             "floating account equity cannot be substituted without current position net reconciliation");
-        check(!session.ReconcileBrokerOpen(observed with {FreeMarginEur=127m}).OpenExposureMonitoringReady,
+        check(!session.ReconcileBrokerOpen(observed with {FreeMarginEur=227m}).OpenExposureMonitoringReady,
             "used margin and free margin must reconcile to current broker equity");
         check(!session.ReconcileBrokerOpen(observed with {Positions=two.Append(two[0]).ToArray()}).OpenExposureMonitoringReady,
             "duplicated position identifiers are never silently dropped");
@@ -44,13 +44,13 @@ internal static class BrokerOpenReadbackChecks
         // blind risk monitoring at exactly the wrong time.
         var distressed=observed with {
             EquityEur=-5m,FreeMarginEur=-75m,
-            Positions=new[]{two[0] with {NetPnlEur=-202m},two[1]}
+            Positions=new[]{two[0] with {NetPnlEur=-302m},two[1]}
         };
         var stressedReport=session.ReconcileBrokerOpen(distressed);
         check(stressedReport.OpenExposureMonitoringReady&&stressedReport.RequiresRiskReductionReview&&
               stressedReport.Status.Contains("DISTRESSED")&&!stressedReport.OrdersEnabled,
             "underwater broker exposure is monitored and flagged for reduction review, never new orders");
-        check(session.Ledger.Summary().CashEur==200m,
+        check(session.Ledger.Summary().CashEur==300m,
             "negative observed floating equity cannot patch or reset the native monetary ledger");
         check(!session.ReconcileBrokerOpen(distressed with {FreeMarginEur=-74m}).OpenExposureMonitoringReady,
             "distressed account still needs an exact broker equity-margin-free margin identity");

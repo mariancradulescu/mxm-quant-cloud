@@ -1,4 +1,4 @@
-# Active OWNER specification v2.0 — updated 2026-11-04 (single normative authority)
+# Active OWNER specification v2.0 — updated 2026-11-05 (single normative authority)
 
 Authority: explicit OWNER system-orchestration decision in this continuation.
 This is the single current specification. README, architecture and acceptance
@@ -8,7 +8,7 @@ link here; older dated directives remain provenance, never competing authority.
 
 - One repository `mariancradulescu/mxm-quant-cloud`, main; preserve history and
   authentic frozen evidence. Continue mandate B–E without reconstruction.
-- One initial EUR200, no additional deposits; reinvestment allowed. Portfolio
+- One prospective initial EUR300, no additional deposits or reset; reinvestment allowed. Portfolio
   maximum drawdown control objective 30%, including floating equity and costs.
 - HARD21: >=21 admitted, financed and completely closed position round trips in
   EVERY prospectively eligible system week. Aggregate all components. Signals,
@@ -38,6 +38,14 @@ link here; older dated directives remain provenance, never competing authority.
   no retuning, inversion, hindsight promotion or holdout rescue. Frozen signals
   could only be research information in a genuinely prospective portfolio
   hypothesis on independent evidence, never a resurrection mechanism.
+
+## OWNER prospective initial-capital amendment — 2026-11-05
+
+This later explicit OWNER decision **supersedes the EUR200 amount for the future final system**, without changing any other OWNER v2.0 invariant. The unique initial capitalization of a **new, prospectively founded** common portfolio is EUR300. It is neither a EUR100 top-up to an earlier EUR200 study/account nor a reset, and cannot be inferred from an unfunded broker balance. No additional funding, synthetic deposit, separate wallet or capital replay is authorized. Positive broker-native founding/cashflow proof must match EUR300 before financial recovery can adopt a broker execution book; absent proof, remain read-only/protective. Model-replay funding is explicitly synthetic and has no broker cash authority.
+
+Current equity, available free margin, current contract volume/margin grids and concurrent exposure govern new allocation; EUR300 is not a perpetual position/margin cap. Floating equity and execution costs enter the system-wide 30% drawdown objective. HARD21 remains systemic, conditional on prospectively eligible weeks, never forced. One native C# cBot; no LIVE/DEMO orders or Cloud activation.
+
+**Frozen historic boundary:** all prior EUR200 studies, their original protocols, hashes, results, encrypted receipts, run identities and public frozen files remain immutable. Earlier dated sections below—including the 2026-11-04 invariant quoted at its original time—are provenance, not live EUR200 authority. Historical EUR200 checkpoints must not be silently reinterpreted as EUR300 funded capital or patched with a EUR100 cash event. Future prospective decision/ledger and synthetic acceptance fixtures use EUR300; historical authentic broker source is not evidence of actual EUR300 capitalization.
 
 ## Active methodological policy v10 (prospectively revisable)
 

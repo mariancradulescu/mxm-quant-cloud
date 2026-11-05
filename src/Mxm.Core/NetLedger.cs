@@ -7,7 +7,7 @@ public sealed record NetSettlement(string EventId, decimal GrossEur, decimal Com
 public sealed class NetLedger
 {
     private readonly Dictionary<string, NetSettlement> events = new();
-    public decimal Balance { get; private set; } = 200m;
+    public decimal Balance { get; private set; } = OwnerRiskAuthority.InitialCapitalEur;
     public void Apply(NetSettlement e)
     {
         if (string.IsNullOrWhiteSpace(e.EventId) || e.EvidenceHash.Length != 64 ||
