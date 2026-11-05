@@ -1,0 +1,100 @@
+{
+  "schema": "mxm-pve1-authentic-economic-negative-receipt-v1",
+  "ownerCapitalProspectiveEur": 300,
+  "protocolFile": "research/pve1_protocol.json",
+  "protocolSha256": "921330cad16a93c7700dc26928c416e773b5192a2e2fb55d23d74f9443893496",
+  "executionWorkflowRunId": 42022439033,
+  "executionCommit": "8e09dc782a1a31f00364de2cce14aad315420778",
+  "artifactId": 13412367214,
+  "artifactName": "pve1-authentic-12-asset-ohlcv-economics-public-only",
+  "originalPublicJsonSha256": "99b07151eaa738730d130c9594ad2bf5ff82d7a2eb20cda9facbb0da03352540",
+  "originalSourceRunIds": [
+    41724643418,
+    41735441128
+  ],
+  "originalSourceCiphertextSha256": [
+    "e47ba7204ca7e07e7bb523ede8a8171f49b216cad09914142ed548839660a370",
+    "fa684ca1de58c6d1e8bdee410834855d05389af0c0ae4523b095367dce0e5331"
+  ],
+  "originalRawProtobufAuthenticated": true,
+  "originalBarsReconstructed": true,
+  "authenticM5Bars": 836087,
+  "instrumentCount": 12,
+  "originallyCapturedDevelopmentCostContexts": 166,
+  "candidateHypotheses": 48,
+  "bonferroniOneSidedAlpha": 0.0010416666666666667,
+  "phases": {
+    "development": {
+      "completeSignalHorizonObservations": 1306,
+      "positiveGrossGroupMeans": 18
+    },
+    "selection": {
+      "completeSignalHorizonObservations": 468,
+      "positiveGrossGroupMeans": 14,
+      "efficientContinuationObservations": 4,
+      "volumeAbsorptionObservations": 464,
+      "passedCompleteAdmission": 0
+    },
+    "globallyExposedAudit": {
+      "completeSignalHorizonObservations": 492,
+      "independent": false
+    }
+  },
+  "illustrativeNotPromotedSelection": [
+    {
+      "symbol": "NAS100",
+      "family": "VOLUME_ABSORPTION_REVERSAL",
+      "horizonMinutes": 240,
+      "observations": 19,
+      "activeWeeks": 8,
+      "meanSignedGrossBps": 20.518372,
+      "unadjustedGrossP": 0.041741863,
+      "incrementalVsMomentumBps": 37.863521,
+      "unadjustedIncrementalP": 0.059366493,
+      "currentAdverseModeledNonfinancingCostBps": 3.708992
+    },
+    {
+      "symbol": "NAS100",
+      "family": "VOLUME_ABSORPTION_REVERSAL",
+      "horizonMinutes": 60,
+      "observations": 12,
+      "activeWeeks": 8,
+      "meanSignedGrossBps": 7.231675,
+      "unadjustedGrossP": 0.017010455,
+      "incrementalVsMomentumBps": 13.384773,
+      "unadjustedIncrementalP": 0.019980748,
+      "currentAdverseModeledNonfinancingCostBps": 3.708992
+    }
+  ],
+  "economicBook": {
+    "initialModelCapitalEur": 300,
+    "endingModelCashEur": 300,
+    "closedConditionalNetEur": 0,
+    "completeModelRoundTrips": 0,
+    "nativeAllocations": 0,
+    "nativeCalls": 0,
+    "prospectivelyEligibleExposedWeeks": 13,
+    "eligibleWeeksPassingSystemHard21": 0,
+    "sampledDrawdown": 0,
+    "continuousDrawdownCertified": false,
+    "actualBrokerFundedNetEur": null,
+    "zeroIsAbstentionNotProfitProof": true,
+    "accountingReconciled": true
+  },
+  "disclosure": {
+    "benchmark": "Zero drift and previous completed 4h momentum at matched clocks",
+    "costClass": "CONDITIONAL_CURRENT_TERM_COST_MODEL_NOT_HISTORICAL_FILL",
+    "directionalTrendFamilyIdenticalToMatched4hMomentumByConstruction": true,
+    "selectionPValueUnadjustedMayLookFavorableButFailsBonferroni": true,
+    "allDatesAlreadyExposedGlobally": true,
+    "independentConfirmation": false,
+    "futureHoldoutReused": false,
+    "originallyClosedModelsReexecuted": false,
+    "brokerRequestsThisRun": 0,
+    "ordersSubmitted": 0,
+    "cloudActivated": false,
+    "tradingQualification": false,
+    "resultFrozenWithoutRetuning": true
+  },
+  "verdict": "PVE1_CLOSED_EXACT_NO_FAMILY_CLEARS_MULTIPLICITY_AND_INCREMENTAL_GROSS_FRICTION_NO_FUNDED_ADMISSION"
+}
