@@ -1,0 +1,138 @@
+{
+  "schema": "MXM_LFX1_DURABLE_AUTHENTIC_RESULT_V1",
+  "id": "LFX1",
+  "status": "CLOSED_EXACT_NEGATIVE_SELECTION_AFTER_ADVERSE_COST_NO_NATIVE_PROMOTION",
+  "protocol": "research/lfx1_protocol.json",
+  "originalResultRunId": 42103291209,
+  "originalPublicArtifactId": 13451340066,
+  "originalPublicArtifactUrl": "https://github.com/mariancradulescu/mxm-quant-cloud/actions/runs/42103291209/artifacts/13451340066",
+  "originalAuthenticSourceRuns": [
+    41724643418,
+    41735441128
+  ],
+  "sourceAuthenticated": true,
+  "originalM5Bars": 836087,
+  "sourceCostContexts": 166,
+  "exAntePowerScreen": {
+    "costsFromCurrentHistoricalDevelopmentQuotesNotPerFill": true,
+    "currentMinimumMarginAllFiveEur": 164,
+    "developmentInformativeWeeks": 26,
+    "developmentLabelReady": 640,
+    "missingCostSymbols": [],
+    "passPreScoring": true,
+    "pilot": {
+      "developmentUnconditionalWeeklyNoiseSdBps": 2.098496076764972,
+      "economicallyRelevantEffectBps": 4.337000223097451,
+      "mdeProxyBps": 1.6305732854059143,
+      "modeledAdverseRoundTripBySymbolBps": {
+        "AUDUSD": 3.469600178477961,
+        "EURUSD": 2.1242180641898205,
+        "GBPUSD": 2.4277200594453574,
+        "USDCAD": 2.3709384470150736,
+        "USDJPY": 2.2037182048184905
+      },
+      "noiseModelCaveat": "weekly all-long return covariance proxy, NOT the contrarian signed-outcome variance",
+      "selectionEffectiveWeeksUpperBound": 13
+    },
+    "reasons": [],
+    "selectionInformativeWeeks": 13,
+    "selectionLabelReady": 323
+  },
+  "conditionalEconomicScore": {
+    "eligibleForNativeFundingFollowup": false,
+    "financialStatus": "UNQUALIFIED_NO_EXECUTION_QUOTES_OR_NATIVE_FILLS",
+    "fundedNetEur": null,
+    "independentConfirmation": false,
+    "nativeFundedLedgerExecuted": false,
+    "phases": {
+      "development": {
+        "completeDirectionalEpisodes": 639,
+        "eligibleWeeks": 26,
+        "meanBps": {
+          "adverse": -1.5196951076734864,
+          "againstMomentum": 1.9961132398226673,
+          "baseline": -0.9980566199113337,
+          "central": -0.4892709564723225,
+          "gross": 0.9980566199113337
+        },
+        "returnSamplesNotIndependent": true,
+        "selectionWeeklyAdverseLowerBps": null,
+        "selectionWeeklyIncrementalMomentumLowerBps": null,
+        "weeklyCompleteEpisodes": [
+          25,
+          25,
+          25,
+          25,
+          25,
+          25,
+          25,
+          20,
+          19,
+          25,
+          25,
+          25,
+          25,
+          25,
+          25,
+          25,
+          25,
+          25,
+          25,
+          25,
+          25,
+          25,
+          25,
+          25,
+          25,
+          25
+        ]
+      },
+      "selection": {
+        "completeDirectionalEpisodes": 322,
+        "eligibleWeeks": 13,
+        "meanBps": {
+          "adverse": -2.333667297856408,
+          "againstMomentum": 0.36861518886390965,
+          "baseline": -0.18430759443195482,
+          "central": -1.3030140907090177,
+          "gross": 0.18430759443195482
+        },
+        "returnSamplesNotIndependent": true,
+        "selectionWeeklyAdverseLowerBps": -3.8402727585455776,
+        "selectionWeeklyIncrementalMomentumLowerBps": -2.63918169392468,
+        "weeklyCompleteEpisodes": [
+          25,
+          25,
+          25,
+          25,
+          24,
+          25,
+          23,
+          25,
+          25,
+          25,
+          25,
+          25,
+          25
+        ]
+      }
+    },
+    "positiveAfterAdverseAndBothBenchmarks": false
+  },
+  "allSourceWeeksGloballyExposed": true,
+  "independentConfirmation": false,
+  "auditOutcomesScored": false,
+  "closedStudyReruns": 0,
+  "nativeFundedLedgerExecuted": false,
+  "brokerConfirmedNetEur": null,
+  "hard21Proven": false,
+  "continuousFloatingDrawdownCertified": false,
+  "originalCapitalEur": 300,
+  "capitalReset": false,
+  "fundedPortfolioEconomicsNotClaimed": true,
+  "noRetuningOrInversion": true,
+  "brokerRequests": 0,
+  "ordersSubmitted": 0,
+  "cloudActivated": false,
+  "exposureWarning": "All previously exposed source weeks remain non-independent. Gross and conditional cost proxies are NOT physical financed C# EUR performance."
+}

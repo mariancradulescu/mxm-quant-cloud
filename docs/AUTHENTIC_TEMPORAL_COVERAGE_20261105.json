@@ -1,0 +1,2586 @@
+{
+  "schema": "MXM_AUTHENTIC_COVERAGE_DURABLE_DIAGNOSTIC_20261105",
+  "sourceRunIds": [
+    41724643418,
+    41735441128
+  ],
+  "sourceClosedPilot": "docs/HRC1_AUTHENTIC_PILOT.json",
+  "originalStudyUnchanged": true,
+  "studyClosedExactNotRescored": true,
+  "resultRunId": 42101938832,
+  "resultArtifactId": 13450665489,
+  "resultArtifactUrl": "https://github.com/mariancradulescu/mxm-quant-cloud/actions/runs/42101938832/artifacts/13450665489",
+  "sourceBars": 836087,
+  "sourceSymbols": 12,
+  "sourceWeeks": 52,
+  "causalHistory": {
+    "HRC1RequiredM5Clocks": 253,
+    "labelFutureM5Clocks": 13,
+    "minimumSymbolsHRC1": 8
+  },
+  "actualDevelopmentWeeksWith8EligibleSymbols": 0,
+  "actualAllWeeksWith8EligibleSymbols": 0,
+  "week21hEligibleSymbols": 5,
+  "week8hEligibleSymbols": 12,
+  "week4hEligibleSymbols": 12,
+  "classification": "CONFLICT_BETWEEN_21H_CONSECUTIVE_SOURCE_REQUIREMENT_AND_8_SYMBOL_THRESHOLD",
+  "gapLimit": "Missing timestamps have not been identified as official broker session closings without separate calendar reconciliation",
+  "assets": [
+    {
+      "feature21h": 4586,
+      "first": "2025-11-03T00:05Z",
+      "fullH1": 6114,
+      "gaps": {
+        "crossesWeekend": 52,
+        "hourPlusSessionLikeUnverified": 2,
+        "missingM5Slots": 30655,
+        "shortUnclassified": 20
+      },
+      "label21h": 4485,
+      "label4h": 5743,
+      "label8h": 5447,
+      "largestGaps": [
+        {
+          "a": "2026-10-30T20:55Z",
+          "b": "2026-11-01T22:05Z",
+          "missingM5": 589
+        },
+        {
+          "a": "2026-09-18T20:55Z",
+          "b": "2026-09-20T21:30Z",
+          "missingM5": 582
+        },
+        {
+          "a": "2026-10-02T20:55Z",
+          "b": "2026-10-04T21:15Z",
+          "missingM5": 579
+        },
+        {
+          "a": "2026-05-01T20:55Z",
+          "b": "2026-05-03T21:15Z",
+          "missingM5": 579
+        }
+      ],
+      "last": "2026-11-02T00:00Z",
+      "m5": 74177,
+      "symbol": "AUDUSD"
+    },
+    {
+      "feature21h": 0,
+      "first": "2025-11-03T00:05Z",
+      "fullH1": 4739,
+      "gaps": {
+        "crossesWeekend": 52,
+        "hourPlusSessionLikeUnverified": 203,
+        "missingM5Slots": 42522,
+        "shortUnclassified": 330
+      },
+      "label21h": 0,
+      "label4h": 2500,
+      "label8h": 996,
+      "largestGaps": [
+        {
+          "a": "2025-12-24T03:30Z",
+          "b": "2025-12-28T22:55Z",
+          "missingM5": 1384
+        },
+        {
+          "a": "2026-04-02T13:00Z",
+          "b": "2026-04-06T23:55Z",
+          "missingM5": 1282
+        },
+        {
+          "a": "2026-06-05T20:55Z",
+          "b": "2026-06-08T07:15Z",
+          "missingM5": 699
+        },
+        {
+          "a": "2026-01-23T19:55Z",
+          "b": "2026-01-26T06:15Z",
+          "missingM5": 699
+        }
+      ],
+      "last": "2026-11-02T00:00Z",
+      "m5": 62310,
+      "symbol": "AUS200"
+    },
+    {
+      "feature21h": 4814,
+      "first": "2025-11-03T00:05Z",
+      "fullH1": 6127,
+      "gaps": {
+        "crossesWeekend": 52,
+        "hourPlusSessionLikeUnverified": 2,
+        "missingM5Slots": 30637,
+        "shortUnclassified": 9
+      },
+      "label21h": 4737,
+      "label4h": 5808,
+      "label8h": 5556,
+      "largestGaps": [
+        {
+          "a": "2026-10-30T20:55Z",
+          "b": "2026-11-01T22:15Z",
+          "missingM5": 591
+        },
+        {
+          "a": "2026-02-27T21:55Z",
+          "b": "2026-03-01T22:10Z",
+          "missingM5": 578
+        },
+        {
+          "a": "2026-10-23T20:55Z",
+          "b": "2026-10-25T21:05Z",
+          "missingM5": 577
+        },
+        {
+          "a": "2026-10-16T20:55Z",
+          "b": "2026-10-18T21:05Z",
+          "missingM5": 577
+        }
+      ],
+      "last": "2026-11-02T00:00Z",
+      "m5": 74195,
+      "symbol": "EURUSD"
+    },
+    {
+      "feature21h": 3938,
+      "first": "2025-11-03T00:05Z",
+      "fullH1": 6081,
+      "gaps": {
+        "crossesWeekend": 56,
+        "hourPlusSessionLikeUnverified": 2,
+        "missingM5Slots": 30706,
+        "shortUnclassified": 52
+      },
+      "label21h": 3771,
+      "label4h": 5556,
+      "label8h": 5136,
+      "largestGaps": [
+        {
+          "a": "2026-10-30T20:55Z",
+          "b": "2026-11-01T22:05Z",
+          "missingM5": 589
+        },
+        {
+          "a": "2026-10-09T20:55Z",
+          "b": "2026-10-11T21:20Z",
+          "missingM5": 580
+        },
+        {
+          "a": "2026-07-17T20:55Z",
+          "b": "2026-07-19T21:20Z",
+          "missingM5": 580
+        },
+        {
+          "a": "2026-06-12T20:55Z",
+          "b": "2026-06-14T21:20Z",
+          "missingM5": 580
+        }
+      ],
+      "last": "2026-11-02T00:00Z",
+      "m5": 74126,
+      "symbol": "GBPUSD"
+    },
+    {
+      "feature21h": 0,
+      "first": "2025-11-03T00:20Z",
+      "fullH1": 4857,
+      "gaps": {
+        "crossesWeekend": 50,
+        "hourPlusSessionLikeUnverified": 201,
+        "missingM5Slots": 43313,
+        "shortUnclassified": 5
+      },
+      "label21h": 0,
+      "label4h": 3614,
+      "label8h": 2602,
+      "largestGaps": [
+        {
+          "a": "2025-12-23T21:00Z",
+          "b": "2025-12-29T00:20Z",
+          "missingM5": 1479
+        },
+        {
+          "a": "2026-04-02T20:00Z",
+          "b": "2026-04-07T00:20Z",
+          "missingM5": 1203
+        },
+        {
+          "a": "2026-04-30T20:00Z",
+          "b": "2026-05-04T00:20Z",
+          "missingM5": 915
+        },
+        {
+          "a": "2026-08-07T19:55Z",
+          "b": "2026-08-10T00:20Z",
+          "missingM5": 628
+        }
+      ],
+      "last": "2026-10-30T20:55Z",
+      "m5": 60903,
+      "symbol": "GER40"
+    },
+    {
+      "feature21h": 442,
+      "first": "2025-11-03T00:05Z",
+      "fullH1": 5808,
+      "gaps": {
+        "crossesWeekend": 52,
+        "hourPlusSessionLikeUnverified": 207,
+        "missingM5Slots": 34369,
+        "shortUnclassified": 15
+      },
+      "label21h": 0,
+      "label4h": 4320,
+      "label8h": 3292,
+      "largestGaps": [
+        {
+          "a": "2026-04-03T13:15Z",
+          "b": "2026-04-05T22:05Z",
+          "missingM5": 681
+        },
+        {
+          "a": "2026-07-03T17:00Z",
+          "b": "2026-07-05T22:05Z",
+          "missingM5": 636
+        },
+        {
+          "a": "2026-06-19T17:00Z",
+          "b": "2026-06-21T22:05Z",
+          "missingM5": 636
+        },
+        {
+          "a": "2025-11-28T18:15Z",
+          "b": "2025-11-30T23:05Z",
+          "missingM5": 633
+        }
+      ],
+      "last": "2026-11-02T00:00Z",
+      "m5": 70463,
+      "symbol": "JPN225"
+    },
+    {
+      "feature21h": 450,
+      "first": "2025-11-03T00:05Z",
+      "fullH1": 5831,
+      "gaps": {
+        "crossesWeekend": 52,
+        "hourPlusSessionLikeUnverified": 207,
+        "missingM5Slots": 34337,
+        "shortUnclassified": 2
+      },
+      "label21h": 0,
+      "label4h": 4323,
+      "label8h": 3295,
+      "largestGaps": [
+        {
+          "a": "2026-04-03T13:15Z",
+          "b": "2026-04-05T22:05Z",
+          "missingM5": 681
+        },
+        {
+          "a": "2026-07-03T17:00Z",
+          "b": "2026-07-05T22:05Z",
+          "missingM5": 636
+        },
+        {
+          "a": "2026-06-19T17:00Z",
+          "b": "2026-06-21T22:05Z",
+          "missingM5": 636
+        },
+        {
+          "a": "2025-11-28T18:15Z",
+          "b": "2025-11-30T23:05Z",
+          "missingM5": 633
+        }
+      ],
+      "last": "2026-11-02T00:00Z",
+      "m5": 70495,
+      "symbol": "NAS100"
+    },
+    {
+      "feature21h": 0,
+      "first": "2025-11-03T01:10Z",
+      "fullH1": 4926,
+      "gaps": {
+        "crossesWeekend": 50,
+        "hourPlusSessionLikeUnverified": 201,
+        "missingM5Slots": 44020,
+        "shortUnclassified": 6
+      },
+      "label21h": 0,
+      "label4h": 3505,
+      "label8h": 2497,
+      "largestGaps": [
+        {
+          "a": "2025-12-24T12:50Z",
+          "b": "2025-12-29T01:10Z",
+          "missingM5": 1299
+        },
+        {
+          "a": "2026-04-02T20:00Z",
+          "b": "2026-04-07T00:05Z",
+          "missingM5": 1200
+        },
+        {
+          "a": "2026-05-22T19:55Z",
+          "b": "2026-05-26T00:05Z",
+          "missingM5": 913
+        },
+        {
+          "a": "2026-05-01T19:55Z",
+          "b": "2026-05-05T00:05Z",
+          "missingM5": 913
+        }
+      ],
+      "last": "2026-10-30T20:55Z",
+      "m5": 60186,
+      "symbol": "UK100"
+    },
+    {
+      "feature21h": 445,
+      "first": "2025-11-03T00:05Z",
+      "fullH1": 5826,
+      "gaps": {
+        "crossesWeekend": 52,
+        "hourPlusSessionLikeUnverified": 207,
+        "missingM5Slots": 34342,
+        "shortUnclassified": 3
+      },
+      "label21h": 0,
+      "label4h": 4324,
+      "label8h": 3296,
+      "largestGaps": [
+        {
+          "a": "2026-04-03T13:15Z",
+          "b": "2026-04-05T22:05Z",
+          "missingM5": 681
+        },
+        {
+          "a": "2026-06-19T17:00Z",
+          "b": "2026-06-21T22:05Z",
+          "missingM5": 636
+        },
+        {
+          "a": "2026-07-03T17:05Z",
+          "b": "2026-07-05T22:05Z",
+          "missingM5": 635
+        },
+        {
+          "a": "2025-11-28T18:15Z",
+          "b": "2025-11-30T23:05Z",
+          "missingM5": 633
+        }
+      ],
+      "last": "2026-11-02T00:00Z",
+      "m5": 70490,
+      "symbol": "US500"
+    },
+    {
+      "feature21h": 4707,
+      "first": "2025-11-03T00:05Z",
+      "fullH1": 6106,
+      "gaps": {
+        "crossesWeekend": 57,
+        "hourPlusSessionLikeUnverified": 2,
+        "missingM5Slots": 30671,
+        "shortUnclassified": 17
+      },
+      "label21h": 4621,
+      "label4h": 5777,
+      "label8h": 5505,
+      "largestGaps": [
+        {
+          "a": "2026-10-30T20:55Z",
+          "b": "2026-11-01T22:05Z",
+          "missingM5": 589
+        },
+        {
+          "a": "2026-06-05T20:55Z",
+          "b": "2026-06-07T21:25Z",
+          "missingM5": 581
+        },
+        {
+          "a": "2026-06-26T20:55Z",
+          "b": "2026-06-28T21:20Z",
+          "missingM5": 580
+        },
+        {
+          "a": "2026-05-15T20:55Z",
+          "b": "2026-05-17T21:20Z",
+          "missingM5": 580
+        }
+      ],
+      "last": "2026-11-02T00:00Z",
+      "m5": 74161,
+      "symbol": "USDCAD"
+    },
+    {
+      "feature21h": 4367,
+      "first": "2025-11-03T00:05Z",
+      "fullH1": 6081,
+      "gaps": {
+        "crossesWeekend": 72,
+        "hourPlusSessionLikeUnverified": 2,
+        "missingM5Slots": 30801,
+        "shortUnclassified": 34
+      },
+      "label21h": 4254,
+      "label4h": 5682,
+      "label8h": 5346,
+      "largestGaps": [
+        {
+          "a": "2026-10-30T20:55Z",
+          "b": "2026-11-01T22:10Z",
+          "missingM5": 590
+        },
+        {
+          "a": "2026-10-02T20:55Z",
+          "b": "2026-10-04T21:55Z",
+          "missingM5": 587
+        },
+        {
+          "a": "2026-05-15T20:55Z",
+          "b": "2026-05-17T21:50Z",
+          "missingM5": 586
+        },
+        {
+          "a": "2026-09-18T21:00Z",
+          "b": "2026-09-20T21:50Z",
+          "missingM5": 585
+        }
+      ],
+      "last": "2026-11-02T00:00Z",
+      "m5": 74031,
+      "symbol": "USDJPY"
+    },
+    {
+      "feature21h": 448,
+      "first": "2025-11-03T00:05Z",
+      "fullH1": 5832,
+      "gaps": {
+        "crossesWeekend": 52,
+        "hourPlusSessionLikeUnverified": 205,
+        "missingM5Slots": 34282
+      },
+      "label21h": 0,
+      "label4h": 4343,
+      "label8h": 3315,
+      "largestGaps": [
+        {
+          "a": "2026-04-02T21:00Z",
+          "b": "2026-04-05T22:05Z",
+          "missingM5": 876
+        },
+        {
+          "a": "2026-07-03T17:00Z",
+          "b": "2026-07-05T22:05Z",
+          "missingM5": 636
+        },
+        {
+          "a": "2026-06-19T17:00Z",
+          "b": "2026-06-21T22:05Z",
+          "missingM5": 636
+        },
+        {
+          "a": "2025-11-28T19:45Z",
+          "b": "2025-11-30T23:05Z",
+          "missingM5": 615
+        }
+      ],
+      "last": "2026-11-02T00:00Z",
+      "m5": 70550,
+      "symbol": "XAUUSD"
+    }
+  ],
+  "weekly": [
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 95,
+        "AUS200": 0,
+        "EURUSD": 95,
+        "GBPUSD": 95,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 95,
+        "USDJPY": 95,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 108,
+        "AUS200": 20,
+        "EURUSD": 108,
+        "GBPUSD": 108,
+        "GER40": 55,
+        "JPN225": 64,
+        "NAS100": 64,
+        "UK100": 50,
+        "US500": 64,
+        "USDCAD": 108,
+        "USDJPY": 108,
+        "XAUUSD": 64
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2025-11-03T00:00Z",
+      "week": 0
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 97,
+        "AUS200": 0,
+        "EURUSD": 97,
+        "GBPUSD": 97,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 97,
+        "USDJPY": 97,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 110,
+        "AUS200": 20,
+        "EURUSD": 110,
+        "GBPUSD": 110,
+        "GER40": 55,
+        "JPN225": 65,
+        "NAS100": 65,
+        "UK100": 50,
+        "US500": 65,
+        "USDCAD": 110,
+        "USDJPY": 110,
+        "XAUUSD": 65
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2025-11-10T00:00Z",
+      "week": 1
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 97,
+        "AUS200": 0,
+        "EURUSD": 97,
+        "GBPUSD": 97,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 97,
+        "USDJPY": 97,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 110,
+        "AUS200": 19,
+        "EURUSD": 110,
+        "GBPUSD": 110,
+        "GER40": 55,
+        "JPN225": 65,
+        "NAS100": 65,
+        "UK100": 50,
+        "US500": 65,
+        "USDCAD": 110,
+        "USDJPY": 110,
+        "XAUUSD": 65
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2025-11-17T00:00Z",
+      "week": 2
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 97,
+        "AUS200": 0,
+        "EURUSD": 97,
+        "GBPUSD": 97,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 97,
+        "USDJPY": 97,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 110,
+        "AUS200": 14,
+        "EURUSD": 110,
+        "GBPUSD": 110,
+        "GER40": 53,
+        "JPN225": 48,
+        "NAS100": 48,
+        "UK100": 48,
+        "US500": 48,
+        "USDCAD": 110,
+        "USDJPY": 110,
+        "XAUUSD": 61
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2025-11-24T00:00Z",
+      "week": 3
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 97,
+        "AUS200": 0,
+        "EURUSD": 97,
+        "GBPUSD": 97,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 97,
+        "USDJPY": 97,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 110,
+        "AUS200": 20,
+        "EURUSD": 110,
+        "GBPUSD": 110,
+        "GER40": 55,
+        "JPN225": 65,
+        "NAS100": 65,
+        "UK100": 50,
+        "US500": 65,
+        "USDCAD": 110,
+        "USDJPY": 110,
+        "XAUUSD": 65
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2025-12-01T00:00Z",
+      "week": 4
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 97,
+        "AUS200": 0,
+        "EURUSD": 97,
+        "GBPUSD": 97,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 97,
+        "USDJPY": 97,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 110,
+        "AUS200": 15,
+        "EURUSD": 110,
+        "GBPUSD": 110,
+        "GER40": 55,
+        "JPN225": 65,
+        "NAS100": 65,
+        "UK100": 50,
+        "US500": 65,
+        "USDCAD": 110,
+        "USDJPY": 110,
+        "XAUUSD": 65
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2025-12-08T00:00Z",
+      "week": 5
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 97,
+        "AUS200": 0,
+        "EURUSD": 97,
+        "GBPUSD": 97,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 97,
+        "USDJPY": 97,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 110,
+        "AUS200": 20,
+        "EURUSD": 110,
+        "GBPUSD": 110,
+        "GER40": 55,
+        "JPN225": 65,
+        "NAS100": 65,
+        "UK100": 50,
+        "US500": 65,
+        "USDCAD": 110,
+        "USDJPY": 110,
+        "XAUUSD": 65
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2025-12-15T00:00Z",
+      "week": 6
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 48,
+        "AUS200": 0,
+        "EURUSD": 48,
+        "GBPUSD": 48,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 48,
+        "USDJPY": 48,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 74,
+        "AUS200": 4,
+        "EURUSD": 74,
+        "GBPUSD": 74,
+        "GER40": 22,
+        "JPN225": 49,
+        "NAS100": 49,
+        "UK100": 22,
+        "US500": 49,
+        "USDCAD": 74,
+        "USDJPY": 74,
+        "XAUUSD": 49
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2025-12-22T00:00Z",
+      "week": 7
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 48,
+        "AUS200": 0,
+        "EURUSD": 48,
+        "GBPUSD": 48,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 48,
+        "USDJPY": 48,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 74,
+        "AUS200": 12,
+        "EURUSD": 74,
+        "GBPUSD": 74,
+        "GER40": 29,
+        "JPN225": 50,
+        "NAS100": 50,
+        "UK100": 32,
+        "US500": 50,
+        "USDCAD": 74,
+        "USDJPY": 74,
+        "XAUUSD": 50
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2025-12-29T00:00Z",
+      "week": 8
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 97,
+        "AUS200": 0,
+        "EURUSD": 97,
+        "GBPUSD": 97,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 97,
+        "USDJPY": 97,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 110,
+        "AUS200": 20,
+        "EURUSD": 110,
+        "GBPUSD": 110,
+        "GER40": 55,
+        "JPN225": 65,
+        "NAS100": 65,
+        "UK100": 50,
+        "US500": 65,
+        "USDCAD": 110,
+        "USDJPY": 110,
+        "XAUUSD": 65
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2026-01-05T00:00Z",
+      "week": 9
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 97,
+        "AUS200": 0,
+        "EURUSD": 97,
+        "GBPUSD": 97,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 97,
+        "USDJPY": 97,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 110,
+        "AUS200": 18,
+        "EURUSD": 110,
+        "GBPUSD": 110,
+        "GER40": 55,
+        "JPN225": 65,
+        "NAS100": 65,
+        "UK100": 50,
+        "US500": 65,
+        "USDCAD": 110,
+        "USDJPY": 110,
+        "XAUUSD": 65
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2026-01-12T00:00Z",
+      "week": 10
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 97,
+        "AUS200": 0,
+        "EURUSD": 97,
+        "GBPUSD": 97,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 97,
+        "USDJPY": 97,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 110,
+        "AUS200": 14,
+        "EURUSD": 110,
+        "GBPUSD": 110,
+        "GER40": 55,
+        "JPN225": 61,
+        "NAS100": 61,
+        "UK100": 50,
+        "US500": 61,
+        "USDCAD": 110,
+        "USDJPY": 110,
+        "XAUUSD": 63
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2026-01-19T00:00Z",
+      "week": 11
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 97,
+        "AUS200": 0,
+        "EURUSD": 97,
+        "GBPUSD": 97,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 97,
+        "USDJPY": 97,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 110,
+        "AUS200": 21,
+        "EURUSD": 110,
+        "GBPUSD": 110,
+        "GER40": 55,
+        "JPN225": 60,
+        "NAS100": 60,
+        "UK100": 46,
+        "US500": 60,
+        "USDCAD": 110,
+        "USDJPY": 110,
+        "XAUUSD": 65
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2026-01-26T00:00Z",
+      "week": 12
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 97,
+        "AUS200": 0,
+        "EURUSD": 97,
+        "GBPUSD": 97,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 97,
+        "USDJPY": 97,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 110,
+        "AUS200": 25,
+        "EURUSD": 110,
+        "GBPUSD": 110,
+        "GER40": 55,
+        "JPN225": 65,
+        "NAS100": 65,
+        "UK100": 50,
+        "US500": 65,
+        "USDCAD": 110,
+        "USDJPY": 110,
+        "XAUUSD": 65
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2026-02-02T00:00Z",
+      "week": 13
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 97,
+        "AUS200": 0,
+        "EURUSD": 97,
+        "GBPUSD": 97,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 97,
+        "USDJPY": 97,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 110,
+        "AUS200": 25,
+        "EURUSD": 110,
+        "GBPUSD": 110,
+        "GER40": 55,
+        "JPN225": 65,
+        "NAS100": 65,
+        "UK100": 50,
+        "US500": 65,
+        "USDCAD": 110,
+        "USDJPY": 110,
+        "XAUUSD": 65
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2026-02-09T00:00Z",
+      "week": 14
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 97,
+        "AUS200": 0,
+        "EURUSD": 97,
+        "GBPUSD": 97,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 97,
+        "USDJPY": 97,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 110,
+        "AUS200": 23,
+        "EURUSD": 110,
+        "GBPUSD": 110,
+        "GER40": 55,
+        "JPN225": 61,
+        "NAS100": 61,
+        "UK100": 49,
+        "US500": 61,
+        "USDCAD": 110,
+        "USDJPY": 110,
+        "XAUUSD": 63
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2026-02-16T00:00Z",
+      "week": 15
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 97,
+        "AUS200": 0,
+        "EURUSD": 97,
+        "GBPUSD": 97,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 97,
+        "USDJPY": 97,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 110,
+        "AUS200": 25,
+        "EURUSD": 110,
+        "GBPUSD": 110,
+        "GER40": 55,
+        "JPN225": 65,
+        "NAS100": 65,
+        "UK100": 50,
+        "US500": 65,
+        "USDCAD": 110,
+        "USDJPY": 110,
+        "XAUUSD": 65
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2026-02-23T00:00Z",
+      "week": 16
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 97,
+        "AUS200": 0,
+        "EURUSD": 97,
+        "GBPUSD": 97,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 97,
+        "USDJPY": 97,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 110,
+        "AUS200": 25,
+        "EURUSD": 110,
+        "GBPUSD": 110,
+        "GER40": 55,
+        "JPN225": 65,
+        "NAS100": 65,
+        "UK100": 50,
+        "US500": 65,
+        "USDCAD": 110,
+        "USDJPY": 110,
+        "XAUUSD": 65
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2026-03-02T00:00Z",
+      "week": 17
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 97,
+        "AUS200": 0,
+        "EURUSD": 97,
+        "GBPUSD": 97,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 97,
+        "USDJPY": 97,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 110,
+        "AUS200": 20,
+        "EURUSD": 110,
+        "GBPUSD": 110,
+        "GER40": 55,
+        "JPN225": 65,
+        "NAS100": 65,
+        "UK100": 50,
+        "US500": 65,
+        "USDCAD": 110,
+        "USDJPY": 110,
+        "XAUUSD": 65
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2026-03-09T00:00Z",
+      "week": 18
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 97,
+        "AUS200": 0,
+        "EURUSD": 97,
+        "GBPUSD": 97,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 97,
+        "USDJPY": 51,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 110,
+        "AUS200": 20,
+        "EURUSD": 110,
+        "GBPUSD": 110,
+        "GER40": 55,
+        "JPN225": 65,
+        "NAS100": 65,
+        "UK100": 50,
+        "US500": 65,
+        "USDCAD": 110,
+        "USDJPY": 90,
+        "XAUUSD": 65
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2026-03-16T00:00Z",
+      "week": 19
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 97,
+        "AUS200": 0,
+        "EURUSD": 97,
+        "GBPUSD": 97,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 97,
+        "USDJPY": 74,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 110,
+        "AUS200": 20,
+        "EURUSD": 110,
+        "GBPUSD": 110,
+        "GER40": 46,
+        "JPN225": 64,
+        "NAS100": 65,
+        "UK100": 50,
+        "US500": 65,
+        "USDCAD": 110,
+        "USDJPY": 100,
+        "XAUUSD": 65
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2026-03-23T00:00Z",
+      "week": 20
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 74,
+        "AUS200": 0,
+        "EURUSD": 97,
+        "GBPUSD": 5,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 97,
+        "USDJPY": 28,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 100,
+        "AUS200": 12,
+        "EURUSD": 110,
+        "GBPUSD": 70,
+        "GER40": 40,
+        "JPN225": 57,
+        "NAS100": 58,
+        "UK100": 40,
+        "US500": 58,
+        "USDCAD": 110,
+        "USDJPY": 80,
+        "XAUUSD": 52
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2026-03-30T00:00Z",
+      "week": 21
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 74,
+        "AUS200": 0,
+        "EURUSD": 97,
+        "GBPUSD": 74,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 97,
+        "USDJPY": 51,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 100,
+        "AUS200": 16,
+        "EURUSD": 110,
+        "GBPUSD": 100,
+        "GER40": 40,
+        "JPN225": 65,
+        "NAS100": 65,
+        "UK100": 40,
+        "US500": 65,
+        "USDCAD": 110,
+        "USDJPY": 90,
+        "XAUUSD": 65
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2026-04-06T00:00Z",
+      "week": 22
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 51,
+        "AUS200": 0,
+        "EURUSD": 97,
+        "GBPUSD": 97,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 97,
+        "USDJPY": 74,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 90,
+        "AUS200": 20,
+        "EURUSD": 110,
+        "GBPUSD": 110,
+        "GER40": 50,
+        "JPN225": 65,
+        "NAS100": 65,
+        "UK100": 50,
+        "US500": 65,
+        "USDCAD": 110,
+        "USDJPY": 100,
+        "XAUUSD": 65
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2026-04-13T00:00Z",
+      "week": 23
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 97,
+        "AUS200": 0,
+        "EURUSD": 97,
+        "GBPUSD": 51,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 97,
+        "USDJPY": 51,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 110,
+        "AUS200": 20,
+        "EURUSD": 110,
+        "GBPUSD": 90,
+        "GER40": 50,
+        "JPN225": 65,
+        "NAS100": 65,
+        "UK100": 50,
+        "US500": 65,
+        "USDCAD": 110,
+        "USDJPY": 90,
+        "XAUUSD": 65
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2026-04-20T00:00Z",
+      "week": 24
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 97,
+        "AUS200": 0,
+        "EURUSD": 74,
+        "GBPUSD": 97,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 97,
+        "USDJPY": 52,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 110,
+        "AUS200": 20,
+        "EURUSD": 100,
+        "GBPUSD": 110,
+        "GER40": 40,
+        "JPN225": 65,
+        "NAS100": 65,
+        "UK100": 50,
+        "US500": 65,
+        "USDCAD": 110,
+        "USDJPY": 91,
+        "XAUUSD": 65
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2026-04-27T00:00Z",
+      "week": 25
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 74,
+        "AUS200": 0,
+        "EURUSD": 97,
+        "GBPUSD": 28,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 97,
+        "USDJPY": 75,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 100,
+        "AUS200": 20,
+        "EURUSD": 110,
+        "GBPUSD": 80,
+        "GER40": 50,
+        "JPN225": 65,
+        "NAS100": 65,
+        "UK100": 40,
+        "US500": 65,
+        "USDCAD": 110,
+        "USDJPY": 101,
+        "XAUUSD": 65
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2026-05-04T00:00Z",
+      "week": 26
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 97,
+        "AUS200": 0,
+        "EURUSD": 97,
+        "GBPUSD": 74,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 97,
+        "USDJPY": 74,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 110,
+        "AUS200": 20,
+        "EURUSD": 110,
+        "GBPUSD": 100,
+        "GER40": 50,
+        "JPN225": 65,
+        "NAS100": 65,
+        "UK100": 50,
+        "US500": 65,
+        "USDCAD": 110,
+        "USDJPY": 100,
+        "XAUUSD": 65
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2026-05-11T00:00Z",
+      "week": 27
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 74,
+        "AUS200": 0,
+        "EURUSD": 97,
+        "GBPUSD": 74,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 97,
+        "USDJPY": 74,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 100,
+        "AUS200": 20,
+        "EURUSD": 110,
+        "GBPUSD": 100,
+        "GER40": 50,
+        "JPN225": 65,
+        "NAS100": 65,
+        "UK100": 50,
+        "US500": 65,
+        "USDCAD": 110,
+        "USDJPY": 100,
+        "XAUUSD": 65
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2026-05-18T00:00Z",
+      "week": 28
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 74,
+        "AUS200": 0,
+        "EURUSD": 97,
+        "GBPUSD": 97,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 97,
+        "USDJPY": 97,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 100,
+        "AUS200": 17,
+        "EURUSD": 110,
+        "GBPUSD": 110,
+        "GER40": 50,
+        "JPN225": 61,
+        "NAS100": 61,
+        "UK100": 40,
+        "US500": 61,
+        "USDCAD": 110,
+        "USDJPY": 110,
+        "XAUUSD": 63
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2026-05-25T00:00Z",
+      "week": 29
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 97,
+        "AUS200": 0,
+        "EURUSD": 97,
+        "GBPUSD": 74,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 74,
+        "USDJPY": 97,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 110,
+        "AUS200": 20,
+        "EURUSD": 110,
+        "GBPUSD": 100,
+        "GER40": 50,
+        "JPN225": 65,
+        "NAS100": 65,
+        "UK100": 50,
+        "US500": 65,
+        "USDCAD": 100,
+        "USDJPY": 110,
+        "XAUUSD": 65
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2026-06-01T00:00Z",
+      "week": 30
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 74,
+        "AUS200": 0,
+        "EURUSD": 97,
+        "GBPUSD": 74,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 74,
+        "USDJPY": 97,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 100,
+        "AUS200": 20,
+        "EURUSD": 110,
+        "GBPUSD": 100,
+        "GER40": 50,
+        "JPN225": 65,
+        "NAS100": 65,
+        "UK100": 50,
+        "US500": 65,
+        "USDCAD": 100,
+        "USDJPY": 110,
+        "XAUUSD": 65
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2026-06-08T00:00Z",
+      "week": 31
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 74,
+        "AUS200": 0,
+        "EURUSD": 74,
+        "GBPUSD": 51,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 73,
+        "USDJPY": 97,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 100,
+        "AUS200": 17,
+        "EURUSD": 100,
+        "GBPUSD": 90,
+        "GER40": 47,
+        "JPN225": 61,
+        "NAS100": 61,
+        "UK100": 50,
+        "US500": 61,
+        "USDCAD": 99,
+        "USDJPY": 110,
+        "XAUUSD": 61
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2026-06-15T00:00Z",
+      "week": 32
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 74,
+        "AUS200": 0,
+        "EURUSD": 74,
+        "GBPUSD": 5,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 97,
+        "USDJPY": 97,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 100,
+        "AUS200": 20,
+        "EURUSD": 100,
+        "GBPUSD": 70,
+        "GER40": 50,
+        "JPN225": 65,
+        "NAS100": 65,
+        "UK100": 50,
+        "US500": 65,
+        "USDCAD": 110,
+        "USDJPY": 110,
+        "XAUUSD": 65
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2026-06-22T00:00Z",
+      "week": 33
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 97,
+        "AUS200": 0,
+        "EURUSD": 97,
+        "GBPUSD": 51,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 97,
+        "USDJPY": 97,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 110,
+        "AUS200": 17,
+        "EURUSD": 110,
+        "GBPUSD": 90,
+        "GER40": 50,
+        "JPN225": 61,
+        "NAS100": 61,
+        "UK100": 50,
+        "US500": 62,
+        "USDCAD": 110,
+        "USDJPY": 110,
+        "XAUUSD": 61
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2026-06-29T00:00Z",
+      "week": 34
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 74,
+        "AUS200": 0,
+        "EURUSD": 97,
+        "GBPUSD": 51,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 97,
+        "USDJPY": 75,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 100,
+        "AUS200": 20,
+        "EURUSD": 110,
+        "GBPUSD": 90,
+        "GER40": 50,
+        "JPN225": 65,
+        "NAS100": 65,
+        "UK100": 50,
+        "US500": 65,
+        "USDCAD": 110,
+        "USDJPY": 101,
+        "XAUUSD": 65
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2026-07-06T00:00Z",
+      "week": 35
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 28,
+        "AUS200": 0,
+        "EURUSD": 97,
+        "GBPUSD": 51,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 74,
+        "USDJPY": 28,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 80,
+        "AUS200": 20,
+        "EURUSD": 110,
+        "GBPUSD": 90,
+        "GER40": 50,
+        "JPN225": 65,
+        "NAS100": 65,
+        "UK100": 50,
+        "US500": 65,
+        "USDCAD": 100,
+        "USDJPY": 80,
+        "XAUUSD": 65
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2026-07-13T00:00Z",
+      "week": 36
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 97,
+        "AUS200": 0,
+        "EURUSD": 97,
+        "GBPUSD": 28,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 97,
+        "USDJPY": 97,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 110,
+        "AUS200": 20,
+        "EURUSD": 110,
+        "GBPUSD": 80,
+        "GER40": 50,
+        "JPN225": 65,
+        "NAS100": 65,
+        "UK100": 50,
+        "US500": 65,
+        "USDCAD": 110,
+        "USDJPY": 110,
+        "XAUUSD": 65
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2026-07-20T00:00Z",
+      "week": 37
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 74,
+        "AUS200": 0,
+        "EURUSD": 97,
+        "GBPUSD": 28,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 97,
+        "USDJPY": 97,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 100,
+        "AUS200": 20,
+        "EURUSD": 110,
+        "GBPUSD": 80,
+        "GER40": 50,
+        "JPN225": 65,
+        "NAS100": 65,
+        "UK100": 50,
+        "US500": 65,
+        "USDCAD": 110,
+        "USDJPY": 110,
+        "XAUUSD": 65
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2026-07-27T00:00Z",
+      "week": 38
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 97,
+        "AUS200": 0,
+        "EURUSD": 97,
+        "GBPUSD": 28,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 97,
+        "USDJPY": 97,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 110,
+        "AUS200": 20,
+        "EURUSD": 110,
+        "GBPUSD": 80,
+        "GER40": 50,
+        "JPN225": 65,
+        "NAS100": 65,
+        "UK100": 50,
+        "US500": 65,
+        "USDCAD": 110,
+        "USDJPY": 110,
+        "XAUUSD": 65
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2026-08-03T00:00Z",
+      "week": 39
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 97,
+        "AUS200": 0,
+        "EURUSD": 97,
+        "GBPUSD": 97,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 97,
+        "USDJPY": 97,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 110,
+        "AUS200": 20,
+        "EURUSD": 110,
+        "GBPUSD": 110,
+        "GER40": 50,
+        "JPN225": 65,
+        "NAS100": 65,
+        "UK100": 50,
+        "US500": 65,
+        "USDCAD": 110,
+        "USDJPY": 110,
+        "XAUUSD": 65
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2026-08-10T00:00Z",
+      "week": 40
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 74,
+        "AUS200": 0,
+        "EURUSD": 74,
+        "GBPUSD": 28,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 97,
+        "USDJPY": 74,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 100,
+        "AUS200": 20,
+        "EURUSD": 100,
+        "GBPUSD": 80,
+        "GER40": 50,
+        "JPN225": 65,
+        "NAS100": 65,
+        "UK100": 50,
+        "US500": 65,
+        "USDCAD": 110,
+        "USDJPY": 100,
+        "XAUUSD": 65
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2026-08-17T00:00Z",
+      "week": 41
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 97,
+        "AUS200": 0,
+        "EURUSD": 97,
+        "GBPUSD": 51,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 74,
+        "USDJPY": 97,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 110,
+        "AUS200": 20,
+        "EURUSD": 110,
+        "GBPUSD": 90,
+        "GER40": 50,
+        "JPN225": 65,
+        "NAS100": 65,
+        "UK100": 50,
+        "US500": 65,
+        "USDCAD": 100,
+        "USDJPY": 110,
+        "XAUUSD": 65
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2026-08-24T00:00Z",
+      "week": 42
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 97,
+        "AUS200": 0,
+        "EURUSD": 97,
+        "GBPUSD": 97,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 51,
+        "USDJPY": 97,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 110,
+        "AUS200": 20,
+        "EURUSD": 110,
+        "GBPUSD": 110,
+        "GER40": 50,
+        "JPN225": 65,
+        "NAS100": 65,
+        "UK100": 40,
+        "US500": 65,
+        "USDCAD": 90,
+        "USDJPY": 110,
+        "XAUUSD": 65
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2026-08-31T00:00Z",
+      "week": 43
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 97,
+        "AUS200": 0,
+        "EURUSD": 74,
+        "GBPUSD": 51,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 28,
+        "USDJPY": 5,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 110,
+        "AUS200": 17,
+        "EURUSD": 100,
+        "GBPUSD": 90,
+        "GER40": 49,
+        "JPN225": 60,
+        "NAS100": 61,
+        "UK100": 50,
+        "US500": 61,
+        "USDCAD": 80,
+        "USDJPY": 70,
+        "XAUUSD": 63
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2026-09-07T00:00Z",
+      "week": 44
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 97,
+        "AUS200": 0,
+        "EURUSD": 74,
+        "GBPUSD": 74,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 97,
+        "USDJPY": 73,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 110,
+        "AUS200": 20,
+        "EURUSD": 100,
+        "GBPUSD": 100,
+        "GER40": 50,
+        "JPN225": 65,
+        "NAS100": 65,
+        "UK100": 50,
+        "US500": 65,
+        "USDCAD": 110,
+        "USDJPY": 99,
+        "XAUUSD": 65
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2026-09-14T00:00Z",
+      "week": 45
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 97,
+        "AUS200": 0,
+        "EURUSD": 97,
+        "GBPUSD": 74,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 97,
+        "USDJPY": 73,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 110,
+        "AUS200": 20,
+        "EURUSD": 110,
+        "GBPUSD": 100,
+        "GER40": 50,
+        "JPN225": 65,
+        "NAS100": 65,
+        "UK100": 50,
+        "US500": 65,
+        "USDCAD": 110,
+        "USDJPY": 99,
+        "XAUUSD": 65
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2026-09-21T00:00Z",
+      "week": 46
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 75,
+        "AUS200": 0,
+        "EURUSD": 97,
+        "GBPUSD": 74,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 97,
+        "USDJPY": 97,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 101,
+        "AUS200": 20,
+        "EURUSD": 110,
+        "GBPUSD": 100,
+        "GER40": 50,
+        "JPN225": 65,
+        "NAS100": 65,
+        "UK100": 50,
+        "US500": 65,
+        "USDCAD": 110,
+        "USDJPY": 110,
+        "XAUUSD": 65
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2026-09-28T00:00Z",
+      "week": 47
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 97,
+        "AUS200": 0,
+        "EURUSD": 74,
+        "GBPUSD": 51,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 51,
+        "USDJPY": 51,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 110,
+        "AUS200": 20,
+        "EURUSD": 100,
+        "GBPUSD": 90,
+        "GER40": 50,
+        "JPN225": 65,
+        "NAS100": 65,
+        "UK100": 50,
+        "US500": 65,
+        "USDCAD": 90,
+        "USDJPY": 90,
+        "XAUUSD": 65
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2026-10-05T00:00Z",
+      "week": 48
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 97,
+        "AUS200": 0,
+        "EURUSD": 97,
+        "GBPUSD": 74,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 74,
+        "USDJPY": 96,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 110,
+        "AUS200": 20,
+        "EURUSD": 110,
+        "GBPUSD": 100,
+        "GER40": 50,
+        "JPN225": 65,
+        "NAS100": 65,
+        "UK100": 50,
+        "US500": 65,
+        "USDCAD": 100,
+        "USDJPY": 109,
+        "XAUUSD": 65
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2026-10-12T00:00Z",
+      "week": 49
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 51,
+        "AUS200": 0,
+        "EURUSD": 51,
+        "GBPUSD": 51,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 74,
+        "USDJPY": 97,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 90,
+        "AUS200": 20,
+        "EURUSD": 90,
+        "GBPUSD": 90,
+        "GER40": 50,
+        "JPN225": 65,
+        "NAS100": 65,
+        "UK100": 50,
+        "US500": 65,
+        "USDCAD": 100,
+        "USDJPY": 110,
+        "XAUUSD": 65
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2026-10-19T00:00Z",
+      "week": 50
+    },
+    {
+      "assets21": 5,
+      "assets4": 12,
+      "assets8": 12,
+      "labels21": {
+        "AUDUSD": 74,
+        "AUS200": 0,
+        "EURUSD": 97,
+        "GBPUSD": 74,
+        "GER40": 0,
+        "JPN225": 0,
+        "NAS100": 0,
+        "UK100": 0,
+        "US500": 0,
+        "USDCAD": 97,
+        "USDJPY": 74,
+        "XAUUSD": 0
+      },
+      "labels8": {
+        "AUDUSD": 100,
+        "AUS200": 20,
+        "EURUSD": 110,
+        "GBPUSD": 100,
+        "GER40": 51,
+        "JPN225": 65,
+        "NAS100": 65,
+        "UK100": 50,
+        "US500": 65,
+        "USDCAD": 110,
+        "USDJPY": 100,
+        "XAUUSD": 65
+      },
+      "maxConcurrent": {
+        "4": 12,
+        "8": 12,
+        "21": 5
+      },
+      "start": "2026-10-26T00:00Z",
+      "week": 51
+    }
+  ],
+  "allExposed": true,
+  "independentConfirmation": false,
+  "returnsScored": false,
+  "brokerRequests": 0,
+  "fundedNetEur": null,
+  "ordersSubmitted": 0,
+  "cloudActivated": false
+}
