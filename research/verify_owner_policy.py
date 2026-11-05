@@ -146,6 +146,31 @@ def check():
     assert oce['hard21Proven'] is False and oce['continuousDrawdown30Proven'] is False
     assert oce['nativeAllocatorInvoked'] is False and oce['ordersSubmitted'] == 0 and oce['cloudActivated'] is False
 
+    # IES1's authentic exposed original is retained in Actions; this compact
+    # immutable receipt is SHA-pinned by the SAME gate, not re-scored as a
+    # prospective strategy or a historical brokerage cost certificate.
+    ies1 = json.loads(Path('docs/IES1_AUTHENTIC_EXPOSED_RECEIPT.json').read_text())
+    study = next(s for s in r['prospectiveStudies'] if s['id'] == 'IES1')
+    assert study['summaryFileSha256'] == r['frozenFileSha256']['docs/IES1_AUTHENTIC_EXPOSED_RECEIPT.json']
+    assert study['originalPublicJsonSha256'] == ies1['originalPublicResultSha256']
+    assert ies1['resultRunId'] == 41991415344 and ies1['originalSourceRunId'] == 41724643418
+    assert ies1['originalAuthenticatedSourceAudited'] and ies1['originalClosedModelsReexecuted'] is False
+    assert ies1['sourceM5CompleteBars'] == 441240 and len(ies1['instruments']) == 6
+    assert sum(x['m5Bars'] for x in ies1['instruments']) == 441240
+    assert sum(x['selectionCompletePairs'] for x in ies1['instruments']) == ies1['selectionTotalCompleteCausalPairs'] == 8747
+    assert sum(x['validDevelopmentQuoteAndFxSamples'] for x in ies1['instruments']) == ies1['pairedWithSynchronousEurRouteAndContract'] == 78
+    assert ies1['pairedWithSynchronousEurRouteAndContract'] + ies1['unknownCostClockCount'] == ies1['possibleQuoteInstrumentClocks'] == 108
+    assert all(x['selectionMeanDirectionalGrossBps'] < 0 and x['selectionBrierSkillVsNeutral'] < 0 for x in ies1['instruments'])
+    assert all(x['positiveDirectionalGrossEvidence'] is False and x['fundedNetEur'] is None for x in ies1['instruments'])
+    assert all(0 < x['currentMinimumMarginEur'] < 200 for x in ies1['instruments'])
+    assert study['independent'] is False and study['qualification'] is False
+    assert study['fundedNetEur'] is None and ies1['economicAdmission']['knownConditionalIncrementalEURNet'] is None
+    assert ies1['economicAdmission']['qualifiedCandidates'] == [] and ies1['economicAdmission']['actualFinancedRoundTrips'] == 0
+    assert not ies1['economicAdmission']['nativeFundedLedgerReplayPerformed']
+    assert ies1['brokerNewReadOnlyRequests'] == 0 and ies1['ordersSubmitted'] == 0 and ies1['cloudActivated'] is False
+    assert not ies1['economicAdmission']['noIndependentConfirmation'] is False
+    assert 'ResearchSpecialistAdmission.Estimate' in Path('src/Mxm.Core/NativeFundedDecisionCycle.cs').read_text()
+
     print('PASS OWNER v2.0 contract, frozen evidence, native funding and no-order boundary; no NET qualification')
 
 
