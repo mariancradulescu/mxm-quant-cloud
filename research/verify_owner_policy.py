@@ -95,6 +95,38 @@ def check():
     assert all(not re.search(r'\b' + call + r'\s*\(', cloud)
                for call in forbidden), 'UNAUTHORIZED_CLOUD_TRADING_CALL'
     assert 'LocalStorage.' not in cloud, 'CLOUD_LOCAL_STORAGE_NOT_DURABLE_RESTART_SOURCE'
+    # Semantic receipt assertions: distinguish account inventory, quote observations
+    # and unsupported predictive/financial qualification. Original receipts remain
+    # immutable; byte-for-byte SHA256 validation is performed above for each.
+    account_inventory = json.loads(Path('docs/FULL_CTRADER_ACCOUNT_INVENTORY_AUTHENTIC_20261105.json').read_text())
+    csp = json.loads(Path('docs/CSP1_AUTHENTIC_SPREAD_RESULT_20261105.json').read_text())
+    mbf = json.loads(Path('docs/MBF1_AUTHENTIC_RESULT.json').read_text())
+    for name, obj in [('INVENTORY', account_inventory), ('CSP1', csp), ('MBF1', mbf)]:
+        assert obj['ordersSubmitted'] == 0 and obj['cloudActivated'] is False, name + '_ORDER_OR_CLOUD_CLAIM'
+    assert account_inventory['authenticated'] is True and account_inventory['fullRawReadbackMatched'] is True
+    assert account_inventory['completeNonArchivedAccountSymbolRoster'] == 5339
+    assert account_inventory['visibleAccountSymbols'] == 1755
+    assert account_inventory['contractProbeCount'] == 96 and account_inventory['contractCurrentMinMarginObserved'] == 89
+    assert account_inventory['currentStaticMinimumMarginBelow200EurCount'] == 74
+    assert account_inventory['notQueriedIsNotUnavailable'] is True and account_inventory['costOrHistoricalMarginProven'] is False
+    assert account_inventory['systemFundedNetEur'] is None and account_inventory['independentConfirmation'] is False
+    assert csp['authenticatedRawReadback'] is True and csp['originalSourceRunId'] == 41940740480
+    assert csp['linkedInventoryRunId'] == account_inventory['sourceRunId']
+    assert csp['instrumentClockOpportunities'] == csp['validFreshPairedBidAsk'] + csp['unknownOrInvalidQuotes']
+    assert csp['unknownOrInvalidQuotes'] == sum(csp['observationStatuses'].values())
+    assert csp['historicalAllInCostCertified'] is False and csp['fundedNetEur'] is None
+    assert csp['independentConfirmation'] is False and csp['hard21Established'] is False
+    assert mbf['authenticatedCryptoRawReadback'] is True and mbf['sourceRunId'] == 41971150620
+    assert mbf['candidateGroups'] == len(mbf['families']) == 8
+    assert mbf['selectionOnlyConditionalFollowupCandidates'] == []
+    asian = [x for x in mbf['families'] if x['family'] == 'ASIA_INDEX_RISK_HANDOFF']
+    assert len(asian) == 2 and all(x['phases']['selection']['completeModelledOpportunities'] == 0 for x in asian)
+    assert mbf['omissions']['ASIA_INDEX_RISK_HANDOFF/FEATURE_MISSING'] == 260
+    assert mbf['allInHistoricalCostsCertified'] is False and mbf['fundedNetEur'] is None
+    assert mbf['nativeAllocatorInvoked'] is False and mbf['independentConfirmation'] is False
+    assert mbf['systemHard21Proven'] is False and mbf['continuousDrawdown30Proven'] is False
+    assert mbf['closedStudiesRescored'] is False
+
     print('PASS OWNER v2.0 contract, frozen evidence, native funding and no-order boundary; no NET qualification')
 
 
