@@ -202,6 +202,23 @@ def check():
     assert not ies1['economicAdmission']['noIndependentConfirmation'] is False
     assert 'ResearchSpecialistAdmission.Estimate' in Path('src/Mxm.Core/NativeFundedDecisionCycle.cs').read_text()
 
+    # HRC1 original authenticated pilot: fail-closed before selection,
+    # exactly preserved artifact, no retrospective change to rejected methods.
+    hrc = json.loads(Path('docs/HRC1_AUTHENTIC_PILOT.json').read_text())
+    hrc_record = next(s for s in r['prospectiveStudies'] if s['id'] == 'HRC1')
+    assert hashlib.sha256(Path('docs/HRC1_AUTHENTIC_PILOT.json').read_bytes()).hexdigest() == '87ecb79c14094b91a143d2f2a9235277abacb577374b632054ed4a055db3dc97'
+    assert hashlib.sha256(Path('research/hrc1_protocol.json').read_bytes()).hexdigest() == hrc['prescoringProtocolSha256'] == hrc_record['protocolSha256']
+    assert hrc['workflowRunId'] == hrc_record['sourceResultRunId'] == 42049772731
+    assert hrc['sourceAuthenticated'] and hrc['rawSourceBars'] == 836087 and hrc['sourceAssets'] == 12 and hrc['originalCostContexts'] == 166
+    assert hrc['development']['knownCompleteLabels'] == 11465 and hrc['development']['activeSignals'] == 4650
+    assert hrc['development']['missingFutureOutcomes'] == 1062
+    assert hrc['development']['completeAssetWeeks'] == 0 and hrc['development']['informativeActiveWeeks'] == 0
+    assert not hrc['developmentPilotPassed'] and hrc['developmentWeeklyStdBps'] is None and hrc['detectableEffectBps'] is None
+    assert hrc['selection'] is None and hrc['selectionNotViewedUnlessPilotPassed'] and hrc['globallyExposedAuditNotScored']
+    assert hrc['fundedNetEur'] is None and not hrc['independentConfirmation'] and not hrc['hard21Proven']
+    assert hrc_record['status'].startswith('CLOSED_EXACT_') and not hrc_record['qualification'] and hrc_record['followupCandidates'] == []
+    assert hrc['brokerRequests'] == 0 and hrc['ordersSubmitted'] == 0 and not hrc['cloudActivated']
+
     print('PASS OWNER v2.0 contract, frozen evidence, native funding and no-order boundary; no NET qualification')
 
 
