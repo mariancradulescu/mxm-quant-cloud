@@ -675,7 +675,17 @@
       "returnsInspected": false,
       "portfolioTradingQualification": false,
       "ordersSubmitted": 0,
-      "status": "REGISTERED_BEFORE_FIRST_CSP1_SOURCE_REQUEST"
+      "status": "EXECUTED_AUTHENTIC_SPREAD_ONLY_UNQUALIFIED",
+      "executionRunId": 41940740480,
+      "exactPublicReceipt": "docs/CSP1_AUTHENTIC_SPREAD_RESULT_20261105.json",
+      "publicArtifactId": 13375837647,
+      "authenticatedReadback": true,
+      "freshPairedQuoteObservations": 19,
+      "instrumentClockOpportunities": 36,
+      "spreadOnly": true,
+      "fullHistoricalCostsCertified": false,
+      "financedNetEur": null,
+      "hard21Proven": false
     }
   ],
   "schema": "mxm-project-data-exposure-v1",
@@ -1074,6 +1084,20 @@
       "returnsInspected": false,
       "decisionExposure": [
         "FULL_ACCOUNT_SYMBOL_NAMES_VISIBILITY_AND_96_CURRENT_MARGIN_PROBE_RESULTS_EXPOSED_NO_RETURN_SCORING"
+      ],
+      "sourceArtifactRetentionDays": 90
+    },
+    {
+      "sourceRunId": 41940740480,
+      "sourceArtifactId": 13375912384,
+      "sourceCiphertextSha256": "b217f6e35eeb1e51c70d11894816277a98a9d831b1a351e4fc6ebc5fa679a270",
+      "publicArtifactId": 13375837647,
+      "exactPublicReceipt": "docs/CSP1_AUTHENTIC_SPREAD_RESULT_20261105.json",
+      "scope": "CSP1 12 predeclared instruments x 3 fixed UTC clocks Nov 4 2026, same original cTrader Pepperstone-linked account; 19/36 fresh paired BID/ASK quote observations, present-current contract terms only, no return outcomes",
+      "independent": false,
+      "returnsInspected": false,
+      "decisionExposure": [
+        "ALL36_PREDECLARED_CSP1_CROSS_ASSET_BID_ASK_SPREAD_CLOCKS_AND_CURRENT_CONTRACT_TERMS_EXPOSED_NO_PREDICTIVE_OUTCOMES"
       ],
       "sourceArtifactRetentionDays": 90
     }
