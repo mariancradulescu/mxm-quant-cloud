@@ -39,7 +39,7 @@ public static class ResearchSpecialistAdmission
             e.ConversionFeeEur,e.SlippageEur,e.FinancingEur,e.CurrentMinMarginEur};
         if(values.Any(v=>v is null))return Block("SPECIALIST_UNKNOWN_EUR_COST_OR_FINANCING");
         if(values.Any(v=>v!.Value<0))return Block("SPECIALIST_NEGATIVE_COST");
-        // The EUR200 is the INITIAL capital, not a perpetual margin ceiling.
+        // The EUR300 is the INITIAL capital, not a perpetual margin ceiling.
         // This inspection validates the observed minimum contract; actual
         // current free margin and floating equity are assessed by the shared
         // funded session and allocator at the decision clock.
@@ -96,6 +96,6 @@ public static class ResearchSpecialistAdmission
         var blocked=gates.Where(g=>!g.AdmittedForConditionalResearch).Select(g=>
             new OpportunityAllocation(g.OpportunityId,0,0,0,g.Reason)).ToArray();
         return new(native with {Declined=native.Declined.Concat(blocked).ToArray(),
-            Qualified=false,Status="COMMON_EUR200_NATIVE_CONDITIONAL_ONLY_NO_TRADING"},gates);
+            Qualified=false,Status="COMMON_NATIVE_CONDITIONAL_ONLY_NO_TRADING"},gates);
     }
 }

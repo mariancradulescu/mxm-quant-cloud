@@ -31,14 +31,24 @@ public sealed record LedgerSummary(decimal CashEur,decimal? LiquidationEquityEur
 // historical-cost, source-authenticity or lifetime-peak certificate.
 public sealed partial class NativeFundedLedger
 {
-    const string Version="mxm-native-funded-ledger-v2";
+    const string Version="mxm-native-funded-ledger-v3";
     static readonly JsonSerializerOptions Options=new(){NumberHandling=JsonNumberHandling.AllowReadingFromString};
-    LedgerState state=new(Version,200,200,-1,200,0,false,new(),new(),new(),new(),new(),new(),new string('0',64));
+    LedgerState state=new(Version,OwnerRiskAuthority.InitialCapitalEur,OwnerRiskAuthority.InitialCapitalEur,-1,OwnerRiskAuthority.InitialCapitalEur,0,false,new(),new(),new(),new(),new(),new(),new string('0',64));
     readonly long maximumStalenessMs;
     public NativeFundedLedger(long maximumStalenessMs=1000)
     {
         if(maximumStalenessMs<0)throw new ArgumentException("NATIVE_LEDGER_STALENESS");
         this.maximumStalenessMs=maximumStalenessMs;
+    }
+    // Historical immutable receipt verifier only: never used by broker recovery,
+    // prospectively funded decisions, or the observation-only cBot. Its EUR200
+    // modeled facts remain in a non-execution domain, never credited to EUR300.
+    internal static NativeFundedLedger ForFrozenHistorical200Receipt()
+    {
+        var x=new NativeFundedLedger();
+        x.state=x.state with {InitialCashEur=200m,CashEur=200m,
+            ObservedPeakEur=200m,MonetaryDomain="FROZEN_MODELED_SETTLEMENT"};
+        return x;
     }
     static string Hash(string s)=>Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(s))).ToLowerInvariant();
     static decimal Fee(LedgerQuote q,decimal units)=>Math.Max(q.ExitFeePerUnit*units,q.ExitFeeFloor);
@@ -59,7 +69,7 @@ public sealed partial class NativeFundedLedger
         state.Positions.Values.Sum(p=>Floating(p,Quote(quotes,p.Symbol,at)));
     void Reconcile()
     {
-        decimal expected=200+state.Closed.Sum(t=>t.NetEur)-state.Positions.Values.Sum(p=>p.EntryFeeRemaining+p.EntryConversionRemaining)+
+        decimal expected=state.InitialCashEur+state.Closed.Sum(t=>t.NetEur)-state.Positions.Values.Sum(p=>p.EntryFeeRemaining+p.EntryConversionRemaining)+
             state.Positions.Values.Sum(p=>p.FinancingRemaining);
         if(Math.Abs(expected-state.CashEur)>.000000001m)throw new InvalidOperationException("NATIVE_LEDGER_CASH_IDENTITY");
     }
@@ -187,7 +197,9 @@ public sealed partial class NativeFundedLedger
         using var d=JsonDocument.Parse(checkpoint);var root=d.RootElement;string payload=root.GetProperty("Payload").GetString()!;
         if(Hash(payload)!=root.GetProperty("Sha256").GetString())throw new ArgumentException("NATIVE_LEDGER_CHECKPOINT_HASH");
         var restored=JsonSerializer.Deserialize<LedgerState>(payload,Options) ?? throw new ArgumentException("NATIVE_LEDGER_CHECKPOINT_STATE");
-        if(restored.Version is not ("mxm-native-funded-ledger-v1" or Version) || restored.InitialCashEur!=200 || restored.ObservedPeakEur<200 || restored.MaximumSampledDrawdown<0)
+        if(restored.Version is not ("mxm-native-funded-ledger-v1" or "mxm-native-funded-ledger-v2" or Version) || !(restored.InitialCashEur==OwnerRiskAuthority.InitialCapitalEur ||
+             (restored.InitialCashEur==200m && restored.MonetaryDomain=="FROZEN_MODELED_SETTLEMENT")) ||
+           restored.ObservedPeakEur<restored.InitialCashEur || restored.MaximumSampledDrawdown<0)
             throw new ArgumentException("NATIVE_LEDGER_CHECKPOINT_VERSION_OR_CAPITAL");
         restored=restored with {Version=Version,MonetaryDomain=restored.MonetaryDomain??"MODEL_REPLAY"};
         if(restored.MonetaryDomain is not ("MODEL_REPLAY" or "BROKER_EXECUTION_FACT" or "FROZEN_MODELED_SETTLEMENT"))

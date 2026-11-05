@@ -34,42 +34,42 @@ internal static class MonetaryRecoveryChecks
             return new(account,"BROKER_EXECUTION_FACT",s,facts,cash,true,true,true,false,funds,at);
         }
         var session=new NativeFundedSession(account,intents:intents,journalContinuityProven:true);
-        var first=Batch(new[]{f1},199.9m,2500);
+        var first=Batch(new[]{f1},299.9m,2500);
         // Only intents already submitted may occur in a current snapshot.
         first=first with {BrokerCashObservedAt=6000,Snapshot=first.Snapshot with {At=6000,HistoryThrough=6000}};
         var accepted=session.ReconcileMoney(first);
-        check(accepted.Adopted&&accepted.RetainedLedger.CashEur==199.9m&&accepted.RetainedLedger.OpenPositions==1,
+        check(accepted.Adopted&&accepted.RetainedLedger.CashEur==299.9m&&accepted.RetainedLedger.OpenPositions==1,
             "positive partial execution imports its cash debit without waiting for full order completion");
         check(accepted.RetainedLedger.LiquidationEquityEur is null&&!accepted.OrdersEnabled,
             "missing broker floating liquidation evidence cannot become a zero loss or trading permission");
-        var omittedNode=System.Text.Json.Nodes.JsonNode.Parse(JsonSerializer.Serialize(first with {BrokerCashEur=200}))!;
+        var omittedNode=System.Text.Json.Nodes.JsonNode.Parse(JsonSerializer.Serialize(first with {BrokerCashEur=300}))!;
         omittedNode["Facts"]![0]!["Commission"]!.AsObject().Remove("Amount");
         var omittedAmount=JsonSerializer.Deserialize<MoneyRecoveryBatch>(omittedNode.ToJsonString())!;
         var noSilentZero=new NativeFundedSession(account,intents:intents,journalContinuityProven:true);
-        check(!noSilentZero.ReconcileMoney(omittedAmount).Adopted&&noSilentZero.Ledger.Summary().CashEur==200,
+        check(!noSilentZero.ReconcileMoney(omittedAmount).Adopted&&noSilentZero.Ledger.Summary().CashEur==300,
             "an omitted JSON monetary Amount is unknown, never a default zero commission");
-        var explicitZero=first with {Facts=new[]{f1 with {Commission=Leg(0,2000)}},BrokerCashEur=200};
+        var explicitZero=first with {Facts=new[]{f1 with {Commission=Leg(0,2000)}},BrokerCashEur=300};
         check(noSilentZero.ReconcileMoney(explicitZero).Adopted,
             "an explicitly evidenced zero commission remains distinct from an omitted amount");
         var before=session.Checkpoint();var repeated=session.ReconcileMoney(first);
         check(repeated.Adopted&&session.Checkpoint()==before,"same financial snapshot is idempotent");
-        var missingCost=Batch(new[]{f1,f2 with {Commission=null}},199.8m,6000);
+        var missingCost=Batch(new[]{f1,f2 with {Commission=null}},299.8m,6000);
         var rejected=session.ReconcileMoney(missingCost);
         check(!rejected.Adopted&&session.Checkpoint()==before,"unknown commission rejects entire recovery atomically");
         rejected=session.ReconcileMoney(Batch(new[]{f1,f2},999,6000));
         check(!rejected.Adopted&&session.Checkpoint()==before,"cash mismatch is not patched by a deposit or balancing entry");
-        rejected=session.ReconcileMoney(Batch(new[]{f1 with {Commission=Leg(.2m,2000)},f2},199.7m,6000));
+        rejected=session.ReconcileMoney(Batch(new[]{f1 with {Commission=Leg(.2m,2000)},f2},299.7m,6000));
         check(!rejected.Adopted&&session.Checkpoint()==before,"recovery cannot rewrite previously accepted monetary history");
-        var afterTwo=Batch(new[]{f1,f2},199.8m,6000);accepted=session.ReconcileMoney(afterTwo);
+        var afterTwo=Batch(new[]{f1,f2},299.8m,6000);accepted=session.ReconcileMoney(afterTwo);
         check(accepted.Adopted&&session.Ledger.Summary().CompleteRoundTrips==0,"split entries accumulate in one position, not two round trips");
         session=NativeFundedSession.Restore(session.Checkpoint(),account);
-        var partial=Batch(new[]{f1,f2,funding,close1},198.64m,6000);accepted=session.ReconcileMoney(partial);
+        var partial=Batch(new[]{f1,f2,funding,close1},298.64m,6000);accepted=session.ReconcileMoney(partial);
         check(accepted.Adopted&&accepted.RetainedLedger.CompleteRoundTrips==0&&accepted.RetainedLedger.OpenPositions==1,
             "cash funding and conversion costs survive restart and partial closing");
         var fragments=session.Ledger.ClosedFragments();
         check(fragments[0].SpreadEur is null&&fragments[0].SlippageEur is null,
             "broker realized price PNL cannot invent spread/slippage decomposition");
-        var final=Batch(all,200.51m,6000);accepted=session.ReconcileMoney(final);
+        var final=Batch(all,300.51m,6000);accepted=session.ReconcileMoney(final);
         // A completely proven broker history can reconstruct submitted
         // intent identities and the SAME monetary ledger after lost LocalStorage.
         // These positive history-completeness facts are synthetic assumptions.
@@ -78,15 +78,15 @@ internal static class MonetaryRecoveryChecks
                 SubmittedAt=intents.Single(i=>i.OrderId==o.OrderId).SubmittedAt
             }).ToArray()
         }};
-        var originalFunding=new BrokerNativeCashflow("deposit",500,"DEPOSIT",200m,200m,null);
+        var originalFunding=new BrokerNativeCashflow("deposit",500,"DEPOSIT",300m,300m,null);
         var restoredBroker=NativeFundedSession.RebuildFromProvenBrokerHistory(
             withSubmitted,new[]{originalFunding});
         check(restoredBroker.Adopted && restoredBroker.Recovered is not null &&
             restoredBroker.Monetary?.Adopted==true &&
-            restoredBroker.Recovered.Ledger.Summary().CashEur==200.51m &&
+            restoredBroker.Recovered.Ledger.Summary().CashEur==300.51m &&
             restoredBroker.Recovered.Ledger.Summary().CompleteRoundTrips==1 &&
             !restoredBroker.OrdersEnabled,
-            "positive native broker order clocks and complete monetary facts recover a continuous EUR200 book without local checkpoint");
+            "positive native broker order clocks and complete monetary facts recover a continuous EUR300 book without local checkpoint");
         check(restoredBroker.Recovered!.Intents.All(i=>i.IntentId.StartsWith("BROKER_CONFIRMED_ORDER/")),
             "recovered intent attribution comes from exact broker-native historical order identity");
         var partiallyFilledTerminal=withSubmitted with {
@@ -98,7 +98,7 @@ internal static class MonetaryRecoveryChecks
         };
         var partialRestart=NativeFundedSession.RebuildFromProvenBrokerHistory(
             partiallyFilledTerminal,new[]{originalFunding});
-        check(partialRestart.Adopted&&partialRestart.Recovered!.Ledger.Summary().CashEur==200.51m &&
+        check(partialRestart.Adopted&&partialRestart.Recovered!.Ledger.Summary().CashEur==300.51m &&
               partialRestart.Recovered.Ledger.Summary().CompleteRoundTrips==1,
             "positively canceled unfilled order remainder does not erase partial historical executions");
         var terminalZero=new BrokerOrderIdentity("no-fill","","unused","SYNTH",1,
@@ -110,7 +110,7 @@ internal static class MonetaryRecoveryChecks
         };
         var zeroRestart=NativeFundedSession.RebuildFromProvenBrokerHistory(
             withUnfilled,new[]{originalFunding});
-        check(zeroRestart.Adopted&&zeroRestart.Recovered!.Ledger.Summary().CashEur==200.51m &&
+        check(zeroRestart.Adopted&&zeroRestart.Recovered!.Ledger.Summary().CashEur==300.51m &&
               zeroRestart.Recovered.Intents.Any(i=>i.OrderId=="no-fill"),
             "affirmatively unfilled terminal broker order is retained without manufacturing an execution");
         check(!NativeFundedSession.RebuildFromProvenBrokerHistory(
@@ -124,7 +124,7 @@ internal static class MonetaryRecoveryChecks
             "missing submitted time is not replaced by a modeled execution clock");
         check(!NativeFundedSession.RebuildFromProvenBrokerHistory(
             withSubmitted,new[]{originalFunding,
-                new BrokerNativeCashflow("extra",1000,"DEPOSIT",20m,220m,null)}).Adopted,
+                new BrokerNativeCashflow("extra",1000,"DEPOSIT",20m,320m,null)}).Adopted,
             "unverified external capitalization prevents broker monetary restore");
         check(!NativeFundedSession.RebuildFromProvenBrokerHistory(
             withSubmitted with {CashflowHistoryComplete=false},
@@ -135,20 +135,20 @@ internal static class MonetaryRecoveryChecks
             new[]{originalFunding}).Adopted,
             "omitting historical entry execution cannot be patched from current balance");
         check(!NativeFundedSession.RebuildFromProvenBrokerHistory(
-            withSubmitted with {BrokerCashEur=201m},
+            withSubmitted with {BrokerCashEur=301m},
             new[]{originalFunding}).Adopted,
             "a broker cash mismatch rejects rebuilt execution history atomically");
         check(accepted.Adopted&&accepted.RetainedLedger.CompleteRoundTrips==1&&accepted.RetainedLedger.ClosedNetEur==.51m,
-            "full lifecycle cash equals200 plus net after commissions conversion and financing");
-        check(session.Observe(final.Snapshot,200.51m).Identity.UnresolvedIntents==0,
+            "full lifecycle cash equals300 plus net after commissions conversion and financing");
+        check(session.Observe(final.Snapshot,300.51m).Identity.UnresolvedIntents==0,
             "monetarily imported terminal executions no longer remain import-required");
         var checkpoint=session.Checkpoint();
         rejected=session.ReconcileMoney(final with {Facts=all.Skip(1).ToArray()});
         check(!rejected.Adopted&&session.Checkpoint()==checkpoint,"history truncation cannot drop an earlier entry fee or loss");
         rejected=session.ReconcileMoney(final with {Facts=Array.Empty<AttributedMoneyFact>(),FundingRecords=Array.Empty<ConfirmedFundingEvent>(),
-            BrokerCashEur=200,Snapshot=final.Snapshot with {Orders=Array.Empty<BrokerOrderIdentity>(),Deals=Array.Empty<BrokerDealIdentity>(),Positions=Array.Empty<BrokerPositionIdentity>()}});
+            BrokerCashEur=300,Snapshot=final.Snapshot with {Orders=Array.Empty<BrokerOrderIdentity>(),Deals=Array.Empty<BrokerDealIdentity>(),Positions=Array.Empty<BrokerPositionIdentity>()}});
         check(!rejected.Adopted&&session.Checkpoint()==checkpoint,
-            "even a fully truncated supposedly-complete broker snapshot cannot reset a previously losing journal to200");
+            "even a fully truncated supposedly-complete broker snapshot cannot reset a previously losing journal to300");
         rejected=session.ReconcileMoney(final with {Facts=all.Select(f=>f.EventId==f2.EventId?f with {Commission=Leg(.1m,3000,"USD",.9m,4000)}:f).ToArray()});
         check(!rejected.Adopted,"conversion observed after the monetary event cannot value an earlier debit");
         var unknown=new NativeFundedSession(account,intents:intents);
@@ -157,7 +157,7 @@ internal static class MonetaryRecoveryChecks
             "matching but stale broker cash cannot certify current financial reconciliation");
         check(!session.ReconcileMoney(final with {AdditionalExternalCashflowDetected=true}).Adopted,
             "external funding cannot be silently absorbed into the continuous owner capital");
-        // The initial200 and cash history here are TEST assumptions, not broker certificates.
+        // The initial300 and cash history here are TEST assumptions, not broker certificates.
         var restored=NativeFundedSession.Restore(checkpoint,account);
         check(restored.Ledger.Summary()==session.Ledger.Summary(),"v2 monetary state survives account-bound restore");
         bool modelFillBlocked=false;
@@ -165,7 +165,7 @@ internal static class MonetaryRecoveryChecks
         catch(InvalidOperationException){modelFillBlocked=true;}
         check(modelFillBlocked,"a recovered execution book cannot accept a modeled event as a real broker cash fact");
         // Two symbols share exactly one cash book; a partial account snapshot
-        // must never create a separate EUR200 wallet for the second position.
+        // must never create a separate EUR300 wallet for the second position.
         var aOpen=Fact("a-open","a-o","a-p","a-local","OPEN",1,1,2000,0,.1m);
         var bOpen=Fact("b-open","b-o","b-p","b-local","OPEN",-1,2,2500,0,.2m,price:20) with {Symbol="OTHER"};
         var aClose=Fact("a-close","a-c","a-p","a-local","CLOSE",-1,1,4000,-3,.1m,.01m,7);
@@ -181,15 +181,15 @@ internal static class MonetaryRecoveryChecks
             return new(account,"BROKER_EXECUTION_FACT",new(account,8000,0,8000,true,true,true,os,ds,ps),fs,cash,true,true,true,false,Array.Empty<ConfirmedFundingEvent>(),8000);
         }
         var joint=new NativeFundedSession(account,intents:jointIntents,journalContinuityProven:true);
-        var jointReport=joint.ReconcileMoney(Joint(2,199.7m));
-        check(jointReport.Adopted&&jointReport.RetainedLedger.OpenPositions==2&&jointReport.RetainedLedger.CashEur==199.7m,
-            "simultaneous symbols reserve their actual fee debits in one continuous200 EUR cash book");
-        joint=NativeFundedSession.Restore(joint.Checkpoint(),account);jointReport=joint.ReconcileMoney(Joint(3,196.59m));
+        var jointReport=joint.ReconcileMoney(Joint(2,299.7m));
+        check(jointReport.Adopted&&jointReport.RetainedLedger.OpenPositions==2&&jointReport.RetainedLedger.CashEur==299.7m,
+            "simultaneous symbols reserve their actual fee debits in one continuous300 EUR cash book");
+        joint=NativeFundedSession.Restore(joint.Checkpoint(),account);jointReport=joint.ReconcileMoney(Joint(3,296.59m));
         check(jointReport.Adopted&&jointReport.RetainedLedger.OpenPositions==1&&jointReport.RetainedLedger.CompleteRoundTrips==1,
             "closing one losing exposure leaves the other position and common cash intact after restart");
-        jointReport=joint.ReconcileMoney(Joint(4,198.37m));
+        jointReport=joint.ReconcileMoney(Joint(4,298.37m));
         check(jointReport.Adopted&&jointReport.RetainedLedger.CompleteRoundTrips==2&&jointReport.RetainedLedger.ClosedNetEur==-1.63m,
-            "the combined book reconciles to200 minus total economic loss, never summed separate wallets");
+            "the combined book reconciles to300 minus total economic loss, never summed separate wallets");
         // Old v1 native modeled checkpoints remain loadable without changing event IDs.
         var model=new NativeFundedLedger();
         var request=new LedgerEvent("old-request",1000,"REQUEST_OPEN","old-position","OLD",1,1,0,0,0,0,0,0,1000,"TEST",proof,Array.Empty<LedgerQuote>());
@@ -206,7 +206,7 @@ internal static class MonetaryRecoveryChecks
         string hash=Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(payload))).ToLowerInvariant();
         var legacy=JsonSerializer.Serialize(new {Payload=payload,Sha256=hash,MaximumStalenessMs=1000});
         var migrated=NativeFundedLedger.Restore(legacy);var preserved=migrated.Summary();migrated.Apply(fill);
-        check(migrated.Summary()==preserved && preserved.CashEur==199.9m && preserved.OpenPositions==1,
+        check(migrated.Summary()==preserved && preserved.CashEur==299.9m && preserved.OpenPositions==1,
             "nonempty v1 checkpoint migrates with cash positions pending IDs and duplicate-fill idempotence intact");
     }
 }

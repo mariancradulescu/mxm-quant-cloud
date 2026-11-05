@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 namespace Mxm.Core;
 
 // Source monetary amounts, never inferred from a changed account balance.
@@ -10,8 +11,14 @@ public sealed record AttributedMoneyFact(string AccountBinding,string Domain,str
     MonetaryLeg? ConversionFee,MonetaryLeg? Financing,string EvidenceHash);
 public sealed record ConfirmedFundingEvent(string RecordId,string PositionId,string Symbol,long At,decimal? Amount,string Currency,long AvailableAt,string EvidenceHash);
 public sealed record MoneyRecoveryBatch(string AccountBinding,string Domain,BrokerIdentitySnapshot Snapshot,
-    AttributedMoneyFact[] Facts,decimal? BrokerCashEur,bool InitialCapital200Proven,bool CashflowHistoryComplete,
-    bool FinancingHistoryComplete,bool AdditionalExternalCashflowDetected,ConfirmedFundingEvent[]? FundingRecords,long? BrokerCashObservedAt);
+    AttributedMoneyFact[] Facts,decimal? BrokerCashEur,bool InitialCapitalProven,bool CashflowHistoryComplete,
+    bool FinancingHistoryComplete,bool AdditionalExternalCashflowDetected,ConfirmedFundingEvent[]? FundingRecords,long? BrokerCashObservedAt)
+{
+    // Accept the original frozen EUR200 verification JSON *only* in its
+    // non-broker historical domain. Never treat it as EUR300 funding proof.
+    [JsonPropertyName("InitialCapital200Proven")]
+    public bool FrozenHistoricalInitialCapital200Proven {get;init;}
+}
 public sealed record MoneyRecoveryReport(bool Adopted,string[] Reasons,LedgerSummary RetainedLedger,
     decimal? ReconstructedCashEur,int ConfirmedExecutionFacts,int AppliedFundingFacts,bool PositionInventoryMatched,
     bool BrokerExecutionRecoveryCertified=false,bool GlobalDrawdownCertified=false,bool OrdersEnabled=false);
@@ -107,7 +114,10 @@ public sealed partial class NativeFundedSession
         var reasons=new List<string>();
         if(b.AccountBinding!=AccountBinding||b.Snapshot.AccountBinding!=AccountBinding)reasons.Add("ACCOUNT_BINDING_MISMATCH");
         if(b.Domain is not ("BROKER_EXECUTION_FACT" or "FROZEN_MODELED_SETTLEMENT")||b.Facts.Any(f=>f.Domain!=b.Domain||f.AccountBinding!=AccountBinding))reasons.Add("MONETARY_SOURCE_DOMAIN_MISMATCH");
-        if(!JournalContinuityProven||!b.InitialCapital200Proven||!b.CashflowHistoryComplete||!b.FinancingHistoryComplete||b.FundingRecords is null)
+        if(!JournalContinuityProven||
+           !(b.InitialCapitalProven ||
+             (b.Domain=="FROZEN_MODELED_SETTLEMENT" && b.FrozenHistoricalInitialCapital200Proven))||
+           !b.CashflowHistoryComplete||!b.FinancingHistoryComplete||b.FundingRecords is null)
             reasons.Add("JOURNAL_INITIAL_FUNDING_OR_CASHFLOW_HISTORY_UNPROVEN");
         if(b.AdditionalExternalCashflowDetected)reasons.Add("EXTERNAL_CASHFLOW_OUTSIDE_OWNER_BOOK");
         if(!b.Snapshot.InventoryStable||!b.Snapshot.OrdersComplete||!b.Snapshot.DealsComplete||b.BrokerCashEur is null)
@@ -142,7 +152,14 @@ public sealed partial class NativeFundedSession
             (b.FundingRecords??Array.Empty<ConfirmedFundingEvent>()).Any(r=>!facts.Any(f=>f.Kind=="FUNDING"&&f.DealId==r.RecordId)))reasons.Add("FUNDING_HISTORY_MISSING_OR_DUPLICATED");
         if(deals.Keys.Any(id=>!facts.Any(f=>(f.Kind is "OPEN" or "CLOSE")&&f.DealId==id)))reasons.Add("MISSING_MONETARY_FACT_FOR_CONFIRMED_EXECUTION");
         if(reasons.Count>0)return Reject();
-        var candidate=new NativeFundedLedger();
+        // The immutable EUR200 monetary receipt is reconstructed only in its
+        // explicitly historical, NON-BROKER model domain. Prospective native
+        // and authenticated broker books always reconstruct from EUR300.
+        var candidate=b.Domain=="FROZEN_MODELED_SETTLEMENT" &&
+            b.FrozenHistoricalInitialCapital200Proven &&
+            Ledger.MonetaryDomain=="FROZEN_MODELED_SETTLEMENT"
+            ? NativeFundedLedger.ForFrozenHistorical200Receipt()
+            : new NativeFundedLedger();
         try {
             // Explicit sequence resolves equal timestamps; no favorable price/order search.
             var ordered=facts.OrderBy(f=>f.At).ThenBy(f=>f.Sequence).ToArray();

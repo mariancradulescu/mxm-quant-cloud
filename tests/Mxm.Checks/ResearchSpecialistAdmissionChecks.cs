@@ -5,8 +5,8 @@ static class ResearchSpecialistAdmissionChecks
     public static void Run(Action<bool,string> check)
     {
         const long clock=100;
-        var account=new ScenarioSizingInputs(200,200,200,1,1,1,10,1,2,0);
-        var grid=new AdaptiveRiskInputs(200,0,200,1,1,1,10,0,false,false,2,0);
+        var account=new ScenarioSizingInputs(300,300,300,1,1,1,10,1,2,0);
+        var grid=new AdaptiveRiskInputs(300,0,300,1,1,1,10,0,false,false,2,0);
         var states=new[]{
             new PortfolioScenario("A",20,true,0,0,0,0),
             new PortfolioScenario("B",20,true,0,0,0,0)};
@@ -62,7 +62,7 @@ static class ResearchSpecialistAdmissionChecks
         check(wrongHorizon.NativeAllocation.Allocations.Length==0 &&
               wrongHorizon.NativeAllocation.Declined.Single().Reason=="SPECIALIST_HORIZON_SCENARIO_MISMATCH",
               "specialist holding time must match common scenario horizon when declared");
-        // The original EUR200 is not a permanent margin ceiling once the
+        // The original EUR300 is not a permanent margin ceiling once the
         // same continuous capital has earned more; current free margin still rules.
         var grownGrid=grid with {MarginPerUnitEur=210m};
         var grownOpp=opp with {VolumeGrid=grownGrid};
@@ -73,7 +73,7 @@ static class ResearchSpecialistAdmissionChecks
         var grown=ResearchSpecialistAdmission.Estimate(grownRequest,new[]{grownEvidence});
         check(grown.NativeAllocation.Allocations.Length==1 &&
               grown.NativeAllocation.ReservedMarginEur==210m,
-              "continuous profitable capital may finance a broker minimum margin above initial EUR200");
+              "continuous profitable capital may finance a broker minimum margin above initial EUR300");
         var lowFree=ResearchSpecialistAdmission.Estimate(grownRequest with {
             Account=grownRequest.Account with {FreeMarginEur=200m}},new[]{grownEvidence});
         check(lowFree.NativeAllocation.Allocations.Length==0 &&

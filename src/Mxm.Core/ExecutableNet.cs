@@ -15,10 +15,10 @@ public sealed record ExecutableQuoteEvidence(
     decimal? RequiredMarginEur, decimal? FreeMarginEur,
     string? AuthenticatedSourceSha256, bool AccountIdentityBound,
     bool BothQuoteEventsVerified, bool CostsAndBrokerContractBound,
-    bool Original200EurNoDepositsReconciled);
+    bool Original300EurNoDepositsReconciled);
 
 public sealed record ExecutableNetObservation(
-    bool FullyPriced, bool FundableAt200Eur, decimal? QuoteGrossEur,
+    bool FullyPriced, bool FundableWithAvailableMargin, decimal? QuoteGrossEur,
     decimal? AdverseNetLowerEur, decimal? TotalCostUpperEur,
     decimal? MarginAfterEur, string Verdict, bool EconomicQualified);
 
@@ -34,7 +34,7 @@ public static class ExecutableNet
             !e.BothQuoteEventsVerified)
             return Refuse("AUTHENTIC_ENTRY_EXIT_QUOTES_NOT_BOUND");
         if(!e.CostsAndBrokerContractBound ||
-           !e.Original200EurNoDepositsReconciled)
+           !e.Original300EurNoDepositsReconciled)
             return Refuse("BROKER_COST_OR_FUNDED_CAPITAL_NOT_RECONCILED");
         if(e.EntryUtc.Kind!=DateTimeKind.Utc ||
            e.ExitUtc.Kind!=DateTimeKind.Utc ||
@@ -66,11 +66,11 @@ public static class ExecutableNet
         var conservativeNet=gross-allCosts;
         // Capital feasibility is only a necessary check; free-margin
         // margin stress, concurrent risk and global DD require separate proof.
-        var fundable=margin<=200m && margin<=free;
+        var fundable=margin<=free;
         return new(true,fundable,gross,conservativeNet,allCosts,
             free-margin,
             fundable ? "PRICED_QUOTE_SCENARIO_NO_BROKER_FILL_OR_NET_QUALIFICATION" :
-                       "REAL_MINIMUM_MARGIN_UNFUNDABLE_AT_200_EUR",
+                       "CURRENT_FREE_MARGIN_INSUFFICIENT",
             false);
     }
 }

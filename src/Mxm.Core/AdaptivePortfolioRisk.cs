@@ -47,7 +47,11 @@ public static class AdaptivePortfolioRisk
     {
         var s=scenarios.ToArray();
         AdaptiveRiskChoice Deny(string why)=>new(0,0,0,a.EquityEur,0,null,0,why,false);
-        if(a.EquityEur<=0 || a.PeakReferenceEur<200 || a.PeakReferenceEur<a.EquityEur || a.FreeMarginEur<0 ||
+        if(a.EquityEur<=0 || // This numerical kernel also supports immutable historical EUR200
+           // conditional research fixtures. Prospectively founded EUR300
+           // identity is enforced at NativeFundedLedger / broker recovery,
+           // not as a permanent floor on account equity or scenario states.
+           a.PeakReferenceEur<=0 || a.PeakReferenceEur<a.EquityEur || a.FreeMarginEur<0 ||
            a.MinimumUnits<=0 || a.StepUnits<=0 || a.MaximumUnits<a.MinimumUnits || a.MarginPerUnitEur<=0 ||
            a.MarginCoverageScenarioRatio<0 || a.EffectiveIndependentBlocks<2 || a.UncertaintyMultiplier<0 || s.Length<2 ||
            s.Count(x=>x.InEstimationSample)<2 || a.EffectiveIndependentBlocks>s.Count(x=>x.InEstimationSample) ||

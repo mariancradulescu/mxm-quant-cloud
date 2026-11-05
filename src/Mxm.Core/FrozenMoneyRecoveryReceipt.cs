@@ -8,7 +8,9 @@ public static class FrozenMoneyRecoveryReceipt
     {
         return cases.Select(c=>{
             if(c.Batches.Any(b=>b.Domain!="FROZEN_MODELED_SETTLEMENT"))throw new ArgumentException("RECEIPT_SOURCE_NOT_FROZEN_MODELED_FACTS");
-            var session=new NativeFundedSession(c.AccountBinding,intents:c.Intents,journalContinuityProven:true);
+            var session=new NativeFundedSession(c.AccountBinding,
+                ledger:NativeFundedLedger.ForFrozenHistorical200Receipt(),
+                intents:c.Intents,journalContinuityProven:true);
             var receipts=new List<MoneyRecoveryReport>();
             foreach(var b in c.Batches)
             {

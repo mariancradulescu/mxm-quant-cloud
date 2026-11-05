@@ -29,7 +29,7 @@ static class FundedDecisionCycleChecks
         var rejected=observedOnly.DecideResearch(noEdge);
         check(rejected.Selection.Allocations.Length==0 &&
             rejected.Selection.Declined.Single().Reason=="SPECIALIST_NO_PREDICTIVE_BENCHMARK_SUPPORT" &&
-            rejected.Ledger.PendingIntents==0 && rejected.Ledger.CashEur==200m,
+            rejected.Ledger.PendingIntents==0 && rejected.Ledger.CashEur==300m,
             "economic benchmark rejection reaches common native ledger with zero new intents and unchanged cash");
         observedOnly=NativeFundedSession.Restore(session.Checkpoint(),session.AccountBinding);
         var missingFunding=D("real-gate-missing-financing",1000,new[]{scout}) with {
@@ -56,9 +56,9 @@ static class FundedDecisionCycleChecks
             "prospective path rejects missing EUR economic evidence without changing funded state");
         var conditional=observedOnly.DecideProspective(economic);
         check(conditional.Selection.Allocations.Length==1 &&
-            conditional.Ledger.PendingIntents==1 && conditional.Ledger.CashEur==200m &&
+            conditional.Ledger.PendingIntents==1 && conditional.Ledger.CashEur==300m &&
             !conditional.OrdersEnabled && !conditional.Qualified,
-            "supported conditional specialist shares existing EUR200 ledger and creates request only, not fill");
+            "supported conditional specialist shares existing EUR300 ledger and creates request only, not fill");
         // Same specialist-admitted ID through the existing one-capital modeled
         // ledger: entry BID/ASK, per-side commissions, then complete close.
         // No broker fill or real profit is implied by synthetic execution facts.
@@ -66,7 +66,7 @@ static class FundedDecisionCycleChecks
         pricedSession.ApplyResearchFacts(new[]{
             E("specialist-fill",2000,"OPEN_FILL",scout.Id,"X",price:10.01m,
                 quotes:new[]{Q("X",2000)})});
-        check(pricedSession.Ledger.Summary().CashEur==199.9m &&
+        check(pricedSession.Ledger.Summary().CashEur==299.9m &&
             pricedSession.Ledger.Summary().OpenPositions==1,
             "one specialist-admitted modeled fill debits entry fee exactly once");
         pricedSession.ApplyResearchFacts(new[]{
@@ -75,10 +75,10 @@ static class FundedDecisionCycleChecks
             E("specialist-close-fill",4000,"CLOSE_FILL",scout.Id,"X",price:11m,
                 quotes:new[]{Q("X",4000,11m)})});
         var settled=pricedSession.Ledger.Summary();
-        check(settled.CashEur==200.79m && settled.ClosedNetEur==.79m &&
+        check(settled.CashEur==300.79m && settled.ClosedNetEur==.79m &&
             settled.CompleteRoundTrips==1 && settled.OpenPositions==0 &&
             settled.PendingIntents==0 && !settled.BrokerStateReconciled && !settled.OrdersEnabled,
-            "specialist forecast through common allocation, modeled fill and close reconciles EUR200 once without broker qualification");
+            "specialist forecast through common allocation, modeled fill and close reconciles EUR300 once without broker qualification");
         observedOnly=NativeFundedSession.Restore(session.Checkpoint(),session.AccountBinding);
         var negative=observedOnly.DecideResearch(economic with {Id="real-gate-negative-gross",
             SpecialistEvidence=new[]{economic.SpecialistEvidence![0] with {GrossAboveBenchmarkEur=-.2m}}});
@@ -92,8 +92,8 @@ static class FundedDecisionCycleChecks
         var originalHash=Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(
             System.Text.Encoding.UTF8.GetBytes(originalJson))).ToLowerInvariant();
         check(first.InputHash==originalHash,"legacy native research decision hash stays unchanged without specialist evidence");
-        check(first.Selection.Allocations.Length==2 && first.Ledger.CashEur==200 && first.Ledger.PendingIntents==2 && first.PendingMarginReservedEur==40,
-            "native selector creates two financed intents on one EUR200 ledger without inventing fills");
+        check(first.Selection.Allocations.Length==2 && first.Ledger.CashEur==300 && first.Ledger.PendingIntents==2 && first.PendingMarginReservedEur==40,
+            "native selector creates two financed intents on one EUR300 ledger without inventing fills");
         session=NativeFundedSession.Restore(session.Checkpoint(),session.AccountBinding);
         check(JsonSerializer.Serialize(session.DecideResearch(decision))==JsonSerializer.Serialize(first) && session.Ledger.Summary().PendingIntents==2,
             "native decision receipt survives restart and deduplicates before reranking");
@@ -109,7 +109,7 @@ static class FundedDecisionCycleChecks
         check(atomic && session.Ledger.Checkpoint()==before,"invalid second fill rolls back entire native money batch");
         session.ApplyResearchFacts(new[]{E("fx",2000,"OPEN_FILL","px","X",price:10.01m,quotes:new[]{Q("X",2000),Q("Y",2000)}),
             E("fy",2000,"OPEN_FILL","py","Y",price:10.01m)});
-        check(session.Ledger.Summary().OpenPositions==2 && session.Ledger.Summary().CashEur==199.8m,
+        check(session.Ledger.Summary().OpenPositions==2 && session.Ledger.Summary().CashEur==299.8m,
             "both actual model fills enter the same existing native ledger and debit real modeled fees once");
         ResearchExposureScenarios Exposure(string pid,string s)=>new(pid,s,1,1,
             empty.Select(x=>x with {LossEur=1,MarginEur=20}).ToArray());
@@ -128,8 +128,50 @@ static class FundedDecisionCycleChecks
             E("closeX",6000,"REQUEST_CLOSE","px","X"),E("closeY",6000,"REQUEST_CLOSE","py","Y"),
             E("cx",7000,"CLOSE_FILL","px","X",price:11,quotes:new[]{Q("X",7000,11),Q("Y",7000,11)}),
             E("cy",7000,"CLOSE_FILL","py","Y",price:11)});
-        check(session.Ledger.Summary().CompleteRoundTrips==2 && session.Ledger.Summary().CashEur==201.58m &&
+        check(session.Ledger.Summary().CompleteRoundTrips==2 && session.Ledger.Summary().CashEur==301.58m &&
             !resumed.OrdersEnabled && !resumed.Qualified,
-            "full native selector-to-close lifecycle reconciles one EUR200 capital without trading qualification");
+            "full native selector-to-close lifecycle reconciles one EUR300 capital without trading qualification");
+
+        // The model starts once at EUR300. A loss, restart and repeated
+        // confirmed close cannot create cash, cost credit or a second trip.
+        var lossBook=new NativeFundedLedger();
+        lossBook.Apply(E("loss-open-request",1000,"REQUEST_OPEN","loss","X"));
+        lossBook.Apply(E("loss-open-fill",2000,"OPEN_FILL","loss","X",price:10.01m,
+            quotes:new[]{Q("X",2000)}));
+        lossBook=NativeFundedLedger.Restore(lossBook.Checkpoint());
+        lossBook.Apply(E("loss-close-request",3000,"REQUEST_CLOSE","loss","X"));
+        var lossFill=E("loss-close-fill",4000,"CLOSE_FILL","loss","X",price:9m,
+            quotes:new[]{Q("X",4000,9m)});
+        lossBook.Apply(lossFill);
+        var lost=lossBook.Summary();
+        lossBook=NativeFundedLedger.Restore(lossBook.Checkpoint());
+        lossBook.Apply(lossFill);
+        check(lost==lossBook.Summary() && lost.CashEur==298.79m &&
+            lost.ClosedNetEur==-1.21m && lost.CompleteRoundTrips==1 &&
+            lost.OpenPositions==0 && lost.PendingIntents==0,
+            "EUR300 one-capital modeled loss survives restart with no duplicated fill, fee or trip");
+        var settledCheckpoint=session.Checkpoint();
+        session=NativeFundedSession.Restore(settledCheckpoint,session.AccountBinding);
+        check(session.Ledger.Summary().CashEur==301.58m &&
+            session.Ledger.Summary().CompleteRoundTrips==2 &&
+            session.Ledger.Summary().OpenPositions==0,
+            "simultaneous profitable modeled round trips retain their single EUR300 origin through restart");
+        // A cryptographically intact but old-founded ledger cannot be
+        // reclassified as a EUR300 account by merely restoring its envelope.
+        using var parsed=JsonDocument.Parse(lossBook.Checkpoint());
+        var rawPayload=System.Text.Json.Nodes.JsonNode.Parse(
+            parsed.RootElement.GetProperty("Payload").GetString()!)!;
+        rawPayload["InitialCashEur"]=200m;
+        var oldPayload=rawPayload.ToJsonString();
+        var oldHash=Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(
+            System.Text.Encoding.UTF8.GetBytes(oldPayload))).ToLowerInvariant();
+        var oldCheckpoint=JsonSerializer.Serialize(new {
+            Payload=oldPayload,Sha256=oldHash,MaximumStalenessMs=1000L});
+        bool oldCapitalRejected=false;
+        try{NativeFundedLedger.Restore(oldCheckpoint);}catch(ArgumentException ex){
+            oldCapitalRejected=ex.Message=="NATIVE_LEDGER_CHECKPOINT_VERSION_OR_CAPITAL";}
+        check(oldCapitalRejected,
+            "an earlier EUR200 checkpoint cannot be adopted as prospectively founded EUR300 capital");
+
     }
 }
