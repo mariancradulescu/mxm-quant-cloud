@@ -161,7 +161,8 @@ if (args.Length == 3 && args[2] == "--estimate-portfolio-opportunities-batch")
         if(requests.Length>5 || requests.Any(r=>
             !(r.Scope=="IPF1_MULTI_HORIZON_CONDITIONAL_RESEARCH_NOT_CERTIFIED" ||
               r.Scope=="RCP1_GLOBAL_RISK_DELAYED_FILL_CONDITIONAL_NOT_CERTIFIED" ||
-              r.Scope=="TWC1_CALENDAR_CONDITIONAL_RESEARCH_NOT_CERTIFIED") ||
+              r.Scope=="TWC1_CALENDAR_CONDITIONAL_RESEARCH_NOT_CERTIFIED" ||
+              r.Scope=="PVE2_DAILY_PULLBACK_EUR300_CONDITIONAL_ONLY_NOT_CERTIFIED") ||
             r.CommonHorizonMinutes!=0))throw new ArgumentException();
         File.WriteAllText(args[1],JsonSerializer.Serialize(requests.Select(Mxm.Core.OpportunityOrchestrator.Estimate).ToArray()));
         return 0;
