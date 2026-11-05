@@ -81,7 +81,6 @@ def measure(rows):
     weeks=sorted(by)
     gross=[mean(z["signedBps"] for z in by[w]) for w in weeks]
     delta=[mean(z["signedBps"]-z["momentumBps"] for z in by[w]) for w in weeks]
-    brier=mean((.55 if z["side"]>0 else .45 - 0)**2 for z in []) if False else None
     # Non-fitted, conservative 0.55/0.45 probability with neutral Brier .25.
     br=mean(((.55 if z["side"]>0 else .45)-(1 if z["returnBps"]>0 else 0))**2 for z in rows)
     return dict(n=len(rows),activeWeeks=len(weeks),grossMeanBps=round(mean(z["signedBps"] for z in rows),6),
@@ -99,7 +98,7 @@ def score(bars,p,cost):
     rawCoverage={}
     for s in p["symbols"]:
         rows=series[s];v=views[s]
-        candidates=[t for t in v["observed"] if t%p["features"]["decisionMinutes"]//1==0] if False else [
+        candidates=[
             t for t in v["observed"] if t%(p["features"]["decisionMinutes"]*60000)==0 and p["phase"]["start"]<=t<p["phase"]["end"]]
         rawCoverage[s]=dict(m5Bars=len(rows),decisionClocks=len(candidates),
             h1Observed=sum(x[5]==12 for x in v["h"].values()))
@@ -154,8 +153,7 @@ def score(bars,p,cost):
         if phaseName!="exposed_audit" or (s,fam,h) not in selected:continue
         for z in rows:
             offers[z["t"]].append(dict(symbol=s,family=fam,horizon=h,side=z["side"],
-                predBps=abs(tests[0]["selection"]["grossMeanBps"]) if False else 0.,
-                knownAt=z["t"],sourceSignedReturnProxyBps=z["signedBps"]))
+                predBps=0.,knownAt=z["t"]))
     # Pre-audit selection expected value ONLY, not the future realized label.
     means={(z["symbol"],z["family"],z["horizonMinutes"]):z["selection"]["grossMeanBps"]
         for z in tests if z["selectionPass"]}
