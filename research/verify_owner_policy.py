@@ -171,6 +171,32 @@ def check():
     assert not ies1['economicAdmission']['noIndependentConfirmation'] is False
     assert 'ResearchSpecialistAdmission.Estimate' in Path('src/Mxm.Core/NativeFundedDecisionCycle.cs').read_text()
 
+    # PVE1 is an actual authenticated OHLCV *negative* test with historical
+    # exposure. Preserve its original result hash and close exact; never
+    # reinterpret the modeled unchanged EUR300 book as broker-funded NET.
+    pve = json.loads(Path('docs/PVE1_AUTHENTIC_RESULT.json').read_text())
+    pve_registered = next(s for s in r['prospectiveStudies'] if s['id'] == 'PVE1')
+    assert pve_registered['originalReceiptSha256'] == r['frozenFileSha256']['docs/PVE1_AUTHENTIC_RESULT.json']
+    assert pve_registered['protocolSha256'] == r['frozenFileSha256']['research/pve1_protocol.json'] == pve['protocolSha256']
+    assert pve_registered['originalPublicResultSha256'] == pve['originalPublicResultSha256']
+    assert pve_registered['executionRunId'] == pve['originalGitHubRunId'] == 42022439033
+    assert pve['originalPublicArtifactId'] == 13412367214
+    assert pve['originalRawAuthenticationsAllPassed'] and pve['originalClosedModelsCalled'] == 0
+    assert pve['sourceM5Bars'] == 836087 and pve['sourceInstruments'] == 12
+    assert pve['predeclaredTests'] == 48 and len(pve['horizonMinutes']) == 2
+    assert pve['selectionGrossEpisodesAcrossTests'] == 468
+    assert pve['minimumSelectionGrossP'] > pve['bonferroniAlpha']
+    assert pve['selectionSupported'] == pve_registered['selectionSupported'] == []
+    assert pve['modeledBookInitialEur'] == pve['modeledBookFinalEur'] == 300
+    assert pve['modeledBookNetEur'] == 0 and pve['modeledCompleteRoundTrips'] == 0
+    assert pve['all13ExposedEligibleWeeksHaveZeroRoundTrips']
+    assert pve['fundedBrokerNetEur'] is None and pve['realBrokerCapital300Proven'] is False
+    assert pve['historicalCalendarGloballyExposed'] and pve['independentConfirmation'] is False
+    assert pve['continuousGlobalDrawdownCertified'] is False and pve['hard21Proven'] is False
+    assert pve_registered['closedExactNoRetuning'] and pve_registered['followupCandidates'] == []
+    assert pve['ordersSubmitted'] == pve['brokerRequests'] == 0 and pve['cloudActivated'] is False
+    assert pve['originalResultsChanged'] is False and pve['tradingQualified'] is False
+
     print('PASS OWNER v2.0 contract, frozen evidence, native funding and no-order boundary; no NET qualification')
 
 
