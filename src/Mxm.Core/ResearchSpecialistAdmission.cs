@@ -30,6 +30,10 @@ public static class ResearchSpecialistAdmission
         if(!e.AuthenticCausalSource || !e.ValidBidAsk || !e.CompleteCurrentContractFxAndMargin)
             return Block("SPECIALIST_BROKER_QUOTE_CONTRACT_FX_UNKNOWN");
         if(!e.SupportedVsBenchmark)return Block("SPECIALIST_NO_PREDICTIVE_BENCHMARK_SUPPORT");
+        // A negative or zero gross excess return is a predictive failure, not
+        // a negative *cost*. No missing financing assumption can rescue it.
+        if(e.GrossAboveBenchmarkEur is decimal gross && gross<=0m)
+            return Block("SPECIALIST_NONPOSITIVE_GROSS_EDGE");
         decimal?[] values={e.GrossAboveBenchmarkEur,e.PredictionUncertaintyEur,
             e.ObservedOneRoundTripSpreadEur,e.EntryFeeEur,e.ExitFeeEur,
             e.ConversionFeeEur,e.SlippageEur,e.FinancingEur,e.CurrentMinMarginEur};

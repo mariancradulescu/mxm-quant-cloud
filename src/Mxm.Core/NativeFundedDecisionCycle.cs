@@ -8,7 +8,8 @@ public sealed record ResearchExposureScenarios(string PositionId,string Symbol,i
 public sealed record ResearchEntryTerms(string OpportunityId,long LatencyMs,decimal SlippagePerSide,string EvidenceHash);
 public sealed record NativeResearchDecision(string Id,long Clock,ScenarioSizingInputs Sizing,
     PortfolioScenario[] EmptyStates,EconomicOpportunity[] Opportunities,
-    ResearchExposureScenarios[] Exposure,ResearchEntryTerms[] EntryTerms,string EvidenceHash);
+    ResearchExposureScenarios[] Exposure,ResearchEntryTerms[] EntryTerms,string EvidenceHash,
+    SpecialistEuroEvidence[]? SpecialistEvidence=null);
 public sealed record NativeResearchDecisionReceipt(string InputHash,OrchestrationResult Selection,
     LedgerSummary Ledger,decimal PendingMarginReservedEur,string Status,
     bool Qualified=false,bool OrdersEnabled=false);
@@ -38,7 +39,13 @@ public sealed partial class NativeFundedSession
 
     public NativeResearchDecisionReceipt DecideResearch(NativeResearchDecision d)
     {
-        string hash=Hash(JsonSerializer.Serialize(d));
+        // Null specialist evidence retains the historical exact decision hash format.
+        // Existing closed/legacy development receipts must not be invalidated by
+        // adding this prospective, strictly optional evidence gate.
+        string hash=Hash(d.SpecialistEvidence is null ?
+            JsonSerializer.Serialize(new {d.Id,d.Clock,d.Sizing,d.EmptyStates,
+                d.Opportunities,d.Exposure,d.EntryTerms,d.EvidenceHash}) :
+            JsonSerializer.Serialize(d));
         if(ResearchDecisions.TryGetValue(d.Id,out var previous))
         {
             if(previous.InputHash!=hash)throw new ArgumentException("CONFLICTING_NATIVE_RESEARCH_DECISION");
@@ -104,9 +111,25 @@ public sealed partial class NativeFundedSession
         var offered=d.Opportunities.Except(blocked).ToArray();
         var account=d.Sizing with {EquityEur=equity,FreeMarginEur=free-reserved,
             PeakReferenceEur=Math.Max(summary.ObservedPeakEur,equity)};
-        var selection=OpportunityOrchestrator.Estimate(new(
-            "NATIVE_FUNDED_CYCLE_DEVELOPMENT_NOT_CERTIFIED",0,d.Clock,account,states,offered,true,
-            offered.Select(o=>o.Id).ToArray()));
+        var request=new ResearchOrchestrationRequest(
+            "NATIVE_FUNDED_CYCLE_DEVELOPMENT_NOT_CERTIFIED",0,d.Clock,account,states,
+            offered,true,offered.Select(o=>o.Id).ToArray());
+        // Legacy conditional replay remains byte-for-byte decision-compatible.
+        // New multi-specialist research passes cost, causal benchmark and EUR
+        // uncertainty through the gate BEFORE the SAME allocator and ledger.
+        // No direct deployment, trading or second capital book is possible.
+        OrchestrationResult selection;
+        if(d.SpecialistEvidence is null)
+            selection=OpportunityOrchestrator.Estimate(request);
+        else
+        {
+            if(d.SpecialistEvidence.Length!=d.Opportunities.Length ||
+               d.SpecialistEvidence.Select(x=>x.OpportunityId).Distinct(StringComparer.Ordinal).Count()!=d.SpecialistEvidence.Length ||
+               d.Opportunities.Any(o=>!d.SpecialistEvidence.Any(e=>e.OpportunityId==o.Id)))
+                throw new ArgumentException("NATIVE_SPECIALIST_EVIDENCE_SET_MISMATCH");
+            var relevant=d.SpecialistEvidence.Where(e=>offered.Any(o=>o.Id==e.OpportunityId)).ToArray();
+            selection=ResearchSpecialistAdmission.Estimate(request,relevant).NativeAllocation;
+        }
         selection=selection with {Declined=selection.Declined.Concat(blocked.Select(o=>
             new OpportunityAllocation(o.Id,0,0,0,"NATIVE_RESEARCH_SYMBOL_HELD_OR_PENDING"))).ToArray()};
         var candidate=NativeFundedLedger.Restore(Ledger.Checkpoint());

@@ -356,3 +356,32 @@ execution, demo order or Cloud activation is claimed here. Current Cloud
 remains Linux-based and accepts only suitable compile-time dependencies.
 Continuous floating-equity drawdown, true independent NET and system HARD21
 are not demonstrated by IES1 or this integration.
+
+## Post-IES1 native specialist/session integration (no trading)
+
+IES1 original run 41991415344 is conserved by SHA-pinned
+`docs/IES1_AUTHENTIC_EXPOSED_RECEIPT.json`, with complete original results
+retained unchanged as Actions artifact 13397519721. Six source-exposed
+M5 instruments, 78/108 authenticated historical quote/captured-current-contract
+cost contexts and 8,747 complete selection-phase causal sign pairs were
+observed; none of the six mean directional gross results supports the
+predeclared benchmark. No model was selected, repriced or financed.
+
+The previous `ResearchSpecialistAdmission` read-only screening class is now
+**actually invoked** by `NativeFundedSession.DecideResearch` whenever a
+prospective `NativeResearchDecision` supplies an aligned, complete
+`SpecialistEuroEvidence[]`. Only opportunities clearing causal benchmark,
+known-cost EUR uncertainty, observed current minimum-volume margin and
+contract/FX evidence are forwarded to the existing
+`OpportunityOrchestrator.Estimate`. Successful conditional selections enter
+the **same** `NativeFundedLedger` as pending modeled intents, never as
+invented fills or authorized orders. Unpriced funding and negative gross
+forecasts leave the book and cash untouched.
+
+Earlier closed research and stored native decision identities preserve their
+legacy null-evidence JSON hash; prospective specialist decisions bind the
+new evidence in their idempotency hash. C# integration checks cover both
+branches plus prospective source/economic rejection. None of these tests
+certifies independent NET, historical all-in costs, 12-month unexposed
+confirmation, broker execution, systemic HARD21 or continuously bounded
+floating-equity drawdown. No new infrastructure or second allocator exists.
