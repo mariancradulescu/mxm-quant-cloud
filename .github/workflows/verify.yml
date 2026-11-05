@@ -1849,6 +1849,7 @@ jobs:
     # One shared data/fee/causal-benchmark diagnostic, NOT any frozen model.
     # Exactly one signed OWNER main intent, never pull requests or branch pushes.
     if: >-
+      needs.verify.result == 'success' &&
       github.ref == 'refs/heads/main' &&
       github.actor == 'mariancradulescu' &&
       github.event_name == 'push' &&
