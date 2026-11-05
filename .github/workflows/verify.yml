@@ -1984,8 +1984,9 @@ jobs:
         with:
           dotnet-version: 8.0.x
       - run: python -m pip install -r research/requirements.txt
-      - run: python -m unittest research.test_pve2 -v
       - run: dotnet build src/Mxm.Replay -c Release
+      - run: test -s src/Mxm.Replay/bin/Release/net8.0/Mxm.Replay.dll
+      - run: python -m unittest research.test_pve2 -v
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: sealed-source
