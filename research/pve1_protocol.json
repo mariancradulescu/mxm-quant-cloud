@@ -1,0 +1,104 @@
+{
+  "schema": "mxm-pve1-causal-ohlcv-v1",
+  "id": "PVE1",
+  "status": "PREDECLARED_UNSCORED",
+  "authority": "docs/OWNER_SPEC.md OWNER v2.0 amended 2026-11-05",
+  "premise": "Two fixed, falsifiable M5-to-H4 OHLCV path hypotheses across all twelve existing authenticated Pepperstone annual M5 sources: (1) efficient high-activity four-hour price acceptance persists, (2) high-activity inefficient four-hour path absorbs a late one-hour displacement and reverses. Not a replay of previous volume-dislocation, session-wick, calendar, range-breakout or IPF1 fitted forecasts.",
+  "sources": [
+    {
+      "folder": "bdp-source",
+      "run": 41724643418,
+      "hash": "e47ba7204ca7e07e7bb523ede8a8171f49b216cad09914142ed548839660a370",
+      "schema": "mxm-bdp1-source-v1",
+      "protocol": "research/portfolio_discovery_protocol.json"
+    },
+    {
+      "folder": "aip-source",
+      "run": 41735441128,
+      "hash": "fa684ca1de58c6d1e8bdee410834855d05389af0c0ae4523b095367dce0e5331",
+      "schema": "mxm-aip1-source-v1",
+      "protocol": "research/auction_inventory_protocol.json"
+    }
+  ],
+  "symbols": [
+    "EURUSD",
+    "GBPUSD",
+    "USDJPY",
+    "AUDUSD",
+    "USDCAD",
+    "XAUUSD",
+    "US500",
+    "NAS100",
+    "GER40",
+    "UK100",
+    "AUS200",
+    "JPN225"
+  ],
+  "features": {
+    "decisionMinutes": 240,
+    "entryDelayMinutes": 5,
+    "strictM5WindowCloses": 49,
+    "priorCompletedHourlyBaseline": 20,
+    "priorHourlyMaxAgeDays": 7,
+    "fourHourReturnBpsMin": 8,
+    "oneHourDisplacementBpsMin": 4,
+    "trendEfficiencyMin": 0.62,
+    "trendLastHourActivityRatioMin": 1.1,
+    "absorptionEfficiencyMax": 0.22,
+    "absorptionLastHourActivityRatioMin": 1.4,
+    "fourHourPricePath": "log close returns for exact preceding 48 M5 intervals; no forward fill",
+    "M15": "three completed M5 closes, for causal feature provenance and integrity",
+    "H1": "twelve complete M5 bars, last-hour return and tick-volume sum",
+    "H4": "48 consecutive M5 intervals, signed return, absolute path efficiency",
+    "D1": "observed historical 24h coverage only, not a mandatory bar or fitted signal",
+    "activityBaseline": "prior 20 fully observed H1 tick-volume totals strictly before the four-hour feature interval, last seven days, median; no zero-volume imputation"
+  },
+  "families": [
+    "VOLUME_EFFICIENT_ACCEPTANCE",
+    "VOLUME_ABSORPTION_REVERSAL"
+  ],
+  "horizonsMinutes": [
+    60,
+    240
+  ],
+  "phase": {
+    "start": 1762128000000,
+    "developmentEnd": 1777852800000,
+    "selectionEnd": 1785715200000,
+    "end": 1793577600000,
+    "calendar": "26w development,13w selection,13w exposed audit; audit is globally exposed, not independent",
+    "eligibility": "only thirteen ex-ante complete exposed audit weeks count for conditional prospectively gated portfolio; never apply HARD21 per candidate"
+  },
+  "benchmarks": [
+    "ZERO_DRIFT",
+    "SIGNED_PRECEDING_4H_MOMENTUM_AT_MATCHED_DECISION_CLOCKS"
+  ],
+  "score": {
+    "multiplicity": "48 fixed symbol-family-horizon tests; one-sided weekly-block Gaussian p with Bonferroni alpha=0.05/48 and >=8 distinct selection calendar weeks; report all tests including missing/negative",
+    "maturation": "no labels crossing phase boundaries; entry is next M5 close and exit exact horizon after entry, unknown remains missing",
+    "gate": "selection signed mean gross >0 and improvement vs fixed 4h momentum >0, weekly-block p <=0.05/48 for both gross and improvement, and gross mean > current observed development adverse nonfinancing bps; never choose audit winner",
+    "observedTrialClock": "4h UTC closes with exact source-derived M5 continuity; no synthetic sessions or tuned thresholds"
+  },
+  "economics": {
+    "initialCapitalEur": 300,
+    "oneContinuousBook": true,
+    "noReset": true,
+    "globalDrawdownLimit": 0.3,
+    "hard21": 21,
+    "currentTermCosts": "Original 166 development cost contexts derived from existing authenticated sources; central/adverse/stress are MODELED not historical fills; swap 3x current directional crossing if positively known else no allocation",
+    "nativeSelector": "--estimate-portfolio-opportunities-batch using existing C# native OpportunityOrchestrator, no second optimizer; modeled bar execution at t+5m only after positive selection gate",
+    "maxMinimumVolumeMultiples": 3,
+    "knownMaxHoldingMinutes": 240,
+    "benchmarkBook": "300 EUR cash flat",
+    "noNewBrokerRequests": true,
+    "missingCosts": "No capital allocation on unpriced overnight funding or missing margin/cost; does not stop authentic gross research"
+  },
+  "qualification": {
+    "independentConfirmation": false,
+    "brokerCertifiedNetEur": null,
+    "continuousDrawdownCertified": false,
+    "ordersSubmitted": 0,
+    "cloudActivated": false,
+    "closedStudiesRescored": false
+  }
+}
