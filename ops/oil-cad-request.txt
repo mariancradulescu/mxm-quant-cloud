@@ -1,8 +1,11 @@
-OCE1_REGISTERED_UNSCORED
+OCE1_OWNER_AUTHENTIC_ARCHIVED_RESEARCH_REQUEST
 sourceRuns=41724643418,41948500095
-study=oil-completed-H1-to-USDCAD-M5-exposed-only
-newBrokerRequests=0
+sourceArtifactIds=13273950911,13379722249
+exactRegisteredProtocol=research/oil_cad_protocol.json
+noNewBrokerRequests=true
+newCredentials=false
 orders=0
 cloud=0
-activation=none
-Do not rerun frozen ERP1/MBF1/BDP1 models. An exact owner/main request commit is required to process the existing encrypted source.
+closedStudiesRescored=false
+singleCapitalEur=200
+readOnlyExistingCryptographicCustody=true
