@@ -48,7 +48,7 @@ internal static class ProspectiveIntegratedChecks
                         new PortfolioScenario("B",clock-100,true,0,0,0,0)};
         EconomicOpportunity Opportunity(string id,string symbol,int direction,decimal volume,decimal margin)=>
             new(id,"F1_SYNTHETIC_NOT_ECONOMIC_CANDIDATE",symbol,id,direction,
-                clock,clock-1000,EvidenceLevel.Exploratory,false,
+                clock,clock-50,EvidenceLevel.Exploratory,false,
                 grid with {MinimumUnits=volume,MaximumUnits=volume,MarginPerUnitEur=margin},
                 new[]{new OpportunityScenario("A",clock-100,true,1.0m,0,.15m,0),
                       new OpportunityScenario("B",clock-100,true,1.1m,0,.15m,0)});
@@ -95,7 +95,7 @@ internal static class ProspectiveIntegratedChecks
             "positive specialist preflight reaches same common allocation and one EUR300 funded intent ledger");
         session=NativeFundedSession.Restore(session.Checkpoint(),session.AccountBinding);
         var repeated=session.DecideProspective(Decision("accepted-synthetic",new[]{ex,ey}));
-        check(repeated==admitted && session.Ledger.Summary().PendingIntents==2,
+        check(System.Text.Json.JsonSerializer.Serialize(repeated)==System.Text.Json.JsonSerializer.Serialize(admitted) && session.Ledger.Summary().PendingIntents==2,
             "identical prospective decision after restart cannot allocate twice");
         long t=clock;
         session.ApplyResearchFacts(new[]{
