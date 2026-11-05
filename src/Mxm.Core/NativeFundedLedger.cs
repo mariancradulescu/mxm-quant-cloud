@@ -40,6 +40,16 @@ public sealed partial class NativeFundedLedger
         if(maximumStalenessMs<0)throw new ArgumentException("NATIVE_LEDGER_STALENESS");
         this.maximumStalenessMs=maximumStalenessMs;
     }
+    // Historical immutable receipt verifier only: never used by broker recovery,
+    // prospectively funded decisions, or the observation-only cBot. Its EUR200
+    // modeled facts remain in a non-execution domain, never credited to EUR300.
+    internal static NativeFundedLedger ForFrozenHistorical200Receipt()
+    {
+        var x=new NativeFundedLedger();
+        x.state=x.state with {InitialCashEur=200m,CashEur=200m,
+            ObservedPeakEur=200m,MonetaryDomain="FROZEN_MODELED_SETTLEMENT"};
+        return x;
+    }
     static string Hash(string s)=>Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(s))).ToLowerInvariant();
     static decimal Fee(LedgerQuote q,decimal units)=>Math.Max(q.ExitFeePerUnit*units,q.ExitFeeFloor);
     static decimal ConvertQuote(LedgerQuote q,decimal amount)=>amount*(amount>=0?q.EurCredit:q.EurDebit);
@@ -187,7 +197,9 @@ public sealed partial class NativeFundedLedger
         using var d=JsonDocument.Parse(checkpoint);var root=d.RootElement;string payload=root.GetProperty("Payload").GetString()!;
         if(Hash(payload)!=root.GetProperty("Sha256").GetString())throw new ArgumentException("NATIVE_LEDGER_CHECKPOINT_HASH");
         var restored=JsonSerializer.Deserialize<LedgerState>(payload,Options) ?? throw new ArgumentException("NATIVE_LEDGER_CHECKPOINT_STATE");
-        if(restored.Version is not ("mxm-native-funded-ledger-v1" or "mxm-native-funded-ledger-v2" or Version) || restored.InitialCashEur!=OwnerRiskAuthority.InitialCapitalEur || restored.ObservedPeakEur<OwnerRiskAuthority.InitialCapitalEur || restored.MaximumSampledDrawdown<0)
+        if(restored.Version is not ("mxm-native-funded-ledger-v1" or "mxm-native-funded-ledger-v2" or Version) || !(restored.InitialCashEur==OwnerRiskAuthority.InitialCapitalEur ||
+             (restored.InitialCashEur==200m && restored.MonetaryDomain=="FROZEN_MODELED_SETTLEMENT")) ||
+           restored.ObservedPeakEur<restored.InitialCashEur || restored.MaximumSampledDrawdown<0)
             throw new ArgumentException("NATIVE_LEDGER_CHECKPOINT_VERSION_OR_CAPITAL");
         restored=restored with {Version=Version,MonetaryDomain=restored.MonetaryDomain??"MODEL_REPLAY"};
         if(restored.MonetaryDomain is not ("MODEL_REPLAY" or "BROKER_EXECUTION_FACT" or "FROZEN_MODELED_SETTLEMENT"))
