@@ -1,0 +1,123 @@
+{
+  "schema": "mxm-pve2-authentic-daily-hourly-economic-rejection-v1",
+  "authority": "docs/OWNER_SPEC.md OWNER v2.0, single prospectively initial EUR300",
+  "protocolFile": "research/pve2_protocol.json",
+  "protocolSha256": "ea78402962f0add27ba488fa687be67c01bc879a3689770ab79c8cf87ab097aa",
+  "executionWorkflowRunId": 42035722196,
+  "executionCommit": "baaf611c67363604ab3073776634f01fcb62d000",
+  "technicalPreSourceFailedRunId": 42034865878,
+  "artifactId": 13418188210,
+  "artifactName": "pve2-authentic-daily-hourly-pullback-eur300-public-only",
+  "originalPublicJsonSha256": "ec65b3119b3f124a978faa615fd6b4349891211c97ff9c6b62b8457a30ad4f28",
+  "originalSourceRunIds": [
+    41724643418,
+    41735441128
+  ],
+  "originalSourceCiphertextSha256": [
+    "e47ba7204ca7e07e7bb523ede8a8171f49b216cad09914142ed548839660a370",
+    "fa684ca1de58c6d1e8bdee410834855d05389af0c0ae4523b095367dce0e5331"
+  ],
+  "originalRawProtobufAuthenticated": true,
+  "originalAuthenticM5Bars": 836087,
+  "sourceInstruments": 12,
+  "originalDevelopmentCostContexts": 166,
+  "costCase": "CURRENT_TERM_MODEL_NOT_CERTIFIED_HISTORIC_FILL",
+  "grossAndCostUnits": "bps on equally weighted observed instrument-week clock opportunities; NOT EUR broker P&L",
+  "statisticalPolicy": {
+    "predeclaredHorizonTests": 2,
+    "oneSidedHypothesisTests": 4,
+    "bonferroniAlpha": 0.0125,
+    "allSelectionWeeksRepresented": 13,
+    "allSelectionWeeksWith12Assets": 13,
+    "multipleTestingGateChangedAfterExposure": false
+  },
+  "selection": [
+    {
+      "horizonMinutes": 60,
+      "knownCompleteClocks": 3056,
+      "triggeredSignals": 1185,
+      "knownLabelCoverage": 0.8758956721123531,
+      "grossBpsWeeklyWeighted": -0.5023422499735152,
+      "incrementalGrossVsUnconditionalDailyMomentumBps": -0.551679542209542,
+      "grossOneSidedP": 0.9797346937361814,
+      "incrementalOneSidedP": 0.9390054691590305,
+      "currentCentralNetBps": -1.4014103513300822,
+      "currentAdverseNetBps": -2.1063867939369842,
+      "currentStressNetBps": -3.1930404267770305,
+      "pass": false
+    },
+    {
+      "horizonMinutes": 240,
+      "knownCompleteClocks": 3173,
+      "triggeredSignals": 1241,
+      "knownLabelCoverage": 0.9094296359988535,
+      "grossBpsWeeklyWeighted": -0.8441582953523381,
+      "incrementalGrossVsUnconditionalDailyMomentumBps": -0.8939628698440722,
+      "grossOneSidedP": 0.8687109221672833,
+      "incrementalOneSidedP": 0.83312132833479,
+      "currentCentralNetBps": -1.7519834753745165,
+      "currentAdverseNetBps": -2.4632530331424256,
+      "currentStressNetBps": -3.562350133564207,
+      "pass": false
+    }
+  ],
+  "globallyExposedAuditDescriptiveNotIndependent": [
+    {
+      "horizonMinutes": 60,
+      "knownCompleteClocks": 3093,
+      "triggeredSignals": 1076,
+      "grossBpsWeeklyWeighted": 0.09453099921644902,
+      "currentAdverseNetBps": -1.3441138115535574
+    },
+    {
+      "horizonMinutes": 240,
+      "knownCompleteClocks": 3194,
+      "triggeredSignals": 1133,
+      "grossBpsWeeklyWeighted": 0.33795706255930363,
+      "currentAdverseNetBps": -1.143851872999121
+    }
+  ],
+  "closedExactDecision": {
+    "registeredBeforeScoring": true,
+    "selectionPassedHorizons": 0,
+    "selectionGrossPositiveHorizons": 0,
+    "futureAuditUsedForSelection": false,
+    "closedStrategiesRerun": false,
+    "postHocInstrumentChoice": false,
+    "retuningAuthorized": false
+  },
+  "singleModelPortfolioEUR300": {
+    "startingCapitalEur": 300,
+    "endingCashEur": 300,
+    "modeledClosedNetEur": 0,
+    "modeledCompleteRoundTrips": 0,
+    "modeledOpenPositions": 0,
+    "nativeSelectorCalls": 0,
+    "nativeAllocations": 0,
+    "globalEligibleExposedWeeks": 13,
+    "hard21PassedEligibleWeeks": 0,
+    "sampledDrawdown": 0,
+    "continuousDrawdownCertified": false,
+    "capitalContinuityReconciled": true,
+    "zeroIsAbstentionNotEdgeProof": true
+  },
+  "evidenceLimits": {
+    "historicalBrokerTariffVerified": false,
+    "allSourceWeeksGloballyExposed": true,
+    "independentConfirmation": false,
+    "brokerActualStartingCapitalEUR300Certified": false,
+    "brokerCertifiedNetEur": null,
+    "brokerFillExecutabilityCertified": false,
+    "hard21Proven": false,
+    "maxSystemDrawdown30Proven": false
+  },
+  "operations": {
+    "originalSourceRequests": 0,
+    "newBrokerRequests": 0,
+    "ordersSubmitted": 0,
+    "cloudActivated": false,
+    "noNewExternalServices": true,
+    "noPermanentPythonDependencyInFinalCBot": true
+  },
+  "verdict": "PVE2_CLOSED_EXACT_NEGATIVE_GROSS_SELECTION_BOTH_HORIZONS_NO_NET_ADMISSION_NO_RETUNING"
+}

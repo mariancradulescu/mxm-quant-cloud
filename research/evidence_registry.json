@@ -921,12 +921,24 @@
     },
     {
       "id": "PVE2",
-      "status": "REGISTERED_UNSCORED_NO_BROKER_REQUEST",
+      "status": "CLOSED_EXACT_NEGATIVE_GROSS_BOTH_HORIZONS_ZERO_ADMISSIONS_NO_RETUNING",
       "protocolFile": "research/pve2_protocol.json",
       "authority": "docs/OWNER_SPEC.md OWNER v2.0 prospectively EUR300",
-      "economicallyDistinctFromClosed": ["PVE1","IPF1","RCP1","IMT1","TWC1"],
-      "originalSourceRunIds": [41724643418,41735441128],
-      "originalSourceCiphertextSha256": ["e47ba7204ca7e07e7bb523ede8a8171f49b216cad09914142ed548839660a370","fa684ca1de58c6d1e8bdee410834855d05389af0c0ae4523b095367dce0e5331"],
+      "economicallyDistinctFromClosed": [
+        "PVE1",
+        "IPF1",
+        "RCP1",
+        "IMT1",
+        "TWC1"
+      ],
+      "originalSourceRunIds": [
+        41724643418,
+        41735441128
+      ],
+      "originalSourceCiphertextSha256": [
+        "e47ba7204ca7e07e7bb523ede8a8171f49b216cad09914142ed548839660a370",
+        "fa684ca1de58c6d1e8bdee410834855d05389af0c0ae4523b095367dce0e5331"
+      ],
       "hypothesis": "Dominant 24h price repricing resumes after an opposing completed H1 pullback, 4h UTC decision clocks, exact delayed M5 marks",
       "sourceUniverseCount": 12,
       "predeclaredGlobalHorizonTests": 2,
@@ -937,14 +949,42 @@
       "hard21SystemWide": 21,
       "calendar": "26 development/13 selection/13 globally-exposed audit weeks, no genuine independent holdout",
       "allDatesGloballyExposed": true,
-      "returnsInspectedForThisExactProtocol": false,
+      "returnsInspectedForThisExactProtocol": true,
       "originalClosedModelsRescored": false,
       "independent": false,
       "qualification": false,
       "brokerCertifiedNetEur": null,
       "newBrokerRequests": 0,
       "ordersSubmitted": 0,
-      "cloudActivated": false
+      "cloudActivated": false,
+      "originalPublicJsonSha256": "ec65b3119b3f124a978faa615fd6b4349891211c97ff9c6b62b8457a30ad4f28",
+      "originalArtifactId": 13418188210,
+      "originalResultRunId": 42035722196,
+      "originalResultCommit": "baaf611c67363604ab3073776634f01fcb62d000",
+      "originalM5Bars": 836087,
+      "originalDevelopmentCostContexts": 166,
+      "receiptFile": "docs/PVE2_AUTHENTIC_RESULT.json",
+      "selectionKnownSignalCounts": {
+        "60m": 1185,
+        "240m": 1241
+      },
+      "selectionGrossBpsByHorizon": {
+        "60m": -0.5023422499735152,
+        "240m": -0.8441582953523381
+      },
+      "selectionCurrentAdverseNetBpsByHorizon": {
+        "60m": -2.1063867939369842,
+        "240m": -2.4632530331424256
+      },
+      "selectionSupportedHorizons": 0,
+      "nativeCalls": 0,
+      "nativeAllocations": 0,
+      "modeledCompleteRoundTrips": 0,
+      "endingModeledCapitalEur": 300,
+      "conditionedModeledClosedNetEur": 0,
+      "hard21Proven": false,
+      "maxContinuousDrawdown30Proven": false,
+      "conclusion": "NO_PVE2_ADMISSION_NO_POSTHOC_AUDIT_RESCUE_NO_RETUNING"
     }
   ],
   "schema": "mxm-project-data-exposure-v1",
