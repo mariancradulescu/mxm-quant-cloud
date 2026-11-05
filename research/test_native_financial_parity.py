@@ -69,4 +69,23 @@ class NativeParity(unittest.TestCase):
             with self.assertRaises(subprocess.CalledProcessError):
                 native(self.events+[fact],"--native-funded-facts")
 
+    def test_historical_log_not_equivalent_to_physical_price_settlement(self):
+        import math
+        # Same gross price path, no spread/slip/fee/FX friction by construction:
+        # legacy Book uses notional*log-return; native units*simple price P/L.
+        notional=D("1000")
+        physical_units=D("10")
+        opening=D("100")
+        closing=D("102")
+        historical_log=D(str(1000*math.log(102/100)))
+        native_physical=physical_units*(closing-opening)
+        self.assertEqual(native_physical,D("20"))
+        self.assertGreater(native_physical-historical_log,D(".197"))
+        self.assertLess(native_physical-historical_log,D(".198"))
+        self.assertNotEqual(native_physical,historical_log)
+        # The two would only match for zero return (or by an explicit
+        # price-dependent unit transform that is NOT broker minimum volume).
+        self.assertEqual(physical_units*(opening-opening),D(0))
+        self.assertEqual(D(str(1000*math.log(100/100))),D(0))
+
 if __name__=="__main__":unittest.main()

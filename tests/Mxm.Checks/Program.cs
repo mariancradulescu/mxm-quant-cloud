@@ -2,6 +2,7 @@ using Mxm.Core;
 var passed = 0;
 MonetaryRecoveryChecks.Run(Check);
 FundedDecisionCycleChecks.Run(Check);
+ProspectiveIntegratedChecks.Run(Check);
 ResearchScopeContractChecks.Run(Check);
 NativeCausalWarmupChecks.Run(Check);
 BrokerFlatReadbackChecks.Run(Check);
