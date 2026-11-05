@@ -127,6 +127,25 @@ def check():
     assert mbf['systemHard21Proven'] is False and mbf['continuousDrawdown30Proven'] is False
     assert mbf['closedStudiesRescored'] is False
 
+    oce = json.loads(Path('docs/OCE1_AUTHENTIC_EXPOSED_RESULT.json').read_text())
+    oce_study = next(s for s in r['prospectiveStudies'] if s['id'] == 'OCE1')
+    assert oce_study['status'].startswith('CLOSED_EXACT_') and oce_study['followupCandidates'] == []
+    assert oce_study['originalResultSha256'] == r['frozenFileSha256']['docs/OCE1_AUTHENTIC_EXPOSED_RESULT.json']
+    assert oce['originalSourceCiphertextHashesVerified'] and oce['bothOriginalReadOnlySourcesBoundToSameAccount']
+    assert oce['sourceRuns'] == {'fx': 41724643418, 'oil': 41948500095}
+    assert oce['originalFxM5BarsReconstructedFromRaw'] == 74161
+    assert oce['originalCrudeH1BarsReconstructedFromRaw'] == 5877
+    assert oce['preflightComplete']['scheduledClocks'] == 624
+    assert oce['preflightComplete']['completeDecisionAndHoldingData'] == 614
+    assert oce['quoteCostDevelopmentSampleCount'] == 18
+    assert oce['phase']['selection']['completeUnfundedSignals'] == 46
+    assert oce['phase']['selection']['conditionalBeforeFinancingMeanBps']['adverse'] < 0
+    assert oce['selectionSupportedConditionalFollowupOnly'] is False
+    assert oce['closedStudiesRescored'] is False and oce['newBrokerRequests'] == 0
+    assert oce['fundedNetEur'] is None and oce['independentConfirmation'] is False
+    assert oce['hard21Proven'] is False and oce['continuousDrawdown30Proven'] is False
+    assert oce['nativeAllocatorInvoked'] is False and oce['ordersSubmitted'] == 0 and oce['cloudActivated'] is False
+
     print('PASS OWNER v2.0 contract, frozen evidence, native funding and no-order boundary; no NET qualification')
 
 
