@@ -1845,7 +1845,7 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
-integrated_existing_source_economic_surface:
+  integrated_existing_source_economic_surface:
     # One shared data/fee/causal-benchmark diagnostic, NOT any frozen model.
     # Exactly one signed OWNER main intent, never pull requests or branch pushes.
     if: >-
