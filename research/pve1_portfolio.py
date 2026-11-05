@@ -1,4 +1,4 @@
-"""PVE1 common EUR200 conditional portfolio using existing native C# selector.
+"""PVE1 common EUR300 conditional portfolio using existing native C# selector.
 
 Reuse RCP1's generic funded Book/holding mark primitives ONLY, never its
 frozen predictive model, scenarios, params, forecasts, or economic results.
@@ -91,7 +91,7 @@ def request(book,t,forecasts,views,cost,p,variant):
             AvailableAt=t,CalibratedThrough=latest,Level=1,
             ExecutionEvidenceComplete=False,VolumeGrid=grid,Scenarios=cases))
         complete.append(pid)
-        lookup[pid]=dict(symbol=s,family=FAMILY,horizon=h,side=side,pred=pred)
+        lookup[pid]=dict(symbol=s,family=f['family'],horizon=h,side=side,pred=pred)
     account=dict(EquityEur=mark["equity"],PeakReferenceEur=max(300.,book.high),
         FreeMarginEur=mark["freeMargin"],MinimumUnits=1,StepUnits=1,
         MaximumUnits=3,MarginPerUnitEur=1,MarginCoverageScenarioRatio=1,
