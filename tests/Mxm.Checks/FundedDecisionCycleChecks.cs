@@ -48,11 +48,37 @@ static class FundedDecisionCycleChecks
                 GrossAboveBenchmarkEur=10m,PredictionUncertaintyEur=1m,
                 ObservedOneRoundTripSpreadEur=.1m,EntryFeeEur=.1m,ExitFeeEur=.1m,
                 ConversionFeeEur=.1m,SlippageEur=.1m,FinancingEur=.1m}}};
-        var conditional=observedOnly.DecideResearch(economic);
+        var beforeProspective=observedOnly.Ledger.Checkpoint();
+        bool bypassRejected=false;
+        try{observedOnly.DecideProspective(D("new-decision-no-gate",1000,new[]{scout}));}
+        catch(ArgumentException ex){bypassRejected=ex.Message=="PROSPECTIVE_SPECIALIST_EVIDENCE_REQUIRED";}
+        check(bypassRejected && observedOnly.Ledger.Checkpoint()==beforeProspective,
+            "prospective path rejects missing EUR economic evidence without changing funded state");
+        var conditional=observedOnly.DecideProspective(economic);
         check(conditional.Selection.Allocations.Length==1 &&
             conditional.Ledger.PendingIntents==1 && conditional.Ledger.CashEur==200m &&
             !conditional.OrdersEnabled && !conditional.Qualified,
             "supported conditional specialist shares existing EUR200 ledger and creates request only, not fill");
+        // Same specialist-admitted ID through the existing one-capital modeled
+        // ledger: entry BID/ASK, per-side commissions, then complete close.
+        // No broker fill or real profit is implied by synthetic execution facts.
+        var pricedSession=NativeFundedSession.Restore(observedOnly.Checkpoint(),observedOnly.AccountBinding);
+        pricedSession.ApplyResearchFacts(new[]{
+            E("specialist-fill",2000,"OPEN_FILL",scout.Id,"X",price:10.01m,
+                quotes:new[]{Q("X",2000)})});
+        check(pricedSession.Ledger.Summary().CashEur==199.9m &&
+            pricedSession.Ledger.Summary().OpenPositions==1,
+            "one specialist-admitted modeled fill debits entry fee exactly once");
+        pricedSession.ApplyResearchFacts(new[]{
+            E("specialist-close-request",3000,"REQUEST_CLOSE",scout.Id,"X")});
+        pricedSession.ApplyResearchFacts(new[]{
+            E("specialist-close-fill",4000,"CLOSE_FILL",scout.Id,"X",price:11m,
+                quotes:new[]{Q("X",4000,11m)})});
+        var settled=pricedSession.Ledger.Summary();
+        check(settled.CashEur==200.79m && settled.ClosedNetEur==.79m &&
+            settled.CompleteRoundTrips==1 && settled.OpenPositions==0 &&
+            settled.PendingIntents==0 && !settled.BrokerStateReconciled && !settled.OrdersEnabled,
+            "specialist forecast through common allocation, modeled fill and close reconciles EUR200 once without broker qualification");
         observedOnly=NativeFundedSession.Restore(session.Checkpoint(),session.AccountBinding);
         var negative=observedOnly.DecideResearch(economic with {Id="real-gate-negative-gross",
             SpecialistEvidence=new[]{economic.SpecialistEvidence![0] with {GrossAboveBenchmarkEur=-.2m}}});
