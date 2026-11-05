@@ -107,7 +107,8 @@
     "research/integrated_predictive_funded_protocol.json": "2a4e4e649bc69cb3bebeba1fd5757761e48315744fb69c2f05f806228dbe28f2",
     "docs/IPF1_RESULT.json": "19c995caaeac544bd75dfb0cadcb19e03ec5deabf50eaeae13a55c3f232da948",
     "research/rcp1_protocol.json": "183d723f01556c1c8b81ec88be8a6c0126c17ccb7e65e375665b71ff6b8c1a91",
-    "docs/RCP1_RESULT.json": "e82fcb9233ef3754a63c40eb6dc151a026528268166f524a62421757c47c6a36"
+    "docs/RCP1_RESULT.json": "e82fcb9233ef3754a63c40eb6dc151a026528268166f524a62421757c47c6a36",
+    "docs/ERP1_AUTHENTIC_RESULT.json": "858ab0eaa3e29c4f758cf8d5804f2e49e9868b6f59cc2e37fe2ccff297a12864"
   },
   "independenceDefault": "NOT_ESTABLISHED",
   "nativeFundedFactReception": {
@@ -690,7 +691,7 @@
     {
       "id": "ERP1",
       "phase": "PREDECLARED_CAUSAL_ENERGY_RELATIVE_PRICE_REVERSION_UNSCORED",
-      "status": "REGISTERED_BEFORE_NEW_QUOTES_OR_RETURNS",
+      "status": "CLOSED_EXACT_NEGATIVE_SELECTION_NO_REOPTIMIZATION",
       "protocolFile": "research/erp1_protocol.json",
       "assetUniverse": [
         "SpotCrude",
@@ -706,7 +707,21 @@
       "risk": "one initial EUR200 system; no funded net, HARD21 or drawdown claim",
       "noClosedStudyReruns": true,
       "ordersSubmitted": 0,
-      "cloudActivated": false
+      "cloudActivated": false,
+      "executionRunId": 41948500095,
+      "authenticatedReadback": true,
+      "actualReadOnlyRequests": 319,
+      "sourceResultFile": "docs/ERP1_AUTHENTIC_RESULT.json",
+      "sourceCiphertextSha256": "94377751a8ca305a3d89c72bfc5c5463ae6ed4836d33448586d429cd8d95bfb7",
+      "publicResultSha256": "858ab0eaa3e29c4f758cf8d5804f2e49e9868b6f59cc2e37fe2ccff297a12864",
+      "sourceArtifactId": 13379722249,
+      "publicArtifactId": 13379528330,
+      "observedPairedH1Closes": 5462,
+      "selectionGrossMeanPairedBps": 0.087983,
+      "selectionAdverseBeforeFinancingBps": -34.200105,
+      "fundedNetEur": null,
+      "hard21Proven": false,
+      "modelClosed": true
     }
   ],
   "schema": "mxm-project-data-exposure-v1",
@@ -1119,6 +1134,24 @@
       "returnsInspected": false,
       "decisionExposure": [
         "ALL36_PREDECLARED_CSP1_CROSS_ASSET_BID_ASK_SPREAD_CLOCKS_AND_CURRENT_CONTRACT_TERMS_EXPOSED_NO_PREDICTIVE_OUTCOMES"
+      ],
+      "sourceArtifactRetentionDays": 90
+    },
+    {
+      "sourceRunId": 41948500095,
+      "sourceArtifactId": 13379722249,
+      "sourceCiphertextSha256": "94377751a8ca305a3d89c72bfc5c5463ae6ed4836d33448586d429cd8d95bfb7",
+      "publicArtifactId": 13379528330,
+      "exactPublicReceipt": "docs/ERP1_AUTHENTIC_RESULT.json",
+      "scope": "ERP1 original bound account SpotCrude and SpotBrent H1 completed data over 52 previously research-exposed weeks; 52 fixed development BID/ASK clocks per symbol; 319 read-only requests; one preregistered energy ratio z-reversion model; 197 development + 94 selection + 102 exposed audit modeled paired opportunities; no funded execution",
+      "start": 1762128000000,
+      "end": 1793577600000,
+      "independent": false,
+      "returnsInspected": true,
+      "decisionExposure": [
+        "ALL_52_WEEK_SCHEDULED_4H_CLOCKS_FIXED_SPOTCRUDE_SPOTBRENT_RATIO_SIGNALS_AND_HORIZON_RETURNS",
+        "ALL_3_COST_SCENARIOS_ALL_26_SELECTION_AND_AUDIT_WEEKS_NEGATIVE_COST_PROXY",
+        "NO_INDEPENDENT_CONFIRMATION_NO_FUNDED_EUR"
       ],
       "sourceArtifactRetentionDays": 90
     }
