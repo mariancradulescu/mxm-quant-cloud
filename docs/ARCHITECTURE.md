@@ -218,3 +218,56 @@ unknown financial legs, extra transfers, pending orders, unreconciled intents
 and evidence of an earlier observed equity peak. These are deterministic
 contracts, not broker execution, actual Cloud restart acceptance or
 predictive economic validation.
+
+## Authentic extended universe and economic evidence (2026-11-05)
+
+The architecture still has **one** authority: [OWNER v2.0](OWNER_SPEC.md).
+The collector, run-bound encrypted readback, native C# selector, risk accounting,
+NativeFundedLedger, NativeFundedSession and observation-only Cloud cBot are
+unchanged foundations. A new research source does not add a second ledger,
+allocator, trading runtime or independent trading authorization.
+
+| Layer | Implementation and authenticated evidence | Not established |
+|---|---|---|
+| Full instrument inventory | PR #73, protected cTrader SCOPE_VIEW run #41939175379, 5,339 nonarchived symbol rows, 1,755 visible, 96 current contract probes, 89 margin observations, 74 current minimum margins below EUR200 | Full contract coverage, current *tradability* of every visible symbol, historic spreads/margins, actual EUR200 executability |
+| Conditional quote costs | PR #74–75, CSP1 run #41940740480, 19 of 36 causally synchronized BID/ASK quotes; 8 stale/asynchronous, 7 missing-side, 2 crossed/invalid | Historical complete spread distribution, commissions, slippage, conversion, funding, fill feasibility |
+| Extended-universe prediction | ERP1 run #41948500095: 393 equal-notional paired opportunities, adverse selection negative; MBF1 run #41971150620: 8 predeclared groups, none pass selection | Broker-priced EUR NET, independent edge, portfolio funding, system HARD21, continuous drawdown proof |
+| Native financial execution semantics | Existing common selector and native C# ledger support modeled shared allocations, monetary facts, partial fills and sampled open-equity observation; CI exercises synthetic/frozen deterministic contracts | Real nonempty broker order/fill parity, complete lifetime equity path, durable Cloud restart, fully authenticated historical financed NET |
+
+The two Asian MBF1 groups have **zero complete evaluable episodes**: 260
+scheduled feature clocks lacked complete aligned source observations. They are
+**data-limited, not evidence of a negative edge**. The other MBF1 groups are
+negative after central/adverse conditional cost in the globally exposed
+selection calendar. ERP1 and MBF1 remain frozen in their exact scored forms;
+neither may be inverted, retuned, rerun, or salvaged from exposed audit outcomes.
+
+**Evidence integrity:** the existing byte-for-byte `frozenFileSha256` gate
+now covers `docs/FULL_CTRADER_ACCOUNT_INVENTORY_AUTHENTIC_20261105.json`,
+`docs/CSP1_AUTHENTIC_SPREAD_RESULT_20261105.json` and
+`docs/MBF1_AUTHENTIC_RESULT.json` in addition to ERP1 and historical
+receipts. `research.verify_owner_policy` verifies source/coverage semantics
+and rejects silent financial qualification. These checks protect original
+evidence; they are **not** a statistical or financial certificate.
+
+**Operational development rule:** before implementing a forecast, establish
+from already archived source the required consecutive completed bars, session
+calendar, prospective entry/holding marks, development-period cost observations,
+current minimum-volume/margin applicability and route conversion/funding gaps.
+Incomplete scheduled clocks remain denominators, not zero-return trades.
+Admit distinct hypotheses by economic premise and causal availability, not a
+fixed number of families, two favorite horizons, or an inherited universal
+40-trade / 3-standard-error gate. All reused historical calendars remain
+globally research-exposed; another asset on that calendar is not an
+independent confirmation.
+
+**System financial boundary:** a hypothetical margin below EUR200 is necessary
+only for the instrument's current minimum grid; simultaneous portfolio capacity
+requires shared cash, currency conversion, commission floors, open P/L and
+margin/risk reservations. Conditional bps is not native funded EUR NET. The
+existing C# funded ledger/allocator is used only after distinct selection-period
+economic support; no risk or frequency passes solely from proposal counts.
+HARD21 remains a system-wide requirement on complete financed round trips per
+prospectively eligible week. The 30% portfolio maximum drawdown needs floating
+liquidation equity including costs and conservative unseen-peak bounds;
+sampled marks are insufficient. The Cloud cBot still has no authorized order
+path or accepted runtime.
