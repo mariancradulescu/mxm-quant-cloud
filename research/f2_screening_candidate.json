@@ -1,0 +1,47 @@
+{
+  "schema": "MXM_F2_SCREEN_ONLY_V1",
+  "id": "HRC1",
+  "status": "PREFLIGHT_SCREEN_NOT_SCORED",
+  "authority": "docs/OWNER_SPEC.md v2.0 EUR300",
+  "mechanism": "Regime-dependent sign of completed H1 serial autocorrelation; compare an ex-ante causal momentum-versus-reversal switch to always-on H1 momentum and zero trade. No closed predictor/model is imported or retuned.",
+  "predictor": "At completed H1 clock compute lag-1 serial correlation from 20 earlier complete H1 returns. If rho>+0.20 forecast last H1 return side; if rho<-0.20 forecast opposite side; otherwise abstain. Fixed 60-minute delayed-following-M5 outcome. No peeking beyond complete clocks.",
+  "benchmark": "Always-on previous completed H1 return sign at all causally eligible clocks, plus zero trade. Not a matched-clock same-direction straw benchmark.",
+  "calendar": {
+    "developmentWeeks": 26,
+    "selectionWeeks": 13,
+    "globallyExposedAuditWeeks": 13,
+    "independentConfirmationWeeks": 0
+  },
+  "source": {
+    "receiptFile": "docs/PVE2_AUTHENTIC_RESULT.json",
+    "requiredAuthenticatedM5Bars": 836087,
+    "expectedInstruments": 12,
+    "brokerSourcePreviouslyExposed": true
+  },
+  "capital": {
+    "prospectiveInitialEur": 300,
+    "unfundedLegacyPnlCannotQualify": true,
+    "physicalUnitRequirement": true,
+    "nativeFundedAuthority": "NativeFundedLedger",
+    "singleAccountBinding": "UNPROVEN_BROKER_DEPOSIT_300_NOT_ASSUMED"
+  },
+  "uncertainty": {
+    "oneSidedComparisons": 2,
+    "alphaFamily": 0.05,
+    "targetPower": 0.8,
+    "effectiveSelectionWeeks": null,
+    "selectionWeeklyStandardDeviationBps": null,
+    "requiredEconomicallyDetectableEffectBps": null
+  },
+  "funding": {
+    "currentMinVolumeCommissionAndSpreadComplete": false,
+    "oneCapitalPortfolioFinanceCertified": false
+  },
+  "statusClaims": {
+    "netQualified": false,
+    "hard21Proven": false,
+    "globalDDCertified": false,
+    "cloudActivated": false,
+    "ordersSubmitted": 0
+  }
+}
