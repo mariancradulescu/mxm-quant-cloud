@@ -1,0 +1,7 @@
+MXM FULL ACCOUNT SYMBOL INVENTORY — OWNER v2.0
+
+One authorized read-only cTrader Open API account inventory through existing Pepperstone-linked SCOPE_VIEW credentials and v2 custody.
+Preserve all returned non-archived symbols, including disabled/unknown.
+Probe up to 96 visible category-stratified contract/minimum-margin terms.
+No orders, no Cloud activation, no model scoring, no new services.
+This request does not authorize economic promotion or data-source changes.
