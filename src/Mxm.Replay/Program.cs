@@ -51,7 +51,15 @@ if (args.Length == 3 && args[2] == "--native-frozen-money-recovery")
         var cases=JsonSerializer.Deserialize<Mxm.Core.FrozenMoneyRecoveryCase[]>(File.ReadAllBytes(args[0]),
             new JsonSerializerOptions {NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString})!;
         File.WriteAllText(args[1],JsonSerializer.Serialize(Mxm.Core.FrozenMoneyRecoveryReceipt.Receive(cases)));return 0;
-    } catch { return 27; }
+    } catch(System.Exception ex) {
+        // This CLI receives only frozen, publicly preserved MODEL receipts.
+        // Report symbolic failure categories, never source payload or identities.
+        string reason=ex.Message;
+        if(reason.Length>180 || reason.Any(ch=>!(char.IsUpper(ch)||char.IsDigit(ch)||ch is '_' or '/')))
+            reason="REDACTED";
+        System.Console.Error.WriteLine("FROZEN_RECEIPT_CHECK_"+ex.GetType().Name+"_"+reason);
+        return 27;
+    }
 }
 if (args.Length == 3 && args[2] == "--auction-source-support")
 {
