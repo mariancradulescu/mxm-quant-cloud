@@ -38,6 +38,7 @@ jobs:
       authorized_carry_preflight: ${{ steps.ccp.outputs.authorized_carry_preflight }}
       authorized_auction_inventory: ${{ steps.aip.outputs.authorized_auction_inventory }}
       authorized_full_inventory: ${{ steps.full_inventory.outputs.authorized_full_inventory }}
+      authorized_csp1_cost: ${{ steps.csp1.outputs.authorized_csp1_cost }}
       authorized_discovery_program: ${{ steps.bdp.outputs.authorized_discovery_program }}
       authorized_discovery_reception: ${{ steps.bdp.outputs.authorized_discovery_reception }}
       authorized_sequence_portfolio: ${{ steps.sqp.outputs.authorized_sequence_portfolio }}
@@ -346,6 +347,17 @@ jobs:
              [[ "$(git diff-tree --no-commit-id --name-only -r HEAD)" == "ops/full-symbol-inventory-request.txt" ]]; then
             echo "authorized_full_inventory=true" >> "$GITHUB_OUTPUT"
           fi
+      - name: Verify exact owner/main CSP1 distinct multiasset quote-cost preflight intent
+        id: csp1
+        shell: bash
+        run: |
+          echo "authorized_csp1_cost=false" >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_EVENT_NAME" == "push" && "$GITHUB_REF" == "refs/heads/main" &&
+                "$GITHUB_ACTOR" == "mariancradulescu" &&
+                "$(git log -1 --format=%s)" == "MXM_CSP1_AUTHENTIC_SPREAD_COST_PREFLIGHT" ]] &&
+             [[ "$(git diff-tree --no-commit-id --name-only -r HEAD)" == "ops/csp1-cost-request.txt" ]]; then
+            echo "authorized_csp1_cost=true" >> "$GITHUB_OUTPUT"
+          fi
       - name: Verify exact bounded current-term portfolio preflight intent
         id: ccp
         shell: bash
@@ -446,6 +458,7 @@ jobs:
       - run: python -m unittest research.test_rcp1 -v
       - run: python -m unittest research.test_twc1 -v
       - run: python -m unittest research.test_full_inventory_pipeline -v
+      - run: python -m unittest research.test_csp1_cost_preflight -v
       - run: python -m unittest research.test_depth_channel_pilot -v
       - run: python -m unittest research.test_pipeline research.test_intraday_net research.test_flow_net research.test_neighbour_net research.test_funded_replay research.test_relative_gross research.test_tick_volume_net research.test_anchor_signal research.test_session_wick_signal research.test_orchestrated_replay research.test_joint_quote_extension research.test_portfolio_economic research.test_holding_economic research.test_causal_observation
       - name: Verify native open-equity monitor from immutable modeled holding marks
@@ -585,7 +598,7 @@ jobs:
       (
         (github.event_name == 'workflow_dispatch' && inputs.collect == true) ||
         (github.event_name == 'push' &&
-          (needs.verify.outputs.authorized_depth_channel == 'true' || needs.verify.outputs.authorized_source_request == 'true' || needs.verify.outputs.authorized_economic_request == 'true' || needs.verify.outputs.authorized_intraday_net == 'true' || needs.verify.outputs.authorized_flow_net == 'true' || needs.verify.outputs.authorized_neighbour_net == 'true' || needs.verify.outputs.authorized_volume_net == 'true' || needs.verify.outputs.authorized_m15_anchor_net == 'true' || needs.verify.outputs.authorized_joint_quote_extension == 'true' || needs.verify.outputs.authorized_portfolio_economic == 'true' || needs.verify.outputs.authorized_portfolio_holding == 'true' || needs.verify.outputs.authorized_sequence_portfolio == 'true' || needs.verify.outputs.authorized_discovery_program == 'true' || needs.verify.outputs.authorized_auction_inventory == 'true' || needs.verify.outputs.authorized_carry_preflight == 'true' || needs.verify.outputs.authorized_full_inventory == 'true'))
+          (needs.verify.outputs.authorized_depth_channel == 'true' || needs.verify.outputs.authorized_source_request == 'true' || needs.verify.outputs.authorized_economic_request == 'true' || needs.verify.outputs.authorized_intraday_net == 'true' || needs.verify.outputs.authorized_flow_net == 'true' || needs.verify.outputs.authorized_neighbour_net == 'true' || needs.verify.outputs.authorized_volume_net == 'true' || needs.verify.outputs.authorized_m15_anchor_net == 'true' || needs.verify.outputs.authorized_joint_quote_extension == 'true' || needs.verify.outputs.authorized_portfolio_economic == 'true' || needs.verify.outputs.authorized_portfolio_holding == 'true' || needs.verify.outputs.authorized_sequence_portfolio == 'true' || needs.verify.outputs.authorized_discovery_program == 'true' || needs.verify.outputs.authorized_auction_inventory == 'true' || needs.verify.outputs.authorized_carry_preflight == 'true' || needs.verify.outputs.authorized_full_inventory == 'true' || needs.verify.outputs.authorized_csp1_cost == 'true'))
       )
     needs: verify
     runs-on: ubuntu-24.04
@@ -616,7 +629,7 @@ jobs:
       (
         (github.event_name == 'workflow_dispatch' && inputs.collect == true) ||
         (github.event_name == 'push' &&
-          (needs.verify.outputs.authorized_source_request == 'true' || needs.verify.outputs.authorized_economic_request == 'true' || needs.verify.outputs.authorized_intraday_net == 'true' || needs.verify.outputs.authorized_flow_net == 'true' || needs.verify.outputs.authorized_neighbour_net == 'true' || needs.verify.outputs.authorized_volume_net == 'true' || needs.verify.outputs.authorized_m15_anchor_net == 'true' || needs.verify.outputs.authorized_joint_quote_extension == 'true' || needs.verify.outputs.authorized_portfolio_economic == 'true' || needs.verify.outputs.authorized_portfolio_holding == 'true' || needs.verify.outputs.authorized_sequence_portfolio == 'true' || needs.verify.outputs.authorized_discovery_program == 'true' || needs.verify.outputs.authorized_auction_inventory == 'true' || needs.verify.outputs.authorized_carry_preflight == 'true' || needs.verify.outputs.authorized_full_inventory == 'true'))
+          (needs.verify.outputs.authorized_source_request == 'true' || needs.verify.outputs.authorized_economic_request == 'true' || needs.verify.outputs.authorized_intraday_net == 'true' || needs.verify.outputs.authorized_flow_net == 'true' || needs.verify.outputs.authorized_neighbour_net == 'true' || needs.verify.outputs.authorized_volume_net == 'true' || needs.verify.outputs.authorized_m15_anchor_net == 'true' || needs.verify.outputs.authorized_joint_quote_extension == 'true' || needs.verify.outputs.authorized_portfolio_economic == 'true' || needs.verify.outputs.authorized_portfolio_holding == 'true' || needs.verify.outputs.authorized_sequence_portfolio == 'true' || needs.verify.outputs.authorized_discovery_program == 'true' || needs.verify.outputs.authorized_auction_inventory == 'true' || needs.verify.outputs.authorized_carry_preflight == 'true' || needs.verify.outputs.authorized_full_inventory == 'true' || needs.verify.outputs.authorized_csp1_cost == 'true'))
       )
     needs: [verify, custody_recipient]
     permissions:
@@ -656,8 +669,15 @@ jobs:
           R3_CTRADER_CLIENT_ID: ${{ secrets.R3_CTRADER_CLIENT_ID }}
           R3_CTRADER_CLIENT_SECRET: ${{ secrets.R3_CTRADER_CLIENT_SECRET }}
           R3_CTRADER_ACCESS_TOKEN: ${{ secrets.R3_CTRADER_ACCESS_TOKEN }}
+      - name: CSP1 bounded read-only historical BID and ASK cost pilot
+        if: needs.verify.outputs.authorized_csp1_cost == 'true'
+        run: python -m research.csp1_cost_preflight
+        env:
+          R3_CTRADER_CLIENT_ID: ${{ secrets.R3_CTRADER_CLIENT_ID }}
+          R3_CTRADER_CLIENT_SECRET: ${{ secrets.R3_CTRADER_CLIENT_SECRET }}
+          R3_CTRADER_ACCESS_TOKEN: ${{ secrets.R3_CTRADER_ACCESS_TOKEN }}
       - name: Existing bounded source H1 collection (non-economic request only)
-        if: needs.verify.outputs.authorized_economic_request != 'true' && needs.verify.outputs.authorized_intraday_net != 'true' && needs.verify.outputs.authorized_flow_net != 'true' && needs.verify.outputs.authorized_neighbour_net != 'true' && needs.verify.outputs.authorized_volume_net != 'true' && needs.verify.outputs.authorized_m15_anchor_net != 'true' && needs.verify.outputs.authorized_joint_quote_extension != 'true' && needs.verify.outputs.authorized_portfolio_economic != 'true' && needs.verify.outputs.authorized_portfolio_holding != 'true' && needs.verify.outputs.authorized_sequence_portfolio != 'true' && needs.verify.outputs.authorized_discovery_program != 'true' && needs.verify.outputs.authorized_auction_inventory != 'true' && needs.verify.outputs.authorized_carry_preflight != 'true' && needs.verify.outputs.authorized_full_inventory != 'true'
+        if: needs.verify.outputs.authorized_economic_request != 'true' && needs.verify.outputs.authorized_intraday_net != 'true' && needs.verify.outputs.authorized_flow_net != 'true' && needs.verify.outputs.authorized_neighbour_net != 'true' && needs.verify.outputs.authorized_volume_net != 'true' && needs.verify.outputs.authorized_m15_anchor_net != 'true' && needs.verify.outputs.authorized_joint_quote_extension != 'true' && needs.verify.outputs.authorized_portfolio_economic != 'true' && needs.verify.outputs.authorized_portfolio_holding != 'true' && needs.verify.outputs.authorized_sequence_portfolio != 'true' && needs.verify.outputs.authorized_discovery_program != 'true' && needs.verify.outputs.authorized_auction_inventory != 'true' && needs.verify.outputs.authorized_carry_preflight != 'true' && needs.verify.outputs.authorized_full_inventory != 'true' && needs.verify.outputs.authorized_csp1_cost != 'true'
         run: python -m research.collect
         env:
           R3_CTRADER_CLIENT_ID: ${{ secrets.R3_CTRADER_CLIENT_ID }}
@@ -777,7 +797,7 @@ jobs:
       (
         (github.event_name == 'workflow_dispatch' && inputs.collect == true) ||
         (github.event_name == 'push' &&
-          (needs.verify.outputs.authorized_source_request == 'true' || needs.verify.outputs.authorized_economic_request == 'true' || needs.verify.outputs.authorized_intraday_net == 'true' || needs.verify.outputs.authorized_flow_net == 'true' || needs.verify.outputs.authorized_neighbour_net == 'true' || needs.verify.outputs.authorized_volume_net == 'true' || needs.verify.outputs.authorized_m15_anchor_net == 'true' || needs.verify.outputs.authorized_joint_quote_extension == 'true' || needs.verify.outputs.authorized_portfolio_economic == 'true' || needs.verify.outputs.authorized_portfolio_holding == 'true' || needs.verify.outputs.authorized_sequence_portfolio == 'true' || needs.verify.outputs.authorized_discovery_program == 'true' || needs.verify.outputs.authorized_auction_inventory == 'true' || needs.verify.outputs.authorized_carry_preflight == 'true' || needs.verify.outputs.authorized_full_inventory == 'true'))
+          (needs.verify.outputs.authorized_source_request == 'true' || needs.verify.outputs.authorized_economic_request == 'true' || needs.verify.outputs.authorized_intraday_net == 'true' || needs.verify.outputs.authorized_flow_net == 'true' || needs.verify.outputs.authorized_neighbour_net == 'true' || needs.verify.outputs.authorized_volume_net == 'true' || needs.verify.outputs.authorized_m15_anchor_net == 'true' || needs.verify.outputs.authorized_joint_quote_extension == 'true' || needs.verify.outputs.authorized_portfolio_economic == 'true' || needs.verify.outputs.authorized_portfolio_holding == 'true' || needs.verify.outputs.authorized_sequence_portfolio == 'true' || needs.verify.outputs.authorized_discovery_program == 'true' || needs.verify.outputs.authorized_auction_inventory == 'true' || needs.verify.outputs.authorized_carry_preflight == 'true' || needs.verify.outputs.authorized_full_inventory == 'true' || needs.verify.outputs.authorized_csp1_cost == 'true'))
       ) &&
       needs.verify.result == 'success' &&
       needs.collect.result == 'success'
@@ -813,6 +833,19 @@ jobs:
         with:
           name: full-account-inventory-public-only
           path: full-inventory.public.json
+          if-no-files-found: error
+          retention-days: 90
+      - name: CSP1 independent cryptographic readback of original quote and contract protobuf
+        if: needs.verify.outputs.authorized_csp1_cost == 'true'
+        run: python -m research.csp1_cost_preflight --readback
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - name: Preserve CSP1 authenticated quote-cost surface without broker identities
+        if: needs.verify.outputs.authorized_csp1_cost == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: csp1-authentic-spread-only-public
+          path: csp1.public.json
           if-no-files-found: error
           retention-days: 90
       - name: Reconstruct original current-term portfolio financing evidence
@@ -898,7 +931,7 @@ jobs:
           if-no-files-found: error
           retention-days: 90
       - name: Existing v2 H1 source readback
-        if: needs.verify.outputs.authorized_economic_request != 'true' && needs.verify.outputs.authorized_intraday_net != 'true' && needs.verify.outputs.authorized_flow_net != 'true' && needs.verify.outputs.authorized_neighbour_net != 'true' && needs.verify.outputs.authorized_volume_net != 'true' && needs.verify.outputs.authorized_m15_anchor_net != 'true' && needs.verify.outputs.authorized_joint_quote_extension != 'true' && needs.verify.outputs.authorized_portfolio_economic != 'true' && needs.verify.outputs.authorized_portfolio_holding != 'true' && needs.verify.outputs.authorized_sequence_portfolio != 'true' && needs.verify.outputs.authorized_discovery_program != 'true' && needs.verify.outputs.authorized_auction_inventory != 'true' && needs.verify.outputs.authorized_carry_preflight != 'true' && needs.verify.outputs.authorized_full_inventory != 'true'
+        if: needs.verify.outputs.authorized_economic_request != 'true' && needs.verify.outputs.authorized_intraday_net != 'true' && needs.verify.outputs.authorized_flow_net != 'true' && needs.verify.outputs.authorized_neighbour_net != 'true' && needs.verify.outputs.authorized_volume_net != 'true' && needs.verify.outputs.authorized_m15_anchor_net != 'true' && needs.verify.outputs.authorized_joint_quote_extension != 'true' && needs.verify.outputs.authorized_portfolio_economic != 'true' && needs.verify.outputs.authorized_portfolio_holding != 'true' && needs.verify.outputs.authorized_sequence_portfolio != 'true' && needs.verify.outputs.authorized_discovery_program != 'true' && needs.verify.outputs.authorized_auction_inventory != 'true' && needs.verify.outputs.authorized_carry_preflight != 'true' && needs.verify.outputs.authorized_full_inventory != 'true' && needs.verify.outputs.authorized_csp1_cost != 'true'
         run: python -m research.readback
         env:
           R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
@@ -1028,7 +1061,7 @@ jobs:
           if-no-files-found: error
           retention-days: 90
       - name: Upload existing original v2 CSharp source receipt
-        if: needs.verify.outputs.authorized_economic_request != 'true' && needs.verify.outputs.authorized_intraday_net != 'true' && needs.verify.outputs.authorized_flow_net != 'true' && needs.verify.outputs.authorized_neighbour_net != 'true' && needs.verify.outputs.authorized_volume_net != 'true' && needs.verify.outputs.authorized_m15_anchor_net != 'true' && needs.verify.outputs.authorized_joint_quote_extension != 'true' && needs.verify.outputs.authorized_portfolio_economic != 'true' && needs.verify.outputs.authorized_portfolio_holding != 'true' && needs.verify.outputs.authorized_sequence_portfolio != 'true' && needs.verify.outputs.authorized_discovery_program != 'true' && needs.verify.outputs.authorized_auction_inventory != 'true' && needs.verify.outputs.authorized_carry_preflight != 'true' && needs.verify.outputs.authorized_full_inventory != 'true'
+        if: needs.verify.outputs.authorized_economic_request != 'true' && needs.verify.outputs.authorized_intraday_net != 'true' && needs.verify.outputs.authorized_flow_net != 'true' && needs.verify.outputs.authorized_neighbour_net != 'true' && needs.verify.outputs.authorized_volume_net != 'true' && needs.verify.outputs.authorized_m15_anchor_net != 'true' && needs.verify.outputs.authorized_joint_quote_extension != 'true' && needs.verify.outputs.authorized_portfolio_economic != 'true' && needs.verify.outputs.authorized_portfolio_holding != 'true' && needs.verify.outputs.authorized_sequence_portfolio != 'true' && needs.verify.outputs.authorized_discovery_program != 'true' && needs.verify.outputs.authorized_auction_inventory != 'true' && needs.verify.outputs.authorized_carry_preflight != 'true' && needs.verify.outputs.authorized_full_inventory != 'true' && needs.verify.outputs.authorized_csp1_cost != 'true'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: new-source-custody-public-receipt
