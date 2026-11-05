@@ -23,6 +23,12 @@ def native(data,mode):
             import re
             match=re.search(r'BATCH_RESEARCH_ERROR:([A-Za-z][A-Za-z0-9]{0,80})',proc.stderr or '')
             category=match.group(1) if match else 'UNKNOWN'
+            # The frozen public monetary proof uses no private broker facts.
+            # Allow only the C# verifier's strictly redacted symbolic reason
+            # to pass the wrapper for a precise, bounded migration diagnosis.
+            if mode=='--native-frozen-money-recovery':
+                frozen=re.search(r'FROZEN_RECEIPT_CHECK_([A-Za-z0-9_/]{1,180})',proc.stderr or '')
+                if frozen: category='FROZEN_'+frozen.group(1)
             raise subprocess.CalledProcessError(proc.returncode,['dotnet',mode],stderr=f'NATIVE_REPLAY_FAILED:{category}')
         return json.loads(out.read_text(),parse_float=D)
 
