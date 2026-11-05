@@ -497,6 +497,7 @@ jobs:
       - run: python -m unittest research.test_pve2 -v
       - run: python -m unittest research.test_native_financial_parity -v
       - run: python -m unittest research.test_f2_preflight -v
+      - run: python -m unittest research.test_hrc1_source_pilot -v
       - run: python -m research.f2_preflight
       - run: python -m unittest research.test_full_inventory_pipeline -v
       - run: python -m unittest research.test_csp1_cost_preflight -v
@@ -2010,5 +2011,59 @@ jobs:
         with:
           name: pve2-authentic-daily-hourly-pullback-eur300-public-only
           path: pve2-authentic-public.json
+          if-no-files-found: error
+          retention-days: 90
+
+  hrc1_authentic_development_pilot:
+    # One explicit OWNER/main single-file intent; authenticated original source
+    # ONLY, no new broker requests, no closed strategy calls, no orders/Cloud.
+    if: >-
+      needs.verify.result == 'success' &&
+      github.ref == 'refs/heads/main' &&
+      github.actor == 'mariancradulescu' &&
+      github.event_name == 'push' &&
+      github.event.head_commit.message == 'MXM_HRC1_AUTHENTIC_DEVELOPMENT_PREFLIGHT'
+    needs: verify
+    environment: mxm-r3-custody-v1
+    permissions:
+      contents: read
+      actions: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 2
+      - name: Fail closed unless exactly one new HRC1 pilot intent
+        shell: bash
+        run: |
+          test "$(git log -1 --format=%s)" = "MXM_HRC1_AUTHENTIC_DEVELOPMENT_PREFLIGHT"
+          test "$(git diff-tree --no-commit-id --name-only -r HEAD)" = "ops/hrc1-development-request.txt"
+          test ! -f docs/HRC1_AUTHENTIC_PILOT.json
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - run: python -m unittest research.test_hrc1_source_pilot -v
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: sealed-source
+          run-id: 41724643418
+          github-token: ${{ github.token }}
+          path: bdp-source
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: sealed-source
+          run-id: 41735441128
+          github-token: ${{ github.token }}
+          path: aip-source
+      - name: Reauthenticate original Pepperstone archives and screen HRC1 before any selection
+        run: python -m research.hrc1_source_pilot
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: hrc1-authentic-development-screen-public-only
+          path: hrc1-authentic-pilot-public.json
           if-no-files-found: error
           retention-days: 90
