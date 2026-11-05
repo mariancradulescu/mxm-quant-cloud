@@ -18,8 +18,54 @@ static class FundedDecisionCycleChecks
             new(id,clock,sizing,empty,offered,held??Array.Empty<ResearchExposureScenarios>(),
                 offered.Select(o=>new ResearchEntryTerms(o.Id,1000,0,proof)).ToArray(),proof);
         session.ApplyResearchFacts(new[]{E("mark",1000,"MARK","","",quotes:new[]{Q("X",1000),Q("Y",1000)})});
+        // Verify the actual NativeFundedSession decision path: a specialist
+        // negative/unknown economic input cannot create even a modeled intent.
+        var observedOnly=NativeFundedSession.Restore(session.Checkpoint(),session.AccountBinding);
+        var scout=O("known-negative","X");
+        var evidence=new SpecialistEuroEvidence(scout.Id,700,700,5,60,
+            true,false,true,true,false,-.1m,null,null,null,null,null,null,null,20m);
+        var noEdge=D("real-gate-no-edge",1000,new[]{scout}) with {
+            SpecialistEvidence=new[]{evidence}};
+        var rejected=observedOnly.DecideResearch(noEdge);
+        check(rejected.Selection.Allocations.Length==0 &&
+            rejected.Selection.Declined.Single().Reason=="SPECIALIST_NO_PREDICTIVE_BENCHMARK_SUPPORT" &&
+            rejected.Ledger.PendingIntents==0 && rejected.Ledger.CashEur==200m,
+            "economic benchmark rejection reaches common native ledger with zero new intents and unchanged cash");
+        observedOnly=NativeFundedSession.Restore(session.Checkpoint(),session.AccountBinding);
+        var missingFunding=D("real-gate-missing-financing",1000,new[]{scout}) with {
+            SpecialistEvidence=new[]{evidence with {SupportedVsBenchmark=true,
+                GrossAboveBenchmarkEur=2m,PredictionUncertaintyEur=1m,
+                ObservedOneRoundTripSpreadEur=.1m,EntryFeeEur=.1m,ExitFeeEur=.1m,
+                ConversionFeeEur=.1m,SlippageEur=.1m,FinancingEur=null}}};
+        var unknown=observedOnly.DecideResearch(missingFunding);
+        check(unknown.Selection.Allocations.Length==0 &&
+            unknown.Selection.Declined.Single().Reason=="SPECIALIST_UNKNOWN_EUR_COST_OR_FINANCING" &&
+            unknown.Ledger.PendingIntents==0,
+            "unknown financing cannot bypass shared session to reserve capital");
+        observedOnly=NativeFundedSession.Restore(session.Checkpoint(),session.AccountBinding);
+        var economic=D("real-gate-complete-conditional",1000,new[]{scout}) with {
+            SpecialistEvidence=new[]{evidence with {SupportedVsBenchmark=true,
+                GrossAboveBenchmarkEur=10m,PredictionUncertaintyEur=1m,
+                ObservedOneRoundTripSpreadEur=.1m,EntryFeeEur=.1m,ExitFeeEur=.1m,
+                ConversionFeeEur=.1m,SlippageEur=.1m,FinancingEur=.1m}}};
+        var conditional=observedOnly.DecideResearch(economic);
+        check(conditional.Selection.Allocations.Length==1 &&
+            conditional.Ledger.PendingIntents==1 && conditional.Ledger.CashEur==200m &&
+            !conditional.OrdersEnabled && !conditional.Qualified,
+            "supported conditional specialist shares existing EUR200 ledger and creates request only, not fill");
+        observedOnly=NativeFundedSession.Restore(session.Checkpoint(),session.AccountBinding);
+        var negative=observedOnly.DecideResearch(economic with {Id="real-gate-negative-gross",
+            SpecialistEvidence=new[]{economic.SpecialistEvidence![0] with {GrossAboveBenchmarkEur=-.2m}}});
+        check(negative.Selection.Allocations.Length==0 &&
+            negative.Selection.Declined.Single().Reason=="SPECIALIST_NONPOSITIVE_GROSS_EDGE",
+            "negative authenticated gross prediction is not misclassified as negative trading fees");
         var decision=D("one",1000,new[]{O("px","X"),O("py","Y")});
         var first=session.DecideResearch(decision);
+        var originalJson=JsonSerializer.Serialize(new {decision.Id,decision.Clock,decision.Sizing,
+            decision.EmptyStates,decision.Opportunities,decision.Exposure,decision.EntryTerms,decision.EvidenceHash});
+        var originalHash=Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(
+            System.Text.Encoding.UTF8.GetBytes(originalJson))).ToLowerInvariant();
+        check(first.InputHash==originalHash,"legacy native research decision hash stays unchanged without specialist evidence");
         check(first.Selection.Allocations.Length==2 && first.Ledger.CashEur==200 && first.Ledger.PendingIntents==2 && first.PendingMarginReservedEur==40,
             "native selector creates two financed intents on one EUR200 ledger without inventing fills");
         session=NativeFundedSession.Restore(session.Checkpoint(),session.AccountBinding);
