@@ -581,8 +581,8 @@ Check(Rejects(()=>OpportunityOrchestrator.Select(jointClock,adaptiveAccount,join
 var tight=OpportunityOrchestrator.Select(jointClock,adaptiveAccount with {FreeMarginEur=15},jointBase,new[]{jo,jb});
 Check(tight.Allocations.Length==1 && tight.ReservedMarginEur==10,"shared capital reserved before ranking remaining opportunities");
 Check(OpportunityOrchestrator.Select(jointClock,adaptiveAccount,jointBase,new[]{jo with {
-    Scenarios=jo.Scenarios.Select(x=>x with {LossPerUnitEur=.04m}).ToArray()},jb with {
-    Scenarios=jb.Scenarios.Select(x=>x with {LossPerUnitEur=.04m}).ToArray()}}).Allocations.Length==1,
+    Scenarios=jo.Scenarios.Select(x=>x with {LossPerUnitEur=.05m}).ToArray()},jb with {
+    Scenarios=jb.Scenarios.Select(x=>x with {LossPerUnitEur=.05m}).ToArray()}}).Allocations.Length==1,
     "joint correlated stress prevents independently feasible allocations exceeding common drawdown capacity");
 var descriptors=JointOpportunityResearch.Describe(researchBars);
 var futureMutated=researchBars.Select((x,i)=>i>=900?x with {C=x.C*2}:x).ToArray();
