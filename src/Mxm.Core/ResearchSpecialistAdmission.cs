@@ -39,7 +39,11 @@ public static class ResearchSpecialistAdmission
             e.ConversionFeeEur,e.SlippageEur,e.FinancingEur,e.CurrentMinMarginEur};
         if(values.Any(v=>v is null))return Block("SPECIALIST_UNKNOWN_EUR_COST_OR_FINANCING");
         if(values.Any(v=>v!.Value<0))return Block("SPECIALIST_NEGATIVE_COST");
-        if(e.CurrentMinMarginEur<=0 || e.CurrentMinMarginEur>200m ||
+        // The EUR200 is the INITIAL capital, not a perpetual margin ceiling.
+        // This inspection validates the observed minimum contract; actual
+        // current free margin and floating equity are assessed by the shared
+        // funded session and allocator at the decision clock.
+        if(e.CurrentMinMarginEur<=0 ||
            e.CurrentMinMarginEur>o.VolumeGrid.MinimumUnits*o.VolumeGrid.MarginPerUnitEur*1.000001m)
             return Block("SPECIALIST_MIN_VOLUME_MARGIN_NOT_FINANCED");
         decimal spread=e.PricesAlreadyContainBidAsk?0m:e.ObservedOneRoundTripSpreadEur!.Value;
@@ -57,8 +61,33 @@ public static class ResearchSpecialistAdmission
            evidence.Select(x=>x.OpportunityId).Distinct(StringComparer.Ordinal).Count()!=evidence.Length ||
            request.Opportunities.Any(o=>!evidence.Any(e=>e.OpportunityId==o.Id)))
             throw new ArgumentException("SPECIALIST_EVIDENCE_SET_NOT_ALIGNED");
-        var gates=request.Opportunities.Select(o=>Inspect(request.Clock,o,
-            evidence.Single(e=>e.OpportunityId==o.Id))).ToArray();
+        var gates=request.Opportunities.Select(o=>{
+            var e=evidence.Single(e=>e.OpportunityId==o.Id);
+            var gate=Inspect(request.Clock,o,e);
+            if(!gate.AdmittedForConditionalResearch)return gate;
+            // This is the available EUR margin AFTER the native ledger has
+            // reserved pending entries. Not a stale initial-capital constant.
+            if(e.CurrentMinMarginEur!.Value>request.Account.FreeMarginEur)
+                return gate with {AdmittedForConditionalResearch=false,
+                    Reason="SPECIALIST_CURRENT_FREE_MARGIN_INSUFFICIENT"};
+            if(request.CommonHorizonMinutes>0 && e.HoldingMinutes!=request.CommonHorizonMinutes)
+                return gate with {AdmittedForConditionalResearch=false,
+                    Reason="SPECIALIST_HORIZON_SCENARIO_MISMATCH"};
+            // The specialized forecast is EUR at minimum physical volume and
+            // includes spread/fees/slippage/conversion/financing and uncertainty.
+            // An independently supplied scenario matrix MUST NOT imply a
+            // greater mean incremental NET at that same minimum volume.
+            // Otherwise a positive specialist gate can be bypassed by a
+            // more optimistic allocator payoff matrix. This is a conservative
+            // compatibility screen, NOT a proof of realized cost attribution.
+            var sample=o.Scenarios.Where(s=>s.Estimation).ToArray();
+            if(sample.Length<2 || sample.Average(s=>
+                o.VolumeGrid.MinimumUnits*s.NetPerUnitEur-s.FixedCostEur)>
+                gate.IncrementalLowerEur!.Value)
+                return gate with {AdmittedForConditionalResearch=false,
+                    Reason="SPECIALIST_SCENARIO_NET_EXCEEDS_EVIDENCE"};
+            return gate;
+        }).ToArray();
         var offered=request.Opportunities.Where(o=>gates.Any(g=>g.OpportunityId==o.Id &&
             g.AdmittedForConditionalResearch)).ToArray();
         var native=OpportunityOrchestrator.Estimate(request with {
