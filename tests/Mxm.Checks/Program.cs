@@ -314,7 +314,7 @@ Check(Rejects(()=>fixedSource.Observe(
     Bar(1,1.10m) with {Symbol="GBPUSD"})),"different symbol never shares adaptive weights");
 
 
-var accountRisk = new BrokerRiskSnapshot(220m, 130m, 240m,true,true,true,true);
+var accountRisk = new BrokerRiskSnapshot(320m, 130m, 340m,true,true,true,true);
 var existingRisk = new[]{
     new OpenRiskExposure("position-1",5m,20m),
     new OpenRiskExposure("position-2",7m,30m)
@@ -322,13 +322,13 @@ var existingRisk = new[]{
 var proposalRisk = new ProposedRiskExposure("position-3",8m,2m,35m);
 var riskOk = PortfolioRiskBudget.Assess(accountRisk,existingRisk,proposalRisk);
 Check(riskOk.Admissible && riskOk.PortfolioPositionCountAfter==3 &&
-    riskOk.DrawdownHeadroomEur==52m && riskOk.TotalStressLossAfterEur==22m,
+    riskOk.DrawdownHeadroomEur==82m && riskOk.TotalStressLossAfterEur==22m,
     "dynamic multi-position risk without obsolete per-trade caps");
 Check(!PortfolioRiskBudget.Assess(accountRisk with {CertifiedEquityPeakUpperEur=null},
     existingRisk,proposalRisk).Admissible,"uncertified peak cannot open risk capacity");
 Check(!PortfolioRiskBudget.Assess(accountRisk with {OrderOutcomesKnown=false},
     existingRisk,proposalRisk).Admissible,"ambiguous execution blocks new exposure");
-Check(!PortfolioRiskBudget.Assess(accountRisk with {EquityEur=168m},
+Check(!PortfolioRiskBudget.Assess(accountRisk with {EquityEur=238m},
     existingRisk,proposalRisk).Admissible,"drawdown boundary has zero headroom");
 Check(!PortfolioRiskBudget.Assess(accountRisk,existingRisk,
     proposalRisk with {RequiredMarginEur=131m}).Admissible,
