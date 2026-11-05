@@ -301,3 +301,58 @@ alongside the other November 5 source receipts. No simulated proposals
 count as broker round trips or native financed EUR NET. The common native
 risk/ledger path remains the only permitted eventual portfolio path
 when a **distinct** candidate earns prospective economic support.
+
+## Integrated cost attribution and actual specialist-to-native boundary (IES1)
+
+The current source material distinguishes authentic **historical** BID/ASK
+observations from the **current** authenticated broker contract (including
+commission type, minimum commission and currency, lot size, physical minimum
+volume and step, PnL conversion rate, funding schedule, leverage and margin).
+The official Open API `ProtoOASymbol` supplies four commission calculation
+types (USD/million USD, USD/lot, percentage of quote notional, quote
+currency/lot), a separate minimum-commission currency/type and per-trade
+volume in cents; current `ProtoOAExpectedMarginRes` is a point-in-time
+observation. Algo `Symbol.MarketHours`, `DynamicLeverage`,
+`GetEstimatedMargin`, `CommissionType`, `MinCommissionType` and
+`PnLConversionFeeRate` are documented but not automatically certified by
+historical Open API archives. No historical DOM panel is available.
+
+`research/contract_eur_cost.py` converts each contract fee to **EUR**
+using explicitly supplied, time-bound cross-asset rates and a separate
+minimum-fee floor. Missing rate, tariff, financing or slippage is **unknown**,
+not zero. Recorded spread is charged **once** when projecting from a mid-price
+forecast, or **not added** on top of already BID/ASK-priced cash execution.
+The gross-PnL-dependent conversion fee remains unknown until the relevant
+profit amount and conversion rate exist; current broker fields are not a
+certificate of historical fee schedules. No closed study receipt is repriced.
+
+`ResearchSpecialistAdmission.Inspect/Estimate` now provides an executable
+internal responsibility boundary: feature clock, broker/quote and FX evidence,
+predictive comparison against a benchmark, full EUR uncertainty/cost/margin
+screen, then only the EXISTING `OpportunityOrchestrator.Estimate` on common
+states and a single EUR200 capital book. The same `NativeFundedSession`
+and `NativeFundedLedger` remain responsible for future actual priced
+facts/held equity; this bridge does not manufacture those facts. Missing
+finance or commission blocks candidate admission. No external agents or
+second allocator/ledger exist; any nonempty allocation in synthetic tests
+is CONDITIONAL and not a trade or a native financial parity certificate.
+
+IES1 only audits the BDP1 **original encrypted raw source** (six existing
+FX/gold assets, 52 globally exposed weeks, M5 and historical fixed quotes);
+it never invokes BDP1's closed forecast or selector. Across ALL assets it
+compares the sign of an already completed prior hour with the following
+complete hour against an explicit neutral sign-probability benchmark and
+reports complete weeks and missing bars. Original archived development
+BID/ASK at fixed clocks is combined **illustratively** with later captured
+current contract fees in EUR; no missing FX route, spread or fee is zero-filled.
+No overlaid EUR fees are passed off as historical executable NET, no instrument
+is selected as a winner from the exposed calendar, and no marginal allocation
+is admitted without a separate prospective supported candidate.
+
+The official cTrader CLI supports `backtest` for .NET 8 .algo files, but
+requires a separate cTrader ID/password-file/account context (not supplied
+by the existing Open API SCOPE_VIEW secrets). No CLI cBot backtest, broker
+execution, demo order or Cloud activation is claimed here. Current Cloud
+remains Linux-based and accepts only suitable compile-time dependencies.
+Continuous floating-equity drawdown, true independent NET and system HARD21
+are not demonstrated by IES1 or this integration.

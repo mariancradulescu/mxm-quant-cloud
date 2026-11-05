@@ -6,6 +6,7 @@ NativeCausalWarmupChecks.Run(Check);
 BrokerFlatReadbackChecks.Run(Check);
 BrokerOpenReadbackChecks.Run(Check);
 ConditionalDiscoveryChecks.Run(Check);
+ResearchSpecialistAdmissionChecks.Run(Check);
 PortfolioObservationChecks.Run(Check);
 void Check(bool condition, string name) { if (!condition) throw new Exception(name); passed++; }
 // Material identity/recovery contracts: no synthetic profitability claim.
