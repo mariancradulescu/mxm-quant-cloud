@@ -1,0 +1,1049 @@
+{
+  "allInHistoricalCostsCertified": false,
+  "authenticPriceClosesPerSymbol": {
+    "ETHUSD": 8713,
+    "GBPJPY": 6188,
+    "HK50": 4198,
+    "JPN225-F": 5888
+  },
+  "authenticatedCryptoRawReadback": true,
+  "brokerFillsKnown": false,
+  "candidateGroups": 8,
+  "closedStudiesRescored": false,
+  "cloudActivated": false,
+  "continuousDrawdown30Proven": false,
+  "costDefinition": "OBSERVED_FIXED_DEVELOPMENT_SPREAD_PLUS_HYPOTHETICAL_COMMISSION_SLIPPAGE_CONVERSION_NO_FUNDING",
+  "currentContractWireEvidence": {
+    "ETHUSD": {
+      "currentMinimumMarginEur": "10.75",
+      "minUnits": "0.01",
+      "preciseCommissionWirePresent": true,
+      "swapLongWirePresent": true,
+      "swapPeriodWirePresent": true,
+      "swapShortWirePresent": true,
+      "swapTimeWirePresent": true
+    },
+    "GBPJPY": {
+      "currentMinimumMarginEur": "39.93",
+      "minUnits": "1000",
+      "preciseCommissionWirePresent": true,
+      "swapLongWirePresent": true,
+      "swapPeriodWirePresent": true,
+      "swapShortWirePresent": true,
+      "swapTimeWirePresent": true
+    },
+    "HK50": {
+      "currentMinimumMarginEur": "27.9",
+      "minUnits": "0.1",
+      "preciseCommissionWirePresent": true,
+      "swapLongWirePresent": true,
+      "swapPeriodWirePresent": true,
+      "swapShortWirePresent": true,
+      "swapTimeWirePresent": true
+    },
+    "JPN225-F": {
+      "currentMinimumMarginEur": "17.22",
+      "minUnits": "1",
+      "preciseCommissionWirePresent": true,
+      "swapLongWirePresent": true,
+      "swapPeriodWirePresent": true,
+      "swapShortWirePresent": true,
+      "swapTimeWirePresent": true
+    }
+  },
+  "economicVerdict": "NO_SELECTION_GROUP_CLEARS_ADVERSE_COST_AND_MULTIPLICITY_GATE",
+  "families": [
+    {
+      "costBps": {
+        "adverse": 15.91293,
+        "central": 8.88297,
+        "stress": 29.938878
+      },
+      "currentMinMarginEur": 27.9,
+      "currentStaticMinMarginBelow200Eur": true,
+      "family": "ASIA_INDEX_RISK_HANDOFF",
+      "historicalDevelopmentQuotePairs": 26,
+      "horizonHours": 2,
+      "phases": {
+        "development": {
+          "activeWeeks": 0,
+          "adverseWeeklyLowerAfterCostBps": null,
+          "allWeeklyCounts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "completeModelledOpportunities": 0,
+          "conditionalBeforeFinancingMeanBps": {
+            "adverse": null,
+            "central": null,
+            "stress": null
+          },
+          "conservativeWeeklyLowerBps": null,
+          "emptyWeeks": 26,
+          "grossMeanBps": null,
+          "grossWinRate": null
+        },
+        "globallyExposedAudit": {
+          "activeWeeks": 0,
+          "adverseWeeklyLowerAfterCostBps": null,
+          "allWeeklyCounts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "completeModelledOpportunities": 0,
+          "conditionalBeforeFinancingMeanBps": {
+            "adverse": null,
+            "central": null,
+            "stress": null
+          },
+          "conservativeWeeklyLowerBps": null,
+          "emptyWeeks": 13,
+          "grossMeanBps": null,
+          "grossWinRate": null
+        },
+        "selection": {
+          "activeWeeks": 0,
+          "adverseWeeklyLowerAfterCostBps": null,
+          "allWeeklyCounts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "completeModelledOpportunities": 0,
+          "conditionalBeforeFinancingMeanBps": {
+            "adverse": null,
+            "central": null,
+            "stress": null
+          },
+          "conservativeWeeklyLowerBps": null,
+          "emptyWeeks": 13,
+          "grossMeanBps": null,
+          "grossWinRate": null
+        }
+      },
+      "selectionOnlyConditionalFollowupGate": false,
+      "target": "HK50"
+    },
+    {
+      "costBps": {
+        "adverse": 15.91293,
+        "central": 8.88297,
+        "stress": 29.938878
+      },
+      "currentMinMarginEur": 27.9,
+      "currentStaticMinMarginBelow200Eur": true,
+      "family": "ASIA_INDEX_RISK_HANDOFF",
+      "historicalDevelopmentQuotePairs": 26,
+      "horizonHours": 4,
+      "phases": {
+        "development": {
+          "activeWeeks": 0,
+          "adverseWeeklyLowerAfterCostBps": null,
+          "allWeeklyCounts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "completeModelledOpportunities": 0,
+          "conditionalBeforeFinancingMeanBps": {
+            "adverse": null,
+            "central": null,
+            "stress": null
+          },
+          "conservativeWeeklyLowerBps": null,
+          "emptyWeeks": 26,
+          "grossMeanBps": null,
+          "grossWinRate": null
+        },
+        "globallyExposedAudit": {
+          "activeWeeks": 0,
+          "adverseWeeklyLowerAfterCostBps": null,
+          "allWeeklyCounts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "completeModelledOpportunities": 0,
+          "conditionalBeforeFinancingMeanBps": {
+            "adverse": null,
+            "central": null,
+            "stress": null
+          },
+          "conservativeWeeklyLowerBps": null,
+          "emptyWeeks": 13,
+          "grossMeanBps": null,
+          "grossWinRate": null
+        },
+        "selection": {
+          "activeWeeks": 0,
+          "adverseWeeklyLowerAfterCostBps": null,
+          "allWeeklyCounts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "completeModelledOpportunities": 0,
+          "conditionalBeforeFinancingMeanBps": {
+            "adverse": null,
+            "central": null,
+            "stress": null
+          },
+          "conservativeWeeklyLowerBps": null,
+          "emptyWeeks": 13,
+          "grossMeanBps": null,
+          "grossWinRate": null
+        }
+      },
+      "selectionOnlyConditionalFollowupGate": false,
+      "target": "HK50"
+    },
+    {
+      "costBps": {
+        "adverse": 13.154674,
+        "central": 6.652819,
+        "stress": 26.555658
+      },
+      "currentMinMarginEur": 39.93,
+      "currentStaticMinMarginBelow200Eur": true,
+      "family": "TOKYO_LONDON_FX_POSITION_UNWIND",
+      "historicalDevelopmentQuotePairs": 21,
+      "horizonHours": 2,
+      "phases": {
+        "development": {
+          "activeWeeks": 24,
+          "adverseWeeklyLowerAfterCostBps": -16.268375,
+          "allWeeklyCounts": [
+            2,
+            3,
+            4,
+            2,
+            2,
+            1,
+            4,
+            3,
+            1,
+            3,
+            3,
+            3,
+            4,
+            3,
+            4,
+            4,
+            3,
+            1,
+            3,
+            3,
+            0,
+            2,
+            2,
+            1,
+            0,
+            1
+          ],
+          "completeModelledOpportunities": 62,
+          "conditionalBeforeFinancingMeanBps": {
+            "adverse": -12.428307,
+            "central": -5.926452,
+            "stress": -25.829291
+          },
+          "conservativeWeeklyLowerBps": -3.113701,
+          "emptyWeeks": 2,
+          "grossMeanBps": 0.726367,
+          "grossWinRate": 0.532258
+        },
+        "globallyExposedAudit": {
+          "activeWeeks": 13,
+          "adverseWeeklyLowerAfterCostBps": -25.412667,
+          "allWeeklyCounts": [
+            2,
+            1,
+            1,
+            2,
+            4,
+            1,
+            4,
+            1,
+            1,
+            4,
+            2,
+            1,
+            1
+          ],
+          "completeModelledOpportunities": 25,
+          "conditionalBeforeFinancingMeanBps": {
+            "adverse": -16.41658,
+            "central": -9.914725,
+            "stress": -29.817564
+          },
+          "conservativeWeeklyLowerBps": -12.257993,
+          "emptyWeeks": 0,
+          "grossMeanBps": -3.261906,
+          "grossWinRate": 0.28
+        },
+        "selection": {
+          "activeWeeks": 11,
+          "adverseWeeklyLowerAfterCostBps": -21.132828,
+          "allWeeklyCounts": [
+            2,
+            3,
+            1,
+            1,
+            0,
+            1,
+            1,
+            2,
+            2,
+            3,
+            2,
+            0,
+            1
+          ],
+          "completeModelledOpportunities": 19,
+          "conditionalBeforeFinancingMeanBps": {
+            "adverse": -12.032877,
+            "central": -5.531022,
+            "stress": -25.433861
+          },
+          "conservativeWeeklyLowerBps": -7.978154,
+          "emptyWeeks": 2,
+          "grossMeanBps": 1.121797,
+          "grossWinRate": 0.473684
+        }
+      },
+      "selectionOnlyConditionalFollowupGate": false,
+      "target": "GBPJPY"
+    },
+    {
+      "costBps": {
+        "adverse": 13.154674,
+        "central": 6.652819,
+        "stress": 26.555658
+      },
+      "currentMinMarginEur": 39.93,
+      "currentStaticMinMarginBelow200Eur": true,
+      "family": "TOKYO_LONDON_FX_POSITION_UNWIND",
+      "historicalDevelopmentQuotePairs": 21,
+      "horizonHours": 4,
+      "phases": {
+        "development": {
+          "activeWeeks": 24,
+          "adverseWeeklyLowerAfterCostBps": -18.207033,
+          "allWeeklyCounts": [
+            2,
+            3,
+            4,
+            2,
+            2,
+            1,
+            4,
+            3,
+            1,
+            3,
+            3,
+            3,
+            4,
+            3,
+            4,
+            4,
+            3,
+            1,
+            3,
+            3,
+            0,
+            2,
+            2,
+            1,
+            0,
+            1
+          ],
+          "completeModelledOpportunities": 62,
+          "conditionalBeforeFinancingMeanBps": {
+            "adverse": -12.111462,
+            "central": -5.609607,
+            "stress": -25.512446
+          },
+          "conservativeWeeklyLowerBps": -5.052359,
+          "emptyWeeks": 2,
+          "grossMeanBps": 1.043212,
+          "grossWinRate": 0.516129
+        },
+        "globallyExposedAudit": {
+          "activeWeeks": 13,
+          "adverseWeeklyLowerAfterCostBps": -26.56242,
+          "allWeeklyCounts": [
+            2,
+            1,
+            1,
+            2,
+            4,
+            1,
+            4,
+            1,
+            1,
+            4,
+            2,
+            1,
+            1
+          ],
+          "completeModelledOpportunities": 25,
+          "conditionalBeforeFinancingMeanBps": {
+            "adverse": -16.664438,
+            "central": -10.162583,
+            "stress": -30.065422
+          },
+          "conservativeWeeklyLowerBps": -13.407746,
+          "emptyWeeks": 0,
+          "grossMeanBps": -3.509764,
+          "grossWinRate": 0.4
+        },
+        "selection": {
+          "activeWeeks": 11,
+          "adverseWeeklyLowerAfterCostBps": -21.420763,
+          "allWeeklyCounts": [
+            2,
+            3,
+            1,
+            1,
+            0,
+            1,
+            1,
+            2,
+            2,
+            3,
+            2,
+            0,
+            1
+          ],
+          "completeModelledOpportunities": 19,
+          "conditionalBeforeFinancingMeanBps": {
+            "adverse": -13.367382,
+            "central": -6.865527,
+            "stress": -26.768366
+          },
+          "conservativeWeeklyLowerBps": -8.266089,
+          "emptyWeeks": 2,
+          "grossMeanBps": -0.212708,
+          "grossWinRate": 0.578947
+        }
+      },
+      "selectionOnlyConditionalFollowupGate": false,
+      "target": "GBPJPY"
+    },
+    {
+      "costBps": {
+        "adverse": 26.090064,
+        "central": 15.684611,
+        "stress": 48.896058
+      },
+      "currentMinMarginEur": 10.75,
+      "currentStaticMinMarginBelow200Eur": true,
+      "family": "CRYPTO_WEEKEND_SHOCK_DRIFT",
+      "historicalDevelopmentQuotePairs": 30,
+      "horizonHours": 2,
+      "phases": {
+        "development": {
+          "activeWeeks": 20,
+          "adverseWeeklyLowerAfterCostBps": -94.987261,
+          "allWeeklyCounts": [
+            5,
+            7,
+            2,
+            0,
+            1,
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+            1,
+            7,
+            5,
+            6,
+            1,
+            6,
+            2,
+            3,
+            5,
+            2,
+            1,
+            3,
+            3,
+            1,
+            0
+          ],
+          "completeModelledOpportunities": 63,
+          "conditionalBeforeFinancingMeanBps": {
+            "adverse": -22.344101,
+            "central": -11.938648,
+            "stress": -45.150095
+          },
+          "conservativeWeeklyLowerBps": -68.897197,
+          "emptyWeeks": 6,
+          "grossMeanBps": 3.745963,
+          "grossWinRate": 0.460317
+        },
+        "globallyExposedAudit": {
+          "activeWeeks": 8,
+          "adverseWeeklyLowerAfterCostBps": -86.751152,
+          "allWeeklyCounts": [
+            0,
+            0,
+            5,
+            0,
+            1,
+            1,
+            3,
+            1,
+            0,
+            1,
+            4,
+            2,
+            0
+          ],
+          "completeModelledOpportunities": 18,
+          "conditionalBeforeFinancingMeanBps": {
+            "adverse": -53.164554,
+            "central": -42.759101,
+            "stress": -75.970548
+          },
+          "conservativeWeeklyLowerBps": -60.661088,
+          "emptyWeeks": 5,
+          "grossMeanBps": -27.07449,
+          "grossWinRate": 0.333333
+        },
+        "selection": {
+          "activeWeeks": 10,
+          "adverseWeeklyLowerAfterCostBps": -57.547602,
+          "allWeeklyCounts": [
+            1,
+            2,
+            4,
+            0,
+            6,
+            0,
+            1,
+            3,
+            2,
+            3,
+            0,
+            1,
+            4
+          ],
+          "completeModelledOpportunities": 27,
+          "conditionalBeforeFinancingMeanBps": {
+            "adverse": -37.55415,
+            "central": -27.148697,
+            "stress": -60.360144
+          },
+          "conservativeWeeklyLowerBps": -31.457538,
+          "emptyWeeks": 3,
+          "grossMeanBps": -11.464086,
+          "grossWinRate": 0.555556
+        }
+      },
+      "selectionOnlyConditionalFollowupGate": false,
+      "target": "ETHUSD"
+    },
+    {
+      "costBps": {
+        "adverse": 26.090064,
+        "central": 15.684611,
+        "stress": 48.896058
+      },
+      "currentMinMarginEur": 10.75,
+      "currentStaticMinMarginBelow200Eur": true,
+      "family": "CRYPTO_WEEKEND_SHOCK_DRIFT",
+      "historicalDevelopmentQuotePairs": 30,
+      "horizonHours": 4,
+      "phases": {
+        "development": {
+          "activeWeeks": 20,
+          "adverseWeeklyLowerAfterCostBps": -92.3419,
+          "allWeeklyCounts": [
+            5,
+            7,
+            2,
+            0,
+            1,
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+            1,
+            7,
+            5,
+            6,
+            1,
+            6,
+            2,
+            3,
+            5,
+            2,
+            1,
+            3,
+            3,
+            1,
+            0
+          ],
+          "completeModelledOpportunities": 63,
+          "conditionalBeforeFinancingMeanBps": {
+            "adverse": -23.308613,
+            "central": -12.90316,
+            "stress": -46.114607
+          },
+          "conservativeWeeklyLowerBps": -66.251836,
+          "emptyWeeks": 6,
+          "grossMeanBps": 2.781451,
+          "grossWinRate": 0.428571
+        },
+        "globallyExposedAudit": {
+          "activeWeeks": 8,
+          "adverseWeeklyLowerAfterCostBps": -108.651212,
+          "allWeeklyCounts": [
+            0,
+            0,
+            5,
+            0,
+            1,
+            1,
+            3,
+            1,
+            0,
+            1,
+            4,
+            2,
+            0
+          ],
+          "completeModelledOpportunities": 18,
+          "conditionalBeforeFinancingMeanBps": {
+            "adverse": -58.111968,
+            "central": -47.706515,
+            "stress": -80.917962
+          },
+          "conservativeWeeklyLowerBps": -82.561148,
+          "emptyWeeks": 5,
+          "grossMeanBps": -32.021904,
+          "grossWinRate": 0.277778
+        },
+        "selection": {
+          "activeWeeks": 10,
+          "adverseWeeklyLowerAfterCostBps": -102.254835,
+          "allWeeklyCounts": [
+            1,
+            2,
+            4,
+            0,
+            6,
+            0,
+            1,
+            3,
+            2,
+            3,
+            0,
+            1,
+            4
+          ],
+          "completeModelledOpportunities": 27,
+          "conditionalBeforeFinancingMeanBps": {
+            "adverse": -47.016476,
+            "central": -36.611023,
+            "stress": -69.82247
+          },
+          "conservativeWeeklyLowerBps": -76.164771,
+          "emptyWeeks": 3,
+          "grossMeanBps": -20.926412,
+          "grossWinRate": 0.444444
+        }
+      },
+      "selectionOnlyConditionalFollowupGate": false,
+      "target": "ETHUSD"
+    },
+    {
+      "costBps": {
+        "adverse": 13.154674,
+        "central": 6.652819,
+        "stress": 26.555658
+      },
+      "currentMinMarginEur": 39.93,
+      "currentStaticMinMarginBelow200Eur": true,
+      "family": "CRYPTO_TO_FX_RISK_DELEVERAGING",
+      "historicalDevelopmentQuotePairs": 21,
+      "horizonHours": 2,
+      "phases": {
+        "development": {
+          "activeWeeks": 23,
+          "adverseWeeklyLowerAfterCostBps": -18.705522,
+          "allWeeklyCounts": [
+            3,
+            5,
+            4,
+            1,
+            2,
+            2,
+            1,
+            2,
+            1,
+            2,
+            2,
+            3,
+            3,
+            2,
+            4,
+            2,
+            1,
+            5,
+            0,
+            4,
+            4,
+            1,
+            1,
+            0,
+            0,
+            3
+          ],
+          "completeModelledOpportunities": 58,
+          "conditionalBeforeFinancingMeanBps": {
+            "adverse": -13.238501,
+            "central": -6.736646,
+            "stress": -26.639485
+          },
+          "conservativeWeeklyLowerBps": -5.550848,
+          "emptyWeeks": 3,
+          "grossMeanBps": -0.083827,
+          "grossWinRate": 0.431034
+        },
+        "globallyExposedAudit": {
+          "activeWeeks": 10,
+          "adverseWeeklyLowerAfterCostBps": -16.485888,
+          "allWeeklyCounts": [
+            0,
+            3,
+            0,
+            1,
+            2,
+            0,
+            3,
+            3,
+            2,
+            3,
+            2,
+            2,
+            1
+          ],
+          "completeModelledOpportunities": 22,
+          "conditionalBeforeFinancingMeanBps": {
+            "adverse": -12.494001,
+            "central": -5.992146,
+            "stress": -25.894985
+          },
+          "conservativeWeeklyLowerBps": -3.331214,
+          "emptyWeeks": 3,
+          "grossMeanBps": 0.660673,
+          "grossWinRate": 0.409091
+        },
+        "selection": {
+          "activeWeeks": 12,
+          "adverseWeeklyLowerAfterCostBps": -23.657724,
+          "allWeeklyCounts": [
+            3,
+            3,
+            2,
+            1,
+            7,
+            3,
+            3,
+            7,
+            0,
+            1,
+            2,
+            2,
+            3
+          ],
+          "completeModelledOpportunities": 37,
+          "conditionalBeforeFinancingMeanBps": {
+            "adverse": -15.118013,
+            "central": -8.616158,
+            "stress": -28.518997
+          },
+          "conservativeWeeklyLowerBps": -10.50305,
+          "emptyWeeks": 1,
+          "grossMeanBps": -1.963339,
+          "grossWinRate": 0.486486
+        }
+      },
+      "selectionOnlyConditionalFollowupGate": false,
+      "target": "GBPJPY"
+    },
+    {
+      "costBps": {
+        "adverse": 13.154674,
+        "central": 6.652819,
+        "stress": 26.555658
+      },
+      "currentMinMarginEur": 39.93,
+      "currentStaticMinMarginBelow200Eur": true,
+      "family": "CRYPTO_TO_FX_RISK_DELEVERAGING",
+      "historicalDevelopmentQuotePairs": 21,
+      "horizonHours": 4,
+      "phases": {
+        "development": {
+          "activeWeeks": 23,
+          "adverseWeeklyLowerAfterCostBps": -22.3203,
+          "allWeeklyCounts": [
+            3,
+            5,
+            4,
+            1,
+            2,
+            2,
+            1,
+            2,
+            1,
+            2,
+            2,
+            3,
+            3,
+            2,
+            4,
+            2,
+            1,
+            5,
+            0,
+            4,
+            4,
+            1,
+            1,
+            0,
+            0,
+            3
+          ],
+          "completeModelledOpportunities": 58,
+          "conditionalBeforeFinancingMeanBps": {
+            "adverse": -16.069908,
+            "central": -9.568053,
+            "stress": -29.470892
+          },
+          "conservativeWeeklyLowerBps": -9.165626,
+          "emptyWeeks": 3,
+          "grossMeanBps": -2.915234,
+          "grossWinRate": 0.431034
+        },
+        "globallyExposedAudit": {
+          "activeWeeks": 10,
+          "adverseWeeklyLowerAfterCostBps": -19.577577,
+          "allWeeklyCounts": [
+            0,
+            3,
+            0,
+            1,
+            2,
+            0,
+            3,
+            3,
+            2,
+            3,
+            2,
+            2,
+            1
+          ],
+          "completeModelledOpportunities": 22,
+          "conditionalBeforeFinancingMeanBps": {
+            "adverse": -13.743648,
+            "central": -7.241793,
+            "stress": -27.144632
+          },
+          "conservativeWeeklyLowerBps": -6.422903,
+          "emptyWeeks": 3,
+          "grossMeanBps": -0.588974,
+          "grossWinRate": 0.363636
+        },
+        "selection": {
+          "activeWeeks": 12,
+          "adverseWeeklyLowerAfterCostBps": -24.253504,
+          "allWeeklyCounts": [
+            3,
+            3,
+            2,
+            1,
+            7,
+            3,
+            3,
+            7,
+            0,
+            1,
+            2,
+            2,
+            3
+          ],
+          "completeModelledOpportunities": 37,
+          "conditionalBeforeFinancingMeanBps": {
+            "adverse": -14.073885,
+            "central": -7.57203,
+            "stress": -27.474869
+          },
+          "conservativeWeeklyLowerBps": -11.09883,
+          "emptyWeeks": 1,
+          "grossMeanBps": -0.919211,
+          "grossWinRate": 0.486486
+        }
+      },
+      "selectionOnlyConditionalFollowupGate": false,
+      "target": "GBPJPY"
+    }
+  ],
+  "fundedNetEur": null,
+  "fundedRoundTrips": 0,
+  "globallyExposedCalendar": true,
+  "grossDefinition": "H1_CLOSE_NEXT_HOUR_PROXY_BPS_NOT_EXECUTABLE_BID_ASK_FILLS",
+  "historicH1SourceWindowsTruncated": [],
+  "independentConfirmation": false,
+  "multiplicity": "8_FIXED_GROUPS_CONSERVATIVE_3_SE_WEEK_BLOCKS_NO_AUDIT_WINNER",
+  "nativeAllocatorInvoked": false,
+  "observedHistoricalDevelopmentCostQuotesPerSymbol": {
+    "ETHUSD": 30,
+    "GBPJPY": 21,
+    "HK50": 26,
+    "JPN225-F": 9
+  },
+  "omissions": {
+    "ASIA_INDEX_RISK_HANDOFF/FEATURE_MISSING": 260,
+    "CRYPTO_TO_FX_RISK_DELEVERAGING/FEATURE_MISSING": 6,
+    "CRYPTO_TO_FX_RISK_DELEVERAGING/NO_SIGNAL": 657,
+    "CRYPTO_WEEKEND_SHOCK_DRIFT/FEATURE_MISSING": 15,
+    "CRYPTO_WEEKEND_SHOCK_DRIFT/FORWARD_MISSING": 2,
+    "CRYPTO_WEEKEND_SHOCK_DRIFT/NO_SIGNAL": 500,
+    "TOKYO_LONDON_FX_POSITION_UNWIND/FEATURE_MISSING": 3,
+    "TOKYO_LONDON_FX_POSITION_UNWIND/NO_SIGNAL": 151
+  },
+  "ordersSubmitted": 0,
+  "originalAccountBindingVerified": true,
+  "protocolSha256": "2ef8002886fd23dec9b93fa8516c6b346ebb5c2171e05bfe3a1d125faa3c9a7d",
+  "rawReadOnlyRequestCount": 531,
+  "readOnly": true,
+  "rejectedQuotePairsBySymbolAndReason": {
+    "ETHUSD": {
+      "STALE_OR_ASYNCHRONOUS": 9
+    },
+    "GBPJPY": {
+      "QUOTE_SIDE_MISSING": 13,
+      "STALE_OR_ASYNCHRONOUS": 5
+    },
+    "HK50": {
+      "QUOTE_SIDE_MISSING": 13
+    },
+    "JPN225-F": {
+      "QUOTE_SIDE_MISSING": 15,
+      "STALE_OR_ASYNCHRONOUS": 15
+    }
+  },
+  "schema": "mxm-mbf1-authentic-multifamily-exposed-predictive-v1",
+  "selectionOnlyConditionalFollowupCandidates": [],
+  "sourceCiphertextSha256": "5754b056f0e3995c8121d16d89bcaa557d30738a8c3d70d1a07cf79bf4559285",
+  "sourceH1CompleteBarsByInstrument": {
+    "ETHUSD": 8713,
+    "GBPJPY": 6188,
+    "HK50": 4198,
+    "JPN225-F": 5888
+  },
+  "sourceRunId": 41971150620,
+  "study": "MBF1",
+  "systemHard21Proven": false,
+  "tradingQualification": false,
+  "universe": [
+    "GBPJPY",
+    "ETHUSD",
+    "HK50",
+    "JPN225-F"
+  ]
+}

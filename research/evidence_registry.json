@@ -725,7 +725,7 @@
     },
     {
       "id": "MBF1",
-      "status": "REGISTERED_UNSCORED",
+      "status": "CLOSED_EXACT_NONE_OF_EIGHT_GROUPS_PASS_ADVERSE_SELECTION_ONLY_SCREEN",
       "phase": "PROSPECTIVE_FOUR_FAMILY_EIGHT_GROUP_SINGLE_AUTHENTIC_SOURCE",
       "protocolFile": "research/mbf1_protocol.json",
       "source": "original Pepperstone cTrader SCOPE_VIEW bound account",
@@ -758,7 +758,38 @@
       "cloudActivated": false,
       "ordersSubmitted": 0,
       "ERP1Rescored": false,
-      "closedStudiesRescored": false
+      "closedStudiesRescored": false,
+      "executionRunId": 41971150620,
+      "executionCommit": "1d78035ba1bb57bbe4e711dcd2307bc552fd19e0",
+      "sourceCiphertextSha256": "5754b056f0e3995c8121d16d89bcaa557d30738a8c3d70d1a07cf79bf4559285",
+      "protocolSha256": "2ef8002886fd23dec9b93fa8516c6b346ebb5c2171e05bfe3a1d125faa3c9a7d",
+      "authenticatedCryptoRawReadback": true,
+      "readOnlyRequestCount": 531,
+      "sourceH1CompleteBarsByInstrument": {
+        "ETHUSD": 8713,
+        "GBPJPY": 6188,
+        "HK50": 4198,
+        "JPN225-F": 5888
+      },
+      "developmentQuotePairsByInstrument": {
+        "ETHUSD": 30,
+        "GBPJPY": 21,
+        "HK50": 26,
+        "JPN225-F": 9
+      },
+      "completeSynchronizedH1Closings": 24987,
+      "fixedGroupCount": 8,
+      "selectionAdversePositiveGroupCount": 0,
+      "followupCandidates": [],
+      "exactResultFile": "docs/MBF1_AUTHENTIC_RESULT.json",
+      "exactResultMd": "docs/MBF1_RESULT.md",
+      "originalPublicArtifactId": 13390655078,
+      "originalSourceArtifactId": 13390170888,
+      "originalPublicJsonSha256": "94b582f5edafb1ec6098359898e0aa24a5cf4ebaf2603dd1700beffd45b2f7de",
+      "historicalCostsCertified": false,
+      "nativeAllocatorRun": false,
+      "systemHard21Demonstrated": false,
+      "note": "Asian handoff source gap is unknown/not evaluable; remaining groups are negative after central/adverse conditional costs in selection. No retrospectively selected audit winner or retuning; all closed exact."
     }
   ],
   "schema": "mxm-project-data-exposure-v1",
@@ -1191,6 +1222,24 @@
         "NO_INDEPENDENT_CONFIRMATION_NO_FUNDED_EUR"
       ],
       "sourceArtifactRetentionDays": 90
+    },
+    {
+      "sourceRunId": 41971150620,
+      "sourceArtifactId": 13390170888,
+      "sourceCiphertextSha256": "5754b056f0e3995c8121d16d89bcaa557d30738a8c3d70d1a07cf79bf4559285",
+      "publicArtifactId": 13390655078,
+      "exactPublicReceipt": "docs/MBF1_AUTHENTIC_RESULT.json",
+      "sourceArtifactRetentionDays": 90,
+      "scope": "MBF1 four original-account visible symbols (GBPJPY, ETHUSD, HK50, JPN225-F), 52 weekly authentic H1, 39 fixed development quote clocks per instrument, 531 read-only requests and eight fixed predictive groups; 26/13/13 globally exposed historical calendar.",
+      "independent": false,
+      "returnsInspected": true,
+      "decisionExposure": [
+        "ALL_FOUR_FAMILY_TWO_HORIZON_SELECTION_AND_EXPOSED_AUDIT_OUTCOMES_NO_RESCORE",
+        "ALL_156_FIXED_DEVELOPMENT_BID_ASK_COST_PAIR_ATTEMPTS",
+        "ALL_52_WEEKLY_WINDOWS_FOUR_SYMBOL_H1_CLOSES"
+      ],
+      "portfolioQualification": false,
+      "ordersSubmitted": 0
     }
   ],
   "unknownExposurePolicy": "TREAT_AS_EXPOSED_FOR_QUALIFICATION"
