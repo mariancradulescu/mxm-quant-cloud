@@ -1,0 +1,10 @@
+MXM_PVE2_AUTHENTIC_DAILY_PULLBACK
+Authority: docs/OWNER_SPEC.md OWNER v2.0 including 2026-11-05 initial EUR300 amendment.
+Predeclared protocol: research/pve2_protocol.json, merged before authentic scoring in PR #91.
+Only PVE2 distinct completed H1 pullback versus prior24h direction, all 12 authenticated original Pepperstone symbols.
+Calendar 26/13/13 exposed weeks, fixed 60/240m horizons, four Bonferroni tests, no after-the-fact symbol/timeframe choice.
+Original sealed source runs #41724643418 and #41735441128. Existing real source and cost-context readback only.
+No new broker API requests, no source subscriptions, no LIVE or DEMO orders, no Cloud activation.
+Research read-only. Result artifact public; historical exposures cannot certify independent confirmation.
+One continuous conditional portfolio initial EUR300, no reset, aggregate HARD21 and 30% sampled DD limits; broker-funded NET unknown until proven.
+Exact main-only one-file research invocation. If prior PVE2 artifact exists, fail closed. No reexecution of closed studies.
