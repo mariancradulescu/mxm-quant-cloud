@@ -1,0 +1,74 @@
+{
+  "schema": "mxm-erp1-protocol-v1",
+  "id": "ERP1",
+  "status": "REGISTERED_UNSCORED",
+  "authority": "docs/OWNER_SPEC.md OWNER v2.0",
+  "universe": [
+    "SpotCrude",
+    "SpotBrent"
+  ],
+  "decisionPremise": "Energy-specific Brent-versus-WTI relative-log-price dislocation may mean-revert via product substitution and inventory adjustment; a single predefined hedged pair direction, not old index-to-FX impulse or multi-factor pressure model.",
+  "priorInfo": "CSP1 had 5 of 6 fresh paired quote observations for the two energy symbols, and minimum current margin approximately EUR7.87 and EUR8.76. CSP1 has no energy return outcomes. All dates treated as exposed development.",
+  "startUtcMs": 1762128000000,
+  "developmentEndUtcMs": 1777852800000,
+  "selectionEndUtcMs": 1785715200000,
+  "endUtcMs": 1793577600000,
+  "sourceWindowsWeeks": 52,
+  "sourcePricePeriod": "H1",
+  "decisionHoursUtc": [
+    0,
+    4,
+    8,
+    12,
+    16
+  ],
+  "lookbackHours": 240,
+  "minimumPastPairedHours": 80,
+  "minimumLogRatioScale": 0.00001,
+  "fixedAbsZThreshold": 1.5,
+  "entryLagHours": 1,
+  "holdHours": 3,
+  "tickWindowBeforeClockMs": 60000,
+  "maximumQuoteAgeAtClockMs": 2000,
+  "maximumBidAskTimeSkewMs": 2000,
+  "minimumCostPairsPerAsset": 8,
+  "costDevelopmentClocks": "Tuesday UTC 12:00 and 16:00 in each of 26 first development weeks, both symbols and BID/ASK, no choice by outcomes",
+  "costScenarios": {
+    "central": {
+      "slippageSpreadMultiple": 0.5,
+      "assumedCommissionPerLegBps": 2,
+      "assumedConversionPerLegBps": 1
+    },
+    "adverse": {
+      "slippageSpreadMultiple": 1,
+      "assumedCommissionPerLegBps": 4,
+      "assumedConversionPerLegBps": 2
+    },
+    "stress": {
+      "slippageSpreadMultiple": 2,
+      "assumedCommissionPerLegBps": 8,
+      "assumedConversionPerLegBps": 4
+    }
+  },
+  "historicalCostLimit": "Observed fixed development bid/ask spreads only; commissions, slippage and conversions are explicitly hypothetical per-leg wedges. Historical swap/funding and actual fills unknown. Model outputs conditional paired bps BEFORE financing and NOT funded EUR NET.",
+  "predictiveStatistics": "One prespecified relative-z convergence mechanism, one pair, fixed four-hour decision clock, H1 close next-hour entry proxy, 3h holding, exact intermediate marks, all empty weeks; benchmark prior 4h spread momentum. No retuning or choice of winner.",
+  "splitPolicy": "26 weeks development, 13 weeks selection, 13 globally exposed audit, all dates exposed; 52 weeks not minimum 12 months independent confirmation.",
+  "sourceReadOnlyRequests": [
+    "ProtoOATraderReq",
+    "ProtoOAAssetListReq",
+    "ProtoOASymbolsListReq",
+    "ProtoOASymbolByIdReq",
+    "ProtoOAExpectedMarginReq",
+    "ProtoOAGetTrendbarsReq",
+    "ProtoOAGetTickDataReq"
+  ],
+  "maxRequests": 350,
+  "capitalInitialEur": 200,
+  "hard21": "system-only fully closed financed round trips, not signals",
+  "maximumDrawdown": 0.3,
+  "ordersSubmitted": 0,
+  "cloudActivated": false,
+  "noNewExternalSources": true,
+  "noClosedStudyReruns": true,
+  "promotion": "Only selection support for positive adverse conditional convergence with sufficient weeks can justify a SEPARATE preregistered native C# common-EUR200 financed incremental study. Exposed audit cannot select an effective winner, and no current claim of independent confirmation."
+}

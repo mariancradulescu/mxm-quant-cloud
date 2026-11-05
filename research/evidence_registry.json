@@ -686,6 +686,27 @@
       "fullHistoricalCostsCertified": false,
       "financedNetEur": null,
       "hard21Proven": false
+    },
+    {
+      "id": "ERP1",
+      "phase": "PREDECLARED_CAUSAL_ENERGY_RELATIVE_PRICE_REVERSION_UNSCORED",
+      "status": "REGISTERED_BEFORE_NEW_QUOTES_OR_RETURNS",
+      "protocolFile": "research/erp1_protocol.json",
+      "assetUniverse": [
+        "SpotCrude",
+        "SpotBrent"
+      ],
+      "source": "original-bound Pepperstone cTrader Open API SCOPE_VIEW",
+      "chronology": "26w development / 13w selection / 13w globally exposed audit",
+      "independent": false,
+      "sourceDataUsedBeforeRegistration": false,
+      "previousCsp1CostSurfaceSeen": true,
+      "previouslySeenReturnOutcomeOfThisPair": false,
+      "modelSelectionFromAudit": false,
+      "risk": "one initial EUR200 system; no funded net, HARD21 or drawdown claim",
+      "noClosedStudyReruns": true,
+      "ordersSubmitted": 0,
+      "cloudActivated": false
     }
   ],
   "schema": "mxm-project-data-exposure-v1",
