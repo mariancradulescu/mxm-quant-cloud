@@ -113,7 +113,9 @@
     "research/session_wick_signal.py": "009fde0f32554db684c1fb0474a665f3afc8f06db588aae26632a4740465aa9c",
     "research/tick_volume_net.py": "2747ef20609c4a1e82e4fb225d8c55e49b60b4e5c2c7327ca730666157fa93ed",
     "research/volume_policy_attribution.py": "5684498045923c37af76b35f47a49c9f8cef4b98aeab8213f9e88d0020c2b04d",
-    "src/Mxm.Core/SequenceOpportunityResearch.cs": "75131c62df5e6a2b3276548bb70e2d98399f2cbec6a3889745ed5e7abf32acb7"
+    "src/Mxm.Core/SequenceOpportunityResearch.cs": "75131c62df5e6a2b3276548bb70e2d98399f2cbec6a3889745ed5e7abf32acb7",
+    "docs/PVE1_AUTHENTIC_RESULT.json": "922ce4c037486cb156577fd0d8d6e72ca547101766b8dd9124197c14f6cc2c81",
+    "research/pve1_protocol.json": "921330cad16a93c7700dc26928c416e773b5192a2e2fb55d23d74f9443893496"
   },
   "independenceDefault": "NOT_ESTABLISHED",
   "nativeFundedFactReception": {
@@ -884,6 +886,45 @@
       "systemHARD21Proven": false,
       "continuousDrawdown30Proven": false,
       "scope": "Diagnostic only; no selection, claims of broker historical complete costs or funded marginal NET; no closed model repricing",
+      "ordersSubmitted": 0,
+      "cloudActivated": false
+    },
+    {
+      "id": "PVE1",
+      "phase": "PREDECLARED_TWELVE_ASSET_OHLCV_PATH_AND_ACTIVITY_26_13_13",
+      "status": "CLOSED_EXACT_NO_SELECTION_PASS_NO_RETUNING",
+      "protocolFile": "research/pve1_protocol.json",
+      "protocolSha256": "921330cad16a93c7700dc26928c416e773b5192a2e2fb55d23d74f9443893496",
+      "sourceRunIds": [
+        41724643418,
+        41735441128
+      ],
+      "sourceSymbols": 12,
+      "sourceM5Bars": 836087,
+      "predeclaredTests": 48,
+      "selectionSupported": [],
+      "selectionGrossEpisodesAcrossTests": 468,
+      "globallyExposedAuditGrossEpisodesAcrossTests": 492,
+      "calendarGloballyExposed": true,
+      "independent": false,
+      "qualification": false,
+      "realBrokerCapital300Proven": false,
+      "costClass": "CONDITIONAL_COST_MODEL",
+      "fundedNetEur": null,
+      "modeledInitialCapitalEur": 300,
+      "modeledClosedNetEur": 0,
+      "modeledCompleteRoundTrips": 0,
+      "hard21Proven": false,
+      "continuousDrawdownCertified": false,
+      "followupCandidates": [],
+      "originalPublicArtifactId": 13412367214,
+      "executionRunId": 42022439033,
+      "originalPublicResultSha256": "99b07151eaa738730d130c9594ad2bf5ff82d7a2eb20cda9facbb0da03352540",
+      "exactFrozenReceipt": "docs/PVE1_AUTHENTIC_RESULT.json",
+      "originalReceiptSha256": "922ce4c037486cb156577fd0d8d6e72ca547101766b8dd9124197c14f6cc2c81",
+      "noClosedStudyReruns": true,
+      "closedExactNoRetuning": true,
+      "newBrokerRequests": 0,
       "ordersSubmitted": 0,
       "cloudActivated": false
     }
