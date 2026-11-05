@@ -1,0 +1,90 @@
+{
+  "id": "HRC1",
+  "status": "REGISTERED_UNSCORED",
+  "authority": "docs/OWNER_SPEC.md OWNER v2.0 EUR300",
+  "phase": "NEW_BOUNDED_AUTHENTIC_DEVELOPMENT_PILOT",
+  "noClosedStudyRerun": true,
+  "initialCapitalEur": 300,
+  "source": [
+    {
+      "folder": "bdp-source",
+      "run": 41724643418,
+      "hash": "e47ba7204ca7e07e7bb523ede8a8171f49b216cad09914142ed548839660a370",
+      "schema": "mxm-bdp1-source-v1",
+      "protocol": "research/portfolio_discovery_protocol.json"
+    },
+    {
+      "folder": "aip-source",
+      "run": 41735441128,
+      "hash": "fa684ca1de58c6d1e8bdee410834855d05389af0c0ae4523b095367dce0e5331",
+      "schema": "mxm-aip1-source-v1",
+      "protocol": "research/auction_inventory_protocol.json"
+    }
+  ],
+  "sourceSymbols": [
+    "EURUSD",
+    "GBPUSD",
+    "USDJPY",
+    "AUDUSD",
+    "USDCAD",
+    "XAUUSD",
+    "US500",
+    "NAS100",
+    "GER40",
+    "UK100",
+    "AUS200",
+    "JPN225"
+  ],
+  "calendar": {
+    "start": 1762128000000,
+    "developmentEnd": 1777852800000,
+    "selectionEnd": 1785715200000,
+    "end": 1793577600000,
+    "developmentWeeks": 26,
+    "selectionWeeks": 13,
+    "exposedAuditWeeks": 13,
+    "independentConfirmation": false
+  },
+  "economicPremise": "An ex-ante sign of local H1 return autocorrelation can distinguish conditional continuation from reversal, potentially improving a gross signed-60-minute decision versus unconditional H1 momentum when market inventory persistence regime changes. Neither volatility concentration nor benchmark outperformance is presumed.",
+  "distinctFromClosed": "Fixed unfit lag-one H1 serial correlation sign-switch across exact 21 completed hourly returns, not PVE1 H4 volume/path family, PVE2 24h/H1 pullback, old fitted RCP1, IMT1 index impulse or SQP1 binary transition hazard. Similar generic momentum/reversal ideas remain globally exposed; no novelty/independence certificate is claimed.",
+  "decision": {
+    "hourlyUtc": true,
+    "minObservedConsecutiveH1Returns": 21,
+    "correlationThreshold": 0.2,
+    "entryDelayMinutes": 5,
+    "holdingMinutes": 60,
+    "noFittedParameters": true,
+    "symbolSelection": "ALL_12_OR_NONE",
+    "missingH1OrM5": "ABSTAIN_NO_LABEL_IMPUTATION",
+    "benchmark": "LAST_COMPLETED_H1_MOMENTUM_ON_ALL_CAUSALLY_ELIGIBLE_CLOCKS",
+    "reference": "ZERO_TRADE"
+  },
+  "scientific": {
+    "developmentOnlyPilot": true,
+    "minInformativeDevelopmentWeeks": 20,
+    "minDevelopmentSignalsWithLabels": 200,
+    "minSelectionEquivalentEffectiveWeeks": 10,
+    "minSymbolCoverageInWeek": 8,
+    "requiredEconomicallyDetectableEffectBps": 3,
+    "oneSidedComparisons": 2,
+    "familywiseAlpha": 0.05,
+    "powerTarget": 0.8,
+    "selectionScoringOnlyIfPilotPasses": true,
+    "noPosthocCandidateOrHorizonChoice": true
+  },
+  "financial": {
+    "costMode": "current_term_adverse_model_only_no_broker_fill",
+    "nativeFinancialAuthority": "NativeFundedLedger",
+    "nativeFundingAdmitted": false,
+    "brokerMinimumVolumeAndFxAtExitNotReconciled": true,
+    "independentNetQualified": false,
+    "ordersEnabled": false,
+    "cloudActivated": false
+  },
+  "ops": {
+    "brokerRequests": 0,
+    "ordersSubmitted": 0,
+    "cloudActivated": false,
+    "artifactsPublicOnly": true
+  }
+}
