@@ -148,7 +148,7 @@ internal static class MonetaryRecoveryChecks
         rejected=session.ReconcileMoney(final with {Facts=Array.Empty<AttributedMoneyFact>(),FundingRecords=Array.Empty<ConfirmedFundingEvent>(),
             BrokerCashEur=300,Snapshot=final.Snapshot with {Orders=Array.Empty<BrokerOrderIdentity>(),Deals=Array.Empty<BrokerDealIdentity>(),Positions=Array.Empty<BrokerPositionIdentity>()}});
         check(!rejected.Adopted&&session.Checkpoint()==checkpoint,
-            "even a fully truncated supposedly-complete broker snapshot cannot reset a previously losing journal to200");
+            "even a fully truncated supposedly-complete broker snapshot cannot reset a previously losing journal to300");
         rejected=session.ReconcileMoney(final with {Facts=all.Select(f=>f.EventId==f2.EventId?f with {Commission=Leg(.1m,3000,"USD",.9m,4000)}:f).ToArray()});
         check(!rejected.Adopted,"conversion observed after the monetary event cannot value an earlier debit");
         var unknown=new NativeFundedSession(account,intents:intents);
@@ -157,7 +157,7 @@ internal static class MonetaryRecoveryChecks
             "matching but stale broker cash cannot certify current financial reconciliation");
         check(!session.ReconcileMoney(final with {AdditionalExternalCashflowDetected=true}).Adopted,
             "external funding cannot be silently absorbed into the continuous owner capital");
-        // The initial200 and cash history here are TEST assumptions, not broker certificates.
+        // The initial300 and cash history here are TEST assumptions, not broker certificates.
         var restored=NativeFundedSession.Restore(checkpoint,account);
         check(restored.Ledger.Summary()==session.Ledger.Summary(),"v2 monetary state survives account-bound restore");
         bool modelFillBlocked=false;
@@ -183,13 +183,13 @@ internal static class MonetaryRecoveryChecks
         var joint=new NativeFundedSession(account,intents:jointIntents,journalContinuityProven:true);
         var jointReport=joint.ReconcileMoney(Joint(2,299.7m));
         check(jointReport.Adopted&&jointReport.RetainedLedger.OpenPositions==2&&jointReport.RetainedLedger.CashEur==299.7m,
-            "simultaneous symbols reserve their actual fee debits in one continuous200 EUR cash book");
-        joint=NativeFundedSession.Restore(joint.Checkpoint(),account);jointReport=joint.ReconcileMoney(Joint(3,196.59m));
+            "simultaneous symbols reserve their actual fee debits in one continuous300 EUR cash book");
+        joint=NativeFundedSession.Restore(joint.Checkpoint(),account);jointReport=joint.ReconcileMoney(Joint(3,296.59m));
         check(jointReport.Adopted&&jointReport.RetainedLedger.OpenPositions==1&&jointReport.RetainedLedger.CompleteRoundTrips==1,
             "closing one losing exposure leaves the other position and common cash intact after restart");
-        jointReport=joint.ReconcileMoney(Joint(4,198.37m));
+        jointReport=joint.ReconcileMoney(Joint(4,298.37m));
         check(jointReport.Adopted&&jointReport.RetainedLedger.CompleteRoundTrips==2&&jointReport.RetainedLedger.ClosedNetEur==-1.63m,
-            "the combined book reconciles to200 minus total economic loss, never summed separate wallets");
+            "the combined book reconciles to300 minus total economic loss, never summed separate wallets");
         // Old v1 native modeled checkpoints remain loadable without changing event IDs.
         var model=new NativeFundedLedger();
         var request=new LedgerEvent("old-request",1000,"REQUEST_OPEN","old-position","OLD",1,1,0,0,0,0,0,0,1000,"TEST",proof,Array.Empty<LedgerQuote>());
