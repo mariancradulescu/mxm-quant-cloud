@@ -37,6 +37,17 @@ public sealed partial class NativeFundedSession
         return Ledger.Summary();
     }
 
+    // Prospective decision entrypoint: future native scoring adapters must
+    // supply explicit matched EUR benchmark/cost evidence. Historical replay
+    // continues to use DecideResearch, preserving original decision hashes.
+    // This does not authorize orders and is not yet connected to Cloud scoring.
+    public NativeResearchDecisionReceipt DecideProspective(NativeResearchDecision d)
+    {
+        if(d.SpecialistEvidence is null)
+            throw new ArgumentException("PROSPECTIVE_SPECIALIST_EVIDENCE_REQUIRED");
+        return DecideResearch(d);
+    }
+
     public NativeResearchDecisionReceipt DecideResearch(NativeResearchDecision d)
     {
         // Null specialist evidence retains the historical exact decision hash format.
