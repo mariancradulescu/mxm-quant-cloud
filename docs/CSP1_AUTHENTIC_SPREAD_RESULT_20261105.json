@@ -1,0 +1,109 @@
+{
+  "schema": "mxm-csp1-authentic-spread-public-summary-v1",
+  "authority": "docs/OWNER_SPEC.md OWNER v2.0",
+  "status": "AUTHENTIC_SPREAD_ONLY_UNQUALIFIED_NO_TRADES",
+  "originalSourceRunId": 41940740480,
+  "originalSourceCommit": "a573e7d62d9d19b318c682e07d23c435f8bb3f82",
+  "sourceArtifactId": 13375912384,
+  "publicArtifactId": 13375837647,
+  "sourceCiphertextSha256": "b217f6e35eeb1e51c70d11894816277a98a9d831b1a351e4fc6ebc5fa679a270",
+  "protocolFile": "research/csp1_protocol.json",
+  "protocolSha256": "c10ab48382cf062ef566824e0ed3c64b34b8afbd7c7408b8c0e97bd2afffe3b5",
+  "originalPublicArtifactUrl": "https://github.com/mariancradulescu/mxm-quant-cloud/actions/runs/41940740480/artifacts/13375837647",
+  "linkedInventoryRunId": 41939175379,
+  "originalAccountFingerprintRechecked": true,
+  "authenticatedRawReadback": true,
+  "readOnlyRequestCount": 99,
+  "instruments": 12,
+  "fixedUtcClocks": [
+    "2026-11-04T08:15:00Z",
+    "2026-11-04T15:15:00Z",
+    "2026-11-04T20:15:00Z"
+  ],
+  "instrumentClockOpportunities": 36,
+  "validFreshPairedBidAsk": 19,
+  "unknownOrInvalidQuotes": 17,
+  "observationStatuses": {
+    "staleOrAsynchronous": 8,
+    "missingSide": 7,
+    "crossedOrInvalid": 2
+  },
+  "illustrativeMeanObservedSpreadBps": [
+    {
+      "symbol": "EURUSD",
+      "validSamples": 0,
+      "meanBps": null
+    },
+    {
+      "symbol": "GBPJPY",
+      "validSamples": 3,
+      "meanBps": 0.453
+    },
+    {
+      "symbol": "SpotCrude",
+      "validSamples": 2,
+      "meanBps": 2.5117
+    },
+    {
+      "symbol": "SpotBrent",
+      "validSamples": 3,
+      "meanBps": 3.0898
+    },
+    {
+      "symbol": "ETHUSD",
+      "validSamples": 3,
+      "meanBps": 8.39
+    },
+    {
+      "symbol": "LTCUSD",
+      "validSamples": 2,
+      "meanBps": 44.4294
+    },
+    {
+      "symbol": "HK50",
+      "validSamples": 2,
+      "meanBps": 2.0704
+    },
+    {
+      "symbol": "JPN225-F",
+      "validSamples": 2,
+      "meanBps": 2.5327
+    },
+    {
+      "symbol": "ARKF.US",
+      "validSamples": 0,
+      "meanBps": null
+    },
+    {
+      "symbol": "AMD.US",
+      "validSamples": 1,
+      "meanBps": 12.8426
+    },
+    {
+      "symbol": "EDP.PT",
+      "validSamples": 0,
+      "meanBps": null
+    },
+    {
+      "symbol": "AAXJ.US",
+      "validSamples": 1,
+      "meanBps": 11.1183
+    }
+  ],
+  "warnings": [
+    "Each mean summarizes 0–3 fixed clock observations only; not representative historical spreads",
+    "Missing, stale, incomplete, crossed or asynchronous quotes are not zero costs",
+    "Current margin and tariff observations do not establish historical costs or fills",
+    "Observed spread excludes historical commission, slippage, funding and conversion",
+    "Instrument differences are exploratory cost descriptors, never independently confirmed predictive alpha"
+  ],
+  "historicalAllInCostCertified": false,
+  "fundedNetEur": null,
+  "independentConfirmation": false,
+  "hard21Established": false,
+  "drawdown30Proven": false,
+  "cloudActivated": false,
+  "ordersSubmitted": 0,
+  "closedStudyReruns": 0,
+  "methodologicalNextStep": "Use a separate preregistered causal prediction hypothesis with adequate subsequent authentic market history, explicit central/adverse/stress all-in costs and the existing common EUR200 native ledger; neither CSP1 spreads nor margin qualify a strategy."
+}
