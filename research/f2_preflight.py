@@ -54,7 +54,7 @@ def assess(candidate=None, pilot=None):
     # Construction check: an alternating historical sequence must produce
     # a signed forecast opposite the unconditional H1 momentum benchmark.
     pattern=[1 if i%2==0 else -1 for i in range(21)]
-    if causal_sign(pattern)!==-pattern[-1] or causal_sign([1]*21)!=0:
+    if causal_sign(pattern)!=-pattern[-1] or causal_sign([1]*21)!=0:
         fail("PREDICTOR_BENCHMARK_CONSTRUCTION_NOT_DISTINCT")
     if p["uncertainty"]["oneSidedComparisons"]<1 or p["uncertainty"]["alphaFamily"]<=0 or p["uncertainty"]["alphaFamily"]>=1:
         fail("MULTIPLICITY_PROTOCOL_INVALID")
