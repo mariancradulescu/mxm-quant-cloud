@@ -6,17 +6,96 @@
   "economicPremise": "A sudden crude oil repricing can alter expected Canadian export receipts; any residual pass-through may move USD/CAD opposite to the oil shock after prices already known at the decision clock. A null or reversed effect falsifies this exact causal premise, without fitting the sign to returns.",
   "sourcePolicy": "Use only two already authenticated encrypted cTrader Open API source artifacts. Do not call any prior closed predictive model or replay. Entire source calendars have already been exposed: no independent validation can result.",
   "sources": {
-    "oil": {"runId": 41948500095, "artifactId": 13379722249, "sealedSha256": "94377751a8ca305a3d89c72bfc5c5463ae6ed4836d33448586d429cd8d95bfb7", "instrument":"SpotCrude", "period":"H1"},
-    "fx": {"runId": 41724643418, "artifactId": 13273950911, "sealedSha256": "e47ba7204ca7e07e7bb523ede8a8171f49b216cad09914142ed548839660a370", "instrument":"USDCAD", "period":"M5"}
+    "oil": {
+      "runId": 41948500095,
+      "artifactId": 13379722249,
+      "sealedSha256": "94377751a8ca305a3d89c72bfc5c5463ae6ed4836d33448586d429cd8d95bfb7",
+      "instrument": "SpotCrude",
+      "period": "H1"
+    },
+    "fx": {
+      "runId": 41724643418,
+      "artifactId": 13273950911,
+      "sealedSha256": "e47ba7204ca7e07e7bb523ede8a8171f49b216cad09914142ed548839660a370",
+      "instrument": "USDCAD",
+      "period": "M5"
+    }
   },
-  "decisionCalendar": {"startUtcMs":1762128000000,"developmentEndUtcMs":1777852800000,"selectionEndUtcMs":1785715200000,"endUtcMs":1793577600000,"weeks":52,"weekdaysUtc":[1,2,3],"decisionHoursUtc":[12,13,14,15]},
-  "causalSignal": {"oilCompletedHourlyLookbackHours":4,"priorReferenceDecisionClocks":20,"oilShockAbsVsPastMedian":1.5,"side":"SHORT_USDCAD_AFTER_POSITIVE_CRUDE_SHOCK_AND_LONG_AFTER_NEGATIVE_SHOCK","thresholdTunedByOutcomes":false},
-  "targetObservation": {"entryLagMinutes":5,"holdingMinutes":120,"exitLagMinutes":125,"requireEveryIntermediateM5Close":true,"noFundingRolloverCrossing":true},
+  "decisionCalendar": {
+    "startUtcMs": 1762128000000,
+    "developmentEndUtcMs": 1777852800000,
+    "selectionEndUtcMs": 1785715200000,
+    "endUtcMs": 1793577600000,
+    "weeks": 52,
+    "weekdaysUtc": [
+      1,
+      2,
+      3
+    ],
+    "decisionHoursUtc": [
+      12,
+      13,
+      14,
+      15
+    ]
+  },
+  "causalSignal": {
+    "oilCompletedHourlyLookbackHours": 4,
+    "priorReferenceDecisionClocks": 20,
+    "oilShockAbsVsPastMedian": 1.5,
+    "side": "SHORT_USDCAD_AFTER_POSITIVE_CRUDE_SHOCK_AND_LONG_AFTER_NEGATIVE_SHOCK",
+    "thresholdTunedByOutcomes": false
+  },
+  "targetObservation": {
+    "entryLagMinutes": 5,
+    "holdingMinutes": 120,
+    "exitLagMinutes": 125,
+    "requireEveryIntermediateM5Close": true,
+    "fundingRolloverUnknown": true
+  },
   "preflight": "Account binding and encrypted-source hashes verified first; check oil/FX calendar support and target intermediate mark continuity. Cost observations are from existing fixed BDP1 development BID/ASK windows only and first causally fresh synchronized pair within 20 seconds; missing pairs remain UNKNOWN. No outcome-derived asset, side, horizon or cost selection.",
-  "quoteCost": {"windowMaxMs":20000,"maxAgeMs":2000,"maxBidAskSkewMs":2000,"minDevelopmentSamples":8,"central":{"spreadReference":"median","slippageSpreadMultiple":0.5,"commissionPerSideBpsHypothesis":2,"conversionPerSideBpsHypothesis":1},"adverse":{"spreadReference":"p90","slippageSpreadMultiple":1,"commissionPerSideBpsHypothesis":4,"conversionPerSideBpsHypothesis":2},"stress":{"spreadReference":"max","slippageSpreadMultiple":2,"commissionPerSideBpsHypothesis":8,"conversionPerSideBpsHypothesis":4}},
+  "quoteCost": {
+    "windowMaxMs": 20000,
+    "maxAgeMs": 2000,
+    "maxBidAskSkewMs": 2000,
+    "minDevelopmentSamples": 8,
+    "central": {
+      "spreadReference": "median",
+      "slippageSpreadMultiple": 0.5,
+      "commissionPerSideBpsHypothesis": 2,
+      "conversionPerSideBpsHypothesis": 1
+    },
+    "adverse": {
+      "spreadReference": "p90",
+      "slippageSpreadMultiple": 1,
+      "commissionPerSideBpsHypothesis": 4,
+      "conversionPerSideBpsHypothesis": 2
+    },
+    "stress": {
+      "spreadReference": "max",
+      "slippageSpreadMultiple": 2,
+      "commissionPerSideBpsHypothesis": 8,
+      "conversionPerSideBpsHypothesis": 4
+    }
+  },
   "score": "Directional log-return bps between next completed M5 close and 120-minute exit; no broker fills, current quote at entry, historical financing, account-level NET EUR or C# funded admission is inferred. Selection weeks are descriptive and globally exposed. The per-week lower bound uses a one-sided 95-percent Student t estimate across complete active weeks; no universal 3-SE gate.",
-  "promotionFromSelectionOnly": {"minActiveWeeks":8,"minCompleteSignals":20,"adverseNetActiveWeekLowerBoundPositive":true,"firstRequireHistoricalCostSamples":true,"requireIndependentFutureChronologyForFinalQualification":true,"fundedFollowup":"Only on substantive positive evidence, register separate existing native C# single EUR200 marginal funded replay; do not optimize this exact hypothesis."},
+  "promotionFromSelectionOnly": {
+    "minActiveWeeks": 8,
+    "minCompleteSignals": 20,
+    "adverseNetActiveWeekLowerBoundPositive": true,
+    "firstRequireHistoricalCostSamples": true,
+    "requireIndependentFutureChronologyForFinalQualification": true,
+    "fundedFollowup": "Only on substantive positive evidence, register separate existing native C# single EUR200 marginal funded replay; do not optimize this exact hypothesis."
+  },
   "costCaveat": "Spread samples authentically observed; central/adverse/stress commissions slippage FX are hypothetical; financing, fill-quality and historical contract tariffs unverified. Missing financial evidence prevents funded NET certification.",
-  "system": {"initialCapitalEur":200,"hard21":"system-global-only","maximumContinuousDrawdown":0.30,"cloudActivated":false,"ordersAllowed":false},
-  "newBrokerRequests":0,"oldClosedStudyScoringCalls":0,"newExternalSources":false
+  "system": {
+    "initialCapitalEur": 200,
+    "hard21": "system-global-only",
+    "maximumContinuousDrawdown": 0.3,
+    "cloudActivated": false,
+    "ordersAllowed": false
+  },
+  "newBrokerRequests": 0,
+  "oldClosedStudyScoringCalls": 0,
+  "newExternalSources": false
 }
