@@ -1,0 +1,174 @@
+{
+  "authenticatedCryptoRawReadback": true,
+  "brokerFillsKnown": false,
+  "closedStudiesRescored": false,
+  "cloudActivated": false,
+  "conclusion": "CONDITIONAL_EXPLORATION_NO_FUNDED_NET_OR_INDEPENDENT_HOLDOUT",
+  "continuousDrawdown30Proven": false,
+  "currentContractWireFields": {
+    "SpotBrent": {
+      "commissionWirePresent": true,
+      "minUnits": "1",
+      "swapPeriodWirePresent": true,
+      "swapTimeWirePresent": true
+    },
+    "SpotCrude": {
+      "commissionWirePresent": true,
+      "minUnits": "1",
+      "swapPeriodWirePresent": true,
+      "swapTimeWirePresent": true
+    }
+  },
+  "developmentQuotePairsByAsset": {
+    "SpotBrent": 18,
+    "SpotCrude": 21
+  },
+  "developmentRejectedQuotePairsByReason": {
+    "STALE_OR_ASYNCHRONOUS": 65
+  },
+  "fundedNetEur": null,
+  "fundedRoundTrips": 0,
+  "globalExposedCalendar": true,
+  "grossReturnDefinition": "EQUAL_NOTIONAL_PAIRED_LOG_BPS_UNFUNDED_NOT_EUR_NET",
+  "historicalAllInCostsCertified": false,
+  "historicalCostsNotCertified": true,
+  "historicalFundingKnown": false,
+  "historicalSpreadPlusHypotheticalNonFundingCostCasesBps": {
+    "adverse": 34.288088,
+    "central": 16.758969,
+    "stress": 61.169928
+  },
+  "independentConfirmation": false,
+  "marginCurrentMinimumPairEur": 16.48,
+  "nativeAllocatorInvoked": false,
+  "observedPairedH1Closes": 5462,
+  "ordersSubmitted": 0,
+  "originalAccountBindingVerified": true,
+  "phase": {
+    "development": {
+      "allWeekUnfundedOpportunityCounts": [
+        0,
+        12,
+        0,
+        0,
+        14,
+        1,
+        5,
+        11,
+        0,
+        14,
+        5,
+        5,
+        4,
+        2,
+        13,
+        5,
+        14,
+        11,
+        10,
+        18,
+        1,
+        17,
+        8,
+        13,
+        2,
+        12
+      ],
+      "completeUnfundedPairedOpportunities": 197,
+      "conditionalBeforeFinancingMeanBps": {
+        "adverse": -40.86843,
+        "central": -23.339311,
+        "stress": -67.75027
+      },
+      "grossWinRate": 0.431472,
+      "maximumOpportunitiesOneWeek": 18,
+      "meanGrossPairedBps": -6.580342,
+      "priorMomentumBenchmarkMeanBps": 5.628726,
+      "weeks": 26,
+      "weeksAtLeast21UnfundedSignals": 0,
+      "weeksWithZeroOpportunities": 4
+    },
+    "globallyExposedAudit": {
+      "allWeekUnfundedOpportunityCounts": [
+        15,
+        4,
+        5,
+        6,
+        13,
+        1,
+        18,
+        11,
+        13,
+        3,
+        11,
+        2,
+        0
+      ],
+      "completeUnfundedPairedOpportunities": 102,
+      "conditionalBeforeFinancingMeanBps": {
+        "adverse": -28.933292,
+        "central": -11.404173,
+        "stress": -55.815132
+      },
+      "grossWinRate": 0.558824,
+      "maximumOpportunitiesOneWeek": 18,
+      "meanGrossPairedBps": 5.354796,
+      "priorMomentumBenchmarkMeanBps": -2.267668,
+      "weeks": 13,
+      "weeksAtLeast21UnfundedSignals": 0,
+      "weeksWithZeroOpportunities": 1
+    },
+    "selection": {
+      "allWeekUnfundedOpportunityCounts": [
+        7,
+        9,
+        3,
+        4,
+        13,
+        0,
+        9,
+        1,
+        12,
+        19,
+        4,
+        13,
+        0
+      ],
+      "completeUnfundedPairedOpportunities": 94,
+      "conditionalBeforeFinancingMeanBps": {
+        "adverse": -34.200105,
+        "central": -16.670986,
+        "stress": -61.081945
+      },
+      "grossWinRate": 0.5,
+      "maximumOpportunitiesOneWeek": 19,
+      "meanGrossPairedBps": 0.087983,
+      "priorMomentumBenchmarkMeanBps": 1.105901,
+      "weeks": 13,
+      "weeksAtLeast21UnfundedSignals": 0,
+      "weeksWithZeroOpportunities": 2
+    }
+  },
+  "protocolSha256": "30ce944d5088a8e00d24238abfbcf3512e7eea085578f9feb5431ab9d39cc50b",
+  "rawReadOnlyRequestCount": 319,
+  "readOnly": true,
+  "rejectedClocksByPredeclaredReason": {
+    "belowFixedDeviation": 665,
+    "incompleteNextEntryOrHolding": 2,
+    "insufficientPriorPairedHistory": 16,
+    "missingPairedDecision": 744
+  },
+  "scheduled4hDecisionClocks": 1820,
+  "schema": "mxm-erp1-authentic-exposed-predictive-summary-v1",
+  "sourceCiphertextSha256": "94377751a8ca305a3d89c72bfc5c5463ae6ed4836d33448586d429cd8d95bfb7",
+  "sourceH1CompleteBarsByInstrument": {
+    "SpotBrent": 5477,
+    "SpotCrude": 5877
+  },
+  "sourceRunId": 41948500095,
+  "sourceType": "AUTHENTIC_H1_SPOTCRUDE_SPOTBRENT_FIXED_DEVELOPMENT_BID_ASK",
+  "staticCurrentMarginBelowEUR200": true,
+  "study": "ERP1",
+  "systemHard21Proven": false,
+  "tradingQualification": false
+}
