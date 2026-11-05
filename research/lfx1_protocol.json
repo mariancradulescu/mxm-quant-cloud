@@ -1,0 +1,69 @@
+{
+  "schema": "MXM_LFX1_REGISTERED_SOURCE_STUDY_V1",
+  "id": "LFX1",
+  "status": "REGISTERED_UNSCORED",
+  "authority": "docs/OWNER_SPEC.md OWNER v2.0",
+  "capitalProspectiveInitialEur": 300,
+  "premise": "The mechanically defined 16:00 Europe/London currency fix can temporarily concentrate predictable rebalancing flow. A fixed contrarian exposure to the immediately preceding completed four-hour FX price change at the fix may generate a positive post-fix price response, distinct from unconditional four-hour momentum. Neither favorable direction nor edge is presumed.",
+  "distinction": "Not HRC1 rolling 21-hour autocorrelation or 60-minute hold, not TWC1 fitted UTC weekday/4h seasonality, not AIP1 cash index gap and first-30min activity, not MBF1 Tokyo/London GBPJPY. Exactly one daylight-saving-adjusted London fixing clock per weekday and a prespecified 120m hold; no retuning or per-symbol selection.",
+  "source": {
+    "runs": [
+      41724643418,
+      41735441128
+    ],
+    "originalSignedArchives": true,
+    "originalSourceGloballyExposed": true,
+    "newBrokerRequests": 0,
+    "universe": [
+      "EURUSD",
+      "GBPUSD",
+      "USDJPY",
+      "AUDUSD",
+      "USDCAD"
+    ],
+    "unprobedAssetsCannotBeAssumedFinanceable": true
+  },
+  "calendar": {
+    "start": 1762128000000,
+    "developmentEnd": 1777852800000,
+    "selectionEnd": 1785715200000,
+    "end": 1793577600000,
+    "globallyExposed": true,
+    "independentConfirmation": false
+  },
+  "eligibility": {
+    "clock": "16:00 Europe/London on Monday through Friday, DST-aware",
+    "causalLookbackHours": 4,
+    "completeM5LookbackClocks": 49,
+    "entryDelayMinutes": 5,
+    "holdingMinutes": 120,
+    "requiredFutureM5Clocks": 25,
+    "minSimultaneousAssets": 3,
+    "minimumDevelopmentInformativeWeeks": 20,
+    "minimumSelectionInformativeWeeks": 10,
+    "minimumDevelopmentOpportunities": 150,
+    "minimumSelectionOpportunities": 50
+  },
+  "scientific": {
+    "oneSidedComparisons": 2,
+    "alphaFamily": 0.05,
+    "powerTarget": 0.8,
+    "pilot": "Use only development unconditional 120-minute future M5 returns to estimate week-block noise scale BEFORE ever calculating directional signals or selection returns. Never view exposed audit outcomes.",
+    "economicallyRelevantMde": "1.25 times the maximum predeclared FX adverse roundtrip cost in bps; gross study impact must at least justify observed current-term adverse costs plus a 25% buffer. No generic 3bps.",
+    "effectiveSample": "Informative chronological weeks, not opportunities, independent count capped by 13 selection weeks.",
+    "stopIfPilotFails": true
+  },
+  "predictor": "At 16:00 London fixing clock: if close(t)>close(t-4h), forecast SHORT; otherwise LONG if strictly lower; equality abstains. Entry only on exact t+5min close, closing exact 120 minutes later.",
+  "benchmark": "Matched-clock FOUR_HOUR_MOMENTUM with opposite sign and identical entry/exit/cost; secondary ZERO_TRADE. No selection by performance.",
+  "financial": {
+    "fundingAuthority": "NativeFundedLedger for any finance-promotion, not Python Book",
+    "sourceCostScenario": "existing authenticated current-term development cost_context central/adverse",
+    "historicBidAskForEachTradeProven": false,
+    "initialCashEur": 300,
+    "independentNet": false,
+    "ordersAllowed": false,
+    "cloudActivated": false
+  },
+  "locked": true,
+  "noHRC1OrOtherClosedStudyRerun": true
+}
