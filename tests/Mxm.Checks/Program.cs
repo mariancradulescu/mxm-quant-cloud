@@ -193,8 +193,6 @@ Check(FundedBrokerCostScreen.Assess(new FundedBrokerQuote(
     "SYNTH",1.1m,1.1001m,1000m,.90m,.10m,.10m,.05m,0m,250m,.02m,true,true))
     .CanFundFromInitialCapital,
     "new EUR300 initial capacity can finance a EUR250 minimum contract; no alpha implied");
-Check(ExecutableNet.Evaluate(quoted with {RequiredMarginEur=250m}).FundableWithAvailableMargin,
-    "EUR250 margin can be financed by EUR300 available equity without static EUR200 refusal");
 
 Check(OwnerRiskAuthority.InitialCapitalEur==300m &&
     PortfolioEconomics.OwnerInitialCapitalEur==300m &&
@@ -422,6 +420,8 @@ Check(priced.FullyPriced && priced.FundableWithAvailableMargin &&
     priced.TotalCostUpperEur==.6m &&
     priced.AdverseNetLowerEur==.12m && !priced.EconomicQualified,
     "quote bid ask and all bound EUR costs computed but not mistaken for broker fills");
+Check(ExecutableNet.Evaluate(quoted with {RequiredMarginEur=250m}).FundableWithAvailableMargin,
+    "EUR250 margin can be financed by EUR300 available equity without static EUR200 refusal");
 Check(ExecutableNet.Evaluate(quoted with {SlippageUpperEur=null}).Verdict==
     "EXECUTABLE_QUOTE_MARGIN_OR_NET_COST_MISSING",
     "no slippage value never treated as free");
