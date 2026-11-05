@@ -1,0 +1,1 @@
+OWNER v2.0 B-E; IES1 original-bound 41724643418 sealed archived BDP1 read-only, no new broker requests, no old model reruns, no orders, no Cloud. Exposed six-symbol cross-sectional M5, EUR contractual fee audit and neutral causal benchmark, all results and gaps retained.
