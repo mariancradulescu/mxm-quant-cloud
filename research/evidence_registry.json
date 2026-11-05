@@ -886,6 +886,38 @@
       "scope": "Diagnostic only; no selection, claims of broker historical complete costs or funded marginal NET; no closed model repricing",
       "ordersSubmitted": 0,
       "cloudActivated": false
+    },
+    {
+      "id": "PVE1",
+      "status": "CLOSED_EXACT_48_HYPOTHESES_ZERO_MULTIPLICITY_ADMISSIONS_NO_RETUNING",
+      "ownerCapitalProspectiveEur": 300,
+      "originalSourceRunIds": [
+        41724643418,
+        41735441128
+      ],
+      "protocolFile": "research/pve1_protocol.json",
+      "protocolSha256": "921330cad16a93c7700dc26928c416e773b5192a2e2fb55d23d74f9443893496",
+      "originalPublicJsonSha256": "99b07151eaa738730d130c9594ad2bf5ff82d7a2eb20cda9facbb0da03352540",
+      "sourceResultRunId": 42022439033,
+      "originalArtifactId": 13412367214,
+      "receiptFile": "docs/PVE1_AUTHENTIC_RESULT.json",
+      "originalM5Bars": 836087,
+      "preregisteredGroups": 48,
+      "selectionSupportedGroups": 0,
+      "selectionPositiveGrossMeans": 14,
+      "nativeAllocations": 0,
+      "modelledCommonCapitalEndingEur": 300,
+      "completeModelRoundTrips": 0,
+      "costClass": "CONDITIONAL_COST_MODEL",
+      "fundedNetEur": null,
+      "independent": false,
+      "qualification": false,
+      "hard21Proven": false,
+      "continuousDrawdownProven": false,
+      "brokerRequestsThisRun": 0,
+      "ordersSubmitted": 0,
+      "closedModelsRescored": false,
+      "followupCandidates": []
     }
   ],
   "schema": "mxm-project-data-exposure-v1",

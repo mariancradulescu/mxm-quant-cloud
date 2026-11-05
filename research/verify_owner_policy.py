@@ -146,6 +146,33 @@ def check():
     assert oce['hard21Proven'] is False and oce['continuousDrawdown30Proven'] is False
     assert oce['nativeAllocatorInvoked'] is False and oce['ordersSubmitted'] == 0 and oce['cloudActivated'] is False
 
+
+    # New PVE1 authentically executed after its fixed prospective protocol had
+    # already been committed; no reoptimization or promotion of exposed source.
+    pve = next(s for s in r['prospectiveStudies'] if s['id']=='PVE1')
+    pve_receipt = json.loads(Path('docs/PVE1_AUTHENTIC_RESULT.json').read_text())
+    pve_protocol = Path('research/pve1_protocol.json').read_bytes()
+    assert pve['status'].startswith('CLOSED_EXACT_') and pve['selectionSupportedGroups']==0
+    assert pve['independent'] is False and pve['qualification'] is False
+    assert pve['fundedNetEur'] is None and pve['followupCandidates']==[]
+    assert hashlib.sha256(pve_protocol).hexdigest()==pve['protocolSha256']==pve_receipt['protocolSha256']
+    assert pve_receipt['originalPublicJsonSha256']==pve['originalPublicJsonSha256']
+    assert pve_receipt['executionWorkflowRunId']==pve['sourceResultRunId']==42022439033
+    assert pve_receipt['authenticM5Bars']==pve['originalM5Bars']==836087
+    assert pve_receipt['candidateHypotheses']==pve['preregisteredGroups']==48
+    assert pve_receipt['phases']['selection']['passedCompleteAdmission']==0
+    assert pve_receipt['economicBook']['initialModelCapitalEur']==300
+    assert pve_receipt['economicBook']['endingModelCashEur']==300
+    assert pve_receipt['economicBook']['closedConditionalNetEur']==0
+    assert pve_receipt['economicBook']['completeModelRoundTrips']==0
+    assert pve_receipt['economicBook']['nativeAllocations']==0
+    assert pve_receipt['economicBook']['actualBrokerFundedNetEur'] is None
+    assert pve_receipt['disclosure']['independentConfirmation'] is False
+    assert pve_receipt['disclosure']['tradingQualification'] is False
+    assert pve_receipt['disclosure']['ordersSubmitted']==0
+    assert pve_receipt['disclosure']['brokerRequestsThisRun']==0
+    assert pve_receipt['disclosure']['originallyClosedModelsReexecuted'] is False
+
     # IES1's authentic exposed original is retained in Actions; this compact
     # immutable receipt is SHA-pinned by the SAME gate, not re-scored as a
     # prospective strategy or a historical brokerage cost certificate.
