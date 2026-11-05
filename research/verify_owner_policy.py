@@ -20,6 +20,8 @@ def check():
         s = Path(name).read_text()
         assert 'OWNER_SPEC.md' in s, 'MISSING_ACTIVE_AUTHORITY: ' + name
         assert 'OWNER v3.0' not in s, 'CONCURRENT_NORMATIVE_AUTHORITY: ' + name
+    assert 'Prospective initial capital EUR 300' in Path('README.md').read_text(), 'STALE_README_PROSPECTIVE_CAPITAL'
+    assert 'continuous EUR 300 prospective initial capital' in Path('docs/ACCEPTANCE.md').read_text(), 'STALE_ACCEPTANCE_PROSPECTIVE_CAPITAL'
 
     # Closed experiments cannot silently become an independent/funded certificate.
     # A future genuinely new prospectively registered study is not pre-rejected.
@@ -52,7 +54,8 @@ def check():
     assert ipf_receipt['protocolSha256'] == ipf['protocolSha256']
     assert ipf_receipt['followupCandidates'] == []
     assert not ipf_receipt['modeledCommonCapital']['nativeFundedLedgerReplayParityCertified']
-    assert 'IPF1_MULTI_HORIZON_CONDITIONAL_RESEARCH_NOT_CERTIFIED' in Path('src/Mxm.Core/OpportunityOrchestrator.cs').read_text()
+    assert 'IPF1_MULTI_HORIZON_CONDITIONAL_RESEARCH_NOT_CERTIFIED' in Path('src/Mxm.Core/ResearchScopeContract.cs').read_text()
+    assert 'ResearchScopeContract.Require(' in Path('src/Mxm.Core/OpportunityOrchestrator.cs').read_text()
     rcp = next(s for s in r['prospectiveStudies'] if s['id'] == 'RCP1')
     rcp_result = json.loads(Path('docs/RCP1_RESULT.json').read_text())
     assert rcp['status'].startswith('CLOSED_EXACT_') and rcp['closedExactNoRetuning']
@@ -67,7 +70,8 @@ def check():
     assert rcp_result['economicVerdict']['genuineBrokerFundedNetEur'] is None
     assert rcp_result['economicVerdict']['qualifiedForOrders'] is False
     assert rcp_result['economicVerdict']['noIndependentHoldout'] is True
-    assert 'RCP1_GLOBAL_RISK_DELAYED_FILL_CONDITIONAL_NOT_CERTIFIED' in Path('src/Mxm.Core/OpportunityOrchestrator.cs').read_text()
+    assert 'RCP1_GLOBAL_RISK_DELAYED_FILL_CONDITIONAL_NOT_CERTIFIED' in Path('src/Mxm.Core/ResearchScopeContract.cs').read_text()
+    assert 'ResearchScopeContract.Require(' in Path('src/Mxm.Core/OpportunityOrchestrator.cs').read_text()
     new_replay = Path('research/rcp1_portfolio.py').read_text()
     assert 'entryAt=t+MS' in new_replay and 'openCurves[pid]=records' in new_replay
     assert rcp_result['modeledCommonCapital']['full']['originalCapitalReconciled']
