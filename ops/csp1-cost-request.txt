@@ -1,0 +1,4 @@
+Owner v2.0 — authorized CSP1 read-only quote-cost pilot, no trading.
+Run exactly research/csp1_protocol.json on original cTrader Open API SCOPE_VIEW credentials.
+Use existing v2 encrypted custody and independently reconstruct responses.
+No strategy rescoring, economic promotion, LIVE/DEMO orders or Cloud activation.
