@@ -1,1 +1,1 @@
-ERP1 pre-registered causal energy-pair research. No broker collection requested by this PR.
+OWNER v2.0 continuation. Execute exactly once the preregistered ERP1 original-account cTrader read-only SpotCrude/SpotBrent H1 relative-ratio study with 52 fixed weeks, original encrypted custody and only exposed economic scoring. No orders/Cloud. Freeze results without retuning.
