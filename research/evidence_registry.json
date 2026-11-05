@@ -793,6 +793,45 @@
       "nativeAllocatorRun": false,
       "systemHard21Demonstrated": false,
       "note": "Asian handoff source gap is unknown/not evaluable; remaining groups are negative after central/adverse conditional costs in selection. No retrospectively selected audit winner or retuning; all closed exact."
+    },
+    {
+      "id": "OCE1",
+      "status": "REGISTERED_UNSCORED",
+      "phase": "CAUSAL_OIL_PRICE_SHOCK_TO_CAD_SLOW_PASS_THROUGH_EXPOSED",
+      "protocolFile": "research/oil_cad_protocol.json",
+      "sourceRuns": [
+        41724643418,
+        41948500095
+      ],
+      "authenticSourceInputOnly": true,
+      "originalSourceArtifacts": [
+        13273950911,
+        13379722249
+      ],
+      "underlyingCalendarGloballyExposed": true,
+      "independent": false,
+      "distinctFromClosedStudies": "Energy-specific oil export receipts transmit with delay into commodity FX, not the closed oil-oil mean reversion or MBF1 crypto/Asia session rules",
+      "sourceTimeframes": [
+        "SpotCrude_H1",
+        "USDCAD_M5"
+      ],
+      "features": "Completed 4-hour SpotCrude impulse normalized by strictly earlier 20 decision-clock impulses",
+      "target": "USDCAD",
+      "targetEntryLagMinutes": 5,
+      "targetHoldMinutes": 120,
+      "decisions": "Tue-Thu 12/13/14/15 UTC; exact 52 weeks 26/13/13; missing bars unknown",
+      "costClass": "CONDITIONAL_COST_MODEL",
+      "costCalibrationOnlyDevelopment": true,
+      "historicalBrokerAllInCostsCertified": false,
+      "risk": "Static current minimum margin checked separately; common EUR200 native allocator used only after selection support",
+      "selectionAndMultiplicity": "Single preregistered economic directional sign; one-sided weekly t lower bound defined for this cohort, no 3SE/40 universal gate",
+      "newBrokerRequests": 0,
+      "closedStudiesRescored": false,
+      "fundedNetEur": null,
+      "hard21Proven": false,
+      "qualification": false,
+      "ordersSubmitted": 0,
+      "cloudActivated": false
     }
   ],
   "schema": "mxm-project-data-exposure-v1",
