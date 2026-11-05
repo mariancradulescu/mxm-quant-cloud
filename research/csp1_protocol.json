@@ -1,0 +1,57 @@
+{
+  "schema": "mxm-csp1-cost-preflight-protocol-v1",
+  "id": "CSP1",
+  "authority": "docs/OWNER_SPEC.md OWNER v2.0",
+  "status": "REGISTERED_BEFORE_ANY_CSP1_BROKER_REQUEST",
+  "purpose": "Read-only side-paired historic BID/ASK spread readiness and current contract/margin metadata by asset family; no forecast or trading result",
+  "inventorySourceRunId": 41939175379,
+  "inventorySourceSha256": "3609973af1f6af996d9724742df64f27cbf1ea27821ad2bafcd27ccd93c94992",
+  "selectionRule": "Ex ante visible and previously marginBelowInitial200Eur=true from all-category authentic inventory; 2 FX (one historical control), 2 spot energies, 2 crypto, 2 indices, 2 US ETF/equity, 2 European or regional equity/ETF; no outcome or quote-score selection",
+  "universe": [
+    "EURUSD",
+    "GBPJPY",
+    "SpotCrude",
+    "SpotBrent",
+    "ETHUSD",
+    "LTCUSD",
+    "HK50",
+    "JPN225-F",
+    "ARKF.US",
+    "AMD.US",
+    "EDP.PT",
+    "AAXJ.US"
+  ],
+  "observationUtcMillis": [
+    1793780100000,
+    1793805300000,
+    1793823300000
+  ],
+  "observationUtc": [
+    "2026-11-04T08:15:00Z",
+    "2026-11-04T15:15:00Z",
+    "2026-11-04T20:15:00Z"
+  ],
+  "tickWindowBeforeClockMs": 60000,
+  "maximumQuoteAgeAtClockMs": 2000,
+  "maximumBidAskTimeSkewMs": 2000,
+  "maxSourceRequests": 105,
+  "allSourceRequests": [
+    "ProtoOATraderReq",
+    "ProtoOAAssetListReq",
+    "ProtoOASymbolsListReq",
+    "ProtoOASymbolByIdReq",
+    "ProtoOAExpectedMarginReq",
+    "ProtoOAGetTickDataReq"
+  ],
+  "costMeasurement": "For complete BID and ASK sides, take latest causal event no later than fixed UTC clock; relative spread bps from decoded raw integer prices. Incomplete pagination, missing or stale paired quotes and crossed sides are unknown, not zero. Current contract terms are distinct from historical quoted timestamps.",
+  "evidenceExposure": "Global development data. No independent confirmation or historical execution fills. Current margin/commission/funding terms are not proved historical.",
+  "output": "Per symbol and UTC clock evidence/status, bid/ask spread bps only when complete and fresh; current min margin and broker fee field presence; no EUR trade NET.",
+  "capitalEur": 200,
+  "hard21SystemEligibleWeeks": null,
+  "maxDrawdownObjective": 0.3,
+  "ordersSubmitted": 0,
+  "cloudActivated": false,
+  "researchOnly": true,
+  "closedStudiesRescored": false,
+  "newExternalSources": false
+}
