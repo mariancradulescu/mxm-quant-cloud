@@ -1,0 +1,48 @@
+{
+  "schema": "mxm-integrated-economic-surface-protocol-v1",
+  "id": "IES1",
+  "authority": "docs/OWNER_SPEC.md OWNER v2.0",
+  "status": "PREDECLARED_UNSCORED_EXPOSED_SOURCE_DIAGNOSTIC",
+  "purpose": "One shared source/fee/predictive-coverage diagnostic; not a trading strategy, optimization or test of any frozen model",
+  "originalSourceRunId": 41724643418,
+  "sourceCiphertextSha256": "e47ba7204ca7e07e7bb523ede8a8171f49b216cad09914142ed548839660a370",
+  "sourceProtocol": "research/portfolio_discovery_protocol.json",
+  "sourceUniverse": [
+    "EURUSD",
+    "GBPUSD",
+    "USDJPY",
+    "AUDUSD",
+    "USDCAD",
+    "XAUUSD"
+  ],
+  "sourceWeeks": 52,
+  "pricePeriod": "M5",
+  "diagnosticPeriodMinutes": 60,
+  "calendar": {
+    "startUtcMs": 1762128000000,
+    "developmentEndUtcMs": 1777852800000,
+    "selectionEndUtcMs": 1785715200000,
+    "endUtcMs": 1793577600000
+  },
+  "baseline": "Constant 0.5 chance of next completed-hour positive log return (Brier 0.25); zero signed return is excluded only from scoring and counted",
+  "diagnostic": "Predeclared prior-completed-hour return sign versus next-completed-hour sign, require all 25 consecutive M5 closes on both sides; no threshold, no fitting, no candidate or trade",
+  "costClockRule": "Use ONLY original 18 BDP1 frozen development quote clocks, select first paired causal fresh BID ASK between nominal+1s and nominal+11s; no favorable spread selection",
+  "costEvidence": "Genuine old BID ASK snapshots; genuine CURRENT contract rate/floor and deposit/quote assets applied illustratively to old quote; no historical tariff/funding/execution certificate",
+  "commissionMetadata": "Four ProtoOACommissionType values and minimum fee asset/type used from the original authenticated ProtoOASymbol wire; missing required wire/FX route remains unknown",
+  "commonCapitalEur": 200,
+  "maxDrawdown": 0.3,
+  "hard21": "Only complete financed shared-system round trips count; no diagnostic signal counts as trade",
+  "multiplicity": "Report ALL SIX symbols and every chronological block; no cherry-picked asset, horizon or strategy, no promotion using globally exposed dates",
+  "dataExposure": "52 weeks are already globally research exposed. There is NO independent confirmation from these outputs.",
+  "prohibited": [
+    "new broker requests",
+    "live or demo orders",
+    "cloud activation",
+    "retuning BDP1/MSP1/IPF1/RCP1/ERP1/MBF1/OCE1",
+    "trading qualification"
+  ],
+  "approval": "NO_DIRECT_ALPHA_OR_FUNDED_ADMISSION_FROM_IES1",
+  "newBrokerRequests": 0,
+  "ordersSubmitted": 0,
+  "cloudActivated": false
+}
