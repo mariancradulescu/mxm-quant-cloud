@@ -1,1 +1,6 @@
-MBF1_PREREGISTERED_CODE_ONLY_NO_AUTHENTIC_REQUEST_YET
+MBF1_EXACT_OWNER_MAIN_AUTHENTIC_READ_ONLY_RESEARCH_INTENT_20261105
+protocol=research/mbf1_protocol.json
+source=cTrader-OpenAPI-SCOPE_VIEW-EXISTING
+researchOnly=true
+ordersSubmitted=0
+cloudActivated=false
