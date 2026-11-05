@@ -658,6 +658,24 @@
       "closedModelsCalled": 0,
       "runExecuted": false,
       "note": "New calendar-only economic mechanism, not closed price-pressure/SGD model refit; register exact source/protocol and all cells before scoring; selection and audit globally exposed development only."
+    },
+    {
+      "id": "CSP1",
+      "phase": "PREDECLARED_POST_INVENTORY_READ_ONLY_BID_ASK_SPREAD_COST_PREFLIGHT",
+      "protocolFile": "research/csp1_protocol.json",
+      "sourceRunId": 41939175379,
+      "universe": "12 ex ante selected new/old families from current static under-EUR200 screen",
+      "clocksUtcMs": [
+        1793780100000,
+        1793805300000,
+        1793823300000
+      ],
+      "independent": false,
+      "netEstimateAllowed": false,
+      "returnsInspected": false,
+      "portfolioTradingQualification": false,
+      "ordersSubmitted": 0,
+      "status": "REGISTERED_BEFORE_FIRST_CSP1_SOURCE_REQUEST"
     }
   ],
   "schema": "mxm-project-data-exposure-v1",
@@ -1044,6 +1062,20 @@
       "sourceArtifactExpiresAt": "2027-02-02T05:29:13Z",
       "sourceArtifactId": 13298288376,
       "sourceRunId": 41779527411
+    },
+    {
+      "sourceRunId": 41939175379,
+      "sourceArtifactId": 13375915680,
+      "sourceCiphertextSha256": "3609973af1f6af996d9724742df64f27cbf1ea27821ad2bafcd27ccd93c94992",
+      "publicArtifactId": 13375915761,
+      "exactPublicReceipt": "docs/FULL_CTRADER_ACCOUNT_INVENTORY_AUTHENTIC_20261105.json",
+      "scope": "All 5339 returned symbols from the original cTrader-account binding; 1755 visible, 96 category-stratified current contract probes, 89 margins observed, 74 below EUR200 static threshold. No historical returns or quote-cost scoring.",
+      "independent": false,
+      "returnsInspected": false,
+      "decisionExposure": [
+        "FULL_ACCOUNT_SYMBOL_NAMES_VISIBILITY_AND_96_CURRENT_MARGIN_PROBE_RESULTS_EXPOSED_NO_RETURN_SCORING"
+      ],
+      "sourceArtifactRetentionDays": 90
     }
   ],
   "unknownExposurePolicy": "TREAT_AS_EXPOSED_FOR_QUALIFICATION"
