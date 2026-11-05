@@ -8,3 +8,5 @@ No new broker API requests, no source subscriptions, no LIVE or DEMO orders, no 
 Research read-only. Result artifact public; historical exposures cannot certify independent confirmation.
 One continuous conditional portfolio initial EUR300, no reset, aggregate HARD21 and 30% sampled DD limits; broker-funded NET unknown until proven.
 Exact main-only one-file research invocation. If prior PVE2 artifact exists, fail closed. No reexecution of closed studies.
+
+Technical RETRY authorization: previous protected run #42034865878 failed at native Python integration test BEFORE artifact download, decryption, scoring or creation of a PVE2 economic result. PR #92 corrected build ordering only; exact predeclared hypotheses, costs, calendar, source SHA and capital remain fixed. This is a first authentic economic scoring, not rerun of a completed test.
