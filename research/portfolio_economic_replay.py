@@ -29,6 +29,7 @@ def native(data,mode):
             if mode=='--native-frozen-money-recovery':
                 frozen=re.search(r'FROZEN_RECEIPT_CHECK_([A-Za-z0-9_/]{1,180})',proc.stderr or '')
                 if frozen: category='FROZEN_'+frozen.group(1)
+                print('FROZEN_PUBLIC_RECEIPT_DIAGNOSTIC:'+category,file=__import__('sys').stderr)
             raise subprocess.CalledProcessError(proc.returncode,['dotnet',mode],stderr=f'NATIVE_REPLAY_FAILED:{category}')
         return json.loads(out.read_text(),parse_float=D)
 
