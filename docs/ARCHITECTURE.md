@@ -271,3 +271,33 @@ prospectively eligible week. The 30% portfolio maximum drawdown needs floating
 liquidation equity including costs and conservative unseen-peak bounds;
 sampled marks are insufficient. The Cloud cBot still has no authorized order
 path or accepted runtime.
+
+## OCE1 source reuse and economic outcome
+
+Read-only original-source-only [OCE1 run #41976399909](https://github.com/mariancradulescu/mxm-quant-cloud/actions/runs/41976399909)
+reused the **original bound-account** BDP1 USD/CAD M5 and ERP1 SpotCrude H1
+encrypted archives without broker requests or old predictive model calls.
+Original protobuf reconstruction verified 74,161 M5 and 5,877 H1 closes.
+An explicitly preregistered Tuesday–Thursday 12–15 UTC calendar had
+614/624 complete source/holding clocks, avoiding the previous MBF1 Asian
+missing-feature failure. The H1 energy feature, subsequent M5 entry
+and two-hour target holding have distinct causal timestamps.
+
+The single predeclared oil-export-receipts-to-CAD directional hypothesis
+produced 192 **unfunded** signals. The 46 selection signals averaged only
++0.123398 directional gross bps, versus -6.203439 central, -12.461684
+adverse and -24.754270 stress bps after *conditional non-financing*
+costs. Development cost cases used 18 causally observed, original
+BID/ASK quote windows; actual commissions, financing, conversion,
+slippage, fills and historical funded margin remain unknown. Current
+minimum USD/CAD margin EUR29.79 is not an execution certificate.
+The exact OCE1 configuration is closed as **not supported**, without
+reversal, retuning, audit-based rescue or a gratuitous funded C# replay.
+This negative result does not disprove unrelated market premises, shared
+system HARD21 or the project; it does NOT validate them either.
+
+The same existing SHA256 gate now pins the original OCE1 public result,
+alongside the other November 5 source receipts. No simulated proposals
+count as broker round trips or native financed EUR NET. The common native
+risk/ledger path remains the only permitted eventual portfolio path
+when a **distinct** candidate earns prospective economic support.
