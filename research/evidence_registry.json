@@ -1614,5 +1614,26 @@
       "ordersSubmitted": 0
     }
   ],
-  "unknownExposurePolicy": "TREAT_AS_EXPOSED_FOR_QUALIFICATION"
+  "unknownExposurePolicy": "TREAT_AS_EXPOSED_FOR_QUALIFICATION",
+  "authenticationDiagnostics": [
+    {
+      "id": "AUTH_SCOPE_20261106",
+      "status": "AUTH_CAUSE_UNDETERMINED_SCOPE_NOT_VERIFIED",
+      "diagnosticRunId": 42178238508,
+      "originalArtifactId": 13483574579,
+      "originalPublicJsonSha256": "09c9a3838251e5029ef8cecd3b8c67e89819d25be7db1a111f64a7531197cc87",
+      "durableReceipt": "docs/AUTH_SCOPE_DIAGNOSTIC_AUTHENTIC_RESULT_20261106.json",
+      "applicationAuthVerified": true,
+      "tokenViewVerified": false,
+      "originalAccountAuthVerified": false,
+      "numberAuthRequests": 2,
+      "brokerDataRequests": 0,
+      "refreshAttempted": false,
+      "credentialsWritten": false,
+      "liveOrDemoOrders": 0,
+      "cloudActivated": false,
+      "underlyingCauseProven": false,
+      "closedModelRescored": false
+    }
+  ]
 }
