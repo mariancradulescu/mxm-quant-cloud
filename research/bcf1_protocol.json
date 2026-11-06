@@ -1,0 +1,64 @@
+{
+  "schema": "MXM_BCF1_EUR_RATE_CURVE_SOURCE_PREFLIGHT_V1",
+  "id": "BCF1",
+  "status": "PREDECLARED_UNSCORED_SOURCE_GATE",
+  "authority": "docs/OWNER_SPEC.md OWNER v2.0",
+  "ownerCapitalProspectiveEur": 300,
+  "objective": "One bounded authentic Pepperstone read-only COST/COVERAGE/contract source gate for EUR bond-futures curve transmission; not a predictor, strategy score, an isolated research wallet or new infrastructure.",
+  "distinctEconomicPremise": "Policy-rate and duration-risk repricing can change the EUR intermediate-vs-long bond futures relative curve. Whether any predictable lag exists is UNTESTED; ERP1 crude/Brent commodity physical basis, GEP1 gold/JPY and USD equities, and prior FX/index models are not reused.",
+  "instruments": [
+    "EUBobl-F",
+    "EUBund-F"
+  ],
+  "minimumLiveContractProof": "Original Pepperstone EUR-bound account; current opening tradingMode, min/step volume, live margin, current term contract information required",
+  "historicalSource": {
+    "startUtcMs": 1762128000000,
+    "endUtcMs": 1793577600000,
+    "weeks": 52,
+    "barPeriod": "H1",
+    "maxBarsPerWeeklyRequest": 168,
+    "allHistoricalCalendarWeeksGloballyExposed": true,
+    "decisionsOrReturnOutcomesForbidden": true
+  },
+  "newChronologicalSource": {
+    "startUtcMs": 1793577600000,
+    "endUtcMs": 1793937600000,
+    "barPeriod": "H1",
+    "sourceOnly": true,
+    "independenceNotEstablished": true,
+    "notToBeScoredOrUnsealedForPredictionWithoutPriorIndependentProtocol": true,
+    "note": "Nov 2–Nov 6 2026 only; fixed times, no after-observation extension"
+  },
+  "quoteCostPreflight": {
+    "developmentWeeks": 13,
+    "quoteClockHourUtcWeeklyOffset": 62,
+    "lookbackMs": 60000,
+    "maxQuoteAgeMs": 2000,
+    "maxSideSkewMs": 2000,
+    "minimumValidPairedQuoteClocksEach": 8,
+    "missingNeverZero": true,
+    "swapsFundingCommissionFxConversionNotCertified": true
+  },
+  "sourceFeasibility": {
+    "minimumJointWeeklyHistoricalCoverage": 20,
+    "minimumJointHistoryH1Closes": 400,
+    "minimumFutureIndependentWeeksForConfirmation": 0,
+    "noPredictorFit": true,
+    "noScoredReturns": true,
+    "assessedInNativeEUR300Portfolio": false,
+    "staticMinimumMarginsMustFitEUR300": true
+  },
+  "operations": {
+    "expectedBrokerReadOnlyRequests": 165,
+    "maxBrokerReadOnlyRequests": 180,
+    "existingSealedCustody": true,
+    "originalViewOnlyOAuth": true,
+    "existingCSharpValuationRemainsExclusiveForPromotableFunding": true,
+    "noClosedModelCalls": true,
+    "noLiveOrDemoOrders": true,
+    "noCloudActivation": true,
+    "oneShot": true
+  },
+  "postPreflight": "If coverage or cost sample size fails, stop exact premise without outcomes. If it passes, register a separate mechanism with economic futility gate and fully frozen comparisons BEFORE scoring any source labels. This preflight alone never qualifies a trade.",
+  "locked": true
+}
