@@ -1128,7 +1128,7 @@
     },
     {
       "id": "BCF1",
-      "status": "REGISTERED_UNSCORED_SOURCE_ONLY",
+      "status": "SOURCE_ONLY_AUTH_BLOCKED_NO_RESULTS",
       "authority": "docs/OWNER_SPEC.md OWNER v2.0 EUR300",
       "protocolFile": "research/bcf1_protocol.json",
       "sourceExposure": "HISTORICAL_52_WEEKS_GLOBAL_EXPOSED_AND_NOV2_NOV6_UNSCORED_SEALED_POST_EXPOSURE",
@@ -1147,7 +1147,21 @@
       "drawdownCertified": false,
       "cloudActivated": false,
       "closedStudiesRescored": false,
-      "postExposureConfirmationPeriodCertified": false
+      "postExposureConfirmationPeriodCertified": false,
+      "sourceResultRunId": 42172375939,
+      "sourceRunAttempts": 2,
+      "originalApplicationAuthSuccessBothAttempts": true,
+      "accountTokenViewScopeValidated": false,
+      "exactAuthFailureClass": "AFTER_APPLICATION_AUTH_BEFORE_VIEW_SCOPE_CONFIRMED",
+      "newHistoricalOrPostExposureSourceCaptured": false,
+      "sourceCiphertextSha256": null,
+      "sourceReadbackAvailable": false,
+      "readOnlySourceRequestsSucceeded": 0,
+      "currentBrokerTermsReverified": false,
+      "proposedEconomicScoreAvailable": false,
+      "protocolRetuned": false,
+      "ordersSubmitted": 0,
+      "readOnlyAuthenticationBlockerDocument": "docs/BCF1_AUTH_AND_EUR300_CAPACITY_20261106.md"
     }
   ],
   "schema": "mxm-project-data-exposure-v1",
