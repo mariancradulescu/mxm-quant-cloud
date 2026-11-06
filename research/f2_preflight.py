@@ -89,5 +89,78 @@ def assess(candidate=None, pilot=None):
         powerMdeBps=mde,exploratoryFeaturesAllowed=True,
         protectedEconomicScoringAllowed=scoring_allowed,fundedNetPromotionAllowed=False,
         independentConfirmation=False,ordersSubmitted=0,cloudActivated=False,blockReasons=reasons)
+
+def prospective_economic_futility(weekly_adverse_net_bps, weekly_incremental_bps, *,
+                                  model_cost_context_complete,
+                                  predeclared_comparisons, active_development_weeks,
+                                  required_incremental_surplus_bps=0.0,
+                                  alpha_family=0.05, hac_lags=3,
+                                  minimum_development_weeks=20):
+    """Prospective DEVELOPMENT-only bound; does not score or promote a candidate.
+
+    Both series contain one paired observation per chronological eligible calendar
+    week INCLUDING genuine zero-trade weeks. Do not use past globally exposed
+    selection or audit returns; never call this on a closed study.
+    Upper bounds account for serial weekly dependence using the larger of a
+    fixed-lag Newey-West and unadjusted variance. The Bonferroni comparison
+    count belongs to the preregistered whole programme.
+    A positive upper bound merely means "futility NOT demonstrated".
+    """
+    from statistics import mean, stdev
+    a=list(weekly_adverse_net_bps)
+    b=list(weekly_incremental_bps)
+    n=len(a)
+    if (not model_cost_context_complete or n!=len(b) or
+        n<minimum_development_weeks or active_development_weeks<8 or
+        active_development_weeks>n or
+        predeclared_comparisons<2 or hac_lags!=3 or
+        not 0<alpha_family<1 or required_incremental_surplus_bps<0 or
+        not all(math.isfinite(x) for x in a+b)):
+        return dict(status="NOT_INFORMATIVE_NO_ECONOMIC_PROMOTION",
+                    economicallyFutile=None,
+                    scoreSelectionAllowed=False,
+                    developmentWeeks=n,returnOutcomesIndependent=False,
+                    reasons=["MISSING_COST_OR_WEEKLY_DEPENDENCE_EVIDENCE"])
+    def upper(xs):
+        mu=mean(xs)
+        if stdev(xs)<=0:
+            return None,None
+        centered=[x-mu for x in xs]
+        gamma0=sum(z*z for z in centered)/n
+        lrv=gamma0
+        for lag in range(1,hac_lags+1):
+            gamma=sum(centered[t]*centered[t-lag]
+                      for t in range(lag,n))/n
+            lrv+=2*(1-lag/(hac_lags+1))*gamma
+        se=max(stdev(xs)/math.sqrt(n),math.sqrt(max(0,lrv)/n))
+        z=NormalDist().inv_cdf(1-alpha_family/predeclared_comparisons)
+        return mu+z*se, se
+    net_ub,net_se=upper(a)
+    inc_ub,inc_se=upper(b)
+    if net_ub is None or inc_ub is None:
+        return dict(status="NOT_INFORMATIVE_NO_ECONOMIC_PROMOTION",
+                    economicallyFutile=None,scoreSelectionAllowed=False,
+                    developmentWeeks=n,returnOutcomesIndependent=False,
+                    reasons=["ZERO_WEEKLY_VARIANCE_CANNOT_CERTIFY_FUTILITY"])
+    # Reject only if the plausible upper bound cannot cover adverse all-in
+    # cost or beat the fixed same-clock benchmark.
+    futile=net_ub<=0 or inc_ub<=required_incremental_surplus_bps
+    return dict(status="FUTILE_STOP_BEFORE_SELECTION" if futile else
+                "UPPER_BOUND_ALLOWS_PLAUSIBILITY_NOT_EVIDENCE",
+                economicallyFutile=futile,
+                scoreSelectionAllowed=not futile,developmentWeeks=n,
+                activeDevelopmentWeeks=active_development_weeks,
+                conditionalAdverseNetMeanBps=mean(a),
+                incrementalMatchedBenchmarkMeanBps=mean(b),
+                upperAdverseNetBps=net_ub,
+                upperIncrementalBps=inc_ub,
+                standardErrorAdverseHacConservativeBps=net_se,
+                standardErrorIncrementalHacConservativeBps=inc_se,
+                familyComparisons=predeclared_comparisons,
+                hacLagsFixedExAnte=hac_lags,
+                independenceCertified=False,financeCertified=False,
+                hard21Certified=False,
+                statusIsNotProofOfPositiveEdge=True)
+
 if __name__=="__main__":
     print(json.dumps(assess(),sort_keys=True))
