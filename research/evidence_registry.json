@@ -1053,6 +1053,51 @@
       "brokerRequests": 0,
       "ordersSubmitted": 0,
       "cloudActivated": false
+    },
+    {
+      "id": "GEP1",
+      "status": "REGISTERED_UNSCORED_EXPLORATORY",
+      "phase": "ONE_PROSPECTIVE_INTEGRATED_TWO_DISTINCT_INTERMARKET_FAMILY_PROGRAM",
+      "protocolFile": "research/gep1_protocol.json",
+      "sourceRuns": [
+        41724643418,
+        41735441128
+      ],
+      "originalAuthenticatedM5Bars": 836087,
+      "originalCostContexts": 166,
+      "sourceUniverse": [
+        "EURUSD",
+        "GBPUSD",
+        "AUDUSD",
+        "USDCAD",
+        "USDJPY",
+        "XAUUSD",
+        "US500",
+        "NAS100"
+      ],
+      "groups": [
+        "GOLD_RISK_TO_JPY/USDJPY",
+        "USD_FUNDING_TO_US_INDEX/US500",
+        "USD_FUNDING_TO_US_INDEX/NAS100"
+      ],
+      "sourceGloballyExposed": true,
+      "original52WeekSourceReuseOnly": true,
+      "independent": false,
+      "qualification": false,
+      "selectionViewed": false,
+      "brokerFundedNetEur": null,
+      "nativeCSharpFinancedRoundTripsProven": 0,
+      "closedStudiesRescored": false,
+      "closedExactReruns": 0,
+      "brokerRequests": 0,
+      "ordersSubmitted": 0,
+      "cloudActivated": false,
+      "preflightMethod": "MECHANISM_SIGNED_DEVELOPMENT_WEEK_BLOCK_POWER_AND_ACTUAL_SOURCE_COST_CONTEXT_NOT_UNCONDITIONAL_PROXY",
+      "comparisonsRegistered": 6,
+      "prospectiveConfirmedPeriodRequired": true,
+      "decisionExposure": [
+        "THE_PROGRAMME_FAMILIES_AND_ALL_GROUPS_FROZEN_EX_ANTE_NO_OUTCOME_OBSERVED_AT_REGISTRATION"
+      ]
     }
   ],
   "schema": "mxm-project-data-exposure-v1",
