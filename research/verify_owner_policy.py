@@ -338,6 +338,25 @@ def check():
     assert proto['operations']['noLiveOrDemoOrders'] and proto['operations']['noCloudActivation']
     assert 'def prospective_economic_futility(' in Path('research/f2_preflight.py').read_text()
 
+    # Auth-only original public receipt: no invented expiry, no source capture.
+    auth_rec = json.loads(Path('docs/AUTH_SCOPE_DIAGNOSTIC_AUTHENTIC_RESULT_20261106.json').read_text())
+    auth_reg = next(x for x in r['authenticationDiagnostics'] if x['id'] == 'AUTH_SCOPE_20261106')
+    assert auth_reg['diagnosticRunId'] == 42178238508
+    assert auth_rec['source']['originalPublicJsonSha256'] == auth_reg['originalPublicJsonSha256']
+    assert auth_rec['source']['originalPublicArtifactId'] == auth_reg['originalArtifactId'] == 13483574579
+    assert auth_rec['result']['category'] == 'AUTH_CAUSE_UNDETERMINED'
+    assert auth_rec['result']['stage'] == 'access_token_scope'
+    assert auth_rec['result']['applicationAuthenticationVerified'] is True
+    assert auth_rec['result']['authenticationRequestsSent'] == 2
+    assert auth_rec['result']['explicitSCOPE_VIEWVerified'] is False
+    assert auth_rec['result']['originalAccountAuthenticationVerified'] is False
+    assert auth_rec['result']['brokerAccountDataOrHistoryRequests'] == 0
+    assert auth_rec['interpretation']['authCauseDemonstrated'] is False
+    assert auth_rec['interpretation']['safeRefreshAndAtomicPairPersistenceInExistingWorkflow'] is False
+    assert auth_rec['scopeBoundary']['BCF1SourceCaptureRecovered'] is False
+    assert auth_rec['scopeBoundary']['newChronologicallyUnexposedDataCollected'] is False
+    assert auth_rec['result']['tradingOrders'] == 0 and auth_rec['result']['cloudActivated'] is False
+
     print('PASS OWNER v2.0 contract, frozen evidence, native funding and no-order boundary; no NET qualification')
 
 
