@@ -265,6 +265,14 @@ def run():
     static_margin_sum = sum(margins) if all(x is not None for x in margins) else None
     supported = [g for g,x in results.items() if
                  x["selection"] is not None and x["selection"]["sourceOnlyPositiveBoth"]]
+    # Source-observable capacity only: no source-priced proposal is a broker
+    # funded, admitted or closed round trip. Include zero-proposal weeks.
+    weekly_source_proposals = defaultdict(int)
+    for group in GROUPS:
+        for stage in ("development","selection"):
+            for w, side, benchmark, entry, exit_at in rows[group][stage]:
+                weekly_source_proposals[w] += 1
+    source_proposals_by_week = [weekly_source_proposals.get(w,0) for w in range(52)]
     report=dict(schema="MXM_GEP1_AUTHENTIC_TWO_FAMILY_SYSTEM_V1",
                 originalSourceAuthentication=authentication,
                 rawSealedSourceM5Bars=sum(map(len,bars.values())),
@@ -275,6 +283,12 @@ def run():
                 runId=int(os.environ.get("GITHUB_RUN_ID","0")),
                 groups=results,selectionConditionalSupport=supported,
                 maximumGroups=3,closedPredictorsCalled=False,
+                sourcePricedProposalsByWeek52=source_proposals_by_week,
+                sourceWeeksWithAtLeast21Proposals=sum(v>=21 for v in source_proposals_by_week),
+                sourceProposalCount=sum(source_proposals_by_week),
+                scheduledClocksPerStandardFiveDayWeek=20,
+                maximumGroupTargetProposalSlotsPerStandardWeek=60,
+                sourceProposalsAreNotFundedCompleteRoundTrips=True,
                 previouslyExposedWeeks=52,independentConfirmation=False,
                 currentThreeTargetMinimumMarginSumEur=static_margin_sum,
                 staticThreeConcurrentMinimumMarginsBelow300=(static_margin_sum is not None
