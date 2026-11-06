@@ -17,8 +17,7 @@ class BondSourceAndFutilityContract(unittest.TestCase):
         self.assertEqual(3+4+len(times)*2+len(quotes)*2*2,165)
         self.assertTrue(p["historicalSource"]["allHistoricalCalendarWeeksGloballyExposed"])
         self.assertTrue(p["newChronologicalSource"]["notToBeScoredOrUnsealedForPredictionWithoutPriorIndependentProtocol"])
-        self.assertFalse(p["sourceFeasibility"]["noScoredReturns"])
-        # noScoredReturns must be TRUE to prohibit outcome leakage.
+        self.assertTrue(p["sourceFeasibility"]["noScoredReturns"])
     
     def test_cost_unknown_is_not_zero_or_approval(self):
         a=[-5+.1*(i%3) for i in range(26)]
