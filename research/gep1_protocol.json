@@ -1,0 +1,127 @@
+{
+  "schema": "MXM_GEP1_INTEGRATED_INTERMARKET_RESEARCH_PROTOCOL_V1",
+  "id": "GEP1",
+  "status": "PREDECLARED_UNSCORED",
+  "authority": "docs/OWNER_SPEC.md OWNER v2.0",
+  "ownerProspectiveInitialCashEur": 300,
+  "purpose": "ONE bounded common-clock prospectively registered system research programme, exactly two economically distinct cross-market premises and three fixed target groups; not independent confirmation or historical model rehabilitation.",
+  "source": {
+    "preexistingAuthenticatedRuns": [
+      41724643418,
+      41735441128
+    ],
+    "originalSealedM5Bars": 836087,
+    "all52WeeksGloballyExposed": true,
+    "noNewBrokerRequests": true,
+    "sourceUniverse": [
+      "EURUSD",
+      "GBPUSD",
+      "AUDUSD",
+      "USDCAD",
+      "USDJPY",
+      "XAUUSD",
+      "US500",
+      "NAS100"
+    ],
+    "executionOutcomePrice": "exact source M5 close only; historical fills unknown",
+    "sourceCost": "166 original authenticated development current-term BID/ASK/currency/margin contexts; missing never zero",
+    "excludeUnprobed": true
+  },
+  "calendar": {
+    "start": 1762128000000,
+    "developmentEnd": 1777852800000,
+    "end": 1793577600000,
+    "developmentWeeks": 26,
+    "selectionWeeks": 26,
+    "utcDecisionHours": [
+      8,
+      12,
+      16,
+      20
+    ],
+    "weekdays": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "labelNoCrossPhase": true,
+    "independentConfirmation": false
+  },
+  "families": [
+    {
+      "id": "GOLD_RISK_TO_JPY",
+      "economicPremise": "A completed rise in gold as haven demand can precede near-term yen appreciation (USDJPY falling), with a fixed inverse sign of the last gold H1 change; opposite gold move predicts USDJPY rising. This tests commodity haven transmission rather than previously closed index-to-FX impulse, oil-to-CAD, currency relative ranking, or London fixing.",
+      "sourceSymbols": [
+        "XAUUSD",
+        "USDJPY"
+      ],
+      "targetSymbols": [
+        "USDJPY"
+      ],
+      "benchmark": "same-clock target USDJPY own-last-H1 momentum and zero trade",
+      "groups": 1
+    },
+    {
+      "id": "USD_FUNDING_TO_US_INDEX",
+      "economicPremise": "A broad prior H1 USD appreciation may represent global funding tightening that negatively leads US equity indices. USD strength is fixed USD-aligned consensus of EURUSD GBPUSD AUDUSD USDCAD; >=3 of 4 aligned signs are needed; short indices on strong USD, long on weak USD. Reverse causal direction of old index-to-FX transmission; not its model or a historical ablation.",
+      "sourceSymbols": [
+        "EURUSD",
+        "GBPUSD",
+        "AUDUSD",
+        "USDCAD",
+        "US500",
+        "NAS100"
+      ],
+      "targetSymbols": [
+        "US500",
+        "NAS100"
+      ],
+      "benchmark": "same-clock each target's last-H1 own momentum and zero trade",
+      "groups": 2
+    }
+  ],
+  "clock": {
+    "features": "completed exact t and t-60m source M5 closes, no imputation; no fitted coefficients or thresholds beyond fixed sign majority",
+    "entryDelayMinutes": 5,
+    "holdingMinutes": 60,
+    "exactCloseAtExit": true,
+    "overlapAllowedOnlyInHypothesisDiagnostic": true
+  },
+  "scientific": {
+    "groups": 3,
+    "oneSidedComparisonsPerGroup": 2,
+    "familywiseAlpha": 0.05,
+    "powerTarget": 0.8,
+    "minimumDevelopmentActiveWeeks": 20,
+    "minimumSelectionSourceWeeks": 20,
+    "minimumDevelopmentCompleteSignals": 100,
+    "minimumSelectionCompleteSignals": 100,
+    "marginMustFit300": true,
+    "pilot": "development-only signed mechanism outcomes and weekly BLOCK strategy and incremental benchmark variances (including zero-signal weeks), never unconditional all-long proxy; no selection response inspected if gate fails",
+    "mde": "Bonferroni normal approximation using dependence-aware calendar week clusters; must be <=1.25x original adverse proxy cost bps for each group, not a general power certificate",
+    "multipleComparisonPolicy": "all 3 target groups and 6 one-sided tests disclosed; no winner rescue or parameter tuning",
+    "scoring": "conditional gross, central, adverse, matched benchmark; weekly one-sided Bonferroni lower if pilot passes; separately report all missing marks",
+    "stop": "missing source/cost/contract, any power gate failure, no positive adjusted adverse and incremental selection lower: exact group closes without inverse/rescore"
+  },
+  "finance": {
+    "minMarginSource": "original authentic current expected margin for target minimum volumes; simultaneous static sum only a necessary condition",
+    "costClass": "CONDITIONAL_COST_MODEL_NOT_ACTUAL_FILLS",
+    "requiredNativePath": "OpportunityOrchestrator and NativeFundedLedger C# for any future candidate funding; never Python isolated wallet",
+    "floatingDrawdownCertified": false,
+    "financingAndHistoricalTariffsCertified": false,
+    "systemHard21FromSignalsForbidden": true,
+    "brokerNetEur": null
+  },
+  "proof": {
+    "originalSourceEncrypted": true,
+    "closedPredictorsCalled": false,
+    "closedStudyReruns": 0,
+    "noOrders": true,
+    "cloudActivated": false,
+    "independentConfirmation": false,
+    "allPilotOutcomesExploratory": true,
+    "locked": true
+  }
+}
