@@ -62,6 +62,7 @@
     "docs/EPA2_EXECUTION_DIAGNOSIS.json": "74054ec4cd11368cf5635c0e1b5b5b21b7b69a59547b65b79f112ea981df2a31",
     "docs/ERP1_AUTHENTIC_RESULT.json": "858ab0eaa3e29c4f758cf8d5804f2e49e9868b6f59cc2e37fe2ccff297a12864",
     "docs/FULL_CTRADER_ACCOUNT_INVENTORY_AUTHENTIC_20261105.json": "a76420710eb350804ec813c5909a63e8d4b60731383263f5584ff937dc898809",
+    "docs/GEP1_AUTHENTIC_RESULT.json": "7ab33081323fc8140b64c7046b6547f7e594c3da51f1e588819bf3646d33f63c",
     "docs/IES1_AUTHENTIC_EXPOSED_RECEIPT.json": "31eb6454e937efbd856eda9835b15db35c3c8429b89c228bf05590261d8e19a8",
     "docs/IMT1_CONDITIONAL_RESULT.json": "23da3224dd063ad352dd56fdaf171333f95c560ae1120bae48577a04772e8ce1",
     "docs/IPF1_RESULT.json": "19c995caaeac544bd75dfb0cadcb19e03ec5deabf50eaeae13a55c3f232da948",
@@ -179,7 +180,8 @@
   },
   "originalActionArtifactSha256": {
     "actions/42101938832/artifacts/13450665489/authentic-temporal-coverage-public.json": "ab5593710ade013c9a24e7431d311e0c71979e71ba48c2fa6b5d61f40dc3914d",
-    "actions/42103291209/artifacts/13451340066/lfx1-authentic-public.json": "0a57d1e7b1cbce4461ea8af45ab16005655deaa96f5ae17ddd204b3734013816"
+    "actions/42103291209/artifacts/13451340066/lfx1-authentic-public.json": "0a57d1e7b1cbce4461ea8af45ab16005655deaa96f5ae17ddd204b3734013816",
+    "actions/42164589258/artifacts/13478557626/gep1-authentic-public.json": "b7790ffdf5d89fb8742af303e99faf65de109d4a98614226cb72ee76e8bf5411"
   },
   "projectWideCalendarRule": "Union of relevant design/research exposures across sources and instruments; overlaps are not independent.",
   "prospectiveCarryPreflight": {
@@ -1056,8 +1058,8 @@
     },
     {
       "id": "GEP1",
-      "status": "REGISTERED_UNSCORED_EXPLORATORY",
-      "phase": "ONE_PROSPECTIVE_INTEGRATED_TWO_DISTINCT_INTERMARKET_FAMILY_PROGRAM",
+      "status": "CLOSED_EXACT_TWO_GROUPS_NEGATIVE_ONE_MECHANISM_POWER_FAIL_NO_PROMOTION",
+      "phase": "AUTHENTIC_PROGRAM_EXECUTED_FROZEN_NEGATIVE_SELECTION_AND_POWER_FAILURE",
       "protocolFile": "research/gep1_protocol.json",
       "sourceRuns": [
         41724643418,
@@ -1084,7 +1086,7 @@
       "original52WeekSourceReuseOnly": true,
       "independent": false,
       "qualification": false,
-      "selectionViewed": false,
+      "selectionViewed": true,
       "brokerFundedNetEur": null,
       "nativeCSharpFinancedRoundTripsProven": 0,
       "closedStudiesRescored": false,
@@ -1097,7 +1099,32 @@
       "prospectiveConfirmedPeriodRequired": true,
       "decisionExposure": [
         "THE_PROGRAMME_FAMILIES_AND_ALL_GROUPS_FROZEN_EX_ANTE_NO_OUTCOME_OBSERVED_AT_REGISTRATION"
-      ]
+      ],
+      "receiptFile": "docs/GEP1_AUTHENTIC_RESULT.json",
+      "receiptFileSha256": "7ab33081323fc8140b64c7046b6547f7e594c3da51f1e588819bf3646d33f63c",
+      "sourceResultRunId": 42164589258,
+      "originalPublicArtifactId": 13478557626,
+      "originalPublicJsonSha256": "b7790ffdf5d89fb8742af303e99faf65de109d4a98614226cb72ee76e8bf5411",
+      "originalProtocolSha256": "ec8bebda600f10e65695033a8c5f9d69b2fac5301489fa21db95a78cc83ae5a4",
+      "pilotPassByGroup": {
+        "goldJPY": true,
+        "usdUS500": true,
+        "usdNAS100": false
+      },
+      "selectionViewedByGroup": {
+        "goldJPY": true,
+        "usdUS500": true,
+        "usdNAS100": false
+      },
+      "selectionSupportedGroups": 0,
+      "followupCandidates": [],
+      "mechanismPowerFailureNAS100": true,
+      "sourcePricedProposalCount": 2398,
+      "sourceWeeksWith21OrMoreProposals": 52,
+      "threeTargetsStaticMinMarginEUR": 190.18,
+      "currentMarginIsNotExecutableFunding": true,
+      "hard21Proven": false,
+      "continuousDrawdownCertified": false
     }
   ],
   "schema": "mxm-project-data-exposure-v1",
