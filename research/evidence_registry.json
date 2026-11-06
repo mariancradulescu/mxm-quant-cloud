@@ -1635,5 +1635,28 @@
       "underlyingCauseProven": false,
       "closedModelRescored": false
     }
+  ],
+  "oauthSecretPresenceChecks": [
+    {
+      "id": "ORIGINAL_FOUR_20261106",
+      "status": "THREE_AVAILABLE_REFRESH_NOT_AVAILABLE_IN_PROTECTED_JOB",
+      "originalRunId": 42246587372,
+      "originalArtifactId": 13518031877,
+      "originalPublicJsonSha256": "2feae2b8e56fb0f48a7347718dac633f1ff19de85396f896d0d494e78dfa2aef",
+      "durableReceipt": "docs/ORIGINAL_FOUR_OAUTH_SECRET_PRESENCE_AUTHENTIC_20261106.json",
+      "refreshSecretFoundInGitHubMetadata": null,
+      "refreshSecretNonemptyInjected": false,
+      "accessSecretNonemptyInjected": true,
+      "clientIdNonemptyInjected": true,
+      "clientSecretNonemptyInjected": true,
+      "refreshTokenValid": null,
+      "accessTokenValid": null,
+      "safePairRotationCompleted": false,
+      "brokerMarketRequests": 0,
+      "originalAccountSCOPEVIEWVerified": false,
+      "closedStudiesTouched": false,
+      "cloudActivated": false,
+      "ordersSubmitted": 0
+    }
   ]
 }
