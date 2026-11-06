@@ -256,18 +256,58 @@ def check():
     assert lfx['closedStudyReruns'] == 0 and lfx['brokerRequests'] == 0
     assert lfx['ordersSubmitted'] == 0 and not lfx['cloudActivated']
 
-    # GEP1 is a single prospectively registered exploratory programme, not
-    # a qualification, new wallet or reclassification of old source as independent.
+    # GEP1 was prospectively frozen before a single protected authentic run.
+    # Pin the original public Action artifact identity AND this precise durable
+    # verdict; the closed protocol cannot be silently rescored or promoted.
     gep = next(s for s in r['prospectiveStudies'] if s['id'] == 'GEP1')
-    protocol = json.loads(Path('research/gep1_protocol.json').read_text())
-    assert gep['status'] == 'REGISTERED_UNSCORED_EXPLORATORY' and gep['independent'] is False
-    assert gep['selectionViewed'] is False and gep['brokerFundedNetEur'] is None
+    protocol_raw = Path('research/gep1_protocol.json').read_bytes()
+    protocol = json.loads(protocol_raw)
+    receipt = json.loads(Path('docs/GEP1_AUTHENTIC_RESULT.json').read_text())
+    assert gep['status'] == 'CLOSED_EXACT_TWO_GROUPS_NEGATIVE_ONE_MECHANISM_POWER_FAIL_NO_PROMOTION'
+    assert gep['independent'] is False and gep['qualification'] is False
+    assert gep['selectionViewed'] is True and gep['selectionViewedByGroup'] == dict(
+        goldJPY=True,usdUS500=True,usdNAS100=False)
+    assert gep['selectionSupportedGroups'] == 0 and gep['followupCandidates'] == []
+    assert gep['brokerFundedNetEur'] is None and gep['hard21Proven'] is False
     assert gep['closedExactReruns'] == 0 and gep['ordersSubmitted'] == 0
-    assert protocol['id'] == 'GEP1' and protocol['proof']['locked'] and protocol['ownerProspectiveInitialCashEur'] == 300
-    assert protocol['source']['all52WeeksGloballyExposed'] and not protocol['calendar']['independentConfirmation']
-    assert len(protocol['families']) == 2 and sum(f['groups'] for f in protocol['families']) == 3
+    assert gep['cloudActivated'] is False and gep['brokerRequests'] == 0
+    assert protocol['id'] == 'GEP1' and protocol['proof']['locked']
+    assert protocol['ownerProspectiveInitialCashEur'] == 300
+    assert len(protocol['families']) == 2 and sum(x['groups'] for x in protocol['families']) == 3
     assert protocol['scientific']['groups'] * protocol['scientific']['oneSidedComparisonsPerGroup'] == 6
     assert not protocol['proof']['cloudActivated'] and protocol['proof']['noOrders']
+    assert protocol['source']['all52WeeksGloballyExposed'] and not protocol['calendar']['independentConfirmation']
+    assert hashlib.sha256(protocol_raw).hexdigest() == gep['originalProtocolSha256'] == receipt['originalProtocolSha256']
+    assert receipt['originalResultRunId'] == gep['sourceResultRunId'] == 42164589258
+    assert receipt['originalPublicArtifactId'] == gep['originalPublicArtifactId'] == 13478557626
+    assert receipt['originalPublicJsonSha256'] == gep['originalPublicJsonSha256'] == 'b7790ffdf5d89fb8742af303e99faf65de109d4a98614226cb72ee76e8bf5411'
+    assert receipt['alreadyGloballyExposedHistoricalWeeks'] == 52 and receipt['originalSealedAuthenticM5Bars'] == 836087
+    assert receipt['originalCostContexts'] == 166 and receipt['sourcePricedProposals52Weeks'] == 2398
+    assert receipt['sourceWeeksWith21OrMoreSourcePricedProposals'] == 52
+    assert receipt['sourcePricedProposalsNotBrokerFinancedRoundTrips']
+    assert receipt['threeTargetStaticMarginFits300'] and receipt['threeTargetsCurrentMinimumStaticMarginSumEur'] == 190.18
+    assert receipt['fundingAndProduct']['nativeCSharpFinancedRoundTrips'] == 0
+    assert receipt['fundingAndProduct']['brokerConfirmedNetEur'] is None
+    assert not receipt['fundingAndProduct']['hard21Certified']
+    assert not receipt['fundingAndProduct']['continuousGlobalDrawdownWithin30PctCertified']
+    assert not receipt['fundingAndProduct']['independentHoldoutAvailable']
+    assert not receipt['fundingAndProduct']['CloudActivated'] and receipt['fundingAndProduct']['ordersLiveOrDemoSubmitted'] == 0
+    groups = {g['id']:g for g in receipt['economicGroups']}
+    assert set(groups) == {'GOLD_RISK_TO_JPY/USDJPY','USD_FUNDING_TO_US_INDEX/US500','USD_FUNDING_TO_US_INDEX/NAS100'}
+    assert all(groups[x]['pilotPass'] and groups[x]['selectionScored'] and
+               groups[x]['selectionConditionalAdverseBps'] < 0 and not groups[x]['admittedForNativeFunding']
+               for x in ('GOLD_RISK_TO_JPY/USDJPY','USD_FUNDING_TO_US_INDEX/US500'))
+    nas = groups['USD_FUNDING_TO_US_INDEX/NAS100']
+    assert not nas['pilotPass'] and not nas['selectionScored'] and nas['selectionConditionalAdverseBps'] is None
+    assert nas['developmentMechanismMdeBps'] > nas['developmentRelevantEffectBps']
+    assert receipt['rerunProhibition']['closedStudiesRerun'] == 0 and not receipt['rerunProhibition']['selectionOutcomeForFailedPowerGroupViewed']
+
+    # Original Action JSON SHA-256 must retain exact identities independently
+    # of the distinct compact durable summaries (which are pinned above).
+    original_pins = r['originalActionArtifactSha256']
+    assert original_pins['actions/42101938832/artifacts/13450665489/authentic-temporal-coverage-public.json'] == 'ab5593710ade013c9a24e7431d311e0c71979e71ba48c2fa6b5d61f40dc3914d'
+    assert original_pins['actions/42103291209/artifacts/13451340066/lfx1-authentic-public.json'] == '0a57d1e7b1cbce4461ea8af45ab16005655deaa96f5ae17ddd204b3734013816'
+    assert original_pins['actions/42164589258/artifacts/13478557626/gep1-authentic-public.json'] == 'b7790ffdf5d89fb8742af303e99faf65de109d4a98614226cb72ee76e8bf5411'
 
     print('PASS OWNER v2.0 contract, frozen evidence, native funding and no-order boundary; no NET qualification')
 
