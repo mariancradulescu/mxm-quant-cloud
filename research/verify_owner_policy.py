@@ -309,6 +309,22 @@ def check():
     assert original_pins['actions/42103291209/artifacts/13451340066/lfx1-authentic-public.json'] == '0a57d1e7b1cbce4461ea8af45ab16005655deaa96f5ae17ddd204b3734013816'
     assert original_pins['actions/42164589258/artifacts/13478557626/gep1-authentic-public.json'] == 'b7790ffdf5d89fb8742af303e99faf65de109d4a98614226cb72ee76e8bf5411'
 
+    # One new exact SOURCE-only bond-rate curve gate; never reclassify old
+    # 52 weeks or unscored new post-exposure bars as independent confirmation.
+    bcf = next(s for s in r['prospectiveStudies'] if s['id'] == 'BCF1')
+    proto = json.loads(Path('research/bcf1_protocol.json').read_text())
+    assert bcf['status'] == 'REGISTERED_UNSCORED_SOURCE_ONLY'
+    assert bcf['independent'] is False and bcf['qualification'] is False
+    assert bcf['brokerFundedNetEur'] is None and bcf['cloudActivated'] is False
+    assert proto['locked'] and proto['ownerCapitalProspectiveEur'] == 300
+    assert proto['instruments'] == ['EUBobl-F','EUBund-F']
+    assert proto['historicalSource']['allHistoricalCalendarWeeksGloballyExposed']
+    assert proto['newChronologicalSource']['notToBeScoredOrUnsealedForPredictionWithoutPriorIndependentProtocol']
+    assert proto['sourceFeasibility']['noScoredReturns']
+    assert proto['operations']['expectedBrokerReadOnlyRequests'] == 165
+    assert proto['operations']['noLiveOrDemoOrders'] and proto['operations']['noCloudActivation']
+    assert 'def prospective_economic_futility(' in Path('research/f2_preflight.py').read_text()
+
     print('PASS OWNER v2.0 contract, frozen evidence, native funding and no-order boundary; no NET qualification')
 
 
