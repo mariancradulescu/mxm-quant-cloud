@@ -1125,6 +1125,29 @@
       "currentMarginIsNotExecutableFunding": true,
       "hard21Proven": false,
       "continuousDrawdownCertified": false
+    },
+    {
+      "id": "BCF1",
+      "status": "REGISTERED_UNSCORED_SOURCE_ONLY",
+      "authority": "docs/OWNER_SPEC.md OWNER v2.0 EUR300",
+      "protocolFile": "research/bcf1_protocol.json",
+      "sourceExposure": "HISTORICAL_52_WEEKS_GLOBAL_EXPOSED_AND_NOV2_NOV6_UNSCORED_SEALED_POST_EXPOSURE",
+      "universe": [
+        "EUBobl-F",
+        "EUBund-F"
+      ],
+      "sourceOnly": true,
+      "historicalPriceReturnsInspected": false,
+      "predictiveOutcomesInspected": false,
+      "brokerPricesOrOrdersSubmitted": 0,
+      "independent": false,
+      "qualification": false,
+      "brokerFundedNetEur": null,
+      "hard21Proven": false,
+      "drawdownCertified": false,
+      "cloudActivated": false,
+      "closedStudiesRescored": false,
+      "postExposureConfirmationPeriodCertified": false
     }
   ],
   "schema": "mxm-project-data-exposure-v1",
