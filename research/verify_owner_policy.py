@@ -219,6 +219,43 @@ def check():
     assert hrc_record['status'].startswith('CLOSED_EXACT_') and not hrc_record['qualification'] and hrc_record['followupCandidates'] == []
     assert hrc['brokerRequests'] == 0 and hrc['ordersSubmitted'] == 0 and not hrc['cloudActivated']
 
+
+    # OWNER PR101–103 receipts: the existing single SHA-256 gate pins both
+    # ORIGINAL durable JSON byte streams; these checks bind their protocol
+    # identity, original Actions artifacts and strictly non-funded conclusions.
+    # Neither historical research code nor original receipts are re-executed.
+    import subprocess
+    def original_blob_sha(path):
+        return subprocess.check_output(['git', 'hash-object', path], text=True).strip()
+
+    assert original_blob_sha('research/hrc1_protocol.json') == '183c69fd036cc08820ec900bfcad3ba08313f78b'
+    assert original_blob_sha('research/pve2_protocol.json') == '47344c3361b894c07998efdea02462a12075514d'
+    assert original_blob_sha('research/lfx1_protocol.json') == '496cd108ab482f70950344ede8ad4889eb99d338'
+    coverage = json.loads(Path('docs/AUTHENTIC_TEMPORAL_COVERAGE_20261105.json').read_text())
+    assert coverage['resultRunId'] == 42101938832 and coverage['resultArtifactId'] == 13450665489
+    assert coverage['sourceRunIds'] == [41724643418, 41735441128]
+    assert coverage['sourceBars'] == 836087 and coverage['sourceSymbols'] == 12 and coverage['sourceWeeks'] == 52
+    assert coverage['actualAllWeeksWith8EligibleSymbols'] == 0
+    assert coverage['week21hEligibleSymbols'] == 5 and coverage['week4hEligibleSymbols'] == 12
+    assert coverage['allExposed'] and not coverage['independentConfirmation'] and not coverage['returnsScored']
+    assert coverage['brokerRequests'] == 0 and coverage['ordersSubmitted'] == 0 and not coverage['cloudActivated']
+    lfx = json.loads(Path('docs/LFX1_AUTHENTIC_RESULT.json').read_text())
+    lfx_record = next(s for s in r['prospectiveStudies'] if s['id'] == 'LFX1')
+    assert lfx['protocol'] == lfx_record['protocolFile'] == 'research/lfx1_protocol.json'
+    assert lfx['originalResultRunId'] == lfx_record['originalResultRunId'] == 42103291209
+    assert lfx['originalPublicArtifactId'] == lfx_record['originalPublicArtifactId'] == 13451340066
+    assert lfx['sourceAuthenticated'] and lfx['originalM5Bars'] == 836087 and lfx['sourceCostContexts'] == 166
+    assert lfx['exAntePowerScreen']['pilot']['noiseModelCaveat'].find('NOT') >= 0
+    assert lfx['exAntePowerScreen']['pilot']['mdeProxyBps'] > 0
+    assert lfx['conditionalEconomicScore']['phases']['selection']['meanBps']['adverse'] < 0
+    assert not lfx['conditionalEconomicScore']['positiveAfterAdverseAndBothBenchmarks']
+    assert lfx_record['status'].startswith('CLOSED_EXACT_') and not lfx_record['selectionSupport']
+    assert lfx['allSourceWeeksGloballyExposed'] and not lfx['independentConfirmation']
+    assert lfx['conditionalEconomicScore']['fundedNetEur'] is None
+    assert not lfx['nativeFundedLedgerExecuted'] and not lfx['hard21Proven']
+    assert lfx['closedStudyReruns'] == 0 and lfx['brokerRequests'] == 0
+    assert lfx['ordersSubmitted'] == 0 and not lfx['cloudActivated']
+
     print('PASS OWNER v2.0 contract, frozen evidence, native funding and no-order boundary; no NET qualification')
 
 
