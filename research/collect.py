@@ -55,11 +55,16 @@ def authenticate(t):
     token = secret("R3_CTRADER_ACCESS_TOKEN")
     expected = HISTORIC_ACCOUNT_FINGERPRINT_COMMITMENT
     reply = t.request(m.ProtoOAApplicationAuthReq(clientId=client, clientSecret=client_secret))
-    need(isinstance(reply, m.ProtoOAApplicationAuthRes), "APPLICATION_AUTH_FAILED")
+    # Shared documented error category: a wrong response type is not evidence
+    # of token expiration. Never log broker protobuf or secret-bearing replies.
+    from .auth_scope_diagnostic import error_reply_category, token_list_category, SCOPE
+    need(isinstance(reply, m.ProtoOAApplicationAuthRes),
+         "AUTH_APPLICATION_" + error_reply_category(reply))
     print("APPLICATION_AUTH_VERIFIED", flush=True)
     accounts = t.request(m.ProtoOAGetAccountListByAccessTokenReq(accessToken=token))
-    need(isinstance(accounts, m.ProtoOAGetAccountListByAccessTokenRes), "TOKEN_INVALID_OR_EXPIRED")
-    need(accounts.HasField("permissionScope") and accounts.permissionScope == e.SCOPE_VIEW, "SCOPE_NOT_EXPLICIT_VIEW")
+    token_category=token_list_category(accounts)
+    need(token_category is None,
+         "SCOPE_NOT_EXPLICIT_VIEW" if token_category == SCOPE else token_category)
     print("ACCESS_TOKEN_EXPLICIT_VIEW_VERIFIED", flush=True)
     # Authenticate the application/token independently, but never select or
     # authenticate an account until the existing binding is well formed.
@@ -74,7 +79,9 @@ def authenticate(t):
     need(len(matches) == 1 and matches[0].HasField("isLive") and matches[0].isLive, "ACCOUNT_BINDING_FAILED")
     account = matches[0].ctidTraderAccountId
     reply = t.request(m.ProtoOAAccountAuthReq(ctidTraderAccountId=account, accessToken=token))
-    need(isinstance(reply, m.ProtoOAAccountAuthRes) and reply.ctidTraderAccountId == account, "ACCOUNT_AUTH_FAILED")
+    if not isinstance(reply,m.ProtoOAAccountAuthRes):
+        need(False, "AUTH_ACCOUNT_" + error_reply_category(reply))
+    need(reply.ctidTraderAccountId == account, "ACCOUNT_AUTH_FAILED")
     print("BOUND_LIVE_ACCOUNT_AUTH_VERIFIED", flush=True)
     return account
 
