@@ -256,6 +256,19 @@ def check():
     assert lfx['closedStudyReruns'] == 0 and lfx['brokerRequests'] == 0
     assert lfx['ordersSubmitted'] == 0 and not lfx['cloudActivated']
 
+    # GEP1 is a single prospectively registered exploratory programme, not
+    # a qualification, new wallet or reclassification of old source as independent.
+    gep = next(s for s in r['prospectiveStudies'] if s['id'] == 'GEP1')
+    protocol = json.loads(Path('research/gep1_protocol.json').read_text())
+    assert gep['status'] == 'REGISTERED_UNSCORED_EXPLORATORY' and gep['independent'] is False
+    assert gep['selectionViewed'] is False and gep['brokerFundedNetEur'] is None
+    assert gep['closedExactReruns'] == 0 and gep['ordersSubmitted'] == 0
+    assert protocol['id'] == 'GEP1' and protocol['proof']['locked'] and protocol['ownerProspectiveInitialCashEur'] == 300
+    assert protocol['source']['all52WeeksGloballyExposed'] and not protocol['calendar']['independentConfirmation']
+    assert len(protocol['families']) == 2 and sum(f['groups'] for f in protocol['families']) == 3
+    assert protocol['scientific']['groups'] * protocol['scientific']['oneSidedComparisonsPerGroup'] == 6
+    assert not protocol['proof']['cloudActivated'] and protocol['proof']['noOrders']
+
     print('PASS OWNER v2.0 contract, frozen evidence, native funding and no-order boundary; no NET qualification')
 
 
