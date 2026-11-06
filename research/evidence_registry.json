@@ -49,7 +49,7 @@
     "docs/AUTHENTIC_M15_WICK_SESSION_NET_VERDICT_20261103.json": "0c06455bea365a10df2d94db989926e1cf012e5fb495a053bdf670ac5d993d46",
     "docs/AUTHENTIC_NEIGHBOUR_NET_VERDICT_20261103.json": "4e9677ca94afa4c568e9104ebb33768e758b6100ffcfcf128596bdcbb4bfd2b1",
     "docs/AUTHENTIC_RELATIVE_GROSS_VERDICT_20261103.json": "2ed851f41737fd8b4a8963852602137db6aad1bcd187f3fa41a618a71d51812a",
-    "docs/AUTHENTIC_TEMPORAL_COVERAGE_20261105.json": "ab5593710ade013c9a24e7431d311e0c71979e71ba48c2fa6b5d61f40dc3914d",
+    "docs/AUTHENTIC_TEMPORAL_COVERAGE_20261105.json": "c428d5b5bb0687be7a73bd49514a7fa26d3c3d3b3953359de3873612d7f330d7",
     "docs/AUTHENTIC_WIDE_REGIME_VERDICT_20261103.json": "8ce232c1cb4f8f7dafc014de898ec6752838e5c58190d32eebe0a6c180860a65",
     "docs/BDP1_AUTHENTIC_RESULT.json": "ba33bc4bdd756db85c1c017c6c1f39241facd94408901787ff4db4bd53871cdb",
     "docs/BROKER_IDENTITY_AUTHENTIC_RECEIPT.json": "0312f98e9dba98eda06e29607792098d7b37db956b533a8096a7447c7998d6f1",
@@ -67,7 +67,7 @@
     "docs/IPF1_RESULT.json": "19c995caaeac544bd75dfb0cadcb19e03ec5deabf50eaeae13a55c3f232da948",
     "docs/JOINED_OPPORTUNITY_AUTHENTIC_RESULT.json": "292c3a3d086deee3af9efb3b480a339fa4edf99c3dda58de7559d712cd166187",
     "docs/JOINT_QUOTE_EVIDENCE_AUTHENTIC_RESULT.json": "5df419990d0cd142e7bda794ed2ae791bc0853c4739f6b0286c35c1f62a5403a",
-    "docs/LFX1_AUTHENTIC_RESULT.json": "0a57d1e7b1cbce4461ea8af45ab16005655deaa96f5ae17ddd204b3734013816",
+    "docs/LFX1_AUTHENTIC_RESULT.json": "bc97319f5e918b6230a894a54ab34b6216595e3786fbb216bc11611b4095a4eb",
     "docs/MBF1_AUTHENTIC_RESULT.json": "94b582f5edafb1ec6098359898e0aa24a5cf4ebaf2603dd1700beffd45b2f7de",
     "docs/MSP1_AUTHENTIC_CONDITIONAL_RESULT.json.gz": "ad140236c7f4792f035171bc015ae2f08c980f7a77d6f91782b540371ba607c4",
     "docs/MSP1_RECEIPT_AUDIT.json": "6282e52e7f4dcd2eb042635299c044c41be2bbb2e06b55564075a446861899e0",
@@ -176,6 +176,10 @@
     "sourceSha256": "388da898c16bfdb740709f3286c018eb95bb80c07b05cc82c332cd9ba56836ea",
     "verificationCommit": "ecc90d4f86aefbfbdd60d3d93c15f0fac3c90dba",
     "verificationRunId": 41744102992
+  },
+  "originalActionArtifactSha256": {
+    "actions/42101938832/artifacts/13450665489/authentic-temporal-coverage-public.json": "ab5593710ade013c9a24e7431d311e0c71979e71ba48c2fa6b5d61f40dc3914d",
+    "actions/42103291209/artifacts/13451340066/lfx1-authentic-public.json": "0a57d1e7b1cbce4461ea8af45ab16005655deaa96f5ae17ddd204b3734013816"
   },
   "projectWideCalendarRule": "Union of relevant design/research exposures across sources and instruments; overlaps are not independent.",
   "prospectiveCarryPreflight": {
