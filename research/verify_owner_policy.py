@@ -313,7 +313,20 @@ def check():
     # 52 weeks or unscored new post-exposure bars as independent confirmation.
     bcf = next(s for s in r['prospectiveStudies'] if s['id'] == 'BCF1')
     proto = json.loads(Path('research/bcf1_protocol.json').read_text())
-    assert bcf['status'] == 'REGISTERED_UNSCORED_SOURCE_ONLY'
+    assert bcf['status'] == 'SOURCE_ONLY_AUTH_BLOCKED_NO_RESULTS'
+    assert bcf['sourceResultRunId'] == 42172375939 and bcf['sourceRunAttempts'] == 2
+    assert bcf['originalApplicationAuthSuccessBothAttempts']
+    assert bcf['accountTokenViewScopeValidated'] is False
+    assert bcf['sourceReadbackAvailable'] is False and bcf['sourceCiphertextSha256'] is None
+    assert bcf['predictiveOutcomesInspected'] is False and bcf['sourceOnly'] is True
+    assert bcf['newHistoricalOrPostExposureSourceCaptured'] is False
+    assert bcf['readOnlySourceRequestsSucceeded'] == 0
+    assert bcf['historicalPriceReturnsInspected'] is False
+    assert bcf['proposedEconomicScoreAvailable'] is False
+    assert bcf['protocolRetuned'] is False
+    assert not Path('docs/BCF1_AUTHENTIC_SOURCE_GATE.json').exists()
+    assert 'APPLICATION_AUTH_VERIFIED' in Path('docs/BCF1_AUTH_AND_EUR300_CAPACITY_20261106.md').read_text()
+    assert '1b15d08fa14bf67239acf31109b1f0f11093df7fe5c1b04fcbf1bff893040c5a' in Path('docs/BCF1_AUTH_AND_EUR300_CAPACITY_20261106.md').read_text()
     assert bcf['independent'] is False and bcf['qualification'] is False
     assert bcf['brokerFundedNetEur'] is None and bcf['cloudActivated'] is False
     assert proto['locked'] and proto['ownerCapitalProspectiveEur'] == 300
