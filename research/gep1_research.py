@@ -130,6 +130,14 @@ def power_gate(p, group, rows, counters, views, cost):
     sci = p["scientific"]
     dev = rows["development"]
     sel = rows["selection"]
+    # An unobserved/insufficient cost context is a missing contract, not zero fees.
+    # Avoid reading any strategy outcomes before establishing a valid cost model.
+    if not all(k in cost for k in ("centralBps","adverseBps","minimumMarginEur","minimumNotionalEur","observed")):
+        return dict(passPreScoring=False,reasons=["INSUFFICIENT_AUTHENTIC_COST_OR_CONTRACT"],
+                    mechanismSpecificDevelopmentPilot=dict(developmentComplete=len(dev),
+                    selectionSourceCompleteWithoutOutcomes=len(sel),
+                    developmentActiveWeeks=0,selectionSourceActiveWeeks=len({x[0] for x in sel}),
+                    mechanismSpecificMdeBps=None,dependenceCaveat="Cost evidence absent; no return scored"))
     dev_weeks = weekly_outcomes(dev, target, views, cost)
     development_active = len(dev_weeks)
     selection_active = len({x[0] for x in sel})
