@@ -1,0 +1,184 @@
+{
+  "schema": "MXM_XUA1_CROSS_UNIVERSE_ORIGINAL_H1_NATIVE_ECONOMICS_V1",
+  "id": "XUA1",
+  "locked": true,
+  "status": "PREDECLARED_UNSCORED",
+  "authority": "docs/OWNER_SPEC.md OWNER v2.0 EUR300 and 2026-11-08 universe expansion",
+  "purpose": "One outcome-blind, cost-first, coordinated, four-class economic test on SIX Pepperstone instruments outside the original twelve M5, reusing only genuine authenticated H1 and quote-source wire evidence; none of the frozen MBF1/ERP1 strategy functions or economic outcomes is called.",
+  "source": {
+    "allPreviouslyExposedWeeks": 52,
+    "additionalBrokerRequests": 0,
+    "sourceRuns": [
+      {
+        "id": "ERP1_ORIGINAL_H1_SOURCE_DATA_ONLY",
+        "runId": 41948500095,
+        "sourceArtifactId": 13379722249,
+        "folder": "energy-source",
+        "ciphertextSha256": "94377751a8ca305a3d89c72bfc5c5463ae6ed4836d33448586d429cd8d95bfb7",
+        "protocol": "research/erp1_protocol.json",
+        "protocolSha256": "30ce944d5088a8e00d24238abfbcf3512e7eea085578f9feb5431ab9d39cc50b",
+        "instruments": [
+          "SpotCrude",
+          "SpotBrent"
+        ],
+        "sourceWeeks": 52,
+        "expectedBrokerReadOnlyRequests": 319
+      },
+      {
+        "id": "MBF1_ORIGINAL_H1_SOURCE_DATA_ONLY",
+        "runId": 41971150620,
+        "sourceArtifactId": 13390170888,
+        "folder": "global-source",
+        "ciphertextSha256": "5754b056f0e3995c8121d16d89bcaa557d30738a8c3d70d1a07cf79bf4559285",
+        "protocol": "research/mbf1_protocol.json",
+        "protocolSha256": "2ef8002886fd23dec9b93fa8516c6b346ebb5c2171e05bfe3a1d125faa3c9a7d",
+        "instruments": [
+          "GBPJPY",
+          "ETHUSD",
+          "HK50",
+          "JPN225-F"
+        ],
+        "sourceWeeks": 52,
+        "expectedBrokerReadOnlyRequests": 531
+      }
+    ],
+    "sourceReadback": "original ciphertext and original runId+protocol hash; revalidate original exact account double SHA, EUR Pepperstone trader, all request-response protobuf identity, contract min volume, margin and H1/quote geometry",
+    "finalProduct": "cTrader Algo Bars H1, Bars TickVolumes, Symbol/Pending/History, pure C# Linux Cloud; no external runtime"
+  },
+  "universe": [
+    "SpotCrude",
+    "SpotBrent",
+    "GBPJPY",
+    "ETHUSD",
+    "HK50",
+    "JPN225-F"
+  ],
+  "classMembership": {
+    "spotEnergy": [
+      "SpotCrude",
+      "SpotBrent"
+    ],
+    "crossCurrency": [
+      "GBPJPY"
+    ],
+    "crypto": [
+      "ETHUSD"
+    ],
+    "asianIndex": [
+      "HK50",
+      "JPN225-F"
+    ]
+  },
+  "eligibility": {
+    "requiresExplicitEnabledAndTradingMode": 0,
+    "requiredHistoricalH1ClosesAtLeast": 300,
+    "requiredFreshPairedBidAskCostClocksAtLeast": 6,
+    "marginEurLowerExclusive": 0,
+    "marginEurUpperExclusive": 300,
+    "volumeMustHaveExplicitValidMinStepMax": true,
+    "notKnownCostNeverFree": true,
+    "canUseOnlySourceOriginalCostObservations": true,
+    "separateSymbolEligibilityBeforeReturns": true
+  },
+  "costModel": {
+    "note": "Genuine original BID/ASK spreads with source-as-of freshness<=2s and skew<=2s; tiered conservative assumed commissions, currency conversions and slippage from original MBF1/ERP1 policies. Historical fill, tariff, financing, net broker EUR unknown.",
+    "central": "1.5 * original valid development spread median bps + 2*(2bps commission + 1bps currency conversion)",
+    "adverse": "2 * original valid development spread empirical p90 bps + 2*(4bps commission + 2bps currency conversion)",
+    "stress": "3 * original max valid development spread bps + 2*(8bps commission + 4bps currency conversion)",
+    "unknownOutsideObservedSample": true,
+    "noHistoricalOvernightSwapModel": true,
+    "sameUTCDayEntryExitRequired": true
+  },
+  "chronology": {
+    "startUtcMs": 1762128000000,
+    "developmentEndUtcMs": 1777852800000,
+    "selectionEndUtcMs": 1785715200000,
+    "endUtcMs": 1793577600000,
+    "developmentWeeks": 26,
+    "selectionWeeks": 13,
+    "globallyExposedAuditWeeksNeverScored": 13,
+    "allUtcHoursCausallyEligible": true,
+    "featureNoMissingHourForwardFill": true
+  },
+  "h1Decision": {
+    "at": "after H1 t completed; need 25 consecutive H1 bars including current and 24 prior",
+    "entry": "next completed H1 close (t+60m) as source proxy, never executable fill",
+    "closedHoldingPathRequired": true,
+    "oneActiveOpportunityPerSymbolAndMechanismClock": true,
+    "benchmark": "matched same-symbol prior H1 one-hour sign at same decision, same holding, same adverse cost if nonflat; cash flat with zero trades",
+    "grossBasis": "complete-source-price-close ratio in bps, never funded NET EUR"
+  },
+  "families": [
+    {
+      "id": "ENERGY_NEWS_IMPULSE_PERSISTENCE_4H",
+      "universe": [
+        "SpotCrude",
+        "SpotBrent"
+      ],
+      "horizonHours": 4,
+      "economicMechanism": "Oil supply/inventory information can take several hours to be digested; a genuine H1 volume-confirmed four-hour impulse may persist across energy CFD price discoveries, without hedging or replaying the closed ERP1 pair spread.",
+      "signal": "Last completed 4h log return absolute >=max(15bps, 3x prior completed 24h median absolute one-hour return), current H1 tick volume>=1.10x prior20 median hour volume, then follow sign of 4h return for 4h.",
+      "cloudPureCSharp": true
+    },
+    {
+      "id": "CRYPTO_PANIC_REBOUND_6H",
+      "universe": [
+        "ETHUSD"
+      ],
+      "horizonHours": 6,
+      "economicMechanism": "After an unusually large 24h crypto liquidation (at least 180bps), the first contrary H1 close of at least 10bps may mark a rebound toward liquidity; trades counter the original 24h shock, not the closed MBF1 weekend shock-drift.",
+      "signal": "Abs(24h log return)>=180bps and current H1 log return opposite to 24h sign with abs >=10bps; predict direction of current H1 rebound for six H1 closes.",
+      "cloudPureCSharp": true
+    },
+    {
+      "id": "ASIAN_INDEX_RISK_SYNCHRONY_3H",
+      "universe": [
+        "HK50",
+        "JPN225-F"
+      ],
+      "horizonHours": 3,
+      "economicMechanism": "Joint synchronous regional index repricing after already completed four-hour returns may persist through the next three trading hours; this is neither MBF1 Tokyo-to-HK underreaction nor closed index-to-FX transmission.",
+      "signal": "Both HK50 and JPN225-F have 4h completed H1 return absolute>=20bps, signs agree; individual current H1 tick volume>=prior12 observed median; follow the common 4h sign for three complete hours.",
+      "cloudPureCSharp": true
+    },
+    {
+      "id": "GBPJPY_REJECTION_WICK_2H",
+      "universe": [
+        "GBPJPY"
+      ],
+      "horizonHours": 2,
+      "economicMechanism": "A one-hour high-volume stop-rejection candlestick without any lookahead pivot can mark exhaustion of GBPJPY intraday leveraged flow; test two-hour fade, distinct from closed Tokyo 4h inventory unwind.",
+      "signal": "H1 upper wick >=60% candle range and close<open => SHORT, or lower wick >=60% range and close>open => LONG, only when current tick volume>=median prior12 H1 tick volumes; no 12h Donchian breach or future swing pivot.",
+      "cloudPureCSharp": true
+    }
+  ],
+  "uncertainty": {
+    "numberEconomicFamilies": 4,
+    "comparisonsAcrossProgramme": 8,
+    "developmentF2": "existing prospective_economic_futility, 26 independent-calendar-week *clusters* with true empty weeks, HAC3, Bonferroni eight prespecified 1s comparisons",
+    "selectionOnlyIfDevelopmentF2Passes": true,
+    "selection": "HAC3 Bonferroni corrected one-sided weekly adverse NET and matched benchmark incremental lower bounds both>0 on next 13 exposed selection weeks",
+    "noScoredAuditWeeks": 13,
+    "activeWeeksNotImputed": true,
+    "oneHorizonPerPredeclaredMechanism": true,
+    "allSourceWeeksGloballyExposedNoIndependentCertificate": true,
+    "failureStopsExactWithoutRetune": true
+  },
+  "fundedContinuation": {
+    "capitalOneWalletEur": 300,
+    "maximumFloatingEquityDrawdownFraction": 0.3,
+    "hard21SystemOnlyFinancedClosed": 21,
+    "noCombinationOfDisqualifiedModels": true,
+    "CSharpParityBeforeAnyPromotion": true,
+    "requiresRealMinimumVolumeAndCompleteFxCommissionSwapFundingMarginEquity": true,
+    "nativeSelectorOrchestratorAndLedgerAlreadyExist": true,
+    "newLedgerNoSyntheticNetClaim": true
+  },
+  "safety": {
+    "noLiveOrDemoOrders": true,
+    "noCTraderCloudActivation": true,
+    "noTokenRefresh": true,
+    "noAlterationOriginalSourceOrClosedResults": true,
+    "noExternalRuntimeDependency": true
+  }
+}
