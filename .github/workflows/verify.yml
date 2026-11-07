@@ -2827,7 +2827,8 @@ jobs:
       github.ref == 'refs/heads/main' &&
       github.actor == 'mariancradulescu' &&
       github.event_name == 'push' &&
-      github.event.head_commit.message == 'MXM_CMA1_ORIGINAL_CONTRACT_COST_READBACK_ONCE'
+      github.event.head_commit.message == 'MXM_CMA1_ORIGINAL_CONTRACT_COST_READBACK_ONCE' &&
+      needs.verify.result == 'success'
     needs: verify
     permissions:
       contents: read
