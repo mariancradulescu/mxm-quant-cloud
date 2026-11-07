@@ -1201,6 +1201,38 @@
       "developmentConservativeUpperAdverseNetBps": -0.8181108515695379,
       "developmentFutilityPassed": false,
       "exactClosedNoRetuning": true
+    },
+    {
+      "id": "CPF1",
+      "status": "PREDECLARED_UNSCORED",
+      "authority": "docs/OWNER_SPEC.md OWNER v2.0 EUR300",
+      "protocolFile": "research/cpf1_protocol.json",
+      "initialCapitalEur": 300,
+      "sourceOriginalPepperstoneRunIds": [
+        41724643418,
+        41735441128
+      ],
+      "sourceM5Bars": 836087,
+      "sourceCostContexts": 166,
+      "source52WeeksGloballyExposed": true,
+      "familyIds": [
+        "DONCHIAN_TREND_VOLUME",
+        "BOLLINGER_OVEREXTENSION_REVERSION",
+        "H1_FALSE_BREAK_LIQUIDITY_SWEEP"
+      ],
+      "wholeProgramComparisons": 6,
+      "sourceOnlyReadOnly": true,
+      "independent": false,
+      "qualification": false,
+      "selectionScored": false,
+      "brokerFundedNetEur": null,
+      "nativeCSharpFundedRoundTrips": 0,
+      "hard21Proven": false,
+      "drawdownCertified": false,
+      "ordersSubmitted": 0,
+      "cloudActivated": false,
+      "closedStudiesRerun": 0,
+      "protocolRetuned": false
     }
   ],
   "schema": "mxm-project-data-exposure-v1",
