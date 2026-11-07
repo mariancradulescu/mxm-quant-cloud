@@ -1,0 +1,103 @@
+{
+  "schema": "MXM_FLS1_DURABLE_ORIGINAL_AUTHENTIC_RESULT_20261107_V1",
+  "authority": "docs/OWNER_SPEC.md OWNER v2.0 EUR300 Nov7 read-only",
+  "provenance": {
+    "originalMainRunId": 42380699704,
+    "originalMainHead": "741bf9d3dc15ffbf3f31f422fff18b1d916f5114",
+    "originalJobId": 128427790959,
+    "originalPublicArtifactId": 13576868959,
+    "originalPublicArtifactName": "fls1-authentic-exposed-economic-result-public-only",
+    "originalPublicFilename": "fls1-authentic-public.json",
+    "originalPublicSha256": "e92757d3d068a73c7d9eda44687119f2d4cee218a9f4c6ac958efe1fc635aa77",
+    "originalLockedProtocol": "research/fls1_protocol.json",
+    "originalLockedProtocolSha256": "1e414ba6c7e81fe08d89ad8a894f6017b2593939ef8315738105cad2a3f4ef51",
+    "sourceSealedOriginalRuns": [
+      41724643418,
+      41735441128
+    ],
+    "sourceM5BarsAuthenticated": 836087,
+    "sourceCurrentTermQuoteCostContextsAuthenticated": 166,
+    "newBrokerSourceRequests": 0,
+    "previouslyGloballyExposedWeeks": 52
+  },
+  "premise": {
+    "leadInstrument": "EURUSD",
+    "targetInstrument": "GBPUSD",
+    "marketMechanism": "GBPUSD signed next-hour follow-through after completed EURUSD H1 impulse and GBPUSD lag",
+    "onlyOneDirectionAndHorizon": true,
+    "utcDecisionHours": [
+      8,
+      12,
+      16
+    ],
+    "holdingMinutes": 60,
+    "entryAtNextCompletedM5": true,
+    "chronologicalDevelopmentWeeks": 26,
+    "chronologicalSelectionWeeks": 13,
+    "unscoredExposedAuditWeeks": 13,
+    "matchedBenchmark": "GBPUSD same-clock prior-H1 momentum at same 60m holding, paying its own modeled cost; cash-flat reference"
+  },
+  "targetCostAndFinance": {
+    "sourceQuoteCostSamples": 18,
+    "currentMinimumMarginEur": 39.96,
+    "currentMinimumNotionalEur": 1160.004740379569,
+    "centralModeledRoundTripCostBps": 1.3152134896347396,
+    "adverseModeledRoundTripCostBps": 2.4277200594453574,
+    "stressModeledRoundTripCostBps": 3.9946414162810684,
+    "capitalProspectiveInitialEur": 300,
+    "staticMarginBelowCapital": true,
+    "minimumHistoricalExecutionFillCostVerified": false,
+    "noOvernightFundingEventAtFixedClocks": true,
+    "brokerActualFundedPnlUnknown": true
+  },
+  "sourceCoverage": {
+    "declaredDevelopmentClocks": 390,
+    "developmentCompleteSourceSignals": 90,
+    "developmentActiveWeeks": 26,
+    "selectionDeclaredClocks": 195,
+    "selectionSourceCompleteSignalsButOutcomesUninspected": 54
+  },
+  "developmentSignalMeanBps": {
+    "gross": -0.4881905457386368,
+    "centralNet": -1.8034040353733765,
+    "adverseNet": -2.9159106051839943,
+    "stressNet": -4.482831962019705,
+    "incrementalVsMatchedMomentumAdverseNet": 0.5373370914605596
+  },
+  "developmentEqualCalendarWeekMeanBps": {
+    "gross": -1.2610532445126565,
+    "centralNet": -2.576266734147396,
+    "adverseNet": -3.6887733039580137,
+    "stressNet": -5.255694660793725,
+    "incrementalVsMatchedMomentumAdverseNet": 0.2651359575520832
+  },
+  "existingF2DevelopmentFutility": {
+    "status": "FUTILE_STOP_BEFORE_SELECTION",
+    "economicallyFutile": true,
+    "selectionScoringAllowed": false,
+    "comparisons": 2,
+    "hacLags": 3,
+    "conservativeAdverseWeeklyStandardErrorBps": 1.4646506134969295,
+    "upperAdverseNetBps": -0.8181108515695379,
+    "conservativeIncrementalWeeklyStandardErrorBps": 1.136582607278175,
+    "upperIncrementalVsMatchedBenchmarkBps": 2.492796933271938,
+    "interpretation": "Even a favorable 95% one-sided upper development net limit is below zero; selection returns remain uninspected."
+  },
+  "verdict": {
+    "status": "CLOSED_EXACT_DEVELOPMENT_F2_FUTILE_BEFORE_SELECTION",
+    "closedExactNoRescoreOrInverse": true,
+    "selectionGrossOrNetBps": null,
+    "selectionOutcomesInspected": false,
+    "exposedAuditWeeksScored": 0,
+    "independentConfirmation": false,
+    "economicNetQualified": false,
+    "brokerFundedNetEur": null,
+    "nativeCSharpFundedRoundTrips": 0,
+    "systemHard21Qualified": false,
+    "globalFloatingDrawdownMax30Certified": false,
+    "ordersSubmitted": 0,
+    "cloudActivated": false,
+    "refreshTokenConsumed": false,
+    "closedStudiesRetuned": 0
+  }
+}
