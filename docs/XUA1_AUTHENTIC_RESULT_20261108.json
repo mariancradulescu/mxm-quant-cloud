@@ -1,0 +1,350 @@
+{
+  "schema": "MXM_XUA1_EXPANDED_NONLEGACY_ORIGINAL_AUTHENTIC_ECONOMIC_RECEPTION_20261108_V1",
+  "ownerAuthority": "docs/OWNER_SPEC.md OWNER v2.0 EUR300 and OWNER 2026-11-08 expansion of market universe",
+  "provenance": {
+    "runId": 42421515437,
+    "head": "a1af1102b79827cbd9320a7723d76593790c7901",
+    "protectedEconomicJobId": 128551047220,
+    "originalPublicArtifactId": 13593647547,
+    "originalPublicArtifactName": "xua1-original-six-nonlegacy-h1-cost-native-economics-public-only",
+    "originalPublicArtifactJson": "xua1-authentic-public.json",
+    "originalPublicJsonSha256": "16da046cac6923c6ac284324d3060a4a15be790e71258d5bf6a2d09107359f7a",
+    "lockedProtocol": "research/xua1_protocol.json",
+    "lockedProtocolSha256": "5ca62675e0cc9d5a60e0e6a6f95d3f93a414fdd7af1522b9676e3b48a40f8335",
+    "originalSourceRunIds": [
+      41948500095,
+      41971150620
+    ],
+    "originalSourceCiphertextSha256": [
+      "94377751a8ca305a3d89c72bfc5c5463ae6ed4836d33448586d429cd8d95bfb7",
+      "5754b056f0e3995c8121d16d89bcaa557d30738a8c3d70d1a07cf79bf4559285"
+    ],
+    "originalSourceBrokerRequests": [
+      319,
+      531
+    ],
+    "originalLivePepperstoneEURCryptographicBindingRechecked": true,
+    "original2026Nov08ResearchBrokerRequests": 0,
+    "firstAttemptPreScoreTechnicalFailureRunId": 42420879815,
+    "firstAttemptReason": "Python NameError in hourly timeline construction, fixed before any outcome label was scored and re-executed only via exact one-file technical recovery approval",
+    "technicalRecoveryPRs": [
+      137,
+      138
+    ]
+  },
+  "sourceAndCurrentTerms": {
+    "historicalCompletedH1": {
+      "ETHUSD": 8713,
+      "GBPJPY": 6188,
+      "HK50": 4198,
+      "JPN225-F": 5888,
+      "SpotBrent": 5477,
+      "SpotCrude": 5877
+    },
+    "totalH1": 36341,
+    "technicallyEligibleSixMarkets": [
+      "ETHUSD",
+      "GBPJPY",
+      "HK50",
+      "JPN225-F",
+      "SpotBrent",
+      "SpotCrude"
+    ],
+    "contractAndCostByMarket": {
+      "ETHUSD": {
+        "pairedBidAsk": 30,
+        "currentMinimumMarginEur": 10.75,
+        "minimumVolume": "0.01",
+        "originalMedianSpreadBps": 6.456407,
+        "centralModeledBps": 15.684610500000002,
+        "adverseModeledBps": 26.090063999999998,
+        "stressModeledBps": 48.896058
+      },
+      "GBPJPY": {
+        "pairedBidAsk": 21,
+        "currentMinimumMarginEur": 39.93,
+        "minimumVolume": "1000",
+        "originalMedianSpreadBps": 0.435213,
+        "centralModeledBps": 6.6528195,
+        "adverseModeledBps": 13.154674,
+        "stressModeledBps": 26.555658
+      },
+      "HK50": {
+        "pairedBidAsk": 26,
+        "currentMinimumMarginEur": 27.9,
+        "minimumVolume": "0.1",
+        "originalMedianSpreadBps": 1.92198,
+        "centralModeledBps": 8.88297,
+        "adverseModeledBps": 15.91293,
+        "stressModeledBps": 29.938878000000003
+      },
+      "JPN225-F": {
+        "pairedBidAsk": 9,
+        "currentMinimumMarginEur": 17.22,
+        "minimumVolume": "1",
+        "originalMedianSpreadBps": 3.193294,
+        "centralModeledBps": 10.789940999999999,
+        "adverseModeledBps": 18.515652,
+        "stressModeledBps": 33.773478
+      },
+      "SpotBrent": {
+        "pairedBidAsk": 18,
+        "currentMinimumMarginEur": 8.67,
+        "minimumVolume": "1",
+        "originalMedianSpreadBps": 3.552736,
+        "centralModeledBps": 11.329104000000001,
+        "adverseModeledBps": 22.37134,
+        "stressModeledBps": 41.253861
+      },
+      "SpotCrude": {
+        "pairedBidAsk": 21,
+        "currentMinimumMarginEur": 7.81,
+        "minimumVolume": "1",
+        "originalMedianSpreadBps": 3.61991,
+        "centralModeledBps": 11.429865,
+        "adverseModeledBps": 23.916748,
+        "stressModeledBps": 43.916067
+      }
+    },
+    "eligibleMeans": "Observed current minimum lot margin below EUR300 and fresh historical BID/ASK samples; does not prove funded concurrent capital, slippage/fills, currency conversion or swap",
+    "historicalAllInFeesAndFinancingProven": false
+  },
+  "nativeParity": {
+    "exactSignAgreement": true,
+    "featuresChecked": 960,
+    "nativeCloudLibrary": "Mxm.Core.XuaNativeFeatureSigns",
+    "nativeReplayFlag": "--xua1-native-signs",
+    "realOriginalMarketFrames": 960,
+    "cloudCompatibleCoreLibrary": "src/Mxm.Core/XuaNativeFeatureSigns.cs",
+    "independentlyCompiledInSameCbotCSharpProject": true,
+    "readOnlyMarketObservationsOnly": true,
+    "priorEconomicOutcomesNotUsedToFitFeatures": true
+  },
+  "method": {
+    "distinctOriginalMarketFamilies": 4,
+    "eightPredeclaredOneSidedComparisons": true,
+    "developmentCalendarWeeks": 26,
+    "selectionCalendarWeeks": 13,
+    "globallyExposedAuditCalendarWeeksUnscored": 13,
+    "all52WeeksGloballyExposed": true,
+    "gross": "H1 completed close proxy not bid/ask executable fill",
+    "modeledCosts": "Original fresh historical BID/ASK plus conservative assumed commission FX conversion and slippage; funding not included and actual historical tariff/fills unknown",
+    "benchmarks": "Same target same clock previous H1 momentum with modelled adverse trading fees and cash flat",
+    "F2": "Existing f2_preflight.prospective_economic_futility HAC3 and Bonferroni 8-comparison programme",
+    "selectionPolicy": "Only mechanisms passing development F2 may read exposed selection outcomes; selection require both adjusted adverse NET and incremental benchmark weekly lower > 0",
+    "noInstrumentWinnerAfterSeeingReturns": true
+  },
+  "originalEvaluatedFamilies": {
+    "ENERGY_NEWS_IMPULSE_PERSISTENCE_4H": {
+      "development": {
+        "activeWeeks": 26,
+        "equalCalendarWeekMeanBps": {
+          "adverse": -13.165132773710427,
+          "central": -1.400573273710431,
+          "gross": 9.978911226289572,
+          "incremental": 11.219540270944048,
+          "stress": -32.60605277371043
+        },
+        "perSignalMeanBps": {
+          "adverse": -12.288677775788285,
+          "central": -0.43863156406190285,
+          "gross": 10.946815448967415,
+          "incremental": 9.6695685442097,
+          "stress": -31.79568408523454
+        },
+        "signalCount": 921,
+        "symbolsWithEvents": [
+          "SpotBrent",
+          "SpotCrude"
+        ]
+      },
+      "f2": {
+        "activeDevelopmentWeeks": 26,
+        "conditionalAdverseNetMeanBps": -13.165132773710427,
+        "developmentWeeks": 26,
+        "economicallyFutile": false,
+        "familyComparisons": 8,
+        "financeCertified": false,
+        "hacLagsFixedExAnte": 3,
+        "hard21Certified": false,
+        "incrementalMatchedBenchmarkMeanBps": 11.219540270944048,
+        "independenceCertified": false,
+        "scoreSelectionAllowed": true,
+        "standardErrorAdverseHacConservativeBps": 7.370264131516157,
+        "standardErrorIncrementalHacConservativeBps": 8.222344172568732,
+        "status": "UPPER_BOUND_ALLOWS_PLAUSIBILITY_NOT_EVIDENCE",
+        "statusIsNotProofOfPositiveEdge": true,
+        "upperAdverseNetBps": 5.243616295442637,
+        "upperIncrementalBps": 31.756534323271648
+      },
+      "selection": {
+        "activeWeeks": 13,
+        "actualFundedNetEur": null,
+        "adjustedAdverseNetLowerBps": -51.21300734587574,
+        "adjustedMatchedBenchmarkIncrementalLowerBps": -35.377450722418764,
+        "equalCalendarWeekMeanBps": {
+          "adverse": -24.19707317354015,
+          "central": -12.432513673540155,
+          "gross": -1.0530291735401542,
+          "incremental": -8.70943353164344,
+          "stress": -43.63799317354015
+        },
+        "perSignalMeanBps": {
+          "adverse": -27.514357705895044,
+          "central": -15.701033750198848,
+          "gross": -4.318148035008972,
+          "incremental": -8.651555658845743,
+          "stress": -46.99297552867986
+        },
+        "signalCount": 474,
+        "supportedConditionally": false,
+        "symbolsWithEvents": [
+          "SpotBrent",
+          "SpotCrude"
+        ]
+      },
+      "exactVerdict": "EXACT_SELECTION_REJECTED_ADVERSE_OR_BENCHMARK"
+    },
+    "CRYPTO_PANIC_REBOUND_6H": {
+      "development": {
+        "activeWeeks": 26,
+        "equalCalendarWeekMeanBps": {
+          "adverse": -27.789652532543407,
+          "central": -17.38419903254341,
+          "gross": -1.6995885325434106,
+          "incremental": 0,
+          "stress": -50.595646532543405
+        },
+        "perSignalMeanBps": {
+          "adverse": -28.294282815113526,
+          "central": -17.88882931511353,
+          "gross": -2.204218815113529,
+          "incremental": 0,
+          "stress": -51.100276815113524
+        },
+        "signalCount": 579,
+        "symbolsWithEvents": [
+          "ETHUSD"
+        ]
+      },
+      "f2": {
+        "developmentWeeks": 26,
+        "economicallyFutile": null,
+        "reasons": [
+          "ZERO_WEEKLY_VARIANCE_CANNOT_CERTIFY_FUTILITY"
+        ],
+        "returnOutcomesIndependent": false,
+        "scoreSelectionAllowed": false,
+        "status": "NOT_INFORMATIVE_NO_ECONOMIC_PROMOTION"
+      },
+      "selection": null,
+      "exactVerdict": "EXACT_STOP_F2_FUTILE_OR_UNINFORMATIVE"
+    },
+    "ASIAN_INDEX_RISK_SYNCHRONY_3H": {
+      "development": {
+        "activeWeeks": 26,
+        "equalCalendarWeekMeanBps": {
+          "adverse": -17.794939246551156,
+          "central": -10.403723919628078,
+          "gross": -0.5305959003973093,
+          "incremental": -3.5901457129539516,
+          "stress": -32.460516208089615
+        },
+        "perSignalMeanBps": {
+          "adverse": -18.675704087876266,
+          "central": -11.19161372804363,
+          "gross": -1.0639262552402817,
+          "incremental": -2.7358076419099815,
+          "stress": -33.50572308369216
+        },
+        "signalCount": 478,
+        "symbolsWithEvents": [
+          "HK50",
+          "JPN225-F"
+        ]
+      },
+      "f2": {
+        "activeDevelopmentWeeks": 26,
+        "conditionalAdverseNetMeanBps": -17.794939246551156,
+        "developmentWeeks": 26,
+        "economicallyFutile": true,
+        "familyComparisons": 8,
+        "financeCertified": false,
+        "hacLagsFixedExAnte": 3,
+        "hard21Certified": false,
+        "incrementalMatchedBenchmarkMeanBps": -3.5901457129539516,
+        "independenceCertified": false,
+        "scoreSelectionAllowed": false,
+        "standardErrorAdverseHacConservativeBps": 2.5991020223313073,
+        "standardErrorIncrementalHacConservativeBps": 2.2765653019502676,
+        "status": "FUTILE_STOP_BEFORE_SELECTION",
+        "statusIsNotProofOfPositiveEdge": true,
+        "upperAdverseNetBps": -11.303147896817979,
+        "upperIncrementalBps": 2.0960439045844907
+      },
+      "selection": null,
+      "exactVerdict": "EXACT_STOP_F2_FUTILE_OR_UNINFORMATIVE"
+    },
+    "GBPJPY_REJECTION_WICK_2H": {
+      "development": {
+        "activeWeeks": 26,
+        "equalCalendarWeekMeanBps": {
+          "adverse": -13.953227876786478,
+          "central": -7.451373376786479,
+          "gross": -0.7985538767864789,
+          "incremental": -0.19740302879763036,
+          "stress": -27.35421187678648
+        },
+        "perSignalMeanBps": {
+          "adverse": -13.98319550881678,
+          "central": -7.48134100881678,
+          "gross": -0.82852150881678,
+          "incremental": -0.22811016661059508,
+          "stress": -27.384179508816782
+        },
+        "signalCount": 135,
+        "symbolsWithEvents": [
+          "GBPJPY"
+        ]
+      },
+      "f2": {
+        "activeDevelopmentWeeks": 26,
+        "conditionalAdverseNetMeanBps": -13.953227876786478,
+        "developmentWeeks": 26,
+        "economicallyFutile": true,
+        "familyComparisons": 8,
+        "financeCertified": false,
+        "hacLagsFixedExAnte": 3,
+        "hard21Certified": false,
+        "incrementalMatchedBenchmarkMeanBps": -0.19740302879763036,
+        "independenceCertified": false,
+        "scoreSelectionAllowed": false,
+        "standardErrorAdverseHacConservativeBps": 1.1267483729395533,
+        "standardErrorIncrementalHacConservativeBps": 0.13737919664984496,
+        "status": "FUTILE_STOP_BEFORE_SELECTION",
+        "statusIsNotProofOfPositiveEdge": true,
+        "upperAdverseNetBps": -11.138942297410122,
+        "upperIncrementalBps": 0.14572974274506142
+      },
+      "selection": null,
+      "exactVerdict": "EXACT_STOP_F2_FUTILE_OR_UNINFORMATIVE"
+    }
+  },
+  "verdict": {
+    "status": "CLOSED_EXACT_XUA1_SIX_NONLEGACY_H1_FOUR_FAMILIES_NO_SELECTION_PROMOTION",
+    "originalEconomicVerdict": "NO_NEW_FUNDED_CANDIDATE_FROM_EXPANDED_SIX_H1_MARKETS",
+    "conditionalGroupIds": [],
+    "closedExactNoRetuningInversionOrRecoveryOfNegativeEconomicModels": true,
+    "noOldERP1MBF1PredictorScored": true,
+    "auditWeeksScored": 0,
+    "newNativeCSharpTradingStrategyPromoted": false,
+    "originalBrokerFundedNetEur": null,
+    "newNativeFundedClosedRoundTrips": 0,
+    "systemHard21Certified": false,
+    "globalFloatingDD30Certified": false,
+    "independentChronologicalConfirmation": false,
+    "ordersSubmitted": 0,
+    "cloudActivated": false,
+    "tokenRefresh": false
+  }
+}
