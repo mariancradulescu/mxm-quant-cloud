@@ -70,6 +70,7 @@ class PipelineChecks(unittest.TestCase):
 
     def test_owner_view_trade_and_missing_scope_all_require_original_live_account(self):
         import hashlib
+        from . import owner_readonly_auth
         fake_id=31415926
         fingerprint=hashlib.sha256(f'ctrader-account:{fake_id}'.encode()).hexdigest()
         commitment=hashlib.sha256(fingerprint.encode()).hexdigest()
@@ -93,31 +94,31 @@ class PipelineChecks(unittest.TestCase):
                     if self.scope is not None: reply.permissionScope=self.scope
                     return reply
                 return m.ProtoOAAccountAuthRes(ctidTraderAccountId=fake_id)
-        with patch.dict('os.environ',creds), patch.object(collect,'HISTORIC_ACCOUNT_FINGERPRINT_COMMITMENT',commitment):
+        with patch.dict('os.environ',creds), patch.object(owner_readonly_auth,'HISTORIC_ACCOUNT_FINGERPRINT_COMMITMENT',commitment):
             for scope,expected in ((e.SCOPE_VIEW,'VIEW_READ_ONLY_TRANSPORT'),
                                    (e.SCOPE_TRADE,'TRADE_CAPABILITY_READ_ONLY_TRANSPORT'),
                                    (None,'NOT_ATTESTED_READ_ONLY_TRANSPORT')):
                 fake=Fake(scope=scope)
-                self.assertEqual(collect.authenticate(fake),fake_id)
+                self.assertEqual(owner_readonly_auth.authenticate(fake),fake_id)
                 self.assertEqual(fake.sent,[
                     'ProtoOAApplicationAuthReq',
                     'ProtoOAGetAccountListByAccessTokenReq',
                     'ProtoOAAccountAuthReq'])
                 response=m.ProtoOAGetAccountListByAccessTokenRes(accessToken='synthetic-access-token')
                 if scope is not None: response.permissionScope=scope
-                self.assertEqual(collect.read_only_scope_attestation(response),expected)
+                self.assertEqual(owner_readonly_auth.read_only_scope_attestation(response),expected)
             for fake in (Fake(scope=e.SCOPE_TRADE,matched=False),
                          Fake(scope=e.SCOPE_VIEW,live=False),
                          Fake(scope=None,matched=False)):
                 with self.assertRaisesRegex(CaptureContractError,'ACCOUNT_BINDING_FAILED'):
-                    collect.authenticate(fake)
+                    owner_readonly_auth.authenticate(fake)
                 self.assertEqual(len(fake.sent),2)
             for fake in (Fake(scope=e.SCOPE_VIEW,error=True),Fake(scope=None,error=True)):
                 with self.assertRaisesRegex(CaptureContractError,'TOKEN_INVALID_OR_EXPIRED'):
-                    collect.authenticate(fake)
+                    owner_readonly_auth.authenticate(fake)
                 self.assertEqual(len(fake.sent),2)
         # Test-only commitment was replaced only in memory and cannot alter pinned source.
-        self.assertNotEqual(collect.HISTORIC_ACCOUNT_FINGERPRINT_COMMITMENT,commitment)
+        self.assertNotEqual(owner_readonly_auth.HISTORIC_ACCOUNT_FINGERPRINT_COMMITMENT,commitment)
 
     def test_readonly_transport_refuses_order_mutations_before_network_under_any_token_scope(self):
         from .ctrader_transport import StdlibCTraderTransport
