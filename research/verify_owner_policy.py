@@ -376,6 +376,39 @@ def check():
     assert fp_secret['reconciliation']['viewScopeNowProven'] is False
     assert fp_secret['nextSecureStep']['authenticatedEnvironmentSecretsDualTokenWritebackAvailableThroughConnector'] is False
 
+    # OWNER Nov7: corrected secret names are present, but SCOPE_VIEW not proved.
+    # Conserve the post-reconfiguration receipt separately from the Nov6 error
+    # and from the misnamed-fingerprint secret comparison.
+    recovery = json.loads(Path('docs/OWNER_RECONFIGURED_OAUTH_AUTHENTIC_RESULT_20261107.json').read_text())
+    ar = next(x for x in r['authenticationDiagnostics'] if x['id'] == 'OWNER_RECONFIGURED_OAUTH_20261107')
+    pr = next(x for x in r['oauthSecretPresenceChecks'] if x['id'] == 'FOUR_CORRECTED_20261107')
+    assert recovery['source']['workflowRunId'] == ar['diagnosticRunId'] == pr['originalRunId'] == 42374757850
+    assert recovery['source']['publicArtifactId'] == ar['originalArtifactId'] == pr['originalArtifactId'] == 13575056596
+    assert recovery['source']['authFileSha256'] == ar['originalPublicJsonSha256']
+    assert recovery['source']['presenceFileSha256'] == pr['originalPublicJsonSha256']
+    assert recovery['secretAvailability']['allFourAvailable'] is True
+    assert set(k for k in recovery['secretAvailability'] if k.startswith('R3_CTRADER_')) == {
+        'R3_CTRADER_CLIENT_ID', 'R3_CTRADER_CLIENT_SECRET',
+        'R3_CTRADER_ACCESS_TOKEN', 'R3_CTRADER_REFRESH_TOKEN'}
+    assert all(recovery['secretAvailability'][k] == 'AVAILABLE_IN_PROTECTED_JOB'
+               for k in recovery['secretAvailability'] if k.startswith('R3_CTRADER_'))
+    assert recovery['authentication']['category'] == 'AUTH_SCOPE_INCOMPATIBLE_OR_MISSING'
+    assert recovery['authentication']['stage'] == 'access_token_scope'
+    assert recovery['authentication']['applicationAuthenticationVerified'] is True
+    assert recovery['authentication']['tokenAccountListResponseReceived'] is True
+    assert recovery['authentication']['explicitSCOPE_VIEWVerified'] is False
+    assert recovery['authentication']['originalAccountAuthenticationVerified'] is False
+    assert recovery['authentication']['authenticationRequestsSent'] == 2
+    assert recovery['authentication']['brokerMarketHistoryContractOrQuoteRequests'] == 0
+    assert recovery['boundary']['BCF1Status'] == 'SOURCE_ONLY_AUTH_BLOCKED_NO_RESULTS'
+    assert recovery['boundary']['BCF1RecoveryTriggered'] is False
+    assert recovery['boundary']['refreshTokenConsumed'] is False
+    assert recovery['boundary']['tokenRotationPerformed'] is False
+    assert recovery['boundary']['liveOrDemoOrders'] == 0
+    assert recovery['boundary']['cTraderCloudActivated'] is False
+    assert ar['BCF1Recovered'] is False and ar['closedModelRescored'] is False
+    assert pr['safePairRotationCompleted'] is False
+
     print('PASS OWNER v2.0 contract, frozen evidence, native funding and no-order boundary; no NET qualification')
 
 

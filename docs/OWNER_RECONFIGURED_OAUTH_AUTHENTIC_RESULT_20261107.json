@@ -1,0 +1,62 @@
+{
+  "schema": "MXM_OWNER_RECONFIGURED_OAUTH_AUTHENTIC_RECEPTION_20261107_V1",
+  "authority": "docs/OWNER_SPEC.md OWNER v2.0",
+  "source": {
+    "workflowRunId": 42374757850,
+    "workflowHeadSha": "868887fd2fb0c89e220fbac93864c84c778449c0",
+    "workflowConclusion": "success",
+    "protectedJob": "owner_reconfigured_oauth_auth_once",
+    "protectedJobId": 128410302217,
+    "environment": "mxm-r3-pepperstone-v1",
+    "publicArtifactId": 13575056596,
+    "publicArtifactName": "owner-reconfigured-oauth-auth-public-only",
+    "presenceFile": "oauth-secret-presence.public.json",
+    "presenceFileSha256": "e4c5f05d7c38965cb13afd242cced1d44088a53e28e827fe3c12727714e73b1c",
+    "authFile": "auth-scope-diagnostic.public.json",
+    "authFileSha256": "e0399ff110d9c0952dfe3f5694e21137cbd89ba7ac5119fa9210e1cd69c123cb"
+  },
+  "secretAvailability": {
+    "R3_CTRADER_CLIENT_ID": "AVAILABLE_IN_PROTECTED_JOB",
+    "R3_CTRADER_CLIENT_SECRET": "AVAILABLE_IN_PROTECTED_JOB",
+    "R3_CTRADER_ACCESS_TOKEN": "AVAILABLE_IN_PROTECTED_JOB",
+    "R3_CTRADER_REFRESH_TOKEN": "AVAILABLE_IN_PROTECTED_JOB",
+    "allFourAvailable": true,
+    "valuesLengthsPrefixesOrSecretFingerprintsDisclosed": false,
+    "credentialValidityInferredFromPresence": false
+  },
+  "authentication": {
+    "category": "AUTH_SCOPE_INCOMPATIBLE_OR_MISSING",
+    "stage": "access_token_scope",
+    "applicationAuthenticationVerified": true,
+    "tokenAccountListResponseReceived": true,
+    "explicitSCOPE_VIEWVerified": false,
+    "differentScopeVsAbsentScopeNotDistinguished": true,
+    "originalLiveAccountCryptographicallyBound": false,
+    "originalAccountAuthenticationVerified": false,
+    "authenticationRequestsSent": 2,
+    "brokerMarketHistoryContractOrQuoteRequests": 0,
+    "exactAccountOrPrivateIdentifierDisclosed": false,
+    "rawBrokerPayloadOrErrorCodeDisclosed": false
+  },
+  "boundary": {
+    "refreshTokenConsumed": false,
+    "refreshTokenValidityTested": false,
+    "tokenRotationPerformed": false,
+    "secureDurablePairWritebackAvailableThroughConnectedGitHubTools": false,
+    "legacyMisnamedFingerprintSecretUsed": false,
+    "originalAccountBindingChanged": false,
+    "BCF1Status": "SOURCE_ONLY_AUTH_BLOCKED_NO_RESULTS",
+    "BCF1RecoveryTriggered": false,
+    "newBCF1SourceOrBIDASKCollected": false,
+    "economicPredictorOrClosedStudyRerun": false,
+    "newNetEur": null,
+    "nativeCSharpFundedRoundTrips": 0,
+    "HARD21Certified": false,
+    "drawdown30Certified": false,
+    "independentConfirmation": false,
+    "liveOrDemoOrders": 0,
+    "cTraderCloudActivated": false
+  },
+  "conclusion": "Four corrected OAuth environment names available; original application auth accepted; successful token-account-list response did not explicitly attest SCOPE_VIEW. Stop before original-account auth and BCF1. This does not prove expiration or which alternate/absent scope occurred.",
+  "remediationBoundary": "Official cTrader original-application authorization must yield view-only OAuth scope=accounts for the original Pepperstone LIVE account. No further identical auth probe or BCF1 source work on the unchanged access-token state; no token refresh without secure durable pair writeback."
+}
