@@ -1306,7 +1306,7 @@
     },
     {
       "id": "XUA1",
-      "status": "PREDECLARED_UNSCORED",
+      "status": "CLOSED_EXACT_XUA1_SIX_NONLEGACY_H1_FOUR_FAMILIES_NO_SELECTION_PROMOTION",
       "authority": "docs/OWNER_SPEC.md OWNER v2.0 EUR300, 2026-11-08 universe extension",
       "protocolFile": "research/xua1_protocol.json",
       "classCount": 4,
@@ -1337,7 +1337,28 @@
       "qualification": false,
       "cloudActivated": false,
       "ordersSubmitted": 0,
-      "closedStudiesRerun": 0
+      "closedStudiesRerun": 0,
+      "sourceResearchRunId": 42421515437,
+      "sourceResearchHeadSha": "a1af1102b79827cbd9320a7723d76593790c7901",
+      "sourceOriginalPublicArtifactId": 13593647547,
+      "sourceOriginalPublicSha256": "16da046cac6923c6ac284324d3060a4a15be790e71258d5bf6a2d09107359f7a",
+      "sourceOriginalProtocolSha256": "5ca62675e0cc9d5a60e0e6a6f95d3f93a414fdd7af1522b9676e3b48a40f8335",
+      "receipt": "docs/XUA1_AUTHENTIC_RESULT_20261108.json",
+      "nativeOriginalActualFeatureParityCases": 960,
+      "nativeOriginalActualSignParityExact": true,
+      "costAndCurrentMarginEligibleSymbols": 6,
+      "developmentF2ScreenedFamilies": 4,
+      "selectionOutcomeViewedFamilyIds": [
+        "ENERGY_NEWS_IMPULSE_PERSISTENCE_4H"
+      ],
+      "selectionOutcomeNeverViewedFamilyIds": [
+        "CRYPTO_PANIC_REBOUND_6H",
+        "ASIAN_INDEX_RISK_SYNCHRONY_3H",
+        "GBPJPY_REJECTION_WICK_2H"
+      ],
+      "auditWeeksScored": 0,
+      "economicCandidateAdmitted": false,
+      "exactClosedNoRetune": true
     }
   ],
   "schema": "mxm-project-data-exposure-v1",
@@ -2015,5 +2036,58 @@
     "noOrders": true,
     "noCloud": true,
     "durableResultFile": "docs/MFA1_AUTHENTIC_RESULT_20261107.json"
+  },
+  "xua1AuthenticExpandedUniverseResult": {
+    "id": "XUA1_20261108",
+    "sourceRun": 42421515437,
+    "originalPublicArtifactId": 13593647547,
+    "originalPublicJsonSha256": "16da046cac6923c6ac284324d3060a4a15be790e71258d5bf6a2d09107359f7a",
+    "lockedProtocolSha256": "5ca62675e0cc9d5a60e0e6a6f95d3f93a414fdd7af1522b9676e3b48a40f8335",
+    "receipt": "docs/XUA1_AUTHENTIC_RESULT_20261108.json",
+    "newNonLegacyAssetSymbols": [
+      "SpotCrude",
+      "SpotBrent",
+      "GBPJPY",
+      "ETHUSD",
+      "HK50",
+      "JPN225-F"
+    ],
+    "originalAuthenticH1Closes": 36341,
+    "originalAuthenticatedPublicSourceRunIds": [
+      41948500095,
+      41971150620
+    ],
+    "originalRawSourceRequests": [
+      319,
+      531
+    ],
+    "newBrokerRequests": 0,
+    "validOriginalAsOfPythonCSharpParityCases": 960,
+    "familyCount": 4,
+    "BonferroniOneSidedComparisons": 8,
+    "familyWithExposedSelectionScoreOnly": [
+      "ENERGY_NEWS_IMPULSE_PERSISTENCE_4H"
+    ],
+    "familyNotScoredOnSelection": [
+      "CRYPTO_PANIC_REBOUND_6H",
+      "ASIAN_INDEX_RISK_SYNCHRONY_3H",
+      "GBPJPY_REJECTION_WICK_2H"
+    ],
+    "frozenAuditNeverScored": true,
+    "economicQualifiedCount": 0,
+    "nativeFundedClosedTrips": 0,
+    "brokerFundedNetEur": null,
+    "hard21": false,
+    "globalContinuousFloatingDrawdown30Certified": false,
+    "independentConfirmation": false,
+    "liveDemoOrders": 0,
+    "cloudActivated": false,
+    "closedOriginalERP1MBF1PredictorsReplayed": false,
+    "technicalPreScoreFailureRun": 42420879815,
+    "technicalRecoveryPRs": [
+      137,
+      138
+    ],
+    "status": "CLOSED_EXACT_NO_ECONOMIC_PROMOTION"
   }
 }
