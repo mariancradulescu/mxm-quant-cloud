@@ -1245,6 +1245,41 @@
       "exactClosedNoRetuning": true,
       "costEligibleSymbols": 12,
       "originalSourceNewBrokerRequests": 0
+    },
+    {
+      "id": "MFA1",
+      "status": "PREDECLARED_UNSCORED",
+      "authority": "docs/OWNER_SPEC.md OWNER v2.0",
+      "protocolFile": "research/mfa1_protocol.json",
+      "originalPepperstoneRuns": [
+        41724643418,
+        41735441128
+      ],
+      "originalM5Bars": 836087,
+      "originalCostContexts": 166,
+      "all52SourceWeeksGloballyExposed": true,
+      "independent": false,
+      "sixCoordinatedHypotheses": [
+        "SQUEEZE_RELEASE_30",
+        "H4_M30_PULLBACK_120",
+        "TICK_CLIMAX_FADE_15",
+        "REOPEN_GAP_FADE_60",
+        "INDEX_RELATIVE_DISPERSION_90",
+        "ASOF_FOUR_WEEK_FAMILY_ROTATION"
+      ],
+      "comparisonCount": 12,
+      "unscoredAuditWeeks": 13,
+      "pythonNativeCSharpParityRequired": true,
+      "cloudObservationOnly": true,
+      "oneCapitalEur": 300,
+      "brokerFundedNetEur": null,
+      "nativeFundedRoundTrips": 0,
+      "hard21Proven": false,
+      "globalFloatingDrawdown30Certified": false,
+      "qualification": false,
+      "liveOrDemoOrders": 0,
+      "cloudActivated": false,
+      "closedStudyReruns": 0
     }
   ],
   "schema": "mxm-project-data-exposure-v1",
