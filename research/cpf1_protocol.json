@@ -1,0 +1,138 @@
+{
+  "schema": "MXM_CPF1_CLOUD_NATIVE_THREE_FAMILY_LOCKED_PROTOCOL_V1",
+  "id": "CPF1",
+  "status": "PREDECLARED_UNSCORED",
+  "locked": true,
+  "authority": "docs/OWNER_SPEC.md OWNER v2.0 2026-11-07",
+  "purpose": "One bounded joint economic comparison of three mechanistically distinct and Cloud-native single-symbol H1 OHLCV families; neither an indicator parameter grid nor reinterpretation of any closed prior exact configuration.",
+  "source": {
+    "originalAuthenticatedSealedRuns": [
+      41724643418,
+      41735441128
+    ],
+    "originalManifest": "research/hrc1_protocol.json",
+    "originalAuthenticatedM5BarCount": 836087,
+    "originalAuthenticQuoteCostContexts": 166,
+    "sourceSymbols": [
+      "EURUSD",
+      "GBPUSD",
+      "USDJPY",
+      "AUDUSD",
+      "USDCAD",
+      "XAUUSD",
+      "US500",
+      "NAS100",
+      "GER40",
+      "UK100",
+      "AUS200",
+      "JPN225"
+    ],
+    "originalLiveAccountCryptographicallyBound": true,
+    "original52WeeksGloballyExposed": true,
+    "noNewBrokerRequests": true,
+    "newNov2Nov6H1ReservedNoDecryption": true,
+    "originalQuoteCost": "existing research.multiscale_conditional_research.extract_costs and integrated_predictive_funded.cost_context; observed spreads, commission, FX conversion, current minimum volumes/margins; modeled slippage not broker fills"
+  },
+  "clock": {
+    "start": 1762128000000,
+    "developmentEnd": 1777852800000,
+    "selectionEnd": 1785715200000,
+    "end": 1793577600000,
+    "developmentWeeks": 26,
+    "selectionWeeks": 13,
+    "exposedAuditWeeksUnscored": 13,
+    "utcWeekdays": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "utcHours": [
+      8,
+      12,
+      16
+    ],
+    "signal": "ONE_HOUR_CLOSED_H1_BAR_ONLY; every H1 reconstructed from exact 12 complete contiguous original M5 OHLCV bars; no weekend/session imputation; past 20 complete contiguous H1 required.",
+    "sourceEntry": "at t+5m next exact completed M5 close, not market fill",
+    "holdMinutes": 60,
+    "sourceExit": "exact completed M5 close at t+65m, all 13 holding M5 closes required, no boundary-cross phase",
+    "noOvernightExitAssumed": false,
+    "unobservedPrice": "unknown; no forward fill, no proxy invent"
+  },
+  "families": [
+    {
+      "id": "DONCHIAN_TREND_VOLUME",
+      "family": "Trend/momentum with observed tick activity",
+      "premise": "A new 20h high/low close on actual tick-activity expansion reflects persistent directional order flow; the next 60 minutes may follow the completed breakout.",
+      "signal": "If current closed H1 close > highest prior 20 complete H1 highs AND current H1 tick volume >=1.2x median prior 20 hourly tick volumes, buy; if close < minimum prior 20 lows and same activity criterion, sell; otherwise abstain.",
+      "code": "D",
+      "cloudNative": "cTrader Algo Bars HighPrices/LowPrices/TickVolumes, Donchian-style max/min, Math median; no proprietary indicator dependency"
+    },
+    {
+      "id": "BOLLINGER_OVEREXTENSION_REVERSION",
+      "family": "Mean reversion / oscillator",
+      "premise": "An H1 closing price outside the prior 20 completed hour-closes' two-sigma band may reflect transient inventory dislocation that reverses over the next 60 minutes.",
+      "signal": "Compute arithmetic mean and population sigma of the prior 20 complete H1 closes, excluding the current H1. If z=(currentClose-mean)/sigma>=2, SELL; if z<=-2, BUY; if sigma<=0, abstain.",
+      "code": "B",
+      "cloudNative": "cTrader Algo BollingerBands or equivalent custom C# mean and population-standard-deviation on closed Bars"
+    },
+    {
+      "id": "H1_FALSE_BREAK_LIQUIDITY_SWEEP",
+      "family": "Price action and liquidity sweep",
+      "premise": "A completed H1 that pierces the previous 12-hour extreme and closes back inside the old range, with a dominant rejection wick, can reverse as stop liquidity is absorbed.",
+      "signal": "After 12 previous complete contiguous H1 candles, if current high>prior12 maxHigh, current close<prior12 maxHigh, current low>=prior12 minLow, upper wick>=0.45 of nonzero full H1 range: short. Mirror at the lower low for long. If both sides/ambiguous, abstain.",
+      "code": "S",
+      "cloudNative": "cTrader Algo Bars OHLC; pure C# math, no future fractal confirmation or chart draw required"
+    }
+  ],
+  "eligibility": {
+    "universePrespecifiedSourceSymbolsOnly": true,
+    "minQuoteCostContextsEach": 3,
+    "minOriginalDevelopmentH1BarsEach": 100,
+    "currentMinimumVolumeMarginBelowEur300": true,
+    "currentMinimumNotionalPositive": true,
+    "currentModeledAdverseRoundTripCostPositive": true,
+    "minimumEligibleSourceSymbolsForFamilyScreen": 3,
+    "unknownMarginCostOrBrokerTariffNeverZero": true,
+    "outcomeBlindFixedBeforeScoring": true,
+    "notAClaimThat300EurActualAccountBalanceIsVerified": true
+  },
+  "benchmarks": {
+    "primary": "same target, same decision clock and holding; sign of completed prior 4h H1 close change; pays same instrument modeled adverse roundtrip cost for nonflat side",
+    "secondary": "EUR300 cash-flat, zero fees zero trades",
+    "singleAssetCost": "central, adverse and stress per original target from preexisting authenticated current-term quote contexts, using exactly integrated_predictive_funded.cost_context",
+    "grossPriceBasis": "target M5 source close-to-close, not actual bid/ask fill"
+  },
+  "statistics": {
+    "wholeProgramFamilies": 3,
+    "wholeProgramOneSidedComparisons": 6,
+    "alphaFamily": 0.05,
+    "f2": "existing f2_preflight.prospective_economic_futility at 26 development calendar week means including empty weeks; 3-lag HAC, Bonferroni six comparisons, no selection outcomes until family F2 passes",
+    "selection": "13 calendar-week mean adverse net vs flat and incremental adverse net vs same-clock 4h momentum, one-sided HAC(3) Bonferroni six-comparison lower confidence bounds; both >0 required",
+    "risk": "No hyperparameter choice, symbol winner choice or threshold relaxation after observed returns; all eligible instrument cases pooled equally within active week; no post-hoc salvage",
+    "close": "If authentic source/contract/cost gate fails, or development F2 fails, or selection paired net lower not positive, close exact family without retuning, inversion, selection rescore or audit score",
+    "exposedHistoricalSelectionNotIndependent": true
+  },
+  "finance": {
+    "prospectiveInitialCapitalEur": 300,
+    "singleNativeCSharpFundedLedger": true,
+    "nativeOrchestrator": "OpportunityOrchestrator",
+    "nativeLedger": "NativeFundedLedger",
+    "fullLiveBrokerFillsObserved": false,
+    "nextStepOnlyForPositiveSelectionAdverseNetAndBenchmark": true,
+    "maxFloatingDrawdownFraction": 0.3,
+    "hard21SystemAggregateFundedClosedPerEligibleWeek": 21,
+    "signalsNotFundedRoundTrips": true,
+    "noIndependentConfirmationFromThese52Weeks": true
+  },
+  "security": {
+    "pepperstoneOriginalLiveOnly": true,
+    "prohibitedLiveDemoOrders": true,
+    "prohibitedCloudActivation": true,
+    "noTokenRefresh": true,
+    "noClosedStudyRetuning": true,
+    "noMCPOrExternalRuntimeDependency": true,
+    "noHttpOrPersistentLocalStorageRequired": true
+  }
+}
