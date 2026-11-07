@@ -14,6 +14,8 @@ from pathlib import Path
 from .collect import HISTORIC_ACCOUNT_FINGERPRINT_COMMITMENT, normalize_binding
 
 NAME="R3_CTRADER_ACCOUNT_FINGERPRINT_SHA256"
+# Intentionally not a collector/authentication environment variable.
+AUDIT_ONLY_ENV_NAME="MXM_SUSPECT_FINGERPRINT_AUDIT_ONLY"
 RESULT_MATCH="MATCHES_ORIGINAL_HISTORIC_ACCOUNT_FINGERPRINT"
 RESULT_UNKNOWN="DOES_NOT_MATCH_ORIGINAL_FINGERPRINT_VALUE_TYPE_UNKNOWN"
 RESULT_UNAVAILABLE="NOT_AVAILABLE_OR_EMPTY_IN_PROTECTED_ENVIRONMENT"
@@ -35,7 +37,7 @@ def compare_secret_to_original(secret: str | None, *,
     return RESULT_UNKNOWN
 
 def sanitized_receipt(environ):
-    code=compare_secret_to_original(environ.get(NAME))
+    code=compare_secret_to_original(environ.get(AUDIT_ONLY_ENV_NAME))
     return {
         "schema":SCHEMA,
         "environment":"mxm-r3-pepperstone-v1",
