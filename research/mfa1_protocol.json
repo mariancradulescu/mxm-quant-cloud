@@ -45,7 +45,8 @@
     "sourceTimeM5Milliseconds": 300000,
     "allCausalFeaturesOnlyFromCompletedM5": true,
     "sourceEntryDelayMinutes": 5,
-    "noMissingPriceImputation": true
+    "noMissingPriceImputation": true,
+    "noCrossUTCDateForAnyHolding": "Skip prospective source opportunities whose delayed entry and completed exit cross UTC calendar date; overnight funding and rollover not proven by historical fills."
   },
   "families": [
     {
@@ -151,12 +152,12 @@
     "nativeRuntime": "MxmCloud observation only; no new trading calls",
     "existingOpportunityOrchestratorAuthority": true,
     "existingNativeFundedLedgerAuthority": true,
-    "noFundingWithoutPositiveSelectionAndParitalParity": true,
     "oneCapitalEUR300": true,
     "maximumGlobalFloatingDrawdown": 0.3,
     "hard21SystemFundedClosedPerEligibleWeek": 21,
     "noLiveOrDemoOrders": true,
     "noCloudActivation": true,
-    "noTokenRefresh": true
+    "noTokenRefresh": true,
+    "noFundingWithoutPositiveSelectionAndNativeParity": true
   }
 }
