@@ -1,0 +1,406 @@
+{
+  "schema": "MXM_MFA1_DURABLE_GENUINE_MULTIFAMILY_ADAPTIVE_NATIVE_RECEPTION_20261107_V1",
+  "authority": "docs/OWNER_SPEC.md OWNER v2.0 EUR300",
+  "provenance": {
+    "originalMainRunId": 42410064919,
+    "originalMainHeadSha": "4c1a6686c46356abc1cacff9b9dfcfdd5dd206b7",
+    "protectedEconomicJobId": 128516499370,
+    "originalPublicArtifactId": 13589436204,
+    "originalPublicArtifactName": "mfa1-coordinated-original-authentic-native-parity-and-economics-public-only",
+    "originalPublicJsonName": "mfa1-authentic-public.json",
+    "originalPublicJsonSha256": "366ce1e8f20cfebfbad2e61a23892cf8446554c33ec7c6a142769a4824e2506b",
+    "originalLockedProtocol": "research/mfa1_protocol.json",
+    "originalLockedProtocolSha256": "d48af787e86535a8bebeff14250732f0b2a372aaff528038995a68494a59ed4e",
+    "originalEncryptedPepperstoneSourceRuns": [
+      41724643418,
+      41735441128
+    ],
+    "originalM5Bars": 836087,
+    "originalCurrentTermBidAskCostContexts": 166,
+    "noNewBrokerRequests": true,
+    "all52SourceWeeksGloballyExposed": true
+  },
+  "method": {
+    "oneCoordinatedProgramSixHypotheses": true,
+    "fiveNativeMechanismsAndOneAsOfAdaptiveFamily": true,
+    "nativeCloudCSharpFeaturesCompiled": true,
+    "pythonCSharpOriginalMarketSignParity": {
+      "actualOriginalMarketSource": true,
+      "cTraderCloudBrokerOrderCalls": 0,
+      "cases": 864,
+      "csharpLibrary": "src/Mxm.Core/MultiFamilyNativeFeatures.cs",
+      "exactSignAgreement": true,
+      "featureComparisonCount": 4320,
+      "nativeReplay": "src/Mxm.Replay --native-mfa1-feature-parity",
+      "observedNonzeroByMechanism": {
+        "IndexDispersion": 66,
+        "Pullback": 88,
+        "ReopenGap": 61,
+        "Squeeze": 113,
+        "VolumeClimax": 60
+      }
+    },
+    "numberOfPredeclaredBonferroniOneSidedTests": 12,
+    "chronologicalDevelopmentWeeks": 26,
+    "chronologicalSelectionWeeks": 13,
+    "historicallyExposedUnscoredAuditWeeks": 13,
+    "allHoursEligibleAsSourceAllows": true,
+    "variableHoldingMinutes": [
+      15,
+      30,
+      60,
+      90,
+      120
+    ],
+    "tradeEntryM5CloseProxyNotBrokerFill": true,
+    "currentTermCostsCentralAdverseStressModeledNotHistoricalFills": true,
+    "matchedBenchmark": "same-symbol same-clock prior completed H1 momentum where available, cash flat for actual market reopen",
+    "adaptive": "trailing 4 prior FULL calendar week outcomes only; choose one family for next week if at least 3 source observations and positive adverse net",
+    "noOvernightUnpricedSwapAssumption": true,
+    "allInstrumentCostMarginEligible": [
+      "AUDUSD",
+      "AUS200",
+      "EURUSD",
+      "GBPUSD",
+      "GER40",
+      "JPN225",
+      "NAS100",
+      "UK100",
+      "US500",
+      "USDCAD",
+      "USDJPY",
+      "XAUUSD"
+    ]
+  },
+  "results": {
+    "adaptive": {
+      "development": {
+        "activeCalendarWeeks": 2,
+        "activeTargetSymbols": 10,
+        "equalCalendarWeekMeanBps": {
+          "adverseNetBps": -0.31763588642435603,
+          "centralNetBps": -0.1939575140275573,
+          "grossBps": -0.03330994269238716,
+          "incrementalVersusMatchedBenchmarkAdverseBps": -0.31763588642435603,
+          "stressNetBps": -0.5064717610980098
+        },
+        "signalCount": 27,
+        "signalWeightedMeanBps": {
+          "adverseNetBps": -4.896230175181248,
+          "centralNetBps": -2.9446075392350965,
+          "grossBps": -0.6083456735419586,
+          "incrementalVersusMatchedBenchmarkAdverseBps": -4.896230175181248,
+          "stressNetBps": -7.79425809346528
+        }
+      },
+      "developmentF2": {
+        "developmentWeeks": 26,
+        "economicallyFutile": null,
+        "reasons": [
+          "MISSING_COST_OR_WEEKLY_DEPENDENCE_EVIDENCE"
+        ],
+        "returnOutcomesIndependent": false,
+        "scoreSelectionAllowed": false,
+        "status": "NOT_INFORMATIVE_NO_ECONOMIC_PROMOTION"
+      },
+      "selection": null,
+      "selectionWeekPolicy": null,
+      "verdict": "EXACT_F2_NO_SELECTION"
+    },
+    "adaptiveQualified": false,
+    "eligibleSymbols": [
+      "AUDUSD",
+      "AUS200",
+      "EURUSD",
+      "GBPUSD",
+      "GER40",
+      "JPN225",
+      "NAS100",
+      "UK100",
+      "US500",
+      "USDCAD",
+      "USDJPY",
+      "XAUUSD"
+    ],
+    "familyVerdicts": {
+      "H4_M30_PULLBACK_120": {
+        "development": {
+          "activeCalendarWeeks": 26,
+          "activeTargetSymbols": 12,
+          "equalCalendarWeekMeanBps": {
+            "adverseNetBps": -4.0904001149387295,
+            "centralNetBps": -2.245274307104767,
+            "grossBps": 0.10834596542611497,
+            "incrementalVersusMatchedBenchmarkAdverseBps": 0.23492957657412897,
+            "stressNetBps": -6.948826953883784
+          },
+          "signalCount": 4285,
+          "signalWeightedMeanBps": {
+            "adverseNetBps": -3.8776758462463037,
+            "centralNetBps": -2.1018214639694284,
+            "grossBps": 0.17690349635183839,
+            "incrementalVersusMatchedBenchmarkAdverseBps": 0.42474155857500856,
+            "stressNetBps": -6.563888485071151
+          }
+        },
+        "f2": {
+          "activeDevelopmentWeeks": 26,
+          "conditionalAdverseNetMeanBps": -4.0904001149387295,
+          "developmentWeeks": 26,
+          "economicallyFutile": true,
+          "familyComparisons": 12,
+          "financeCertified": false,
+          "hacLagsFixedExAnte": 3,
+          "hard21Certified": false,
+          "incrementalMatchedBenchmarkMeanBps": 0.23492957657412897,
+          "independenceCertified": false,
+          "scoreSelectionAllowed": false,
+          "standardErrorAdverseHacConservativeBps": 0.8237226178062665,
+          "standardErrorIncrementalHacConservativeBps": 1.2766428529159493,
+          "status": "FUTILE_STOP_BEFORE_SELECTION",
+          "statusIsNotProofOfPositiveEdge": true,
+          "upperAdverseNetBps": -1.917207927184037,
+          "upperIncrementalBps": 3.603041868911742
+        },
+        "horizon": 120,
+        "selection": null,
+        "verdict": "EXACT_F2_NO_SELECTION"
+      },
+      "INDEX_RELATIVE_DISPERSION_90": {
+        "development": {
+          "activeCalendarWeeks": 26,
+          "activeTargetSymbols": 2,
+          "equalCalendarWeekMeanBps": {
+            "adverseNetBps": -3.7431022179817246,
+            "centralNetBps": -2.0808591266838,
+            "grossBps": -0.054337713655823586,
+            "incrementalVersusMatchedBenchmarkAdverseBps": 0.7235733900589311,
+            "stressNetBps": -6.2725560606431605
+          },
+          "signalCount": 2090,
+          "signalWeightedMeanBps": {
+            "adverseNetBps": -3.7369264828772715,
+            "centralNetBps": -2.074683391579347,
+            "grossBps": -0.04816197855137034,
+            "incrementalVersusMatchedBenchmarkAdverseBps": 0.32923935145151384,
+            "stressNetBps": -6.266380325538707
+          }
+        },
+        "f2": {
+          "activeDevelopmentWeeks": 26,
+          "conditionalAdverseNetMeanBps": -3.7431022179817246,
+          "developmentWeeks": 26,
+          "economicallyFutile": true,
+          "familyComparisons": 12,
+          "financeCertified": false,
+          "hacLagsFixedExAnte": 3,
+          "hard21Certified": false,
+          "incrementalMatchedBenchmarkMeanBps": 0.7235733900589311,
+          "independenceCertified": false,
+          "scoreSelectionAllowed": false,
+          "standardErrorAdverseHacConservativeBps": 0.20942926111503454,
+          "standardErrorIncrementalHacConservativeBps": 1.1186572955231437,
+          "status": "FUTILE_STOP_BEFORE_SELECTION",
+          "statusIsNotProofOfPositiveEdge": true,
+          "upperAdverseNetBps": -3.190573946566123,
+          "upperIncrementalBps": 3.6748791365006963
+        },
+        "horizon": 90,
+        "selection": null,
+        "verdict": "EXACT_F2_NO_SELECTION"
+      },
+      "REOPEN_GAP_FADE_60": {
+        "development": {
+          "activeCalendarWeeks": 26,
+          "activeTargetSymbols": 12,
+          "equalCalendarWeekMeanBps": {
+            "adverseNetBps": -1.7267602849928685,
+            "centralNetBps": -0.08256822514226161,
+            "grossBps": 2.0351643032308258,
+            "incrementalVersusMatchedBenchmarkAdverseBps": -1.7267602849928685,
+            "stressNetBps": -4.284200014186227
+          },
+          "signalCount": 305,
+          "signalWeightedMeanBps": {
+            "adverseNetBps": -4.48121975964432,
+            "centralNetBps": -2.5208377860489946,
+            "grossBps": -0.10111100801752294,
+            "incrementalVersusMatchedBenchmarkAdverseBps": -4.48121975964432,
+            "stressNetBps": -7.507205714246241
+          }
+        },
+        "f2": {
+          "activeDevelopmentWeeks": 26,
+          "conditionalAdverseNetMeanBps": -1.7267602849928685,
+          "developmentWeeks": 26,
+          "economicallyFutile": false,
+          "familyComparisons": 12,
+          "financeCertified": false,
+          "hacLagsFixedExAnte": 3,
+          "hard21Certified": false,
+          "incrementalMatchedBenchmarkMeanBps": -1.7267602849928685,
+          "independenceCertified": false,
+          "scoreSelectionAllowed": true,
+          "standardErrorAdverseHacConservativeBps": 1.5489794598245068,
+          "standardErrorIncrementalHacConservativeBps": 1.5489794598245068,
+          "status": "UPPER_BOUND_ALLOWS_PLAUSIBILITY_NOT_EVIDENCE",
+          "statusIsNotProofOfPositiveEdge": true,
+          "upperAdverseNetBps": 2.3598460413552256,
+          "upperIncrementalBps": 2.3598460413552256
+        },
+        "horizon": 60,
+        "selection": {
+          "activeCalendarWeeks": 13,
+          "activeTargetSymbols": 12,
+          "bonferroniHac3AdverseNetLowerBps": -10.950417183303696,
+          "bonferroniHac3IncrementalVsBenchmarkLowerBps": -10.950417183303696,
+          "equalCalendarWeekMeanBps": {
+            "adverseNetBps": -5.302600077963387,
+            "centralNetBps": -3.1068519895941793,
+            "grossBps": -0.36869125119727414,
+            "incrementalVersusMatchedBenchmarkAdverseBps": -5.302600077963387,
+            "stressNetBps": -8.70883653994499
+          },
+          "independentlyConfirmed": false,
+          "nativeFundedNetEur": null,
+          "signalCount": 250,
+          "signalWeightedMeanBps": {
+            "adverseNetBps": -4.851000045891622,
+            "centralNetBps": -2.5815504376462144,
+            "grossBps": 0.19508086500816507,
+            "incrementalVersusMatchedBenchmarkAdverseBps": -4.851000045891622,
+            "stressNetBps": -8.415416462214976
+          },
+          "sourceProxyPositiveBoth": false
+        },
+        "verdict": "CLOSED_EXACT_SELECTION_NET_OR_BENCHMARK_UNSUPPORTED"
+      },
+      "SQUEEZE_RELEASE_30": {
+        "development": {
+          "activeCalendarWeeks": 26,
+          "activeTargetSymbols": 12,
+          "equalCalendarWeekMeanBps": {
+            "adverseNetBps": -4.2560085804730985,
+            "centralNetBps": -2.4108827726391358,
+            "grossBps": -0.05726250010825353,
+            "incrementalVersusMatchedBenchmarkAdverseBps": 0.044233150576122315,
+            "stressNetBps": -7.114435419418152
+          },
+          "signalCount": 9245,
+          "signalWeightedMeanBps": {
+            "adverseNetBps": -4.1907300367445375,
+            "centralNetBps": -2.391956530276144,
+            "grossBps": -0.07663494051482765,
+            "incrementalVersusMatchedBenchmarkAdverseBps": 0.00997839107642643,
+            "stressNetBps": -6.942018622773731
+          }
+        },
+        "f2": {
+          "activeDevelopmentWeeks": 26,
+          "conditionalAdverseNetMeanBps": -4.2560085804730985,
+          "developmentWeeks": 26,
+          "economicallyFutile": true,
+          "familyComparisons": 12,
+          "financeCertified": false,
+          "hacLagsFixedExAnte": 3,
+          "hard21Certified": false,
+          "incrementalMatchedBenchmarkMeanBps": 0.044233150576122315,
+          "independenceCertified": false,
+          "scoreSelectionAllowed": false,
+          "standardErrorAdverseHacConservativeBps": 0.22703181088369748,
+          "standardErrorIncrementalHacConservativeBps": 0.1409965908673441,
+          "status": "FUTILE_STOP_BEFORE_SELECTION",
+          "statusIsNotProofOfPositiveEdge": true,
+          "upperAdverseNetBps": -3.6570402540985856,
+          "upperIncrementalBps": 0.4162184319673185
+        },
+        "horizon": 30,
+        "selection": null,
+        "verdict": "EXACT_F2_NO_SELECTION"
+      },
+      "TICK_CLIMAX_FADE_15": {
+        "development": {
+          "activeCalendarWeeks": 26,
+          "activeTargetSymbols": 12,
+          "equalCalendarWeekMeanBps": {
+            "adverseNetBps": -4.923539583713593,
+            "centralNetBps": -3.1803608765894755,
+            "grossBps": -0.8820629772338718,
+            "incrementalVersusMatchedBenchmarkAdverseBps": -1.885976997679261,
+            "stressNetBps": -7.7660260762371305
+          },
+          "signalCount": 796,
+          "signalWeightedMeanBps": {
+            "adverseNetBps": -5.593074055946559,
+            "centralNetBps": -3.655128887918007,
+            "grossBps": -1.1152651426492999,
+            "incrementalVersusMatchedBenchmarkAdverseBps": -2.4877103576609763,
+            "stressNetBps": -8.81882096120421
+          }
+        },
+        "f2": {
+          "activeDevelopmentWeeks": 26,
+          "conditionalAdverseNetMeanBps": -4.923539583713593,
+          "developmentWeeks": 26,
+          "economicallyFutile": true,
+          "familyComparisons": 12,
+          "financeCertified": false,
+          "hacLagsFixedExAnte": 3,
+          "hard21Certified": false,
+          "incrementalMatchedBenchmarkMeanBps": -1.885976997679261,
+          "independenceCertified": false,
+          "scoreSelectionAllowed": false,
+          "standardErrorAdverseHacConservativeBps": 0.6271622147571849,
+          "standardErrorIncrementalHacConservativeBps": 1.204389715790782,
+          "status": "FUTILE_STOP_BEFORE_SELECTION",
+          "statusIsNotProofOfPositiveEdge": true,
+          "upperAdverseNetBps": -3.2689243089806617,
+          "upperIncrementalBps": 1.291512930106366
+        },
+        "horizon": 15,
+        "selection": null,
+        "verdict": "EXACT_F2_NO_SELECTION"
+      }
+    },
+    "nativeParity": {
+      "actualOriginalMarketSource": true,
+      "cTraderCloudBrokerOrderCalls": 0,
+      "cases": 864,
+      "csharpLibrary": "src/Mxm.Core/MultiFamilyNativeFeatures.cs",
+      "exactSignAgreement": true,
+      "featureComparisonCount": 4320,
+      "nativeReplay": "src/Mxm.Replay --native-mfa1-feature-parity",
+      "observedNonzeroByMechanism": {
+        "IndexDispersion": 66,
+        "Pullback": 88,
+        "ReopenGap": 61,
+        "Squeeze": 113,
+        "VolumeClimax": 60
+      }
+    },
+    "orders": 0,
+    "qualified": [],
+    "runId": 42410064919,
+    "sourceM5": 836087,
+    "verdict": "COORDINATED_FIVE_FAMILIES_PLUS_ADAPTIVE_NO_NET_QUALIFICATION"
+  },
+  "verdict": {
+    "status": "COORDINATED_FIVE_FAMILIES_PLUS_ADAPTIVE_NO_NET_QUALIFICATION",
+    "adaptiveStatus": "NOT_INFORMATIVE_NO_ECONOMIC_PROMOTION",
+    "qualifiedBaseFamilies": [],
+    "adaptiveQualified": false,
+    "originalMarketFeatureParityExact": true,
+    "closedExactNoRetuneOrInversion": true,
+    "admittedBrokerFundedNetEur": null,
+    "newNativeCSharpFundedRoundTrips": 0,
+    "noFundedContributionOrHard21Certification": true,
+    "maximumFloatingDrawdown30Certified": false,
+    "independentConfirmation": false,
+    "unscoredAuditViewed": false,
+    "closedStudiesRerun": 0,
+    "ordersSubmitted": 0,
+    "cloudActivated": false,
+    "refreshTokenUsed": false,
+    "nativeCbotRemainsObservationOnly": true
+  }
+}
