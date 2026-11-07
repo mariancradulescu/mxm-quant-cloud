@@ -1658,5 +1658,26 @@
       "cloudActivated": false,
       "ordersSubmitted": 0
     }
+  ],
+  "originalFingerprintSecretAudit": [
+    {
+      "id": "MISNAMED_FINGERPRINT_SECRET_IDENTITY_20261107",
+      "status": "NOT_ORIGINAL_FINGERPRINT_VALUE_TYPE_UNKNOWN_POSSIBLE_REFRESH_NOT_VALIDATED",
+      "sourceRunId": 42347155803,
+      "sourceArtifactId": 13563777822,
+      "publicReceiptSha256": "ed6dfcb1e8d6234fe941b0b1be318d374b6e67412ec0b6c91e749e9eff045892",
+      "durableReceipt": "docs/ORIGINAL_FINGERPRINT_SECRET_AUTHENTIC_RESULT_20261107.json",
+      "matchedHistoricAccountFingerprint": false,
+      "unknownMayBeRefresh": true,
+      "refreshVerifiedValid": false,
+      "secretValuesReadOutsideProtectedJob": false,
+      "secretsChanged": false,
+      "refreshAttempted": false,
+      "ordersSubmitted": 0,
+      "cloudActivated": false,
+      "sourceRequests": 0,
+      "originalAccountBindingChanged": false,
+      "BCF1Resumed": false
+    }
   ]
 }
