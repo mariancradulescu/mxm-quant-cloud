@@ -5,6 +5,7 @@ FundedDecisionCycleChecks.Run(Check);
 ProspectiveIntegratedChecks.Run(Check);
 ResearchScopeContractChecks.Run(Check);
 NativeCausalWarmupChecks.Run(Check);
+NativeMultiFamilyFeatureChecks.Run(Check);
 BrokerFlatReadbackChecks.Run(Check);
 BrokerOpenReadbackChecks.Run(Check);
 ConditionalDiscoveryChecks.Run(Check);
