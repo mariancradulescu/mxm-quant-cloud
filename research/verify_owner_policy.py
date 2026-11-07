@@ -441,6 +441,41 @@ def check():
     assert bcf_recovery['authentication']['cloudActivated'] is False
     assert auth_new['ownerTradingAuthorized'] is False and brec['ordersSubmitted'] == 0
 
+    # Nov 7 FLS1: an actually executed NEW predeclared economic hypothesis,
+    # not a rescore/ablation or a broker-certified EUR NET.
+    fls = next(x for x in r['prospectiveStudies'] if x['id'] == 'FLS1')
+    fls_receipt = json.loads(Path('docs/FLS1_AUTHENTIC_RESULT_20261107.json').read_text())
+    fls_protocol_raw = Path('research/fls1_protocol.json').read_bytes()
+    fls_proto = json.loads(fls_protocol_raw)
+    assert fls_proto['locked'] and fls_proto['status'] == 'PREDECLARED_UNSCORED'
+    assert fls_proto['prospectiveInitialCapitalEur'] == 300
+    assert fls_proto['originalSource']['fullyGloballyExposedWeeks'] == 52
+    assert fls_proto['restrictions']['noLiveDemoOrders'] is True
+    assert fls['status'] == fls_receipt['verdict']['status'] == 'CLOSED_EXACT_DEVELOPMENT_F2_FUTILE_BEFORE_SELECTION'
+    assert fls['originalResultRunId'] == fls_receipt['provenance']['originalMainRunId'] == 42380699704
+    assert fls['originalPublicArtifactId'] == fls_receipt['provenance']['originalPublicArtifactId'] == 13576868959
+    assert fls['originalPublicSha256'] == fls_receipt['provenance']['originalPublicSha256'] == 'e92757d3d068a73c7d9eda44687119f2d4cee218a9f4c6ac958efe1fc635aa77'
+    assert fls_receipt['provenance']['originalLockedProtocolSha256'] == hashlib.sha256(fls_protocol_raw).hexdigest()
+    assert fls_receipt['provenance']['sourceM5BarsAuthenticated'] == 836087
+    assert fls_receipt['provenance']['sourceCurrentTermQuoteCostContextsAuthenticated'] == 166
+    assert fls_receipt['targetCostAndFinance']['sourceQuoteCostSamples'] == 18
+    assert fls_receipt['targetCostAndFinance']['currentMinimumMarginEur'] == 39.96
+    assert fls_receipt['sourceCoverage']['developmentCompleteSourceSignals'] == 90
+    assert fls_receipt['sourceCoverage']['selectionSourceCompleteSignalsButOutcomesUninspected'] == 54
+    assert fls_receipt['developmentSignalMeanBps']['gross'] == -0.4881905457386368
+    assert fls_receipt['developmentSignalMeanBps']['adverseNet'] == -2.9159106051839943
+    assert fls_receipt['existingF2DevelopmentFutility']['upperAdverseNetBps'] == -0.8181108515695379
+    assert fls_receipt['existingF2DevelopmentFutility']['status'] == 'FUTILE_STOP_BEFORE_SELECTION'
+    assert fls_receipt['existingF2DevelopmentFutility']['selectionScoringAllowed'] is False
+    assert fls_receipt['verdict']['selectionOutcomesInspected'] is False
+    assert fls_receipt['verdict']['exposedAuditWeeksScored'] == 0
+    assert fls_receipt['verdict']['brokerFundedNetEur'] is None
+    assert fls_receipt['verdict']['nativeCSharpFundedRoundTrips'] == 0
+    assert fls_receipt['verdict']['ordersSubmitted'] == 0
+    assert fls_receipt['verdict']['cloudActivated'] is False
+    assert fls_receipt['verdict']['refreshTokenConsumed'] is False
+    assert fls['exactClosedNoRetuning'] and fls['closedStudiesRescored'] is False
+
     print('PASS OWNER v2.0 contract, frozen evidence, native funding and no-order boundary; no NET qualification')
 
 
