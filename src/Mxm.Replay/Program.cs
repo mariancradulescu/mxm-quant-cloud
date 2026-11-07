@@ -1,5 +1,18 @@
 using System.Text.Json;
 using System.Security.Cryptography;
+
+// Byte-for-byte causality/parity oracle used only by protected research and CI.
+// The same compiled Mxm.Core is used by the Cloud cBot; no orders or broker IO.
+if (args.Length == 3 && args[2] == "--native-mfa1-feature-parity")
+{
+    try {
+        var cases=JsonSerializer.Deserialize<Mxm.Core.NativeFamilyCase[]>(File.ReadAllBytes(args[0]))!;
+        if(cases==null||cases.Length>6000)return 36;
+        var result=cases.Select(Mxm.Core.MultiFamilyNativeFeatures.Evaluate).ToArray();
+        File.WriteAllText(args[1],JsonSerializer.Serialize(result));
+        return 0;
+    } catch { return 36; }
+}
 if (args.Length == 3 && args[2] == "--native-funded-decision-cycle")
 {
     try {
