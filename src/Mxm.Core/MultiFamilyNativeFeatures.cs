@@ -43,7 +43,10 @@ public static class MultiFamilyNativeFeatures
         if(d is null)return null;
         var arr=new NativeFamilyBar[intervals+1];
         for(int i=0;i<=intervals;i++)
-            if(!d.TryGetValue(t-i*FiveMinutes,out arr[i]!))return null;
+        {
+            if(!d.TryGetValue(t-i*FiveMinutes,out var value))return null;
+            arr[i]=value;
+        }
         return arr; // newest first, completed close at clock.
     }
     public static NativeFamilySigns Evaluate(NativeFamilyCase q)
