@@ -49,22 +49,6 @@ def normalize_binding(value):
     need(re.fullmatch(r"[0-9a-fA-F]{64}", value) is not None, "ACCOUNT_BINDING_INVALID")
     return value.lower()
 
-def read_only_scope_attestation(accounts):
-    """Scope describes server capability, not OWNER's permitted operations.
-
-    Missing is not a VIEW or TRADE attestation. Both recognized scopes may
-    authenticate the original account; transport allowlists remain decisive.
-    Explicit OAuth errors/unrecognized enum values are never accepted.
-    """
-    need(isinstance(accounts, m.ProtoOAGetAccountListByAccessTokenRes),
-         "TOKEN_INVALID_OR_EXPIRED")
-    if not accounts.HasField("permissionScope"):
-        return "NOT_ATTESTED_READ_ONLY_TRANSPORT"
-    need(accounts.permissionScope in (e.SCOPE_VIEW, e.SCOPE_TRADE),
-         "SCOPE_UNRECOGNIZED")
-    return ("VIEW_READ_ONLY_TRANSPORT" if accounts.permissionScope == e.SCOPE_VIEW
-            else "TRADE_CAPABILITY_READ_ONLY_TRANSPORT")
-
 def authenticate(t):
     client = secret("R3_CTRADER_CLIENT_ID")
     client_secret = secret("R3_CTRADER_CLIENT_SECRET")
@@ -75,8 +59,8 @@ def authenticate(t):
     print("APPLICATION_AUTH_VERIFIED", flush=True)
     accounts = t.request(m.ProtoOAGetAccountListByAccessTokenReq(accessToken=token))
     need(isinstance(accounts, m.ProtoOAGetAccountListByAccessTokenRes), "TOKEN_INVALID_OR_EXPIRED")
-    scope = read_only_scope_attestation(accounts)
-    print("ACCESS_TOKEN_SCOPE_" + scope, flush=True)
+    need(accounts.HasField("permissionScope") and accounts.permissionScope == e.SCOPE_VIEW, "SCOPE_NOT_EXPLICIT_VIEW")
+    print("ACCESS_TOKEN_EXPLICIT_VIEW_VERIFIED", flush=True)
     # Authenticate the application/token independently, but never select or
     # authenticate an account until the existing binding is well formed.
     # The old environment fingerprint string is not a source of truth.
