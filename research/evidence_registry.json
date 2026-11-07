@@ -1165,7 +1165,7 @@
     },
     {
       "id": "FLS1",
-      "status": "PREDECLARED_UNSCORED",
+      "status": "CLOSED_EXACT_DEVELOPMENT_F2_FUTILE_BEFORE_SELECTION",
       "authority": "docs/OWNER_SPEC.md OWNER v2.0 EUR300 and Nov7 read-only clarification",
       "protocolFile": "research/fls1_protocol.json",
       "sourceRuns": [
@@ -1185,7 +1185,22 @@
       "ordersSubmitted": 0,
       "cloudActivated": false,
       "closedStudiesRescored": false,
-      "originalAccountCustodyBound": true
+      "originalAccountCustodyBound": true,
+      "originalResultRunId": 42380699704,
+      "originalPublicArtifactId": 13576868959,
+      "originalPublicSha256": "e92757d3d068a73c7d9eda44687119f2d4cee218a9f4c6ac958efe1fc635aa77",
+      "originalProtocolSha256": "1e414ba6c7e81fe08d89ad8a894f6017b2593939ef8315738105cad2a3f4ef51",
+      "resultFile": "docs/FLS1_AUTHENTIC_RESULT_20261107.json",
+      "originalSealedPepperstoneM5Bars": 836087,
+      "originalCurrentTermCostContexts": 166,
+      "developmentCompleteSignals": 90,
+      "sourceCompleteSelectionSignals": 54,
+      "developmentGrossMeanBps": -0.4881905457386368,
+      "developmentCentralNetMeanBps": -1.8034040353733765,
+      "developmentAdverseNetMeanBps": -2.9159106051839943,
+      "developmentConservativeUpperAdverseNetBps": -0.8181108515695379,
+      "developmentFutilityPassed": false,
+      "exactClosedNoRetuning": true
     }
   ],
   "schema": "mxm-project-data-exposure-v1",
