@@ -577,6 +577,70 @@ def check():
     assert '--native-mfa1-feature-parity' in Path('src/Mxm.Replay/Program.cs').read_text()
     assert Path('src/Mxm.Core/MultiFamilyNativeFeatures.cs').is_file()
     
+    # Original six NON-LEGACY asset classes, genuine historical H1/quote source:
+    # first source attempt pre-score technical failure is separately disclosed;
+    # the exact original XUA1 protocol never changed. Never use original
+    # ERP1/MBF1 already-closed predictor, nor score globally exposed audit.
+    xua = next(x for x in r['prospectiveStudies'] if x['id']=='XUA1')
+    xur = json.loads(Path('docs/XUA1_AUTHENTIC_RESULT_20261108.json').read_text())
+    xue = r['xua1AuthenticExpandedUniverseResult']
+    xup_raw = Path('research/xua1_protocol.json').read_bytes()
+    xup = json.loads(xup_raw)
+    xur_proof = xur['provenance']
+    assert xup['id']=='XUA1' and xup['locked'] is True and xup['status']=='PREDECLARED_UNSCORED'
+    assert xup['fundedContinuation']['capitalOneWalletEur']==300
+    assert xup['source']['additionalBrokerRequests']==0
+    assert len(xup['families'])==4 and xup['uncertainty']['comparisonsAcrossProgramme']==8
+    assert xur_proof['lockedProtocolSha256'] == xue['lockedProtocolSha256'] == hashlib.sha256(xup_raw).hexdigest()
+    assert xur_proof['runId'] == xua['sourceResearchRunId'] == xue['sourceRun'] == 42421515437
+    assert xur_proof['originalPublicArtifactId'] == xue['originalPublicArtifactId'] == 13593647547
+    assert xur_proof['originalPublicJsonSha256'] == xue['originalPublicJsonSha256'] == '16da046cac6923c6ac284324d3060a4a15be790e71258d5bf6a2d09107359f7a'
+    assert xur_proof['firstAttemptPreScoreTechnicalFailureRunId']==42420879815
+    assert xur_proof['technicalRecoveryPRs']==[137,138]
+    assert xur_proof['originalSourceRunIds']==[41948500095,41971150620]
+    assert xur_proof['originalSourceBrokerRequests']==[319,531]
+    assert xur['sourceAndCurrentTerms']['totalH1']==36341
+    assert len(xur['sourceAndCurrentTerms']['technicallyEligibleSixMarkets'])==6
+    assert all(c['pairedBidAsk']>=6 and 0<c['currentMinimumMarginEur']<300
+               for c in xur['sourceAndCurrentTerms']['contractAndCostByMarket'].values())
+    assert xur['nativeParity']['realOriginalMarketFrames']==960
+    assert xur['nativeParity']['exactSignAgreement'] is True
+    assert xur['nativeParity']['nativeCloudLibrary']=='Mxm.Core.XuaNativeFeatureSigns'
+    families_xua=xur['originalEvaluatedFamilies']
+    assert len(families_xua)==4
+    energy_xua=families_xua['ENERGY_NEWS_IMPULSE_PERSISTENCE_4H']
+    crypto_xua=families_xua['CRYPTO_PANIC_REBOUND_6H']
+    asian_xua=families_xua['ASIAN_INDEX_RISK_SYNCHRONY_3H']
+    gbpjpy_xua=families_xua['GBPJPY_REJECTION_WICK_2H']
+    assert energy_xua['development']['signalCount']==921
+    assert energy_xua['f2']['status']=='UPPER_BOUND_ALLOWS_PLAUSIBILITY_NOT_EVIDENCE'
+    assert energy_xua['selection']['signalCount']==474
+    assert energy_xua['selection']['perSignalMeanBps']['adverse']==-27.514357705895044
+    assert energy_xua['selection']['adjustedAdverseNetLowerBps']==-51.21300734587574
+    assert energy_xua['selection']['adjustedMatchedBenchmarkIncrementalLowerBps']==-35.377450722418764
+    assert energy_xua['verdict']=='EXACT_SELECTION_REJECTED_ADVERSE_OR_BENCHMARK'
+    assert crypto_xua['development']['signalCount']==579 and crypto_xua['selection'] is None
+    assert crypto_xua['f2']['status']=='NOT_INFORMATIVE_NO_ECONOMIC_PROMOTION'
+    assert asian_xua['development']['signalCount']==478 and asian_xua['selection'] is None
+    assert asian_xua['f2']['status']=='FUTILE_STOP_BEFORE_SELECTION'
+    assert gbpjpy_xua['development']['signalCount']==135 and gbpjpy_xua['selection'] is None
+    assert gbpjpy_xua['f2']['status']=='FUTILE_STOP_BEFORE_SELECTION'
+    assert xur['method']['all52WeeksGloballyExposed'] is True
+    assert xur['verdict']['status']==xua['status']=='CLOSED_EXACT_XUA1_SIX_NONLEGACY_H1_FOUR_FAMILIES_NO_SELECTION_PROMOTION'
+    assert xur['verdict']['conditionalGroupIds']==[]
+    assert xur['verdict']['auditWeeksScored']==0
+    assert xur['verdict']['newNativeFundedClosedRoundTrips']==0
+    assert xur['verdict']['originalBrokerFundedNetEur'] is None
+    assert xur['verdict']['independentChronologicalConfirmation'] is False
+    assert xur['verdict']['ordersSubmitted']==0
+    assert xur['verdict']['cloudActivated'] is False
+    assert xur['verdict']['tokenRefresh'] is False
+    assert xue['closedOriginalERP1MBF1PredictorsReplayed'] is False
+    assert xua['closedStudiesRerun']==0 and xua['exactClosedNoRetune'] is True
+    assert Path('src/Mxm.Core/XuaNativeFeatureSigns.cs').exists()
+    assert '--xua1-native-signs' in Path('src/Mxm.Replay/Program.cs').read_text()
+    assert 'XuaNativeFeatureSigns' in Path('tests/Mxm.Checks/Program.cs').read_text()
+
     print('PASS OWNER v2.0 contract, frozen evidence, native funding and no-order boundary; no NET qualification')
 
 
