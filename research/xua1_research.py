@@ -40,9 +40,9 @@ def need(ok,code):
 
 def sha(content):return hashlib.sha256(content).hexdigest()
 
-def asof_index(h1,t):
+def asof_index(h1,t,timeline=None):
     """Last twenty-five real, completed H1 observations, never forward-filled."""
-    timeline=sorted(h1)
+    if timeline is None:timeline=sorted(h1)
     ix=bisect_right(timeline,t)
     if ix==0 or timeline[ix-1]!=t or ix<25:return None
     return [h1[k] for k in timeline[ix-25:ix]]
@@ -241,12 +241,12 @@ def build_eligible(pr,sources):
         if not why:eligible[symbol]=model
     return bars,eligible,status
 
-def frames(h1,family,symbol,t):
-    current=asof_index(h1[symbol],t)
+def frames(h1,family,symbol,t,timelines):
+    current=asof_index(h1[symbol],t,timelines[symbol])
     peer=None
     if family==NAMES[2]:
         other="JPN225-F" if symbol=="HK50" else "HK50"
-        peer=asof_index(h1[other],t)
+        peer=asof_index(h1[other],t,timelines[other])
     return current,peer
 
 def feature_cases(p,bars,eligible):
@@ -254,6 +254,7 @@ def feature_cases(p,bars,eligible):
     case_events={f:{"development":[],"selection":[]} for f in NAMES}
     counters={f:Counter() for f in NAMES}
     parity=defaultdict(list)
+    timelines={symbol:sorted(row) for symbol,row in h1.items()}
     start=p["chronology"]["startUtcMs"];dev=p["chronology"]["developmentEndUtcMs"]
     select=p["chronology"]["selectionEndUtcMs"]
     for spec in p["families"]:
@@ -262,9 +263,9 @@ def feature_cases(p,bars,eligible):
             if symbol not in eligible:
                 counters[name]["excludedCostOrContract"]+=1
                 continue
-            ts=sorted(t for t in bars[symbol] if start<=t<select)
+            ts=[t for t in timelines[symbol] if start<=t<select]
             for t in ts:
-                h,peer=frames(bars,name,symbol,t)
+                h,peer=frames(bars,name,symbol,t,timelines)
                 if not valid(h):
                     counters[name]["insufficientExactPastObservedH1"]+=1
                     continue
