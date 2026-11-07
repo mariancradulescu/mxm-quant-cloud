@@ -1657,6 +1657,22 @@
       "BCF1Recovered": false,
       "economicScoringPerformed": false,
       "closedModelRescored": false
+    },
+    {
+      "id": "OWNER_SCOPE_ADAPTER_BCF1_20261107",
+      "status": "ORIGINAL_LIVE_ACCOUNT_AUTH_SUCCEEDED_TRADE_CAPABILITY_READ_ONLY_ONLY",
+      "sourceRunId": 42377775316,
+      "sourceJobId": 128419198008,
+      "durableReceipt": "docs/BCF1_AUTHENTIC_RECOVERY_RESULT_20261107.json",
+      "originalApplicationAuthenticated": true,
+      "scopeAttested": "SCOPE_TRADE",
+      "ownerTradingAuthorized": false,
+      "originalAccountCryptographicallyBound": true,
+      "originalAccountAuthenticated": true,
+      "outboundTransportReadOnly": true,
+      "refreshTokenConsumed": false,
+      "ordersSubmitted": 0,
+      "cloudActivated": false
     }
   ],
   "oauthSecretPresenceChecks": [
@@ -1722,6 +1738,43 @@
       "sourceRequests": 0,
       "originalAccountBindingChanged": false,
       "BCF1Resumed": false
+    }
+  ],
+  "bcf1RecoveryReadbacks": [
+    {
+      "id": "BCF1_OWNER_SCOPE_RECOVERY_20261107",
+      "status": "AUTHENTIC_SOURCE_READBACK_COST_PAIR_COVERAGE_FAILED_UNSCORED",
+      "sourceRunId": 42377775316,
+      "sourceArtifactId": 13576153067,
+      "sourceCiphertextSha256": "e145ae896749f1bc4a73b0514db14ecb30d63e7cfb69610535a22d5ce4685c30",
+      "readbackJobId": 128419383584,
+      "originalPublicArtifactId": 13576272572,
+      "originalPublicJsonSha256": "d7d4ea67fffdee99832067fec568b20176d67b3b46df74011554903d7198c85b",
+      "durableReceipt": "docs/BCF1_AUTHENTIC_RECOVERY_RESULT_20261107.json",
+      "originalApplicationAuthenticated": true,
+      "observedTechnicalScope": "SCOPE_TRADE",
+      "ownerPermittedOperations": "READ_ONLY",
+      "originalLiveAccountReauthenticated": true,
+      "authRequestsAndSourceRequestsBound": true,
+      "sourceReadOnlyRequests": 165,
+      "original52WeeksJointH1": 52,
+      "newUnscoredH1ByEachInstrument": 83,
+      "validFreshBidAskByInstrument": {
+        "EUBobl-F": 0,
+        "EUBund-F": 1
+      },
+      "requiredEach": 8,
+      "costSourceGatePassed": false,
+      "reason": "AUTHENTIC_PAIRED_QUOTES_BELOW_MINIMUM",
+      "grossAndNetScored": false,
+      "fundedNetEur": null,
+      "nativeFundedTrips": 0,
+      "independentConfirmation": false,
+      "refreshAttempted": false,
+      "ordersSubmitted": 0,
+      "cloudActivated": false,
+      "oldBCF1FailedAuthRecordUnchanged": true,
+      "noRetuningOrRelaunch": true
     }
   ]
 }
