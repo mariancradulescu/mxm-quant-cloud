@@ -10,7 +10,8 @@ from collections import Counter
 from decimal import Decimal
 from pathlib import Path
 from statistics import median
-from .collect import authenticate, HISTORIC_ACCOUNT_FINGERPRINT_COMMITMENT
+from .collect import HISTORIC_ACCOUNT_FINGERPRINT_COMMITMENT
+from .owner_readonly_auth import authenticate
 from .ctrader_transport import StdlibCTraderTransport
 from .ctrader_proto import OpenApiMessages_pb2 as m, OpenApiModelMessages_pb2 as e
 from .guard import require_read_only_request
