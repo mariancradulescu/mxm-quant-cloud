@@ -1376,7 +1376,7 @@ jobs:
       - name: Compare suspect secret only in memory with pinned original double-SHA256
         run: python -m research.original_fingerprint_secret_identity
         env:
-          R3_CTRADER_ACCOUNT_FINGERPRINT_SHA256: ${{ secrets.R3_CTRADER_ACCOUNT_FINGERPRINT_SHA256 }}
+          MXM_SUSPECT_FINGERPRINT_AUDIT_ONLY: ${{ secrets.R3_CTRADER_ACCOUNT_FINGERPRINT_SHA256 }}
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: original-fingerprint-secret-identity-public-only
