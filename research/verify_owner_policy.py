@@ -357,6 +357,25 @@ def check():
     assert auth_rec['scopeBoundary']['newChronologicallyUnexposedDataCollected'] is False
     assert auth_rec['result']['tradingOrders'] == 0 and auth_rec['result']['cloudActivated'] is False
 
+    # OWNER Nov7: real original-environment fingerprint-name audit; a
+    # mismatch does not certify a valid OAuth refresh or change any identity.
+    fp_secret = json.loads(Path('docs/ORIGINAL_FINGERPRINT_SECRET_AUTHENTIC_RESULT_20261107.json').read_text())
+    fsreg = r['originalFingerprintSecretAudit'][0]
+    assert fp_secret['originalProtectedEvidence']['runId'] == fsreg['sourceRunId'] == 42347155803
+    assert fp_secret['originalProtectedEvidence']['sourceArtifactId'] == fsreg['sourceArtifactId'] == 13563777822
+    assert fp_secret['originalProtectedEvidence']['publicFileSha256'] == fsreg['publicReceiptSha256']
+    assert fp_secret['result']['comparison'] == 'DOES_NOT_MATCH_ORIGINAL_FINGERPRINT_VALUE_TYPE_UNKNOWN'
+    assert fp_secret['result']['unknownValueMayBeRefreshTokenButNotProven'] is True
+    assert fp_secret['result']['refreshTokenValidityConfirmed'] is False
+    assert fp_secret['result']['matchedHistoricalOriginalFingerprint'] is False
+    assert fp_secret['result']['historicalOriginalLiveAccountBindingChanged'] is False
+    assert fp_secret['result']['originalSecretChanged'] is False
+    assert fp_secret['result']['refreshRotatedOrConsumed'] is False
+    assert fp_secret['result']['brokerRequests'] == 0 and fp_secret['result']['ordersSubmitted'] == 0
+    assert fp_secret['reconciliation']['BCF1Status'] == 'SOURCE_ONLY_AUTH_BLOCKED_NO_RESULTS'
+    assert fp_secret['reconciliation']['viewScopeNowProven'] is False
+    assert fp_secret['nextSecureStep']['authenticatedEnvironmentSecretsDualTokenWritebackAvailableThroughConnector'] is False
+
     print('PASS OWNER v2.0 contract, frozen evidence, native funding and no-order boundary; no NET qualification')
 
 
