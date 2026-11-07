@@ -206,8 +206,11 @@ def cost_eligible(protocol,source_bars,contexts,hourly):
     for symbol in protocol["source"]["sourceSymbols"]:
         q=allcost.get(symbol,{})
         why=[]
-        if len(hourly[symbol])<ep["minOriginalDevelopmentH1BarsEach"]:
-            why.append("INSUFFICIENT_COMPLETE_H1")
+        development=protocol["clock"]
+        n_h1_dev=sum(development["start"]<=t<development["developmentEnd"]
+                     for t in hourly[symbol])
+        if n_h1_dev<ep["minOriginalDevelopmentH1BarsEach"]:
+            why.append("INSUFFICIENT_COMPLETE_DEVELOPMENT_H1")
         if q.get("observed",0)<ep["minQuoteCostContextsEach"]:
             why.append("AUTHENTIC_QUOTE_COST_CONTEXTS_INSUFFICIENT")
         if not (isinstance(q.get("minimumMarginEur"),(int,float)) and
