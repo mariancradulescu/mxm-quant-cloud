@@ -84,7 +84,7 @@
       "timeframe": "first completed M5 bar after >=60m and <=72h broker timestamp gap",
       "horizonMinutes": 60,
       "mechanism": "Previous authentic M5 close precedes first reopened bar by 60m..72h and current bar open differs from prior close by >=8bps; forecast short-term retracement opposite the genuine observed open jump. Never synthesize absent bars.",
-      "benchmark": "same-clock prior observed completed H1 target sign when exactly available; benchmark must be observed, otherwise no event",
+      "benchmark": "Predeclared cash-flat at true session reopen. Ordinary same-clock H1 prior momentum is unavailable across this genuine gap and must not be fabricated; zero-risk benchmark earns zero with zero trading fees. Source signal always pays its own modeled full spread/commission/slippage.",
       "targetUniverse": "all 12",
       "cloud": "M5 Bars.OpenTimes and Open/Close; MarketHours may be read but no calendar service"
     },
