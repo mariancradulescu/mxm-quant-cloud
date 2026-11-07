@@ -89,11 +89,11 @@
   "eligibility": {
     "universePrespecifiedSourceSymbolsOnly": true,
     "minQuoteCostContextsEach": 3,
-    "minOriginalDevelopmentH1BarsEach": 100,
+    "minOriginalDevelopmentH1BarsEach": 21,
     "currentMinimumVolumeMarginBelowEur300": true,
     "currentMinimumNotionalPositive": true,
     "currentModeledAdverseRoundTripCostPositive": true,
-    "minimumEligibleSourceSymbolsForFamilyScreen": 3,
+    "minimumEligibleSourceSymbolsForFamilyScreen": 1,
     "unknownMarginCostOrBrokerTariffNeverZero": true,
     "outcomeBlindFixedBeforeScoring": true,
     "notAClaimThat300EurActualAccountBalanceIsVerified": true
