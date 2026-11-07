@@ -1303,6 +1303,41 @@
       "selectionQualifiedFamilies": [],
       "fundedBrokerNetEur": null,
       "exactClosedNoRetuning": true
+    },
+    {
+      "id": "XUA1",
+      "status": "PREDECLARED_UNSCORED",
+      "authority": "docs/OWNER_SPEC.md OWNER v2.0 EUR300, 2026-11-08 universe extension",
+      "protocolFile": "research/xua1_protocol.json",
+      "classCount": 4,
+      "symbolCount": 6,
+      "universe": [
+        "SpotCrude",
+        "SpotBrent",
+        "GBPJPY",
+        "ETHUSD",
+        "HK50",
+        "JPN225-F"
+      ],
+      "sourceOriginalRunIds": [
+        41948500095,
+        41971150620
+      ],
+      "sourceRawOriginalEncryptedOnly": true,
+      "sourceAll52WeeksGloballyExposed": true,
+      "originalClosedERP1MBF1PredictorsNeverInvoked": true,
+      "researchNativeCSharp": "src/Mxm.Core/XuaNativeFeatureSigns.cs",
+      "familyTests": 8,
+      "prospectiveInitialCapitalEur": 300,
+      "brokerNewRequests": 0,
+      "brokerFundedNetEur": null,
+      "actualNativeFundedTrips": 0,
+      "systemHard21Proven": false,
+      "independent": false,
+      "qualification": false,
+      "cloudActivated": false,
+      "ordersSubmitted": 0,
+      "closedStudiesRerun": 0
     }
   ],
   "schema": "mxm-project-data-exposure-v1",

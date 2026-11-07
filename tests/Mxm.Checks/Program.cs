@@ -12,6 +12,28 @@ ConditionalDiscoveryChecks.Run(Check);
 ResearchSpecialistAdmissionChecks.Run(Check);
 PortfolioObservationChecks.Run(Check);
 void Check(bool condition, string name) { if (!condition) throw new Exception(name); passed++; }
+// Non-legacy symbol features must compile inside the same pure Mxm.Core linked
+// into the observation-only Cloud cBot. Synthetic discriminants are NOT P&L.
+var xuaBars=Enumerable.Range(1,25).Select(i=>
+    new XuaH1(i*3600000L,100d,101d,99d,100d,100d)).ToArray();
+xuaBars[^1]=xuaBars[^1] with {Open=101d,High=104d,Low=100d,Close=103d,Volume=150d};
+var xuaEnergy=new XuaFeatureFrame(XuaNativeFeatureSigns.Energy,
+    "SpotCrude",xuaBars,null);
+Check(XuaNativeFeatureSigns.Decide(xuaEnergy)==1,
+    "new nonlegacy source energy C# signal is determinate and causal");
+Check(XuaNativeFeatureSigns.Decide(xuaEnergy with {Symbol="ETHUSD"})==0,
+    "nonlegacy mechanism never applies to an unintended symbol");
+var xuaGap=xuaBars.ToArray();
+xuaGap[^3]=xuaGap[^3] with {CloseAt=xuaGap[^4].CloseAt};
+Check(XuaNativeFeatureSigns.Decide(xuaEnergy with {History=xuaGap})==0,
+    "duplicated H1 clock is not a valid native feature window");
+var xuaCrypto=Enumerable.Range(1,25).Select(i=>
+    new XuaH1(i*3600000L,98d,100d,96d,98d,100d)).ToArray();
+xuaCrypto[0]=xuaCrypto[0] with {Close=100d};
+xuaCrypto[^2]=xuaCrypto[^2] with {Close=97d};
+Check(XuaNativeFeatureSigns.Decide(new XuaFeatureFrame(
+    XuaNativeFeatureSigns.Crypto,"ETHUSD",xuaCrypto,null))==1,
+    "new crypto rebound requires completed 24H shock and opposite last H1");
 // Material identity/recovery contracts: no synthetic profitability claim.
 var localIdentity=new LocalIntentIdentity("intent-A","order-A","position-A","SYNTH",1,2,false,1000);
 var brokerOrder=new BrokerOrderIdentity("order-A","intent-A","position-A","SYNTH",1,2,2,false,"FILLED",2000);
