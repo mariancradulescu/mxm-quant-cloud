@@ -76,6 +76,24 @@ class XuaOriginalSixAssetTests(unittest.TestCase):
         self.assertLess(out["perSignalMeanBps"]["adverse"],out["perSignalMeanBps"]["gross"])
         self.assertEqual(out["weekly"]["gross"][1:],[0.]*25)
 
+    def test_all_six_observed_h1_timelines_construct_without_external_broker(self):
+        p=json.loads(Path("research/xua1_protocol.json").read_text())
+        start=p["chronology"]["startUtcMs"]
+        # 30 authentic-shape H1 candles, three different session gaps and
+        # real symbols; the handler must never reference an undefined source.
+        bars={}
+        for symbol in p["universe"]:
+            bars[symbol]={}
+            for i in range(31):
+                at=start+i*r.H
+                bars[symbol][at]=(at,100.,101.,99.,100.,100)
+        costs={name:{"centralBps":6.,"adverseBps":13.,"stressBps":25.}
+               for name in p["universe"]}
+        events,counters,parity=r.feature_cases(p,bars,costs)
+        self.assertEqual(set(events),set(r.NAMES))
+        self.assertTrue(parity)
+        self.assertEqual(sum(len(v) for v in events[r.NAMES[0]].values()),0)
+
     def test_locked_six_nonlegacy_asset_classes_and_no_executable_orders(self):
         p=json.loads(Path("research/xua1_protocol.json").read_text())
         self.assertEqual(len(p["universe"]),6)
