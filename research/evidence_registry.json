@@ -1248,7 +1248,7 @@
     },
     {
       "id": "MFA1",
-      "status": "PREDECLARED_UNSCORED",
+      "status": "CLOSED_EXACT_COORDINATED_NATIVE_FIVE_FAMILIES_AND_ADAPTIVE_NO_QUALIFICATION",
       "authority": "docs/OWNER_SPEC.md OWNER v2.0",
       "protocolFile": "research/mfa1_protocol.json",
       "originalPepperstoneRuns": [
@@ -1279,7 +1279,30 @@
       "qualification": false,
       "liveOrDemoOrders": 0,
       "cloudActivated": false,
-      "closedStudyReruns": 0
+      "closedStudyReruns": 0,
+      "originalResultMainRunId": 42410064919,
+      "originalPublicArtifactId": 13589436204,
+      "originalPublicArtifactJsonSha256": "366ce1e8f20cfebfbad2e61a23892cf8446554c33ec7c6a142769a4824e2506b",
+      "originalLockedProtocolSha256": "d48af787e86535a8bebeff14250732f0b2a372aaff528038995a68494a59ed4e",
+      "durableOriginalEconomicReceipt": "docs/MFA1_AUTHENTIC_RESULT_20261107.json",
+      "nativePythonCSharpParityActualOriginalCases": 864,
+      "nativePythonCSharpComparisons": 4320,
+      "nativeParityExact": true,
+      "costEligibleInstrumentCount": 12,
+      "developmentOnlyScreened": [
+        "SQUEEZE_RELEASE_30",
+        "H4_M30_PULLBACK_120",
+        "TICK_CLIMAX_FADE_15",
+        "INDEX_RELATIVE_DISPERSION_90",
+        "ASOF_FOUR_WEEK_FAMILY_ROTATION"
+      ],
+      "sourceSelectedAndRejected": [
+        "REOPEN_GAP_FADE_60"
+      ],
+      "sourceAuditOutcomesViewed": false,
+      "selectionQualifiedFamilies": [],
+      "fundedBrokerNetEur": null,
+      "exactClosedNoRetuning": true
     }
   ],
   "schema": "mxm-project-data-exposure-v1",
@@ -1927,5 +1950,35 @@
     "cloudActivated": false,
     "noNewBrokerRequests": true,
     "closedExactNoRetune": true
+  },
+  "mfa1AuthenticResearch": {
+    "id": "MFA1_ORIGINAL_LIVE_PEP_CLOUD_NATIVE_PARITY_ADAPTIVE_20261107",
+    "originalRunId": 42410064919,
+    "originalMainHead": "4c1a6686c46356abc1cacff9b9dfcfdd5dd206b7",
+    "originalArtifactId": 13589436204,
+    "originalPublicJsonSha256": "366ce1e8f20cfebfbad2e61a23892cf8446554c33ec7c6a142769a4824e2506b",
+    "originalProtocolSha256": "d48af787e86535a8bebeff14250732f0b2a372aaff528038995a68494a59ed4e",
+    "originalAuthenticatedM5Bars": 836087,
+    "originalCostQuoteContexts": 166,
+    "sourceReadOnly": true,
+    "originalTrueAccountBound": true,
+    "original52WeeksExposed": true,
+    "originalFeatureParityCases": 864,
+    "originalFeatureParityComparisons": 4320,
+    "exactCSharpPythonParity": true,
+    "sixPrespecifiedMechanisms": true,
+    "BonferroniOneSidedComparisons": 12,
+    "F2DevelopmentFailedOrUninformative": 5,
+    "selectionScoredAndRejected": 1,
+    "adaptiveDevActiveWeeks": 2,
+    "selectionPromotions": 0,
+    "brokerFundedNetEur": null,
+    "roundTripsFinancedInCSharp": 0,
+    "independentConfirmation": false,
+    "hard21Proven": false,
+    "floatingGlobalDD30Certified": false,
+    "noOrders": true,
+    "noCloud": true,
+    "durableResultFile": "docs/MFA1_AUTHENTIC_RESULT_20261107.json"
   }
 }

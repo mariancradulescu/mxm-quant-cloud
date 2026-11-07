@@ -523,6 +523,60 @@ def check():
     assert cpfr['verdict']['refreshTokenConsumed'] is False
     assert cpf['closedStudiesRerun'] == 0 and cpf['protocolRetuned'] is False
 
+    # MFA1 is one authentic six-hypothesis PROGRAM, not five retuned trials.
+    # Assert original sealed source, native parity and economic NON-qualification.
+    mfa = next(x for x in r['prospectiveStudies'] if x['id']=='MFA1')
+    mr = json.loads(Path('docs/MFA1_AUTHENTIC_RESULT_20261107.json').read_text())
+    ma = r['mfa1AuthenticResearch']
+    mp_raw = Path('research/mfa1_protocol.json').read_bytes()
+    mp = json.loads(mp_raw)
+    assert mp['locked'] and mp['status']=='PREDECLARED_UNSCORED'
+    assert mp['economicAdmission']['capitalProspectiveEur']==300
+    assert mp['product']['oneCapitalEUR300'] and mp['product']['noLiveOrDemoOrders']
+    assert mp['statistical']['programmedGroups']==6
+    assert mp['statistical']['totalOneSidedComparisons']==12
+    assert mp['calendar']['globallyExposedAuditWeeksUnscored']==13
+    assert [f['id'] for f in mp['families']]==[
+        'SQUEEZE_RELEASE_30','H4_M30_PULLBACK_120',
+        'TICK_CLIMAX_FADE_15','REOPEN_GAP_FADE_60',
+        'INDEX_RELATIVE_DISPERSION_90']
+    assert mr['provenance']['originalLockedProtocolSha256']==hashlib.sha256(mp_raw).hexdigest()
+    assert mr['provenance']['originalMainRunId']==mfa['originalResultMainRunId']==ma['originalRunId']==42410064919
+    assert mr['provenance']['originalPublicArtifactId']==ma['originalArtifactId']==mfa['originalPublicArtifactId']==13589436204
+    assert mr['provenance']['originalPublicJsonSha256']==ma['originalPublicJsonSha256']==mfa['originalPublicArtifactJsonSha256']=='366ce1e8f20cfebfbad2e61a23892cf8446554c33ec7c6a142769a4824e2506b'
+    assert mr['provenance']['originalM5Bars']==836087
+    assert mr['provenance']['originalCurrentTermBidAskCostContexts']==166
+    assert mr['results']['nativeParity']['exactSignAgreement'] is True
+    assert mr['results']['nativeParity']['cases']==864
+    assert mr['results']['nativeParity']['featureComparisonCount']==4320
+    assert mr['results']['nativeParity']['observedNonzeroByMechanism']=={
+        'IndexDispersion':66,'Pullback':88,'ReopenGap':61,'Squeeze':113,'VolumeClimax':60}
+    assert len(mr['results']['eligibleSymbols'])==12
+    assert len(mr['results']['familyVerdicts'])==5
+    assert len(mr['method']['variableHoldingMinutes'])==5
+    assert mr['results']['familyVerdicts']['REOPEN_GAP_FADE_60']['selection']['signalCount']==250
+    assert mr['results']['familyVerdicts']['REOPEN_GAP_FADE_60']['selection']['bonferroniHac3AdverseNetLowerBps']==-10.950417183303696
+    assert mr['results']['familyVerdicts']['SQUEEZE_RELEASE_30']['selection'] is None
+    assert mr['results']['familyVerdicts']['H4_M30_PULLBACK_120']['selection'] is None
+    assert mr['results']['familyVerdicts']['TICK_CLIMAX_FADE_15']['selection'] is None
+    assert mr['results']['familyVerdicts']['INDEX_RELATIVE_DISPERSION_90']['selection'] is None
+    assert mr['results']['adaptive']['development']['activeCalendarWeeks']==2
+    assert mr['results']['adaptive']['selection'] is None
+    assert mr['results']['adaptive']['developmentF2']['status']=='NOT_INFORMATIVE_NO_ECONOMIC_PROMOTION'
+    assert mr['results']['qualified']==[] and mr['results']['adaptiveQualified'] is False
+    assert mr['verdict']['newNativeCSharpFundedRoundTrips']==0
+    assert mr['verdict']['admittedBrokerFundedNetEur'] is None
+    assert mr['verdict']['independentConfirmation'] is False
+    assert mr['verdict']['unscoredAuditViewed'] is False
+    assert mr['verdict']['ordersSubmitted']==0
+    assert mr['verdict']['cloudActivated'] is False
+    assert mr['verdict']['refreshTokenUsed'] is False
+    assert mfa['status']=='CLOSED_EXACT_COORDINATED_NATIVE_FIVE_FAMILIES_AND_ADAPTIVE_NO_QUALIFICATION'
+    assert mfa['closedStudyReruns']==0 and mfa['exactClosedNoRetuning'] is True
+    assert 'MultiFamilyNativeFeatures.Evaluate(' in Path('src/Mxm.Cloud/MxmCloud.cs').read_text()
+    assert '--native-mfa1-feature-parity' in Path('src/Mxm.Replay/Program.cs').read_text()
+    assert Path('src/Mxm.Core/MultiFamilyNativeFeatures.cs').is_file()
+    
     print('PASS OWNER v2.0 contract, frozen evidence, native funding and no-order boundary; no NET qualification')
 
 
