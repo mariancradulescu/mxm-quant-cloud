@@ -253,7 +253,7 @@ def feature_cases(p,bars,eligible):
     """No future outcome prices are read to precompute signed decisions."""
     case_events={f:{"development":[],"selection":[]} for f in NAMES}
     counters={f:Counter() for f in NAMES}
-    parity=[]
+    parity=defaultdict(list)
     start=p["chronology"]["startUtcMs"];dev=p["chronology"]["developmentEndUtcMs"]
     select=p["chronology"]["selectionEndUtcMs"]
     for spec in p["families"]:
@@ -270,8 +270,9 @@ def feature_cases(p,bars,eligible):
                     continue
                 side=decide(name,symbol,h,peer)
                 # Valid H1 of peer absent -> causal abstention.
-                if len(parity)<3000:
-                    parity.append((name,symbol,t,h,peer,side))
+                # Stratify original-market parity cases by class BEFORE returns.
+                if len(parity[name])<120 or (side and len(parity[name])<240):
+                    parity[name].append((name,symbol,t,h,peer,side))
                 if not side:
                     counters[name]["noAsOfEconomicFeature"]+=1
                     continue
@@ -289,7 +290,7 @@ def feature_cases(p,bars,eligible):
                 case_events[name][phase].append(dict(symbol=symbol,week=(t-start)//W,
                     entry=entry,exit=exit_at,side=side,benchmark=benchmark))
                 counters[name]["completeSourceEvents"]+=1
-    return case_events,counters,parity
+    return case_events,counters,[row for name in NAMES for row in parity[name]]
 
 def parity_real_original(cases):
     """Native actual H1 feature signs must match BEFORE forward label scoring."""
@@ -300,9 +301,8 @@ def parity_real_original(cases):
     for row in cases:
         k=(row[0],row[1])
         if len(selected)>=1024:break
-        if len(selected)<700 or (row[5] and k not in seen):
-            selected.append(row)
-            if row[5]:seen.add(k)
+        selected.append(row)
+        if row[5]:seen.add(k)
     inputs=[]
     for name,s,t,h,peer,side in selected:
         def pack(xs):
