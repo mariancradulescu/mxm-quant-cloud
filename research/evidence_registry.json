@@ -1204,7 +1204,7 @@
     },
     {
       "id": "CPF1",
-      "status": "PREDECLARED_UNSCORED",
+      "status": "ALL_THREE_EXACT_FAMILIES_CLOSED_WITHOUT_CSHARP_PROMOTION",
       "authority": "docs/OWNER_SPEC.md OWNER v2.0 EUR300",
       "protocolFile": "research/cpf1_protocol.json",
       "initialCapitalEur": 300,
@@ -1224,7 +1224,7 @@
       "sourceOnlyReadOnly": true,
       "independent": false,
       "qualification": false,
-      "selectionScored": false,
+      "selectionScored": true,
       "brokerFundedNetEur": null,
       "nativeCSharpFundedRoundTrips": 0,
       "hard21Proven": false,
@@ -1232,7 +1232,19 @@
       "ordersSubmitted": 0,
       "cloudActivated": false,
       "closedStudiesRerun": 0,
-      "protocolRetuned": false
+      "protocolRetuned": false,
+      "originalResultRunId": 42383853064,
+      "originalPublicArtifactId": 13579215807,
+      "originalPublicSha256": "a72ee698649967a9a998ba04c474ac8c3cafed62608c769d5aed9a0f4c2b1723",
+      "durableResult": "docs/CPF1_AUTHENTIC_RESULT_20261107.json",
+      "f2DevelopmentComplete": true,
+      "selectionScoredFamilies": [
+        "BOLLINGER_OVEREXTENSION_REVERSION"
+      ],
+      "sourceAuditOutcomesScored": false,
+      "exactClosedNoRetuning": true,
+      "costEligibleSymbols": 12,
+      "originalSourceNewBrokerRequests": 0
     }
   ],
   "schema": "mxm-project-data-exposure-v1",
@@ -1847,5 +1859,38 @@
       "oldBCF1FailedAuthRecordUnchanged": true,
       "noRetuningOrRelaunch": true
     }
-  ]
+  ],
+  "cpf1AuthenticResearch": {
+    "id": "CPF1_ORIGINAL_AUTHENTIC_CLOUD_FAMILIES_20261107",
+    "originalRunId": 42383853064,
+    "originalMainHead": "649c98ccf934416fdebb122afca46b1ca9223e58",
+    "originalPublicArtifactId": 13579215807,
+    "originalPublicFileSha256": "a72ee698649967a9a998ba04c474ac8c3cafed62608c769d5aed9a0f4c2b1723",
+    "originalProtocolSha256": "923ac670aa466c46369956680246f24f3affb22fc63f551368ca536572a98e9d",
+    "durableResult": "docs/CPF1_AUTHENTIC_RESULT_20261107.json",
+    "originalM5": 836087,
+    "authenticQuoteCostContexts": 166,
+    "eligibleContractCostSymbols": 12,
+    "mechanismActiveAssets": 5,
+    "fixedFamilies": 3,
+    "comparisonCount": 6,
+    "familySelectionScored": [
+      "BOLLINGER_OVEREXTENSION_REVERSION"
+    ],
+    "familySelectionNotScored": [
+      "DONCHIAN_TREND_VOLUME",
+      "H1_FALSE_BREAK_LIQUIDITY_SWEEP"
+    ],
+    "selectionQualifiedFamilies": [],
+    "originalSource52WeeksAllGloballyExposed": true,
+    "auditScoreViewed": false,
+    "netBrokerFundedEur": null,
+    "independentConfirmation": false,
+    "hard21Proven": false,
+    "continuousFloatingDD30Certified": false,
+    "ordersSubmitted": 0,
+    "cloudActivated": false,
+    "noNewBrokerRequests": true,
+    "closedExactNoRetune": true
+  }
 }
