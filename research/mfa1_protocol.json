@@ -1,0 +1,162 @@
+{
+  "schema": "MXM_MFA1_COORDINATED_CLOUD_NATIVE_MULTI_FAMILY_ADAPTIVE_RESEARCH_V1",
+  "id": "MFA1",
+  "status": "PREDECLARED_UNSCORED",
+  "locked": true,
+  "authority": "docs/OWNER_SPEC.md OWNER v2.0 2026-11-07",
+  "hypothesis": "Distinct market mechanisms can coexist at genuinely different decision clocks and holding horizons; causal trailing four-calendar-week adverse-NET relative evidence may identify when to allocate exposure to one family rather than select a retrospective winning strategy. Each of the five primitives and one adaptive gate is predeclared jointly; conditional profitability is unproven.",
+  "sources": {
+    "originalPepperstoneSealedRuns": [
+      41724643418,
+      41735441128
+    ],
+    "originalSealedManifest": "research/hrc1_protocol.json",
+    "authenticM5Bars": 836087,
+    "authenticQuoteCostContexts": 166,
+    "all52WeeksGloballyExposed": true,
+    "independentConfirmation": false,
+    "universe": [
+      "EURUSD",
+      "GBPUSD",
+      "USDJPY",
+      "AUDUSD",
+      "USDCAD",
+      "XAUUSD",
+      "US500",
+      "NAS100",
+      "GER40",
+      "UK100",
+      "AUS200",
+      "JPN225"
+    ],
+    "sourceNoNewBrokerRequests": true,
+    "sourceNoBCF1ReservedNewH1": true,
+    "costMethod": "research.multiscale_conditional_research.extract_costs then research.integrated_predictive_funded.cost_context; current-term authentic development BID/ASK+commission+conversion and modeled slippage, not actual fills"
+  },
+  "calendar": {
+    "start": 1762128000000,
+    "developmentEnd": 1777852800000,
+    "selectionEnd": 1785715200000,
+    "end": 1793577600000,
+    "developmentWeeks": 26,
+    "selectionWeeks": 13,
+    "globallyExposedAuditWeeksUnscored": 13,
+    "noFixedUTCDecisionHours": true,
+    "sourceTimeM5Milliseconds": 300000,
+    "allCausalFeaturesOnlyFromCompletedM5": true,
+    "sourceEntryDelayMinutes": 5,
+    "noMissingPriceImputation": true
+  },
+  "families": [
+    {
+      "id": "SQUEEZE_RELEASE_30",
+      "category": "volatility state transition",
+      "timeframe": "M15",
+      "horizonMinutes": 30,
+      "mechanism": "Within consecutive past 49 completed M5 prices, 9 prior return increments average absolute log movement <=0.75 of earlier 36, then the current completed M15 3-bar impulse exceeds 3x that suppressed movement AND 2bps; directional release follows for 30m.",
+      "benchmark": "same-clock sign of prior completed H1 target log return, same target and cost",
+      "targetUniverse": "all 12 source instruments",
+      "cloud": "M5 Bars.ClosePrices; Math.Log; custom deterministic C#"
+    },
+    {
+      "id": "H4_M30_PULLBACK_120",
+      "category": "multi-timeframe momentum pullback",
+      "timeframe": "H1 decision with 4h M5 past",
+      "horizonMinutes": 120,
+      "mechanism": "Prior 3.5h close-to-close log trend magnitude >=6bps; final 30m price adjustment opposes trend with 0.15..0.60 of magnitude; follow the prior 3.5h trend for 2h. Distinct from closed D1/H1 PVE2 exact rule.",
+      "benchmark": "same-clock sign prior H1 target, same cost",
+      "targetUniverse": "all 12",
+      "cloud": "H1 and M5 Bars + C# log returns"
+    },
+    {
+      "id": "TICK_CLIMAX_FADE_15",
+      "category": "tick-volume impact shock fade",
+      "timeframe": "M15",
+      "horizonMinutes": 15,
+      "mechanism": "Latest 3 complete M5 bars have average tick volume >=2.5x previous 21-bar average, 3-bar price move exceeds 1.8x past seven non-overlapping 3-bar absolute returns and 3bps; fade its direction over 15m.",
+      "benchmark": "same-clock prior H1 target price momentum and cost",
+      "targetUniverse": "all 12",
+      "cloud": "M5 Bars.TickVolumes and OHLC, pure C#"
+    },
+    {
+      "id": "REOPEN_GAP_FADE_60",
+      "category": "market sessions / genuine reopen discontinuity",
+      "timeframe": "first completed M5 bar after >=60m and <=72h broker timestamp gap",
+      "horizonMinutes": 60,
+      "mechanism": "Previous authentic M5 close precedes first reopened bar by 60m..72h and current bar open differs from prior close by >=8bps; forecast short-term retracement opposite the genuine observed open jump. Never synthesize absent bars.",
+      "benchmark": "same-clock prior observed completed H1 target sign when exactly available; benchmark must be observed, otherwise no event",
+      "targetUniverse": "all 12",
+      "cloud": "M5 Bars.OpenTimes and Open/Close; MarketHours may be read but no calendar service"
+    },
+    {
+      "id": "INDEX_RELATIVE_DISPERSION_90",
+      "category": "multi-asset relative price / shared risk regime",
+      "timeframe": "H1 completed clock with two contemporaneous 4h M5 paths",
+      "horizonMinutes": 90,
+      "mechanism": "At completed hourly clock both US500 and NAS100 have exact 49-bar 4h paths; if target 4h return minus peer 4h return exceeds 8bps in magnitude, fade the target's relative overperformance/underperformance for 90m. Two target perspectives disclosed; no uncosted synthetic hedge.",
+      "benchmark": "same-clock own last H1 momentum, same target and cost",
+      "targetUniverse": [
+        "US500",
+        "NAS100"
+      ],
+      "cloud": "MarketData.GetBars(M5,symbol) two symbols, local pure C# beta-free normalized returns"
+    }
+  ],
+  "adaptiveSystem": {
+    "id": "ASOF_FOUR_WEEK_FAMILY_ROTATION",
+    "category": "causal online portfolio family selector",
+    "model": "At each new original calendar week, calculate each family's trailing FOUR FULL prior weeks of all real matched source-proxy completed adverse-NET outcomes; if >=3 completed scored events and strictly positive trailing per-signal adverse NET, select the family with greatest trailing mean; ties in predeclared family id order. Freeze choice entire coming week, no contemporaneous outcome used. Do not select symbol or tune thresholds.",
+    "warmupCalendarWeeks": 4,
+    "lookbackFullWeeks": 4,
+    "minimumTrailingCompleteEvents": 3,
+    "selectionClock": "fixed at calendar-week start, not signal timestamp after price outcome",
+    "portfolioRule": "take only source signals of chosen family; no more than one simultaneous proposal on exact target per clock, no modeled qualification by itself",
+    "benchmark": "same-clock target H1 momentum after same modeled adverse round-trip costs and cash-flat reference",
+    "costMethod": "same per-symbol observed development current-term central/adverse/stress cost; never zero for unknown",
+    "risk": "Even a supported model must pass single C# native EUR300 shared-capital ledger, actual minVolume/margin FX conversion/financing, account-wide floating equity and 30% drawdown; no broker trade claims"
+  },
+  "economicAdmission": {
+    "capitalProspectiveEur": 300,
+    "minAuthenticCostContextPerEligibleSymbol": 3,
+    "marginForMinimumVolumeBelowEur300": true,
+    "positiveCurrentModeledAdverseCostRequired": true,
+    "minimumHistoricalM5ClosesForH1Benchmark": 13,
+    "costScenarioNames": [
+      "central",
+      "adverse",
+      "stress"
+    ],
+    "priceOutcomeBasis": "exact source M5 closes at t+5m and t+5+horizon with every intermediate M5 mark",
+    "brokerHistoricalActualBidAskRoundtripNotAsserted": true,
+    "noPerfectPairedBIDASKAsGeneralGate": true,
+    "minimumNotionalEurObservedRequired": true
+  },
+  "statistical": {
+    "programmedGroups": 6,
+    "predeclaredPairedComparisonsPerGroup": 2,
+    "familywiseOneSidedAlpha": 0.05,
+    "totalOneSidedComparisons": 12,
+    "baseOneSidedHACWeeksLag": 3,
+    "pilot": "use existing f2_preflight.prospective_economic_futility on DEVELOPMENT 26 weekly equal-asset means including genuine zero-opportunity weeks, across all 12 predeclared one-sided comparisons. F2 positive upper bound means plausible only; selection remains closed for failed group.",
+    "selection": "for each F2-permitted group, 13 calendar-week equal-asset, equal-week proxy means. Conservative Bonferroni HAC3 one-sided LOWER for adverse source-proxy NET against flat and incremental adverse NET against costed same-clock target H1 momentum must BOTH exceed 0.",
+    "adaptiveAsOf": "past four complete source calendar weeks only; development adaptive screen before selection; all 5 source families eligible as distinct inputs but no return-based winner retraining",
+    "exposedAuditNeverScored": true,
+    "noPostHocRescueOrInversion": true,
+    "independentConfirmation": false
+  },
+  "product": {
+    "oneSingleCloudCbot": true,
+    "pureCSharpFeaturesBeforeEconomicPromotion": true,
+    "nativeResearchParity": "exact all-sign equality on deterministic authentic pre-scoring bounded M5 feature samples between Python and src/Mxm.Core/MultiFamilyNativeFeatures.cs run via src/Mxm.Replay",
+    "nativeRuntime": "MxmCloud observation only; no new trading calls",
+    "existingOpportunityOrchestratorAuthority": true,
+    "existingNativeFundedLedgerAuthority": true,
+    "noFundingWithoutPositiveSelectionAndParitalParity": true,
+    "oneCapitalEUR300": true,
+    "maximumGlobalFloatingDrawdown": 0.3,
+    "hard21SystemFundedClosedPerEligibleWeek": 21,
+    "noLiveOrDemoOrders": true,
+    "noCloudActivation": true,
+    "noTokenRefresh": true
+  }
+}
