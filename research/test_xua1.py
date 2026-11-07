@@ -20,7 +20,7 @@ class XuaOriginalSixAssetTests(unittest.TestCase):
         self.assertEqual(r.decide(r.NAMES[0],"SpotCrude",low),0)
 
     def test_crypto_large_daily_shock_and_counterhour(self):
-        h=history(close=98.)
+        h=[(t,100.,101.,97.,98.,v) for t,o,hi,lo,cl,v in history()]
         h[0]=(h[0][0],100.,101.,99.,100.,100)
         h[-2]=(h[-2][0],98.,99.,97.,97.,100)
         h[-1]=(h[-1][0],98.,99.,97.,98.,100)
