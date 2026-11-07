@@ -254,7 +254,7 @@ def feature_cases(p,bars,eligible):
     case_events={f:{"development":[],"selection":[]} for f in NAMES}
     counters={f:Counter() for f in NAMES}
     parity=defaultdict(list)
-    timelines={symbol:sorted(row) for symbol,row in h1.items()}
+    timelines={symbol:sorted(row) for symbol,row in bars.items()}
     start=p["chronology"]["startUtcMs"];dev=p["chronology"]["developmentEndUtcMs"]
     select=p["chronology"]["selectionEndUtcMs"]
     for spec in p["families"]:
