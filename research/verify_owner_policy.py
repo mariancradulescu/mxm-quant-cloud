@@ -409,6 +409,38 @@ def check():
     assert ar['BCF1Recovered'] is False and ar['closedModelRescored'] is False
     assert pr['safePairRotationCompleted'] is False
 
+    # Nov 7 OWNER BCF1 recovery is a new event, NOT a rewrite of Nov 6.
+    bcf_recovery = json.loads(Path('docs/BCF1_AUTHENTIC_RECOVERY_RESULT_20261107.json').read_text())
+    brec = next(x for x in r['bcf1RecoveryReadbacks'] if x['id'] == 'BCF1_OWNER_SCOPE_RECOVERY_20261107')
+    auth_new = next(x for x in r['authenticationDiagnostics'] if x['id'] == 'OWNER_SCOPE_ADAPTER_BCF1_20261107')
+    assert bcf['status'] == 'SOURCE_ONLY_AUTH_BLOCKED_NO_RESULTS'
+    assert bcf['sourceResultRunId'] == 42172375939
+    assert bcf_recovery['source']['runId'] == brec['sourceRunId'] == auth_new['sourceRunId'] == 42377775316
+    assert bcf_recovery['source']['publicReadbackArtifactId'] == brec['originalPublicArtifactId'] == 13576272572
+    assert bcf_recovery['source']['publicReadbackFileSha256'] == brec['originalPublicJsonSha256'] == 'd7d4ea67fffdee99832067fec568b20176d67b3b46df74011554903d7198c85b'
+    assert bcf_recovery['source']['protocolSha256'] == '18e415a766fd7e2ba0583f914c29b04804b8867065ed429b52568254884064dc'
+    assert bcf_recovery['authentication']['observedScope'] == auth_new['scopeAttested'] == 'SCOPE_TRADE'
+    assert bcf_recovery['authentication']['originalLiveAccountCryptographicallyBound']
+    assert bcf_recovery['authentication']['originalAccountAuthenticated']
+    assert bcf_recovery['sourceReadback']['sourceRequests'] == 165
+    assert bcf_recovery['sourceReadback']['completeEncryptedCustodyReadback']
+    assert bcf_recovery['sourceReadback']['historicalSourceWeeksWithJointH1'] == 52
+    assert bcf_recovery['sourceReadback']['newUnscoredChronologicalH1Times'] == {'EUBobl-F':83,'EUBund-F':83}
+    bidask = bcf_recovery['sourceReadback']['bidAskCostPreflight']
+    assert bidask['requiredFreshPairedClocksEach'] == 8
+    assert bidask['EUBobl-F']['validFreshPaired'] == 0
+    assert bidask['EUBund-F']['validFreshPaired'] == 1
+    assert bcf_recovery['sourceReadback']['sumMinimumMarginEur'] == 47.36
+    assert bcf_recovery['verdict']['onlyBlockingReason'] == 'AUTHENTIC_PAIRED_QUOTES_BELOW_MINIMUM'
+    assert bcf_recovery['verdict']['observableSourcePreflightPass'] is False
+    assert bcf_recovery['verdict']['economicCostOrNetScoringPermitted'] is False
+    assert bcf_recovery['verdict']['brokerFundedNetEur'] is None
+    assert bcf_recovery['verdict']['nativeCSharpRoundTripsProven'] == 0
+    assert bcf_recovery['authentication']['refreshTokenConsumed'] is False
+    assert bcf_recovery['authentication']['ordersSent'] == 0
+    assert bcf_recovery['authentication']['cloudActivated'] is False
+    assert auth_new['ownerTradingAuthorized'] is False and brec['ordersSubmitted'] == 0
+
     print('PASS OWNER v2.0 contract, frozen evidence, native funding and no-order boundary; no NET qualification')
 
 
