@@ -160,7 +160,7 @@ public class MxmCloud : Robot
             if(warmupNow>=_nextWarmupPollAt)
             {
                 _nextWarmupPollAt=warmupNow+300000;
-                int ready=0,total=0;
+                int ready=0,total=0,mfaFeatureSlices=0;
                 var frames=new (TimeFrame Frame,int Minutes,string Name)[]{
                     (TimeFrame.Minute5,5,"M5"),(TimeFrame.Hour,60,"H1"),
                     (TimeFrame.Hour4,240,"H4"),(TimeFrame.Daily,1440,"D1")};
@@ -186,6 +186,48 @@ public class MxmCloud : Robot
                         }
                         if(NativeCausalWarmup.Rebuild(new(name,frame.Name,frame.Minutes,
                             warmupNow,prefix)).Ready)ready++;
+                        // The SAME pure Cloud C# feature code is used for
+                        // protected Pepperstone/Python parity and compiled cBot.
+                        // This is OBSERVATION ONLY. No forecast admission,
+                        // native wallet mutation, order placement or cloud launch.
+                        if(frame.Minutes==5 && bars.Count>=98)
+                        {
+                            NativeFamilyBar[] NativePrefix(Bars source)
+                            {
+                                int end=source.Count-2; // exclude currently forming bar
+                                if(end<95)return System.Array.Empty<NativeFamilyBar>();
+                                var result=new NativeFamilyBar[96];
+                                for(int k=0;k<96;k++)
+                                {
+                                    int ix=end-95+k;
+                                    long closeAt=Stamp(source.OpenTimes[ix])+300000L;
+                                    result[k]=new NativeFamilyBar(closeAt,
+                                        source.OpenPrices[ix],source.HighPrices[ix],
+                                        source.LowPrices[ix],source.ClosePrices[ix],
+                                        (long)source.TickVolumes[ix]);
+                                }
+                                return result;
+                            }
+                            string peer=name=="US500"?"NAS100":
+                                name=="NAS100"?"US500":"";
+                            var peerBars=System.Array.Empty<NativeFamilyBar>();
+                            if(peer.Length>0)
+                            {
+                                var peerSource=MarketData.GetBars(TimeFrame.Minute5,peer);
+                                if(peerSource.Count>=98)peerBars=NativePrefix(peerSource);
+                            }
+                            var nativeBars=NativePrefix(bars);
+                            long lastClosed=nativeBars[^1].EndAt;
+                            // Evaluation never uses the current forming bar.
+                            var featureObservation=MultiFamilyNativeFeatures.Evaluate(
+                                new NativeFamilyCase(name,peer,lastClosed,nativeBars,peerBars));
+                            _=featureObservation.Squeeze+
+                              featureObservation.Pullback+
+                              featureObservation.VolumeClimax+
+                              featureObservation.ReopenGap+
+                              featureObservation.IndexDispersion;
+                            mfaFeatureSlices++;
+                        }
                     }
                     catch(System.Exception)
                     {
@@ -193,7 +235,7 @@ public class MxmCloud : Robot
                         // observation gap. Retry at the next bounded poll.
                     }
                 }
-                string warmupStatus=ready+"/"+total;
+                string warmupStatus=ready+"/"+total+"; native MFA1 feature slices "+mfaFeatureSlices;
                 if(warmupStatus!=_lastWarmupStatus)
                 {
                     Print("MXM native bounded causal feature warmup: {0}; no forecast or orders enabled.",warmupStatus);
