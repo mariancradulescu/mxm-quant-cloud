@@ -95,9 +95,9 @@ class PipelineChecks(unittest.TestCase):
                     return reply
                 return m.ProtoOAAccountAuthRes(ctidTraderAccountId=fake_id)
         with patch.dict('os.environ',creds), patch.object(owner_readonly_auth,'HISTORIC_ACCOUNT_FINGERPRINT_COMMITMENT',commitment):
-            for scope,expected in ((e.SCOPE_VIEW,'VIEW_READ_ONLY_TRANSPORT'),
-                                   (e.SCOPE_TRADE,'TRADE_CAPABILITY_READ_ONLY_TRANSPORT'),
-                                   (None,'NOT_ATTESTED_READ_ONLY_TRANSPORT')):
+            for scope,expected in ((e.SCOPE_VIEW,'VIEW'),
+                                   (e.SCOPE_TRADE,'TRADE_CAPABLE'),
+                                   (None,'NOT_ATTESTED')):
                 fake=Fake(scope=scope)
                 self.assertEqual(owner_readonly_auth.authenticate(fake),fake_id)
                 self.assertEqual(fake.sent,[
