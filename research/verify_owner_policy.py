@@ -476,6 +476,53 @@ def check():
     assert fls_receipt['verdict']['refreshTokenConsumed'] is False
     assert fls['exactClosedNoRetuning'] and fls['closedStudiesRescored'] is False
 
+    # Nov 7 CPF1: genuine original Pepperstone source 3-family H1 Cloud
+    # screen, six Bonferroni contrasts, one nonqualified selection; the
+    # previously exposed 13 audit weeks are NEVER scored or reclassified.
+    cpf = next(x for x in r['prospectiveStudies'] if x['id'] == 'CPF1')
+    cpfr = json.loads(Path('docs/CPF1_AUTHENTIC_RESULT_20261107.json').read_text())
+    cp_raw = Path('research/cpf1_protocol.json').read_bytes()
+    cpp = json.loads(cp_raw)
+    cp_evidence = r['cpf1AuthenticResearch']
+    assert cpp['locked'] and cpp['status'] == 'PREDECLARED_UNSCORED'
+    assert cpp['finance']['prospectiveInitialCapitalEur'] == 300
+    assert len(cpp['source']['sourceSymbols']) == 12
+    assert len(cpp['families']) == 3 and cpp['statistics']['wholeProgramOneSidedComparisons'] == 6
+    assert cpp['clock']['exposedAuditWeeksUnscored'] == 13
+    assert cpp['security']['prohibitedLiveDemoOrders'] and cpp['security']['noTokenRefresh']
+    assert cpfr['provenance']['originalLockedProtocolSha256'] == hashlib.sha256(cp_raw).hexdigest()
+    assert cpfr['provenance']['genuineGitHubActionsRunId'] == cpf['originalResultRunId'] == cp_evidence['originalRunId'] == 42383853064
+    assert cpfr['provenance']['publicArtifactId'] == cpf['originalPublicArtifactId'] == cp_evidence['originalPublicArtifactId'] == 13579215807
+    assert cpfr['provenance']['originalPublicJsonSha256'] == cpf['originalPublicSha256'] == cp_evidence['originalPublicFileSha256'] == 'a72ee698649967a9a998ba04c474ac8c3cafed62608c769d5aed9a0f4c2b1723'
+    assert cpfr['provenance']['originalAuthenticatedM5Bars'] == 836087
+    assert cpfr['provenance']['originalAuthenticatedQuoteCostContexts'] == 166
+    assert cpfr['finance']['symbolCountCostAndMinimumMarginEligible'] == 12
+    assert cpfr['finance']['symbolsWithCompleteStrategySignalsInDevelopment'] == 5
+    assert cpfr['chronology']['independentChronologicalConfirmation'] is False
+    assert cpfr['chronology']['comparisonsFamilywiseBonferroni'] == 6
+    results_cpf = cpfr['results']
+    trend_cpf=results_cpf['DONCHIAN_TREND_VOLUME']
+    boll_cpf=results_cpf['BOLLINGER_OVEREXTENSION_REVERSION']
+    sweep_cpf=results_cpf['H1_FALSE_BREAK_LIQUIDITY_SWEEP']
+    assert trend_cpf['developmentSignals'] == 166 and trend_cpf['selectionResults'] is None
+    assert trend_cpf['developmentF2'] == 'NOT_INFORMATIVE_NO_ECONOMIC_PROMOTION'
+    assert boll_cpf['developmentSignals'] == 361 and boll_cpf['selectionSignals'] == 171
+    assert boll_cpf['developmentF2'] == 'UPPER_BOUND_ALLOWS_PLAUSIBILITY_NOT_EVIDENCE'
+    assert boll_cpf['selectionAdjustedOneSidedBonferroniHAC3LowerAdverseNetBps'] == -5.9269704229415705
+    assert boll_cpf['selectionAdjustedOneSidedBonferroniHAC3LowerIncrementalBenchmarkBps'] == -6.9026160215803225
+    assert boll_cpf['selectionSupportsFunding'] is False
+    assert sweep_cpf['developmentSignals'] == 138 and sweep_cpf['selectionResults'] is None
+    assert sweep_cpf['developmentF2'] == 'FUTILE_STOP_BEFORE_SELECTION'
+    assert cpfr['verdict']['status'] == cpf['status'] == 'ALL_THREE_EXACT_FAMILIES_CLOSED_WITHOUT_CSHARP_PROMOTION'
+    assert cpfr['verdict']['selectionPromotableGroups'] == cp_evidence['selectionQualifiedFamilies'] == []
+    assert cpfr['verdict']['auditOutcomesScored'] is False
+    assert cpfr['verdict']['nativeCsharpFundedCompleteTrips'] == 0
+    assert cpfr['verdict']['independentlyConfirmedNetAdvantage'] is False
+    assert cpfr['verdict']['liveOrDemoOrdersSubmitted'] == 0
+    assert cpfr['verdict']['nativeCloudCbotActivated'] is False
+    assert cpfr['verdict']['refreshTokenConsumed'] is False
+    assert cpf['closedStudiesRerun'] == 0 and cpf['protocolRetuned'] is False
+
     print('PASS OWNER v2.0 contract, frozen evidence, native funding and no-order boundary; no NET qualification')
 
 
