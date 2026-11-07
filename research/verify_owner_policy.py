@@ -618,7 +618,7 @@ def check():
     assert energy_xua['selection']['perSignalMeanBps']['adverse']==-27.514357705895044
     assert energy_xua['selection']['adjustedAdverseNetLowerBps']==-51.21300734587574
     assert energy_xua['selection']['adjustedMatchedBenchmarkIncrementalLowerBps']==-35.377450722418764
-    assert energy_xua['verdict']=='EXACT_SELECTION_REJECTED_ADVERSE_OR_BENCHMARK'
+    assert energy_xua['exactVerdict']=='EXACT_SELECTION_REJECTED_ADVERSE_OR_BENCHMARK'
     assert crypto_xua['development']['signalCount']==579 and crypto_xua['selection'] is None
     assert crypto_xua['f2']['status']=='NOT_INFORMATIVE_NO_ECONOMIC_PROMOTION'
     assert asian_xua['development']['signalCount']==478 and asian_xua['selection'] is None
