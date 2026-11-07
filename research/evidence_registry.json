@@ -1162,6 +1162,30 @@
       "protocolRetuned": false,
       "ordersSubmitted": 0,
       "readOnlyAuthenticationBlockerDocument": "docs/BCF1_AUTH_AND_EUR300_CAPACITY_20261106.md"
+    },
+    {
+      "id": "FLS1",
+      "status": "PREDECLARED_UNSCORED",
+      "authority": "docs/OWNER_SPEC.md OWNER v2.0 EUR300 and Nov7 read-only clarification",
+      "protocolFile": "research/fls1_protocol.json",
+      "sourceRuns": [
+        41724643418,
+        41735441128
+      ],
+      "sourcePreviouslyExposed": true,
+      "unscoredAuditWeeks": 13,
+      "sourceFamily": "EURUSD_H1_LEAD_TO_GBPUSD_UNDERREACTION_NEXT_H1",
+      "selectionScored": false,
+      "independent": false,
+      "qualification": false,
+      "brokerFundedNetEur": null,
+      "nativeCSharpFundedRoundTrips": 0,
+      "hard21Proven": false,
+      "drawdownCertified": false,
+      "ordersSubmitted": 0,
+      "cloudActivated": false,
+      "closedStudiesRescored": false,
+      "originalAccountCustodyBound": true
     }
   ],
   "schema": "mxm-project-data-exposure-v1",
