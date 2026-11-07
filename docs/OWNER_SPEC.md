@@ -39,6 +39,36 @@ link here; older dated directives remain provenance, never competing authority.
   could only be research information in a genuinely prospective portfolio
   hypothesis on independent evidence, never a resurrection mechanism.
 
+## OWNER scope/permission clarification — 2026-11-07 (current authority)
+
+The OWNER deliberately installed the four original MXM Quant Research OAuth
+credentials in the protected `mxm-r3-pepperstone-v1` GitHub environment.
+A token's **technical server permission** is distinct from the operations the
+OWNER authorizes. Only **read-only Open API requests** are authorized even when
+the supplied token technically has `SCOPE_TRADE`. No LIVE/DEMO order, amendment,
+cancellation, closing operation, token refresh/rotation, Cloud activation or
+new account identity is authorized by this clarification.
+
+The active original-account authentication may proceed with an explicitly
+attested `SCOPE_VIEW`, explicitly attested `SCOPE_TRADE`, or an **absent
+optional `permissionScope` field** in a genuinely successful cTrader account-list
+response. An absent field is **unattested**, never falsely certified as either
+scope. Unknown explicit scope values, OAuth error responses, rejected tokens,
+unmatched accounts or unverifiable identity are rejected. The exact historic
+double-SHA256 commitment to the one original Pepperstone LIVE account remains
+unchanged, and that account must authenticate successfully before source reads.
+The existing outbound protobuf read-only allowlists in all transports and source
+pipelines remain enforceable independently of token scope. No fallback to
+an alternative account, new broker, trading request or permission escalation.
+
+One frozen BCF1 protocol and its independent custody receipt may be recovered
+once after successful original-account authentication, by the already prepared
+OWNER/main recovery intent. BCF1 is **source/contract/coverage/cost preflight only**;
+no scoring, holdout promotion or historical data/protocol modification is
+authorized without the separate ex-ante economic gates. Previous Nov 6/7
+credential and BCF1 incident receipts are immutable historical observations,
+not assertions about subsequent corrected runs.
+
 ## OWNER prospective initial-capital amendment — 2026-11-05
 
 This later explicit OWNER decision **supersedes the EUR200 amount for the future final system**, without changing any other OWNER v2.0 invariant. The unique initial capitalization of a **new, prospectively founded** common portfolio is EUR300. It is neither a EUR100 top-up to an earlier EUR200 study/account nor a reset, and cannot be inferred from an unfunded broker balance. No additional funding, synthetic deposit, separate wallet or capital replay is authorized. Positive broker-native founding/cashflow proof must match EUR300 before financial recovery can adopt a broker execution book; absent proof, remain read-only/protective. Model-replay funding is explicitly synthetic and has no broker cash authority.
