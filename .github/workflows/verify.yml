@@ -583,6 +583,7 @@ jobs:
       - run: python -m unittest research.test_f2_preflight -v
       - run: python -m unittest research.test_hrc1_source_pilot -v
       - run: python -m unittest research.test_gep1_research -v
+      - run: python -m unittest research.test_fls1 -v
       - run: python -m unittest research.test_bcf1_preflight -v
       - run: python -m unittest research.test_auth_scope_diagnostic -v
       - run: python -m unittest research.test_oauth_secret_presence -v
@@ -2566,5 +2567,63 @@ jobs:
         with:
           name: gep1-authentic-global-exposed-economics-public-only
           path: gep1-authentic-public.json
+          if-no-files-found: error
+          retention-days: 90
+
+  fls1_fx_lead_lag_authentic_economics:
+    # A distinct preregistered study, not a rerun of prior exposed research.
+    # The one-file owner/main intent is merged only AFTER the protocol and code.
+    if: >-
+      needs.verify.result == 'success' &&
+      github.ref == 'refs/heads/main' &&
+      github.actor == 'mariancradulescu' &&
+      github.event_name == 'push' &&
+      contains(github.event.head_commit.message, 'MXM_FLS1_AUTHENTIC_COST_FIRST_ECONOMIC_SCORE_ONCE')
+    needs: verify
+    environment: mxm-r3-custody-v1
+    permissions:
+      contents: read
+      actions: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 2
+      - name: Gate exact one-file OWNER FLS1 research authority
+        shell: bash
+        run: |
+          test "$(git log -1 --format=%s)" = 'MXM_FLS1_AUTHENTIC_COST_FIRST_ECONOMIC_SCORE_ONCE'
+          test "$(git diff --name-only HEAD^ HEAD)" = 'ops/fls1-research-intent.txt'
+          test "$(cat ops/fls1-research-intent.txt)" = 'FLS1_LOCKED_FX_LEAD_LAG_ORIGINAL_SEALED_SOURCE_ONCE'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: 8.0.x
+      - run: dotnet build src/Mxm.Replay -c Release
+      - run: python -m unittest research.test_fls1 -v
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: sealed-source
+          run-id: 41724643418
+          github-token: ${{ github.token }}
+          path: bdp-source
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: sealed-source
+          run-id: 41735441128
+          github-token: ${{ github.token }}
+          path: aip-source
+      - name: Run one FLS1 source-authentic cost-first economic test
+        run: python -m research.fls1_research
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: fls1-authentic-exposed-economic-result-public-only
+          path: fls1-authentic-public.json
           if-no-files-found: error
           retention-days: 90

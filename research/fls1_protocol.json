@@ -1,0 +1,104 @@
+{
+  "schema": "MXM_FLS1_PREDECLARED_EXPLORATORY_ECONOMICS_V1",
+  "id": "FLS1",
+  "status": "PREDECLARED_UNSCORED",
+  "locked": true,
+  "authority": "docs/OWNER_SPEC.md OWNER v2.0 (2026-11-07 read-only clarification)",
+  "prospectiveInitialCapitalEur": 300,
+  "economicPremise": "Price discovery in more liquid EURUSD may precede GBPUSD repricing when GBPUSD underresponds to the same completed UTC hour USD impulse. A fixed EURUSD-leading directional GBPUSD follow-through can be tested against GBPUSD's own prior-hour momentum and flat. This tests single-direction FX price transmission, not the closed five-FX hedged H4 residual-reversal, equity-to-FX impulse, gold-to-JPY, fixed-calendar mean, London fix, or refitting any prior strategy.",
+  "originalSource": {
+    "sealedRuns": [
+      41724643418,
+      41735441128
+    ],
+    "sourceManifest": "research/hrc1_protocol.json",
+    "expectedOriginalM5Bars": 836087,
+    "expectedAuthenticatedCostContexts": 166,
+    "fullyGloballyExposedWeeks": 52,
+    "noAdditionalPepperstoneRequests": true,
+    "sourceCustody": "R3_CUSTODY_PRIVATE_KEY_PEM protected existing environment; original cryptographic account binding",
+    "universe": [
+      "EURUSD",
+      "GBPUSD"
+    ],
+    "target": "GBPUSD",
+    "costEvidence": "original authenticated 166 current-term BID/ASK, commission, conversion and margin contexts; no historical fill or continuous spread certification"
+  },
+  "calendar": {
+    "start": 1762128000000,
+    "developmentEnd": 1777852800000,
+    "selectionEnd": 1785715200000,
+    "end": 1793577600000,
+    "developmentWeeks": 26,
+    "selectionWeeks": 13,
+    "unscoredExposedAuditWeeks": 13,
+    "weekdaysUtc": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "decisionHoursUtc": [
+      8,
+      12,
+      16
+    ],
+    "oneDecisionPerTargetAtClock": true
+  },
+  "mechanism": {
+    "featureClock": "completed exact EURUSD/GBPUSD M5 60-minute endpoints at decision UTC t, require every intermediate completed 5-minute close over prior 60m for both instruments",
+    "minAbsLeaderReturnBps": 2,
+    "maxAbsoluteLaggerReturnFractionOfLeader": 0.75,
+    "signal": "sign(EURUSD last completed 60m log return), only when leader absolute >=2bps and GBPUSD absolute <=0.75 of leader; no fitted sign/threshold",
+    "entryDelayMinutes": 5,
+    "holdingMinutes": 60,
+    "allIntermediateHoldingMarksRequired": true,
+    "noPriceFillsInferred": true,
+    "decisionDoesNotReadFuturePrices": true,
+    "benchmark": "same-clock same-target GBPUSD last complete 60m direction; if flat, no benchmark trade; equal current modeled fees on nonflat benchmark",
+    "flatBenchmark": "stay in EUR300 cash"
+  },
+  "costs": {
+    "requireOriginalObservedSamplesAtLeast": 3,
+    "requireCurrentMinMarginEurBelow": 300,
+    "completeCommissionConversionAndFundingScope": true,
+    "central": "existing integrated_predictive_funded.cost_context centralBps",
+    "adverse": "existing integrated_predictive_funded.cost_context adverseBps",
+    "stress": "existing integrated_predictive_funded.cost_context stressBps",
+    "missingCostNeverZero": true,
+    "allAreModeledConditionalCurrentTermNotBrokerFills": true,
+    "noOvernightHoldingAtFixedClocks": true
+  },
+  "science": {
+    "preflight": "existing f2_preflight.prospective_economic_futility on 26 calendar-week clusters including zero-signal weeks; HAC(3), 2 fixed paired comparisons, 0.05 familywise one-sided; selection outcomes unavailable to preflight",
+    "minimumDevelopmentCalendarWeeks": 20,
+    "minimumDevelopmentActiveWeeks": 8,
+    "comparisonCount": 2,
+    "alphaFamily": 0.05,
+    "minimumSourceQuoteSamples": 3,
+    "selectionWeeklyLower": "Bonferroni two one-sided HAC(3) lower bounds for weekly average adverse NET and incremental modeled NET against same-clock GBPUSD prior-H1-momentum",
+    "qualification": "both adjusted lower confidence bounds >0, and cost/margin preflight valid; positive bps alone never broker EUR NET",
+    "stop": "missing source/contract/costs, economic futility development bound, or nonpositive adverse and/or benchmark selection lower => exact closed no retune; no audit scoring"
+  },
+  "fundedNextStep": {
+    "nativeCSharpAuthority": "NativeFundedLedger and OpportunityOrchestrator",
+    "oneSharedCapital300": true,
+    "maxGlobalFloatingDrawdown": 0.3,
+    "hard21SystemOnly": 21,
+    "nativeReplayOnlyIfSelectionBothAdjustmentsPositive": true,
+    "unqualifiedNativeTripsCount": 0,
+    "noExecutionClaimFromM5Closes": true,
+    "independentFutureDataRequired": true
+  },
+  "restrictions": {
+    "originalLiveAccountOnly": true,
+    "noLiveDemoOrders": true,
+    "noCloud": true,
+    "noTokenRefresh": true,
+    "noClosedStudyModelCalls": true,
+    "noHistoricalOutcomeOptimization": true,
+    "noUnscoredNov2Nov6BCF1Reuse": true,
+    "sourceOnlyFromPreviouslyAuthenticatedSealedRuns": true
+  }
+}
