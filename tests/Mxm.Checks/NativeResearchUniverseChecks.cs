@@ -18,7 +18,7 @@ public static class NativeResearchUniverseChecks
         check(empty.ResearchSymbols.Length==0&&
               empty.Symbols.SequenceEqual(new[]{"GBPUSD","US500"}),
               "empty research universe preserves existing account observation lanes");
-        var tooLarge=NativeResearchUniverse.Resolve(string.Join(",",Enumerable.Range(1,13)
+        var tooLarge=NativeResearchUniverse.Resolve(string.Join(",",Enumerable.Range(1,33)
             .Select(x=>"SYM"+x)),"US500",new[]{"HELD"},_=>true);
         check(tooLarge.ResearchSymbols.Length==0&&
               tooLarge.Symbols.SequenceEqual(new[]{"HELD","US500"})&&
