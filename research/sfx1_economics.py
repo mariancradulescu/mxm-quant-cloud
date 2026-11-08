@@ -120,10 +120,14 @@ def source_event_cost(symbol,entry,source,spreads,terms,scenario):
     eurjpy=source["EURJPY"].get(entry)
     target=source[symbol].get(entry)
     if not converter or not eurjpy or not target:return None
-    usd_eur=1/float(converter[4])
-    quote_eur=usd_eur if symbol=="NZDUSD" else 1/float(eurjpy[4])
+    eurusd_price=float(converter[4])/10**terms["EURUSD"]["digits"]
+    eurjpy_price=float(eurjpy[4])/10**terms["EURJPY"]["digits"]
+    target_price=float(target[4])/10**terms[symbol]["digits"]
+    if eurusd_price<=0 or eurjpy_price<=0 or target_price<=0:return None
+    usd_eur=1/eurusd_price
+    quote_eur=usd_eur if symbol=="NZDUSD" else 1/eurjpy_price
     units=float(terms[symbol]["minimumUnits"])
-    notional=units*float(target[4])*quote_eur
+    notional=units*target_price*quote_eur
     if notional<=0 or usd_eur<=0:return None
     info=terms[symbol]
     # Exact CURRENT tariff: USD_PER_LOT, explicit zero floor, as-of source.
