@@ -189,7 +189,7 @@ public sealed class NativeProductResearchLoop
             decimal perUnit=(predictedNet-uncertainty)/Math.Max(1,units)*.5m;
             decimal riskPerUnit=Math.Abs(a)*mid*fx*.25m+.00001m;
             var candidates=Enumerable.Range(0,8).Select(i=>
-                new OpportunityScenario("STATE"+i,at-2,true,perUnit,0m,
+                new OpportunityScenario("STATE"+i,baseClock,true,perUnit,0m,
                     riskPerUnit,0m)).ToArray();
             offered.Add(new EconomicOpportunity(id,"EXPLORATORY_M5_M15_AGREEMENT_NOT_FITTED",
                 market.Symbol,id,side,at-1,baseClock,
