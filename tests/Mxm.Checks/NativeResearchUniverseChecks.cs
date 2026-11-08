@@ -18,12 +18,21 @@ public static class NativeResearchUniverseChecks
         check(empty.ResearchSymbols.Length==0&&
               empty.Symbols.SequenceEqual(new[]{"GBPUSD","US500"}),
               "empty research universe preserves existing account observation lanes");
-        var tooLarge=NativeResearchUniverse.Resolve(string.Join(",",Enumerable.Range(1,13)
+        var tooLarge=NativeResearchUniverse.Resolve(string.Join(",",Enumerable.Range(1,257)
             .Select(x=>"SYM"+x)),"US500",new[]{"HELD"},_=>true);
         check(tooLarge.ResearchSymbols.Length==0&&
               tooLarge.Symbols.SequenceEqual(new[]{"HELD","US500"})&&
               tooLarge.Status=="NATIVE_UNIVERSE_INVALID_OR_TOO_LARGE",
               "oversized universe cannot silently truncate while hiding held exposure");
+        var configured=string.Join(",",Enumerable.Range(1,96).Select(i=>"ROT"+i));
+        var windows=Enumerable.Range(0,3).Select(i=>
+            NativeResearchUniverse.Resolve(configured,"US500",new[]{"HELD"},
+                _=>true,sweep:i)).ToArray();
+        check(windows.All(w=>w.ResearchSymbols.Length==32 &&
+                  w.Symbols.Contains("HELD")&&w.Symbols.Contains("US500")&&
+                  w.Status=="NATIVE_UNIVERSE_ROTATING_OBSERVATION_ONLY") &&
+              windows.SelectMany(w=>w.ResearchSymbols).Distinct().Count()==96,
+              "96 preconfigured genuine symbols rotate over three 32-market sweeps without dropping broker exposure");
         var malformed=NativeResearchUniverse.Resolve("EURUSD,GBP/USD","US500",
             Array.Empty<string>(),_=>true);
         check(malformed.ResearchSymbols.Length==0&&malformed.Symbols.Length==1,

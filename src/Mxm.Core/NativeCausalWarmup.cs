@@ -24,7 +24,7 @@ public static class NativeCausalWarmup
         NativeWarmupReport Reject(string reason,int gaps=0)=>new(false,reason,input.Symbol,
             input.Timeframe,0,0,gaps,null,null,null,null,null);
         if(string.IsNullOrWhiteSpace(input.Symbol)||string.IsNullOrWhiteSpace(input.Timeframe)||
-           input.Minutes is not (5 or 60 or 240 or 1440)||input.ObservedAt<=0||
+           input.Minutes is not (5 or 15 or 30 or 60 or 240 or 1440)||input.ObservedAt<=0||
            input.ClosedBars is null)
             return Reject("WARMUP_SYMBOL_TIMEFRAME_OR_CLOCK_UNAVAILABLE");
         if(input.ClosedBars.Length<WindowBars)return Reject("WARMUP_INSUFFICIENT_CLOSED_BARS");
