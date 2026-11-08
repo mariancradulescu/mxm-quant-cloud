@@ -4,6 +4,43 @@ Authority: explicit OWNER system-orchestration decision in this continuation.
 This is the single current specification. README, architecture and acceptance
 link here; older dated directives remain provenance, never competing authority.
 
+## OWNER prospective cost, universe and temporal clarification — 2026-11-08
+
+This explicit OWNER decision is prospective and does not alter any frozen exact
+XUA1/MFA1/CPF1/CCP1 strategy outcome, protocol, chronology, ciphertext or hash.
+
+- Broker commission, commission minimum and currency, P&L conversion fee, observed
+  BID/ASK spread, slippage uncertainty and swap/rollover must be recorded as
+  **separate** fields by instrument, original Pepperstone account and evidence
+  timestamp. Do not introduce a generic 6/12/24 bps *commission or conversion
+  tariff* across diverse new symbol classes. Slippage scenarios can remain
+  conservative but must be explicitly labeled as assumptions. Missing fees, FX
+  routes, marks and fills cannot default to zero. Current terms are not a
+  certified historical tariff.
+- The authenticated full roster (5,339 symbols, 1,755 visible) is not the
+  executable universe. The original 12 plus six H1 XUA1 instruments are not
+  a universal research ceiling. Screen each distinct new market's opening
+  mode, legal minimum and step volume, current margin by volume and direction,
+  session hours, liquidity/quote completeness, effective commission, conversion
+  and funding before outcome scoring. Demonstrating minimum-margin < EUR300
+  is not proof that actual common-equity exposure is funded.
+- Use causal native Cloud M15, H1, H4 and justified multi-timeframe views as
+  **economic-mechanism-specific choices**; no exhaustive timeframe search or
+  revival of closed candidates. Rollover/financing conditions bind to actual
+  instrument contract fields (including period, UTC charge time, 3-day charge
+  date, weekend flag and broker schedule), not a universal UTC-midnight ban.
+- The genuine **CMA1** original-account contract re-read is frozen separately at
+  `docs/CMA1_AUTHENTIC_CONTRACT_TERMS_20261108.json`. It showed current
+  contract tariff metadata for nine Forex crosses from the *original* earlier
+  CCP1 source, with zero new Open API requests. Four prospective distinct
+  additional research candidates are EURJPY, AUDJPY, NZDJPY and NZDUSD,
+  subject to genuine new M15/H4 availability and price/cost validation.
+  This is contract/feasibility evidence, **not a positive predictive result**.
+- Preserve single EUR300 prospective native cBot, system-wide funded HARD21,
+  30% floating equity drawdown, independent chronological confirmation, and
+  no LIVE/DEMO orders or Cloud activation. Only exact rejected configurations,
+  not entire asset classes, timeframes or economic mechanisms, are closed.
+
 ## OWNER requirements (change only by a new OWNER decision)
 
 - One repository `mariancradulescu/mxm-quant-cloud`, main; preserve history and
