@@ -1,0 +1,372 @@
+{
+  "schema": "MXM_OWNER_EXECUTED_PUBLIC_RECEIPT_MULTI_ASSET_COST_MARGIN_SCREEN_20261108_V1",
+  "sourceDocumentGitBlobShas": {
+    "docs/CMA1_AUTHENTIC_CONTRACT_TERMS_20261108.json": "63935a132d603ea59d54afdf19fdf61b8b821be0",
+    "docs/CMA2_AUTHENTIC_COST_SURFACE_20261108.json": "b47cfaf005f56980e3aeb8378c3c17ba16ad016a",
+    "docs/XUA1_AUTHENTIC_RESULT_20261108.json": "f40ada53c2b1d41cf2a48530c6fed231629aba9a"
+  },
+  "sourceAuthentication": "ORIGINAL_PUBLISHED_CMA1_CMA2_XUA1_RAW_READBACK_PRIORLY_VERIFIED",
+  "sourceAsOfOnly": true,
+  "closedStudiesNotReevaluated": true,
+  "sourceMarketCount": 18,
+  "sourceMarkets": {
+    "AUDJPY": {
+      "name": "AUDJPY",
+      "category": "fx",
+      "asof": "CMA1-2026-11-04",
+      "minMarginEUR": 30.97,
+      "minimumUnits": 1000,
+      "quotePairs": null,
+      "spreadBps": null,
+      "commissionRoundTripUSD": 0.06,
+      "referenceAdverseBps": null
+    },
+    "AUDUSD": {
+      "name": "AUDUSD",
+      "category": "fx",
+      "asof": "CMA1-2026-11-04",
+      "minMarginEUR": 30.97,
+      "minimumUnits": 1000,
+      "quotePairs": null,
+      "spreadBps": null,
+      "commissionRoundTripUSD": 0.06,
+      "referenceAdverseBps": null
+    },
+    "EURJPY": {
+      "name": "EURJPY",
+      "category": "fx",
+      "asof": "CMA1-2026-11-04",
+      "minMarginEUR": 33.33,
+      "minimumUnits": 1000,
+      "quotePairs": null,
+      "spreadBps": null,
+      "commissionRoundTripUSD": 0.06,
+      "referenceAdverseBps": null
+    },
+    "EURUSD": {
+      "name": "EURUSD",
+      "category": "fx",
+      "asof": "CMA1-2026-11-04",
+      "minMarginEUR": 33.33,
+      "minimumUnits": 1000,
+      "quotePairs": null,
+      "spreadBps": null,
+      "commissionRoundTripUSD": 0.06,
+      "referenceAdverseBps": null
+    },
+    "GBPJPY": {
+      "name": "GBPJPY",
+      "category": "fx",
+      "asof": "CMA1-2026-11-04",
+      "minMarginEUR": 39.91,
+      "minimumUnits": 1000,
+      "quotePairs": null,
+      "spreadBps": null,
+      "commissionRoundTripUSD": 0.06,
+      "referenceAdverseBps": 13.154674,
+      "additionalXua1QuotePairs": 21,
+      "additionalXua1SpreadBps": 0.435213
+    },
+    "GBPUSD": {
+      "name": "GBPUSD",
+      "category": "fx",
+      "asof": "CMA1-2026-11-04",
+      "minMarginEUR": 39.91,
+      "minimumUnits": 1000,
+      "quotePairs": null,
+      "spreadBps": null,
+      "commissionRoundTripUSD": 0.06,
+      "referenceAdverseBps": null
+    },
+    "NZDJPY": {
+      "name": "NZDJPY",
+      "category": "fx",
+      "asof": "CMA1-2026-11-04",
+      "minMarginEUR": 24.88,
+      "minimumUnits": 1000,
+      "quotePairs": null,
+      "spreadBps": null,
+      "commissionRoundTripUSD": 0.06,
+      "referenceAdverseBps": null
+    },
+    "NZDUSD": {
+      "name": "NZDUSD",
+      "category": "fx",
+      "asof": "CMA1-2026-11-04",
+      "minMarginEUR": 24.88,
+      "minimumUnits": 1000,
+      "quotePairs": null,
+      "spreadBps": null,
+      "commissionRoundTripUSD": 0.06,
+      "referenceAdverseBps": null
+    },
+    "USDJPY": {
+      "name": "USDJPY",
+      "category": "fx",
+      "asof": "CMA1-2026-11-04",
+      "minMarginEUR": 29.64,
+      "minimumUnits": 1000,
+      "quotePairs": null,
+      "spreadBps": null,
+      "commissionRoundTripUSD": 0.06,
+      "referenceAdverseBps": null
+    },
+    "NatGas": {
+      "name": "NatGas",
+      "category": "energy",
+      "asof": "CMA2-2026-11-05",
+      "minMarginEUR": 24.74,
+      "minimumUnits": "100",
+      "quotePairs": 1,
+      "spreadBps": 11.104942,
+      "commissionRoundTripUSD": null,
+      "referenceAdverseBps": null
+    },
+    "JPYX": {
+      "name": "JPYX",
+      "category": "index",
+      "asof": "CMA2-2026-11-05",
+      "minMarginEUR": 7.83,
+      "minimumUnits": "10",
+      "quotePairs": 0,
+      "spreadBps": null,
+      "commissionRoundTripUSD": null,
+      "referenceAdverseBps": null
+    },
+    "USDX": {
+      "name": "USDX",
+      "category": "index",
+      "asof": "CMA2-2026-11-05",
+      "minMarginEUR": 183.84,
+      "minimumUnits": "10",
+      "quotePairs": 1,
+      "spreadBps": 4.917823,
+      "commissionRoundTripUSD": null,
+      "referenceAdverseBps": null
+    },
+    "AMD.US": {
+      "name": "AMD.US",
+      "category": "equity",
+      "asof": "CMA2-2026-11-05",
+      "minMarginEUR": 7.99,
+      "minimumUnits": "0.1",
+      "quotePairs": 1,
+      "spreadBps": 15.011258,
+      "commissionRoundTripUSD": null,
+      "referenceAdverseBps": null
+    },
+    "ETHUSD": {
+      "name": "ETHUSD",
+      "category": "crypto",
+      "asof": "XUA1-2026-11-08",
+      "minMarginEUR": 10.75,
+      "minimumUnits": "0.01",
+      "quotePairs": 30,
+      "spreadBps": 6.456407,
+      "commissionRoundTripUSD": null,
+      "referenceAdverseBps": 26.090063999999998
+    },
+    "HK50": {
+      "name": "HK50",
+      "category": "index",
+      "asof": "XUA1-2026-11-08",
+      "minMarginEUR": 27.9,
+      "minimumUnits": "0.1",
+      "quotePairs": 26,
+      "spreadBps": 1.92198,
+      "commissionRoundTripUSD": null,
+      "referenceAdverseBps": 15.91293
+    },
+    "JPN225-F": {
+      "name": "JPN225-F",
+      "category": "index",
+      "asof": "XUA1-2026-11-08",
+      "minMarginEUR": 17.22,
+      "minimumUnits": "1",
+      "quotePairs": 9,
+      "spreadBps": 3.193294,
+      "commissionRoundTripUSD": null,
+      "referenceAdverseBps": 18.515652
+    },
+    "SpotBrent": {
+      "name": "SpotBrent",
+      "category": "energy",
+      "asof": "XUA1-2026-11-08",
+      "minMarginEUR": 8.67,
+      "minimumUnits": "1",
+      "quotePairs": 18,
+      "spreadBps": 3.552736,
+      "commissionRoundTripUSD": null,
+      "referenceAdverseBps": 22.37134
+    },
+    "SpotCrude": {
+      "name": "SpotCrude",
+      "category": "energy",
+      "asof": "XUA1-2026-11-08",
+      "minMarginEUR": 7.81,
+      "minimumUnits": "1",
+      "quotePairs": 21,
+      "spreadBps": 3.61991,
+      "commissionRoundTripUSD": null,
+      "referenceAdverseBps": 23.916748
+    }
+  },
+  "sourceClasses": {
+    "crypto": 1,
+    "energy": 3,
+    "equity": 1,
+    "fx": 9,
+    "index": 4
+  },
+  "combinationsAtOneSourceMinimumVolume": [
+    {
+      "symbols": [
+        "NatGas",
+        "USDX",
+        "AMD.US"
+      ],
+      "sourceDateSumMarginEUR": 216.57,
+      "headroomEUR300": 83.43,
+      "stressHeadroomEUR210": -6.57,
+      "stress210Fits": false,
+      "financedCertified": false
+    },
+    {
+      "symbols": [
+        "NatGas",
+        "USDX"
+      ],
+      "sourceDateSumMarginEUR": 208.58,
+      "headroomEUR300": 91.42,
+      "stressHeadroomEUR210": 1.42,
+      "stress210Fits": true,
+      "financedCertified": false
+    },
+    {
+      "symbols": [
+        "USDX",
+        "AMD.US"
+      ],
+      "sourceDateSumMarginEUR": 191.83,
+      "headroomEUR300": 108.17,
+      "stressHeadroomEUR210": 18.17,
+      "stress210Fits": true,
+      "financedCertified": false
+    },
+    {
+      "symbols": [
+        "NatGas",
+        "AMD.US"
+      ],
+      "sourceDateSumMarginEUR": 32.73,
+      "headroomEUR300": 267.27,
+      "stressHeadroomEUR210": 177.27,
+      "stress210Fits": true,
+      "financedCertified": false
+    },
+    {
+      "symbols": [
+        "NatGas",
+        "HK50",
+        "AMD.US"
+      ],
+      "sourceDateSumMarginEUR": 60.63,
+      "headroomEUR300": 239.37,
+      "stressHeadroomEUR210": 149.37,
+      "stress210Fits": true,
+      "financedCertified": false
+    },
+    {
+      "symbols": [
+        "SpotCrude",
+        "HK50",
+        "AMD.US"
+      ],
+      "sourceDateSumMarginEUR": 43.7,
+      "headroomEUR300": 256.3,
+      "stressHeadroomEUR210": 166.3,
+      "stress210Fits": true,
+      "financedCertified": false
+    },
+    {
+      "symbols": [
+        "NatGas",
+        "AMD.US",
+        "EURJPY"
+      ],
+      "sourceDateSumMarginEUR": 66.06,
+      "headroomEUR300": 233.94,
+      "stressHeadroomEUR210": 143.94,
+      "stress210Fits": true,
+      "financedCertified": false
+    },
+    {
+      "symbols": [
+        "USDX",
+        "GBPJPY",
+        "AMD.US"
+      ],
+      "sourceDateSumMarginEUR": 231.74,
+      "headroomEUR300": 68.26,
+      "stressHeadroomEUR210": -21.74,
+      "stress210Fits": false,
+      "financedCertified": false
+    }
+  ],
+  "threeDistinctAssetClassesIllustrativelyUnderEUR210Stress": 227,
+  "mcs1": {
+    "nominalWeeklyDecisionClocks": 105,
+    "actualSignalCounts": null,
+    "financedCompleteRoundTrips": 0,
+    "currentAsOfThreeSingleLegMarginsEUR": 216.57,
+    "indicativeCapitalHeadroomEUR300": 83.43,
+    "stressEquityEUR210MarginGapEUR": 6.57,
+    "usdxOneLegPercentageCapital": 61.28,
+    "usdxOneLegPercentageStressEquity": 87.5429,
+    "usdxPlusNatGasStressHeadroomEUR": 1.42,
+    "stressAssumptionsNotExecutionProof": true
+  },
+  "costBreakEvenHurdlesSourceOneSnapshotPlusDeclaredHypotheticalFriction": {
+    "NatGas": {
+      "singleObservedSpreadBps": 11.104942,
+      "illustrativeCommissionBpsAtAMD200USD": 0,
+      "illustrativeCentralGrossHurdleBps": 17.157413,
+      "illustrativeAdverseGrossHurdleBps": 23.209884,
+      "quotePairs": 1,
+      "distributionProven": false,
+      "modelNetEUR": null
+    },
+    "USDX": {
+      "singleObservedSpreadBps": 4.917823,
+      "illustrativeCommissionBpsAtAMD200USD": 0,
+      "illustrativeCentralGrossHurdleBps": 7.876735,
+      "illustrativeAdverseGrossHurdleBps": 10.835646,
+      "quotePairs": 1,
+      "distributionProven": false,
+      "modelNetEUR": null
+    },
+    "AMD.US": {
+      "singleObservedSpreadBps": 15.011258,
+      "illustrativeCommissionBpsAtAMD200USD": 20,
+      "illustrativeCentralGrossHurdleBps": 43.016887,
+      "illustrativeAdverseGrossHurdleBps": 51.022516,
+      "quotePairs": 1,
+      "distributionProven": false,
+      "modelNetEUR": null
+    }
+  },
+  "economicVerdict": {
+    "originalNewMarketOHLCVRescored": false,
+    "forecastGrossBps": null,
+    "forecastNetCentralBps": null,
+    "forecastNetAdverseBps": null,
+    "forecastIncrementalNetBps": null,
+    "financedBrokerNetEUR": null,
+    "independentConfirmation": false,
+    "hard21Proven": false,
+    "drawdown30Certified": false,
+    "ordersLiveDemo": 0,
+    "cloudActivated": false
+  },
+  "interpretation": "Original-source cost and static margin economic screening was executed; no broker filled trades, new OHLCV outcome backtest or new predictive alpha. Historical source tariffs/quotes may differ and FX/financing/fills are not certified."
+}
