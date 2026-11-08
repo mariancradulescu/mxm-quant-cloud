@@ -8,6 +8,7 @@ McsNativeChecks.Run(Check);
 ProspectiveIntegratedChecks.Run(Check);
 ResearchScopeContractChecks.Run(Check);
 NativeCausalWarmupChecks.Run(Check);
+NativeResearchUniverseChecks.Run(Check);
 NativeMultiFamilyFeatureChecks.Run(Check);
 BrokerFlatReadbackChecks.Run(Check);
 BrokerOpenReadbackChecks.Run(Check);
