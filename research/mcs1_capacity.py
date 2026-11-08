@@ -40,6 +40,23 @@ def inspect_capacity(protocol=None,broker=None):
         raise ValueError("MCS1_MARGIN_OR_MINIMUM_VOLUME_NOT_FEASIBLE")
     combined=sum(margins.values())
     required=21
+    # A SINGLE authentic observed CMA2 spread per symbol, never a historical
+    # p50/p90, can only define a HYPOTHETICAL minimum price hurdle.
+    spreads={s:D(b["candidates"][s]["observedSpreadBps"]) for s in names}
+    if any(v<0 for v in spreads.values()):raise ValueError("BROKER_SPREAD_NOT_OBSERVED")
+    # Illustrative AMD quoted price 200 USD/share; original minimum fee
+    # two sides USD0.02 each for minimum 0.1 share -> 20bps at USD200.
+    hypotheticalAmdUsdPrice=D(200)
+    amdUnits=units["AMD.US"]
+    minUsdFee=D(b["candidates"]["AMD.US"]["minCommissionWire"])/D(10)**8
+    oneSideUsd=max(
+       D(b["candidates"]["AMD.US"]["commissionRateWire"])/D(10)**8 *
+       amdUnits/D(b["candidates"]["AMD.US"]["lotSizeUnits"]),
+       minUsdFee)
+    illustrativeCommission={s:D(0) for s in names}
+    illustrativeCommission["AMD.US"]=D(20000)*oneSideUsd/(amdUnits*hypotheticalAmdUsdPrice)
+    central={s:spreads[s]*D("1.5")+illustrativeCommission[s]+D(".5") for s in names}
+    adverse={s:spreads[s]*D(2)+illustrativeCommission[s]+D(1) for s in names}
     return {
       "source":"AUTHENTIC_CMA2_ORIGINAL_CONTRACT_AS_OBSERVED_2026_11_05",
       "economicProtocolFrozenBeforePriceOutcomes":True,
@@ -52,6 +69,14 @@ def inspect_capacity(protocol=None,broker=None):
       "sourceWindowCoverage":None,
       "sourceObservedMinimumMarginsEur":{k:str(v) for k,v in margins.items()},
       "observedMinimumUnits":{k:str(v) for k,v in units.items()},
+      "illustrativeSingleSpreadConditionalMinimumGrossHurdlesBps":{
+        key:{"sourceObservedOneSpreadBps":str(spreads[key]),
+             "illustrativeCentralCostBps":str(central[key]),
+             "illustrativeAdverseCostBps":str(adverse[key])}
+        for key in names},
+      "illustrativeAmdSharePriceUsdForFeeBpsOnly":str(hypotheticalAmdUsdPrice),
+      "oneObservedQuotePairPerSymbolNotHistoricalDistribution":True,
+      "theseAreNotRealModelNetOrPredictiveOutcomes":True,
       "sumOfSourceDateOneMinPositionMarginsEur":str(combined),
       "hypotheticalHeadroomBeforeCommissionsAndFloatingDrawdownEur":str(D(300)-combined),
       "sumOfMarginsDoesNotProveSimultaneousFinancing":True,
