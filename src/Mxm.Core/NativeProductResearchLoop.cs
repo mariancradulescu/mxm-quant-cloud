@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 
 namespace Mxm.Core;
 
@@ -32,7 +33,9 @@ public sealed record NativeProductResearchReport(
     decimal? ModelMatchedLongBenchmarkEur=null,
     decimal? ModelIncrementalVsLongEur=null,
     bool AdversePathFullyRepriced=false,int ObservedM5SlotsNotScored=0,
-    long MaxObservedM5LagMs=0,bool HistoryPathComplete=false);
+    long MaxObservedM5LagMs=0,bool HistoryPathComplete=false,
+    string ModelEpochId="",string ContinuityBoundary="ISOLATED_MODEL_EPISODE",
+    int UnresolvedCalendarGaps=0);
 
 public sealed class NativeProductResearchLoop
 {
@@ -53,9 +56,86 @@ public sealed class NativeProductResearchLoop
     private readonly Dictionary<string,int> weekly=new(StringComparer.Ordinal);
     private readonly List<NativeProductSignal> signals=new();
     private long lastClock=-1;
+    private string epochId="EPISODE-"+Guid.NewGuid().ToString("N");
+    private bool recoveredCheckpoint=false;
     private int eventSequence, forecasts, accepted, rejected;
 
     public NativeFundedSession ResearchSession=>session;
+    public string ModelEpochId=>epochId;
+    public long LastObservedAt=>lastClock;
+    // This SHA-256 only detects accidental/unauthorised checkpoint mutation.
+    // It is NOT a signature, custody receipt or evidence that missing prices
+    // were observed. Caller must verify its source dataset independently.
+    public string ExportIntegrityCheckpoint(string sourceDatasetSha256)
+    {
+        if(sourceDatasetSha256.Length!=64 ||
+            !sourceDatasetSha256.All(Uri.IsHexDigit))
+            throw new ArgumentException("MODEL_REPLAY_CHECKPOINT_SOURCE_SHA_MISSING");
+        string payload=JsonSerializer.Serialize(new {
+            Version="mxm-product-shadow-episode-v1",EpochId=epochId,
+            SourceSha=sourceDatasetSha256,LastClock=lastClock,
+            Session=session.Checkpoint(),Adverse=adverse.Export(),
+            Tracked=tracked,PreviousForecastBar=previousForecastBar,
+            LastSeenM5=lastSeenM5Bar,Weekly=weekly,Signals=signals,
+            EventSequence=eventSequence,Forecasts=forecasts,
+            Accepted=accepted,Rejected=rejected,
+            UnobservedM5=unobservedM5DecisionSlots,
+            UnresolvedGaps=unresolvedCalendarGaps,
+            MaxLag=maximumBarObservationLagMs,
+            HistoryPathComplete=historicalPathComplete,
+            Benchmark=matchedLongBenchmarkNetEur
+        });
+        return JsonSerializer.Serialize(new {Payload=payload,Sha256=Fingerprint(payload)});
+    }
+    public static NativeProductResearchLoop RestoreIntegrityCheckpoint(
+        string json,string expectedSourceDatasetSha256)
+    {
+        using var d=JsonDocument.Parse(json);
+        var root=d.RootElement;
+        var payload=root.GetProperty("Payload").GetString()??"";
+        if(Fingerprint(payload)!=root.GetProperty("Sha256").GetString())
+            throw new ArgumentException("MODEL_REPLAY_CHECKPOINT_INTEGRITY_MISMATCH");
+        using var parsed=JsonDocument.Parse(payload);
+        var p=parsed.RootElement;
+        if(p.GetProperty("Version").GetString()!="mxm-product-shadow-episode-v1"||
+           p.GetProperty("SourceSha").GetString()!=expectedSourceDatasetSha256)
+            throw new ArgumentException("MODEL_REPLAY_CHECKPOINT_SOURCE_OR_VERSION_MISMATCH");
+        var loop=new NativeProductResearchLoop();
+        loop.epochId=p.GetProperty("EpochId").GetString()??throw new ArgumentException("MODEL_EPOCH_MISSING");
+        loop.session=NativeFundedSession.Restore(
+            p.GetProperty("Session").GetString()!,"NATIVE_PRODUCT_MODEL_REPLAY_ONLY");
+        loop.adverse=NativeProductAdverseBook.Restore(p.GetProperty("Adverse").GetString()!);
+        void Load<T>(Dictionary<string,T> target,string name)
+        {
+            var src=JsonSerializer.Deserialize<Dictionary<string,T>>(
+                p.GetProperty(name).GetRawText())??throw new ArgumentException("MODEL_REPLAY_MISSING_STATE");
+            foreach(var entry in src)target.Add(entry.Key,entry.Value);
+        }
+        Load(loop.tracked,"Tracked");
+        Load(loop.previousForecastBar,"PreviousForecastBar");
+        Load(loop.lastSeenM5Bar,"LastSeenM5");
+        Load(loop.weekly,"Weekly");
+        loop.signals.AddRange(JsonSerializer.Deserialize<NativeProductSignal[]>(
+            p.GetProperty("Signals").GetRawText())??Array.Empty<NativeProductSignal>());
+        loop.eventSequence=p.GetProperty("EventSequence").GetInt32();
+        loop.forecasts=p.GetProperty("Forecasts").GetInt32();
+        loop.accepted=p.GetProperty("Accepted").GetInt32();
+        loop.rejected=p.GetProperty("Rejected").GetInt32();
+        loop.unobservedM5DecisionSlots=p.GetProperty("UnobservedM5").GetInt32();
+        loop.unresolvedCalendarGaps=p.GetProperty("UnresolvedGaps").GetInt32();
+        loop.maximumBarObservationLagMs=p.GetProperty("MaxLag").GetInt64();
+        loop.historicalPathComplete=p.GetProperty("HistoryPathComplete").GetBoolean();
+        loop.matchedLongBenchmarkNetEur=p.GetProperty("Benchmark").GetDecimal();
+        loop.lastClock=p.GetProperty("LastClock").GetInt64();
+        var money=loop.session.Ledger.Summary();
+        var stress=loop.adverse.Summary;
+        if(loop.lastClock<0||money.CashEur<=0||money.OpenPositions!=
+            loop.tracked.Values.Count(x=>x.OpenAt>0)||
+           (loop.adverse.Complete && stress is null))
+            throw new ArgumentException("MODEL_REPLAY_CHECKPOINT_MONETARY_OR_CLOCK_MISMATCH");
+        loop.recoveredCheckpoint=true;
+        return loop;
+    }
     public bool HistoricalPathComplete=>historicalPathComplete;
     public int UnobservedM5DecisionSlots=>unobservedM5DecisionSlots;
     public int UnresolvedCalendarGaps=>unresolvedCalendarGaps;
@@ -105,6 +185,15 @@ public sealed class NativeProductResearchLoop
                x.Symbol!=x.Quote.Symbol||x.SlippagePerSideQuote<0||
                x.HoldingMinutes<15||x.HoldingMinutes>240))
             throw new ArgumentException("PRODUCT_REPLAY_NONCAUSAL_MARKET_CLOCK");
+        // Do not silently bridge unobserved intrahorizon equity. Offline replay
+        // can preserve a full path by supplying every historical decision clock;
+        // Cloud restart creates an independent model epoch until such a path
+        // and a verified checkpoint have been provided.
+        if(lastClock>0 && at-lastClock>315000L)
+        {
+            historicalPathComplete=false;
+            unresolvedCalendarGaps++;
+        }
         // One coherent multiasset mark; no broker ledger/account state is ever
         // accessed or modified. No synthetic fill is created on the intent clock.
         ApplyFacts(new[]{Event("MARK",at,quotes:markets.Select(x=>x.Quote).ToArray())});
@@ -340,6 +429,11 @@ public sealed class NativeProductResearchLoop
             AdversePathFullyRepriced:adverse.Complete,
             ObservedM5SlotsNotScored:unobservedM5DecisionSlots,
             MaxObservedM5LagMs:maximumBarObservationLagMs,
-            HistoryPathComplete:historicalPathComplete);
+            HistoryPathComplete:historicalPathComplete,
+            ModelEpochId:epochId,
+            ContinuityBoundary:recoveredCheckpoint?
+                "VERIFIED_INTEGRITY_CHECKPOINT_SAME_SOURCE_EPOCH_NOT_BROKER_CERTIFIED":
+                "NEW_ISOLATED_MODEL_EPOCH_NOT_CLOUD_HISTORY_CONTINUATION",
+            UnresolvedCalendarGaps:unresolvedCalendarGaps);
     }
 }
