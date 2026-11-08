@@ -46,6 +46,35 @@ public static class NativeProductResearchLoopChecks
             refused.RejectedIntents>=1&&refused.ModelCashEur==300m&&
             refused.ModelClosedRoundTrips==0,
             "no independent predictive benchmark refuses prospective entry without mutating EUR300 cash");
+        // Two distinct markets arriving on different M5 decision clocks
+        // must still compete against ONE existing held and pending budget.
+        var staggered=new NativeProductResearchLoop();
+        var t0=anchor+2000;
+        var onlyA=staggered.Advance(t0,new[]{Market("SYNTH_A",t0,0)},true);
+        check(onlyA.AcceptedModelIntents==1&&onlyA.ModelPendingIntents==1,
+            "first symbol reserves one EUR300 model intent before second market appears");
+        const string provisionalSource="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+        var livePending=NativeProductResearchLoop.RestoreIntegrityCheckpoint(
+            staggered.ExportIntegrityCheckpoint(provisionalSource),provisionalSource);
+        var t1=t0+m5;
+        var newB=livePending.Advance(t1,new[]{
+            Market("SYNTH_A",t1,1),Market("SYNTH_B",t1,1)},true);
+        check(newB.AcceptedModelIntents==2&&newB.ModelOpenPositions==1&&
+              newB.ModelPendingIntents==1&&newB.ModelCashEur<300m,
+            "staggered B is assessed with A held and common margin, with pending state restored across checkpoint");
+        // A cTrader Algo Symbol observation must NEVER be silently upgraded
+        // to an authenticated original Pepperstone contract.
+        var algoTerms=Contract("SYNTH_A",t0) with {OriginalBrokerAuthenticated=false};
+        var algoContext=new NativeMarketCostContext(t0,10m,10.02m,
+            1m,1m,1m,1m,20m,1m,.005m);
+        bool originalTariffRejects=false;
+        try{NativeBrokerContractCosts.Quote(algoTerms,algoContext);}
+        catch(ArgumentException){originalTariffRejects=true;}
+        var algoOnly=NativeBrokerContractCosts.QuoteCurrentAlgo(algoTerms,algoContext);
+        check(originalTariffRejects&&
+              !algoOnly.HistoricalExecutionCertified&&
+              algoOnly.EvidenceLevel.Contains("UNATTESTED"),
+            "current Algo fees are priced conditionally without inventing original account cryptographic proof");
         var loop=new NativeProductResearchLoop();
         var a=loop.Advance(at,new[]{Market("SYNTH_A",at,0),
             Market("SYNTH_B",at,0)},EnableUnqualifiedShadowSimulation:true);
@@ -88,10 +117,15 @@ public static class NativeProductResearchLoopChecks
             fragments.All(x=>x.SpreadEur>0)&&
             fragments.All(x=>x.SlippageEur>0),
             "full modeled settlement itemizes conversion, commission, actual modeled rollover charge, spread and slippage");
-        check(r.ModelAdverseNetProxyEur<r.ModelCentralNetEur&&
+        check(r.ModelAdverseNetProxyEur is decimal stressed &&
+              stressed<r.ModelCentralNetEur &&
+              r.AdversePathFullyRepriced &&
+              r.ModelMatchedLongBenchmarkEur.HasValue &&
+              r.ModelIncrementalVsLongEur==
+                  r.ModelCentralNetEur-r.ModelMatchedLongBenchmarkEur &&
               r.ModelMaximumSampledDrawdown>0m&&!r.Qualified&&
               !r.BrokerNetCertified,
-            "adverse extra-spread scenario and floating marked equity remain model-only");
+            "adverse bid/ask, fee, slippage, FX and swap are financially repriced in a second native ledger; matched same-clock long benchmark and floating equity remain descriptive");
         bool backwardRejected=false;
         try{loop.Advance(at+1,Array.Empty<NativeProductMarket>(),false);}
         catch(ArgumentException){backwardRejected=true;}
@@ -104,7 +138,11 @@ public static class NativeProductResearchLoopChecks
                 initialCapitalEur=300m,
                 grossModelEur=r.ModelGrossEur,
                 centralNetModelEur=r.ModelCentralNetEur,
-                adverseExtraSpreadModelEur=r.ModelAdverseNetProxyEur,
+                adverseFullRepricedNetModelEur=r.ModelAdverseNetProxyEur,
+                matchedLongBenchmarkNetModelEur=r.ModelMatchedLongBenchmarkEur,
+                incrementalVsMatchedLongModelEur=r.ModelIncrementalVsLongEur,
+                unobservedM5Slots=r.ObservedM5SlotsNotScored,
+                adverseFullyRepriced=r.AdversePathFullyRepriced,
                 cashEur=r.ModelCashEur,
                 closedRoundTrips=r.ModelClosedRoundTrips,
                 sampledFloatingDrawdown=r.ModelMaximumSampledDrawdown,
@@ -112,6 +150,26 @@ public static class NativeProductResearchLoopChecks
                 brokerNetCertified=false,independentConfirmation=false,
                 ordersEnabled=false,source="PURELY_SYNTHETIC_NUMERICAL_FIXTURE"
             }));
+        const string sourceHash="cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc";
+        string full=loop.ExportIntegrityCheckpoint(sourceHash);
+        var cloned=NativeProductResearchLoop.RestoreIntegrityCheckpoint(full,sourceHash);
+        check(cloned.ModelEpochId==loop.ModelEpochId &&
+              cloned.ResearchSession.Ledger.Summary()==loop.ResearchSession.Ledger.Summary() &&
+              cloned.AdverseScenario.Summary==loop.AdverseScenario.Summary,
+              "source-bound integrity checkpoint restores original session and fully repriced adverse cash without second EUR300 deposit");
+        bool differentSourceRejected=false;
+        try{NativeProductResearchLoop.RestoreIntegrityCheckpoint(full,
+            "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");}
+        catch(ArgumentException){differentSourceRejected=true;}
+        check(differentSourceRejected,"different historical source cannot adopt a previous model capital run");
+        var oneMissed=new NativeProductResearchLoop();
+        _=oneMissed.Advance(at,new[]{Market("SYNTH_A",at,0)},false);
+        var delayed=oneMissed.Advance(at+2*m5,new[]{
+            Market("SYNTH_A",at+2*m5,2)},false);
+        check(delayed.ObservedM5SlotsNotScored>=1 &&
+              !delayed.HistoryPathComplete &&
+              delayed.UnresolvedCalendarGaps>=1,
+              "M5 skipped decision clock and unobserved floating path explicitly invalidate complete history");
         var checkpoint=loop.ResearchSession.Checkpoint();
         var restored=NativeFundedSession.Restore(checkpoint,loop.ResearchSession.AccountBinding);
         check(restored.Ledger.Summary()==loop.ResearchSession.Ledger.Summary(),
