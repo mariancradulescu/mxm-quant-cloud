@@ -646,3 +646,28 @@ def check():
 
 if __name__ == '__main__':
     check()
+
+    # COL1: recompute published exposed-source outcome arithmetic in existing CI.
+    # No new broker request, workflow, protected credential, old strategy rerun,
+    # confidential source read, orders, cloud, or holdout evaluation.
+    from research.col1_exposed_session_premium import calculate
+    import math
+    calculated = calculate(json.loads(Path('docs/AIP1_AUTHENTIC_RESULT.json').read_text()))
+    published = json.loads(Path('docs/COL1_EXPOSED_AUTHENTIC_RESULT_20261108.json').read_text())
+    def same(a,b):
+        if isinstance(a,dict) and isinstance(b,dict):
+            return a.keys()==b.keys() and all(same(a[k],b[k]) for k in a)
+        if isinstance(a,list) and isinstance(b,list):
+            return len(a)==len(b) and all(same(x,y) for x,y in zip(a,b))
+        if isinstance(a,float) and isinstance(b,(float,int)):
+            return math.isclose(a,b,rel_tol=1e-12,abs_tol=1e-9)
+        return a==b
+    assert same(calculated,published),'COL1_REPORT_MISMATCH'
+    assert calculated['selectionEvents']==287 and calculated['missing']==0
+    assert calculated['otherPhaseSourceRowsNotScored']==359
+    assert sum(v>=21 for v in calculated['maxPotentialSignalSlotsByWeek'])==5
+    assert calculated['jointHac3BonferroniDescriptive']['adverseVsCash']['meanBps'] < 0
+    assert calculated['jointHac3BonferroniDescriptive']['adverseIncrementalVsFrozenAip1SideBenchmark']['meanBps'] < 0
+    assert calculated['financedRoundTrips']==0 and calculated['conditionalNetEur'] is None
+    assert not calculated['independentConfirmation'] and not calculated['tradingQualification']
+    print('PASS COL1 historical price proxy, negative two adverse endpoints; no funded qualification')
