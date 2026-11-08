@@ -79,6 +79,16 @@ static class NativeContractCostChecks
         check(conversion.Quote.EurCredit==.0059976m &&
             conversion.Quote.EurDebit==.0060024m,
             "conversion fee follows signed native debit/credit rates");
+        // Percentage-of-value tariffs are based on the actual submitted
+        // side, not a universal ASK; an implicit ASK for short exits or
+        // short entries would silently overcharge / distort NET.
+        var equities=terms with {CommissionType=3,PreciseRateWire=5000L};
+        var buyPrice=NativeBrokerContractCosts.Quote(equities,context);
+        var sellPrice=NativeBrokerContractCosts.Quote(equities,context,
+            executionIsBuy:false);
+        check(buyPrice.OneSideCommissionEur>sellPrice.OneSideCommissionEur &&
+            buyPrice.OneSideCommissionEur-sellPrice.OneSideCommissionEur==.00006m,
+            "percentage commission follows the execution side bid/ask, not extra spread");
         check(!priced.HistoricalExecutionCertified,
             "synthetic parity never asserts actual broker-funded profit");
     }
