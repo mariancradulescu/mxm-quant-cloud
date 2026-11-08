@@ -46,6 +46,7 @@ class CrossClassExistingCostEnvelopeTests(unittest.TestCase):
     def test_public_executed_receipt_recomputed_from_original_source_docs(self):
         import json
         from pathlib import Path
+        from decimal import Decimal as D
         derived=actual_receipt_envelope()
         receipt=json.loads(Path(
             "docs/OWNER_EXECUTED_MULTI_ASSET_COST_CAPITAL_SCREEN_20261108.json").read_text())
@@ -58,10 +59,10 @@ class CrossClassExistingCostEnvelopeTests(unittest.TestCase):
             receipt["combinationsAtOneSourceMinimumVolume"],
             derived["selectedActualSourceMarginConfigurations"]):
             self.assertEqual(actual["symbols"],expected["symbols"])
-            self.assertEqual(str(actual["sourceDateSumMarginEUR"]),
-                             expected["observedAsOfMinMarginSumEur"])
-            self.assertEqual(str(actual["stressHeadroomEUR210"]),
-                             expected["stress210StaticHeadroomBeforeCostsEur"])
+            self.assertEqual(D(str(actual["sourceDateSumMarginEUR"])),
+                             D(expected["observedAsOfMinMarginSumEur"]))
+            self.assertEqual(D(str(actual["stressHeadroomEUR210"])),
+                             D(expected["stress210StaticHeadroomBeforeCostsEur"]))
             self.assertEqual(actual["stress210Fits"],
                              expected["stress210SourceDateMinimumMarginFits"])
             self.assertFalse(actual["financedCertified"])
