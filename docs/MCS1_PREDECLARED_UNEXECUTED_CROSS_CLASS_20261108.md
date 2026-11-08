@@ -45,6 +45,41 @@ and concurrency permits; 20% is a simple mathematical feasibility
 threshold, **NOT a forecast or achieved frequency**. The objective
 is system-wide, not per symbol.
 
+## Executed source-dated economic feasibility *before* H1 data
+
+A pure, regression-tested `research/mcs1_capacity.py` now independently
+reads **existing authenticated CMA2 published contract evidence**, not
+fabricated trades. It verifies the three minimum margins sum to EUR216.57
+and the EUR300 initial capital would leave EUR83.43 *before* fees,
+maintenance/floating losses and overlapping exposure. It recomputes 105
+nominal clock slots/week directly from all three predeclared hour/day
+calendars, not from hardcoded signal counts. Reaching HARD21 would
+mathematically require a >=20% conversion of these *nominal clocks* into
+admitted financed complete round trips; actual source gap, signal and
+allocation rates are unknown.
+
+The only original paired CMA2 BID/ASK snapshot for each chosen symbol
+gives a **single** spread observation (not distribution). If we apply
+a plainly artificial 0.5x spread central / 1.0x spread adverse
+slippage and add 0.5/1 bps route/model buffers, the resulting
+*ILLUSTRATIVE gross break-even hurdles* are:
+
+| Symbol | Current source one snapshot spread bps | Illustrative central cost hurdle bps | Illustrative adverse cost hurdle bps |
+|---|---:|---:|---:|
+| NatGas | 11.104942 | 17.157413 | 23.209884 |
+| USDX | 4.917823 | 7.876735 | 10.835646 |
+| AMD.US | 15.011258 | 43.016887 | 51.022516 |
+
+AMD calculations additionally assume an **illustrative USD200 per
+share**, authenticated USD0.02 broker minimum fee PER SIDE and 0.1
+share volume. The source-data commission hurdle alone is 20bps at
+that assumed price; price variation changes the bps cost. This
+is a source-grounded pre-study feasibility calculation, **NOT**
+calibrated cost p50/p90, authenticated trade fills, historical tariff
+continuity, strategy BRUT, NET or confirmation. MCS1 will not
+declare central/adverse model NET until genuine multi-date quotes
+and original H1 outcomes actually pass the predeclared source gates.
+
 The planned separate source phase has exactly 324 original-account
 read-only requests: 3 account/asset/universe headers, 6 as-of
 contract/margin requests, 159 weekly H1 bars (3 x 53 including five
