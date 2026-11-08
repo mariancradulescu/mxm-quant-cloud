@@ -288,6 +288,87 @@ public class MxmCloud : Robot
                 // all held, pending and model positions are still tracked.
                 if(_readOnlyUniverseSweep<int.MaxValue)_readOnlyUniverseSweep++;
                 else _readOnlyUniverseSweep=0;
+                // Priority lane: execute the active M5 strategy observation
+                // before the slower rotating full-universe survey, otherwise
+                // 32 x 6 background warmups can delay a 5-minute decision.
+                // A real product-shaped research path using current cTrader
+                // prices, native contract snapshots and completed M5/M15 bars.
+                // Simulated fills happen on later observations only; neither
+                // this loop nor its core types contains broker order actions.
+                if(_productResearch is not null)
+                {
+                    try
+                    {
+                        var inputs=new System.Collections.Generic.List<NativeProductMarket>();
+                        if(Account.BrokerName.Contains("Pepperstone",
+                            System.StringComparison.OrdinalIgnoreCase))
+                        {
+                            var active=ActiveM5ResearchWatchlist
+                                .Split(new[]{',',';'},System.StringSplitOptions.TrimEntries|
+                                    System.StringSplitOptions.RemoveEmptyEntries)
+                                .Distinct(System.StringComparer.Ordinal).ToArray();
+                            if(active.Length>16 || active.Any(x=>x.Length>64))
+                                throw new System.ArgumentException("ACTIVE_M5_WATCHLIST_INVALID_OR_TOO_LARGE");
+                            foreach(var name in active
+                                .Concat(_productResearch.ActiveSymbols)
+                                .Distinct(System.StringComparer.Ordinal))
+                            {
+                                try
+                                {
+                                    if(!Symbols.Exists(name))continue;
+                                    var symbol=Symbols.GetSymbol(name);
+                                    var feas=NativeResearchMarketCapacity.Screen(new(
+                                        name,symbol.IsTradingEnabled,symbol.Bid,symbol.Ask,
+                                        symbol.VolumeInUnitsMin,
+                                        symbol.GetEstimatedMargin(TradeType.Buy,symbol.VolumeInUnitsMin),
+                                        symbol.GetEstimatedMargin(TradeType.Sell,symbol.VolumeInUnitsMin)));
+                                    // Active signals must have a currently
+                                    // plausible minimum-volume funding route.
+                                    if(!feas.EitherDirectionWithinInitial300 &&
+                                        !_productResearch.ActiveSymbols.Contains(name))
+                                        continue;
+                                    var market=ReadProductResearchMarket(name,warmupNow);
+                                    if(market is not null)inputs.Add(market);
+                                }
+                                catch(System.Exception)
+                                {
+                                    // Explicitly report missed observation
+                                    // later; broker risk monitoring stays live.
+                                }
+                            }
+                        }
+                        // Explicitly process every observed clock even when
+                        // no valid candidates exist, so missing marks cannot
+                        // become fabricated close or profitable executions.
+                        var report=_productResearch.Advance(warmupNow,inputs.ToArray(),
+                            EnableUnqualifiedShadowSimulation:true);
+                        string status=report.ModelClosedRoundTrips+" completed model trips; "+
+                            report.AcceptedModelIntents+" conditional research intents; "+
+                            report.RejectedIntents+" rejected; cash EUR "+
+                            report.ModelCashEur.ToString("0.0000",
+                                System.Globalization.CultureInfo.InvariantCulture)+
+                            "; sampled floating DD "+
+                            (100m*report.ModelMaximumSampledDrawdown).ToString("0.000",
+                                System.Globalization.CultureInfo.InvariantCulture)+
+                            "%; unobserved M5 slots "+report.ObservedM5SlotsNotScored+
+                            "; lag max ms "+report.MaxObservedM5LagMs+
+                            "; adverse fully repriced "+report.AdversePathFullyRepriced+
+                            "; restart "+report.ContinuityBoundary;
+                        if(report.ModelClosedRoundTrips!=_lastResearchModelTrips ||
+                            report.LatestSignals.Length>0 ||
+                            status!=_lastResearchEconomicStatus)
+                        {
+                            Print("MXM model-only product research: {0}; no broker NET qualification or orders.",status);
+                            _lastResearchModelTrips=report.ModelClosedRoundTrips;
+                            _lastResearchEconomicStatus=status;
+                        }
+                    }
+                    catch(System.Exception)
+                    {
+                        // Broker account cash monitoring remains independent.
+                        Print("MXM model-only replay missing current complete market/contract evidence; no broker orders.");
+                    }
+                }
                 int ready=0,total=0,mfaFeatureSlices=0;
                 int quoteReady=0,minimumVolumeWithin300=0;
                 // Native, account-current terms, not historical fill prices or
@@ -388,84 +469,6 @@ public class MxmCloud : Robot
                     }
                 }
 
-                // A real product-shaped research path using current cTrader
-                // prices, native contract snapshots and completed M5/M15 bars.
-                // Simulated fills happen on later observations only; neither
-                // this loop nor its core types contains broker order actions.
-                if(_productResearch is not null)
-                {
-                    try
-                    {
-                        var inputs=new System.Collections.Generic.List<NativeProductMarket>();
-                        if(Account.BrokerName.Contains("Pepperstone",
-                            System.StringComparison.OrdinalIgnoreCase))
-                        {
-                            var active=ActiveM5ResearchWatchlist
-                                .Split(new[]{',',';'},System.StringSplitOptions.TrimEntries|
-                                    System.StringSplitOptions.RemoveEmptyEntries)
-                                .Distinct(System.StringComparer.Ordinal).ToArray();
-                            if(active.Length>16 || active.Any(x=>x.Length>64))
-                                throw new System.ArgumentException("ACTIVE_M5_WATCHLIST_INVALID_OR_TOO_LARGE");
-                            foreach(var name in active
-                                .Concat(_productResearch.ActiveSymbols)
-                                .Distinct(System.StringComparer.Ordinal))
-                            {
-                                try
-                                {
-                                    if(!Symbols.Exists(name))continue;
-                                    var symbol=Symbols.GetSymbol(name);
-                                    var feas=NativeResearchMarketCapacity.Screen(new(
-                                        name,symbol.IsTradingEnabled,symbol.Bid,symbol.Ask,
-                                        symbol.VolumeInUnitsMin,
-                                        symbol.GetEstimatedMargin(TradeType.Buy,symbol.VolumeInUnitsMin),
-                                        symbol.GetEstimatedMargin(TradeType.Sell,symbol.VolumeInUnitsMin)));
-                                    // Active signals must have a currently
-                                    // plausible minimum-volume funding route.
-                                    if(!feas.EitherDirectionWithinInitial300 &&
-                                        !_productResearch.ActiveSymbols.Contains(name))
-                                        continue;
-                                    var market=ReadProductResearchMarket(name,warmupNow);
-                                    if(market is not null)inputs.Add(market);
-                                }
-                                catch(System.Exception)
-                                {
-                                    // Explicitly report missed observation
-                                    // later; broker risk monitoring stays live.
-                                }
-                            }
-                        }
-                        // Explicitly process every observed clock even when
-                        // no valid candidates exist, so missing marks cannot
-                        // become fabricated close or profitable executions.
-                        var report=_productResearch.Advance(warmupNow,inputs.ToArray(),
-                            EnableUnqualifiedShadowSimulation:true);
-                        string status=report.ModelClosedRoundTrips+" completed model trips; "+
-                            report.AcceptedModelIntents+" conditional research intents; "+
-                            report.RejectedIntents+" rejected; cash EUR "+
-                            report.ModelCashEur.ToString("0.0000",
-                                System.Globalization.CultureInfo.InvariantCulture)+
-                            "; sampled floating DD "+
-                            (100m*report.ModelMaximumSampledDrawdown).ToString("0.000",
-                                System.Globalization.CultureInfo.InvariantCulture)+
-                            "%; unobserved M5 slots "+report.ObservedM5SlotsNotScored+
-                            "; lag max ms "+report.MaxObservedM5LagMs+
-                            "; adverse fully repriced "+report.AdversePathFullyRepriced+
-                            "; restart "+report.ContinuityBoundary;
-                        if(report.ModelClosedRoundTrips!=_lastResearchModelTrips ||
-                            report.LatestSignals.Length>0 ||
-                            status!=_lastResearchEconomicStatus)
-                        {
-                            Print("MXM model-only product research: {0}; no broker NET qualification or orders.",status);
-                            _lastResearchModelTrips=report.ModelClosedRoundTrips;
-                            _lastResearchEconomicStatus=status;
-                        }
-                    }
-                    catch(System.Exception)
-                    {
-                        // Broker account cash monitoring remains independent.
-                        Print("MXM model-only replay missing current complete market/contract evidence; no broker orders.");
-                    }
-                }
                 string warmupStatus=ready+"/"+total+
                     "; market feature slices "+mfaFeatureSlices+
                     "; present-term quotes "+quoteReady+"/"+universe.ResearchSymbols.Length+
