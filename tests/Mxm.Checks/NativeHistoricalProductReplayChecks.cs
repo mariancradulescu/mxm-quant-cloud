@@ -78,5 +78,23 @@ public static class NativeHistoricalProductReplayChecks
                 .Take(10).Append(raw[9]).Concat(raw.Skip(10)).ToArray())}},true);}
         catch(ArgumentException){duplicateBarsRejected=true;}
         check(duplicateBarsRejected,"duplicate historical M5 bar never becomes a second signal");
+        Console.WriteLine("MXM_PRODUCT_HISTORICAL_ADAPTER_SYNTHETIC_RECEIPT="+
+            JsonSerializer.Serialize(new {
+                source=out1.SourceLabel,
+                instruments=out1.InstrumentsWithCompleteM5,
+                originalM5=out1.OriginalM5Bars,
+                derivedM15=out1.CausalM15Bars,
+                quoteClocks=out1.DistinctQuoteClocks,
+                modelSignals=out1.ForecastsGenerated,
+                modelIntents=out1.ModelIntentCount,
+                modelClosedRoundTrips=out1.CompletedModelRoundTrips,
+                modelCentralNetEur=out1.ModelClosedCentralNetEur,
+                modelAdverseNetEur=out1.ModelClosedAdverseNetEur,
+                matchedBenchmarkNetEur=out1.MatchedLongBenchmarkNetEur,
+                descriptiveIncrementalNetEur=out1.IncrementalVsLongNetEur,
+                sampledDd=out1.MaximumSampledCentralDrawdown,
+                continuousIntrabarEquityCertified=false,
+                authenticatedBrokerData=false,independentConfirmation=false
+            }));
     }
 }
