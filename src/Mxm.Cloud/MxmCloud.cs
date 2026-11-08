@@ -6,6 +6,10 @@ namespace cAlgo.Robots;
 [Robot(TimeZone = TimeZones.UTC, AccessRights = AccessRights.None)]
 public class MxmCloud : Robot
 {
+    // Adds proactively observed markets before positions exist; no order permission.
+    [Parameter("Read-only research universe", DefaultValue = "EURUSD,GBPUSD,AUDUSD,USDJPY,USDCAD,US500,NAS100,XAUUSD")]
+    public string ReadOnlyResearchUniverse { get; set; } = "EURUSD,GBPUSD,AUDUSD,USDJPY,USDCAD,US500,NAS100,XAUUSD";
+
     private string _lastMode = "";
     private bool _transientFault;
     private NativeFundedSession? _fundedSession;
@@ -15,6 +19,7 @@ public class MxmCloud : Robot
     private string _lastNativeOpenInventoryFingerprint="";
     private long _nextWarmupPollAt;
     private string _lastWarmupStatus="";
+    private string _lastUniverseStatus="";
     private static long Stamp(System.DateTime t)=>new System.DateTimeOffset(System.DateTime.SpecifyKind(t,System.DateTimeKind.Utc)).ToUnixTimeMilliseconds();
 
 
@@ -147,11 +152,22 @@ public class MxmCloud : Robot
                 riskAt,riskAvailable,riskCash,riskEquity,riskMargin,riskFree,riskCredit,stableRisk,true,riskPositions,
                 null,null,null,.01m,riskHash),riskAvailable);
 
-            var symbols=positions.Select(x=>x.SymbolName)
-                .Concat(pending.Select(x=>x.SymbolName))
-                .Append(SymbolName)
-                .Distinct(System.StringComparer.Ordinal)
-                .ToArray();
+            // Product-level distinction: the original scanner only inspected
+            // the chart and held/pending symbols, so it could never discover a
+            // candidate on an unheld market. Resolve the configured broker
+            // universe independently, retaining ALL existing exposure lanes.
+            var universe=NativeResearchUniverse.Resolve(
+                ReadOnlyResearchUniverse,SymbolName,
+                positions.Select(x=>x.SymbolName).Concat(pending.Select(x=>x.SymbolName)),
+                name=>Symbols.Exists(name));
+            var symbols=universe.Symbols;
+            string universeStatus=universe.Status+"; candidates "+
+                universe.ResearchSymbols.Length+"; unavailable "+universe.Unavailable.Length;
+            if(universeStatus!=_lastUniverseStatus)
+            {
+                Print("MXM read-only multiasset product universe: {0}; never an order admission.",universeStatus);
+                _lastUniverseStatus=universeStatus;
+            }
             // Recover bounded causal feature prefixes from native broker bars
             // without replaying annual research or loading a local checkpoint.
             // Each lane is independent: missing market history cannot suppress
@@ -161,6 +177,28 @@ public class MxmCloud : Robot
             {
                 _nextWarmupPollAt=warmupNow+300000;
                 int ready=0,total=0,mfaFeatureSlices=0;
+                int quoteReady=0,minimumVolumeWithin300=0;
+                // Native, account-current terms, not historical fill prices or
+                // a 300 EUR funded multi-position portfolio certificate.
+                foreach(var candidate in universe.ResearchSymbols)
+                {
+                    try
+                    {
+                        var market=Symbols.GetSymbol(candidate);
+                        var capacity=NativeResearchMarketCapacity.Screen(new(
+                            candidate,market.IsTradingEnabled,
+                            market.Bid,market.Ask,market.VolumeInUnitsMin,
+                            market.GetEstimatedMargin(TradeType.Buy,market.VolumeInUnitsMin),
+                            market.GetEstimatedMargin(TradeType.Sell,market.VolumeInUnitsMin)));
+                        if(capacity.QuoteUsable)quoteReady++;
+                        if(capacity.EitherDirectionWithinInitial300)minimumVolumeWithin300++;
+                    }
+                    catch(System.Exception)
+                    {
+                        // One market's unavailable contract/margin observation
+                        // does not suppress account-level cash and risk recovery.
+                    }
+                }
                 var frames=new (TimeFrame Frame,int Minutes,string Name)[]{
                     (TimeFrame.Minute5,5,"M5"),(TimeFrame.Hour,60,"H1"),
                     (TimeFrame.Hour4,240,"H4"),(TimeFrame.Daily,1440,"D1")};
@@ -235,7 +273,11 @@ public class MxmCloud : Robot
                         // observation gap. Retry at the next bounded poll.
                     }
                 }
-                string warmupStatus=ready+"/"+total+"; native MFA1 feature slices "+mfaFeatureSlices;
+                string warmupStatus=ready+"/"+total+
+                    "; market feature slices "+mfaFeatureSlices+
+                    "; present-term quotes "+quoteReady+"/"+universe.ResearchSymbols.Length+
+                    "; min-volume <=EUR300 single-leg "+minimumVolumeWithin300+
+                    " (not jointly funded or cost qualified)";
                 if(warmupStatus!=_lastWarmupStatus)
                 {
                     Print("MXM native bounded causal feature warmup: {0}; no forecast or orders enabled.",warmupStatus);
