@@ -1628,7 +1628,8 @@ jobs:
       github.ref == 'refs/heads/main' &&
       github.actor == 'mariancradulescu' &&
       github.event_name == 'push' &&
-      github.event.head_commit.message == 'MXM_CMA2_MULTI_CLASS_READ_ONLY_COST_PREFLIGHT_ONCE' &&
+      (github.event.head_commit.message == 'MXM_CMA2_MULTI_CLASS_READ_ONLY_COST_PREFLIGHT_ONCE' ||
+      github.event.head_commit.message == 'MXM_CMA2_SCOPE_READ_ONLY_AUTH_RECOVERY_ONCE') &&
       needs.verify.result == 'success'
     needs: verify
     permissions:
@@ -1644,9 +1645,17 @@ jobs:
       - name: Require exact owner single-file source-only CMA2 consent
         shell: bash
         run: |
-          test "$(git log -1 --format=%s)" = 'MXM_CMA2_MULTI_CLASS_READ_ONLY_COST_PREFLIGHT_ONCE'
-          test "$(git diff --name-only HEAD^ HEAD)" = 'ops/cma2-cost-readback-intent.txt'
-          test "$(cat ops/cma2-cost-readback-intent.txt)" = 'CMA2_FOUR_NEW_SYMBOLS_FROZEN_COST_SURFACE_READ_ONLY_NO_TRADES'
+          subject="$(git log -1 --format=%s)"
+          changed="$(git diff --name-only HEAD^ HEAD)"
+          if [[ "$subject" == 'MXM_CMA2_MULTI_CLASS_READ_ONLY_COST_PREFLIGHT_ONCE' ]]; then
+            test "$changed" = 'ops/cma2-cost-readback-intent.txt'
+            test "$(cat ops/cma2-cost-readback-intent.txt)" = 'CMA2_FOUR_NEW_SYMBOLS_FROZEN_COST_SURFACE_READ_ONLY_NO_TRADES'
+          elif [[ "$subject" == 'MXM_CMA2_SCOPE_READ_ONLY_AUTH_RECOVERY_ONCE' ]]; then
+            test "$changed" = 'ops/cma2-auth-recovery-intent.txt'
+            test "$(cat ops/cma2-auth-recovery-intent.txt)" = 'CMA2_ONLY_EXISTING_OWNER_READONLY_SCOPE_ADAPTER_NO_PROTOCOL_CHANGE'
+          else
+            exit 1
+          fi
           test -f research/cma2_protocol.json
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
@@ -1669,7 +1678,8 @@ jobs:
       github.ref == 'refs/heads/main' &&
       github.actor == 'mariancradulescu' &&
       github.event_name == 'push' &&
-      github.event.head_commit.message == 'MXM_CMA2_MULTI_CLASS_READ_ONLY_COST_PREFLIGHT_ONCE' &&
+      (github.event.head_commit.message == 'MXM_CMA2_MULTI_CLASS_READ_ONLY_COST_PREFLIGHT_ONCE' ||
+      github.event.head_commit.message == 'MXM_CMA2_SCOPE_READ_ONLY_AUTH_RECOVERY_ONCE') &&
       needs.verify.result == 'success' && needs.cma2_new_recipient.result == 'success'
     needs: [verify, cma2_new_recipient]
     permissions:
@@ -1707,7 +1717,8 @@ jobs:
       github.ref == 'refs/heads/main' &&
       github.actor == 'mariancradulescu' &&
       github.event_name == 'push' &&
-      github.event.head_commit.message == 'MXM_CMA2_MULTI_CLASS_READ_ONLY_COST_PREFLIGHT_ONCE' &&
+      (github.event.head_commit.message == 'MXM_CMA2_MULTI_CLASS_READ_ONLY_COST_PREFLIGHT_ONCE' ||
+      github.event.head_commit.message == 'MXM_CMA2_SCOPE_READ_ONLY_AUTH_RECOVERY_ONCE') &&
       needs.verify.result == 'success' && needs.cma2_broker_source.result == 'success'
     needs: [verify, cma2_broker_source]
     permissions:
