@@ -1,0 +1,102 @@
+name: cTrader CLI 5.10.1 net6 read-only build and metadata
+on:
+  push:
+    branches:
+      - mxm-ctrader-cli-5101-readonly-20261109
+      - main
+    paths:
+      - ".github/workflows/ctrader-cli-5101-readonly.yml"
+      - "src/Mxm.Cloud/**"
+      - "src/Mxm.Core/**"
+  pull_request:
+    paths:
+      - ".github/workflows/ctrader-cli-5101-readonly.yml"
+      - "src/Mxm.Cloud/**"
+      - "src/Mxm.Core/**"
+permissions:
+  contents: read
+jobs:
+  verify-official-cli:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Verify pinned official Docker image is available
+        run: |
+          set -euo pipefail
+          docker pull ghcr.io/spotware/ctrader-console:5.10.1
+          docker run --rm ghcr.io/spotware/ctrader-console:5.10.1 --version
+      - name: Build EXISTING net6 Cloud project with official CLI
+        run: |
+          set -euo pipefail
+          test -f src/Mxm.Cloud/Mxm.Cloud.csproj
+          grep -F '<TargetFramework>net6.0</TargetFramework>' src/Mxm.Cloud/Mxm.Cloud.csproj
+          CNAME="mxm-ctrader-cli-${GITHUB_RUN_ID}"
+          docker run --name "$CNAME" \
+            --mount type=bind,source="${GITHUB_WORKSPACE}",target=/root/cAlgo/Sources/Robots/MxmQuant \
+            --workdir /root/cAlgo/Sources/Robots/MxmQuant \
+            ghcr.io/spotware/ctrader-console:5.10.1 \
+            build /root/cAlgo/Sources/Robots/MxmQuant/src/Mxm.Cloud/Mxm.Cloud.csproj
+          mkdir -p ctrader-cli-5101 "$RUNNER_TEMP/ctrader-built-container"
+          docker cp "$CNAME:/root/cAlgo" "$RUNNER_TEMP/ctrader-built-container/cAlgo"
+          docker cp "$CNAME:/root/Documents" "$RUNNER_TEMP/ctrader-built-container/Documents" || true
+          docker rm "$CNAME"
+          find "$RUNNER_TEMP/ctrader-built-container" -type f -name '*.algo' -print |
+            tee ctrader-cli-5101/algo-source-paths.txt
+          ALGO="$(find "$RUNNER_TEMP/ctrader-built-container" -type f -name '*.algo' -print -quit)"
+          if [[ -z "$ALGO" ]]; then
+            echo "::error::CLI build returned success but no .algo was found in its cAlgo/Documents tree."
+            exit 62
+          fi
+          cp "$ALGO" ctrader-cli-5101/Mxm.Cloud.ctrader-cli-5101.algo
+          sha256sum ctrader-cli-5101/Mxm.Cloud.ctrader-cli-5101.algo |
+            tee ctrader-cli-5101/algo-sha256.txt
+      - name: Verify resulting algo and parse its metadata through 5.10.1
+        run: |
+          set -euo pipefail
+          mkdir -p ctrader-cli-5101
+          ALGO="ctrader-cli-5101/Mxm.Cloud.ctrader-cli-5101.algo"
+          test -s "$ALGO"
+          docker run --rm \
+            --mount type=bind,source="${GITHUB_WORKSPACE}",target=/root/cAlgo/Sources/Robots/MxmQuant \
+            --workdir /root/cAlgo/Sources/Robots/MxmQuant \
+            ghcr.io/spotware/ctrader-console:5.10.1 \
+            metadata "/root/cAlgo/Sources/Robots/MxmQuant/$ALGO" | tee ctrader-cli-5101/metadata.txt
+          test -s ctrader-cli-5101/metadata.txt
+          echo "CLI_NET6_ALGO_METADATA_EXECUTED=true" | tee ctrader-cli-5101/result.txt
+      - name: Probe official M1 server backtest prerequisites without credentials or trades
+        run: |
+          set -euo pipefail
+          mkdir -p ctrader-cli-5101
+          set +e
+          timeout 60s docker run --rm \
+            --mount type=bind,source="${GITHUB_WORKSPACE}",target=/root/cAlgo/Sources/Robots/MxmQuant \
+            --workdir /root/cAlgo/Sources/Robots/MxmQuant \
+            ghcr.io/spotware/ctrader-console:5.10.1 \
+            backtest /root/cAlgo/Sources/Robots/MxmQuant/ctrader-cli-5101/Mxm.Cloud.ctrader-cli-5101.algo \
+            --symbol=EURUSD --period=m5 --data-mode=m1 \
+            --start=01/11/2026 --end=03/11/2026 --balance=300 \
+            --report-json=/root/cAlgo/Sources/Robots/MxmQuant/ctrader-cli-5101/unauthenticated-backtest-report.json \
+            > ctrader-cli-5101/backtest-auth-probe.txt 2>&1
+          rc=$?
+          set -e
+          echo "CLI_UNAUTHENTICATED_BACKTEST_EXIT_CODE=$rc" | tee ctrader-cli-5101/auth-probe-status.txt
+          # The job has no cTID, password file, account ID or secret access.
+          # A successful run could NOT certify Pepperstone provenance.
+          if [[ $rc -eq 0 ]]; then
+            echo "CLI_ANONYMOUS_RESULT_NOT_PEPPERSTONE_AUTHENTICATED" | tee -a ctrader-cli-5101/auth-probe-status.txt
+          elif grep -Eqi 'Missing --ctid|Missing --pwd-file|Missing --account|--ctid|--pwd-file|authentication|credentials' ctrader-cli-5101/backtest-auth-probe.txt; then
+            echo "CTRADER_ID_PASSWORD_FILE_AND_PEPPERSTONE_ACCOUNT_REQUIRED_FOR_SERVER_BACKTEST" | tee -a ctrader-cli-5101/auth-probe-status.txt
+          else
+            echo "CLI_UNAUTHED_BACKTEST_OTHER_ERROR_EXAMINE_PROBE" | tee -a ctrader-cli-5101/auth-probe-status.txt
+            cat ctrader-cli-5101/backtest-auth-probe.txt
+          fi
+      - name: Upload credential-free CLI build receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ctrader-cli-5101-readonly-receipt
+          path: |
+            ctrader-cli-5101/
+          if-no-files-found: warn
+          retention-days: 15
