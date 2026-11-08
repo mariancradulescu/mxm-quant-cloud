@@ -75,7 +75,7 @@ public static class NativeBrokerContractCosts
     }
     public static NativeCostAttribution Quote(
         NativeObservedContractTerms c,NativeMarketCostContext q,
-        long? holdingOpenedAt=null,int? side=null)
+        long? holdingOpenedAt=null,int? side=null,bool executionIsBuy=true)
     {
         Validate(c,q.Units);
         if(q.AtUtcMs<=0 || q.Bid<=0 || q.Ask<q.Bid ||
@@ -94,8 +94,11 @@ public static class NativeBrokerContractCosts
             c.MinimumCommissionAsset=="USD" ? q.UsdToEur :
             q.MinimumFeeAssetToEur ?? throw new ArgumentException("NATIVE_COST_MINIMUM_FX_ROUTE_UNKNOWN");
         decimal floor=(c.PreciseMinimumWire/Wire)*feeAssetToEur;
-        // Conservative ask-side for commission sizing on a new entry.
-        decimal perUnit=CommissionPerUnit(c,q.Ask,q.QuoteDebitToEur,q.UsdToEur);
+        // Commission follows actual proposed execution SIDE: buy at ASK,
+        // sell at BID. Critical for percentage-of-notional broker tariffs.
+        // Distinct from spread, already in the executable price.
+        decimal executablePrice=executionIsBuy?q.Ask:q.Bid;
+        decimal perUnit=CommissionPerUnit(c,executablePrice,q.QuoteDebitToEur,q.UsdToEur);
         var ledgerQuote=new LedgerQuote(c.Symbol,q.AtUtcMs,q.Bid,q.Ask,
             credit,debit,perUnit,floor,q.MarginRequirementEur/q.Units);
         decimal fee=Math.Max(perUnit*q.Units,floor);
