@@ -580,6 +580,7 @@ jobs:
       - run: python -m unittest research.test_pve1 -v
       - run: python -m unittest research.test_pve2 -v
       - run: python -m unittest research.test_native_financial_parity -v
+      - run: python -m unittest research.test_prospective_original_contract_parity -v
       - run: python -m unittest research.test_f2_preflight -v
       - run: python -m unittest research.test_hrc1_source_pilot -v
       - run: python -m unittest research.test_gep1_research -v

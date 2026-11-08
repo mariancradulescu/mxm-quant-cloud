@@ -1,6 +1,101 @@
 using System.Text.Json;
 using System.Security.Cryptography;
 
+// Research-only bridge to EXACT existing Mxm.Core finance implementation.
+// The original broker contract fields come from CMA1/CMA2; example market
+// prices and FX rates MUST be labeled illustrative, never actual broker fills.
+if (args.Length==3 && args[2]=="--prospective-native-contract-ledger-parity")
+{
+    try
+    {
+        using var doc=JsonDocument.Parse(File.ReadAllBytes(args[0]));
+        var rows=doc.RootElement.EnumerateArray();
+        var numbers=new JsonSerializerOptions {
+            NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString
+        };
+        var receipts=new List<object>();
+        const string evidence="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+        foreach(var row in rows)
+        {
+            var contract=JsonSerializer.Deserialize<Mxm.Core.NativeObservedContractTerms>(
+                row.GetProperty("Contract").GetRawText(),numbers)!;
+            var open=JsonSerializer.Deserialize<Mxm.Core.NativeMarketCostContext>(
+                row.GetProperty("Entry").GetRawText(),numbers)!;
+            var close=JsonSerializer.Deserialize<Mxm.Core.NativeMarketCostContext>(
+                row.GetProperty("Exit").GetRawText(),numbers)!;
+            int side=row.GetProperty("Side").GetInt32();
+            if(side is not (-1 or 1) || open.Units!=close.Units || 
+                close.AtUtcMs<=open.AtUtcMs+2000L || open.AtUtcMs<2000)
+                throw new ArgumentException("COST_PARITY_CASE_CLOCK_OR_SIDE");
+            var entry=Mxm.Core.NativeBrokerContractCosts.Quote(
+                contract,open,executionIsBuy:side>0);
+            var exit=Mxm.Core.NativeBrokerContractCosts.Quote(
+                contract,close,executionIsBuy:side<0);
+            decimal? carry=Mxm.Core.NativeBrokerContractCosts.SignedFinancing(
+                contract,open.AtUtcMs,close.AtUtcMs,side,open.Units,
+                close.QuoteCreditToEur,close.QuoteDebitToEur);
+            if(carry is not decimal funding)
+                throw new ArgumentException("COST_PARITY_FUNDING_UNKNOWN_NO_ZERO_DEFAULT");
+            var book=new Mxm.Core.NativeFundedLedger(1000);
+            decimal q=side>0?open.Ask+open.SlippagePerSideQuote:
+                               open.Bid-open.SlippagePerSideQuote;
+            decimal y=side>0?close.Bid-close.SlippagePerSideQuote:
+                               close.Ask+close.SlippagePerSideQuote;
+            var id="model-"+receipts.Count;
+            Mxm.Core.LedgerEvent Fact(string name,long at,string kind,
+                decimal price,decimal fee,decimal slip,decimal margin,
+                Mxm.Core.LedgerQuote[] quotes,decimal signedFinance=0)
+                =>new(name,at,kind,id,contract.Symbol,side,open.Units,price,fee,
+                    margin,slip,0,0,1000,"AUTHENTIC_TERMS_ILLUSTRATIVE_MARKS_ONLY",
+                    evidence,quotes,signedFinance);
+            book.Apply(Fact("req-entry-"+id,open.AtUtcMs-1000,
+                "REQUEST_OPEN",0,0,open.SlippagePerSideQuote,
+                entry.Quote.MarginPerUnit,Array.Empty<Mxm.Core.LedgerQuote>()));
+            book.Apply(Fact("fill-entry-"+id,open.AtUtcMs,
+                "OPEN_FILL",q,entry.OneSideCommissionEur,
+                open.SlippagePerSideQuote,entry.Quote.MarginPerUnit,
+                new[]{entry.Quote}));
+            book.Apply(Fact("req-exit-"+id,close.AtUtcMs-1000,
+                "REQUEST_CLOSE",0,0,open.SlippagePerSideQuote,
+                exit.Quote.MarginPerUnit,Array.Empty<Mxm.Core.LedgerQuote>()));
+            if(funding!=0m)
+                book.Apply(Fact("finance-"+id,close.AtUtcMs,
+                    "FINANCING",0,0,open.SlippagePerSideQuote,0,
+                    new[]{exit.Quote},funding));
+            book.Apply(Fact("fill-exit-"+id,close.AtUtcMs,
+                "CLOSE_FILL",y,exit.OneSideCommissionEur,
+                open.SlippagePerSideQuote,exit.Quote.MarginPerUnit,
+                new[]{exit.Quote}));
+            var fragment=book.ClosedFragments().Single();
+            var snapshot=book.Summary();
+            var resumed=Mxm.Core.NativeFundedLedger.Restore(book.Checkpoint());
+            if(resumed.Summary()!=snapshot ||
+               resumed.ClosedFragments().Single()!=fragment)
+                throw new InvalidOperationException("NATIVE_CONTRACT_LEDGER_RESTART_PARITY");
+            receipts.Add(new {
+                ContractSymbol=contract.Symbol,
+                ContractAsObservedUtcMs=contract.ObservedAtUtcMs,
+                Entry=entry,Exit=exit,FinancingSignedEur=funding,
+                ClosedFragment=fragment,Ledger=snapshot,
+                SourcePricesAuthenticBrokerTicks=false,
+                ContractTermsObservedOriginalBroker=contract.OriginalBrokerAuthenticated,
+                HistoricalContractContinuityCertified=false,
+                NativeLedgerRestartExact=true,
+                ActualBrokerNetEur=(decimal?)null,OrdersSubmitted=0
+            });
+        }
+        File.WriteAllText(args[1],JsonSerializer.Serialize(new {
+            NativeContractAndLedgerReceipts=receipts,
+            SameCoreAsCloud=true,ClosedOldStudiesReplayed=false,
+            IndependentConfirmation=false,OrdersSubmitted=0,CloudActivated=false
+        }));return 0;
+    }
+    catch(Exception ex) {
+        Console.Error.WriteLine(ex.GetType().Name + ":" + ex.Message);
+        return 42;
+    }
+}
+
 if (args.Length == 3 && args[2] == "--sfx1-native-signs")
 {
     try
