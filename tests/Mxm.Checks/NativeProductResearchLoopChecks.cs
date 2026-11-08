@@ -90,6 +90,21 @@ public static class NativeProductResearchLoopChecks
         catch(ArgumentException){backwardRejected=true;}
         check(backwardRejected,
             "out-of-order replay observations cannot overwrite a newer financial state");
+        // A real deterministic numerical reception from THIS synthetic test,
+        // never source-authenticated Pepperstone performance or funded broker NET.
+        Console.WriteLine("MXM_PRODUCT_NATIVE_SYNTHETIC_MODEL_RECEIPT="+
+            System.Text.Json.JsonSerializer.Serialize(new {
+                initialCapitalEur=300m,
+                grossModelEur=r.ModelGrossEur,
+                centralNetModelEur=r.ModelCentralNetEur,
+                adverseExtraSpreadModelEur=r.ModelAdverseNetProxyEur,
+                cashEur=r.ModelCashEur,
+                closedRoundTrips=r.ModelClosedRoundTrips,
+                sampledFloatingDrawdown=r.ModelMaximumSampledDrawdown,
+                weekly=r.ModelRoundTripsPerIsoWeek,
+                brokerNetCertified=false,independentConfirmation=false,
+                ordersEnabled=false,source="PURELY_SYNTHETIC_NUMERICAL_FIXTURE"
+            }));
         var checkpoint=loop.ResearchSession.Checkpoint();
         var restored=NativeFundedSession.Restore(checkpoint,loop.ResearchSession.AccountBinding);
         check(restored.Ledger.Summary()==loop.ResearchSession.Ledger.Summary(),
