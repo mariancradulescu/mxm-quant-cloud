@@ -1,0 +1,130 @@
+{
+  "schema": "MXM_CMA1_RECEPTION_ORIGINAL_CURRENT_CONTRACT_COST_20261108",
+  "authority": "docs/OWNER_SPEC.md OWNER v2.0 + 2026-11-08 OWNER directive",
+  "status": "ORIGINAL_AUTHENTIC_CURRENT_TERMS_ONLY_NO_ECONOMIC_SCORE",
+  "runId": 42427395565,
+  "originalEvidenceSourceRun": 41774823771,
+  "originalPepperstoneEurAccountVerified": true,
+  "originalSourceCiphertextSha256": "d0d080c94fa1208a2973bd230b9727a14b3596ccbdb81b373ae2df4361e3ce52",
+  "originalSourceReadbackVerified": true,
+  "newPepperstoneRequests": 0,
+  "artifact": {
+    "id": 13596226107,
+    "name": "cma1-original-current-contract-terms-public-only",
+    "filename": "cma1-current-terms-public.json",
+    "jsonSha256": "d0d658ab8ef0960bf9bc0f489d4d5b4af538b302a178a707cffbbfb8836442f7"
+  },
+  "termsDate": "2026-11-04",
+  "probedContractCount": 9,
+  "accountSwapFree": false,
+  "sharedCurrentContract": {
+    "type": "USD_PER_LOT",
+    "preciseTradingCommissionRateWire": 300000000,
+    "scale": 100000000,
+    "commissionPerLotPerSideUsdFromNativeCurrentModel": "3.00",
+    "minCommissionType": "CURRENCY",
+    "minCommissionAsset": "USD",
+    "preciseMinCommissionWire": 0,
+    "explicitFeeFloorUsd": "0",
+    "explicitPnlConversionFeeBps": 0,
+    "minUnits": 1000,
+    "lotSizeUnits": 100000,
+    "theoreticalTwoSideCommissionMinVolumeUsd": "0.06",
+    "scheduleTimezone": "America/New_York",
+    "tradingScheduleIntervals": 5,
+    "swapCalculationType": "PIPS",
+    "swapPeriodHours": 24,
+    "swapTimeUtc": "22:00",
+    "swapRollover3Days": "WEDNESDAY",
+    "chargeSwapAtWeekends": false
+  },
+  "instruments": {
+    "AUDJPY": {
+      "currentMinMarginEur": "30.97",
+      "minimumUnits": 1000,
+      "swapLongPips": 0.34,
+      "swapShortPips": -1.35,
+      "contractFeeFieldsExplicit": true
+    },
+    "AUDUSD": {
+      "currentMinMarginEur": "30.97",
+      "minimumUnits": 1000,
+      "swapLongPips": 0.01,
+      "swapShortPips": -0.32,
+      "contractFeeFieldsExplicit": true
+    },
+    "EURJPY": {
+      "currentMinMarginEur": "33.33",
+      "minimumUnits": 1000,
+      "swapLongPips": -0.37,
+      "swapShortPips": -1.08,
+      "contractFeeFieldsExplicit": true
+    },
+    "EURUSD": {
+      "currentMinMarginEur": "33.33",
+      "minimumUnits": 1000,
+      "swapLongPips": -0.73,
+      "swapShortPips": 0.15,
+      "contractFeeFieldsExplicit": true
+    },
+    "GBPJPY": {
+      "currentMinMarginEur": "39.91",
+      "minimumUnits": 1000,
+      "swapLongPips": 0.09,
+      "swapShortPips": -2.13,
+      "contractFeeFieldsExplicit": true
+    },
+    "GBPUSD": {
+      "currentMinMarginEur": "39.91",
+      "minimumUnits": 1000,
+      "swapLongPips": -0.25,
+      "swapShortPips": -0.27,
+      "contractFeeFieldsExplicit": true
+    },
+    "NZDJPY": {
+      "currentMinMarginEur": "24.88",
+      "minimumUnits": 1000,
+      "swapLongPips": -0.3,
+      "swapShortPips": -0.57,
+      "contractFeeFieldsExplicit": true
+    },
+    "NZDUSD": {
+      "currentMinMarginEur": "24.88",
+      "minimumUnits": 1000,
+      "swapLongPips": -0.34,
+      "swapShortPips": 0.08,
+      "contractFeeFieldsExplicit": true
+    },
+    "USDJPY": {
+      "currentMinMarginEur": "29.64",
+      "minimumUnits": 1000,
+      "swapLongPips": 0.29,
+      "swapShortPips": -1.57,
+      "contractFeeFieldsExplicit": true
+    }
+  },
+  "fourOutsidePrevious18": [
+    "EURJPY",
+    "AUDJPY",
+    "NZDJPY",
+    "NZDUSD"
+  ],
+  "interpretation": {
+    "actualBrokerFeeEur": null,
+    "brokerFundedNetEur": null,
+    "currencyRoutesAndTimeMatchedQuotesRequired": true,
+    "historicalTariffContinuityProven": false,
+    "historicalCommissionAndFinancingProven": false,
+    "slippageSource": "SEPARATE_MODEL_UNCERTAINTY_NOT_BROKER_FEE",
+    "noUniversalMidnightHoldingExclusion": true,
+    "costResearchKnownScopeOnly": true,
+    "noClosedStudyRetuning": true,
+    "xua1ExactVerdictsUnchanged": true,
+    "noNewPredictiveCandidatePromoted": true,
+    "noIndependentConfirmation": true,
+    "hard21Proven": false,
+    "maxDrawdown30Proven": false,
+    "ordersSubmitted": 0,
+    "cloudActivated": false
+  }
+}
