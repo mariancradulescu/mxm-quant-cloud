@@ -45,6 +45,8 @@ public sealed class NativeProductResearchLoop
     private int eventSequence, forecasts, accepted, rejected;
 
     public NativeFundedSession ResearchSession=>session;
+    public string[] ActiveSymbols=>tracked.Values.Select(x=>x.Symbol)
+        .Distinct(StringComparer.Ordinal).ToArray();
     private static string Fingerprint(string value)=>Convert.ToHexString(
         SHA256.HashData(Encoding.UTF8.GetBytes(value))).ToLowerInvariant();
     private LedgerEvent Event(string kind,long at,string id="",string symbol="",int side=0,
