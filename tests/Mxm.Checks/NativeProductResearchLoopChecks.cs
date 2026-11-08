@@ -46,6 +46,35 @@ public static class NativeProductResearchLoopChecks
             refused.RejectedIntents>=1&&refused.ModelCashEur==300m&&
             refused.ModelClosedRoundTrips==0,
             "no independent predictive benchmark refuses prospective entry without mutating EUR300 cash");
+        // Two distinct markets arriving on different M5 decision clocks
+        // must still compete against ONE existing held and pending budget.
+        var staggered=new NativeProductResearchLoop();
+        var t0=anchor+2000;
+        var onlyA=staggered.Advance(t0,new[]{Market("SYNTH_A",t0,0)},true);
+        check(onlyA.AcceptedModelIntents==1&&onlyA.ModelPendingIntents==1,
+            "first symbol reserves one EUR300 model intent before second market appears");
+        const string provisionalSource="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+        var livePending=NativeProductResearchLoop.RestoreIntegrityCheckpoint(
+            staggered.ExportIntegrityCheckpoint(provisionalSource),provisionalSource);
+        var t1=t0+m5;
+        var newB=livePending.Advance(t1,new[]{
+            Market("SYNTH_A",t1,1),Market("SYNTH_B",t1,1)},true);
+        check(newB.AcceptedModelIntents==2&&newB.ModelOpenPositions==1&&
+              newB.ModelPendingIntents==1&&newB.ModelCashEur<300m,
+            "staggered B is assessed with A held and common margin, with pending state restored across checkpoint");
+        // A cTrader Algo Symbol observation must NEVER be silently upgraded
+        // to an authenticated original Pepperstone contract.
+        var algoTerms=Contract("SYNTH_A",t0) with {OriginalBrokerAuthenticated=false};
+        var algoContext=new NativeMarketCostContext(t0,10m,10.02m,
+            1m,1m,1m,1m,20m,1m,.005m);
+        bool originalTariffRejects=false;
+        try{NativeBrokerContractCosts.Quote(algoTerms,algoContext);}
+        catch(ArgumentException){originalTariffRejects=true;}
+        var algoOnly=NativeBrokerContractCosts.QuoteCurrentAlgo(algoTerms,algoContext);
+        check(originalTariffRejects&&
+              !algoOnly.HistoricalExecutionCertified&&
+              algoOnly.EvidenceLevel.Contains("UNATTESTED"),
+            "current Algo fees are priced conditionally without inventing original account cryptographic proof");
         var loop=new NativeProductResearchLoop();
         var a=loop.Advance(at,new[]{Market("SYNTH_A",at,0),
             Market("SYNTH_B",at,0)},EnableUnqualifiedShadowSimulation:true);
