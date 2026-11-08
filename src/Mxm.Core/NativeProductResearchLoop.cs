@@ -198,6 +198,14 @@ public sealed class NativeProductResearchLoop
         // accessed or modified. No synthetic fill is created on the intent clock.
         ApplyFacts(new[]{Event("MARK",at,quotes:markets.Select(x=>x.Quote).ToArray())});
         var byName=markets.ToDictionary(x=>x.Symbol,StringComparer.Ordinal);
+        foreach(var outstanding in tracked.Values)
+            if(!byName.ContainsKey(outstanding.Symbol))
+            {
+                // A missing held mark makes equity/financing history incomplete:
+                // no forward-filled mark or fictitious model close is allowed.
+                historicalPathComplete=false;
+                unresolvedCalendarGaps++;
+            }
         foreach(var id in tracked.Keys.ToArray())
         {
             var p=tracked[id];
@@ -365,9 +373,43 @@ public sealed class NativeProductResearchLoop
         {
             var states=Enumerable.Range(0,8).Select(i=>
                 new PortfolioScenario("STATE"+i,at-2,true,0m,0m,0m,0m)).ToArray();
+            // Capital and risk are common across staggered decisions. All
+            // genuinely held and pending positions are carried into EACH
+            // joint adverse state; no independent-capital accounts, no hidden
+            // exposure or diversification credit. These loss estimates remain
+            // explicit conditional stress, NOT certified tail calibration.
+            var held=session.Ledger.PositionSnapshot()
+                .Select(p=>(Id:p.Id,p.Symbol,p.Side,p.Units,p.MarginPerUnit));
+            var pending=session.Ledger.PendingSnapshot()
+                .Where(p=>p.Kind=="REQUEST_OPEN")
+                .Select(p=>(Id:p.PositionId,p.Symbol,p.Side,p.Units,
+                    MarginPerUnit:p.MarginPerUnit));
+            var exposures=new List<ResearchExposureScenarios>();
+            foreach(var p in held.Concat(pending))
+            {
+                if(!byName.TryGetValue(p.Symbol,out var quoteEvidence))
+                {
+                    historicalPathComplete=false;
+                    // Unknown held market facts stay blocked by native
+                    // conservative exposure matching in DecideResearch.
+                    continue;
+                }
+                var q=quoteEvidence.Quote;
+                decimal margin=p.Units*Math.Max(p.MarginPerUnit,q.MarginPerUnit);
+                decimal range=quoteEvidence.M5.Length>0?
+                    quoteEvidence.M5[^1].High-quoteEvidence.M5[^1].Low:0m;
+                decimal fx=(q.EurCredit+q.EurDebit)/2m;
+                decimal loss=p.Units*(Math.Max(range,q.Ask-q.Bid)*fx*2m+
+                    quoteEvidence.SlippagePerSideQuote*fx);
+                exposures.Add(new(p.Id,p.Symbol,p.Side,p.Units,
+                    states.Select(st=>st with {
+                        KnownAt=at-2,NetEur=0m,LossEur=loss,
+                        MarginEur=margin,PeakEur=0m
+                    }).ToArray()));
+            }
             var d=new NativeResearchDecision("PRODUCT/"+at,at,
                 new ScenarioSizingInputs(300,300,300,1,1,1,1,1,2,0),
-                states,offered.ToArray(),Array.Empty<ResearchExposureScenarios>(),
+                states,offered.ToArray(),exposures.ToArray(),
                 terms.ToArray(),Fingerprint("PRODUCT/"+at),evidence.ToArray());
             // Exact same prospectively gated path for independently supported
             // evidence. UNQUALIFIED shadow mode is explicit, never promoted.
