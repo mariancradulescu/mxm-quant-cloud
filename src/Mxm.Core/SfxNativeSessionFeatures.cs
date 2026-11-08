@@ -55,7 +55,7 @@ public static class SfxNativeSessionFeatures
             return new(0,0,false);
         long local=x.Clock%Day;
         var target=Index(x.Target,x.Clock);
-        if(x.Mechanism==Jpy && x.Symbol is "EURJPY" or "AUDJPY" or "NZDJPY" &&
+        if(x.Mechanism==Jpy && (x.Symbol is "EURJPY" or "AUDJPY" or "NZDJPY") &&
            local==8*3600000L+15*60000L)
         {
             // Last *complete* H4 close was 08:00; count all 16 M15 slots.
