@@ -1,0 +1,36 @@
+{
+  "schema": "mxm-cma2-four-class-cost-preflight-v1",
+  "id": "CMA2",
+  "researchOnly": true,
+  "purpose": "Four economically distinct markets, frozen outcome-blind read-only source pilot: NatGas energy seasonality, JPYX/USDX currency baskets and AMD.US single-stock market hours. Contracts, margin and fresh paired BID/ASK only; no returns, predictor, price-history scoring, trade or generic commission wedge.",
+  "universe": [
+    "NatGas",
+    "JPYX",
+    "USDX",
+    "AMD.US"
+  ],
+  "sourceEvidence": "Authentic original EUR Pepperstone live account 2026-11-05 full-account preflight; no prior archived candidate returns scored.",
+  "observationUtcMillis": [
+    1793844900000,
+    1793889900000,
+    1793907900000
+  ],
+  "observationUtcTexts": [
+    "2026-11-05T02:15:00Z",
+    "2026-11-05T14:45:00Z",
+    "2026-11-05T19:45:00Z"
+  ],
+  "tickWindowBeforeClockMs": 60000,
+  "maximumQuoteAgeAtClockMs": 2000,
+  "maximumBidAskTimeSkewMs": 2000,
+  "maxSourceRequests": 40,
+  "expectedSourceRequests": 35,
+  "predeclaredEconomics": "No signal prediction without spread cost floor/actual contract fee in EUR, credible concurrent margin, historical source M15/H4, deterministic independent confirmation and separate slippage.",
+  "noOutcomeDataScoring": true,
+  "noClosedStudyRerun": true,
+  "noLiveDemoOrders": true,
+  "noCloudActivation": true,
+  "ownerCapitalProspectiveEur": 300,
+  "maxFloatingDrawdown": 0.3,
+  "hard21OnlySystemFinancedRoundTrips": true
+}
