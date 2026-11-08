@@ -1,6 +1,45 @@
 using System.Text.Json;
 using System.Security.Cryptography;
 
+// Native product-level historical replay on FULL imported M5 OHLCV and exact
+// quote/cost observations. Input provenance is not cryptographically attested
+// by the command; custody validation must occur upstream in a permitted
+// protected environment. Never synthesize BID/ASK or broker fills from OHLCV.
+// Example: dotnet run --project src/Mxm.Replay -- input.json result.json
+//          --native-product-ohlcv-exploratory
+if(args.Length==3 && (args[2]=="--native-product-ohlcv-exploratory"||
+                     args[2]=="--native-product-ohlcv-gated"))
+{
+    try
+    {
+        var bytes=File.ReadAllBytes(args[0]);
+        var jsonOptions=new JsonSerializerOptions{
+            NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString
+        };
+        var tape=JsonSerializer.Deserialize<Mxm.Core.NativeHistoricalMarketTape>(
+            bytes,jsonOptions)??throw new ArgumentException("PRODUCT_TAPE_NULL");
+        var receipt=Mxm.Core.NativeHistoricalProductReplay.Evaluate(tape,
+            UnqualifiedShadowMode:args[2]=="--native-product-ohlcv-exploratory");
+        string sha=Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
+        File.WriteAllText(args[1],JsonSerializer.Serialize(new{
+            InputFileSha256=sha,
+            Receipt=receipt,
+            SourceOriginalBrokerCryptographicallyVerified=false,
+            PortfolioRealBrokerNetEur=(decimal?)null,
+            NoOrdersSent=true,CloudNotActivated=true,
+            InputMustSupplyActualOriginalBidAskSnapshots=true,
+            SourceProvenance="UNVERIFIED_INPUT_UNTIL_AUTHORIZED_CUSTODY_ATTESTS"
+        }));
+        return 0;
+    }
+    catch(Exception ex)
+    {
+        Console.Error.WriteLine("NATIVE_HISTORICAL_REPLAY_REJECTED:"+
+            ex.GetType().Name+":"+ex.Message);
+        return 57;
+    }
+}
+
 // The SAME native Cloud-linked Mxm.Core executes all three MCS1 features.
 // Research-only, no broker request or order. Original H1 bars provided as input.
 if(args.Length==3 && args[2]=="--mcs1-native-h1-signs")
