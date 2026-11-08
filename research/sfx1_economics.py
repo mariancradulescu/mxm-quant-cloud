@@ -116,9 +116,9 @@ def source_event_cost(symbol,entry,source,spreads,terms,scenario):
     fxBuffer=.25 if scenario=="central" else .75
     # No manufactured USD2EUR/JPY2EUR historical account conversion fill.
     # Completed same-clock EURUSD and EURJPY M15 CLOSE are mid-price proxies.
-    converter=source["EURUSD"].get(entry)
-    eurjpy=source["EURJPY"].get(entry)
-    target=source[symbol].get(entry)
+    converter=source.get("EURUSD",{}).get(entry)
+    eurjpy=source.get("EURJPY",{}).get(entry)
+    target=source.get(symbol,{}).get(entry)
     if not converter or not eurjpy or not target:return None
     eurusd_price=float(converter[4])/10**terms["EURUSD"]["digits"]
     eurjpy_price=float(eurjpy[4])/10**terms["EURJPY"]["digits"]
