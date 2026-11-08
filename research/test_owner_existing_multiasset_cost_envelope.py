@@ -43,6 +43,40 @@ class CrossClassExistingCostEnvelopeTests(unittest.TestCase):
             self.assertTrue(x["notObservedHistoricalCostDistribution"])
             self.assertTrue(x["notPredictiveGrossOrNet"])
 
+    def test_public_executed_receipt_recomputed_from_original_source_docs(self):
+        import json
+        from pathlib import Path
+        derived=actual_receipt_envelope()
+        receipt=json.loads(Path(
+            "docs/OWNER_EXECUTED_MULTI_ASSET_COST_CAPITAL_SCREEN_20261108.json").read_text())
+        self.assertEqual(receipt["sourceMarketCount"],derived["distinctContractSymbolsReviewed"])
+        self.assertEqual(receipt["sourceClasses"],derived["sourceClassCounts"])
+        self.assertEqual(receipt["threeDistinctAssetClassesIllustrativelyUnderEUR210Stress"],
+                         derived["distinctThreeClassCombinationsUnderIllustrativeStress210"])
+        self.assertEqual(receipt["threeDistinctAssetClassesIllustrativelyUnderEUR210Stress"],227)
+        for actual,expected in zip(
+            receipt["combinationsAtOneSourceMinimumVolume"],
+            derived["selectedActualSourceMarginConfigurations"]):
+            self.assertEqual(actual["symbols"],expected["symbols"])
+            self.assertEqual(str(actual["sourceDateSumMarginEUR"]),
+                             expected["observedAsOfMinMarginSumEur"])
+            self.assertEqual(str(actual["stressHeadroomEUR210"]),
+                             expected["stress210StaticHeadroomBeforeCostsEur"])
+            self.assertEqual(actual["stress210Fits"],
+                             expected["stress210SourceDateMinimumMarginFits"])
+            self.assertFalse(actual["financedCertified"])
+        for symbol,scenario in derived["illustrativeCurrentSingleSnapshotCostHurdles"].items():
+            observed=receipt["costBreakEvenHurdlesSourceOneSnapshotPlusDeclaredHypotheticalFriction"][symbol]
+            self.assertAlmostEqual(observed["illustrativeCentralGrossHurdleBps"],
+                  float(scenario["illustrativeCentralGrossBreakEvenBps"]),places=6)
+            self.assertAlmostEqual(observed["illustrativeAdverseGrossHurdleBps"],
+                  float(scenario["illustrativeAdverseGrossBreakEvenBps"]),places=6)
+            self.assertFalse(observed["distributionProven"])
+            self.assertIsNone(observed["modelNetEUR"])
+        self.assertIsNone(receipt["economicVerdict"]["forecastGrossBps"])
+        self.assertIsNone(receipt["economicVerdict"]["financedBrokerNetEUR"])
+        self.assertFalse(receipt["economicVerdict"]["hard21Proven"])
+
     def test_source_provenance_failure_closed(self):
         docs=raw_sources()
         broken=deepcopy(docs)
