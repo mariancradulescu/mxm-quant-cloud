@@ -10,6 +10,7 @@ ResearchScopeContractChecks.Run(Check);
 NativeCausalWarmupChecks.Run(Check);
 NativeResearchUniverseChecks.Run(Check);
 NativeProductResearchLoopChecks.Run(Check);
+NativeHistoricalProductReplayChecks.Run(Check);
 NativeMultiFamilyFeatureChecks.Run(Check);
 BrokerFlatReadbackChecks.Run(Check);
 BrokerOpenReadbackChecks.Run(Check);
