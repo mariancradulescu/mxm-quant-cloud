@@ -26,6 +26,7 @@ public class MxmCloud : Robot
     private long _nextWarmupPollAt;
     private string _lastWarmupStatus="";
     private string _lastUniverseStatus="";
+    private int _readOnlyUniverseSweep;
     private static long Stamp(System.DateTime t)=>new System.DateTimeOffset(System.DateTime.SpecifyKind(t,System.DateTimeKind.Utc)).ToUnixTimeMilliseconds();
 
 
@@ -251,8 +252,9 @@ public class MxmCloud : Robot
             // universe independently, retaining ALL existing exposure lanes.
             var universe=NativeResearchUniverse.Resolve(
                 ReadOnlyResearchUniverse,SymbolName,
-                positions.Select(x=>x.SymbolName).Concat(pending.Select(x=>x.SymbolName)),
-                name=>Symbols.Exists(name));
+                positions.Select(x=>x.SymbolName).Concat(pending.Select(x=>x.SymbolName))
+                    .Concat(_productResearch?.ActiveSymbols ?? System.Array.Empty<string>()),
+                name=>Symbols.Exists(name),sweep:_readOnlyUniverseSweep);
             var symbols=universe.Symbols;
             string universeStatus=universe.Status+"; candidates "+
                 universe.ResearchSymbols.Length+"; unavailable "+universe.Unavailable.Length;
@@ -269,6 +271,10 @@ public class MxmCloud : Robot
             if(warmupNow>=_nextWarmupPollAt)
             {
                 _nextWarmupPollAt=warmupNow+300000;
+                // One deterministic bounded slice per completed polling cycle;
+                // all held, pending and model positions are still tracked.
+                if(_readOnlyUniverseSweep<int.MaxValue)_readOnlyUniverseSweep++;
+                else _readOnlyUniverseSweep=0;
                 int ready=0,total=0,mfaFeatureSlices=0;
                 int quoteReady=0,minimumVolumeWithin300=0;
                 // Native, account-current terms, not historical fill prices or
@@ -380,7 +386,9 @@ public class MxmCloud : Robot
                         var inputs=new System.Collections.Generic.List<NativeProductMarket>();
                         if(Account.BrokerName.Contains("Pepperstone",
                             System.StringComparison.OrdinalIgnoreCase))
-                        foreach(var name in universe.ResearchSymbols)
+                        foreach(var name in universe.ResearchSymbols
+                            .Concat(_productResearch.ActiveSymbols)
+                            .Distinct(System.StringComparer.Ordinal))
                         {
                             var market=ReadProductResearchMarket(name,warmupNow);
                             if(market is not null)inputs.Add(market);
