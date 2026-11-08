@@ -31,23 +31,32 @@ jobs:
           set -euo pipefail
           test -f src/Mxm.Cloud/Mxm.Cloud.csproj
           grep -F '<TargetFramework>net6.0</TargetFramework>' src/Mxm.Cloud/Mxm.Cloud.csproj
-          docker run --rm \
+          CNAME="mxm-ctrader-cli-${GITHUB_RUN_ID}"
+          docker run --name "$CNAME" \
             --mount type=bind,source="${GITHUB_WORKSPACE}",target=/root/cAlgo/Sources/Robots/MxmQuant \
             --workdir /root/cAlgo/Sources/Robots/MxmQuant \
             ghcr.io/spotware/ctrader-console:5.10.1 \
             build /root/cAlgo/Sources/Robots/MxmQuant/src/Mxm.Cloud/Mxm.Cloud.csproj
+          mkdir -p ctrader-cli-5101 "$RUNNER_TEMP/ctrader-built-container"
+          docker cp "$CNAME:/root/cAlgo" "$RUNNER_TEMP/ctrader-built-container/cAlgo"
+          docker cp "$CNAME:/root/Documents" "$RUNNER_TEMP/ctrader-built-container/Documents" || true
+          docker rm "$CNAME"
+          find "$RUNNER_TEMP/ctrader-built-container" -type f -name '*.algo' -print |
+            tee ctrader-cli-5101/algo-source-paths.txt
+          ALGO="$(find "$RUNNER_TEMP/ctrader-built-container" -type f -name '*.algo' -print -quit)"
+          if [[ -z "$ALGO" ]]; then
+            echo "::error::CLI build returned success but no .algo was found in its cAlgo/Documents tree."
+            exit 62
+          fi
+          cp "$ALGO" ctrader-cli-5101/Mxm.Cloud.ctrader-cli-5101.algo
+          sha256sum ctrader-cli-5101/Mxm.Cloud.ctrader-cli-5101.algo |
+            tee ctrader-cli-5101/algo-sha256.txt
       - name: Verify resulting algo and parse its metadata through 5.10.1
         run: |
           set -euo pipefail
           mkdir -p ctrader-cli-5101
-          find src/Mxm.Cloud -type f -name '*.algo' -print | tee ctrader-cli-5101/algo-candidates.txt
-          ALGO="$(find src/Mxm.Cloud -type f -name '*.algo' -print -quit)"
-          if [[ -z "$ALGO" ]]; then
-            echo "::error::The official CLI returned without producing an .algo in the existing project."
-            exit 61
-          fi
+          ALGO="ctrader-cli-5101/Mxm.Cloud.ctrader-cli-5101.algo"
           test -s "$ALGO"
-          sha256sum "$ALGO" | tee ctrader-cli-5101/algo-sha256.txt
           docker run --rm \
             --mount type=bind,source="${GITHUB_WORKSPACE}",target=/root/cAlgo/Sources/Robots/MxmQuant \
             --workdir /root/cAlgo/Sources/Robots/MxmQuant \
