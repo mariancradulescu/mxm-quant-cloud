@@ -237,7 +237,7 @@ public sealed class NativeProductResearchLoop
         signals.AddRange(recent);
         if(signals.Count>300)signals.RemoveRange(0,signals.Count-300);
         lastClock=at;
-        return Report(at,recent);
+        return Report(at,recent.ToArray());
     }
 
     private NativeProductResearchReport Report(long at,NativeProductSignal[] recent)
