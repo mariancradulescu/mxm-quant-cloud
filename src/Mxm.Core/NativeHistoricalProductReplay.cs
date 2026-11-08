@@ -1,0 +1,177 @@
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+
+namespace Mxm.Core;
+
+// Reusable deterministic adapter for FULL historical closed Pepperstone OHLCV
+// plus independently observed BID/ASK/FX/volume/contract cost snapshots.
+// It never reverse-engineers BID/ASK from M5 mid bars and never regards input
+// filenames/claims as a cryptographic broker custody attestation.
+public sealed record NativeHistoricalBars(string Symbol,
+    NativeClosedMarketBar[] M5);
+public sealed record NativeHistoricalQuoteObservation(
+    long At,LedgerQuote Quote,NativeObservedContractTerms? Contract,
+    decimal SlippagePerSideQuote,int HoldingMinutes=30);
+public sealed record NativeHistoricalMarketTape(
+    string SourceLabel,NativeHistoricalBars[] Bars,
+    NativeHistoricalQuoteObservation[] Quotes);
+public sealed record NativeHistoricalEquityObservation(
+    long At,decimal? CentralEquityEur,decimal? AdverseEquityEur,
+    decimal? UsedMarginEur,int ClosedModelRoundTrips,
+    int ForecastCount,int CumulativeUnknownM5Slots);
+public sealed record NativeHistoricalMarketReceipt(
+    string SourceLabel,string OriginalProviderAuthenticity,
+    int InstrumentsWithCompleteM5,int OriginalM5Bars,
+    int CausalM15Bars,int QuoteObservations,int DistinctQuoteClocks,
+    int CompletedModelRoundTrips,int ModelIntentCount,int ModelRejectedCount,
+    decimal? ModelFinalCashEur,decimal? ModelClosedGrossEur,
+    decimal? ModelClosedCentralNetEur,decimal? ModelClosedAdverseNetEur,
+    decimal? MatchedLongBenchmarkNetEur,decimal? IncrementalVsLongNetEur,
+    decimal? MaximumSampledCentralDrawdown,
+    Dictionary<string,int> ModelTripsPerObservedIsoWeek,
+    NativeHistoricalEquityObservation[] SampledEquity,
+    int UnscoredM5ClockSlots,bool ContinuousHistoricalEquityObserved,
+    int OpenModelPositions,int PendingModelRequests,
+    bool IndependentConfirmation=false,bool BrokerNetCertified=false,
+    bool OrdersEnabled=false,string Verdict="EXPLORATORY_ONLY_NOT_BROKER_QUALIFIED");
+
+public static class NativeHistoricalProductReplay
+{
+    private const long M5=300000L,M15=900000L;
+    private static string Week(long at)
+    {
+        var d=DateTimeOffset.FromUnixTimeMilliseconds(at).UtcDateTime;
+        return ISOWeek.GetYear(d)+"-W"+ISOWeek.GetWeekOfYear(d).ToString("00");
+    }
+    public static NativeClosedMarketBar[] AggregateCompletedM15(
+        NativeClosedMarketBar[] m5)
+    {
+        var result=new List<NativeClosedMarketBar>();
+        if(m5 is null)throw new ArgumentException("TAPE_RAW_M5_MISSING");
+        for(int k=2;k<m5.Length;k++)
+        {
+            var a=m5[k-2];var b=m5[k-1];var c=m5[k];
+            if(c.CloseAt%M15!=0 || b.OpenAt!=a.CloseAt ||
+                c.OpenAt!=b.CloseAt || c.CloseAt-c.OpenAt!=M5 ||
+                a.CloseAt-a.OpenAt!=M5 || b.CloseAt-b.OpenAt!=M5)
+                continue;
+            result.Add(new NativeClosedMarketBar(a.OpenAt,c.CloseAt,
+                a.Open,Math.Max(a.High,Math.Max(b.High,c.High)),
+                Math.Min(a.Low,Math.Min(b.Low,c.Low)),c.Close,
+                checked(a.TickVolume+b.TickVolume+c.TickVolume)));
+        }
+        return result.ToArray();
+    }
+    private static int Until(NativeClosedMarketBar[] data,long at)
+    {
+        int left=0,right=data.Length;
+        while(left<right)
+        {
+            int mid=left+(right-left)/2;
+            if(data[mid].CloseAt<=at)left=mid+1;
+            else right=mid;
+        }
+        return left;
+    }
+    private static NativeClosedMarketBar[] Prefix(
+        NativeClosedMarketBar[] all,long at)
+    {
+        int until=Until(all,at),n=Math.Min(until,NativeCausalWarmup.WindowBars);
+        var prefix=new NativeClosedMarketBar[n];
+        Array.Copy(all,until-n,prefix,0,n);
+        return prefix;
+    }
+    public static NativeHistoricalMarketReceipt Evaluate(
+        NativeHistoricalMarketTape tape,bool UnqualifiedShadowMode=true)
+    {
+        if(tape is null||tape.Bars is null||tape.Quotes is null||
+           string.IsNullOrWhiteSpace(tape.SourceLabel)||
+           tape.Bars.Select(x=>x.Symbol).Distinct(StringComparer.Ordinal).Count()!=tape.Bars.Length||
+           tape.Bars.Length==0)
+            throw new ArgumentException("HISTORICAL_TAPE_SOURCE_STRUCTURE_INVALID");
+        var paths=new Dictionary<string,(NativeClosedMarketBar[] M5,NativeClosedMarketBar[] M15)>(
+            StringComparer.Ordinal);
+        long total5=0,total15=0;
+        foreach(var source in tape.Bars)
+        {
+            var b=source.M5;
+            if(string.IsNullOrWhiteSpace(source.Symbol) || b is null||
+               b.Length==0 || b.Any(x=>x.CloseAt-x.OpenAt!=M5 ||
+                  x.CloseAt<=x.OpenAt||x.OpenAt<0||x.Open<=0||
+                  x.Close<=0||x.High<x.Open||x.High<x.Close||
+                  x.Low>x.Open||x.Low>x.Close||x.TickVolume<0))
+                throw new ArgumentException("HISTORICAL_TAPE_INVALID_OHLCV_GEOMETRY");
+            if(b.Zip(b.Skip(1)).Any(z=>z.First.CloseAt>z.Second.OpenAt))
+                throw new ArgumentException("HISTORICAL_TAPE_DUPLICATED_OR_REVERSED_M5");
+            var m15=AggregateCompletedM15(b);
+            paths.Add(source.Symbol,(b,m15));
+            total5+=b.Length;total15+=m15.Length;
+        }
+        if(total5>12000000||total15>4000000||
+           tape.Quotes.Length>14000000||
+           tape.Quotes.Any(x=>x.At<=0||x.Quote is null||
+               x.Quote.At!=x.At||x.Contract is null||
+               x.Quote.Symbol!=x.Contract.Symbol||
+               !paths.ContainsKey(x.Quote.Symbol)||
+               x.SlippagePerSideQuote<0||x.HoldingMinutes<15||
+               x.HoldingMinutes>240))
+            throw new ArgumentException("HISTORICAL_TAPE_BROKER_QUOTE_CONTRACT_MISSING");
+        var samples=tape.Quotes.OrderBy(x=>x.At)
+            .ThenBy(x=>x.Quote.Symbol,StringComparer.Ordinal).ToArray();
+        if(samples.Zip(samples.Skip(1)).Any(x=>
+            x.First.At==x.Second.At&&x.First.Quote.Symbol==x.Second.Quote.Symbol))
+            throw new ArgumentException("HISTORICAL_TAPE_DUPLICATED_QUOTE_SYMBOL_CLOCK");
+        var simulation=new NativeProductResearchLoop();
+        var traces=new List<NativeHistoricalEquityObservation>();
+        var weeks=new SortedDictionary<string,int>(StringComparer.Ordinal);
+        NativeProductResearchReport? last=null;
+        foreach(var group in samples.GroupBy(x=>x.At))
+        {
+            var inputs=group.Select(x=>{
+                var bars=paths[x.Quote.Symbol];
+                // Both complete M5 and M15 windows are anchored at the
+                // current quote clock, never at the tape's final future bar.
+                return new NativeProductMarket(x.Quote.Symbol,
+                    Prefix(bars.M5,group.Key),Prefix(bars.M15,group.Key),
+                    x.Quote,x.Contract,x.SlippagePerSideQuote,x.HoldingMinutes,
+                    IndependentlySupportedAgainstBenchmark:false);
+            }).ToArray();
+            last=simulation.Advance(group.Key,inputs,UnqualifiedShadowMode);
+            var central=simulation.ResearchSession.Ledger.Summary(group.Key);
+            var adverse=simulation.AdverseScenario.Summary;
+            traces.Add(new(group.Key,central.LiquidationEquityEur,
+                adverse?.LiquidationEquityEur,central.UsedMarginEur,
+                central.CompleteRoundTrips,last.Forecasts,
+                last.ObservedM5SlotsNotScored));
+            weeks.TryAdd(Week(group.Key),0);
+        }
+        if(last is null)throw new ArgumentException("HISTORICAL_TAPE_NO_QUOTES");
+        foreach(var pair in last.ModelRoundTripsPerIsoWeek)
+            weeks[pair.Key]=pair.Value;
+        var monetary=simulation.ResearchSession.Ledger.Summary();
+        // Quote clocks are evidence of market MARKS, not a complete intrabar
+        // equity path. No zero DD is certified when between-mark prices absent.
+        bool complete=last.HistoryPathComplete &&
+            monetary.LiquidationEquityEur is not null &&
+            monetary.OpenPositions==0&&monetary.PendingIntents==0 &&
+            traces.All(x=>x.CentralEquityEur.HasValue);
+        return new(tape.SourceLabel,
+            "INPUT_FILE_NOT_CRYPTOGRAPHICALLY_AUTHENTICATED_BY_THIS_ADAPTER",
+            paths.Count,checked((int)total5),checked((int)total15),
+            tape.Quotes.Length,traces.Count,
+            last.ModelClosedRoundTrips,last.AcceptedModelIntents,last.RejectedIntents,
+            monetary.CashEur,
+            last.ModelGrossEur,last.ModelCentralNetEur,
+            last.ModelAdverseNetProxyEur,last.ModelMatchedLongBenchmarkEur,
+            last.ModelIncrementalVsLongEur,
+            monetary.MaximumSampledDrawdown,
+            new Dictionary<string,int>(weeks,StringComparer.Ordinal),
+            traces.ToArray(),last.ObservedM5SlotsNotScored,complete,
+            monetary.OpenPositions,monetary.PendingIntents);
+    }
+}
