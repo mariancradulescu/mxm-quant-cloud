@@ -1,0 +1,66 @@
+name: cTrader CLI 5.10.1 net6 read-only build and metadata
+on:
+  push:
+    branches:
+      - mxm-ctrader-cli-5101-readonly-20261109
+      - main
+    paths:
+      - ".github/workflows/ctrader-cli-5101-readonly.yml"
+      - "src/Mxm.Cloud/**"
+      - "src/Mxm.Core/**"
+  pull_request:
+    paths:
+      - ".github/workflows/ctrader-cli-5101-readonly.yml"
+      - "src/Mxm.Cloud/**"
+      - "src/Mxm.Core/**"
+permissions:
+  contents: read
+jobs:
+  verify-official-cli:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Verify pinned official Docker image is available
+        run: |
+          set -euo pipefail
+          docker pull ghcr.io/spotware/ctrader-console:5.10.1
+          docker run --rm ghcr.io/spotware/ctrader-console:5.10.1 --version
+      - name: Build EXISTING net6 Cloud project with official CLI
+        run: |
+          set -euo pipefail
+          test -f src/Mxm.Cloud/Mxm.Cloud.csproj
+          grep -F '<TargetFramework>net6.0</TargetFramework>' src/Mxm.Cloud/Mxm.Cloud.csproj
+          docker run --rm \
+            --mount type=bind,source="${GITHUB_WORKSPACE}",target=/workspace \
+            --workdir /workspace \
+            ghcr.io/spotware/ctrader-console:5.10.1 \
+            build /workspace/src/Mxm.Cloud/Mxm.Cloud.csproj
+      - name: Verify resulting algo and parse its metadata through 5.10.1
+        run: |
+          set -euo pipefail
+          mkdir -p ctrader-cli-5101
+          find src/Mxm.Cloud -type f -name '*.algo' -print | tee ctrader-cli-5101/algo-candidates.txt
+          ALGO="$(find src/Mxm.Cloud -type f -name '*.algo' -print -quit)"
+          if [[ -z "$ALGO" ]]; then
+            echo "::error::The official CLI returned without producing an .algo in the existing project."
+            exit 61
+          fi
+          test -s "$ALGO"
+          sha256sum "$ALGO" | tee ctrader-cli-5101/algo-sha256.txt
+          docker run --rm \
+            --mount type=bind,source="${GITHUB_WORKSPACE}",target=/workspace \
+            --workdir /workspace \
+            ghcr.io/spotware/ctrader-console:5.10.1 \
+            metadata "/workspace/$ALGO" | tee ctrader-cli-5101/metadata.txt
+          test -s ctrader-cli-5101/metadata.txt
+          echo "CLI_NET6_ALGO_METADATA_EXECUTED=true" | tee ctrader-cli-5101/result.txt
+      - name: Upload credential-free CLI build receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ctrader-cli-5101-readonly-receipt
+          path: |
+            ctrader-cli-5101/
+          if-no-files-found: warn
+          retention-days: 15
