@@ -46,10 +46,10 @@ public static class NativeBrokerContractCosts
         return value;
     }
 
-    public static void Validate(NativeObservedContractTerms c,decimal units)
+    public static void Validate(NativeObservedContractTerms c,decimal units,bool requireOriginalBroker=true)
     {
         ArgumentNullException.ThrowIfNull(c);
-        if(!c.OriginalBrokerAuthenticated || string.IsNullOrWhiteSpace(c.Symbol) ||
+        if((requireOriginalBroker && !c.OriginalBrokerAuthenticated) || string.IsNullOrWhiteSpace(c.Symbol) ||
             string.IsNullOrWhiteSpace(c.QuoteAsset) || c.ObservedAtUtcMs<=0 ||
             c.MinimumUnits<=0 || c.VolumeStepUnits<=0 || c.LotUnits<=0 ||
             c.MaximumUnits<c.MinimumUnits || units<c.MinimumUnits ||
@@ -73,11 +73,29 @@ public static class NativeBrokerContractCosts
             _ => throw new ArgumentException("NATIVE_COST_UNKNOWN_COMMISSION_TYPE")
         };
     }
+    // Exact original Open API contract path remains strictly authenticated.
     public static NativeCostAttribution Quote(
         NativeObservedContractTerms c,NativeMarketCostContext q,
         long? holdingOpenedAt=null,int? side=null,bool executionIsBuy=true)
+        =>Price(c,q,holdingOpenedAt,side,executionIsBuy,true);
+
+    // cTrader Algo Symbol fields have NOT been cryptographically authenticated
+    // against the original Pepperstone Open API account contract. Never set the
+    // original-account flag to true just to obtain a conditional research price.
+    public static NativeCostAttribution QuoteCurrentAlgo(
+        NativeObservedContractTerms c,NativeMarketCostContext q,
+        long? holdingOpenedAt=null,int? side=null,bool executionIsBuy=true)
     {
-        Validate(c,q.Units);
+        if(c.OriginalBrokerAuthenticated)
+            throw new ArgumentException("ALGO_CURRENT_CONTRACT_PROVENANCE_MISMATCH");
+        return Price(c,q,holdingOpenedAt,side,executionIsBuy,false);
+    }
+
+    private static NativeCostAttribution Price(NativeObservedContractTerms c,
+        NativeMarketCostContext q,long? holdingOpenedAt,int? side,
+        bool executionIsBuy,bool requireOriginalBroker)
+    {
+        Validate(c,q.Units,requireOriginalBroker);
         if(q.AtUtcMs<=0 || q.Bid<=0 || q.Ask<q.Bid ||
             q.QuoteCreditToEur<=0 || q.QuoteDebitToEur<q.QuoteCreditToEur ||
             q.UsdToEur<=0 || q.MarginRequirementEur<=0 ||
@@ -105,17 +123,33 @@ public static class NativeBrokerContractCosts
         decimal spread=(q.Ask-q.Bid)*q.Units*((credit+debit)/2m);
         decimal? funding=null;
         if(holdingOpenedAt is long start && side is int orientation)
-            funding=SignedFinancing(c,start,q.AtUtcMs,orientation,q.Units,q.QuoteCreditToEur,q.QuoteDebitToEur);
+            funding=FinancingCore(c,start,q.AtUtcMs,orientation,q.Units,q.QuoteCreditToEur,q.QuoteDebitToEur,requireOriginalBroker);
         return new(ledgerQuote,fee,funding,
             2m*q.SlippagePerSideQuote*q.Units*((credit+debit)/2m),
-            spread,false,"ORIGINAL_ACCOUNT_CURRENT_CONTRACT_CONDITIONAL_COST");
+            spread,false,requireOriginalBroker?
+            "ORIGINAL_ACCOUNT_CURRENT_CONTRACT_CONDITIONAL_COST":
+            "CTRADER_ALGO_CURRENT_CONDITIONAL_UNATTESTED_NOT_ORIGINAL_ACCOUNT");
     }
 
     public static decimal? SignedFinancing(NativeObservedContractTerms c,
         long openedAt,long closedAt,int side,decimal units,
         decimal quoteCreditToEur,decimal quoteDebitToEur)
+        =>FinancingCore(c,openedAt,closedAt,side,units,quoteCreditToEur,quoteDebitToEur,true);
+
+    public static decimal? SignedFinancingCurrentAlgo(NativeObservedContractTerms c,
+        long openedAt,long closedAt,int side,decimal units,
+        decimal quoteCreditToEur,decimal quoteDebitToEur)
     {
-        Validate(c,units);
+        if(c.OriginalBrokerAuthenticated)
+            throw new ArgumentException("ALGO_CURRENT_CONTRACT_PROVENANCE_MISMATCH");
+        return FinancingCore(c,openedAt,closedAt,side,units,quoteCreditToEur,quoteDebitToEur,false);
+    }
+
+    private static decimal? FinancingCore(NativeObservedContractTerms c,
+        long openedAt,long closedAt,int side,decimal units,
+        decimal quoteCreditToEur,decimal quoteDebitToEur,bool requireOriginalBroker)
+    {
+        Validate(c,units,requireOriginalBroker);
         if(side is not (-1 or 1) || openedAt<0 || closedAt<openedAt ||
             quoteCreditToEur<=0 || quoteDebitToEur<quoteCreditToEur)
             throw new ArgumentException("NATIVE_COST_FINANCING_INPUT");
