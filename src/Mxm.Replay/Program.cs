@@ -1,4 +1,18 @@
 using System.Text.Json;
+if (args.Length == 3 && args[2] == "--sfx1-native-signs")
+{
+    try
+    {
+        var frames=JsonSerializer.Deserialize<Mxm.Core.SfxFeatureFrame[]>(
+            File.ReadAllBytes(args[0]))!;
+        if(frames is null || frames.Length>6000)return 41;
+        File.WriteAllText(args[1],JsonSerializer.Serialize(
+            Mxm.Core.SfxNativeSessionFeatures.EvaluateBatch(frames)));
+        return 0;
+    }
+    catch { return 41; }
+}
+
 using System.Security.Cryptography;
 
 if (args.Length == 3 && args[2] == "--xua1-native-signs")
