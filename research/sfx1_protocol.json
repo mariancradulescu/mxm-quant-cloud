@@ -1,0 +1,113 @@
+{
+  "schema": "mxm-sfx1-original-pepperstone-m15-multifamily-v1",
+  "id": "SFX1",
+  "status": "PREDECLARED_UNSCORED",
+  "authority": "docs/OWNER_SPEC.md OWNER v2.0 2026-11-08 economic-cost directive",
+  "locked": true,
+  "readOnly": true,
+  "originalPepperstoneLiveAccountOnly": true,
+  "goal": "Two distinct M15/H4 market mechanisms after CMA1, not closed XUA1/MBF1/CPF1 retuning, no generic commission wedges; OHLCV predictive gross may proceed with sparse bid/ask but no broker NET claim.",
+  "universe": [
+    "EURJPY",
+    "AUDJPY",
+    "NZDJPY",
+    "NZDUSD",
+    "EURUSD"
+  ],
+  "candidates": [
+    "EURJPY",
+    "AUDJPY",
+    "NZDJPY",
+    "NZDUSD"
+  ],
+  "roleOfEURUSD": "conversion route only, never a signal or trading candidate",
+  "mechanism": [
+    {
+      "name": "JPY_BASKET_0815_DISPERSION_RECOMPRESSION_M15_H4",
+      "symbols": [
+        "EURJPY",
+        "AUDJPY",
+        "NZDJPY"
+      ],
+      "clockUTC": "08:15",
+      "daysOfWeek": "MON_FRI",
+      "peerClock": "08:00",
+      "lengthCompletedM15": 16,
+      "premise": "Common JPY risk flow across three crosses temporarily leaves one cross mispriced relative to its two JPY peers during Tokyo-to-London repricing; next 45m may recompress.",
+      "signal": "if both peer completed 04:00–08:00 returns same sign and peer mean magnitude >=8bps, sell target if own 4h return minus peer mean>=12bps; buy if <=-12bps. No first/last bar from future.",
+      "holdMinutes": 45,
+      "entryLagMinutes": 15,
+      "benchmark": "same-clock same-instrument completed 4h momentum on IDENTICAL selected model events, same execution and costs",
+      "invalidate": "missing exact consecutive 16 native M15 closes in target or either peer, session closed, stale H4, or missing exact entry/exit closes"
+    },
+    {
+      "name": "NZDUSD_0700_H4_TO_M15_INTRASESSION_REVERSAL",
+      "symbols": [
+        "NZDUSD"
+      ],
+      "clockUTC": "07:00",
+      "daysOfWeek": "MON_FRI",
+      "priorCompletedH4": "00:00–04:00",
+      "premise": "Late Asian intraday price/volume reversal against completed Oceania 4h shock can persist into European preopen before London repricing.",
+      "signal": "last completed 30m M15 return absolute >=4bps opposite completed 00–04h H4 move absolute >=8bps; two newest M15 mean tick activity >=1.1 times previous four M15 mean; trade last 30m side.",
+      "holdMinutes": 60,
+      "entryLagMinutes": 15,
+      "benchmark": "same-clock same-instrument completed 00–04h H4 momentum, same modeled costs",
+      "invalidate": "missing exact M15 warmup, volume not observed, future bar, late quote, or forecast-evaluated clock outside 07:00 UTC"
+    }
+  ],
+  "source": {
+    "startUtcMs": 1762128000000,
+    "developmentEndUtcMs": 1777852800000,
+    "selectionEndUtcMs": 1785715200000,
+    "endHistoricalUtcMs": 1793577600000,
+    "newUnscoredEndUtcMs": 1794009600000,
+    "historicalWeeks": 52,
+    "newDaysChronologicallyAfterLastExposed": 5,
+    "oneWeeklyM15RequestPerInstrument": true,
+    "period": "M15",
+    "costPredeclaredFirst13Weeks": [
+      "WEDNESDAY_0815_UTC",
+      "THURSDAY_0700_UTC"
+    ],
+    "quoteWindowBeforeClockMs": 60000,
+    "maxQuoteAgeAtClockMs": 10000,
+    "maxSideSkewMs": 3000,
+    "expectedAuthenticatedRequests": 486,
+    "maxRequests": 510,
+    "sourceRetentionDays": 90,
+    "sourceReadback": "encrypted original raw request+response protobuf, same-account double-sha, source hashes before any feature or forward outcome",
+    "newBrokerRequestsOnlyForPreviouslyMissingM15For4NewCandidatesPlusEURUSDFxRoute": true
+  },
+  "selection": {
+    "phasesWeeks": {
+      "development": 26,
+      "selection": 13,
+      "previouslyExposedAudit": 13
+    },
+    "noUncontaminatedConfirmationFromHistory": true,
+    "futureFiveDaysNotIndependentOneYearConfirmation": true,
+    "entry": "next complete M15 close at t+15m, never same completed decision bar",
+    "exit": "entry close + fixed 45m for JPY and +60m NZDUSD, require all intermediate contiguous M15 bars",
+    "scoring": "simple log return in bps, model side versus same-event momentum, all empty weeks retained",
+    "hypotheses": 2,
+    "multipleTests": "at most two fixed economic mechanisms, Bonferroni 2, no post-result retuning",
+    "minimumSelectionCompleteEventsForEconomicPromotion": 40,
+    "minimumSelectionActiveWeeks": 8,
+    "minimumDevelopmentCostQuotesPerTarget": 3,
+    "minimumDistinctDevelopmentCostDates": 3,
+    "central": "observed development paired BID/ASK median spread once + authenticated current-term 3USD/lot both sides converted via causal EURUSD M15 + 0.5 observed spread roundtrip slippage + 0.25bps hypothetical FX route uncertainty",
+    "adverse": "observed development paired BID/ASK p90 + authenticated current-term 3USD/lot both sides converted via causal EURUSD M15 + 1 observed spread roundtrip slippage + 0.75bps hypothetical FX route uncertainty",
+    "stop": "if no evidence gross uplift over matched benchmark or no credible cost support, mark exact configuration unpromoted without retrospective rescue",
+    "priceBasis": "authentic completed M15 close-only proxy, not historical matched bid/ask order fill",
+    "financing": "zero only for intraday clock windows demonstrably not crossing original 22UTC ordinary rollover; historical fee/rate continuity unverified",
+    "historicalTariffContinuityCertified": false,
+    "actualFillCostCertified": false,
+    "paperNetOnlyConditionalCostModel": true,
+    "fundedEurReplay": "only after independent positive adverse model versus momentum plus fill/quote source and actual minimum-lot EUR300 joint financing evidence",
+    "hard21": "count only financed complete native ledger roundtrips across whole system and pre-eligible weeks",
+    "maxGlobalDrawdown": 0.3,
+    "ordersSent": 0,
+    "cloudActivated": false
+  }
+}
