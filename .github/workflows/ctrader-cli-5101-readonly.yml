@@ -32,10 +32,10 @@ jobs:
           test -f src/Mxm.Cloud/Mxm.Cloud.csproj
           grep -F '<TargetFramework>net6.0</TargetFramework>' src/Mxm.Cloud/Mxm.Cloud.csproj
           docker run --rm \
-            --mount type=bind,source="${GITHUB_WORKSPACE}",target=/workspace \
-            --workdir /workspace \
+            --mount type=bind,source="${GITHUB_WORKSPACE}",target=/root/cAlgo/Sources/Robots/MxmQuant \
+            --workdir /root/cAlgo/Sources/Robots/MxmQuant \
             ghcr.io/spotware/ctrader-console:5.10.1 \
-            build /workspace/src/Mxm.Cloud/Mxm.Cloud.csproj
+            build /root/cAlgo/Sources/Robots/MxmQuant/src/Mxm.Cloud/Mxm.Cloud.csproj
       - name: Verify resulting algo and parse its metadata through 5.10.1
         run: |
           set -euo pipefail
@@ -49,10 +49,10 @@ jobs:
           test -s "$ALGO"
           sha256sum "$ALGO" | tee ctrader-cli-5101/algo-sha256.txt
           docker run --rm \
-            --mount type=bind,source="${GITHUB_WORKSPACE}",target=/workspace \
-            --workdir /workspace \
+            --mount type=bind,source="${GITHUB_WORKSPACE}",target=/root/cAlgo/Sources/Robots/MxmQuant \
+            --workdir /root/cAlgo/Sources/Robots/MxmQuant \
             ghcr.io/spotware/ctrader-console:5.10.1 \
-            metadata "/workspace/$ALGO" | tee ctrader-cli-5101/metadata.txt
+            metadata "/root/cAlgo/Sources/Robots/MxmQuant/$ALGO" | tee ctrader-cli-5101/metadata.txt
           test -s ctrader-cli-5101/metadata.txt
           echo "CLI_NET6_ALGO_METADATA_EXECUTED=true" | tee ctrader-cli-5101/result.txt
       - name: Upload credential-free CLI build receipt
