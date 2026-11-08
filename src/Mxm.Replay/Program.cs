@@ -1,6 +1,21 @@
 using System.Text.Json;
 using System.Security.Cryptography;
 
+// The SAME native Cloud-linked Mxm.Core executes all three MCS1 features.
+// Research-only, no broker request or order. Original H1 bars provided as input.
+if(args.Length==3 && args[2]=="--mcs1-native-h1-signs")
+{
+    try
+    {
+        var rows=JsonSerializer.Deserialize<Mxm.Core.McsH1Frame[]>(File.ReadAllBytes(args[0]))!;
+        if(rows is null || rows.Length>11000)return 43;
+        File.WriteAllText(args[1],JsonSerializer.Serialize(
+            Mxm.Core.McsNativeH1Features.EvaluateBatch(rows)));
+        return 0;
+    }
+    catch {return 43;}
+}
+
 // Research-only bridge to EXACT existing Mxm.Core finance implementation.
 // The original broker contract fields come from CMA1/CMA2; example market
 // prices and FX rates MUST be labeled illustrative, never actual broker fills.

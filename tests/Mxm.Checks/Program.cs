@@ -4,6 +4,7 @@ MonetaryRecoveryChecks.Run(Check);
 FundedDecisionCycleChecks.Run(Check);
 NativeContractCostChecks.Run(Check);
 SfxNativeChecks.Run(Check);
+McsNativeChecks.Run(Check);
 ProspectiveIntegratedChecks.Run(Check);
 ResearchScopeContractChecks.Run(Check);
 NativeCausalWarmupChecks.Run(Check);
