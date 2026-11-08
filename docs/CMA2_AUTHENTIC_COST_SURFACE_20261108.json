@@ -1,0 +1,111 @@
+{
+  "schema": "MXM_CMA2_DURABLE_ORIGINAL_AUTHENTIC_MULTI_CLASS_COST_20261108_V1",
+  "authority": "docs/OWNER_SPEC.md OWNER v2.0 prospective Nov8 cost directive",
+  "originalAccount": "HISTORIC_PEPPERSTONE_LIVE_EUR_ACCOUNT_BOUND_PUBLIC_ONLY",
+  "evidence": {
+    "sourceRunId": 42428880809,
+    "sourceEncryptedSha256": "f919557b3bc9a330bff5ae637f40d1d750b0f1f1d084063bf474b63476fca3ab",
+    "lockedProtocol": "research/cma2_protocol.json",
+    "lockedProtocolSha256": "35cd8e16f8ea9a6afbe3e517d53a985fc161ef631249fdde3615c5e09c45a3f5",
+    "publicArtifactId": 13597245249,
+    "publicArtifact": "cma2-four-distinct-markets-cost-contract-public-only",
+    "publicJsonFilename": "cma2.public.json",
+    "publicJsonSha256": "8e2c7dc30d7338d7b17a679ab03b4c05af4540c3888548ba6587ed78119b0988",
+    "sourceRequestCount": 35,
+    "sourceWasNewPepperstoneReadOnly": true,
+    "originalRawRequestResponseIndependentDecryptReadback": true,
+    "originalAccountBindingRechecked": true,
+    "firstRunTechAuthFailureHadNoSourceCiphertext": true,
+    "quoteClocksUtc": [
+      "2026-11-05T02:15:00Z",
+      "2026-11-05T14:45:00Z",
+      "2026-11-05T19:45:00Z"
+    ]
+  },
+  "contractCommon": {
+    "commissionTypeWire": 2,
+    "commissionRateScale": 100000000,
+    "commissionType": "USD_PER_LOT",
+    "minCommissionType": "CURRENCY",
+    "minCommissionAsset": "USD",
+    "pnlConversionFeeBpsExplicit": 0,
+    "swapChargeClockUtc": "22:00",
+    "swapTripleChargeWeekday": "FRIDAY",
+    "swapPeriodHours": 24,
+    "chargeSwapAtWeekendsExplicit": false,
+    "accountScheduleTimeZone": "America/New_York"
+  },
+  "candidates": {
+    "NatGas": {
+      "minVolumeUnits": "100",
+      "lotSizeUnits": "10000",
+      "minMarginEur": "24.74",
+      "observedFreshQuotePairs": 1,
+      "observedSpreadBps": "11.104942",
+      "commissionRateWire": 0,
+      "minCommissionWire": 0,
+      "swapCalcType": 0,
+      "swapLong": -1.4,
+      "swapShort": 1.26
+    },
+    "JPYX": {
+      "minVolumeUnits": "10",
+      "lotSizeUnits": "100",
+      "minMarginEur": "7.83",
+      "observedFreshQuotePairs": 0,
+      "observedSpreadBps": null,
+      "commissionRateWire": 0,
+      "minCommissionWire": 0,
+      "swapCalcType": 0,
+      "swapLong": -0.09,
+      "swapShort": -0.06
+    },
+    "USDX": {
+      "minVolumeUnits": "10",
+      "lotSizeUnits": "100",
+      "minMarginEur": "183.84",
+      "observedFreshQuotePairs": 1,
+      "observedSpreadBps": "4.917823",
+      "commissionRateWire": 0,
+      "minCommissionWire": 0,
+      "swapCalcType": 0,
+      "swapLong": 0.01,
+      "swapShort": -0.59
+    },
+    "AMD.US": {
+      "minVolumeUnits": "0.1",
+      "lotSizeUnits": "1",
+      "minMarginEur": "7.99",
+      "observedFreshQuotePairs": 1,
+      "observedSpreadBps": "15.011258",
+      "commissionRateWire": 2000000,
+      "minCommissionWire": 2000000,
+      "swapCalcType": 1,
+      "swapLong": -6.41,
+      "swapShort": 1.21
+    }
+  },
+  "sourceCoverage": {
+    "clockObservations": 12,
+    "freshPairedBidAsk": 3,
+    "staleOrMissing": 9,
+    "noReliableHistoricalCostDistribution": true,
+    "noActualFills": true,
+    "notionalAndFXConversionsToEurUnavailable": true,
+    "commissionsAndSwapUnitInterpretationMustMatchContractType": true,
+    "legacyRawReceiptFlagMarginBelow200WasNotA300EurFundingTest": true
+  },
+  "economicOutcome": {
+    "currentMinMarginBelowProspective300EurForFourSingleLegs": true,
+    "fundedExposureCapacityProven": false,
+    "historicalNetEur": null,
+    "predictiveModelsScored": 0,
+    "independentConfirmation": false,
+    "hard21SystemProven": false,
+    "maximumDrawdown30Proven": false,
+    "closedExactXUA1Restored": false,
+    "ordersSubmitted": 0,
+    "cloudActivated": false
+  },
+  "nextGate": "Candidate-specific fresh liquid BID/ASK first; compute fee in EUR at causal price and volume, swap by instrument and currency; gather authentic M15/H4 only if economically justified; retain original EUR300 common ledger and independent chronological confirmation. Do not re-score XUA1."
+}
