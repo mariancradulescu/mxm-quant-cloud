@@ -12,6 +12,13 @@ public class MxmCloud : Robot
 
     [Parameter("Exploratory EUR300 model replay (NO orders)", DefaultValue = true)]
     public bool EnableExploratoryReplay { get; set; } = true;
+    // Active M5 research lanes remain observed at EVERY completed M5 clock.
+    // The separate 256-symbol survey rotates only for non-active discovery.
+    // This list is a predeclared feasibility watchlist, NOT fitted alpha.
+    [Parameter("Active M5 research watchlist (max 16)", DefaultValue =
+        "EURUSD,GBPUSD,AUDUSD,USDJPY,USDCAD,US500,NAS100,XAUUSD")]
+    public string ActiveM5ResearchWatchlist { get; set; } =
+        "EURUSD,GBPUSD,AUDUSD,USDJPY,USDCAD,US500,NAS100,XAUUSD";
 
     private NativeProductResearchLoop? _productResearch;
     private int _lastResearchModelTrips = -1;
@@ -45,6 +52,9 @@ public class MxmCloud : Robot
         // A restart begins a fresh observational simulation, not a cash reset
         // of any broker account; historical recovery requires causal replay.
         _productResearch=EnableExploratoryReplay ? new NativeProductResearchLoop():null;
+        if(_productResearch is not null)
+            Print("MXM isolated model-only EUR300 research epoch {0}; no Cloud LocalStorage continuity or cumulative profit claim.",
+                _productResearch.ModelEpochId);
         Timer.Start(15);
         ObserveNative();
     }
@@ -136,11 +146,11 @@ public class MxmCloud : Robot
             minWire,minimumAsset,convBps,
             market.SwapCalculationType==SymbolSwapCalculationType.Pips?0:1,
             (decimal)market.SwapLong,(decimal)market.SwapShort,pipPosition,
-            24,1320,triple,false,0,true,false);
+            24,1320,triple,false,0,false,false);
         var context=new NativeMarketCostContext(clock,(decimal)market.Bid,
             (decimal)market.Ask,quoteFx,quoteFx,usdFx,minAssetFx,
             requiredMargin,minimum,(decimal)(market.Ask-market.Bid)/4m);
-        var attribution=NativeBrokerContractCosts.Quote(terms,context);
+        var attribution=NativeBrokerContractCosts.QuoteCurrentAlgo(terms,context);
         return new NativeProductMarket(name,shortBars,mediumBars,
             attribution.Quote,terms,context.SlippagePerSideQuote,30,false);
     }
@@ -270,7 +280,10 @@ public class MxmCloud : Robot
             long warmupNow=Stamp(Server.TimeInUtc);
             if(warmupNow>=_nextWarmupPollAt)
             {
-                _nextWarmupPollAt=warmupNow+300000;
+                // Do not anchor the M5 scanner to an arbitrary cBot start time.
+                // Poll the next completed five-minute boundary plus one timer
+                // interval; missing bars are measured in the model receipt.
+                _nextWarmupPollAt=(warmupNow/300000L+1L)*300000L+15000L;
                 // One deterministic bounded slice per completed polling cycle;
                 // all held, pending and model positions are still tracked.
                 if(_readOnlyUniverseSweep<int.MaxValue)_readOnlyUniverseSweep++;
@@ -386,12 +399,40 @@ public class MxmCloud : Robot
                         var inputs=new System.Collections.Generic.List<NativeProductMarket>();
                         if(Account.BrokerName.Contains("Pepperstone",
                             System.StringComparison.OrdinalIgnoreCase))
-                        foreach(var name in universe.ResearchSymbols
-                            .Concat(_productResearch.ActiveSymbols)
-                            .Distinct(System.StringComparer.Ordinal))
                         {
-                            var market=ReadProductResearchMarket(name,warmupNow);
-                            if(market is not null)inputs.Add(market);
+                            var active=ActiveM5ResearchWatchlist
+                                .Split(new[]{',',';'},System.StringSplitOptions.TrimEntries|
+                                    System.StringSplitOptions.RemoveEmptyEntries)
+                                .Distinct(System.StringComparer.Ordinal).ToArray();
+                            if(active.Length>16 || active.Any(x=>x.Length>64))
+                                throw new System.ArgumentException("ACTIVE_M5_WATCHLIST_INVALID_OR_TOO_LARGE");
+                            foreach(var name in active
+                                .Concat(_productResearch.ActiveSymbols)
+                                .Distinct(System.StringComparer.Ordinal))
+                            {
+                                try
+                                {
+                                    if(!Symbols.Exists(name))continue;
+                                    var symbol=Symbols.GetSymbol(name);
+                                    var feas=NativeResearchMarketCapacity.Screen(new(
+                                        name,symbol.IsTradingEnabled,symbol.Bid,symbol.Ask,
+                                        symbol.VolumeInUnitsMin,
+                                        symbol.GetEstimatedMargin(TradeType.Buy,symbol.VolumeInUnitsMin),
+                                        symbol.GetEstimatedMargin(TradeType.Sell,symbol.VolumeInUnitsMin)));
+                                    // Active signals must have a currently
+                                    // plausible minimum-volume funding route.
+                                    if(!feas.EitherDirectionWithinInitial300 &&
+                                        !_productResearch.ActiveSymbols.Contains(name))
+                                        continue;
+                                    var market=ReadProductResearchMarket(name,warmupNow);
+                                    if(market is not null)inputs.Add(market);
+                                }
+                                catch(System.Exception)
+                                {
+                                    // Explicitly report missed observation
+                                    // later; broker risk monitoring stays live.
+                                }
+                            }
                         }
                         // Explicitly process every observed clock even when
                         // no valid candidates exist, so missing marks cannot
@@ -405,7 +446,11 @@ public class MxmCloud : Robot
                                 System.Globalization.CultureInfo.InvariantCulture)+
                             "; sampled floating DD "+
                             (100m*report.ModelMaximumSampledDrawdown).ToString("0.000",
-                                System.Globalization.CultureInfo.InvariantCulture)+"%";
+                                System.Globalization.CultureInfo.InvariantCulture)+
+                            "%; unobserved M5 slots "+report.ObservedM5SlotsNotScored+
+                            "; lag max ms "+report.MaxObservedM5LagMs+
+                            "; adverse fully repriced "+report.AdversePathFullyRepriced+
+                            "; restart "+report.ContinuityBoundary;
                         if(report.ModelClosedRoundTrips!=_lastResearchModelTrips ||
                             report.LatestSignals.Length>0 ||
                             status!=_lastResearchEconomicStatus)
