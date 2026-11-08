@@ -226,6 +226,13 @@ public sealed class NativeProductResearchLoop
                 tracked.Add(chosen.Id,new(market.Symbol,opportunity.Direction,
                     chosen.Units,at,0,market.HoldingMinutes,market.SlippagePerSideQuote,
                     market.Contract!));
+                var selectedIndex=recent.FindIndex(x=>x.Symbol==market.Symbol &&
+                    x.Status=="MODEL_FORECAST_ONLY");
+                if(selectedIndex>=0)
+                    recent[selectedIndex]=recent[selectedIndex] with {
+                        Status="SHADOW_MODEL_INTENT_ALLOCATED_NOT_TRADING",
+                        DecisionReason=chosen.Reason
+                    };
             }
             foreach(var declined in conditional.Selection.Declined)
             {
