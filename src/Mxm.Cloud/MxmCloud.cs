@@ -10,6 +10,12 @@ public class MxmCloud : Robot
     [Parameter("Read-only research universe", DefaultValue = "EURUSD,GBPUSD,AUDUSD,USDJPY,USDCAD,US500,NAS100,XAUUSD")]
     public string ReadOnlyResearchUniverse { get; set; } = "EURUSD,GBPUSD,AUDUSD,USDJPY,USDCAD,US500,NAS100,XAUUSD";
 
+    [Parameter("Exploratory EUR300 model replay (NO orders)", DefaultValue = true)]
+    public bool EnableExploratoryReplay { get; set; } = true;
+
+    private NativeProductResearchLoop? _productResearch;
+    private int _lastResearchModelTrips = -1;
+    private string _lastResearchEconomicStatus = "";
     private string _lastMode = "";
     private bool _transientFault;
     private NativeFundedSession? _fundedSession;
@@ -34,6 +40,10 @@ public class MxmCloud : Robot
         // unset key may raise LocalStorageException. Do not load any checkpoint
         // as the restart authority. Reconstruct from native broker facts.
         _fundedSession=new NativeFundedSession(_accountBinding);
+        // Independent MODEL_REPLAY capital, never the broker monetary domain.
+        // A restart begins a fresh observational simulation, not a cash reset
+        // of any broker account; historical recovery requires causal replay.
+        _productResearch=EnableExploratoryReplay ? new NativeProductResearchLoop():null;
         Timer.Start(15);
         ObserveNative();
     }
@@ -49,6 +59,89 @@ public class MxmCloud : Robot
         // A subsequent successful native observation clears transient state.
         _transientFault = true;
         Print("MXM native observation exception; scheduled auto-reconciliation continues.");
+    }
+
+
+    private NativeProductMarket? ReadProductResearchMarket(string name,long clock)
+    {
+        // All mappings use CURRENT cTrader platform terms, not retrospectively
+        // certified Pepperstone history or guaranteed historical fill prices.
+        var market=Symbols.GetSymbol(name);
+        if(!market.IsTradingEnabled || !market.MarketHours.IsOpened() ||
+            market.Bid<=0 || market.Ask<market.Bid)return null;
+        var m5=MarketData.GetBars(TimeFrame.Minute5,name);
+        var m15=MarketData.GetBars(TimeFrame.Minute15,name);
+        NativeClosedMarketBar[] Prefix(Bars bars,int minutes)
+        {
+            int n=NativeCausalWarmup.WindowBars;
+            if(bars.Count<n+1)return System.Array.Empty<NativeClosedMarketBar>();
+            int end=bars.Count-2;
+            var output=new NativeClosedMarketBar[n];
+            for(int j=0;j<n;j++)
+            {
+                int i=end-n+1+j;
+                long open=Stamp(bars.OpenTimes[i]);
+                output[j]=new(open,open+(long)minutes*60000L,
+                    (decimal)bars.OpenPrices[i],(decimal)bars.HighPrices[i],
+                    (decimal)bars.LowPrices[i],(decimal)bars.ClosePrices[i],
+                    (long)bars.TickVolumes[i]);
+            }
+            return output;
+        }
+        var shortBars=Prefix(m5,5);
+        var mediumBars=Prefix(m15,15);
+        if(shortBars.Length<NativeCausalWarmup.WindowBars ||
+            mediumBars.Length<NativeCausalWarmup.WindowBars)return null;
+        var feeType=(int)market.CommissionType+1;
+        if(feeType<1 || feeType>4)return null;
+        // Price-proportional commissions must use execution BUY/SELL sides.
+        // The existing single-fee-attributed model quote is not sufficient
+        // for both sides of these contracts: never misprice them.
+        if(feeType is 1 or 3)return null;
+        int pipPosition=0;
+        decimal pip=(decimal)market.PipSize;
+        while(pip>0m && pip<1m && pipPosition<18)
+        {
+            pip*=10m;pipPosition++;
+        }
+        if(pip!=1m)return null;
+        var quoteFx=(decimal)AssetConverter.Convert(1d,market.QuoteAsset,Account.Asset);
+        var usdFx=(decimal)AssetConverter.Convert(1d,"USD",Account.Asset);
+        string minimumAsset=market.MinCommissionType==SymbolMinCommissionType.QuoteAsset
+            ?market.QuoteAsset.Name:market.MinCommissionAsset.Name;
+        decimal minAssetFx=(decimal)AssetConverter.Convert(1d,minimumAsset,Account.Asset);
+        decimal minimum=(decimal)market.VolumeInUnitsMin;
+        if(minimum<=0)return null;
+        decimal requiredMargin=(decimal)System.Math.Max(
+            market.GetEstimatedMargin(TradeType.Buy,market.VolumeInUnitsMin),
+            market.GetEstimatedMargin(TradeType.Sell,market.VolumeInUnitsMin));
+        var commission=(decimal)market.Commission;
+        // CTrader direct fee value -> the PREEXISTING Proto contract wire
+        // representation. USD/lot, quote/lot are exact unit mappings.
+        long commissionWire=checked((long)decimal.Round(commission*100000000m,0));
+        long minWire=checked((long)decimal.Round((decimal)market.MinCommission*100000000m,0));
+        int convBps=checked((int)System.Math.Round(
+            market.PnLConversionFeeRate*10000d));
+        int triple=market.Swap3DaysRollover.HasValue
+            ?(market.Swap3DaysRollover.Value==System.DayOfWeek.Sunday?7:
+                (int)market.Swap3DaysRollover.Value):3;
+        // The cTrader Algo Symbol API does not expose all original account
+        // rollover semantics here. The 22:00 UTC/skip/weekend assumptions
+        // are an explicit CONDITIONAL SIMULATION ONLY; not actual funding.
+        var terms=new NativeObservedContractTerms(name,market.QuoteAsset.Name,
+            clock,minimum,(decimal)market.VolumeInUnitsStep,
+            (decimal)market.VolumeInUnitsMax,(decimal)market.LotSize,
+            feeType,commissionWire,(int)market.MinCommissionType+1,
+            minWire,minimumAsset,convBps,
+            market.SwapCalculationType==SymbolSwapCalculationType.Pips?0:1,
+            (decimal)market.SwapLong,(decimal)market.SwapShort,pipPosition,
+            24,1320,triple,false,0,true,false);
+        var context=new NativeMarketCostContext(clock,(decimal)market.Bid,
+            (decimal)market.Ask,quoteFx,quoteFx,usdFx,minAssetFx,
+            requiredMargin,minimum,(decimal)(market.Ask-market.Bid)/4m);
+        var attribution=NativeBrokerContractCosts.Quote(terms,context);
+        return new NativeProductMarket(name,shortBars,mediumBars,
+            attribution.Quote,terms,context.SlippagePerSideQuote,30,false);
     }
 
     private void ObserveNative()
@@ -200,7 +293,9 @@ public class MxmCloud : Robot
                     }
                 }
                 var frames=new (TimeFrame Frame,int Minutes,string Name)[]{
-                    (TimeFrame.Minute5,5,"M5"),(TimeFrame.Hour,60,"H1"),
+                    (TimeFrame.Minute5,5,"M5"),
+                    (TimeFrame.Minute15,15,"M15"),(TimeFrame.Minute30,30,"M30"),
+                    (TimeFrame.Hour,60,"H1"),
                     (TimeFrame.Hour4,240,"H4"),(TimeFrame.Daily,1440,"D1")};
                 foreach(var name in symbols)
                 foreach(var frame in frames)
@@ -271,6 +366,51 @@ public class MxmCloud : Robot
                     {
                         // Incomplete symbol/timeframe history is a local
                         // observation gap. Retry at the next bounded poll.
+                    }
+                }
+
+                // A real product-shaped research path using current cTrader
+                // prices, native contract snapshots and completed M5/M15 bars.
+                // Simulated fills happen on later observations only; neither
+                // this loop nor its core types contains broker order actions.
+                if(_productResearch is not null)
+                {
+                    try
+                    {
+                        var inputs=new System.Collections.Generic.List<NativeProductMarket>();
+                        if(Account.BrokerName.Contains("Pepperstone",
+                            System.StringComparison.OrdinalIgnoreCase))
+                        foreach(var name in universe.ResearchSymbols)
+                        {
+                            var market=ReadProductResearchMarket(name,warmupNow);
+                            if(market is not null)inputs.Add(market);
+                        }
+                        // Explicitly process every observed clock even when
+                        // no valid candidates exist, so missing marks cannot
+                        // become fabricated close or profitable executions.
+                        var report=_productResearch.Advance(warmupNow,inputs.ToArray(),
+                            EnableUnqualifiedShadowSimulation:true);
+                        string status=report.ModelClosedRoundTrips+" completed model trips; "+
+                            report.AcceptedModelIntents+" conditional research intents; "+
+                            report.RejectedIntents+" rejected; cash EUR "+
+                            report.ModelCashEur.ToString("0.0000",
+                                System.Globalization.CultureInfo.InvariantCulture)+
+                            "; sampled floating DD "+
+                            (100m*report.ModelMaximumSampledDrawdown).ToString("0.000",
+                                System.Globalization.CultureInfo.InvariantCulture)+"%";
+                        if(report.ModelClosedRoundTrips!=_lastResearchModelTrips ||
+                            report.LatestSignals.Length>0 ||
+                            status!=_lastResearchEconomicStatus)
+                        {
+                            Print("MXM model-only product research: {0}; no broker NET qualification or orders.",status);
+                            _lastResearchModelTrips=report.ModelClosedRoundTrips;
+                            _lastResearchEconomicStatus=status;
+                        }
+                    }
+                    catch(System.Exception)
+                    {
+                        // Broker account cash monitoring remains independent.
+                        Print("MXM model-only replay missing current complete market/contract evidence; no broker orders.");
                     }
                 }
                 string warmupStatus=ready+"/"+total+
