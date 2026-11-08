@@ -59,7 +59,7 @@ public static class NativeProductResearchLoopChecks
             long clock=at+tick*m5;
             r=loop.Advance(clock,new[]{Market("SYNTH_A",clock,tick),
                 Market("SYNTH_B",clock,tick)},
-                EnableUnqualifiedShadowSimulation:tick<9);
+                EnableUnqualifiedShadowSimulation:tick<8);
             if(tick==1)
                 check(r.ModelOpenPositions==2&&r.ModelCashEur<300m&&
                     r.ModelEquityEur<r.ModelCashEur,
