@@ -1,4 +1,6 @@
 using System.Text.Json;
+using System.Security.Cryptography;
+
 if (args.Length == 3 && args[2] == "--sfx1-native-signs")
 {
     try
@@ -12,8 +14,6 @@ if (args.Length == 3 && args[2] == "--sfx1-native-signs")
     }
     catch { return 41; }
 }
-
-using System.Security.Cryptography;
 
 if (args.Length == 3 && args[2] == "--xua1-native-signs")
 {
