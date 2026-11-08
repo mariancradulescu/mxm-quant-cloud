@@ -12,9 +12,10 @@ public sealed record NativeResearchUniversePlan(
 public static class NativeResearchUniverse
 {
     public const int MaxResearchSymbols = 32;
+    public const int MaxConfiguredResearchSymbols = 256;
 
     public static NativeResearchUniversePlan Resolve(string? requested,string chartSymbol,
-        IEnumerable<string>? exposureSymbols,Func<string,bool> isAvailable)
+        IEnumerable<string>? exposureSymbols,Func<string,bool> isAvailable,int sweep=0)
     {
         if(isAvailable is null)throw new ArgumentNullException(nameof(isAvailable));
         var forced=(exposureSymbols??Array.Empty<string>())
@@ -25,18 +26,24 @@ public static class NativeResearchUniverse
         NativeResearchUniversePlan Reject(string reason)=>
             new(forced,Array.Empty<string>(),Array.Empty<string>(),reason);
 
-        if(requested is null || requested.Length>1024)
+        if(requested is null || requested.Length>16384 || sweep<0)
             return Reject("NATIVE_UNIVERSE_INVALID_CONFIGURATION");
         var names=requested.Split(new[]{',',';'},StringSplitOptions.TrimEntries|
             StringSplitOptions.RemoveEmptyEntries)
             .Distinct(StringComparer.Ordinal).ToArray();
-        if(names.Length>MaxResearchSymbols ||
+        if(names.Length>MaxConfiguredResearchSymbols ||
            names.Any(x=>x.Length>64 || x.Any(c=>!(char.IsLetterOrDigit(c)||
                     c is '.' or '-' or '_' or '#'))))
             return Reject("NATIVE_UNIVERSE_INVALID_OR_TOO_LARGE");
         var available=new List<string>();
         var unavailable=new List<string>();
-        foreach(var name in names)
+        // Deterministic bounded rotation: more research symbols can be
+        // explored over successive completed observation cycles, without
+        // suppressing ANY model or broker position outside the current slice.
+        var window=names.Length<=MaxResearchSymbols?names:
+            Enumerable.Range(0,MaxResearchSymbols).Select(i=>
+                names[(int)(((long)sweep*MaxResearchSymbols+i)%names.Length)]).ToArray();
+        foreach(var name in window)
         {
             if(isAvailable(name))available.Add(name);
             else unavailable.Add(name);
@@ -44,7 +51,9 @@ public static class NativeResearchUniverse
         return new(forced.Concat(available).Distinct(StringComparer.Ordinal).ToArray(),
             available.ToArray(),unavailable.ToArray(),
             unavailable.Count>0?"NATIVE_UNIVERSE_PARTIAL_BROKER_AVAILABILITY":
-                "NATIVE_UNIVERSE_CONFIGURED_OBSERVATION_ONLY");
+                names.Length>MaxResearchSymbols?
+                    "NATIVE_UNIVERSE_ROTATING_OBSERVATION_ONLY":
+                    "NATIVE_UNIVERSE_CONFIGURED_OBSERVATION_ONLY");
     }
 }
 
