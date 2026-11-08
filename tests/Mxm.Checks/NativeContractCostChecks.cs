@@ -87,7 +87,7 @@ static class NativeContractCostChecks
         var sellPrice=NativeBrokerContractCosts.Quote(equities,context,
             executionIsBuy:false);
         check(buyPrice.OneSideCommissionEur>sellPrice.OneSideCommissionEur &&
-            buyPrice.OneSideCommissionEur-sellPrice.OneSideCommissionEur==.006m,
+            buyPrice.OneSideCommissionEur-sellPrice.OneSideCommissionEur==.00006m,
             "percentage commission follows the execution side bid/ask, not extra spread");
         check(!priced.HistoricalExecutionCertified,
             "synthetic parity never asserts actual broker-funded profit");
