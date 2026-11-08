@@ -49,6 +49,13 @@ public static class NativeProductResearchLoopChecks
         var loop=new NativeProductResearchLoop();
         var a=loop.Advance(at,new[]{Market("SYNTH_A",at,0),
             Market("SYNTH_B",at,0)},EnableUnqualifiedShadowSimulation:true);
+        check(a.LatestSignals.Length==2&&a.LatestSignals.All(x=>
+            x.Status=="SHADOW_MODEL_INTENT_ALLOCATED_NOT_TRADING" &&
+            x.DecisionReason.Contains("CONDITIONAL")),
+            "both shadow allocations carry causal symbol-specific native reasoning");
+        check(refused.LatestSignals.Single().DecisionReason==
+            "SPECIALIST_NO_PREDICTIVE_BENCHMARK_SUPPORT",
+            "unqualified prospective rejection reports the original native specialist economic reason");
         check(a.Forecasts==2&&a.AcceptedModelIntents==2&&
             a.ModelPendingIntents==2&&a.ModelCashEur==300m&&
             !a.Qualified&&!a.OrdersEnabled&&!a.BrokerNetCertified,
