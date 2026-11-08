@@ -11,7 +11,7 @@ public sealed record NativeResearchUniversePlan(
 
 public static class NativeResearchUniverse
 {
-    public const int MaxResearchSymbols = 12;
+    public const int MaxResearchSymbols = 32;
 
     public static NativeResearchUniversePlan Resolve(string? requested,string chartSymbol,
         IEnumerable<string>? exposureSymbols,Func<string,bool> isAvailable)
