@@ -24,27 +24,48 @@ public sealed record NativeProductResearchReport(
     long At,int Forecasts,int AcceptedModelIntents,int RejectedIntents,
     int ModelOpenPositions,int ModelPendingIntents,int ModelClosedRoundTrips,
     decimal ModelCashEur,decimal? ModelEquityEur,decimal ModelGrossEur,
-    decimal ModelCentralNetEur,decimal ModelAdverseNetProxyEur,
+    decimal ModelCentralNetEur,decimal? ModelAdverseNetProxyEur,
     decimal ModelMaximumSampledDrawdown,
     Dictionary<string,int> ModelRoundTripsPerIsoWeek,
     NativeProductSignal[] LatestSignals,string Status,
-    bool BrokerNetCertified=false,bool Qualified=false,bool OrdersEnabled=false);
+    bool BrokerNetCertified=false,bool Qualified=false,bool OrdersEnabled=false,
+    decimal? ModelMatchedLongBenchmarkEur=null,
+    decimal? ModelIncrementalVsLongEur=null,
+    bool AdversePathFullyRepriced=false,int ObservedM5SlotsNotScored=0,
+    long MaxObservedM5LagMs=0,bool HistoryPathComplete=false);
 
 public sealed class NativeProductResearchLoop
 {
     private sealed record Tracked(string Symbol,int Side,decimal Units,long RequestAt,
         long OpenAt,int HoldMinutes,decimal SlippagePerSideQuote,
-        NativeObservedContractTerms Contract,bool CloseRequested=false);
+        NativeObservedContractTerms Contract,bool CloseRequested=false,
+        LedgerQuote? EntryQuote=null);
     private const string ResearchDomain="UNQUALIFIED_CAUSAL_MODEL_REPLAY_NOT_BROKER_EXECUTION";
-    private readonly NativeFundedSession session=new("NATIVE_PRODUCT_MODEL_REPLAY_ONLY");
+    private NativeFundedSession session=new("NATIVE_PRODUCT_MODEL_REPLAY_ONLY");
+    private NativeProductAdverseBook adverse=new();
     private readonly Dictionary<string,Tracked> tracked=new(StringComparer.Ordinal);
     private readonly Dictionary<string,long> previousForecastBar=new(StringComparer.Ordinal);
+    private readonly Dictionary<string,long> lastSeenM5Bar=new(StringComparer.Ordinal);
+    private int unobservedM5DecisionSlots,unresolvedCalendarGaps;
+    private long maximumBarObservationLagMs;
+    private bool historicalPathComplete=true;
+    private decimal matchedLongBenchmarkNetEur;
     private readonly Dictionary<string,int> weekly=new(StringComparer.Ordinal);
     private readonly List<NativeProductSignal> signals=new();
     private long lastClock=-1;
     private int eventSequence, forecasts, accepted, rejected;
 
     public NativeFundedSession ResearchSession=>session;
+    public bool HistoricalPathComplete=>historicalPathComplete;
+    public int UnobservedM5DecisionSlots=>unobservedM5DecisionSlots;
+    public int UnresolvedCalendarGaps=>unresolvedCalendarGaps;
+    public long MaxBarObservationLagMs=>maximumBarObservationLagMs;
+    public NativeProductAdverseBook AdverseScenario=>adverse;
+    private void ApplyFacts(LedgerEvent[] facts)
+    {
+        session.ApplyResearchFacts(facts);
+        adverse.Apply(facts);
+    }
     public string[] ActiveSymbols=>tracked.Values.Select(x=>x.Symbol)
         .Distinct(StringComparer.Ordinal).ToArray();
     private static string Fingerprint(string value)=>Convert.ToHexString(
@@ -57,6 +78,17 @@ public sealed class NativeProductResearchLoop
             execution,fee,margin,slippage,available,calibrated,latency,ResearchDomain,
             Fingerprint(ResearchDomain+":"+at+":"+symbol+":"+eventSequence),
             quotes??Array.Empty<LedgerQuote>(),financing);
+    private static bool ContractUsableForModel(NativeObservedContractTerms c)
+        =>c.OriginalBrokerAuthenticated ||
+            (!c.HistoricalTariffContinuityCertified && c.ObservedAtUtcMs>0);
+    private static decimal? Financing(NativeObservedContractTerms c,
+        long opened,long closed,int side,decimal units,
+        decimal credit,decimal debit)
+        =>c.OriginalBrokerAuthenticated
+            ?NativeBrokerContractCosts.SignedFinancing(c,opened,closed,
+                side,units,credit,debit)
+            :NativeBrokerContractCosts.SignedFinancingCurrentAlgo(c,opened,closed,
+                side,units,credit,debit);
     private static decimal Fee(LedgerQuote q,decimal units)=>
         Math.Max(q.ExitFeePerUnit*units,q.ExitFeeFloor);
     private static string Week(long at)
@@ -75,7 +107,7 @@ public sealed class NativeProductResearchLoop
             throw new ArgumentException("PRODUCT_REPLAY_NONCAUSAL_MARKET_CLOCK");
         // One coherent multiasset mark; no broker ledger/account state is ever
         // accessed or modified. No synthetic fill is created on the intent clock.
-        session.ApplyResearchFacts(new[]{Event("MARK",at,quotes:markets.Select(x=>x.Quote).ToArray())});
+        ApplyFacts(new[]{Event("MARK",at,quotes:markets.Select(x=>x.Quote).ToArray())});
         var byName=markets.ToDictionary(x=>x.Symbol,StringComparer.Ordinal);
         foreach(var id in tracked.Keys.ToArray())
         {
@@ -85,19 +117,36 @@ public sealed class NativeProductResearchLoop
             if(p.OpenAt==0 && at>=p.RequestAt+1000)
             {
                 decimal px=p.Side>0?q.Ask+p.SlippagePerSideQuote:q.Bid-p.SlippagePerSideQuote;
-                session.ApplyResearchFacts(new[]{Event("OPEN_FILL",at,id,p.Symbol,p.Side,
+                ApplyFacts(new[]{Event("OPEN_FILL",at,id,p.Symbol,p.Side,
                     p.Units,px,Fee(q,p.Units),q.MarginPerUnit,p.SlippagePerSideQuote)});
-                tracked[id]=p with {OpenAt=at};
+                tracked[id]=p with {OpenAt=at,EntryQuote=q};
             }
             else if(p.OpenAt>0 && p.CloseRequested && at>=p.RequestAt+1000)
             {
                 // Contractual rollover is never guessed. Without a complete
                 // financing model, hold the position as unknown, not zero-cost.
-                var finance=NativeBrokerContractCosts.SignedFinancing(p.Contract,
+                var finance=Financing(p.Contract,
                     p.OpenAt,at,p.Side,p.Units,q.EurCredit,q.EurDebit);
                 if(finance is null)continue;
                 decimal px=p.Side>0?q.Bid-p.SlippagePerSideQuote:q.Ask+p.SlippagePerSideQuote;
-                session.ApplyResearchFacts(new[]{
+                // Matched, fixed-side buy-and-hold benchmark on the *same*
+                // observed entry/exit clock, units and model cost surface.
+                // Counterfactual benchmark is descriptive, not separately
+                // financed or independently validated.
+                if(p.EntryQuote is LedgerQuote entry)
+                {
+                    decimal gross=(q.Bid-p.SlippagePerSideQuote-
+                        entry.Ask-p.SlippagePerSideQuote)*p.Units;
+                    decimal converted=gross*(gross>=0?q.EurCredit:q.EurDebit);
+                    var longCarry=Financing(p.Contract,p.OpenAt,at,1,
+                        p.Units,q.EurCredit,q.EurDebit);
+                    if(longCarry is decimal carry)
+                        matchedLongBenchmarkNetEur+=converted-
+                            Fee(entry,p.Units)-Fee(q,p.Units)+carry;
+                    else historicalPathComplete=false;
+                }
+                else historicalPathComplete=false;
+                ApplyFacts(new[]{
                     Event("FINANCING",at,id,p.Symbol,p.Side,p.Units,
                         financing:finance.Value),
                     Event("CLOSE_FILL",at,id,p.Symbol,p.Side,p.Units,
@@ -110,7 +159,7 @@ public sealed class NativeProductResearchLoop
             else if(p.OpenAt>0 && !p.CloseRequested &&
                     at-p.OpenAt>=p.HoldMinutes*60000L)
             {
-                session.ApplyResearchFacts(new[]{Event("REQUEST_CLOSE",at,id,
+                ApplyFacts(new[]{Event("REQUEST_CLOSE",at,id,
                     p.Symbol,p.Side,p.Units,latency:1000)});
                 tracked[id]=p with {CloseRequested=true,RequestAt=at};
             }
@@ -124,6 +173,23 @@ public sealed class NativeProductResearchLoop
         {
             var p5=NativeCausalWarmup.Rebuild(new(market.Symbol,"M5",5,at,market.M5));
             var p15=NativeCausalWarmup.Rebuild(new(market.Symbol,"M15",15,at,market.M15));
+            if(p5.Ready)
+            {
+                long old=lastSeenM5Bar.GetValueOrDefault(market.Symbol);
+                if(old>0 && p5.LastClosedAt>old+300000L)
+                {
+                    // Only count unobserved completed slots, never fabricate
+                    // the directions or profitability of missing signals.
+                    if(p5.MissingIntervals==0)
+                        unobservedM5DecisionSlots+=checked((int)(
+                            (p5.LastClosedAt-old)/300000L-1));
+                    else unresolvedCalendarGaps++;
+                }
+                if(old==0||p5.LastClosedAt>old)
+                    lastSeenM5Bar[market.Symbol]=p5.LastClosedAt;
+                maximumBarObservationLagMs=Math.Max(maximumBarObservationLagMs,
+                    Math.Max(0,at-p5.LastClosedAt));
+            }
             if(!p5.Ready || !p15.Ready || p5.NormalizedDrift is not decimal a ||
                 p15.NormalizedDrift is not decimal b || a*b<=0 ||
                 previousForecastBar.GetValueOrDefault(market.Symbol)==p5.LastClosedAt)
@@ -135,7 +201,7 @@ public sealed class NativeProductResearchLoop
             if(market.Contract is not NativeObservedContractTerms c ||
                c.Symbol!=market.Symbol ||
                c.MinimumUnits<=0 || c.MinimumUnits>c.MaximumUnits ||
-               !c.OriginalBrokerAuthenticated)
+               !ContractUsableForModel(c))
             {
                 rejected++;
                 recent.Add(new(market.Symbol,at,side,"MODEL_COST_CONTRACT_NOT_AVAILABLE",
@@ -150,7 +216,7 @@ public sealed class NativeProductResearchLoop
                     null,null,null,"SINGLE_POSITION_PER_SYMBOL"));
                 continue;
             }
-            decimal? signedFunding=NativeBrokerContractCosts.SignedFinancing(
+            decimal? signedFunding=Financing(
                 c,at,at+market.HoldingMinutes*60000L,side,units,q.EurCredit,q.EurDebit);
             if(signedFunding is null)
             {
@@ -219,6 +285,14 @@ public sealed class NativeProductResearchLoop
             var conditional=EnableUnqualifiedShadowSimulation
                 ?session.DecideResearch(d with {SpecialistEvidence=null})
                 :session.DecideProspective(d);
+            // Record precisely the existing core's accepted model intents in
+            // a second adverse-cost replay of the SAME allocation/funding path.
+            var decisions=conditional.Selection.Allocations
+                .Select(x=>x.Id).ToHashSet(StringComparer.Ordinal);
+            if(decisions.Count>0)
+                adverse.Apply(session.Ledger.PendingSnapshot().Where(x=>
+                    x.Kind=="REQUEST_OPEN" && decisions.Contains(x.PositionId))
+                    .ToArray());
             accepted+=conditional.Selection.Allocations.Length;
             rejected+=conditional.Selection.Declined.Length;
             foreach(var chosen in conditional.Selection.Allocations)
@@ -253,12 +327,19 @@ public sealed class NativeProductResearchLoop
     {
         var s=session.Ledger.Summary(at);
         var closed=session.Ledger.ClosedFragments();
-        decimal extraStress=closed.Sum(x=>x.SpreadEur??0m);
         return new(at,forecasts,accepted,rejected,s.OpenPositions,s.PendingIntents,
             s.CompleteRoundTrips,s.CashEur,s.LiquidationEquityEur,
             closed.Sum(x=>x.GrossEur),s.ClosedNetEur,
-            s.ClosedNetEur-extraStress,s.MaximumSampledDrawdown,
+            adverse.Summary?.ClosedNetEur,s.MaximumSampledDrawdown,
             new Dictionary<string,int>(weekly,StringComparer.Ordinal),recent,
-            "MODEL_ONLY_FIXED_EUR300_CASH_BENCHMARK_ZERO_NOT_INDEPENDENT_OR_BROKER_NET");
+            "EXPLORATORY_MODEL_ONLY_NOT_ORIGINAL_AUTHENTICATED_OR_BROKER_NET",
+            ModelMatchedLongBenchmarkEur:historicalPathComplete?
+                matchedLongBenchmarkNetEur:null,
+            ModelIncrementalVsLongEur:historicalPathComplete?
+                s.ClosedNetEur-matchedLongBenchmarkNetEur:null,
+            AdversePathFullyRepriced:adverse.Complete,
+            ObservedM5SlotsNotScored:unobservedM5DecisionSlots,
+            MaxObservedM5LagMs:maximumBarObservationLagMs,
+            HistoryPathComplete:historicalPathComplete);
     }
 }
