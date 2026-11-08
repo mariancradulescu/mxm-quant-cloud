@@ -1,7 +1,7 @@
 """CMA2: authenticated read-only paired BID/ASK and current contract cost preflight.
 
 Separate, ex-ante quote-cost observation; no prediction, fills, EUR NET, or
-model selection. Reuses collect.authenticate, stdlib transport, custody v2,
+model selection. Reuses owner_readonly_auth.authenticate, stdlib transport, custody v2,
 guard allowlist, and immutable protocol. All raw protobuf stays encrypted.
 """
 from __future__ import annotations
@@ -12,7 +12,8 @@ import os
 import sys
 from decimal import Decimal as D
 from pathlib import Path
-from .collect import authenticate,HISTORIC_ACCOUNT_FINGERPRINT_COMMITMENT
+from .owner_readonly_auth import authenticate
+from .collect import HISTORIC_ACCOUNT_FINGERPRINT_COMMITMENT
 from .ctrader_transport import StdlibCTraderTransport
 from .ctrader_proto import OpenApiMessages_pb2 as m,OpenApiModelMessages_pb2 as e
 from .guard import require_read_only_request
