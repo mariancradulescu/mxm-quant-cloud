@@ -1,0 +1,154 @@
+{
+  "schema": "MXM_SFX1_AUTHENTIC_NATIVE_M15_H4_PREDICTIVE_RECEPTION_20261108_V1",
+  "authority": "docs/OWNER_SPEC.md OWNER v2.0 prospective Nov8",
+  "frozenProtocol": "research/sfx1_protocol.json",
+  "runId": 42432623291,
+  "sourceOriginalAccountLivePepperstoneEUR": true,
+  "sourceCryptographicReadbackVerified": true,
+  "sourceCiphertextSha256": "5e1884020cf4bd0c16b7da10ea392fff94d5156b04107ba12affd36f5f87e3a5",
+  "frozenProtocolSha256": "a730a20d27986962e8e918dc882cc7c93e7b3bc9e6a9ff9405106bb022f664f7",
+  "publicArtifactId": 13597897345,
+  "publicArtifactFilename": "sfx1-authentic-public.json",
+  "publicArtifactSha256": "2544f302eef20996ccd4c2e987303d6ef6b1bc84974c4d22e804c0e245df2bf2",
+  "rawSealedArtifactId": 13597518876,
+  "sourceRequests": 486,
+  "originalAuthenticatedM15BarsByInstrument": {
+    "AUDJPY": 25204,
+    "EURJPY": 25206,
+    "EURUSD_conversionOnly": 25224,
+    "NZDJPY": 25197,
+    "NZDUSD": 25224
+  },
+  "sourceM15BarsTotal": 126055,
+  "chronologicalAdditionalM15BarsEachInstrument": 472,
+  "sourceM15WeeklyWindowsTruncated": 0,
+  "marketNativeParity": {
+    "actualOriginalMarketSource": true,
+    "nativeCsharpCases": 1031,
+    "exactAgreement": true,
+    "nonzeroSignalsWithForward": 151
+  },
+  "costSupport": {
+    "preselectedCostClocksPerTarget": 26,
+    "freshPairedQuoteSamples": {
+      "AUDJPY": 22,
+      "EURJPY": 23,
+      "NZDJPY": 23,
+      "NZDUSD": 24
+    },
+    "freshPairedTotal": 92,
+    "attemptedTotal": 104,
+    "brokerCurrentPreciseTradingCommissionUSDPerLotSide": 3,
+    "historicalBrokerTermsCertified": false,
+    "historicalTradeFills": 0,
+    "slippageSeparateModeled": true,
+    "conversionRouteMidM15NotFill": true,
+    "intradayHoldingDoesNotCrossObserved22UtcRollover": true
+  },
+  "families": {
+    "JPY_BASKET_0815_DISPERSION_RECOMPRESSION_M15_H4": {
+      "completeSignals": 132,
+      "instruments": [
+        "EURJPY",
+        "AUDJPY",
+        "NZDJPY"
+      ],
+      "holdMinutes": 45,
+      "development": {
+        "completeSignals": 71,
+        "activeWeeks": 24,
+        "emptyWeeks": 2,
+        "grossMeanBps": 1.093883,
+        "grossMomentumBenchmarkBps": -0.630664,
+        "conditionalCentralNetMeanBps": -0.987716,
+        "conditionalAdverseNetMeanBps": -2.028912,
+        "conditionalAdverseMomentumBenchmarkBps": -3.753459,
+        "incrementalAdverseNetVsMomentumBps": 1.724547,
+        "calendarWeekHacBonferroniAdverseLowerBps": -1.959203
+      },
+      "selection": {
+        "completeSignals": 29,
+        "activeWeeks": 13,
+        "emptyWeeks": 0,
+        "grossMeanBps": -0.988919,
+        "grossMomentumBenchmarkBps": 1.033467,
+        "conditionalCentralNetMeanBps": -3.229231,
+        "conditionalAdverseNetMeanBps": -4.317023,
+        "conditionalAdverseMomentumBenchmarkBps": -2.294637,
+        "incrementalAdverseNetVsMomentumBps": -2.022386,
+        "calendarWeekHacBonferroniAdverseLowerBps": -3.100495
+      },
+      "previouslyExposedAudit": {
+        "completeSignals": 32,
+        "activeWeeks": 11,
+        "emptyWeeks": 2,
+        "grossMeanBps": -1.855435,
+        "grossMomentumBenchmarkBps": 0.540893,
+        "conditionalCentralNetMeanBps": -4.102276,
+        "conditionalAdverseNetMeanBps": -5.190872,
+        "conditionalAdverseMomentumBenchmarkBps": -2.794545,
+        "incrementalAdverseNetVsMomentumBps": -2.396328,
+        "calendarWeekHacBonferroniAdverseLowerBps": -6.229369
+      },
+      "admission": "NO_NEGATIVE_SELECTION_GROSS_AND_ADVERSE"
+    },
+    "NZDUSD_0700_H4_TO_M15_INTRASESSION_REVERSAL": {
+      "completeSignals": 19,
+      "instruments": [
+        "NZDUSD"
+      ],
+      "holdMinutes": 60,
+      "development": {
+        "completeSignals": 8,
+        "activeWeeks": 8,
+        "emptyWeeks": 18,
+        "grossMeanBps": -3.67106,
+        "grossMomentumBenchmarkBps": 3.67106,
+        "conditionalCentralNetMeanBps": -5.472881,
+        "conditionalAdverseNetMeanBps": -6.161384,
+        "conditionalAdverseMomentumBenchmarkBps": 1.180736,
+        "incrementalAdverseNetVsMomentumBps": -7.34212,
+        "calendarWeekHacBonferroniAdverseLowerBps": -9.712996
+      },
+      "selection": {
+        "completeSignals": 7,
+        "activeWeeks": 4,
+        "emptyWeeks": 9,
+        "grossMeanBps": 8.256214,
+        "grossMomentumBenchmarkBps": -8.256214,
+        "conditionalCentralNetMeanBps": 6.460258,
+        "conditionalAdverseNetMeanBps": 5.771755,
+        "conditionalAdverseMomentumBenchmarkBps": -10.740673,
+        "incrementalAdverseNetVsMomentumBps": 16.512429,
+        "calendarWeekHacBonferroniAdverseLowerBps": 1.211043
+      },
+      "previouslyExposedAudit": {
+        "completeSignals": 4,
+        "activeWeeks": 4,
+        "emptyWeeks": 9,
+        "grossMeanBps": -4.349169,
+        "grossMomentumBenchmarkBps": 4.349169,
+        "conditionalCentralNetMeanBps": -6.178097,
+        "conditionalAdverseNetMeanBps": -6.866599,
+        "conditionalAdverseMomentumBenchmarkBps": 1.831739,
+        "incrementalAdverseNetVsMomentumBps": -8.698339,
+        "calendarWeekHacBonferroniAdverseLowerBps": -6.933893
+      },
+      "admission": "NO_SELECTION_SAMPLE_7_BELOW_40_AND_4_ACTIVE_WEEKS_BELOW_8_DEVELOPMENT_AUDIT_NEGATIVE"
+    }
+  },
+  "verdict": {
+    "closedExactTwoSfx1Configurations": true,
+    "closedOtherStudiesRetuned": false,
+    "historicalReturnsExploratoryExposed": true,
+    "conditionalCostModelNotBrokerFillNet": true,
+    "fundedBrokerNetEur": null,
+    "nativeFundedRoundTrips": 0,
+    "systemWideHard21Certified": false,
+    "maximumFloatingDrawdown30Certified": false,
+    "independentChronologicalConfirmation": false,
+    "cloudActivated": false,
+    "ordersLiveOrDemo": 0,
+    "nextPriority": "Distinct economical causal mechanism on new market/timeframe or genuinely future evidence; preserve positive but underpowered NZD selection as selection-only, no retune, inversion or backfilled proof."
+  }
+}
