@@ -1,0 +1,208 @@
+{
+  "schema": "MXM_MCS1_ORIGINAL_BROKER_CROSS_CLASS_H1_V1",
+  "id": "MCS1",
+  "status": "REGISTERED_UNSCORED",
+  "authority": "docs/OWNER_SPEC.md OWNER v2.0 + 2026-11-08 prospective dual statistical and multi-class directive",
+  "locked": true,
+  "originalPepperstoneEURAccount": true,
+  "readOnly": true,
+  "closedStudiesRemainFrozen": [
+    "XUA1",
+    "SFX1",
+    "MFA1",
+    "MBF1",
+    "ERP1",
+    "OCE1",
+    "CMA2"
+  ],
+  "classAndRationale": [
+    {
+      "symbol": "NatGas",
+      "class": "energy/commodity CFD",
+      "source": "CMA2 original contract current source 2026-11-05",
+      "minMarginEur": "24.74",
+      "minUnits": "100",
+      "currentObservedSpreadBps": "11.104942",
+      "contractFeeAtMinVolumeUsdPerSide": "0",
+      "role": "TARGET"
+    },
+    {
+      "symbol": "USDX",
+      "class": "USD basket/index CFD",
+      "source": "CMA2 original contract current source 2026-11-05",
+      "minMarginEur": "183.84",
+      "minUnits": "10",
+      "currentObservedSpreadBps": "4.917823",
+      "contractFeeAtMinVolumeUsdPerSide": "0",
+      "role": "TARGET_AND_NATGAS_CONTEXT"
+    },
+    {
+      "symbol": "AMD.US",
+      "class": "US-listed equity CFD",
+      "source": "CMA2 original contract current source 2026-11-05",
+      "minMarginEur": "7.99",
+      "minUnits": "0.1",
+      "currentObservedSpreadBps": "15.011258",
+      "contractFeeFloorUsdPerSide": "0.02",
+      "role": "TARGET"
+    }
+  ],
+  "timeframes": [
+    "H1_NATIVE_COMPLETED",
+    "NATGAS_FOUR_COMPLETED_H1_TO_H4_CONTEXT"
+  ],
+  "source": {
+    "startUtcMs": 1762128000000,
+    "developmentEndUtcMs": 1777852800000,
+    "selectionEndUtcMs": 1785715200000,
+    "exposedAuditEndUtcMs": 1793577600000,
+    "newerUnscoredEndUtcMs": 1794009600000,
+    "historicalWeeks": 52,
+    "readOnlyBrokerRequestsExact": 324,
+    "historicalWeeklyH1Requests": 159,
+    "currentContractAndMarginReverificationRequests": 6,
+    "frozenHistoricalPairedCostClocksPerTarget": 26,
+    "historicalBidAskRequests": 156,
+    "sourceHeaders": 3,
+    "quoteClockRule": [
+      {
+        "weekday": "WEDNESDAY",
+        "utc": "15:45"
+      },
+      {
+        "weekday": "THURSDAY",
+        "utc": "17:45"
+      }
+    ],
+    "maximumBidAskAgeMs": 10000,
+    "maximumQuoteSkewMs": 3000,
+    "tickLookbackMs": 60000,
+    "trendbarPeriod": "H1",
+    "historicalAlreadyGloballyExposed": true,
+    "laterChronologicalFiveDays": "CUSTODY_ONLY_UNSCORED_NOT_IN_FEATURE_OR_OUTCOME_STUDY",
+    "independentYearConfirmation": false,
+    "sourceKeepSealed": true
+  },
+  "families": [
+    {
+      "id": "NATGAS_H4_EXHAUSTION_USDX_QUIET_REVERSAL",
+      "symbol": "NatGas",
+      "peer": "USDX",
+      "decisionUtcHours": [
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19
+      ],
+      "weekdays": [
+        "MON",
+        "TUE",
+        "WED",
+        "THU",
+        "FRI"
+      ],
+      "mechanism": "Gas four-hour magnitude >=35bps, latest H1 reverses the H4 sign, last H1 tick activity >=1.10 times prior three-hour mean, USDX two-hour magnitude <10bps; follow gas last-hour reversal for one H1. Cross-class dollar calm distinguishes local gas flow.",
+      "nativeRule": "completed NatGas H1 clocks t..t-4, USDX clocks t..t-2; no gap fills",
+      "benchmark": "same-event target prior 4h momentum",
+      "holdingHours": 1,
+      "entryLagHours": 1
+    },
+    {
+      "id": "USDX_OVERLAP_TWO_HOUR_DRIFT",
+      "symbol": "USDX",
+      "decisionUtcHours": [
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19
+      ],
+      "weekdays": [
+        "MON",
+        "TUE",
+        "WED",
+        "THU",
+        "FRI"
+      ],
+      "mechanism": "London–US overlap USD index two-hour absolute drift >=4bps and most recent H1 same sign, with genuine positive tick volume; forecast one H1 persistence.",
+      "nativeRule": "completed USDX H1 clocks t..t-2; no gap fill",
+      "benchmark": "same-event long-only USDX index exposure",
+      "holdingHours": 1,
+      "entryLagHours": 1
+    },
+    {
+      "id": "AMD_US_INTRADAY_TICK_ACTIVITY_EXHAUSTION",
+      "symbol": "AMD.US",
+      "decisionUtcHours": [
+        15,
+        16,
+        17,
+        18,
+        19
+      ],
+      "weekdays": [
+        "MON",
+        "TUE",
+        "WED",
+        "THU",
+        "FRI"
+      ],
+      "mechanism": "US equity completed last H1 absolute close return >=80bps and last-hour tick activity >=1.25x mean of four preceding genuine H1 bars; trade one H1 opposite the extreme directional flow.",
+      "nativeRule": "completed AMD.US H1 clocks t..t-4; gaps and untraded cash hours invalid",
+      "benchmark": "same-event target preceding H1 momentum",
+      "holdingHours": 1,
+      "entryLagHours": 1
+    }
+  ],
+  "frequencyPrescreen": {
+    "classEligibleH1DecisionsPerFullTradingWeekUpperBound": {
+      "NatGas": 40,
+      "USDX": 40,
+      "AMD.US": 25
+    },
+    "combinedUpperBound": 105,
+    "HARD21RequiresExAnteSignalConversionFractionAtMost": "0.20",
+    "label": "EX_AN_TE_CLOCK_CAPACITY_NOT_SIGNAL_PROBABILITY_NOT_FINANCED_TRADES",
+    "qualification": "calculate real signal weekly counts on source BEFORE reading forward results; zero weeks included; if rate poor do not retune thresholds"
+  },
+  "economics": {
+    "useExistingJointStatGate": "research/prospective_joint_stat_gate.py",
+    "predeclaredTotalFamilies": 3,
+    "oneSidedFamilywiseAlpha": 0.05,
+    "testsPerFamily": [
+      "ADVERSE_NET_VS_CASH",
+      "ADVERSE_NET_INCREMENTAL_VS_SAME_EVENT_BENCHMARK"
+    ],
+    "minimumSelectionCompleteSignals": 40,
+    "minimumSelectionActiveWeeks": 8,
+    "minimumDevelopmentPairedQuoteSamplesByTarget": 8,
+    "minimumDistinctQuoteDatesByTarget": 8,
+    "central": "development observed paired spread median + 0.5x spread separate model slippage + current specific broker per-volume commission/floor in quote-currency bps + 0.5bps route uncertainty",
+    "adverse": "development paired spread p90 + 1.0x spread separate model slippage + current broker commission/floor + 1.0bps route uncertainty",
+    "noSpreadDoubleBooked": true,
+    "allPricedWithSourceTimeContractOnly": true,
+    "minVolumeAndMarginSource": "actual current original-account CMA2 then refreshed symbol/margin source as-of run",
+    "benchmarkCostsMatchedToSameEventSide": true,
+    "bothAbsoluteAndIncrementalHacPositiveRequired": true,
+    "noCostQuotesMeansOnlyGrossAndUncertifiedCostScenario": false,
+    "missingCostMeansNetNull": true,
+    "intradayExitBeforeObserved22UTCRollover": true,
+    "actualExecutedQuoteSideProofRequiredForFundedNetEur": true,
+    "fundedEurWithoutActualFillProhibited": true,
+    "noRetuningAfterScore": true,
+    "notIndependentOnGloballyExposed52Weeks": true,
+    "holdFutureFiveDaysUnscored": true,
+    "portfolioCapitalEur": 300,
+    "systemicHard21RoundTripsPerEligibleWeek": 21,
+    "globalMaximumDrawdown": 0.3,
+    "ordersLiveDemo": 0,
+    "cloudActivated": false
+  }
+}
