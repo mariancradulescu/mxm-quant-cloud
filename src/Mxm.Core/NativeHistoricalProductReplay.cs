@@ -38,7 +38,11 @@ public sealed record NativeHistoricalMarketReceipt(
     int UnscoredM5ClockSlots,bool ContinuousHistoricalEquityObserved,
     int OpenModelPositions,int PendingModelRequests,
     bool IndependentConfirmation=false,bool BrokerNetCertified=false,
-    bool OrdersEnabled=false,string Verdict="EXPLORATORY_ONLY_NOT_BROKER_QUALIFIED");
+    bool OrdersEnabled=false,string Verdict="EXPLORATORY_ONLY_NOT_BROKER_QUALIFIED",
+    int ForecastsGenerated=0,string[]? ObservedSymbols=null,
+    string[]? ActuallyScoredTimeframes=null,
+    bool CompleteSampledSnapshotCalendar=false,
+    string BenchmarkContract="CASH_ZERO_AND_MATCHED_SAME_CLOCK_ALWAYS_LONG_UNFUNDED_DESCRIPTIVE");
 
 public static class NativeHistoricalProductReplay
 {
@@ -171,7 +175,14 @@ public static class NativeHistoricalProductReplay
             last.ModelIncrementalVsLongEur,
             monetary.MaximumSampledDrawdown,
             new Dictionary<string,int>(weeks,StringComparer.Ordinal),
-            traces.ToArray(),last.ObservedM5SlotsNotScored,complete,
-            monetary.OpenPositions,monetary.PendingIntents);
+            traces.ToArray(),last.ObservedM5SlotsNotScored,
+            // M5 closes/quote snapshots NEVER prove the complete intrabar
+            // floating-equity path needed for DD30 certification.
+            false,
+            monetary.OpenPositions,monetary.PendingIntents,
+            ForecastsGenerated:last.Forecasts,
+            ObservedSymbols:paths.Keys.OrderBy(x=>x,StringComparer.Ordinal).ToArray(),
+            ActuallyScoredTimeframes:new[]{"M5","M15_AGGREGATED_FROM_COMPLETED_M5"},
+            CompleteSampledSnapshotCalendar:complete);
     }
 }
