@@ -1,0 +1,205 @@
+{
+  "schema": "MXM_COL1_EXPOSED_SELECTION_ONLY_EXPLORATORY_V1",
+  "source": "docs/AIP1_AUTHENTIC_RESULT.json",
+  "mechanism": "ALL_SIX_INDEXES_LONG_CASH_OPEN_PLUS30_TO_PLUS150_MIN",
+  "sourceIdentity": "PRIORLY_AUTHENTICATED_ORIGINAL_PEPPERSTONE_SOURCE_LABELS_NO_NEW_REQUEST",
+  "sampleRestriction": "AIP1_ALREADY_EXPOSED_SELECTION_ONLY; AUDIT_FORECASTS_UNTOUCHED",
+  "cannotAssertNewIndependentEvidence": true,
+  "eventSubsetBias": "PUBLISHED_AIP1_SCHEDULED_FEATURE_ROWS; NOT THE COMPLETE_BROKER_OPEN_CALENDAR",
+  "selectionWeekCount": 13,
+  "selectionEvents": 287,
+  "completeProxyEvents": 287,
+  "missing": 0,
+  "otherPhaseSourceRowsNotScored": 359,
+  "weekly": [
+    {
+      "week": 0,
+      "sourceScheduledEvents": 20,
+      "completeGrossCostEvents": 20,
+      "missing": 0,
+      "days": 5,
+      "equalEventGrossBps": 8.98538928099285,
+      "equalEventConditionalCentralNetBps": 5.385157140425205,
+      "equalEventConditionalAdverseNetBps": 1.7849249998575558,
+      "equalEventIncrementalVsFrozenAip1AdverseBps": 19.853474731802986
+    },
+    {
+      "week": 1,
+      "sourceScheduledEvents": 20,
+      "completeGrossCostEvents": 20,
+      "missing": 0,
+      "days": 5,
+      "equalEventGrossBps": -1.3352693071871933,
+      "equalEventConditionalCentralNetBps": -4.93550144775484,
+      "equalEventConditionalAdverseNetBps": -8.535733588322485,
+      "equalEventIncrementalVsFrozenAip1AdverseBps": -6.038312174911579
+    },
+    {
+      "week": 2,
+      "sourceScheduledEvents": 29,
+      "completeGrossCostEvents": 29,
+      "missing": 0,
+      "days": 5,
+      "equalEventGrossBps": 3.7537022808463307,
+      "equalEventConditionalCentralNetBps": 0.3248671225480436,
+      "equalEventConditionalAdverseNetBps": -3.1039680357502473,
+      "equalEventIncrementalVsFrozenAip1AdverseBps": 8.059564289830757
+    },
+    {
+      "week": 3,
+      "sourceScheduledEvents": 17,
+      "completeGrossCostEvents": 17,
+      "missing": 0,
+      "days": 5,
+      "equalEventGrossBps": 12.006525321725753,
+      "equalEventConditionalCentralNetBps": 8.006726934483396,
+      "equalEventConditionalAdverseNetBps": 4.006928547241039,
+      "equalEventIncrementalVsFrozenAip1AdverseBps": 13.73169444403714
+    },
+    {
+      "week": 4,
+      "sourceScheduledEvents": 15,
+      "completeGrossCostEvents": 15,
+      "missing": 0,
+      "days": 5,
+      "equalEventGrossBps": 6.248314573559086,
+      "equalEventConditionalCentralNetBps": 1.9899344558238525,
+      "equalEventConditionalAdverseNetBps": -2.2684456619113833,
+      "equalEventIncrementalVsFrozenAip1AdverseBps": 18.98295697819193
+    },
+    {
+      "week": 5,
+      "sourceScheduledEvents": 22,
+      "completeGrossCostEvents": 22,
+      "missing": 0,
+      "days": 5,
+      "equalEventGrossBps": -24.715965588125076,
+      "equalEventConditionalCentralNetBps": -27.640596061254687,
+      "equalEventConditionalAdverseNetBps": -30.565226534384298,
+      "equalEventIncrementalVsFrozenAip1AdverseBps": -61.79374225995794
+    },
+    {
+      "week": 6,
+      "sourceScheduledEvents": 25,
+      "completeGrossCostEvents": 25,
+      "missing": 0,
+      "days": 5,
+      "equalEventGrossBps": 4.806064698309376,
+      "equalEventConditionalCentralNetBps": 1.9179934118800086,
+      "equalEventConditionalAdverseNetBps": -0.9700778745493586,
+      "equalEventIncrementalVsFrozenAip1AdverseBps": 6.921346303311804
+    },
+    {
+      "week": 7,
+      "sourceScheduledEvents": 19,
+      "completeGrossCostEvents": 19,
+      "missing": 0,
+      "days": 5,
+      "equalEventGrossBps": -0.24747786990704113,
+      "equalEventConditionalCentralNetBps": -4.267278436593469,
+      "equalEventConditionalAdverseNetBps": -8.287079003279898,
+      "equalEventIncrementalVsFrozenAip1AdverseBps": 3.829952886510736
+    },
+    {
+      "week": 8,
+      "sourceScheduledEvents": 20,
+      "completeGrossCostEvents": 20,
+      "missing": 0,
+      "days": 5,
+      "equalEventGrossBps": 10.635236757251974,
+      "equalEventConditionalCentralNetBps": 6.506691435252796,
+      "equalEventConditionalAdverseNetBps": 2.3781461132536137,
+      "equalEventIncrementalVsFrozenAip1AdverseBps": -13.344341708693587
+    },
+    {
+      "week": 9,
+      "sourceScheduledEvents": 20,
+      "completeGrossCostEvents": 20,
+      "missing": 0,
+      "days": 5,
+      "equalEventGrossBps": -16.42592849699531,
+      "equalEventConditionalCentralNetBps": -20.5544738189945,
+      "equalEventConditionalAdverseNetBps": -24.68301914099367,
+      "equalEventIncrementalVsFrozenAip1AdverseBps": -21.38314934986785
+    },
+    {
+      "week": 10,
+      "sourceScheduledEvents": 20,
+      "completeGrossCostEvents": 20,
+      "missing": 0,
+      "days": 5,
+      "equalEventGrossBps": -18.673361447991145,
+      "equalEventConditionalCentralNetBps": -22.801906769990318,
+      "equalEventConditionalAdverseNetBps": -26.9304520919895,
+      "equalEventIncrementalVsFrozenAip1AdverseBps": -33.28168668203213
+    },
+    {
+      "week": 11,
+      "sourceScheduledEvents": 30,
+      "completeGrossCostEvents": 30,
+      "missing": 0,
+      "days": 5,
+      "equalEventGrossBps": 15.563046464954395,
+      "equalEventConditionalCentralNetBps": 12.12387111410635,
+      "equalEventConditionalAdverseNetBps": 8.684695763258302,
+      "equalEventIncrementalVsFrozenAip1AdverseBps": 17.552609005500415
+    },
+    {
+      "week": 12,
+      "sourceScheduledEvents": 30,
+      "completeGrossCostEvents": 30,
+      "missing": 0,
+      "days": 5,
+      "equalEventGrossBps": -15.925830635505713,
+      "equalEventConditionalCentralNetBps": -19.365005986353765,
+      "equalEventConditionalAdverseNetBps": -22.804181337201808,
+      "equalEventIncrementalVsFrozenAip1AdverseBps": -21.71831000070508
+    }
+  ],
+  "weeklyFullCalendarMeansBps": {
+    "equalEventGrossBps": -1.1788887667747474,
+    "equalEventConditionalCentralNetBps": -4.86996314664784,
+    "equalEventConditionalAdverseNetBps": -8.561037526520936,
+    "equalEventIncrementalVsFrozenAip1AdverseBps": -5.279072579767877
+  },
+  "jointHac3BonferroniDescriptive": {
+    "adverseVsCash": {
+      "meanBps": -8.561037526520936,
+      "hac3SeBps": 2.4293014590138533,
+      "multiplicityAdjustedLowerBps": -13.322380893778694
+    },
+    "adverseIncrementalVsFrozenAip1SideBenchmark": {
+      "meanBps": -5.279072579767877,
+      "hac3SeBps": 4.85011035643748,
+      "multiplicityAdjustedLowerBps": -14.785114199430062
+    }
+  },
+  "maxPotentialSignalSlotsByWeek": [
+    20,
+    20,
+    29,
+    17,
+    15,
+    22,
+    25,
+    19,
+    20,
+    20,
+    20,
+    30,
+    30
+  ],
+  "financedRoundTrips": 0,
+  "conditionalNetEur": null,
+  "nativeCsharpNewMechanismParity": false,
+  "actualBrokerFills": false,
+  "globalDrawdown30Proven": false,
+  "hard21Proven": false,
+  "independentConfirmation": false,
+  "tradingQualification": false,
+  "newOrders": 0,
+  "cloudActivated": false,
+  "costInterpretation": "CostBps is AIP1 source-date modelled roundtrip cost, not historical quote fills; central=1x, adverse=2x conditional cost; no historical FX financing/tariff certificates",
+  "priceInterpretation": "Forward broker OHLC close-only label; not historical bid/ask executable trade",
+  "notARerunOfClosedAip1": "No model retraining, refitting, re-selection, parameter tuning or original primary result rescore; frozen predicted side only as fixed comparator"
+}
