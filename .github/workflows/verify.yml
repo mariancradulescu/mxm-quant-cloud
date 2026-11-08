@@ -601,6 +601,7 @@ jobs:
       - run: python -m unittest research.test_cma1_cost_recovery -v
       - run: python -m unittest research.test_cma2_cost_preflight -v
       - run: python -m unittest research.test_sfx1 -v
+      - run: python -m unittest research.test_prospective_joint_stat_gate -v
       - run: python -m unittest research.test_depth_channel_pilot -v
       - run: python -m unittest research.test_pipeline research.test_intraday_net research.test_flow_net research.test_neighbour_net research.test_funded_replay research.test_relative_gross research.test_tick_volume_net research.test_anchor_signal research.test_session_wick_signal research.test_orchestrated_replay research.test_joint_quote_extension research.test_portfolio_economic research.test_holding_economic research.test_causal_observation
       - name: Verify native open-equity monitor from immutable modeled holding marks
