@@ -1,0 +1,131 @@
+{
+  "Protocol": "MXM_FX_NEW_MECHANISMS_W45_V1",
+  "DeclaredUtc": "2026-11-09",
+  "Status": "PREDECLARED_BEFORE_NEW_OPENAPI_RESULT",
+  "Authority": "docs/OWNER_SPEC.md",
+  "Product": "single native C# EUR300 funded model, no broker orders or Cloud activation",
+  "DeveloperEvidence": {
+    "period": "2026-11-02T00:00:00Z/2026-11-09T00:00:00Z",
+    "week": "2026-W45",
+    "role": "new exploratory evaluation on post-PR160 original-account market history; NOT independent confirmation",
+    "historicalPrecedentExcluded": "2026-W42 through W44 and all closed PR160 candidate outcomes",
+    "warmupFrom": "2026-10-30T08:00:00Z",
+    "notYetConfirmedSelection": true
+  },
+  "FutureConfirmation": {
+    "earliestFullUnexposedWeek": "2026-11-09T00:00:00Z/2026-11-16T00:00:00Z",
+    "role": "reserved prospective independent chronological confirmation; NOT SCORED in W45",
+    "mustRemainUnscored": true
+  },
+  "Universe": {
+    "symbols": [
+      "EURUSD",
+      "GBPUSD",
+      "AUDUSD"
+    ],
+    "why": "original account USD quotes permit same-clock USD factor and an exact USD/EUR conversion path; authenticated feasible minimum volume and available original Open API source, not a permanent strategy universe",
+    "requirements": [
+      "original LIVE account identity",
+      "read-only authentication",
+      "min-volume margin <= EUR300",
+      "original M5 and as-of BID/ASK independently observed",
+      "historical instrument tariffs must not be inferred from current contract snapshots"
+    ]
+  },
+  "Source": {
+    "period": "M5 raw closed Open API bars, M15 exactly aggregated from three consecutive M5",
+    "bidAsk": "historical independent tick BID/ASK; strictly as-of <=60 s",
+    "snapshotFrequency": "every weekday M5 close + 1500 ms",
+    "quotes": "no weekend forward-fill, no OHLC-derived BID/ASK",
+    "DOM": "not used: historical market depth proof absent",
+    "originalContracts": "current authenticated original account snapshots priced only as retrospective scenarios"
+  },
+  "Families": [
+    {
+      "id": "FX_USD_BREADTH_DELAYED_CATCHUP",
+      "rationale": "same-direction slower FX response to broadly shared USD M15 trend may catch up; unlike PR160's reversal of factor residual",
+      "signal": "3 same-clock USD quoted markets with completed M15 drift; median has magnitude >35% of mean abs M15 return; candidate M15 normalized drift same sign and 0<|b|<0.60|median|; latest completed M5 drift same sign and |a|>0.25|median|",
+      "side": "sign of median shared normalized M15 drift",
+      "entry": "as-of bid/ask clock, native EUR300 allocator, next observed quote modeled fill, no market orders",
+      "exit": {
+        "policy": "M5_VOLATILITY_TARGET",
+        "profit": "2.0*entry ATR14",
+        "loss": "1.5*entry ATR14 at observed actionable quote",
+        "durationMaxMinutes": 120
+      },
+      "risk": "same global broker costs, normalized drift and already existing uncertainty/no-edge gate"
+    },
+    {
+      "id": "FX_M5_SHOCK_EXHAUSTION_REVERSION",
+      "rationale": "short-term directional shock range can overshoot and mean-revert even without crossing a price-extremum boundary, distinct from PR160 breakout",
+      "signal": "last completed M5 true range >1.60 times preceding 8 completed M5 average range; directional candle body >0.60 current range; latest close movement same sign as body; current as-of spread <=0.40 current M5 range",
+      "side": "opposite the directional shock body",
+      "entry": "as-of bid/ask clock, native EUR300 allocator, next observed quote modeled fill, no market orders",
+      "exit": {
+        "policy": "M15_EQUILIBRIUM_REVERSION",
+        "equilibrium": "mean of 8 completed M15 closes frozen at entry fill",
+        "loss": "1.5*entry ATR14 at observed actionable quote",
+        "durationMaxMinutes": 90
+      },
+      "risk": "same global broker costs, range based exploratory signal and existing uncertainty/no-edge gate"
+    }
+  ],
+  "DeterministicConflict": "If both trigger on same symbol/clock, breadth takes priority in joint book; ablations remove family before generating candidates, not after financing",
+  "Benchmark": [
+    "cash EUR300 zero-return",
+    "same-entry/exit-clock long costed comparator, descriptive not separately funded"
+  ],
+  "Replays": [
+    {
+      "id": "JOINT",
+      "families": [
+        "FX_USD_BREADTH_DELAYED_CATCHUP",
+        "FX_M5_SHOCK_EXHAUSTION_REVERSION"
+      ]
+    },
+    {
+      "id": "WITHOUT_BREADTH",
+      "families": [
+        "FX_M5_SHOCK_EXHAUSTION_REVERSION"
+      ]
+    },
+    {
+      "id": "WITHOUT_SHOCK",
+      "families": [
+        "FX_USD_BREADTH_DELAYED_CATCHUP"
+      ]
+    }
+  ],
+  "MarginalFormula": "joint NET minus same EUR300 counterfactual NET without each family; never sum independent portfolios",
+  "RequiredReceipt": [
+    "data symbols and original M5 and paired tick-based BIDASK counts",
+    "source/contract observation clock and simulated costs",
+    "proposals and accepted financed complete round trips weekly",
+    "gross EUR",
+    "central EUR NET",
+    "adverse EUR NET",
+    "matched long EUR NET and cash benchmark",
+    "joint and family-ablation incremental EUR NET",
+    "maximum sampled margin and free margin where available",
+    "maximum sampled floating-equity DD, never continuous certified",
+    "end pending/open inventory and missing data limits",
+    "no independent confirmation and no broker fills"
+  ],
+  "NonPromotion": [
+    "central and adverse absolute and incremental NET must be positive with independent confirmation",
+    "HARD21 >=21 real financed completed trips every prospectively eligible week, not one week",
+    "continuous floating DD<=30% needs additional proof",
+    "only historical 1 week here, no final trade qualification"
+  ],
+  "Forbidden": [
+    "retune closed PR160 breakout",
+    "retune after seeing W45 output",
+    "historical DOM invention",
+    "orders LIVE/DEMO",
+    "Cloud activation",
+    "OAuth refresh",
+    "new secrets",
+    "workflow bypass",
+    "ignore negative results"
+  ]
+}
