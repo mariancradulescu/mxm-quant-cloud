@@ -45,7 +45,7 @@ jobs:
           python -m pip install -r research/requirements.txt
           dotnet build src/Mxm.Replay -c Release
       - name: Collect original Pepperstone SCOPE_VIEW M5+tick BID/ASK and execute native EUR300 model
-        run: python -m research.native_original_openapi_product_replay --historical-w36w37
+        run: python -m research.native_original_openapi_product_replay --cross-energy-equity
         env:
           R3_CTRADER_CLIENT_ID: ${{ secrets.R3_CTRADER_CLIENT_ID }}
           R3_CTRADER_CLIENT_SECRET: ${{ secrets.R3_CTRADER_CLIENT_SECRET }}
