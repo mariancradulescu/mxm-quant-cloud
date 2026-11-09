@@ -19,7 +19,8 @@ public sealed record NativeProductMarket(
 public sealed record NativeProductSignal(
     string Symbol,long At,int Direction,string Status,
     decimal? GrossForecastEur,decimal? CentralForecastEur,
-    decimal? AdverseForecastEur,string DecisionReason);
+    decimal? AdverseForecastEur,string DecisionReason,
+    string Mechanism="FROZEN_LEGACY_M5_M15");
 
 public sealed record NativeProductResearchReport(
     long At,int Forecasts,int AcceptedModelIntents,int RejectedIntents,
@@ -44,6 +45,17 @@ public sealed class NativeProductResearchLoop
         NativeObservedContractTerms Contract,bool CloseRequested=false,
         LedgerQuote? EntryQuote=null);
     private const string ResearchDomain="UNQUALIFIED_CAUSAL_MODEL_REPLAY_NOT_BROKER_EXECUTION";
+    private readonly string researchMode;
+    // Both independent economically motivated families below are fixed BEFORE
+    // any new extended original-account data collection is opened.
+    public NativeProductResearchLoop(string researchMode="FROZEN_LEGACY_M5_M15")
+    {
+        if(researchMode is not ("FROZEN_LEGACY_M5_M15" or
+            "FX_CAUSAL_BREAKOUT_PLUS_RELATIVE_VALUE" or
+            "FX_ONLY_BREAKOUT" or "FX_ONLY_RELATIVE_VALUE"))
+            throw new ArgumentException("UNDECLARED_RESEARCH_MECHANISM");
+        this.researchMode=researchMode;
+    }
     private NativeFundedSession session=new("NATIVE_PRODUCT_MODEL_REPLAY_ONLY");
     private NativeProductAdverseBook adverse=new();
     private readonly Dictionary<string,Tracked> tracked=new(StringComparer.Ordinal);
@@ -262,6 +274,23 @@ public sealed class NativeProductResearchLoop
             }
         }
 
+        // Cross-sectional USD factor is defined only by the SAME known M15
+        // clock of at least 3 USD-quoted account markets. The median of
+        // completed normalized M15 returns is a causal benchmark, not a
+        // fitted parameter or outcome-ranked symbol choice.
+        var cross=markets.Where(x=>x.Contract?.QuoteAsset=="USD")
+            .Select(x=>(x.Symbol,R:NativeCausalWarmup.Rebuild(
+                new(x.Symbol,"M15",15,at,x.M15))))
+            .Where(x=>x.R.Ready && x.R.NormalizedDrift is not null)
+            .ToArray();
+        decimal? crossMedian=null;
+        if(cross.Length>=3)
+        {
+            var d=cross.Select(x=>x.R.NormalizedDrift!.Value)
+                .OrderBy(v=>v).ToArray();
+            crossMedian=d.Length%2==1?d[d.Length/2]:
+                (d[d.Length/2-1]+d[d.Length/2])/2m;
+        }
         var offered=new List<EconomicOpportunity>();
         var evidence=new List<SpecialistEuroEvidence>();
         var terms=new List<ResearchEntryTerms>();
@@ -288,12 +317,58 @@ public sealed class NativeProductResearchLoop
                     Math.Max(0,at-p5.LastClosedAt));
             }
             if(!p5.Ready || !p15.Ready || p5.NormalizedDrift is not decimal a ||
-                p15.NormalizedDrift is not decimal b || a*b<=0 ||
+                p15.NormalizedDrift is not decimal b ||
                 previousForecastBar.GetValueOrDefault(market.Symbol)==p5.LastClosedAt)
                 continue;
+            int side=0;string mechanism="FROZEN_LEGACY_M5_M15";
+            decimal driver=Math.Abs(4m*a+b);
+            if(researchMode=="FROZEN_LEGACY_M5_M15")
+            {
+                if(a*b<=0)continue;
+                side=a>0?1:-1;
+            }
+            else
+            {
+                // Family A: break of the PREVIOUS 8 completed M5 high/low,
+                // accompanied by M15 drift in the same direction and a
+                // contemporaneous range expansion relative to past M5 bars.
+                // This is a price-extremum event, NOT retuning the legacy
+                // M5/M15 directional-agreement strategy.
+                bool breakout=false;
+                if(market.M5.Length>=10 && p5.RelativeRange is decimal rr &&
+                   rr>0 && market.M15.Length>=NativeCausalWarmup.WindowBars)
+                {
+                    var last=market.M5[^1];
+                    var prior=market.M5.TakeLast(9).SkipLast(1).ToArray();
+                    decimal upper=prior.Max(x=>x.High);
+                    decimal lower=prior.Min(x=>x.Low);
+                    decimal tr=(last.High-last.Low)/last.Open;
+                    if(last.Close>upper && b>0 && tr>=rr*1.25m){side=1;breakout=true;
+                        driver=(last.Close-upper)/last.Close+Math.Abs(b);}
+                    else if(last.Close<lower && b<0 && tr>=rr*1.25m){side=-1;breakout=true;
+                        driver=(lower-last.Close)/last.Close+Math.Abs(b);}
+                }
+                if(breakout && researchMode!="FX_ONLY_RELATIVE_VALUE")
+                    mechanism="FX_CAUSAL_RANGE_EXPANSION_BREAK";
+                else if(researchMode!="FX_ONLY_BREAKOUT" &&
+                    market.Contract?.QuoteAsset=="USD" &&
+                    crossMedian is decimal med &&
+                    p15.MeanAbsoluteReturn is decimal mar && mar>0 &&
+                    Math.Abs(b-med)>2m*mar &&
+                    a*(b-med)<0)
+                {
+                    // Family B: a USD cross-sectional M15 factor residual
+                    // with M5 reversion already visible; no clock-hour
+                    // constant, no chosen winning instrument, no index
+                    // dispersion, and a distinct FX relative-value rationale.
+                    side=b>med?-1:1;
+                    driver=Math.Abs(b-med);
+                    mechanism="FX_CAUSAL_USD_FACTOR_RELATIVE_VALUE";
+                }
+                else continue;
+            }
             previousForecastBar[market.Symbol]=p5.LastClosedAt;
             forecasts++;
-            int side=a>0?1:-1;
             var q=market.Quote;
             if(market.Contract is not NativeObservedContractTerms c ||
                c.Symbol!=market.Symbol ||
@@ -302,7 +377,7 @@ public sealed class NativeProductResearchLoop
             {
                 rejected++;
                 recent.Add(new(market.Symbol,at,side,"MODEL_COST_CONTRACT_NOT_AVAILABLE",
-                    null,null,null,"SOURCE_OR_CONTRACT_UNATTESTED"));
+                    null,null,null,"SOURCE_OR_CONTRACT_UNATTESTED",mechanism));
                 continue;
             }
             decimal units=c.MinimumUnits;
@@ -310,7 +385,7 @@ public sealed class NativeProductResearchLoop
             {
                 rejected++;
                 recent.Add(new(market.Symbol,at,side,"MODEL_SYMBOL_ALREADY_OPEN_OR_PENDING",
-                    null,null,null,"SINGLE_POSITION_PER_SYMBOL"));
+                    null,null,null,"SINGLE_POSITION_PER_SYMBOL",mechanism));
                 continue;
             }
             decimal? signedFunding=Financing(
@@ -319,7 +394,7 @@ public sealed class NativeProductResearchLoop
             {
                 rejected++;
                 recent.Add(new(market.Symbol,at,side,"MODEL_FUNDING_UNKNOWN",
-                    null,null,null,"NO_UNPRICED_ROLLOVER"));
+                    null,null,null,"NO_UNPRICED_ROLLOVER",mechanism));
                 continue;
             }
             decimal mid=(q.Bid+q.Ask)/2m;
@@ -327,25 +402,26 @@ public sealed class NativeProductResearchLoop
             // EXPLORATORY forecast, not a fitted/qualified alpha: agreement
             // between completed M5 and M15 direction, magnitude from past
             // normalized movement. No closing or future sample is consulted.
-            decimal projectedGross=Math.Abs((4m*a+b)*mid*units*fx);
+            decimal projectedGross=driver*mid*units*fx;
             decimal spread=(q.Ask-q.Bid)*units*fx;
             decimal commission=2m*Fee(q,units);
             decimal slippage=2m*market.SlippagePerSideQuote*units*fx;
             decimal fundingDebit=Math.Max(0,-signedFunding.Value);
             decimal conversion=projectedGross*
                 Math.Max(0,q.EurDebit-q.EurCredit)/Math.Max(.00000001m,fx);
-            decimal uncertainty=Math.Abs(a-b)*mid*units*fx+
-                (p5.MeanAbsoluteReturn??0m)*mid*units*fx;
+            decimal uncertainty=(researchMode=="FROZEN_LEGACY_M5_M15"?
+                Math.Abs(a-b):Math.Abs(b)+(p15.MeanAbsoluteReturn??0m))*
+                mid*units*fx+(p5.MeanAbsoluteReturn??0m)*mid*units*fx;
             decimal predictedNet=projectedGross-spread-commission-slippage-
                 fundingDebit-conversion;
             decimal adverse=predictedNet-spread-slippage;
-            string id="EXPLORATORY/"+market.Symbol+"/"+p5.LastClosedAt;
+            string id="EXPLORATORY/"+mechanism+"/"+market.Symbol+"/"+p5.LastClosedAt;
             var baseClock=Math.Min(p5.LastClosedAt,p15.LastClosedAt);
             if(baseClock>=at-1)
             {
                 rejected++;
                 recent.Add(new(market.Symbol,at,side,"MODEL_FEATURE_UNAVAILABLE_BEFORE_DECISION",
-                    projectedGross,predictedNet,adverse,"CAUSAL_CLOCK_UNSUPPORTED"));
+                    projectedGross,predictedNet,adverse,"CAUSAL_CLOCK_UNSUPPORTED",mechanism));
                 continue;
             }
             decimal minMargin=q.MarginPerUnit*units;
@@ -356,7 +432,7 @@ public sealed class NativeProductResearchLoop
             var candidates=Enumerable.Range(0,8).Select(i=>
                 new OpportunityScenario("STATE"+i,baseClock,true,perUnit,0m,
                     riskPerUnit,0m)).ToArray();
-            offered.Add(new EconomicOpportunity(id,"EXPLORATORY_M5_M15_AGREEMENT_NOT_FITTED",
+            offered.Add(new EconomicOpportunity(id,mechanism,
                 market.Symbol,id,side,at-1,baseClock,
                 EvidenceLevel.Exploratory,false,grid,candidates));
             evidence.Add(new(id,baseClock,at-1,5,market.HoldingMinutes,
@@ -367,7 +443,8 @@ public sealed class NativeProductResearchLoop
             recent.Add(new(market.Symbol,at,side,"MODEL_FORECAST_ONLY",
                 projectedGross,predictedNet,adverse,
                 market.IndependentlySupportedAgainstBenchmark?
-                    "EXTERNAL_BENCHMARK_SUPPORT_SUPPLIED":"EXPLORATORY_NO_INDEPENDENT_BENCHMARK_SUPPORT"));
+                    "EXTERNAL_BENCHMARK_SUPPORT_SUPPLIED":"EXPLORATORY_NO_INDEPENDENT_BENCHMARK_SUPPORT",
+                mechanism));
         }
         if(offered.Count>0)
         {
@@ -445,7 +522,9 @@ public sealed class NativeProductResearchLoop
             {
                 var ix=recent.FindIndex(x=>declined.Id.EndsWith(
                     x.Symbol+"/"+previousForecastBar.GetValueOrDefault(x.Symbol)));
-                if(ix>=0)recent[ix]=recent[ix] with {DecisionReason=declined.Reason};
+                if(ix>=0)recent[ix]=recent[ix] with {
+                    Status="SHADOW_MODEL_INTENT_DECLINED_NOT_TRADING",
+                    DecisionReason=declined.Reason};
             }
         }
         signals.AddRange(recent);
