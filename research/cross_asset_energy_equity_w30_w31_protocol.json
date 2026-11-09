@@ -1,0 +1,89 @@
+{
+  "id": "MXM_OIL_EQUITY_W30_W31_V1",
+  "lockedBeforeNewResults": true,
+  "lockedAt": "2026-11-09",
+  "authority": "docs/OWNER_SPEC.md",
+  "sourceHistorical": "Original live EUR Pepperstone read-only Open API historical genuine M5 and independent BID/ASK ticks as-of <=60 seconds; M15 only completed 3xM5",
+  "reusedEvidence": [
+    "docs/CMA2_AUTHENTIC_COST_SURFACE_20261108.json AMD.US min margin 7.99 EUR, one paired quote",
+    "docs/OWNER_EXECUTED_MULTI_ASSET_COST_CAPITAL_SCREEN_20261108.json SpotBrent margin 8.67EUR, SpotCrude margin 7.81EUR, original 18/21 paired quotes; all as-observed old contract evidence NOT certified historical cost",
+    "Existing C# NativeProductResearchLoop and NativeFundedLedger single EUR300"
+  ],
+  "targets": [
+    "SpotBrent",
+    "SpotCrude",
+    "AMD.US"
+  ],
+  "conversionOnly": [
+    "EURUSD"
+  ],
+  "reason": "Two real energy commodities and one US equity, not the closed FX universe. EURUSD provides genuine same-clock USD/EUR conversion only, never a candidate.",
+  "prerequisites": [
+    "All symbols exist on same original LIVE account, enabled, quote asset USD",
+    "Each min-volume CURRENT expected margin 0<EUR300 with complete current commission/floor/financing values",
+    "Official OpenAPI integer price scale 1/100000 regardless display digits",
+    "Genuine exchange session gaps never fabricated or carried forward",
+    "Each target >=200 authentic complete M5/week; original BID/ASK independent ticks",
+    "No historical DOM claim, no original fill or tariff continuity claim"
+  ],
+  "warmup": [
+    "2026-07-17T08:00:00Z",
+    "2026-07-20T00:00:00Z"
+  ],
+  "development": [
+    "2026-07-20T00:00:00Z",
+    "2026-07-27T00:00:00Z",
+    "2026-W30"
+  ],
+  "selection": [
+    "2026-07-27T00:00:00Z",
+    "2026-08-03T00:00:00Z",
+    "2026-W31"
+  ],
+  "historicallyGloballyExposed": true,
+  "independentConfirmation": false,
+  "futureW46Unexposed": true,
+  "families": [
+    {
+      "id": "ENERGY_BRENT_TO_CRUDE_LAG",
+      "market": "SpotCrude",
+      "context": "SpotBrent",
+      "rationale": "lead–lag repricing in correlated oil contracts; Brent information leads WTI",
+      "condition": "Weekdays 08:00–17:00 UTC, same-clock M15 five-bar contiguous last 4-bar cumulative normalized returns: abs(Brent)>1.2*4*Brent meanAbs15, Crude same direction and abs(Crude)<0.65*abs(Brent), Crude latest M5 normalized drift same sign; no future bars",
+      "direction": "sign of Brent cumulative M15 return",
+      "exit": "M15_PREDICTION_INVALIDATION plus quote-side 1.5 ATR14 protective threshold and 120-minute maximum hold",
+      "driver": "abs(Brent4)-abs(Crude4) normalized quote price",
+      "targetSize": "original minimum volume only"
+    },
+    {
+      "id": "AMD_US_OPENING_HOUR_TICKFLOW",
+      "market": "AMD.US",
+      "rationale": "US cash open genuine directional volume pressure persists into second hour; not generic breakout",
+      "condition": "Weekdays at 14:30 UTC+1500ms only, 12 contiguous completed M5 from 13:30UTC; abs(first hour close-open)>=0.65*mean of 12 M5 candle ranges; sum last six tick volume >=1.15*sum first six; completed M15 drift same sign",
+      "direction": "sign of first 60minute price displacement",
+      "exit": "M5_ATR_CHANDELIER completed-high/low 2 ATR14, quote-side 1.5 ATR invalidation and 180-minute safety cap",
+      "driver": "abs(first-hour price displacement)/last price",
+      "targetSize": "original minimum volume only"
+    }
+  ],
+  "simultaneous": "Both mechanisms share existing C# EUR300 cash/equity, allocator, margin and risk; 2 full EUR300 counterfactual removals, no sum of isolated wallets",
+  "runs": [
+    "JOINT_ENERGY_EQUITY",
+    "ONLY_ENERGY_LEAD_LAG",
+    "ONLY_AMD_SESSION"
+  ],
+  "economicOutputs": [
+    "source bars and bid/ask and missing quote counts",
+    "2-week BRUT NET central/adverse and matched long benchmark",
+    "real original-fee scenario and modeled slippage",
+    "cumulative joint portfolio equity and weekly complete round trips",
+    "per-family signals accepted/rejected, marginal full-ledger ablations",
+    "sampled floating drawdown vs 30% and observed max margin; no continuous DD certification",
+    "source/account scope limitations and broker-fill distinction"
+  ],
+  "noPromotion": "2 globally exposed weeks cannot certify independent alpha or >=12month walkforward, HARD21 or DD30; no parameter changes on selection",
+  "noOrders": true,
+  "cloudActivated": false,
+  "closedExactStudiesNotRelaunched": true,
+  "doNotQueryW46": true
+}
