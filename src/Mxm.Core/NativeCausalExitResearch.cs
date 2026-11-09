@@ -70,25 +70,26 @@ public static class NativeCausalExitResearch
            side is not (1 or -1) || entryPrice<=0 ||
            quote is null || quote.At!=at || quote.Bid<=0 ||
            quote.Ask<quote.Bid || maximumMinutes is <15 or >240 ||
-           m5 is null || m15 is null ||
-           m5.Any(b=>b.CloseAt>=at) || m15.Any(b=>b.CloseAt>=at))
+           m5 is null || m15 is null)
             throw new ArgumentException("EXIT_POLICY_NONCAUSAL_OR_UNSUPPORTED");
-        if(policy!=FrozenFixed && (seed.AtrQuote<=0 ||
-             seed.EquilibriumQuote<=0 || priorExtreme<=0))
+        // Exact already-exposed replays must preserve their original holding
+        // decision, which never depended on candle freshness or exit seeds.
+        // Do not silently apply NEW adaptive data gates to a frozen experiment.
+        if(policy==FrozenFixed)
+            return new(at-openAt>=maximumMinutes*60000L,
+                "FROZEN_LEGACY_TIME",priorExtreme>0?priorExtreme:entryPrice);
+        if(m5.Any(b=>b.CloseAt>=at) || m15.Any(b=>b.CloseAt>=at))
+            throw new ArgumentException("EXIT_POLICY_FUTURE_BAR");
+        if(seed.AtrQuote<=0 || seed.EquilibriumQuote<=0 || priorExtreme<=0)
             throw new ArgumentException("EXIT_POLICY_ENTRY_SEED_MISSING");
 
         var afterEntry=m5.Where(b=>b.CloseAt>openAt &&
             b.CloseAt<at).ToArray();
-        decimal extreme=priorExtreme>0?priorExtreme:entryPrice;
+        decimal extreme=priorExtreme;
         if(afterEntry.Length>0)
             extreme=side==1?
                 Math.Max(extreme,afterEntry.Max(b=>b.High)):
                 Math.Min(extreme,afterEntry.Min(b=>b.Low));
-
-        // The old hold rule remains ONLY for exact historical reproduction.
-        if(policy==FrozenFixed)
-            return new(at-openAt>=maximumMinutes*60000L,
-                "FROZEN_LEGACY_TIME",extreme);
 
         // Current bid/ask mark, NOT a guaranteed historical stop execution.
         decimal actionable=side==1?quote.Bid:quote.Ask;
