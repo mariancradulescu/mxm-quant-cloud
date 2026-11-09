@@ -230,6 +230,10 @@ def collect_and_evaluate():
                             and name!="EURUSD" else 1000)
             need(sum(DECISION_START<=x["OpenAt"]<first_week for x in rows)>=minimum_week,
                  "FIRST_COMPLETE_WEEK_M5_COVERAGE_UNSATISFACTORY")
+            if NAS100_FROZEN_W32W33:
+                # No zero-coverage week accepted as a successful replication.
+                need(sum(first_week<=x["OpenAt"]<DECISION_END for x in rows)>=minimum_week,
+                     "SECOND_COMPLETE_WEEK_M5_COVERAGE_UNSATISFACTORY")
             bars.append({"Symbol":name,"M5":rows})
 
         def ticks(name, side, start, end):
@@ -410,7 +414,7 @@ def collect_and_evaluate():
             "FrozenNas100SessionUtcPreserved":(
                 "14:30-19:00 fixed UTC post-open, NOT full cash session"
                 if NAS100_FROZEN_W32W33 else None),
-            "FrozenW20W21MechanismsAndExitsUnchanged":True,
+            "FrozenW20W21MechanismsAndExitsUnchanged":US_INDEX_ANY,
             "ReadOnlyOriginalPepperstoneAuthenticated":True,
             "ExplicitViewScopeVerified":False,
             "ViewPermissionRequestPath":"EXISTING_OWNER_READONLY_AUTH_SCOPE_DECLARED_IN_RUN_LOG",
