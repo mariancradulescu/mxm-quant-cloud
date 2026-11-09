@@ -42,11 +42,42 @@ public sealed record NativeHistoricalMarketReceipt(
     int ForecastsGenerated=0,string[]? ObservedSymbols=null,
     string[]? ActuallyScoredTimeframes=null,
     bool CompleteSampledSnapshotCalendar=false,
-    string BenchmarkContract="CASH_ZERO_AND_MATCHED_SAME_CLOCK_ALWAYS_LONG_UNFUNDED_DESCRIPTIVE");
+    string BenchmarkContract="CASH_ZERO_AND_MATCHED_SAME_CLOCK_ALWAYS_LONG_UNFUNDED_DESCRIPTIVE",
+    Dictionary<string,int>? RejectionReasons=null,
+    Dictionary<string,int>? RejectionCategories=null,
+    Dictionary<string,int>? SignalsByMechanism=null,
+    Dictionary<string,decimal>? ClosedNetByMechanismEur=null,
+    decimal? MaximumObservedMarginEur=null,
+    string ResearchMode="FROZEN_LEGACY_M5_M15");
 
 public static class NativeHistoricalProductReplay
 {
     private const long M5=300000L,M15=900000L;
+    private static string RejectionCategory(string r)
+    {
+        var u=r.ToUpperInvariant();
+        if(u.Contains("SYMBOL_ALREADY")||u.Contains("POSITION_PER_SYMBOL")||
+           u.Contains("OPEN_OR_PENDING"))return "SYMBOL_OCCUPIED";
+        if(u.Contains("SPREAD")||u.Contains("COMMISSION")||
+           u.Contains("SLIPPAGE")||u.Contains("FUNDING")||
+           u.Contains("FINANCING")||u.Contains("COST")||
+           u.Contains("FEE"))return "COST_AND_FUNDING";
+        if(u.Contains("MARGIN")||u.Contains("CAPITAL")||
+           u.Contains("FREE_FUNDS")||u.Contains("INSUFFICIENT_CASH"))
+            return "FINANCING_CAPACITY";
+        if(u.Contains("RISK")||u.Contains("DRAWDOWN")||
+           u.Contains("LOSS")||u.Contains("ADVERSE"))
+            return "JOINT_RISK";
+        if(u.Contains("SOURCE")||u.Contains("CLOCK")||
+           u.Contains("UNKNOWN")||u.Contains("UNAVAILABLE")||
+           u.Contains("STALE")||u.Contains("DATA")||
+           u.Contains("MISSING"))return "DATA_AND_CAUSAL_COVERAGE";
+        if(u.Contains("BENCHMARK")||u.Contains("PREDICT")||
+           u.Contains("EDGE")||u.Contains("ADVANTAGE")||
+           u.Contains("ALPHA")||u.Contains("ECONOMIC")||
+           u.Contains("PROFIT"))return "NO_DEMONSTRATED_EDGE";
+        return "OTHER_NATIVE_SELECTOR_REASON";
+    }
     private static string Week(long at)
     {
         var d=DateTimeOffset.FromUnixTimeMilliseconds(at).UtcDateTime;
@@ -91,7 +122,8 @@ public static class NativeHistoricalProductReplay
         return prefix;
     }
     public static NativeHistoricalMarketReceipt Evaluate(
-        NativeHistoricalMarketTape tape,bool UnqualifiedShadowMode=true)
+        NativeHistoricalMarketTape tape,bool UnqualifiedShadowMode=true,
+        string ResearchMode="FROZEN_LEGACY_M5_M15")
     {
         if(tape is null||tape.Bars is null||tape.Quotes is null||
            string.IsNullOrWhiteSpace(tape.SourceLabel)||
@@ -130,7 +162,11 @@ public static class NativeHistoricalProductReplay
         if(samples.Zip(samples.Skip(1)).Any(x=>
             x.First.At==x.Second.At&&x.First.Quote.Symbol==x.Second.Quote.Symbol))
             throw new ArgumentException("HISTORICAL_TAPE_DUPLICATED_QUOTE_SYMBOL_CLOCK");
-        var simulation=new NativeProductResearchLoop();
+        var simulation=new NativeProductResearchLoop(ResearchMode);
+        var reasonCounts=new Dictionary<string,int>(StringComparer.Ordinal);
+        var categoryCounts=new Dictionary<string,int>(StringComparer.Ordinal);
+        var signalFamilies=new Dictionary<string,int>(StringComparer.Ordinal);
+        decimal maxMargin=0m;
         var traces=new List<NativeHistoricalEquityObservation>();
         var weeks=new SortedDictionary<string,int>(StringComparer.Ordinal);
         NativeProductResearchReport? last=null;
@@ -146,7 +182,19 @@ public static class NativeHistoricalProductReplay
                     IndependentlySupportedAgainstBenchmark:false);
             }).ToArray();
             last=simulation.Advance(group.Key,inputs,UnqualifiedShadowMode);
+            foreach(var signal in last.LatestSignals)
+            {
+                signalFamilies[signal.Mechanism]=
+                    signalFamilies.GetValueOrDefault(signal.Mechanism)+1;
+                if(signal.Status=="SHADOW_MODEL_INTENT_ALLOCATED_NOT_TRADING")continue;
+                string reason=signal.DecisionReason;
+                reasonCounts[reason]=reasonCounts.GetValueOrDefault(reason)+1;
+                var category=RejectionCategory(reason);
+                categoryCounts[category]=categoryCounts.GetValueOrDefault(category)+1;
+            }
             var central=simulation.ResearchSession.Ledger.Summary(group.Key);
+            if(central.UsedMarginEur is decimal used)
+                maxMargin=Math.Max(maxMargin,used);
             var adverse=simulation.AdverseScenario.Summary;
             traces.Add(new(group.Key,central.LiquidationEquityEur,
                 adverse?.LiquidationEquityEur,central.UsedMarginEur,
@@ -183,6 +231,17 @@ public static class NativeHistoricalProductReplay
             ForecastsGenerated:last.Forecasts,
             ObservedSymbols:paths.Keys.OrderBy(x=>x,StringComparer.Ordinal).ToArray(),
             ActuallyScoredTimeframes:new[]{"M5","M15_AGGREGATED_FROM_COMPLETED_M5"},
-            CompleteSampledSnapshotCalendar:complete);
+            CompleteSampledSnapshotCalendar:complete,
+            RejectionReasons:reasonCounts,
+            RejectionCategories:categoryCounts,
+            SignalsByMechanism:signalFamilies,
+            ClosedNetByMechanismEur:simulation.ResearchSession.Ledger
+                .ClosedFragments().GroupBy(x=>
+                    x.PositionId.Split('/').Length>=4 ?
+                    x.PositionId.Split('/')[1]:"FROZEN_LEGACY_M5_M15",
+                    StringComparer.Ordinal).ToDictionary(
+                    x=>x.Key,x=>x.Sum(v=>v.NetEur),StringComparer.Ordinal),
+            MaximumObservedMarginEur:maxMargin,
+            ResearchMode:ResearchMode);
     }
 }
