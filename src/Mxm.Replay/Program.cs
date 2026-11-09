@@ -1,6 +1,43 @@
 using System.Text.Json;
 using System.Security.Cryptography;
 
+// This uses the EXISTING cost/ledger/replay machinery. Original Open API
+// source authentication happens in the collector process; this offline reader
+// does not independently establish account identity or tariff continuity.
+if(args.Length==3 && args[2]=="--native-original-openapi-research")
+{
+    try
+    {
+        var input=File.ReadAllBytes(args[0]);
+        var parse=new JsonSerializerOptions{
+            NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString
+        };
+        var source=JsonSerializer.Deserialize<Mxm.Core.NativeOriginalOpenApiTape>(
+            input,parse)??throw new ArgumentException("OPENAPI_PRODUCT_TAPE_NULL");
+        var receipt=Mxm.Core.NativeHistoricalProductReplay.Evaluate(
+            Mxm.Core.NativeOriginalOpenApiProductAdapter.Convert(source),
+            UnqualifiedShadowMode:true);
+        File.WriteAllText(args[1],JsonSerializer.Serialize(new {
+            InputFileSha256=Convert.ToHexString(SHA256.HashData(input)).ToLowerInvariant(),
+            Receipt=receipt,
+            ContractTermsAreCurrentNotHistorical=true,
+            HistoricalSlippageIsModeledNotExecuted=true,
+            SourceAuthenticationMustBeVerifiedByCaller=true,
+            CertifiedBrokerTradeFills=false,
+            IndependentlyConfirmed=false,
+            OrdersSubmitted=0,
+            CloudActivated=false
+        }));
+        return 0;
+    }
+    catch(Exception exc)
+    {
+        Console.Error.WriteLine("OPENAPI_PRODUCT_NATIVE_REPLAY_REJECTED:"+
+            exc.GetType().Name);
+        return 58;
+    }
+}
+
 // Native product-level historical replay on FULL imported M5 OHLCV and exact
 // quote/cost observations. Input provenance is not cryptographically attested
 // by the command; custody validation must occur upstream in a permitted
