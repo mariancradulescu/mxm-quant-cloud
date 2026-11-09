@@ -392,22 +392,22 @@ public sealed class NativeProductResearchLoop
                 if(!breadth && researchMode!="FX_ONLY_BREADTH_W45" &&
                    market.M5.Length>=10)
                 {
-                    var recent=market.M5.TakeLast(10).ToArray();
-                    bool consecutive=recent.Zip(recent.Skip(1)).All(x=>
+                    var shockWindow=market.M5.TakeLast(10).ToArray();
+                    bool consecutive=shockWindow.Zip(shockWindow.Skip(1)).All(x=>
                         x.First.CloseAt==x.Second.OpenAt);
-                    var last=recent[^1];
+                    var last=shockWindow[^1];
                     // The eight bars immediately preceding the signal bar,
                     // not earlier bars or future outcome.
-                    var prior=recent.Skip(1).Take(8).ToArray();
+                    var prior=shockWindow.Skip(1).Take(8).ToArray();
                     decimal range=last.High-last.Low;
                     decimal priorRange=prior.Average(x=>x.High-x.Low);
                     decimal body=last.Close-last.Open;
-                    decimal spread=market.Quote.Ask-market.Quote.Bid;
+                    decimal quoteSpread=market.Quote.Ask-market.Quote.Bid;
                     if(consecutive && range>0 && priorRange>0 &&
                        range>1.60m*priorRange &&
                        Math.Abs(body)>0.60m*range &&
-                       Math.Sign(body)==Math.Sign(last.Close-recent[^2].Close) &&
-                       spread<=0.40m*range)
+                       Math.Sign(body)==Math.Sign(last.Close-shockWindow[^2].Close) &&
+                       quoteSpread<=0.40m*range)
                     {
                         side=body>0?-1:1;
                         driver=Math.Abs(body)/last.Close;
