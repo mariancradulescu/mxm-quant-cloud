@@ -1,6 +1,96 @@
 using System.Text.Json;
 using System.Security.Cryptography;
 
+// Preregistered W24/W25 ETHUSD wick/SpotCrude session-tick economics.
+// Same existing original read-only Pepperstone adapter and EUR300 funded
+// NativeHistoricalProductReplay, never trading orders or Cloud activation.
+if(args.Length==3 && args[2]=="--native-original-openapi-crypto-crude-w24w25")
+{
+    try
+    {
+        var bytes=File.ReadAllBytes(args[0]);
+        var parse=new JsonSerializerOptions {
+            NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString
+        };
+        var original=JsonSerializer.Deserialize<Mxm.Core.NativeOriginalOpenApiTape>(
+            bytes,parse)??throw new ArgumentException("CRYPTO_CRUDE_SOURCE_NULL");
+        if(original.SourceLabel!=
+            "ORIGINAL_PEPPERSTONE_OPENAPI_2026_W24_W25_CRYPTO_CRUDE_PREDECLARED"||
+           !original.Bars.Select(x=>x.Symbol)
+                .OrderBy(x=>x,StringComparer.Ordinal)
+                .SequenceEqual(new[]{"ETHUSD","EURUSD","SpotCrude"})||
+           original.Marks.Any(x=>!new[]{"ETHUSD","EURUSD","SpotCrude"}
+                .Contains(x.Symbol,StringComparer.Ordinal)))
+            throw new ArgumentException("CRYPTO_CRUDE_SOURCE_PROTOCOL_MISMATCH");
+        var tape=Mxm.Core.NativeOriginalOpenApiProductAdapter.Convert(original);
+        var joint=Mxm.Core.NativeHistoricalProductReplay.Evaluate(tape,
+            UnqualifiedShadowMode:true,ResearchMode:"CRYPTO_CRUDE_W24W25");
+        var onlyCrypto=Mxm.Core.NativeHistoricalProductReplay.Evaluate(tape,
+            UnqualifiedShadowMode:true,ResearchMode:"ONLY_CRYPTO_W24W25");
+        var onlyCrude=Mxm.Core.NativeHistoricalProductReplay.Evaluate(tape,
+            UnqualifiedShadowMode:true,ResearchMode:"ONLY_CRUDE_W24W25");
+        var weeks=joint.SampledEquity.GroupBy(x=>{
+            var d=DateTimeOffset.FromUnixTimeMilliseconds(x.At).UtcDateTime;
+            return System.Globalization.ISOWeek.GetYear(d)+"-W"+
+                System.Globalization.ISOWeek.GetWeekOfYear(d).ToString("00");
+        }).OrderBy(g=>g.Key,StringComparer.Ordinal).Select(g=>{
+            var first=g.First();var last=g.Last();
+            return new{
+                Week=g.Key,FirstMarkAtMs=first.At,LastMarkAtMs=last.At,
+                FirstSampledEquityEur=first.CentralEquityEur,
+                LastSampledEquityEur=last.CentralEquityEur,
+                WeekSampledEquityDifferenceEur=
+                    last.CentralEquityEur-first.CentralEquityEur,
+                FirstAdverseSampledEquityEur=first.AdverseEquityEur,
+                LastAdverseSampledEquityEur=last.AdverseEquityEur,
+                WeekSampledAdverseDifferenceEur=
+                    last.AdverseEquityEur-first.AdverseEquityEur,
+                CumulativeCompleteModelRoundTrips=last.ClosedModelRoundTrips,
+                IndependentConfirmation=false,SingleBookNoCashReset=true
+            };
+        }).ToArray();
+        File.WriteAllText(args[1],JsonSerializer.Serialize(new{
+            Protocol="research/crypto_crude_w24_w25_protocol.json",
+            Window="2026-W24_W25_GLOBALLY_EXPOSED_DEV_SELECTION_NOT_INDEPENDENT",
+            OriginalSourceSha256=Convert.ToHexString(
+                SHA256.HashData(bytes)).ToLowerInvariant(),
+            OriginalSourceAuthenticationOnlyCollector=true,
+            BrokerHistoricTariffContinuityCertified=false,
+            EURUSDReferenceIsNotTraded=true,
+            JointReceipt=joint,
+            // Python public receipt maps this exact stable field name.
+            Receipt=joint,
+            ChronologicalWeeklyMarks=weeks,
+            FundedAblations=new {
+                OnlyETHUSDWick=onlyCrypto,
+                OnlySpotCrudeSessionDrift=onlyCrude,
+                MarginalETHUSDWickNetEur=
+                    joint.ModelClosedCentralNetEur-onlyCrude.ModelClosedCentralNetEur,
+                MarginalSpotCrudeSessionNetEur=
+                    joint.ModelClosedCentralNetEur-onlyCrypto.ModelClosedCentralNetEur,
+                OneJointEUR300ModelNeverSumOfAblationWallets=true,
+                AllAblationsEUR300IsolatedCounterfactualOnly=true,
+                ClaimedIndependentEconomicSupport=false
+            },
+            CurrentBrokerContractFirstObservedAtMs=
+                original.Marks.Min(x=>x.Contract.ObservedAtUtcMs),
+            FirstOriginalPriceMarkMs=original.Marks.Min(x=>x.At),
+            ContractTermsAppliedRetrospectively=
+                original.Marks.Any(x=>x.Contract.ObservedAtUtcMs>x.At),
+            HistoricalFillsModeledNotReal=true,
+            BrokerNetCertified=false,IndependentConfirmation=false,
+            OrdersSubmitted=0,CloudActivated=false
+        }));
+        return 0;
+    }
+    catch(Exception e)
+    {
+        Console.Error.WriteLine("ORIGINAL_CRYPTO_CRUDE_REPLAY_REJECTED:"+
+            e.GetType().Name);
+        return 58;
+    }
+}
+
 // Cross-asset W30/W31 economic research, registered before source results.
 // Reuses EXISTING original historical converter and native EUR300 funded
 // portfolio; never broker orders, Cloud, invented DOM, or recycled closed
