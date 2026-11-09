@@ -60,7 +60,9 @@ public sealed class NativeProductResearchLoop
             "FX_ONLY_BREAKOUT" or "FX_ONLY_RELATIVE_VALUE" or
             "FX_BREADTH_SHOCK_W45" or "FX_ONLY_BREADTH_W45" or
             "FX_ONLY_SHOCK_W45" or "FX_SHOCK_ABSORPTION_W36W37" or
-            "FX_ONLY_SHOCK_W36W37" or "FX_ONLY_ABSORPTION_W36W37"))
+            "FX_ONLY_SHOCK_W36W37" or "FX_ONLY_ABSORPTION_W36W37" or
+            "CROSS_OIL_EQUITY_W30W31" or "CROSS_ONLY_OIL_W30W31" or
+            "CROSS_ONLY_EQUITY_W30W31"))
             throw new ArgumentException("UNDECLARED_RESEARCH_MECHANISM");
         this.researchMode=researchMode;
     }
@@ -372,6 +374,74 @@ public sealed class NativeProductResearchLoop
                 if(a*b<=0)continue;
                 side=a>0?1:-1;
             }
+            else if(researchMode is "CROSS_OIL_EQUITY_W30W31" or
+                "CROSS_ONLY_OIL_W30W31" or "CROSS_ONLY_EQUITY_W30W31")
+            {
+                bool oil=false,equity=false;
+                var utc=DateTimeOffset.FromUnixTimeMilliseconds(at).UtcDateTime;
+                if(researchMode!="CROSS_ONLY_EQUITY_W30W31" &&
+                   market.Symbol=="SpotCrude" &&
+                   utc.Hour>=8 && utc.Hour<17 &&
+                   byName.TryGetValue("SpotBrent",out var brent) &&
+                   market.M15.Length>=5 && brent.M15.Length>=5)
+                {
+                    // Shared same-clock completed M15 observations.
+                    // Brent is pure context; never a phantom funded leg.
+                    var cb=market.M15.TakeLast(5).ToArray();
+                    var bb=brent.M15.TakeLast(5).ToArray();
+                    bool common=cb[^1].CloseAt==bb[^1].CloseAt &&
+                        cb[^1].CloseAt<at &&
+                        cb.Zip(cb.Skip(1)).All(x=>
+                            x.First.CloseAt==x.Second.OpenAt) &&
+                        bb.Zip(bb.Skip(1)).All(x=>
+                            x.First.CloseAt==x.Second.OpenAt);
+                    var bw=NativeCausalWarmup.Rebuild(new(
+                        "SpotBrent","M15",15,at,brent.M15));
+                    decimal cr=cb[^1].Close/cb[0].Close-1m;
+                    decimal br=bb[^1].Close/bb[0].Close-1m;
+                    if(common && bw.Ready &&
+                       bw.MeanAbsoluteReturn is decimal mean && mean>0 &&
+                       Math.Abs(br)>4m*1.2m*mean &&
+                       br*cr>0 && Math.Abs(cr)<0.65m*Math.Abs(br) &&
+                       a*br>0)
+                    {
+                        side=br>0?1:-1;
+                        driver=Math.Abs(br)-Math.Abs(cr);
+                        oil=true;
+                        mechanism="ENERGY_BRENT_TO_CRUDE_LAG";
+                    }
+                }
+                if(researchMode!="CROSS_ONLY_OIL_W30W31" &&
+                   market.Symbol=="AMD.US" &&
+                   utc.Hour==14 && utc.Minute==30 &&
+                   market.M5.Length>=12)
+                {
+                    // Predeclared summer US cash session: 13:30–14:30 UTC.
+                    // Twelve REAL contiguous M5 source bars, each closed.
+                    var openHour=market.M5.TakeLast(12).ToArray();
+                    var begin=DateTimeOffset.FromUnixTimeMilliseconds(
+                        openHour[0].OpenAt).UtcDateTime;
+                    bool valid=begin.Hour==13 && begin.Minute==30 &&
+                        openHour[^1].CloseAt<at &&
+                        openHour.Zip(openHour.Skip(1)).All(x=>
+                            x.First.CloseAt==x.Second.OpenAt);
+                    decimal averageRange=openHour.Average(x=>x.High-x.Low);
+                    decimal signedMove=openHour[^1].Close-openHour[0].Open;
+                    long firstVolume=openHour.Take(6).Sum(x=>x.TickVolume);
+                    long lastVolume=openHour.Skip(6).Sum(x=>x.TickVolume);
+                    if(valid && averageRange>0 && firstVolume>0 &&
+                       Math.Abs(signedMove)>=0.65m*averageRange &&
+                       lastVolume>=1.15m*firstVolume &&
+                       signedMove*b>0m)
+                    {
+                        side=signedMove>0?1:-1;
+                        driver=Math.Abs(signedMove)/openHour[^1].Close;
+                        equity=true;
+                        mechanism="AMD_US_OPENING_HOUR_TICKFLOW";
+                    }
+                }
+                if(!oil && !equity)continue;
+            }
             else if(researchMode is "FX_BREADTH_SHOCK_W45" or
                 "FX_ONLY_BREADTH_W45" or "FX_ONLY_SHOCK_W45" or
                 "FX_SHOCK_ABSORPTION_W36W37" or
@@ -516,12 +586,18 @@ public sealed class NativeProductResearchLoop
                     NativeCausalExitResearch.EquilibriumReversion,
                 "FX_HIGH_TICK_ACTIVITY_ABSORPTION"=>
                     NativeCausalExitResearch.VolatilityTarget,
+                "ENERGY_BRENT_TO_CRUDE_LAG"=>
+                    NativeCausalExitResearch.PredictionInvalidation,
+                "AMD_US_OPENING_HOUR_TICKFLOW"=>
+                    NativeCausalExitResearch.Chandelier,
                 _=>market.ExitPolicy
             };
             int effectiveHolding=mechanism switch {
                 "FX_USD_BREADTH_DELAYED_CATCHUP"=>120,
                 "FX_M5_SHOCK_EXHAUSTION_REVERSION"=>90,
                 "FX_HIGH_TICK_ACTIVITY_ABSORPTION"=>75,
+                "ENERGY_BRENT_TO_CRUDE_LAG"=>120,
+                "AMD_US_OPENING_HOUR_TICKFLOW"=>180,
                 _=>market.HoldingMinutes
             };
             if(effectiveExitPolicy!=NativeCausalExitResearch.FrozenFixed &&
@@ -667,6 +743,10 @@ public sealed class NativeProductResearchLoop
                         (Policy:NativeCausalExitResearch.EquilibriumReversion,Minutes:90),
                     "FX_HIGH_TICK_ACTIVITY_ABSORPTION"=>
                         (Policy:NativeCausalExitResearch.VolatilityTarget,Minutes:75),
+                    "ENERGY_BRENT_TO_CRUDE_LAG"=>
+                        (Policy:NativeCausalExitResearch.PredictionInvalidation,Minutes:120),
+                    "AMD_US_OPENING_HOUR_TICKFLOW"=>
+                        (Policy:NativeCausalExitResearch.Chandelier,Minutes:180),
                     _=>(Policy:market.ExitPolicy,Minutes:market.HoldingMinutes)
                 };
                 tracked.Add(chosen.Id,new(market.Symbol,opportunity.Direction,
