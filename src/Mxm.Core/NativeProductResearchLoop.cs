@@ -57,7 +57,9 @@ public sealed class NativeProductResearchLoop
     {
         if(researchMode is not ("FROZEN_LEGACY_M5_M15" or
             "FX_CAUSAL_BREAKOUT_PLUS_RELATIVE_VALUE" or
-            "FX_ONLY_BREAKOUT" or "FX_ONLY_RELATIVE_VALUE"))
+            "FX_ONLY_BREAKOUT" or "FX_ONLY_RELATIVE_VALUE" or
+            "FX_BREADTH_SHOCK_W45" or "FX_ONLY_BREADTH_W45" or
+            "FX_ONLY_SHOCK_W45"))
             throw new ArgumentException("UNDECLARED_RESEARCH_MECHANISM");
         this.researchMode=researchMode;
     }
@@ -369,6 +371,54 @@ public sealed class NativeProductResearchLoop
                 if(a*b<=0)continue;
                 side=a>0?1:-1;
             }
+            else if(researchMode is "FX_BREADTH_SHOCK_W45" or
+                "FX_ONLY_BREADTH_W45" or "FX_ONLY_SHOCK_W45")
+            {
+                // New prespecified, entirely separate W45 mechanisms.
+                // No PR160 breakout signal is evaluated or rescued.
+                bool breadth=false,shock=false;
+                if(researchMode!="FX_ONLY_SHOCK_W45" &&
+                   cross.Length>=3 && crossMedian is decimal med &&
+                   p15.MeanAbsoluteReturn is decimal mar && mar>0 &&
+                   Math.Abs(med)>0.35m*mar && med*b>0 &&
+                   Math.Abs(b)<0.60m*Math.Abs(med) &&
+                   a*med>0 && Math.Abs(a)>0.25m*Math.Abs(med))
+                {
+                    side=med>0?1:-1;
+                    driver=Math.Abs(med-b);
+                    breadth=true;
+                    mechanism="FX_USD_BREADTH_DELAYED_CATCHUP";
+                }
+                if(!breadth && researchMode!="FX_ONLY_BREADTH_W45" &&
+                   market.M5.Length>=10)
+                {
+                    var recent=market.M5.TakeLast(10).ToArray();
+                    bool consecutive=recent.Zip(recent.Skip(1)).All(x=>
+                        x.First.CloseAt==x.Second.OpenAt);
+                    var last=recent[^1];
+                    var prior=recent.Skip(1).Take(8).ToArray();
+                    // The eight bars immediately preceding the signal bar,
+                    // not earlier bars or future outcome.
+                    prior=recent.Skip(1).Take(8).ToArray();
+                    prior=recent.Skip(1).Take(8).ToArray();
+                    decimal range=last.High-last.Low;
+                    decimal priorRange=prior.Average(x=>x.High-x.Low);
+                    decimal body=last.Close-last.Open;
+                    decimal spread=market.Quote.Ask-market.Quote.Bid;
+                    if(consecutive && range>0 && priorRange>0 &&
+                       range>1.60m*priorRange &&
+                       Math.Abs(body)>0.60m*range &&
+                       Math.Sign(body)==Math.Sign(last.Close-recent[^2].Close) &&
+                       spread<=0.40m*range)
+                    {
+                        side=body>0?-1:1;
+                        driver=Math.Abs(body)/last.Close;
+                        shock=true;
+                        mechanism="FX_M5_SHOCK_EXHAUSTION_REVERSION";
+                    }
+                }
+                if(!breadth && !shock)continue;
+            }
             else
             {
                 // Family A: break of the PREVIOUS 8 completed M5 high/low,
@@ -423,7 +473,19 @@ public sealed class NativeProductResearchLoop
                 continue;
             }
             decimal units=c.MinimumUnits;
-            if(market.ExitPolicy!=NativeCausalExitResearch.FrozenFixed &&
+            string effectiveExitPolicy=mechanism switch {
+                "FX_USD_BREADTH_DELAYED_CATCHUP"=>
+                    NativeCausalExitResearch.VolatilityTarget,
+                "FX_M5_SHOCK_EXHAUSTION_REVERSION"=>
+                    NativeCausalExitResearch.EquilibriumReversion,
+                _=>market.ExitPolicy
+            };
+            int effectiveHolding=mechanism switch {
+                "FX_USD_BREADTH_DELAYED_CATCHUP"=>120,
+                "FX_M5_SHOCK_EXHAUSTION_REVERSION"=>90,
+                _=>market.HoldingMinutes
+            };
+            if(effectiveExitPolicy!=NativeCausalExitResearch.FrozenFixed &&
                !NativeCausalExitResearch.TrySeed(market.M5,market.M15,
                     at,out _))
             {
@@ -441,7 +503,7 @@ public sealed class NativeProductResearchLoop
                 continue;
             }
             decimal? signedFunding=Financing(
-                c,at,at+market.HoldingMinutes*60000L,side,units,q.EurCredit,q.EurDebit);
+                c,at,at+effectiveHolding*60000L,side,units,q.EurCredit,q.EurDebit);
             if(signedFunding is null)
             {
                 rejected++;
@@ -487,7 +549,7 @@ public sealed class NativeProductResearchLoop
             offered.Add(new EconomicOpportunity(id,mechanism,
                 market.Symbol,id,side,at-1,baseClock,
                 EvidenceLevel.Exploratory,false,grid,candidates));
-            evidence.Add(new(id,baseClock,at-1,5,market.HoldingMinutes,
+            evidence.Add(new(id,baseClock,at-1,5,effectiveHolding,
                 true,market.IndependentlySupportedAgainstBenchmark,true,true,
                 false,projectedGross,uncertainty,spread,
                 Fee(q,units),Fee(q,units),conversion,slippage,fundingDebit,minMargin));
@@ -559,9 +621,16 @@ public sealed class NativeProductResearchLoop
             {
                 var opportunity=offered.Single(x=>x.Id==chosen.Id);
                 var market=byName[opportunity.Symbol];
+                var plan=opportunity.Mechanism switch {
+                    "FX_USD_BREADTH_DELAYED_CATCHUP"=>
+                        (Policy:NativeCausalExitResearch.VolatilityTarget,Minutes:120),
+                    "FX_M5_SHOCK_EXHAUSTION_REVERSION"=>
+                        (Policy:NativeCausalExitResearch.EquilibriumReversion,Minutes:90),
+                    _=>(Policy:market.ExitPolicy,Minutes:market.HoldingMinutes)
+                };
                 tracked.Add(chosen.Id,new(market.Symbol,opportunity.Direction,
-                    chosen.Units,at,0,market.HoldingMinutes,market.SlippagePerSideQuote,
-                    market.Contract!,ExitPolicy:market.ExitPolicy));
+                    chosen.Units,at,0,plan.Minutes,market.SlippagePerSideQuote,
+                    market.Contract!,ExitPolicy:plan.Policy));
                 var selectedIndex=recent.FindIndex(x=>x.Symbol==market.Symbol &&
                     x.Status=="MODEL_FORECAST_ONLY");
                 if(selectedIndex>=0)
