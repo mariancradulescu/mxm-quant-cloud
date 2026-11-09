@@ -1,0 +1,102 @@
+{
+  "id": "MXM_CROSS_CLASS_CRYPTO_ENERGY_2026_W24_W25_V1",
+  "declaredUtc": "2026-11-09",
+  "lockedBeforeOriginalRun": true,
+  "authority": "docs/OWNER_SPEC.md OWNER v2.0, EUR300 single initial capital, no reset",
+  "noRepeat": "Do NOT rerun W30/W31, W36/W37, W42–W45, XUA1 exact crypto panic, ERP1 exact oil impulse, or any closed study",
+  "existingDataEvidence": [
+    "docs/XUA1_AUTHENTIC_RESULT_20261108.json original Pepperstone authenticated ETHUSD genuine H1 8713, historical paired BIDASK 30, min margin EUR10.75; exact previously rejected CRYPTO_PANIC_REBOUND_6H is closed and not reused",
+    "docs/XUA1_AUTHENTIC_RESULT_20261108.json SpotCrude genuine H1 5877, historical paired BIDASK 21, min margin EUR7.81; exact ENERGY_NEWS_IMPULSE_PERSISTENCE_4H is closed and not reused",
+    "docs/FULL_CTRADER_ACCOUNT_INVENTORY_AUTHENTIC_20261105.json existing original account roster; prove current symbol availability/terms again",
+    "Same original live EUR Pepperstone read-only Open API, existing native C# 300EUR research loop, cost/replay ledger, existing workflow"
+  ],
+  "source": {
+    "symbols": [
+      "EURUSD",
+      "ETHUSD",
+      "SpotCrude"
+    ],
+    "tradingTargets": [
+      "ETHUSD",
+      "SpotCrude"
+    ],
+    "conversionOnly": "EURUSD",
+    "sourceStart": "2026-06-05T08:00:00Z",
+    "developmentStart": "2026-06-08T00:00:00Z",
+    "selectionStart": "2026-06-15T00:00:00Z",
+    "selectionEnd": "2026-06-22T00:00:00Z",
+    "weeks": [
+      "2026-W24",
+      "2026-W25"
+    ],
+    "roles": [
+      "W24 historically globally exposed exploratory development",
+      "W25 later globally exposed chronological selection, NOT independent confirmation"
+    ],
+    "validation": [
+      "all enabled, original account bound, quote asset USD",
+      "original current contract min lot/step/max and fee/floor/FX/financing explicitly known",
+      "minimum original broker margin >0 and <=300EUR each, joint wallet still governs",
+      "M5 authentic OHLC+tick volume, 200+ complete decision-week M5 bars per target, no OHLC-derived BID/ASK",
+      "M15 exactly aggregated from three genuinely contiguous M5; no weekend/closure gap fills",
+      "independent historical tick BID+ASK <=60 sec as-of, actual per-symbol/clock missingness disclosed",
+      "current original contract terms historically applied only as conditional cost scenarios, never certified history",
+      "optional weekend ETHUSD not evaluated, weekday clocks only, not a global product restriction"
+    ]
+  },
+  "mechanisms": [
+    {
+      "id": "CRYPTO_M5_LIQUIDITY_WICK_ABSORPTION",
+      "target": "ETHUSD",
+      "rationale": "In high quote-update/tick activity, an outsize one-sided M5 wick with rejection against the preceding M15 trend can reflect liquidity absorption and rapid counter-move; distinct from closed H1 panic rebound 6h",
+      "entry": "Last completed M5 candle high-low>0 and >=0.9*mean of immediately previous eight completed M5 ranges; upper OR lower wick >=0.55*current high-low; tick volume >=1.25 * mean previous eight genuine bars; last completed M15 drift aligned toward rejected wick; actual as-of BID/ASK spread <= 0.35*current M5 range; strictly contiguous last nine M5 bars",
+      "side": "Sell dominant upper wick when M15 drift positive; buy dominant lower wick when M15 drift negative",
+      "exit": "M5_VOLATILITY_TARGET from 14-bar entry ATR, +2 ATR actionable quote-profit, -1.5ATR actionable quote-loss, maximum 150 min protective exposure; only exit at actual as-of future mark, no guessed stop fills",
+      "driver": "dominant rejected wick / genuine last close, prior info only",
+      "noParameterSweep": true
+    },
+    {
+      "id": "CRUDE_US_SESSION_TICK_ACTIVITY_DRIFT",
+      "target": "SpotCrude",
+      "rationale": "US-session liquid-hours oil price discovery with rising genuine tick activity and 15-min aligned signed repricing can persist briefly; not ERP1 closed four-hour energy-news impulse",
+      "entry": "UTC 13:00–19:00 on weekdays; last nine genuinely consecutive completed M5 bars; most recent 3-bar close-to-close drift same sign as completed M15 drift and latest candle body; |3bar drift|>=0.75*mean previous eight M5 ranges; recent M5 tick volume >=1.15*mean preceding eight; as-of real spread <=0.50*last M5 range; all positive prices/volume",
+      "side": "Follow sign of completed 3-M5 close drift",
+      "exit": "M15_PREDICTION_INVALIDATION on completed 3-bar M15 reversal, actionable adverse -1.5ATR14, 120 min protective maximum; no intrabar fills inferred",
+      "driver": "abs(3-M5 close drift)/last close, causal",
+      "noParameterSweep": true
+    }
+  ],
+  "admission": "Existing cost+uncertainty risk allocator, min original volume, single 300 EUR ledger and simultaneous positions with margin/financing",
+  "priority": "If same clock multiple funded candidates offered, standard existing joint allocator selects; no artificial candidate winner preference",
+  "counterfactuals": [
+    "JOINT_CRYPTO_CRUDE",
+    "ONLY_CRYPTO_WICK",
+    "ONLY_CRUDE_DRIFT"
+  ],
+  "marginal": "joint EUR NET minus funded EUR300 replay without one family; never sum separate wallet profits",
+  "benchmarks": [
+    "flat EUR300 cash",
+    "costed same-entry same-exit-clock long target descriptive unfunded benchmark"
+  ],
+  "output": [
+    "authentic original broker source and quote counts and 2 weeks by symbol with gaps",
+    "forecasts, rejected reason, financed entry intents and complete weekly round trips",
+    "joint+2 ablated BRUT EUR, NET central/adverse EUR, matched long, marginals",
+    "maximum observed margin, sampled floating drawdown, unavailable continuous DD30 proof",
+    "unresolved ledger positions/cash, broker-current tariffs applied retrospectively, no historic fill verification",
+    "no selection nor independent confirmation claim on globally exposed weeks, W46 unscored"
+  ],
+  "promotion": "No promotion on 2 globally exposed weeks. Require full independent chronological confirmation, absolute adverse and incremental NET positive after source-realistic cost/slippage, systemic HARD21>=21 true financed round trips/eligible week, global DD<=30% with continuous floating observations, then separate OWNER Cloud decision",
+  "security": {
+    "originalAccountReadOnlyRequestsOnly": true,
+    "tokenMayBeTradeCapable": true,
+    "tokenScopeTradeCapableDoesNotAuthorizeOrders": true,
+    "liveOrders": 0,
+    "demoOrders": 0,
+    "cloudTradingActivated": false,
+    "noNewSecrets": true,
+    "noOAuthRefresh": true,
+    "noHistoricalDOMClaim": true,
+    "doNotScoreW46": true
+  }
+}

@@ -62,7 +62,9 @@ public sealed class NativeProductResearchLoop
             "FX_ONLY_SHOCK_W45" or "FX_SHOCK_ABSORPTION_W36W37" or
             "FX_ONLY_SHOCK_W36W37" or "FX_ONLY_ABSORPTION_W36W37" or
             "CROSS_OIL_EQUITY_W30W31" or "CROSS_ONLY_OIL_W30W31" or
-            "CROSS_ONLY_EQUITY_W30W31"))
+            "CROSS_ONLY_EQUITY_W30W31" or
+            "CRYPTO_CRUDE_W24W25" or "ONLY_CRYPTO_W24W25" or
+            "ONLY_CRUDE_W24W25"))
             throw new ArgumentException("UNDECLARED_RESEARCH_MECHANISM");
         this.researchMode=researchMode;
     }
@@ -374,6 +376,58 @@ public sealed class NativeProductResearchLoop
                 if(a*b<=0)continue;
                 side=a>0?1:-1;
             }
+
+            else if(researchMode is "CRYPTO_CRUDE_W24W25" or
+                "ONLY_CRYPTO_W24W25" or "ONLY_CRUDE_W24W25")
+            {
+                // Two separate predeclared W24/W25 economic hypotheses.
+                // Prior closed ETH H1 panic and oil 4H impulse families
+                // are not invoked or rescored.
+                if(market.M5.Length<9)continue;
+                var window=market.M5.TakeLast(9).ToArray();
+                var bar=window[^1];
+                var previous=window.Take(8).ToArray();
+                bool contiguous=bar.CloseAt<at &&
+                    window.Zip(window.Skip(1)).All(x=>
+                        x.First.CloseAt==x.Second.OpenAt);
+                decimal range=bar.High-bar.Low;
+                decimal priorAverageRange=previous.Average(x=>x.High-x.Low);
+                decimal priorAverageVolume=previous.Average(x=>(decimal)x.TickVolume);
+                decimal spreadNow=market.Quote.Ask-market.Quote.Bid;
+                if(!contiguous||range<=0m||priorAverageRange<=0m||
+                   priorAverageVolume<=0m)continue;
+                if(market.Symbol=="ETHUSD" &&
+                   researchMode!="ONLY_CRUDE_W24W25")
+                {
+                    decimal upper=bar.High-Math.Max(bar.Open,bar.Close);
+                    decimal lower=Math.Min(bar.Open,bar.Close)-bar.Low;
+                    decimal wick=Math.Max(upper,lower);
+                    if(range<0.90m*priorAverageRange ||
+                       wick<0.55m*range ||
+                       bar.TickVolume<1.25m*priorAverageVolume ||
+                       spreadNow>0.35m*range ||
+                       (upper>lower?b<=0m:b>=0m))continue;
+                    side=upper>lower?-1:1;
+                    driver=wick/bar.Close;
+                    mechanism="CRYPTO_M5_LIQUIDITY_WICK_ABSORPTION";
+                }
+                else if(market.Symbol=="SpotCrude" &&
+                    researchMode!="ONLY_CRYPTO_W24W25")
+                {
+                    var utc=DateTimeOffset.FromUnixTimeMilliseconds(at).UtcDateTime;
+                    decimal drift=window[^1].Close-window[^4].Close;
+                    decimal body=bar.Close-bar.Open;
+                    if(utc.Hour<13||utc.Hour>=19 ||
+                       Math.Abs(drift)<0.75m*priorAverageRange ||
+                       drift*b<=0m || drift*body<=0m ||
+                       bar.TickVolume<1.15m*priorAverageVolume ||
+                       spreadNow>0.50m*range)continue;
+                    side=drift>0m?1:-1;
+                    driver=Math.Abs(drift)/bar.Close;
+                    mechanism="CRUDE_US_SESSION_TICK_ACTIVITY_DRIFT";
+                }
+                else continue;
+            }
             else if(researchMode is "CROSS_OIL_EQUITY_W30W31" or
                 "CROSS_ONLY_OIL_W30W31" or "CROSS_ONLY_EQUITY_W30W31")
             {
@@ -590,6 +644,10 @@ public sealed class NativeProductResearchLoop
                     NativeCausalExitResearch.PredictionInvalidation,
                 "AMD_US_OPENING_HOUR_TICKFLOW"=>
                     NativeCausalExitResearch.Chandelier,
+                "CRYPTO_M5_LIQUIDITY_WICK_ABSORPTION"=>
+                    NativeCausalExitResearch.VolatilityTarget,
+                "CRUDE_US_SESSION_TICK_ACTIVITY_DRIFT"=>
+                    NativeCausalExitResearch.PredictionInvalidation,
                 _=>market.ExitPolicy
             };
             int effectiveHolding=mechanism switch {
@@ -598,6 +656,8 @@ public sealed class NativeProductResearchLoop
                 "FX_HIGH_TICK_ACTIVITY_ABSORPTION"=>75,
                 "ENERGY_BRENT_TO_CRUDE_LAG"=>120,
                 "AMD_US_OPENING_HOUR_TICKFLOW"=>180,
+                "CRYPTO_M5_LIQUIDITY_WICK_ABSORPTION"=>150,
+                "CRUDE_US_SESSION_TICK_ACTIVITY_DRIFT"=>120,
                 _=>market.HoldingMinutes
             };
             if(effectiveExitPolicy!=NativeCausalExitResearch.FrozenFixed &&
@@ -747,6 +807,10 @@ public sealed class NativeProductResearchLoop
                         (Policy:NativeCausalExitResearch.PredictionInvalidation,Minutes:120),
                     "AMD_US_OPENING_HOUR_TICKFLOW"=>
                         (Policy:NativeCausalExitResearch.Chandelier,Minutes:180),
+                    "CRYPTO_M5_LIQUIDITY_WICK_ABSORPTION"=>
+                        (Policy:NativeCausalExitResearch.VolatilityTarget,Minutes:150),
+                    "CRUDE_US_SESSION_TICK_ACTIVITY_DRIFT"=>
+                        (Policy:NativeCausalExitResearch.PredictionInvalidation,Minutes:120),
                     _=>(Policy:market.ExitPolicy,Minutes:market.HoldingMinutes)
                 };
                 tracked.Add(chosen.Id,new(market.Symbol,opportunity.Direction,
