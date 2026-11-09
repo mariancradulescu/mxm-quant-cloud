@@ -1,6 +1,92 @@
 using System.Text.Json;
 using System.Security.Cryptography;
 
+// US indices research, preregistered BEFORE original Pepperstone W20/W21
+// historical read-only requests. No orders, Cloud activation, or historic
+// commission continuity claim. One original-funded EUR300 ledger per replay.
+if(args.Length==3 && args[2]=="--native-original-openapi-us-index-w20w21")
+{
+    try
+    {
+        var bytes=File.ReadAllBytes(args[0]);
+        var parse=new JsonSerializerOptions {
+            NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString
+        };
+        var source=JsonSerializer.Deserialize<Mxm.Core.NativeOriginalOpenApiTape>(
+            bytes,parse)??throw new ArgumentException("INDEX_W20W21_EMPTY_SOURCE");
+        if(source.SourceLabel!=
+            "ORIGINAL_PEPPERSTONE_OPENAPI_2026_W20_W21_US_INDEX_PREDECLARED"||
+           !source.Bars.Select(x=>x.Symbol)
+                .OrderBy(x=>x,StringComparer.Ordinal)
+                .SequenceEqual(new[]{"EURUSD","NAS100","US500"})||
+           source.Marks.Any(x=>!new[]{"EURUSD","NAS100","US500"}
+                .Contains(x.Symbol,StringComparer.Ordinal)))
+            throw new ArgumentException("INDEX_W20W21_UNAUTHORISED_SYMBOL_OR_SOURCE");
+        var tape=Mxm.Core.NativeOriginalOpenApiProductAdapter.Convert(source);
+        var joint=Mxm.Core.NativeHistoricalProductReplay.Evaluate(tape,
+            UnqualifiedShadowMode:true,ResearchMode:"US_INDEX_JOINT_W20W21");
+        var onlyNas=Mxm.Core.NativeHistoricalProductReplay.Evaluate(tape,
+            UnqualifiedShadowMode:true,ResearchMode:"US_INDEX_NAS_ONLY_W20W21");
+        var onlySp=Mxm.Core.NativeHistoricalProductReplay.Evaluate(tape,
+            UnqualifiedShadowMode:true,ResearchMode:"US_INDEX_SP_ONLY_W20W21");
+        var chronology=joint.SampledEquity.GroupBy(x=>{
+            var d=DateTimeOffset.FromUnixTimeMilliseconds(x.At).UtcDateTime;
+            return System.Globalization.ISOWeek.GetYear(d)+"-W"+
+                System.Globalization.ISOWeek.GetWeekOfYear(d).ToString("00");
+        }).OrderBy(x=>x.Key,StringComparer.Ordinal).Select(g=>{
+            var first=g.First();var last=g.Last();
+            return new {
+                Week=g.Key,FirstSampleAtMs=first.At,LastSampleAtMs=last.At,
+                FirstSampledCentralEquityEur=first.CentralEquityEur,
+                LastSampledCentralEquityEur=last.CentralEquityEur,
+                SampledCentralEquityChangeEur=
+                    last.CentralEquityEur-first.CentralEquityEur,
+                FirstSampledAdverseEquityEur=first.AdverseEquityEur,
+                LastSampledAdverseEquityEur=last.AdverseEquityEur,
+                SampledAdverseEquityChangeEur=
+                    last.AdverseEquityEur-first.AdverseEquityEur,
+                ModelCompletedRoundTripsCumulative=last.ClosedModelRoundTrips,
+                NoCashReset=true,NotIndependentConfirmation=true
+            };
+        }).ToArray();
+        File.WriteAllText(args[1],JsonSerializer.Serialize(new {
+            Protocol="research/us_index_w20_w21_protocol.json",
+            Window="2026_W20_W21_EXPOSED_DEVELOPMENT_SELECTION_NOT_CONFIRMATION",
+            OriginalMarketSourceSha256=Convert.ToHexString(
+                SHA256.HashData(bytes)).ToLowerInvariant(),
+            Receipt=joint,
+            ChronologicalWeeklySampledEconomics=chronology,
+            FundedAblations=new {
+                OnlyNAS100RelativeDispersion=onlyNas,
+                OnlyUS500H1VolatilityPersistence=onlySp,
+                MarginalNAS100NetEur=
+                    joint.ModelClosedCentralNetEur-onlySp.ModelClosedCentralNetEur,
+                MarginalUS500NetEur=
+                    joint.ModelClosedCentralNetEur-onlyNas.ModelClosedCentralNetEur,
+                SeparateFullEUR300AblationsNeverSummed=true,
+                ClaimedIndependentEconomicSupport=false
+            },
+            EURUSDConversionContextOnly=true,
+            CurrentBrokerContractFirstObservedMs=
+                source.Marks.Min(x=>x.Contract.ObservedAtUtcMs),
+            FirstHistoricalQuoteAtMs=source.Marks.Min(x=>x.At),
+            CurrentContractTermsRetrospectivelyApplied=
+                source.Marks.Any(x=>x.Contract.ObservedAtUtcMs>x.At),
+            NoHistoricalCommissionContinuityCertified=true,
+            BrokerNetCertified=false,IndependentConfirmation=false,
+            BrokerOrderFillsCertified=false,OriginalBrokerSourceOnlyInCollector=true,
+            OrdersSubmitted=0,CloudActivated=false
+        }));
+        return 0;
+    }
+    catch(Exception ex)
+    {
+        Console.Error.WriteLine("US_INDEX_W20W21_NATIVE_REPLAY_REJECTED:"+
+            ex.GetType().Name);
+        return 58;
+    }
+}
+
 // Preregistered W24/W25 ETHUSD wick/SpotCrude session-tick economics.
 // Same existing original read-only Pepperstone adapter and EUR300 funded
 // NativeHistoricalProductReplay, never trading orders or Cloud activation.

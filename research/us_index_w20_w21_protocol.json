@@ -1,0 +1,94 @@
+{
+  "Protocol": "MXM_US_EQUITY_INDEX_DISPERSION_VOLREGIME_W20_W21_V1",
+  "Authority": "docs/OWNER_SPEC.md OWNER v2.0",
+  "DeclaredAtUtc": "2026-11-09",
+  "Status": "LOCKED_BEFORE_ANY_2026_W20_W21_OPENAPI_SOURCE",
+  "History": "Do not rerun exact PR160–PR167, XUA1 Asian synchronous 3h, MCS1, ERP1, MBF1, COL1, or closed configs; keep all negative results and no retuning.",
+  "SourceEvidence": [
+    "docs/FULL_CTRADER_ACCOUNT_INVENTORY_AUTHENTIC_20261105.json source roster includes >1700 original-account symbols, but exact US index support requires fresh broker checks",
+    "docs/OWNER_EXECUTED_MULTI_ASSET_COST_CAPITAL_SCREEN_20261108.json original screened index tariffs and low minimum margins for other index CFD symbols, not substitute US500/NAS100 price/margin evidence",
+    "Pepperstone official listed US500/NAS100 CFD markets; original account contract must independently prove both are enabled, USD quoted, min-volume, commission, fees and EUR300 affordability before any score"
+  ],
+  "Universe": {
+    "MarketTargets": [
+      "NAS100",
+      "US500"
+    ],
+    "ConversionContextOnly": [
+      "EURUSD"
+    ],
+    "QuoteCurrency": "USD",
+    "MarginFund": "EUR300 initial one wallet, profit/loss not reset, no deposit, native C# portfolio and exact min volume"
+  },
+  "Chronology": {
+    "SourceWarmupUtc": "2026-05-08T08:00:00Z",
+    "Development": "2026-05-11T00:00:00Z/2026-05-18T00:00:00Z",
+    "Selection": "2026-05-18T00:00:00Z/2026-05-25T00:00:00Z",
+    "Weeks": [
+      "2026-W20",
+      "2026-W21"
+    ],
+    "Role": "historical globally exposed exploratory development and later descriptive chronological selection, NOT independent unexposed confirmation; W46 remains unscored",
+    "LockedNoChangesAfterSource": true
+  },
+  "SourceRequirements": [
+    "Original Pepperstone LIVE EUR account, strictly read-only OpenAPI requests even when OAuth token TRADE_CAPABLE; scope capability is not trading permission",
+    "USD quote asset by authenticated account symbol-list ID, original symbol detail tradingMode=0",
+    "current minMargin of each market <EUR300, explicit original current min volume/max/step/lot, swap/commission/floor route known before score",
+    "completed M5 true OHLC and tick volume >=200/week per index, M15 aggregated from 3 strictly contiguous completed M5, last 5 and 16 M15 causal bars used for 1h/index volatility profiles",
+    "historical independently paged BID and ASK as-of each weekday M5 close+1.5 sec, never mid/ohlc generated quotes, max age 60 seconds, no market closure time forward-filled",
+    "source USD/EUR conversion from separately observed same-clock EURUSD bid/ask",
+    "retrospective original CURRENT contract tariff snapshots explicitly not historical commission or broker fills",
+    "No historical DOM inference; live MarketDepth API is not historical evidence"
+  ],
+  "Mechanisms": [
+    {
+      "Id": "NAS100_US_CASH_INDEX_RELATIVE_DISPERSION_FADE",
+      "Rationale": "Short-lived US growth-versus-broad-market dispersions induced by opening cash-session imbalance can mean revert once passive liquidity absorbs the sector basket; unlike previously closed Asia index synchronized 3-hour momentum.",
+      "DecisionClock": "Weekdays 14:30–19:00 UTC May DST; 5 consecutive COMPLETED M15 NAS100 and US500 bars with same final clock and both original BID/ASK available",
+      "Signal": "Compute 1hour return as close of last minus first of 5 M15 closes, each normalized by first. Residual NAS100 return minus US500 return. If abs residual >=0.00035 (3.5 bps) and each bar >0, trade NAS100 direction OPPOSITE residual sign; no hindsight session high/low.",
+      "Sizing": "one original NAS100 minimum-volume contract only, existing global selector handles simultaneous orders/margin",
+      "Exit": "native M15_EQUILIBRIUM_REVERSION entry-frozen mean of prior 8 M15 closes, adverse quote-side -1.5ATR14 M5, max exposure 105 min; no intrabar assumed fill",
+      "Driver": "abs normalized 1hour NAS100 minus US500 relative drift, no learned thresholds",
+      "NoParameterGrid": true
+    },
+    {
+      "Id": "US500_US_CASH_H1_VOLATILITY_PERSISTENCE",
+      "Rationale": "Cash-session index-wide index volatility clusters after intra-hour range expansion with directional agreement; uses completed H1-equivalent 4xM15 range regime and true tick volume, rather than previous FX M5 expansion or XUA1 synch.",
+      "DecisionClock": "Weekdays 14:30–19:00 UTC May DST; 16 completed M15 US500 bars with nonfuture prices and at least 12 contiguous most recent bars; only source-valid M15 at actual marks",
+      "Signal": "Newest four completed M15 average relative high-low >=1.10*preceding 12 M15 average relative high-low; last four completed M15 close return abs >= 1x preceding 12 mean abs M15 return; last M15 direction agrees with last-four trend and genuine current M15 tick volume >=0.90 preceding12 mean volume",
+      "Sizing": "one original US500 minimum volume only, global shared EUR300 risk",
+      "Exit": "native M5_ATR_CHANDELIER 2x entry ATR14 computed from completed M5; adverse quote-side -1.5ATR14, maximum exposure 180 minutes, model fills only on future real quote clocks",
+      "Driver": "abs 4 M15 close return, no post hoc tuning",
+      "NoParameterGrid": true
+    }
+  ],
+  "ResearchModes": [
+    "US_INDEX_JOINT_W20W21",
+    "US_INDEX_NAS_ONLY_W20W21",
+    "US_INDEX_SP_ONLY_W20W21"
+  ],
+  "Conflict": "Original same EUR300 allocator ranks opportunities by existing economic uncertainty adjusted utility, never unconstrained independent wallets; two full EUR300 family-removal ablations for marginal NET.",
+  "CostBenchmark": "Original current contract fee floor, commission, FX conversion, funding and observed bid/ask spread plus nonzero slippage; same-clock costed long and cash flat, no third financial wallet",
+  "RequiredPublicReceipt": [
+    "Original source per-symbol M5, causal M15 and independent BIDASK quotes with missing clocks",
+    "two chronological weeks 2026-W20,W21 complete model trips, cash and equity without reset",
+    "gross EUR, NET central/adverse, matched costed long, full funded ablation marginals",
+    "maximum observed margin and sampled floating equity DD, gaps explicitly prohibit continuous <=30% certificate",
+    "all signals and selector decline reasons, model exit counts",
+    "source original authenticated only in protected collector, TRADE_CAPABLE token not owner trading permission",
+    "historical fees current retro scenario, no original broker fills",
+    "no independent alpha, no HARD21 systemic proof from two already exposed weeks"
+  ],
+  "Promotion": "No promotion on these prior-exposed weeks; require robust >=12 months walk-forward with truly unused confirmation, absolute costed and adversely stressed plus matched benchmark incremental NET >0, HARD21 globally >=21 financed closed per eligible week and <=30% continuous floating DD evidence. Close exact negative rule without retuning.",
+  "Security": {
+    "CloudTradingOff": true,
+    "OriginalAccountLIVEOrders": 0,
+    "DemoOrders": 0,
+    "NoOAuthChanges": true,
+    "NoSecretsOutput": true,
+    "ReadOnlyAllowlist": true,
+    "PreserveW46Holdout": true,
+    "NoNewExecutionInfrastructure": true
+  }
+}

@@ -64,7 +64,9 @@ public sealed class NativeProductResearchLoop
             "CROSS_OIL_EQUITY_W30W31" or "CROSS_ONLY_OIL_W30W31" or
             "CROSS_ONLY_EQUITY_W30W31" or
             "CRYPTO_CRUDE_W24W25" or "ONLY_CRYPTO_W24W25" or
-            "ONLY_CRUDE_W24W25"))
+            "ONLY_CRUDE_W24W25" or
+            "US_INDEX_JOINT_W20W21" or "US_INDEX_NAS_ONLY_W20W21" or
+            "US_INDEX_SP_ONLY_W20W21"))
             throw new ArgumentException("UNDECLARED_RESEARCH_MECHANISM");
         this.researchMode=researchMode;
     }
@@ -377,6 +379,71 @@ public sealed class NativeProductResearchLoop
                 side=a>0?1:-1;
             }
 
+
+            else if(researchMode is "US_INDEX_JOINT_W20W21" or
+                "US_INDEX_NAS_ONLY_W20W21" or "US_INDEX_SP_ONLY_W20W21")
+            {
+                // W20–W21 source-locked US index 1-hour-equivalent (4x
+                // completed M15) microstructure. These hypotheses are NOT
+                // the closed Asian index synch or classic FX breakout rules.
+                var utc=DateTimeOffset.FromUnixTimeMilliseconds(at).UtcDateTime;
+                if(utc.Hour<14 || utc.Hour>=19 || 
+                   (utc.Hour==14 && utc.Minute<30))continue;
+                if(market.Symbol=="NAS100" &&
+                   researchMode!="US_INDEX_SP_ONLY_W20W21" &&
+                   byName.TryGetValue("US500",out var broad) &&
+                   market.M15.Length>=5 && broad.M15.Length>=5)
+                {
+                    var nas=market.M15.TakeLast(5).ToArray();
+                    var sp=broad.M15.TakeLast(5).ToArray();
+                    bool aligned=nas[^1].CloseAt<at &&
+                        sp[^1].CloseAt==nas[^1].CloseAt &&
+                        nas.Zip(nas.Skip(1)).All(x=>
+                            x.First.CloseAt==x.Second.OpenAt) &&
+                        sp.Zip(sp.Skip(1)).All(x=>
+                            x.First.CloseAt==x.Second.OpenAt);
+                    if(!aligned)continue;
+                    decimal nasReturn=nas[^1].Close/nas[0].Close-1m;
+                    decimal spReturn=sp[^1].Close/sp[0].Close-1m;
+                    decimal residual=nasReturn-spReturn;
+                    if(Math.Abs(residual)<0.00035m)continue;
+                    side=residual>0m?-1:1;
+                    driver=Math.Abs(residual);
+                    mechanism="NAS100_US_CASH_INDEX_RELATIVE_DISPERSION_FADE";
+                }
+                else if(market.Symbol=="US500" &&
+                    researchMode!="US_INDEX_NAS_ONLY_W20W21" &&
+                    market.M15.Length>=16)
+                {
+                    // No synthetic H1 bars: 4 contiguous completed M15
+                    // closes define the H1-equivalent market regime.
+                    var bars=market.M15.TakeLast(16).ToArray();
+                    if(!bars.Zip(bars.Skip(1)).All(x=>
+                            x.First.CloseAt==x.Second.OpenAt) ||
+                       bars[^1].CloseAt>=at)continue;
+                    var prior=bars.Take(12).ToArray();
+                    var current=bars.Skip(12).ToArray();
+                    decimal oldRange=prior.Average(x=>
+                        (x.High-x.Low)/x.Close);
+                    decimal newRange=current.Average(x=>
+                        (x.High-x.Low)/x.Close);
+                    decimal oldVolume=prior.Average(x=>(decimal)x.TickVolume);
+                    decimal change=current[^1].Close/prior[^1].Close-1m;
+                    decimal meanReturn=prior.Zip(prior.Skip(1))
+                        .Average(x=>Math.Abs(x.Second.Close/
+                            x.First.Close-1m));
+                    decimal lastMove=current[^1].Close-current[^1].Open;
+                    if(oldRange<=0m || oldVolume<=0m ||
+                       newRange<1.10m*oldRange ||
+                       Math.Abs(change)<meanReturn ||
+                       change*lastMove<=0m ||
+                       current[^1].TickVolume<0.90m*oldVolume)continue;
+                    side=change>0m?1:-1;
+                    driver=Math.Abs(change);
+                    mechanism="US500_US_CASH_H1_VOLATILITY_PERSISTENCE";
+                }
+                else continue;
+            }
             else if(researchMode is "CRYPTO_CRUDE_W24W25" or
                 "ONLY_CRYPTO_W24W25" or "ONLY_CRUDE_W24W25")
             {
@@ -648,6 +715,10 @@ public sealed class NativeProductResearchLoop
                     NativeCausalExitResearch.VolatilityTarget,
                 "CRUDE_US_SESSION_TICK_ACTIVITY_DRIFT"=>
                     NativeCausalExitResearch.PredictionInvalidation,
+                "NAS100_US_CASH_INDEX_RELATIVE_DISPERSION_FADE"=>
+                    NativeCausalExitResearch.EquilibriumReversion,
+                "US500_US_CASH_H1_VOLATILITY_PERSISTENCE"=>
+                    NativeCausalExitResearch.Chandelier,
                 _=>market.ExitPolicy
             };
             int effectiveHolding=mechanism switch {
@@ -658,6 +729,8 @@ public sealed class NativeProductResearchLoop
                 "AMD_US_OPENING_HOUR_TICKFLOW"=>180,
                 "CRYPTO_M5_LIQUIDITY_WICK_ABSORPTION"=>150,
                 "CRUDE_US_SESSION_TICK_ACTIVITY_DRIFT"=>120,
+                "NAS100_US_CASH_INDEX_RELATIVE_DISPERSION_FADE"=>105,
+                "US500_US_CASH_H1_VOLATILITY_PERSISTENCE"=>180,
                 _=>market.HoldingMinutes
             };
             if(effectiveExitPolicy!=NativeCausalExitResearch.FrozenFixed &&
@@ -811,6 +884,10 @@ public sealed class NativeProductResearchLoop
                         (Policy:NativeCausalExitResearch.VolatilityTarget,Minutes:150),
                     "CRUDE_US_SESSION_TICK_ACTIVITY_DRIFT"=>
                         (Policy:NativeCausalExitResearch.PredictionInvalidation,Minutes:120),
+                    "NAS100_US_CASH_INDEX_RELATIVE_DISPERSION_FADE"=>
+                        (Policy:NativeCausalExitResearch.EquilibriumReversion,Minutes:105),
+                    "US500_US_CASH_H1_VOLATILITY_PERSISTENCE"=>
+                        (Policy:NativeCausalExitResearch.Chandelier,Minutes:180),
                     _=>(Policy:market.ExitPolicy,Minutes:market.HoldingMinutes)
                 };
                 tracked.Add(chosen.Id,new(market.Symbol,opportunity.Direction,
