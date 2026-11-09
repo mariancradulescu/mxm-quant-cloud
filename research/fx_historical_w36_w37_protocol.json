@@ -1,0 +1,100 @@
+{
+  "Protocol": "MXM_HISTORICAL_W36_W37_FROZEN_SHOCK_VOLUMEFLOW_V1",
+  "DeclaredUtc": "2026-11-09",
+  "Status": "LOCKED_BEFORE_ANY_W36W37_ORIGINAL_BROKER_COLLECTION",
+  "Authority": "docs/OWNER_SPEC.md",
+  "Continuity": "PR160/162/163 frozen; existing C# native product ledger and source collector; no new infrastructure or order path",
+  "ResearchRole": "retrospective replication on historically globally exposed price windows, NOT genuinely independent confirmation",
+  "Segments": [
+    {
+      "name": "development",
+      "utc": "2026-08-31T00:00:00Z/2026-09-07T00:00:00Z",
+      "iso": "2026-W36",
+      "role": "post-registration retrospective development; no tuning after W45 evidence"
+    },
+    {
+      "name": "chronological_selection",
+      "utc": "2026-09-07T00:00:00Z/2026-09-14T00:00:00Z",
+      "iso": "2026-W37",
+      "role": "later fixed-rule temporal replication, historically globally exposed, not independent market-wide selection"
+    },
+    {
+      "name": "warmup_only",
+      "utc": "2026-08-28T08:00:00Z/2026-08-31T00:00:00Z",
+      "role": "M5/M15 closed past windows only"
+    }
+  ],
+  "FrozenFutureHoldout": "2026-W46 stays entirely unexposed in this program; not needed to execute W36/W37",
+  "Universe": [
+    "EURUSD",
+    "GBPUSD",
+    "AUDUSD",
+    "NZDUSD"
+  ],
+  "ExpansionRationale": "NZDUSD is the fourth USD-quoted 5-decimal peer to diversify AUD-tilted FX hypotheses while retaining observed USD/EUR conversion from same-clock EURUSD independent BID/ASK. Reject, do not replace or fabricate, if full symbol, margin, tariff or historic quotes unavailable.",
+  "InstrumentScope": "one selected family of quote USD markets; current exploratory design is not a global system instrument or timeframe limit",
+  "BeforeOutcomeGates": [
+    "single original live Pepperstone account",
+    "read-only scope and requests",
+    "current enabled symbol and min volume under EUR300",
+    "current cost commission minima currency known",
+    "M5 source calendar with 1000+ genuine bars per complete week",
+    "independent historical BID and ASK from ticks as-of <=60s",
+    "no raw-price inference; no weekend fills"
+  ],
+  "Source": "existing original OpenAPI M5 bars and independent BID/ASK tick pages; aggregated M15 only from causally completed contiguous M5; real tick volume from OpenAPI bar feed; 30-minute acquisition windows; mark at each M5 close+1.5sec",
+  "Families": [
+    {
+      "id": "FX_M5_SHOCK_EXHAUSTION_REVERSION",
+      "role": "UNMODIFIED_FROZEN_W45_HYPOTHESIS",
+      "signal": "EXACT PR163 range >1.60 previous eight range; body >0.60 range; quote spread <=0.40 range; align close versus previous; enter opposite body",
+      "exit": "EXACT PR163 M15_EQUILIBRIUM_REVERSION, frozen eight M15 closes, invalidation 1.5*ATR14, maximum 90 minutes",
+      "parameterChangesAfterW45": 0
+    },
+    {
+      "id": "FX_HIGH_TICK_ACTIVITY_ABSORPTION",
+      "role": "NEW_FIXED_DISTINCT_HYPOTHESIS",
+      "rationale": "High true observed quote-change tick volume with compressed M5 true range and small real body following a same-direction 3-M5 drift may signal passive absorption of the previous move rather than a breakout; take opposite 3-M5 move",
+      "signal": "LAST completed M5 volume >=1.50*mean previous eight completed M5 volume; last range <=0.95*previous eight mean range; last candle |close-open|<=0.40*(high-low); previous 3-M5 close drift magnitude >=0.65*previous eight mean true range and aligned with completed M15 normalized drift; reject if time gaps or nonpositive volumes; same-clock real BID/ASK spread <=0.4*last M5 range",
+      "exit": "M5_VOLATILITY_TARGET, ATR14 entry seed; target +2*ATR; invalidation -1.5*ATR, max 75m (safety cap), no historical fill fantasy",
+      "parameterChangesAfterResult": 0
+    }
+  ],
+  "Prioritization": "shock first when both (joint), counterfactual removes family BEFORE candidate generation, no posterior switches",
+  "Accounting": "one continuous isolated EUR300 book across both weeks without cash reset; current contractual commission/funding, historical independent BID/ASK as-of + separate modeled slippage; shared exposure/margin and C# allocator; fees not certified historically",
+  "Comparison": [
+    "JOINT_SHOCK_PLUS_TICKFLOW",
+    "ONLY_FROZEN_SHOCK",
+    "ONLY_NEW_TICKFLOW"
+  ],
+  "Incremental": "joint closed central NET minus identical period EUR300 funded counterfactual NET without respective family",
+  "Benchmarks": [
+    "EUR300 initial cash benchmark 0 gross 0 net",
+    "same fill-clock same exit-clock costed long-only counterfactual, not independently fundable simultaneous portfolio"
+  ],
+  "RequiredReporting": [
+    "counts M5 each symbol, BIDASK marks, missing clocks, first last actual M5",
+    "week by week complete round trips W36 and W37",
+    "gross / central net / adverse net EUR and matched long",
+    "portfoliocentral and each ablation marginal NET",
+    "max observed margin and sampled floating equity DD",
+    "prediction proposals, rejection reason categories, exit reasons",
+    "settlement open/pending, source limitations, data-role limitations"
+  ],
+  "PromotionRules": [
+    "no automatic promotion on retrospective exploratory one or two weeks",
+    "absolute central and adverse NET and independent incremental NET positive after costs and uncertainty",
+    "HARD21 >=21 model-funded completed trips each prospectively eligible week and minimum 12mo authenticated chronological evidence",
+    "global continuous floating DD <=30% independently verified; sampled M5 path cannot certify",
+    "run new historical windows before future W46, but do not score W46 now"
+  ],
+  "Security": [
+    "no LIVE or DEMO orders",
+    "no Cloud activation",
+    "never output OAuth, account IDs or raw tick/contract secrets",
+    "current tariffs not asserted historic",
+    "no retrofit of negative parameters",
+    "read-only protected original-token environment",
+    "existing GitHub workflow runner only"
+  ]
+}

@@ -59,7 +59,8 @@ public sealed class NativeProductResearchLoop
             "FX_CAUSAL_BREAKOUT_PLUS_RELATIVE_VALUE" or
             "FX_ONLY_BREAKOUT" or "FX_ONLY_RELATIVE_VALUE" or
             "FX_BREADTH_SHOCK_W45" or "FX_ONLY_BREADTH_W45" or
-            "FX_ONLY_SHOCK_W45"))
+            "FX_ONLY_SHOCK_W45" or "FX_SHOCK_ABSORPTION_W36W37" or
+            "FX_ONLY_SHOCK_W36W37" or "FX_ONLY_ABSORPTION_W36W37"))
             throw new ArgumentException("UNDECLARED_RESEARCH_MECHANISM");
         this.researchMode=researchMode;
     }
@@ -372,12 +373,15 @@ public sealed class NativeProductResearchLoop
                 side=a>0?1:-1;
             }
             else if(researchMode is "FX_BREADTH_SHOCK_W45" or
-                "FX_ONLY_BREADTH_W45" or "FX_ONLY_SHOCK_W45")
+                "FX_ONLY_BREADTH_W45" or "FX_ONLY_SHOCK_W45" or
+                "FX_SHOCK_ABSORPTION_W36W37" or
+                "FX_ONLY_SHOCK_W36W37" or "FX_ONLY_ABSORPTION_W36W37")
             {
                 // New prespecified, entirely separate W45 mechanisms.
                 // No PR160 breakout signal is evaluated or rescued.
                 bool breadth=false,shock=false;
-                if(researchMode!="FX_ONLY_SHOCK_W45" &&
+                if(researchMode is "FX_BREADTH_SHOCK_W45" or
+                    "FX_ONLY_BREADTH_W45" &&
                    cross.Length>=3 && crossMedian is decimal med &&
                    p15.MeanAbsoluteReturn is decimal mar && mar>0 &&
                    Math.Abs(med)>0.35m*mar && med*b>0 &&
@@ -389,7 +393,8 @@ public sealed class NativeProductResearchLoop
                     breadth=true;
                     mechanism="FX_USD_BREADTH_DELAYED_CATCHUP";
                 }
-                if(!breadth && researchMode!="FX_ONLY_BREADTH_W45" &&
+                if(!breadth && researchMode is not (
+                    "FX_ONLY_BREADTH_W45" or "FX_ONLY_ABSORPTION_W36W37") &&
                    market.M5.Length>=10)
                 {
                     var shockWindow=market.M5.TakeLast(10).ToArray();
@@ -415,7 +420,40 @@ public sealed class NativeProductResearchLoop
                         mechanism="FX_M5_SHOCK_EXHAUSTION_REVERSION";
                     }
                 }
-                if(!breadth && !shock)continue;
+                bool absorption=false;
+                if(!breadth && !shock &&
+                   researchMode is "FX_SHOCK_ABSORPTION_W36W37" or
+                       "FX_ONLY_ABSORPTION_W36W37" &&
+                   market.M5.Length>=10)
+                {
+                    // Prespecified W36/W37 absorption hypothesis. Entirely
+                    // different from the frozen W45 wide shock: unusually
+                    // active tick count with compressed range and small body.
+                    var flowWindow=market.M5.TakeLast(9).ToArray();
+                    bool flowContiguous=flowWindow.Zip(flowWindow.Skip(1))
+                        .All(x=>x.First.CloseAt==x.Second.OpenAt);
+                    var signalBar=flowWindow[^1];
+                    var flowPrior=flowWindow.Take(8).ToArray();
+                    decimal averageRange=flowPrior.Average(x=>x.High-x.Low);
+                    decimal averageVolume=flowPrior.Average(x=>(decimal)x.TickVolume);
+                    decimal signalRange=signalBar.High-signalBar.Low;
+                    decimal recentDrift=flowPrior[^1].Close-flowPrior[^4].Close;
+                    decimal liveSpread=market.Quote.Ask-market.Quote.Bid;
+                    if(flowContiguous && averageRange>0 && averageVolume>0 &&
+                       signalBar.TickVolume>=1.50m*averageVolume &&
+                       signalRange>0 && signalRange<=0.95m*averageRange &&
+                       Math.Abs(signalBar.Close-signalBar.Open)<=0.40m*signalRange &&
+                       Math.Abs(recentDrift)>=0.65m*averageRange &&
+                       recentDrift*b>0 &&
+                       liveSpread<=0.40m*signalRange)
+                    {
+                        side=recentDrift>0?-1:1;
+                        driver=Math.Abs(recentDrift)/signalBar.Close;
+                        absorption=true;
+                        mechanism="FX_HIGH_TICK_ACTIVITY_ABSORPTION";
+                    }
+                }
+                if(!breadth && !shock && !absorption)continue;
             }
             else
             {
@@ -476,11 +514,14 @@ public sealed class NativeProductResearchLoop
                     NativeCausalExitResearch.VolatilityTarget,
                 "FX_M5_SHOCK_EXHAUSTION_REVERSION"=>
                     NativeCausalExitResearch.EquilibriumReversion,
+                "FX_HIGH_TICK_ACTIVITY_ABSORPTION"=>
+                    NativeCausalExitResearch.VolatilityTarget,
                 _=>market.ExitPolicy
             };
             int effectiveHolding=mechanism switch {
                 "FX_USD_BREADTH_DELAYED_CATCHUP"=>120,
                 "FX_M5_SHOCK_EXHAUSTION_REVERSION"=>90,
+                "FX_HIGH_TICK_ACTIVITY_ABSORPTION"=>75,
                 _=>market.HoldingMinutes
             };
             if(effectiveExitPolicy!=NativeCausalExitResearch.FrozenFixed &&
@@ -624,6 +665,8 @@ public sealed class NativeProductResearchLoop
                         (Policy:NativeCausalExitResearch.VolatilityTarget,Minutes:120),
                     "FX_M5_SHOCK_EXHAUSTION_REVERSION"=>
                         (Policy:NativeCausalExitResearch.EquilibriumReversion,Minutes:90),
+                    "FX_HIGH_TICK_ACTIVITY_ABSORPTION"=>
+                        (Policy:NativeCausalExitResearch.VolatilityTarget,Minutes:75),
                     _=>(Policy:market.ExitPolicy,Minutes:market.HoldingMinutes)
                 };
                 tracked.Add(chosen.Id,new(market.Symbol,opportunity.Direction,
