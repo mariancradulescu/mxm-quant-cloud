@@ -1,6 +1,90 @@
 using System.Text.Json;
 using System.Security.Cryptography;
 
+// Original-account historical W36/W37 source, protocol locked before
+// acquisition. Replays existing single EUR300 native ledger per experiment
+// with NO cash resets at the W36/W37 split, NO broker orders, NO Cloud.
+// W45 exact frozen shock is replicated unchanged; tick-volume absorption is
+// a novel preregistered mechanistic candidate, no data-derived thresholds.
+if(args.Length==3 && args[2]=="--native-original-openapi-historic-w36w37")
+{
+    try
+    {
+        var input=File.ReadAllBytes(args[0]);
+        var parse=new JsonSerializerOptions{
+            NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString
+        };
+        var source=JsonSerializer.Deserialize<Mxm.Core.NativeOriginalOpenApiTape>(
+            input,parse)??throw new ArgumentException("HISTORICAL_W36W37_TAPE_NULL");
+        if(source.SourceLabel!=
+           "ORIGINAL_PEPPERSTONE_OPENAPI_2026_W36_W37_FX_M5_SHOCK_TICKFLOW_PREDECLARED" ||
+           source.Bars.Select(x=>x.Symbol).OrderBy(x=>x,StringComparer.Ordinal)
+               .SequenceEqual(new[]{"AUDUSD","EURUSD","GBPUSD","NZDUSD"})==false)
+            throw new ArgumentException("HISTORICAL_W36W37_PROTOCOL_UNIVERSE_MISMATCH");
+        var native=Mxm.Core.NativeOriginalOpenApiProductAdapter.Convert(source);
+        var joint=Mxm.Core.NativeHistoricalProductReplay.Evaluate(native,
+            UnqualifiedShadowMode:true,ResearchMode:"FX_SHOCK_ABSORPTION_W36W37");
+        var onlyShock=Mxm.Core.NativeHistoricalProductReplay.Evaluate(native,
+            UnqualifiedShadowMode:true,ResearchMode:"FX_ONLY_SHOCK_W36W37");
+        var onlyAbsorption=Mxm.Core.NativeHistoricalProductReplay.Evaluate(native,
+            UnqualifiedShadowMode:true,ResearchMode:"FX_ONLY_ABSORPTION_W36W37");
+        var weeks=joint.SampledEquity
+            .GroupBy(x=>{
+                var d=DateTimeOffset.FromUnixTimeMilliseconds(x.At).UtcDateTime;
+                return System.Globalization.ISOWeek.GetYear(d)+"-W"+
+                    System.Globalization.ISOWeek.GetWeekOfYear(d).ToString("00");
+            })
+            .OrderBy(g=>g.Key,StringComparer.Ordinal)
+            .Select(g=>{
+                var a=g.First();var b=g.Last();
+                return new {
+                    Week=g.Key,FirstObservedAtMs=a.At,LastObservedAtMs=b.At,
+                    FirstEquityEur=a.CentralEquityEur,LastEquityEur=b.CentralEquityEur,
+                    SampledEquityChangeEur=b.CentralEquityEur-a.CentralEquityEur,
+                    FirstAdverseEquityEur=a.AdverseEquityEur,
+                    LastAdverseEquityEur=b.AdverseEquityEur,
+                    SampledAdverseEquityChangeEur=b.AdverseEquityEur-a.AdverseEquityEur,
+                    LastCompletedRoundTripsCumulative=b.ClosedModelRoundTrips,
+                    NoCashResetAtBoundary=true,
+                    IsIndependentConfirmation=false
+                };
+            }).ToArray();
+        File.WriteAllText(args[1],JsonSerializer.Serialize(new {
+            Protocol="research/fx_historical_w36_w37_protocol.json",
+            Window="2026-W36_DEVELOPMENT_W37_SELECTION_GLOBALLY_EXPOSED",
+            IndependentConfirmation=false,FutureW46NotScored=true,
+            InputFileSha256=Convert.ToHexString(SHA256.HashData(input)).ToLowerInvariant(),
+            Receipt=joint,ChronologicalWeeklySampledEconomics=weeks,
+            CounterfactualAblation=new {
+                OnlyFrozenW45Shock=onlyShock,
+                OnlyNewTickVolumeAbsorption=onlyAbsorption,
+                MarginalFrozenShockNetEur=joint.ModelClosedCentralNetEur-
+                    onlyAbsorption.ModelClosedCentralNetEur,
+                MarginalTickVolumeAbsorptionNetEur=joint.ModelClosedCentralNetEur-
+                    onlyShock.ModelClosedCentralNetEur,
+                AllAbalationsUseNewIsolatedEUR300CounterfactualBook=true,
+                JointWalletNeverSummed=true,
+                QualifiedIndependentEconomicSupport=false
+            },
+            BrokerContractFirstObservedUtcMs=source.Marks.Min(x=>x.Contract.ObservedAtUtcMs),
+            HistoricDecisionFirstUtcMs=source.Marks.Min(x=>x.At),
+            ContractTermsExplicitlyAppliedRetrospectively=
+                source.Marks.Any(x=>x.Contract.ObservedAtUtcMs>x.At),
+            ContractTermsAreCurrentNotHistorical=true,
+            HistoricalSlippageModeledNotExecuted=true,
+            OriginalAuthenticationVerifiedOnlyByCaller=true,
+            BrokerFillProof=false,OrdersSubmitted=0,CloudActivated=false
+        }));
+        return 0;
+    }
+    catch(Exception e)
+    {
+        Console.Error.WriteLine("HISTORICAL_W36W37_NATIVE_REPLAY_REJECTED:"+
+            e.GetType().Name);
+        return 58;
+    }
+}
+
 // New W45 post-PR162 economic research. The prespecified two-family protocol
 // is committed BEFORE collecting the source: no PR160 breakout revival.
 // Both ablations replay the identical quote tape and a complete fresh EUR300
