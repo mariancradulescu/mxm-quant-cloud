@@ -1,6 +1,66 @@
 using System.Text.Json;
 using System.Security.Cryptography;
 
+// New W45 post-PR162 economic research. The prespecified two-family protocol
+// is committed BEFORE collecting the source: no PR160 breakout revival.
+// Both ablations replay the identical quote tape and a complete fresh EUR300
+// funded model, not a sum of standalone capital wallets. All outputs remain
+// conditional on current tariffs, observed quotes and modeled (not broker) fills.
+if(args.Length==3 && args[2]=="--native-original-openapi-w45")
+{
+    try
+    {
+        var input=File.ReadAllBytes(args[0]);
+        var parse=new JsonSerializerOptions{
+            NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString
+        };
+        var source=JsonSerializer.Deserialize<Mxm.Core.NativeOriginalOpenApiTape>(
+            input,parse)??throw new ArgumentException("OPENAPI_W45_TAPE_NULL");
+        if(source.SourceLabel!=
+           "ORIGINAL_PEPPERSTONE_OPENAPI_2026_W45_FX_M5_BREADTH_AND_SHOCK_PREDECLARED")
+            throw new ArgumentException("W45_PROTOCOL_SOURCE_LABEL_MISMATCH");
+        var native=Mxm.Core.NativeOriginalOpenApiProductAdapter.Convert(source);
+        var joint=Mxm.Core.NativeHistoricalProductReplay.Evaluate(native,
+            UnqualifiedShadowMode:true,ResearchMode:"FX_BREADTH_SHOCK_W45");
+        var withoutBreadth=Mxm.Core.NativeHistoricalProductReplay.Evaluate(native,
+            UnqualifiedShadowMode:true,ResearchMode:"FX_ONLY_SHOCK_W45");
+        var withoutShock=Mxm.Core.NativeHistoricalProductReplay.Evaluate(native,
+            UnqualifiedShadowMode:true,ResearchMode:"FX_ONLY_BREADTH_W45");
+        File.WriteAllText(args[1],JsonSerializer.Serialize(new {
+            Protocol="research/fx_w45_new_mechanisms_protocol.json",
+            Window="2026-W45_EXPLORATORY_NOT_INDEPENDENT_CONFIRMATION",
+            FutureW46NotScored=true,
+            InputFileSha256=Convert.ToHexString(SHA256.HashData(input)).ToLowerInvariant(),
+            Receipt=joint,
+            CounterfactualAblation=new {
+                WithoutUsdBreadthCatchup=withoutBreadth,
+                WithoutM5ShockReversion=withoutShock,
+                MarginalUsdBreadthCatchupNetEur=joint.ModelClosedCentralNetEur-
+                    withoutBreadth.ModelClosedCentralNetEur,
+                MarginalM5ShockReversionNetEur=joint.ModelClosedCentralNetEur-
+                    withoutShock.ModelClosedCentralNetEur,
+                JointWalletNotSumOfCounterfactualWallets=true,
+                ClaimedIndependentEconomicSupport=false
+            },
+            BrokerContractFirstObservedUtcMs=source.Marks.Min(x=>x.Contract.ObservedAtUtcMs),
+            HistoricDecisionFirstUtcMs=source.Marks.Min(x=>x.At),
+            ContractTermsExplicitlyAppliedRetrospectively=
+                source.Marks.Any(x=>x.Contract.ObservedAtUtcMs>x.At),
+            ContractTermsAreCurrentNotHistorical=true,
+            HistoricalSlippageIsModeledNotExecuted=true,
+            SourceAuthenticationMustBeVerifiedByCaller=true,
+            CertifiedBrokerTradeFills=false,
+            IndependentlyConfirmed=false,OrdersSubmitted=0,CloudActivated=false
+        }));
+        return 0;
+    }
+    catch(Exception exc)
+    {
+        Console.Error.WriteLine("OPENAPI_W45_NATIVE_REPLAY_REJECTED:"+exc.GetType().Name);
+        return 58;
+    }
+}
+
 // This uses the EXISTING cost/ledger/replay machinery. Original Open API
 // source authentication happens in the collector process; this offline reader
 // does not independently establish account identity or tariff continuity.
