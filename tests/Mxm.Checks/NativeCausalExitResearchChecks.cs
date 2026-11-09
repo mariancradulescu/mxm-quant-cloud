@@ -72,6 +72,16 @@ public static class NativeCausalExitResearchChecks
         check(!frozen.RequestClose &&
               frozen.Reason=="FROZEN_LEGACY_TIME",
               "existing exact historical 30-minute hold is unchanged");
+        // Legacy must not suddenly depend on the adaptive feature-bar
+        // gate. The recorded time-only exit is reproducible unchanged.
+        var legacyWithNewerBar=NativeCausalExitResearch.Assess(
+            NativeCausalExitResearch.FrozenFixed,now,openAt,1,
+            entry,new(0m,0m),0m,Q(entry),seen.Append(
+                new NativeClosedMarketBar(now,now+m5,entry,entry,entry,
+                    entry,100)).ToArray(),fifteen,30);
+        check(!legacyWithNewerBar.RequestClose &&
+              legacyWithNewerBar.Reason=="FROZEN_LEGACY_TIME",
+              "frozen time exit bypasses only new adaptive candle gates");
         var limited=Assess(NativeCausalExitResearch.PredictionInvalidation,
             entry,minutes:15);
         check(!limited.RequestClose,
