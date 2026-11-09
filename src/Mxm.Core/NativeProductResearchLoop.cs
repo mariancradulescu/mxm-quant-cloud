@@ -396,11 +396,9 @@ public sealed class NativeProductResearchLoop
                     bool consecutive=recent.Zip(recent.Skip(1)).All(x=>
                         x.First.CloseAt==x.Second.OpenAt);
                     var last=recent[^1];
-                    var prior=recent.Skip(1).Take(8).ToArray();
                     // The eight bars immediately preceding the signal bar,
                     // not earlier bars or future outcome.
-                    prior=recent.Skip(1).Take(8).ToArray();
-                    prior=recent.Skip(1).Take(8).ToArray();
+                    var prior=recent.Skip(1).Take(8).ToArray();
                     decimal range=last.High-last.Low;
                     decimal priorRange=prior.Average(x=>x.High-x.Low);
                     decimal body=last.Close-last.Open;
@@ -621,7 +619,7 @@ public sealed class NativeProductResearchLoop
             {
                 var opportunity=offered.Single(x=>x.Id==chosen.Id);
                 var market=byName[opportunity.Symbol];
-                var plan=opportunity.Mechanism switch {
+                var plan=opportunity.Candidate switch {
                     "FX_USD_BREADTH_DELAYED_CATCHUP"=>
                         (Policy:NativeCausalExitResearch.VolatilityTarget,Minutes:120),
                     "FX_M5_SHOCK_EXHAUSTION_REVERSION"=>
