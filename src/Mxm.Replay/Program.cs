@@ -1,6 +1,91 @@
 using System.Text.Json;
 using System.Security.Cryptography;
 
+// Cross-asset W30/W31 economic research, registered before source results.
+// Reuses EXISTING original historical converter and native EUR300 funded
+// portfolio; never broker orders, Cloud, invented DOM, or recycled closed
+// W36/W37 / W45 research models.
+if(args.Length==3 && args[2]=="--native-original-openapi-energy-equity-w30w31")
+{
+    try
+    {
+        var bytes=File.ReadAllBytes(args[0]);
+        var parse=new JsonSerializerOptions{
+            NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString
+        };
+        var source=JsonSerializer.Deserialize<Mxm.Core.NativeOriginalOpenApiTape>(
+            bytes,parse)??throw new ArgumentException("CROSS_ASSET_SOURCE_NULL");
+        if(source.SourceLabel!=
+            "ORIGINAL_PEPPERSTONE_OPENAPI_2026_W30_W31_ENERGY_EQUITY_PREDECLARED" ||
+           !source.Bars.Select(x=>x.Symbol).OrderBy(x=>x,StringComparer.Ordinal)
+               .SequenceEqual(new[]{"AMD.US","EURUSD","SpotBrent","SpotCrude"}) ||
+           source.Marks.Any(x=>!new[]{"AMD.US","EURUSD","SpotBrent","SpotCrude"}
+                .Contains(x.Symbol,StringComparer.Ordinal)))
+            throw new ArgumentException("CROSS_ASSET_SOURCE_OR_UNIVERSE_MISMATCH");
+        var native=Mxm.Core.NativeOriginalOpenApiProductAdapter.Convert(source);
+        var joint=Mxm.Core.NativeHistoricalProductReplay.Evaluate(native,
+            UnqualifiedShadowMode:true,ResearchMode:"CROSS_OIL_EQUITY_W30W31");
+        var onlyOil=Mxm.Core.NativeHistoricalProductReplay.Evaluate(native,
+            UnqualifiedShadowMode:true,ResearchMode:"CROSS_ONLY_OIL_W30W31");
+        var onlyEquity=Mxm.Core.NativeHistoricalProductReplay.Evaluate(native,
+            UnqualifiedShadowMode:true,ResearchMode:"CROSS_ONLY_EQUITY_W30W31");
+        var weeks=joint.SampledEquity
+            .GroupBy(x=>{
+                var d=DateTimeOffset.FromUnixTimeMilliseconds(x.At).UtcDateTime;
+                return System.Globalization.ISOWeek.GetYear(d)+"-W"+
+                    System.Globalization.ISOWeek.GetWeekOfYear(d).ToString("00");
+            })
+            .OrderBy(g=>g.Key,StringComparer.Ordinal)
+            .Select(g=>{
+                var a=g.First();var b=g.Last();
+                return new {
+                    Week=g.Key,FirstAtUtcMs=a.At,LastAtUtcMs=b.At,
+                    FirstSampledEquityEur=a.CentralEquityEur,
+                    LastSampledEquityEur=b.CentralEquityEur,
+                    ObservedSampledEquityChangeEur=b.CentralEquityEur-a.CentralEquityEur,
+                    FirstSampledAdverseEquityEur=a.AdverseEquityEur,
+                    LastSampledAdverseEquityEur=b.AdverseEquityEur,
+                    ObservedSampledAdverseEquityChangeEur=
+                        b.AdverseEquityEur-a.AdverseEquityEur,
+                    ModelCompletedTripsCumulative=b.ClosedModelRoundTrips,
+                    WeekCashNotReset=true,IndependentConfirmation=false
+                };
+            }).ToArray();
+        File.WriteAllText(args[1],JsonSerializer.Serialize(new {
+            Protocol="research/cross_asset_energy_equity_w30_w31_protocol.json",
+            SourceWindow="W30_DEVELOPMENT_W31_CHRONOLOGICAL_SELECTION_GLOBALLY_EXPOSED",
+            ConversionReferenceEurusdNotTradingCandidate=true,
+            BrokerTermsRetrospectiveScenariosNotHistoricalGuarantee=true,
+            SourceAuthenticationOnlyInProtectedCollector=true,
+            InputSha256=Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant(),
+            Receipt=joint,ChronologicalWeeks=weeks,
+            FundedAblations=new {
+                OnlySpotCrudeBrentLeadLag=onlyOil,
+                OnlyAmdOpeningSessionFlow=onlyEquity,
+                MarginalEnergyLeadLagNetEur=joint.ModelClosedCentralNetEur-
+                    onlyEquity.ModelClosedCentralNetEur,
+                MarginalAmdSessionFlowNetEur=joint.ModelClosedCentralNetEur-
+                    onlyOil.ModelClosedCentralNetEur,
+                SeparateFullEUR300AbalationsNotSimultaneouslyFunded=true,
+                ClaimedIndependentConfirmation=false
+            },
+            HistoricClockFirstUtcMs=source.Marks.Min(x=>x.At),
+            ContractFirstObservedUtcMs=source.Marks.Min(x=>x.Contract.ObservedAtUtcMs),
+            ContractTermsAppliedRetrospectively=
+                source.Marks.Any(x=>x.Contract.ObservedAtUtcMs>x.At),
+            ActualBrokerFills=false,PriceSlippageModeled=true,
+            EUR300ModelOnly=true,OrdersSubmitted=0,CloudActivated=false
+        }));
+        return 0;
+    }
+    catch(Exception e)
+    {
+        Console.Error.WriteLine("CROSS_ASSET_NATIVE_REPLAY_REJECTED:"+
+            e.GetType().Name);
+        return 58;
+    }
+}
+
 // Original-account historical W36/W37 source, protocol locked before
 // acquisition. Replays existing single EUR300 native ledger per experiment
 // with NO cash resets at the W36/W37 split, NO broker orders, NO Cloud.
