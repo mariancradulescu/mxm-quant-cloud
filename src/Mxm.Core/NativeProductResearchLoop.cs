@@ -65,6 +65,7 @@ public sealed class NativeProductResearchLoop
     private long maximumBarObservationLagMs;
     private bool historicalPathComplete=true;
     private decimal matchedLongBenchmarkNetEur;
+    private bool benchmarkSettlementComplete=true;
     private readonly Dictionary<string,int> weekly=new(StringComparer.Ordinal);
     private readonly List<NativeProductSignal> signals=new();
     private long lastClock=-1;
@@ -95,7 +96,9 @@ public sealed class NativeProductResearchLoop
             UnresolvedGaps=unresolvedCalendarGaps,
             MaxLag=maximumBarObservationLagMs,
             HistoryPathComplete=historicalPathComplete,
-            Benchmark=matchedLongBenchmarkNetEur
+            Benchmark=matchedLongBenchmarkNetEur,
+            BenchmarkSettlementComplete=benchmarkSettlementComplete,
+            ResearchMode=researchMode
         });
         return JsonSerializer.Serialize(new {Payload=payload,Sha256=Fingerprint(payload)});
     }
@@ -112,7 +115,9 @@ public sealed class NativeProductResearchLoop
         if(p.GetProperty("Version").GetString()!="mxm-product-shadow-episode-v1"||
            p.GetProperty("SourceSha").GetString()!=expectedSourceDatasetSha256)
             throw new ArgumentException("MODEL_REPLAY_CHECKPOINT_SOURCE_OR_VERSION_MISMATCH");
-        var loop=new NativeProductResearchLoop();
+        var loop=new NativeProductResearchLoop(
+            p.GetProperty("ResearchMode").GetString() ??
+                "FROZEN_LEGACY_M5_M15");
         loop.epochId=p.GetProperty("EpochId").GetString()??throw new ArgumentException("MODEL_EPOCH_MISSING");
         loop.session=NativeFundedSession.Restore(
             p.GetProperty("Session").GetString()!,"NATIVE_PRODUCT_MODEL_REPLAY_ONLY");
@@ -138,6 +143,8 @@ public sealed class NativeProductResearchLoop
         loop.maximumBarObservationLagMs=p.GetProperty("MaxLag").GetInt64();
         loop.historicalPathComplete=p.GetProperty("HistoryPathComplete").GetBoolean();
         loop.matchedLongBenchmarkNetEur=p.GetProperty("Benchmark").GetDecimal();
+        loop.benchmarkSettlementComplete=p.GetProperty(
+            "BenchmarkSettlementComplete").GetBoolean();
         loop.lastClock=p.GetProperty("LastClock").GetInt64();
         var money=loop.session.Ledger.Summary();
         var stress=loop.adverse.Summary;
@@ -252,9 +259,9 @@ public sealed class NativeProductResearchLoop
                     if(longCarry is decimal carry)
                         matchedLongBenchmarkNetEur+=converted-
                             Fee(entry,p.Units)-Fee(q,p.Units)+carry;
-                    else historicalPathComplete=false;
+                    else benchmarkSettlementComplete=false;
                 }
-                else historicalPathComplete=false;
+                else benchmarkSettlementComplete=false;
                 ApplyFacts(new[]{
                     Event("FINANCING",at,id,p.Symbol,p.Side,p.Units,
                         financing:finance.Value),
@@ -543,9 +550,9 @@ public sealed class NativeProductResearchLoop
             adverse.Summary?.ClosedNetEur,s.MaximumSampledDrawdown,
             new Dictionary<string,int>(weekly,StringComparer.Ordinal),recent,
             "EXPLORATORY_MODEL_ONLY_NOT_ORIGINAL_AUTHENTICATED_OR_BROKER_NET",
-            ModelMatchedLongBenchmarkEur:historicalPathComplete?
+            ModelMatchedLongBenchmarkEur:benchmarkSettlementComplete?
                 matchedLongBenchmarkNetEur:null,
-            ModelIncrementalVsLongEur:historicalPathComplete?
+            ModelIncrementalVsLongEur:benchmarkSettlementComplete?
                 s.ClosedNetEur-matchedLongBenchmarkNetEur:null,
             AdversePathFullyRepriced:adverse.Complete,
             ObservedM5SlotsNotScored:unobservedM5DecisionSlots,
