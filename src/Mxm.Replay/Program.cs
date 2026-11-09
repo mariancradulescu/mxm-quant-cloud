@@ -4,10 +4,15 @@ using System.Security.Cryptography;
 // US indices research, preregistered BEFORE original Pepperstone W20/W21
 // historical read-only requests. No orders, Cloud activation, or historic
 // commission continuity claim. One original-funded EUR300 ledger per replay.
-if(args.Length==3 && args[2]=="--native-original-openapi-us-index-w20w21")
+if(args.Length==3 && (args[2]=="--native-original-openapi-us-index-w20w21" ||
+    args[2]=="--native-original-openapi-nas100-w32w33"))
 {
     try
     {
+        // Only the historical dates and source label differ. The existing
+        // frozen W20/W21 signal, session, benchmark and funded selector are
+        // called unchanged. This new window is NOT an independent holdout.
+        bool frozenReplication=args[2]=="--native-original-openapi-nas100-w32w33";
         var bytes=File.ReadAllBytes(args[0]);
         var parse=new JsonSerializerOptions {
             NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString
@@ -15,7 +20,9 @@ if(args.Length==3 && args[2]=="--native-original-openapi-us-index-w20w21")
         var source=JsonSerializer.Deserialize<Mxm.Core.NativeOriginalOpenApiTape>(
             bytes,parse)??throw new ArgumentException("INDEX_W20W21_EMPTY_SOURCE");
         if(source.SourceLabel!=
-            "ORIGINAL_PEPPERSTONE_OPENAPI_2026_W20_W21_US_INDEX_PREDECLARED"||
+            (frozenReplication ?
+              "ORIGINAL_PEPPERSTONE_OPENAPI_2026_W32_W33_NAS_REPLICATION_EXPOSED" :
+              "ORIGINAL_PEPPERSTONE_OPENAPI_2026_W20_W21_US_INDEX_PREDECLARED")||
            !source.Bars.Select(x=>x.Symbol)
                 .OrderBy(x=>x,StringComparer.Ordinal)
                 .SequenceEqual(new[]{"EURUSD","NAS100","US500"})||
@@ -50,8 +57,14 @@ if(args.Length==3 && args[2]=="--native-original-openapi-us-index-w20w21")
             };
         }).ToArray();
         File.WriteAllText(args[1],JsonSerializer.Serialize(new {
-            Protocol="research/us_index_w20_w21_protocol.json",
-            Window="2026_W20_W21_EXPOSED_DEVELOPMENT_SELECTION_NOT_CONFIRMATION",
+            Protocol=(frozenReplication ?
+                "research/nas100_frozen_w32_w33_replication_protocol.json" :
+                "research/us_index_w20_w21_protocol.json"),
+            Window=(frozenReplication ?
+                "2026_W32_W33_EXPOSED_FROZEN_REPLICATION_NOT_INDEPENDENT" :
+                "2026_W20_W21_EXPOSED_DEVELOPMENT_SELECTION_NOT_CONFIRMATION"),
+            FrozenOriginalW20W21NasAndUS500Logic=true,
+            FixedSessionUtc="14:30–19:00 UTC; in US summer DST this is post-open, NOT the NYSE open",
             OriginalMarketSourceSha256=Convert.ToHexString(
                 SHA256.HashData(bytes)).ToLowerInvariant(),
             Receipt=joint,
