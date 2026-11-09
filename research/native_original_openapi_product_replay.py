@@ -17,7 +17,8 @@ from datetime import datetime, timezone
 from decimal import Decimal as D
 from pathlib import Path
 
-from .collect import authenticate
+from .owner_readonly_auth import authenticate
+from .guard import CaptureContractError
 from .ctrader_transport import StdlibCTraderTransport
 from .ctrader_proto import OpenApiMessages_pb2 as m, OpenApiModelMessages_pb2 as e
 from .guard import require_read_only_request
@@ -264,7 +265,8 @@ def collect_and_evaluate():
         result={
             "Schema":"MXM_OPENAPI_ACTUAL_NATIVE_REPLAY_20261109_V1",
             "ReadOnlyOriginalPepperstoneAuthenticated":True,
-            "ExplicitViewScopeVerified":True,
+            "ExplicitViewScopeVerified":False,
+            "ViewPermissionRequestPath":"EXISTING_OWNER_READONLY_AUTH_SCOPE_DECLARED_IN_RUN_LOG",
             "InstrumentsRequested":list(SYMBOLS),
             "M5BarsBySymbol":{b["Symbol"]:len(b["M5"]) for b in bars},
             "AuthenticBidAskAsOfObservations":len(marks),
@@ -293,7 +295,10 @@ def main():
     try:
         return collect_and_evaluate()
     except Exception as exc:
-        code=str(exc) if isinstance(exc,MarketReplayError) else (
+        safe=str(exc)
+        code=safe if (isinstance(exc,(MarketReplayError,CaptureContractError))
+            and safe.isupper() and safe.replace("_","").isalnum()
+            and len(safe)<160) else (
             "ORIGINAL_OPENAPI_PRODUCT_FAILED_"+type(exc).__name__)
         print(code,flush=True)
         return 1
