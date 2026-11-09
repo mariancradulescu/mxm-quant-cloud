@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - mxm-original-openapi-native-replay-20261109
+      - main
     paths:
       - ".github/workflows/original-openapi-native-product.yml"
       - "research/native_original_openapi_product_replay.py"
@@ -11,7 +12,23 @@ on:
 permissions:
   contents: read
 jobs:
+  prepare-existing-replay:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: '8.0.x'
+      - run: python -m py_compile research/native_original_openapi_product_replay.py
+      - run: dotnet build src/Mxm.Replay -c Release
+
   original-view-only-native-replay:
+    if: github.ref == 'refs/heads/main'
+    needs: prepare-existing-replay
     runs-on: ubuntu-24.04
     timeout-minutes: 40
     environment: mxm-r3-pepperstone-v1
