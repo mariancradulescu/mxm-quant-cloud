@@ -24,15 +24,19 @@ from .ctrader_proto import OpenApiMessages_pb2 as m, OpenApiModelMessages_pb2 as
 from .guard import require_read_only_request
 from .decode import decode_bars, decode_side
 
-SYMBOLS = ("EURUSD", "GBPUSD")
+# Predeclared original-account USD-quoted FX markets, selected BEFORE scoring.
+# This reuses the prior Open API product collector, not any closed MCS1 study.
+SYMBOLS = ("EURUSD", "GBPUSD", "AUDUSD")
 M5 = 300000
-SOURCE_START = int(datetime(2026, 11, 5, 17, tzinfo=timezone.utc).timestamp() * 1000)
-DECISION_START = int(datetime(2026, 11, 6, 9, tzinfo=timezone.utc).timestamp() * 1000)
-DECISION_END = int(datetime(2026, 11, 6, 13, tzinfo=timezone.utc).timestamp() * 1000)
+# Three complete UTC calendar weeks, predeclared 2026-W42/W43/W44.
+# Prior Friday M5 provides warmup; all Mon-Fri clocks are requested.
+SOURCE_START = int(datetime(2026, 10, 9, 8, tzinfo=timezone.utc).timestamp() * 1000)
+DECISION_START = int(datetime(2026, 10, 12, tzinfo=timezone.utc).timestamp() * 1000)
+DECISION_END = int(datetime(2026, 11, 2, tzinfo=timezone.utc).timestamp() * 1000)
 SOURCE_END = DECISION_END + M5
-QUOTING_WINDOW = 15 * 60000
-MAX_REQUESTS = 850
-MAX_TICK_PAGES = 16
+QUOTING_WINDOW = 30 * 60000
+MAX_REQUESTS = 7000
+MAX_TICK_PAGES = 24
 
 class MarketReplayError(Exception):
     pass
@@ -47,10 +51,10 @@ def price(v):
 def ms(val):
     return int(val)
 
-def contract(symbol, c, quote_asset, at):
+def contract(symbol, c, quote_asset, observed_at):
     fields = lambda x: getattr(c, x) if c.HasField(x) else None
     return {
-        "Symbol": symbol, "QuoteAsset": quote_asset, "ObservedAtUtcMs": at,
+        "Symbol": symbol, "QuoteAsset": quote_asset, "ObservedAtUtcMs": observed_at,
         "MinimumUnits": str(D(c.minVolume)/100),
         "VolumeStepUnits": str(D(c.stepVolume)/100),
         "MaximumUnits": str(D(c.maxVolume)/100),
@@ -77,6 +81,7 @@ def contract(symbol, c, quote_asset, at):
 def collect_and_evaluate():
     transport = StdlibCTraderTransport()
     counter = 0
+
     try:
         # Existing historical original-account binding and EXPLICIT VIEW scope.
         account = authenticate(transport)
@@ -107,6 +112,7 @@ def collect_and_evaluate():
         need(all(x in roster for x in SYMBOLS), "PREREGISTERED_FX_SYMBOL_UNAVAILABLE")
         terms = {}
         ids = {}
+
         for name in SYMBOLS:
             light = roster[name]
             ids[name] = int(light.symbolId)
@@ -139,14 +145,17 @@ def collect_and_evaluate():
             minimum_margin = D(max(margin.margin[0].buyMargin,
                                 margin.margin[0].sellMargin)) / (
                                 D(10)**margin.moneyDigits)
-            terms[name] = (contract(name,c,"USD",DECISION_START),
+            need(minimum_margin>0 and minimum_margin<=D(300),
+                 "MINIMUM_BROKER_MARGIN_EXCEEDS_SINGLE_300_EUR_BUDGET")
+            terms[name] = (contract(name,c,"USD",
+                            int(datetime.now(timezone.utc).timestamp()*1000)),
                            minimum_margin)
         bars = []
         for name in SYMBOLS:
             history = {}
             lo = SOURCE_START
             while lo < SOURCE_END:
-                hi = min(lo + 5*3600000, SOURCE_END)
+                hi = min(lo + 6*3600000, SOURCE_END)
                 res = req(m.ProtoOAGetTrendbarsReq(
                     ctidTraderAccountId=account,symbolId=ids[name],
                     period=e.M5,fromTimestamp=lo,toTimestamp=hi),
@@ -166,7 +175,12 @@ def collect_and_evaluate():
                      "TickVolume":v[5]}
                     for t,v in sorted(history.items())
                     if v[0] <= SOURCE_END]
-            need(len(rows)>=110, "INSUFFICIENT_COMPLETE_M5")
+            need(len(rows)>=2500, "INSUFFICIENT_THREE_WEEK_COMPLETE_M5")
+            # Mandatory development window integrity check before further
+            # tick data is requested; weekend bars are not manufactured.
+            first_week=DECISION_START+7*86400000
+            need(sum(DECISION_START<=x["OpenAt"]<first_week for x in rows)>=1000,
+                 "FIRST_COMPLETE_WEEK_M5_COVERAGE_UNSATISFACTORY")
             bars.append({"Symbol":name,"M5":rows})
 
         def ticks(name, side, start, end):
@@ -191,45 +205,54 @@ def collect_and_evaluate():
                 window_to = earliest-1
             return sorted(set((int(t),int(v)) for t,v in all_rows))
 
-        streams = {name:{e.BID:[],e.ASK:[]} for name in SYMBOLS}
-        for lo in range(DECISION_START-120000, DECISION_END+1500,
+        # Query complete genuine BID and ASK events in 30-minute windows,
+        # then discard raw ticks after deriving the six as-of M5 snapshots.
+        # No price is reconstructed from OHLCV, no future tick is used, no
+        # weekend gaps are forward-filled, and raw ticks never leave runner.
+        sampled={name:{e.BID:{},e.ASK:{}} for name in SYMBOLS}
+        quote_windows=0
+        for lo in range(DECISION_START-120000,DECISION_END+1500,
                         QUOTING_WINDOW):
-            hi = min(lo+QUOTING_WINDOW-1,DECISION_END+1500)
+            hi=min(lo+QUOTING_WINDOW-1,DECISION_END+1500)
+            first=DECISION_START+1500+max(
+                0,(lo-(DECISION_START+1500)+M5-1)//M5)*M5
+            clocks=[clock for clock in range(first,hi+1,M5)
+                    if clock<DECISION_END and
+                    datetime.fromtimestamp(clock/1000,timezone.utc).weekday()<5]
+            if not clocks:continue
+            quote_windows+=1
             for name in SYMBOLS:
                 for side in (e.BID,e.ASK):
-                    streams[name][side].extend(ticks(name,side,lo,hi))
-        # As-of quotations: never pick a future tick for an earlier M5 close.
-        snapshots = {}
-        for name in SYMBOLS:
-            raw = {}
-            for side in (e.BID,e.ASK):
-                seq = sorted(set(streams[name][side]))
-                raw[side] = ([t for t,_ in seq],[v for _,v in seq])
-            snapshots[name] = raw
-        def asof(name,side,at):
-            ts,vs = snapshots[name][side]
-            i=bisect.bisect_right(ts,at)-1
-            if i<0 or at-ts[i]>60000:
-                return None
-            return D(vs[i])/D(100000)
-
-        marks = []
-        for clock in range(DECISION_START+1500,DECISION_END+1500,M5):
-            eur_bid=asof("EURUSD",e.BID,clock)
-            eur_ask=asof("EURUSD",e.ASK,clock)
+                    points=ticks(name,side,lo,hi)
+                    ts=[t for t,_ in points]
+                    for clock in clocks:
+                        i=bisect.bisect_right(ts,clock)-1
+                        if i>=0 and clock-ts[i]<=60000:
+                            sampled[name][side][clock]=D(points[i][1])/D(100000)
+        marks=[]
+        total_clocks=0
+        missing_pair_clock=0
+        for clock in range(DECISION_START+1500,DECISION_END,M5):
+            if datetime.fromtimestamp(clock/1000,timezone.utc).weekday()>=5:
+                continue
+            total_clocks+=1
+            eur_bid=sampled["EURUSD"][e.BID].get(clock)
+            eur_ask=sampled["EURUSD"][e.ASK].get(clock)
             if eur_bid is None or eur_ask is None or eur_bid<=0 or eur_ask<eur_bid:
+                missing_pair_clock+=len(SYMBOLS)
                 continue
             fx_credit=D(1)/eur_ask
             fx_debit=D(1)/eur_bid
             usd_to_eur=(fx_credit+fx_debit)/2
             for name in SYMBOLS:
-                bid=asof(name,e.BID,clock)
-                ask=asof(name,e.ASK,clock)
+                bid=sampled[name][e.BID].get(clock)
+                ask=sampled[name][e.ASK].get(clock)
                 if bid is None or ask is None or bid<=0 or ask<bid:
+                    missing_pair_clock+=1
                     continue
                 c,margin=terms[name]
                 spread=ask-bid
-                # A disclosed slippage SCENARIO, not a certified fill price.
+                # Conditional slippage model, not authentic broker fill.
                 slip=max(D("0.00001"),spread/4)
                 marks.append({
                     "At":clock,"Symbol":name,"Bid":str(bid),"Ask":str(ask),
@@ -240,10 +263,10 @@ def collect_and_evaluate():
                     "SlippagePerSideQuote":str(slip),
                     "Contract":c
                 })
-        need(len(marks)>=20, "INSUFFICIENT_ASOF_BIDASK_CLOCKS")
+        need(len(marks)>=300, "INSUFFICIENT_MULTI_WEEK_ASOF_BIDASK_CLOCKS")
         # The only file sent to the C# replay contains time-labeled market
         # readings, never OAuth values, original account ID, or broker orders.
-        tape={"SourceLabel":"ORIGINAL_PEPPERSTONE_OPENAPI_ScopeView_2026_11_06_FX_M5",
+        tape={"SourceLabel":"ORIGINAL_PEPPERSTONE_OPENAPI_2026_W42_W44_FX_M5_TWO_PREREGISTERED_FAMILIES",
               "Bars":bars,"Marks":marks}
         with tempfile.TemporaryDirectory(prefix="mxm-openapi-native-") as folder:
             input_file=Path(folder)/"source.json"
@@ -263,11 +286,23 @@ def collect_and_evaluate():
             evaluated=json.loads(output_file.read_text())
         receipt=evaluated["Receipt"]
         result={
-            "Schema":"MXM_OPENAPI_ACTUAL_NATIVE_REPLAY_20261109_V1",
+            "Schema":"MXM_OPENAPI_ACTUAL_NATIVE_REPLAY_3W_FX_V2",
             "ReadOnlyOriginalPepperstoneAuthenticated":True,
             "ExplicitViewScopeVerified":False,
             "ViewPermissionRequestPath":"EXISTING_OWNER_READONLY_AUTH_SCOPE_DECLARED_IN_RUN_LOG",
             "InstrumentsRequested":list(SYMBOLS),
+            "DevelopmentStartUtcMs":DECISION_START,
+            "DevelopmentEndUtcMsExclusive":DECISION_END,
+            "M5MarketClocksExpectedPerSymbol":total_clocks,
+            "M5HistoricalQuoteClocksMissingOrInvalid":missing_pair_clock,
+            "QuoteWindowQueries":quote_windows,
+            "ContractsActuallyObservedAtUtcMs":{
+                name:terms[name][0]["ObservedAtUtcMs"] for name in SYMBOLS},
+            "HistoricContractTariffsAreRetrospectiveScenarios":True,
+            "ResearchMechanismsPreregistered":[
+                "FX_CAUSAL_RANGE_EXPANSION_BREAK",
+                "FX_CAUSAL_USD_FACTOR_RELATIVE_VALUE"],
+            "FrozenLegacyM5M15NotRetunedOrPromoted":True,
             "M5BarsBySymbol":{b["Symbol"]:len(b["M5"]) for b in bars},
             "AuthenticBidAskAsOfObservations":len(marks),
             "OpenApiReadOnlyRequests":counter,
@@ -278,7 +313,8 @@ def collect_and_evaluate():
             "IndependentConfirmation":False,
             "OrdersSubmitted":0,
             "CloudActivated":False,
-            "NativeProductReceipt":receipt
+            "NativeProductReceipt":receipt,
+            "CounterfactualFamilyAblations":evaluated["CounterfactualAblation"]
         }
         Path("native-original-openapi-public-receipt.json").write_text(
             json.dumps(result,indent=2,sort_keys=True)+"\n")

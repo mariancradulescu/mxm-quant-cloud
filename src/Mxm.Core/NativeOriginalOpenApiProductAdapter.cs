@@ -19,12 +19,15 @@ public static class NativeOriginalOpenApiProductAdapter
     {
         if(input is null||input.Marks is null||input.Bars is null||
            input.Marks.Length==0)throw new ArgumentException("OPENAPI_PRODUCT_TAPE_EMPTY");
+        // Real contract observations often POSTDATE historical price clocks.
+        // The price/fill remains historical; its tariff is explicitly an
+        // ex-post conditional scenario, never an as-of tariff observation.
         var quotes=input.Marks.Select(m=>
         {
             if(!m.Contract.OriginalBrokerAuthenticated||
                m.Contract.HistoricalTariffContinuityCertified ||
                m.Contract.Symbol!=m.Symbol||
-               m.Contract.ObservedAtUtcMs>m.At)
+               m.Contract.ObservedAtUtcMs<=0)
                 throw new ArgumentException("OPENAPI_PRODUCT_CURRENT_CONTRACT_PROVENANCE_INVALID");
             var ctx=new NativeMarketCostContext(m.At,m.Bid,m.Ask,
                 m.QuoteCreditToEur,m.QuoteDebitToEur,m.UsdToEur,
