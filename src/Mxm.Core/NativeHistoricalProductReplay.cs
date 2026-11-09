@@ -72,7 +72,14 @@ public static class NativeHistoricalProductReplay
            u.Contains("UNKNOWN")||u.Contains("UNAVAILABLE")||
            u.Contains("STALE")||u.Contains("DATA")||
            u.Contains("MISSING"))return "DATA_AND_CAUSAL_COVERAGE";
-        if(u.Contains("BENCHMARK")||u.Contains("PREDICT")||
+        // Existing native selector rejection: CONDITIONAL_ESTIMATE_
+        // NO_POSITIVE_UNCERTAINTY_ADJUSTED_INCREMENTAL_UTILITY.
+        // It is a missing economic advantage, NOT a generic technical
+        // rejection. This classifies receipt text only; no selection,
+        // forecast, model fill, risk, broker data or price is changed.
+        if(u.Contains("NO_POSITIVE")||u.Contains("UNCERTAINTY_ADJUSTED")||
+           u.Contains("INCREMENTAL_UTILITY")||
+           u.Contains("BENCHMARK")||u.Contains("PREDICT")||
            u.Contains("EDGE")||u.Contains("ADVANTAGE")||
            u.Contains("ALPHA")||u.Contains("ECONOMIC")||
            u.Contains("PROFIT"))return "NO_DEMONSTRATED_EDGE";

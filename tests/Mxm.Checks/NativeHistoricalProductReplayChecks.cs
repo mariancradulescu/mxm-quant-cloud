@@ -111,6 +111,16 @@ public static class NativeHistoricalProductReplayChecks
               withoutCross.ResearchMode=="FX_ONLY_BREAKOUT" &&
               withoutBreak.ResearchMode=="FX_ONLY_RELATIVE_VALUE",
               "two preregistered causal FX research hypotheses and two separately EUR300-funded ablations report all reasons, family allocations and common margin");
+        // This reporting-only correction does not re-run the observed
+        // 3-week economic evaluation or change model acceptance/fills.
+        var classify=typeof(NativeHistoricalProductReplay).GetMethod(
+            "RejectionCategory",
+            System.Reflection.BindingFlags.NonPublic |
+            System.Reflection.BindingFlags.Static);
+        check(classify is not null && (string)classify.Invoke(null,new object[]{
+            "CONDITIONAL_ESTIMATE_NO_POSITIVE_UNCERTAINTY_ADJUSTED_INCREMENTAL_UTILITY"
+        })! == "NO_DEMONSTRATED_EDGE",
+            "nonpositive native incremental utility is an economic edge rejection, never OTHER");
         Console.WriteLine("MXM_PRODUCT_HISTORICAL_ADAPTER_SYNTHETIC_RECEIPT="+
             JsonSerializer.Serialize(new {
                 source=out1.SourceLabel,
