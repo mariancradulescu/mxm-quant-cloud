@@ -81,7 +81,7 @@ def contract(symbol, c, quote_asset, observed_at):
 def collect_and_evaluate():
     transport = StdlibCTraderTransport()
     counter = 0
-    contract_observed_at=None
+
     try:
         # Existing historical original-account binding and EXPLICIT VIEW scope.
         account = authenticate(transport)
@@ -112,7 +112,7 @@ def collect_and_evaluate():
         need(all(x in roster for x in SYMBOLS), "PREREGISTERED_FX_SYMBOL_UNAVAILABLE")
         terms = {}
         ids = {}
-        contract_observed_at=int(datetime.now(timezone.utc).timestamp()*1000)
+
         for name in SYMBOLS:
             light = roster[name]
             ids[name] = int(light.symbolId)
@@ -147,7 +147,8 @@ def collect_and_evaluate():
                                 D(10)**margin.moneyDigits)
             need(minimum_margin>0 and minimum_margin<=D(300),
                  "MINIMUM_BROKER_MARGIN_EXCEEDS_SINGLE_300_EUR_BUDGET")
-            terms[name] = (contract(name,c,"USD",contract_observed_at),
+            terms[name] = (contract(name,c,"USD",
+                            int(datetime.now(timezone.utc).timestamp()*1000)),
                            minimum_margin)
         bars = []
         for name in SYMBOLS:
@@ -295,7 +296,8 @@ def collect_and_evaluate():
             "M5MarketClocksExpectedPerSymbol":total_clocks,
             "M5HistoricalQuoteClocksMissingOrInvalid":missing_pair_clock,
             "QuoteWindowQueries":quote_windows,
-            "ContractsActuallyObservedAtUtcMs":contract_observed_at,
+            "ContractsActuallyObservedAtUtcMs":{
+                name:terms[name][0]["ObservedAtUtcMs"] for name in SYMBOLS},
             "HistoricContractTariffsAreRetrospectiveScenarios":True,
             "ResearchMechanismsPreregistered":[
                 "FX_CAUSAL_RANGE_EXPANSION_BREAK",
