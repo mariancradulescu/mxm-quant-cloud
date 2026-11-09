@@ -14,7 +14,8 @@ public sealed record NativeProductMarket(
     string Symbol, NativeClosedMarketBar[] M5, NativeClosedMarketBar[] M15,
     LedgerQuote Quote, NativeObservedContractTerms? Contract,
     decimal SlippagePerSideQuote, int HoldingMinutes=30,
-    bool IndependentlySupportedAgainstBenchmark=false);
+    bool IndependentlySupportedAgainstBenchmark=false,
+    string ExitPolicy=NativeCausalExitResearch.FrozenFixed);
 
 public sealed record NativeProductSignal(
     string Symbol,long At,int Direction,string Status,
@@ -36,14 +37,18 @@ public sealed record NativeProductResearchReport(
     bool AdversePathFullyRepriced=false,int ObservedM5SlotsNotScored=0,
     long MaxObservedM5LagMs=0,bool HistoryPathComplete=false,
     string ModelEpochId="",string ContinuityBoundary="ISOLATED_MODEL_EPISODE",
-    int UnresolvedCalendarGaps=0);
+    int UnresolvedCalendarGaps=0,
+    Dictionary<string,int>? ModelExitReasons=null);
 
 public sealed class NativeProductResearchLoop
 {
     private sealed record Tracked(string Symbol,int Side,decimal Units,long RequestAt,
         long OpenAt,int HoldMinutes,decimal SlippagePerSideQuote,
         NativeObservedContractTerms Contract,bool CloseRequested=false,
-        LedgerQuote? EntryQuote=null);
+        LedgerQuote? EntryQuote=null,
+        string ExitPolicy=NativeCausalExitResearch.FrozenFixed,
+        decimal EntryPrice=0m,decimal EntryAtr=0m,
+        decimal EntryEquilibrium=0m,decimal FavorableExtreme=0m);
     private const string ResearchDomain="UNQUALIFIED_CAUSAL_MODEL_REPLAY_NOT_BROKER_EXECUTION";
     private readonly string researchMode;
     // Both independent economically motivated families below are fixed BEFORE
@@ -67,6 +72,7 @@ public sealed class NativeProductResearchLoop
     private decimal matchedLongBenchmarkNetEur;
     private bool benchmarkSettlementComplete=true;
     private readonly Dictionary<string,int> weekly=new(StringComparer.Ordinal);
+    private readonly Dictionary<string,int> exitReasonCounts=new(StringComparer.Ordinal);
     private readonly List<NativeProductSignal> signals=new();
     private long lastClock=-1;
     private string epochId="EPISODE-"+Guid.NewGuid().ToString("N");
@@ -87,6 +93,7 @@ public sealed class NativeProductResearchLoop
         string payload=JsonSerializer.Serialize(new {
             Version="mxm-product-shadow-episode-v1",EpochId=epochId,
             SourceSha=sourceDatasetSha256,LastClock=lastClock,
+            ExitReasonCounts=exitReasonCounts,
             Session=session.Checkpoint(),Adverse=adverse.Export(),
             Tracked=tracked,PreviousForecastBar=previousForecastBar,
             LastSeenM5=lastSeenM5Bar,Weekly=weekly,Signals=signals,
@@ -132,6 +139,8 @@ public sealed class NativeProductResearchLoop
         Load(loop.previousForecastBar,"PreviousForecastBar");
         Load(loop.lastSeenM5Bar,"LastSeenM5");
         Load(loop.weekly,"Weekly");
+        if(p.TryGetProperty("ExitReasonCounts",out _))
+            Load(loop.exitReasonCounts,"ExitReasonCounts");
         loop.signals.AddRange(JsonSerializer.Deserialize<NativeProductSignal[]>(
             p.GetProperty("Signals").GetRawText())??Array.Empty<NativeProductSignal>());
         loop.eventSequence=p.GetProperty("EventSequence").GetInt32();
@@ -202,7 +211,8 @@ public sealed class NativeProductResearchLoop
            markets.Select(x=>x.Symbol).Distinct(StringComparer.Ordinal).Count()!=markets.Length ||
            markets.Any(x=>x.Quote.At!=at||string.IsNullOrWhiteSpace(x.Symbol)||
                x.Symbol!=x.Quote.Symbol||x.SlippagePerSideQuote<0||
-               x.HoldingMinutes<15||x.HoldingMinutes>240))
+               x.HoldingMinutes<15||x.HoldingMinutes>240||
+               !NativeCausalExitResearch.Supported(x.ExitPolicy)))
             throw new ArgumentException("PRODUCT_REPLAY_NONCAUSAL_MARKET_CLOCK");
         // Do not silently bridge unobserved intrahorizon equity. Offline replay
         // can preserve a full path by supplying every historical decision clock;
@@ -232,10 +242,22 @@ public sealed class NativeProductResearchLoop
             var q=m.Quote;
             if(p.OpenAt==0 && at>=p.RequestAt+1000)
             {
+                NativeExitSeed seed=new(0m,0m);
+                if(p.ExitPolicy!=NativeCausalExitResearch.FrozenFixed &&
+                   !NativeCausalExitResearch.TrySeed(m.M5,m.M15,at,out seed))
+                {
+                    // No fabricated missing ATR/equilibrium at model fill.
+                    // Keep the original pending request, do not forge a fill.
+                    historicalPathComplete=false;
+                    continue;
+                }
                 decimal px=p.Side>0?q.Ask+p.SlippagePerSideQuote:q.Bid-p.SlippagePerSideQuote;
                 ApplyFacts(new[]{Event("OPEN_FILL",at,id,p.Symbol,p.Side,
                     p.Units,px,Fee(q,p.Units),q.MarginPerUnit,p.SlippagePerSideQuote)});
-                tracked[id]=p with {OpenAt=at,EntryQuote=q};
+                tracked[id]=p with {OpenAt=at,EntryQuote=q,
+                    EntryPrice=px,EntryAtr=seed.AtrQuote,
+                    EntryEquilibrium=seed.EquilibriumQuote,
+                    FavorableExtreme=px};
             }
             else if(p.OpenAt>0 && p.CloseRequested && at>=p.RequestAt+1000)
             {
@@ -272,12 +294,25 @@ public sealed class NativeProductResearchLoop
                 var k=Week(at);
                 weekly[k]=weekly.GetValueOrDefault(k)+1;
             }
-            else if(p.OpenAt>0 && !p.CloseRequested &&
-                    at-p.OpenAt>=p.HoldMinutes*60000L)
+            else if(p.OpenAt>0 && !p.CloseRequested)
             {
-                ApplyFacts(new[]{Event("REQUEST_CLOSE",at,id,
-                    p.Symbol,p.Side,p.Units,latency:1000)});
-                tracked[id]=p with {CloseRequested=true,RequestAt=at};
+                // A causal policy can invalidate/target/trail before the
+                // exposure cap. Legacy reproduction retains its old clock.
+                var verdict=NativeCausalExitResearch.Assess(p.ExitPolicy,
+                    at,p.OpenAt,p.Side,p.EntryPrice>0m?p.EntryPrice:
+                        (p.Side>0?q.Ask:q.Bid),
+                    new NativeExitSeed(p.EntryAtr,p.EntryEquilibrium),
+                    p.FavorableExtreme,q,m.M5,m.M15,p.HoldMinutes);
+                tracked[id]=p with {FavorableExtreme=verdict.FavorableExtreme};
+                if(verdict.RequestClose)
+                {
+                    ApplyFacts(new[]{Event("REQUEST_CLOSE",at,id,
+                        p.Symbol,p.Side,p.Units,latency:1000)});
+                    tracked[id]=tracked[id] with {
+                        CloseRequested=true,RequestAt=at};
+                    exitReasonCounts[verdict.Reason]=
+                        exitReasonCounts.GetValueOrDefault(verdict.Reason)+1;
+                }
             }
         }
 
@@ -388,6 +423,16 @@ public sealed class NativeProductResearchLoop
                 continue;
             }
             decimal units=c.MinimumUnits;
+            if(market.ExitPolicy!=NativeCausalExitResearch.FrozenFixed &&
+               !NativeCausalExitResearch.TrySeed(market.M5,market.M15,
+                    at,out _))
+            {
+                rejected++;
+                recent.Add(new(market.Symbol,at,side,
+                    "MODEL_CAUSAL_EXIT_EVIDENCE_MISSING",null,null,null,
+                    "EXIT_ENTRY_WARMUP_OR_CALENDAR_INVALID",mechanism));
+                continue;
+            }
             if(tracked.Values.Any(x=>x.Symbol==market.Symbol))
             {
                 rejected++;
@@ -516,7 +561,7 @@ public sealed class NativeProductResearchLoop
                 var market=byName[opportunity.Symbol];
                 tracked.Add(chosen.Id,new(market.Symbol,opportunity.Direction,
                     chosen.Units,at,0,market.HoldingMinutes,market.SlippagePerSideQuote,
-                    market.Contract!));
+                    market.Contract!,ExitPolicy:market.ExitPolicy));
                 var selectedIndex=recent.FindIndex(x=>x.Symbol==market.Symbol &&
                     x.Status=="MODEL_FORECAST_ONLY");
                 if(selectedIndex>=0)
@@ -562,6 +607,7 @@ public sealed class NativeProductResearchLoop
             ContinuityBoundary:recoveredCheckpoint?
                 "VERIFIED_INTEGRITY_CHECKPOINT_SAME_SOURCE_EPOCH_NOT_BROKER_CERTIFIED":
                 "NEW_ISOLATED_MODEL_EPOCH_NOT_CLOUD_HISTORY_CONTINUATION",
-            UnresolvedCalendarGaps:unresolvedCalendarGaps);
+            UnresolvedCalendarGaps:unresolvedCalendarGaps,
+            ModelExitReasons:new Dictionary<string,int>(exitReasonCounts,StringComparer.Ordinal));
     }
 }

@@ -150,6 +150,32 @@ public static class NativeProductResearchLoopChecks
                 brokerNetCertified=false,independentConfirmation=false,
                 ordersEnabled=false,source="PURELY_SYNTHETIC_NUMERICAL_FIXTURE"
             }));
+        // New, opt-in policies use the SAME EUR300 native session, modeled
+        // fill/cost/financing and close-request latency. They are not trading
+        // instructions and do not rewrite any historical frozen receipt.
+        var managed=new NativeProductResearchLoop();
+        NativeProductMarket ManagedMarket(long clock,int tick)=>
+            Market("SYNTH_A",clock,tick) with {
+                ExitPolicy=NativeCausalExitResearch.VolatilityTarget,
+                HoldingMinutes=180
+            };
+        _=managed.Advance(t0,new[]{ManagedMarket(t0,0)},true);
+        NativeProductResearchReport managedReport=managed.Advance(t0+m5,
+            new[]{ManagedMarket(t0+m5,1)},true);
+        for(int tick=2;tick<=6;tick++)
+        {
+            long clock=t0+tick*m5;
+            managedReport=managed.Advance(clock,
+                new[]{ManagedMarket(clock,tick)},true);
+        }
+        check(managedReport.ModelExitReasons is not null &&
+              managedReport.ModelExitReasons.GetValueOrDefault(
+                  "ENTRY_ATR_PROFIT_TARGET")>=1 &&
+              managedReport.ModelClosedRoundTrips>=1 &&
+              managedReport.ModelCentralNetEur==
+                  managed.ResearchSession.Ledger.Summary().ClosedNetEur,
+            "opt-in ATR target closes via existing funded EUR300 ledger before 180m cap");
+
         const string sourceHash="cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc";
         string full=loop.ExportIntegrityCheckpoint(sourceHash);
         var cloned=NativeProductResearchLoop.RestoreIntegrityCheckpoint(full,sourceHash);
