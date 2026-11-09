@@ -9,6 +9,7 @@ ProspectiveIntegratedChecks.Run(Check);
 ResearchScopeContractChecks.Run(Check);
 NativeCausalWarmupChecks.Run(Check);
 NativeResearchUniverseChecks.Run(Check);
+NativeCausalExitResearchChecks.Run(Check);
 NativeProductResearchLoopChecks.Run(Check);
 NativeHistoricalProductReplayChecks.Run(Check);
 NativeMultiFamilyFeatureChecks.Run(Check);
