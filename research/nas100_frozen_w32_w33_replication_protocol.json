@@ -1,0 +1,67 @@
+{
+  "Protocol": "MXM_NAS100_FROZEN_W20W21_UNCHANGED_HISTORICAL_REPLICATION_W32_W33_V1",
+  "Authority": "docs/OWNER_SPEC.md OWNER v2.0, 2026-11-09 OWNER instruction after PR #168",
+  "Status": "FROZEN_BEFORE_ANY_NEW_2026_W32_W33_OPENAPI_SOURCE_ACCESS",
+  "ParentProtocol": "research/us_index_w20_w21_protocol.json",
+  "ParentOriginalRun": "42620847301",
+  "Objective": "Evaluate EXACT frozen NAS100 relative dispersion fade without tuning on two distinct authentic historical weeks; US500 existing comparator and conditional separate EUR300 full-funded ablation retained. Exposed globally, NON-INDEPENDENT exploratory replication.",
+  "Windows": {
+    "WarmupUtc": "2026-07-31T08:00:00Z",
+    "Week32Utc": "2026-08-03T00:00:00Z/2026-08-10T00:00:00Z",
+    "Week33Utc": "2026-08-10T00:00:00Z/2026-08-17T00:00:00Z",
+    "InclusiveSourceEnd": "2026-08-17T00:05:00Z",
+    "W32Role": "HISTORICAL_DESCRIPTIVE_REPLICATION_ALREADY_GLOBALLY_EXPOSED",
+    "W33Role": "LATER_HISTORICAL_DESCRIPTIVE_REPLICATION_NOT_HOLDOUT",
+    "NoUnexposedIndependentConfirmation": true,
+    "NoW46Access": true
+  },
+  "MarketSource": {
+    "Symbols": [
+      "EURUSD",
+      "NAS100",
+      "US500"
+    ],
+    "EURUSD": "conversion only, real as-of bid/ask",
+    "OriginalPepperstoneLIVEReadOnly": true,
+    "MinM5BarsPerIndexPerWeek": 200,
+    "CompletedM15": "3 contiguous historical M5 with no interpolation",
+    "QuoteSides": "independently original observed BID and ASK as-of each M5 close+1.5s, maximum age 60s",
+    "CurrentContractCost": "retrospective scenario only; cannot certify historical tariffs or broker fills",
+    "BrokerOriginalAccountAuthentication": "existing protected original EUR account and unchanged no-order request allowlist",
+    "TradingPermissions": "TRADE_CAPABLE token never authorizes any LIVE/DEMO action or Cloud activation"
+  },
+  "FrozenNas100": {
+    "Mechanism": "NAS100_US_CASH_INDEX_RELATIVE_DISPERSION_FADE",
+    "DecisionWindowUtc": "14:30–19:00 UTC weekdays, FIXED AS IN W20/W21, no offset adjustment",
+    "SessionQualification": "At US daylight time 14:30 UTC = 10:30 EDT, NOT the US cash opening at 9:30 EDT/13:30 UTC. This is a fixed UTC post-open window, not the entire NYSE cash session.",
+    "Signal": "Five same-clock consecutively completed M15 closes for NAS100 and US500. Absolute normalized one-hour-equivalent relative residual >=0.00035; NAS100 direction opposite residual. No redefinition, inversion, refit, parameter grid, or changed thresholds.",
+    "Entry": "one original minimum broker volume, existing shared causal selector and original C# ledger",
+    "Exit": "existing native M15_EQUILIBRIUM_REVERSION frozen prior-eight-M15-close mean, quote-side protective -1.5 ATR14 M5, 105 minutes max holding",
+    "ExistingResearchMode": "US_INDEX_NAS_ONLY_W20W21 and US_INDEX_JOINT_W20W21 reused verbatim"
+  },
+  "FrozenUS500Comparator": {
+    "Mechanism": "US500_US_CASH_H1_VOLATILITY_PERSISTENCE",
+    "Why": "only unchanged negative-prior comparator to evaluate same-clock fully funded ablations/diversification; NEVER retrospective US500 alpha rehabilitation",
+    "SignalAndExits": "Unchanged exact W20/W21 implementation of 4xM15 vs prior 12 M15 volatility and tick activity, protective -1.5 ATR M5 and native M5_ATR_CHANDELIER 2 ATR, 180 minutes",
+    "Mode": "US_INDEX_SP_ONLY_W20W21"
+  },
+  "FinancialControls": {
+    "OneFundedCapitalEur": 300,
+    "CashOrEquityReset": false,
+    "CommonOrchestratorAndLedger": true,
+    "ExactNativeExistingCode": true,
+    "FullPortfolioAndNASOnlyAndUS500Only": "Separate EUR300 counterfactuals, never sum their PnL",
+    "Compare": "gross, central/adverse NET, matched same-clock long and cash, incremental vs long, ablations, weekly completed funded roundtrips, margin, sampled floating DD, rejection/exit reasons",
+    "HARD21": "systemic 21 complete financed roundtrips each eligible week; never force trades",
+    "Drawdown": "global <=30% target; sampled M5 observation cannot certify continuous path",
+    "Promotion": "no alpha promotion from exposed historical replication or near-zero marginal advantage"
+  },
+  "Security": {
+    "NoLiveOrDemoOrders": true,
+    "NoCloudActivation": true,
+    "NoOAuthRefresh": true,
+    "NoSecretOutput": true,
+    "ImmutableW20W21Evidence": true
+  },
+  "ExAnteGuarantee": "Protocol committed to GitHub branch before source run. Future code executed only after merge into main and protected GitHub Actions read-only job."
+}
