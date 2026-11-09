@@ -377,7 +377,9 @@ def collect_and_evaluate():
             "OrdersSubmitted":0,
             "CloudActivated":False,
             "NativeProductReceipt":receipt,
-            "CounterfactualFamilyAblations":evaluated["CounterfactualAblation"]
+            "CounterfactualFamilyAblations":(
+                evaluated["FundedAblations"] if CROSS_ENERGY_EQUITY
+                else evaluated["CounterfactualAblation"])
         }
         Path("native-original-openapi-public-receipt.json").write_text(
             json.dumps(result,indent=2,sort_keys=True)+"\n")
