@@ -78,6 +78,39 @@ public static class NativeHistoricalProductReplayChecks
                 .Take(10).Append(raw[9]).Concat(raw.Skip(10)).ToArray())}},true);}
         catch(ArgumentException){duplicateBarsRejected=true;}
         check(duplicateBarsRejected,"duplicate historical M5 bar never becomes a second signal");
+        // Explicit RETROSPECTIVE tariff: real account contract is read after
+        // the historical price observation, never backdated to the quote.
+        var historicalClock=baseAt+110*width+1000;
+        var laterObserved=C(baseAt+180*width) with {
+            ObservedAtUtcMs=baseAt+180*width};
+        var currentOriginal=new NativeOriginalOpenApiTape(
+            "SYNTHETIC_CURRENT_BROKER_TARIFF_RETROSPECTIVE",
+            new[]{new NativeHistoricalBars("HIST_SYNTH",raw)},
+            new[]{new NativeOriginalOpenApiMarketMark(
+                historicalClock,"HIST_SYNTH",1.1m,1.1002m,
+                .92m,.93m,.92m,50m,.00001m,laterObserved)});
+        var costed=NativeOriginalOpenApiProductAdapter.Convert(currentOriginal);
+        check(costed.Quotes.Single().At==historicalClock &&
+              costed.Quotes.Single().Contract!.ObservedAtUtcMs>historicalClock &&
+              !costed.Quotes.Single().Contract!.HistoricalTariffContinuityCertified,
+              "original observed contract timestamp is NEVER backdated for historical replay; tariff is explicit retrospective scenario");
+        var scen=NativeHistoricalProductReplay.Evaluate(original,true,
+            ResearchMode:"FX_CAUSAL_BREAKOUT_PLUS_RELATIVE_VALUE");
+        var withoutCross=NativeHistoricalProductReplay.Evaluate(original,true,
+            ResearchMode:"FX_ONLY_BREAKOUT");
+        var withoutBreak=NativeHistoricalProductReplay.Evaluate(original,true,
+            ResearchMode:"FX_ONLY_RELATIVE_VALUE");
+        check(scen.ResearchMode=="FX_CAUSAL_BREAKOUT_PLUS_RELATIVE_VALUE" &&
+              scen.RejectionReasons is not null &&
+              scen.RejectionCategories is not null &&
+              scen.SignalsByMechanism is not null &&
+              scen.ClosedNetByMechanismEur is not null &&
+              scen.RejectionCategories.Values.Sum()==
+                scen.RejectionReasons.Values.Sum() &&
+              scen.MaximumObservedMarginEur is not null &&
+              withoutCross.ResearchMode=="FX_ONLY_BREAKOUT" &&
+              withoutBreak.ResearchMode=="FX_ONLY_RELATIVE_VALUE",
+              "two preregistered causal FX research hypotheses and two separately EUR300-funded ablations report all reasons, family allocations and common margin");
         Console.WriteLine("MXM_PRODUCT_HISTORICAL_ADAPTER_SYNTHETIC_RECEIPT="+
             JsonSerializer.Serialize(new {
                 source=out1.SourceLabel,
