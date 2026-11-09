@@ -14,12 +14,34 @@ if(args.Length==3 && args[2]=="--native-original-openapi-research")
         };
         var source=JsonSerializer.Deserialize<Mxm.Core.NativeOriginalOpenApiTape>(
             input,parse)??throw new ArgumentException("OPENAPI_PRODUCT_TAPE_NULL");
+        var native=Mxm.Core.NativeOriginalOpenApiProductAdapter.Convert(source);
+        // All three paths use one continuous EUR300 cash/equity ledger
+        // each; the full portfolio is never the sum of standalone runs.
+        // Marginal impact is a counterfactual removal, not an isolated
+        // winner-sorting exercise. Families were fixed before the source.
         var receipt=Mxm.Core.NativeHistoricalProductReplay.Evaluate(
-            Mxm.Core.NativeOriginalOpenApiProductAdapter.Convert(source),
-            UnqualifiedShadowMode:true);
+            native,UnqualifiedShadowMode:true,
+            ResearchMode:"FX_CAUSAL_BREAKOUT_PLUS_RELATIVE_VALUE");
+        var withoutRelative=Mxm.Core.NativeHistoricalProductReplay.Evaluate(
+            native,UnqualifiedShadowMode:true,ResearchMode:"FX_ONLY_BREAKOUT");
+        var withoutBreakout=Mxm.Core.NativeHistoricalProductReplay.Evaluate(
+            native,UnqualifiedShadowMode:true,ResearchMode:"FX_ONLY_RELATIVE_VALUE");
         File.WriteAllText(args[1],JsonSerializer.Serialize(new {
             InputFileSha256=Convert.ToHexString(SHA256.HashData(input)).ToLowerInvariant(),
             Receipt=receipt,
+            CounterfactualAblation=new {
+                WithoutRelativeValue=withoutRelative,
+                WithoutBreakout=withoutBreakout,
+                MarginalBreakoutNetEur=receipt.ModelClosedCentralNetEur-
+                    withoutBreakout.ModelClosedCentralNetEur,
+                MarginalRelativeValueNetEur=receipt.ModelClosedCentralNetEur-
+                    withoutRelative.ModelClosedCentralNetEur,
+                ClaimedIndependentEconomicSupport=false
+            },
+            BrokerContractFirstObservedUtcMs=source.Marks.Min(x=>x.Contract.ObservedAtUtcMs),
+            HistoricDecisionFirstUtcMs=source.Marks.Min(x=>x.At),
+            ContractTermsExplicitlyAppliedRetrospectively=
+                source.Marks.Any(x=>x.Contract.ObservedAtUtcMs>x.At),
             ContractTermsAreCurrentNotHistorical=true,
             HistoricalSlippageIsModeledNotExecuted=true,
             SourceAuthenticationMustBeVerifiedByCaller=true,
