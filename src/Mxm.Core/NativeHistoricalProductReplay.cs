@@ -16,7 +16,8 @@ public sealed record NativeHistoricalBars(string Symbol,
     NativeClosedMarketBar[] M5);
 public sealed record NativeHistoricalQuoteObservation(
     long At,LedgerQuote Quote,NativeObservedContractTerms? Contract,
-    decimal SlippagePerSideQuote,int HoldingMinutes=30);
+    decimal SlippagePerSideQuote,int HoldingMinutes=30,
+    string ExitPolicy=NativeCausalExitResearch.FrozenFixed);
 public sealed record NativeHistoricalMarketTape(
     string SourceLabel,NativeHistoricalBars[] Bars,
     NativeHistoricalQuoteObservation[] Quotes);
@@ -48,7 +49,8 @@ public sealed record NativeHistoricalMarketReceipt(
     Dictionary<string,int>? SignalsByMechanism=null,
     Dictionary<string,decimal>? ClosedNetByMechanismEur=null,
     decimal? MaximumObservedMarginEur=null,
-    string ResearchMode="FROZEN_LEGACY_M5_M15");
+    string ResearchMode="FROZEN_LEGACY_M5_M15",
+    Dictionary<string,int>? ExitReasonCounts=null);
 
 public static class NativeHistoricalProductReplay
 {
@@ -162,7 +164,8 @@ public static class NativeHistoricalProductReplay
                x.Quote.Symbol!=x.Contract.Symbol||
                !paths.ContainsKey(x.Quote.Symbol)||
                x.SlippagePerSideQuote<0||x.HoldingMinutes<15||
-               x.HoldingMinutes>240))
+               x.HoldingMinutes>240||
+               !NativeCausalExitResearch.Supported(x.ExitPolicy)))
             throw new ArgumentException("HISTORICAL_TAPE_BROKER_QUOTE_CONTRACT_MISSING");
         var samples=tape.Quotes.OrderBy(x=>x.At)
             .ThenBy(x=>x.Quote.Symbol,StringComparer.Ordinal).ToArray();
@@ -186,7 +189,8 @@ public static class NativeHistoricalProductReplay
                 return new NativeProductMarket(x.Quote.Symbol,
                     Prefix(bars.M5,group.Key),Prefix(bars.M15,group.Key),
                     x.Quote,x.Contract,x.SlippagePerSideQuote,x.HoldingMinutes,
-                    IndependentlySupportedAgainstBenchmark:false);
+                    IndependentlySupportedAgainstBenchmark:false,
+                    ExitPolicy:x.ExitPolicy);
             }).ToArray();
             last=simulation.Advance(group.Key,inputs,UnqualifiedShadowMode);
             foreach(var signal in last.LatestSignals)
@@ -249,6 +253,7 @@ public static class NativeHistoricalProductReplay
                     StringComparer.Ordinal).ToDictionary(
                     x=>x.Key,x=>x.Sum(v=>v.NetEur),StringComparer.Ordinal),
             MaximumObservedMarginEur:maxMargin,
-            ResearchMode:ResearchMode);
+            ResearchMode:ResearchMode,
+            ExitReasonCounts:last.ModelExitReasons);
     }
 }
