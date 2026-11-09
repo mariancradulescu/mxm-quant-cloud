@@ -4,6 +4,34 @@ Authority: explicit OWNER system-orchestration decision in this continuation.
 This is the single current specification. README, architecture and acceptance
 link here; older dated directives remain provenance, never competing authority.
 
+## OWNER strategic source-neutrality and adaptive exits — 2026-11-09
+
+This prospective OWNER directive supersedes any earlier **default preference**
+for OHLCV, historical BID/ASK, DOM, a single timeframe or indicator set.
+Selection must be justified by distinct economic mechanisms and verifiable
+incremental NET after costs under the **same one EUR300 capital book**.
+The official Spotware Open API, Algo and Cloud documentation are the capability
+boundary; a Cloud-callable API is not evidence of historical broker data.
+Open API historical bars/ticks and *live-only* depth must not be conflated,
+and absent quotes/tariffs must not be replaced by favorable imputations.
+
+The prior 30-minute fixed holding time is **not a universal exit rule**.
+Prospective mechanism-specific policies may use causal model invalidation,
+regime transitions, volatility/structure protection, stop and target, Chandelier,
+equilibrium reversion, duration ceilings and volume-valid partial reductions.
+Entries, sizing, holding and exits require joint EUR300 cash, margin, adverse
+NET and sampled floating-equity accounting; no retrospective exit retuning of
+the negative PR #160 breakout, no override of frozen outcomes. Evaluate
+each distinct prespecified experiment against matched benchmarks and its
+marginal contribution by full-portfolio counterfactual **ablation**. Independent
+chronological confirmation remains mandatory before promotion.
+
+Do not create trading orders, activate LIVE/DEMO Cloud, bypass platform tool
+denials, or change historical custody, account identification or permissions.
+Only research-only native C# changes and read-only original Pepperstone evidence
+are permitted. Final product remains a single Linux-compatible C# Cloud cBot
+without persistent Python, GitHub or desktop dependency.
+
 ## OWNER prospective cost, universe and temporal clarification — 2026-11-08
 
 This explicit OWNER decision is prospective and does not alter any frozen exact
