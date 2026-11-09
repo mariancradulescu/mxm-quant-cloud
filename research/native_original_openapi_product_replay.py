@@ -26,14 +26,22 @@ from .decode import decode_bars, decode_side
 
 # Predeclared original-account USD-quoted FX markets, selected BEFORE scoring.
 # This reuses the prior Open API product collector, not any closed MCS1 study.
-SYMBOLS = ("EURUSD", "GBPUSD", "AUDUSD")
+# W45 original run is immutable when invoked in its original mode.
+# W36/W37 historical profile is fixed in fx_historical_w36_w37_protocol.json
+# committed before collecting a single W36 or W37 quote.
+HISTORIC_W36_W37 = "--historical-w36w37" in sys.argv
+SYMBOLS = (("EURUSD","GBPUSD","AUDUSD","NZDUSD") if HISTORIC_W36_W37
+           else ("EURUSD","GBPUSD","AUDUSD"))
 M5 = 300000
-# W45 exposure was prespecified in fx_w45_new_mechanisms_protocol.json,
-# before original new-result collector was dispatched. W42-W44 are CLOSED.
-# W46 and later are RESERVED, not exposed or included in this evaluation.
-SOURCE_START = int(datetime(2026, 10, 30, 8, tzinfo=timezone.utc).timestamp() * 1000)
-DECISION_START = int(datetime(2026, 11, 2, tzinfo=timezone.utc).timestamp() * 1000)
-DECISION_END = int(datetime(2026, 11, 9, tzinfo=timezone.utc).timestamp() * 1000)
+if HISTORIC_W36_W37:
+    SOURCE_START = int(datetime(2026,8,28,8,tzinfo=timezone.utc).timestamp()*1000)
+    DECISION_START = int(datetime(2026,8,31,tzinfo=timezone.utc).timestamp()*1000)
+    DECISION_END = int(datetime(2026,9,14,tzinfo=timezone.utc).timestamp()*1000)
+else:
+    # Immutable W45 mode for reproducibility; never run it again in this PR.
+    SOURCE_START = int(datetime(2026,10,30,8,tzinfo=timezone.utc).timestamp()*1000)
+    DECISION_START = int(datetime(2026,11,2,tzinfo=timezone.utc).timestamp()*1000)
+    DECISION_END = int(datetime(2026,11,9,tzinfo=timezone.utc).timestamp()*1000)
 SOURCE_END = DECISION_END + M5
 QUOTING_WINDOW = 30 * 60000
 MAX_REQUESTS = 7000
@@ -176,7 +184,8 @@ def collect_and_evaluate():
                      "TickVolume":v[5]}
                     for t,v in sorted(history.items())
                     if v[0] <= SOURCE_END]
-            need(len(rows)>=1100, "INSUFFICIENT_W45_COMPLETE_M5")
+            need(len(rows)>=(2100 if HISTORIC_W36_W37 else 1100),
+                 "INSUFFICIENT_PREDECLARED_COMPLETE_M5")
             # Mandatory development window integrity check before further
             # tick data is requested; weekend bars are not manufactured.
             first_week=DECISION_START+7*86400000
@@ -267,7 +276,9 @@ def collect_and_evaluate():
         need(len(marks)>=300, "INSUFFICIENT_MULTI_WEEK_ASOF_BIDASK_CLOCKS")
         # The only file sent to the C# replay contains time-labeled market
         # readings, never OAuth values, original account ID, or broker orders.
-        tape={"SourceLabel":"ORIGINAL_PEPPERSTONE_OPENAPI_2026_W45_FX_M5_BREADTH_AND_SHOCK_PREDECLARED",
+        tape={"SourceLabel":("ORIGINAL_PEPPERSTONE_OPENAPI_2026_W36_W37_FX_M5_SHOCK_TICKFLOW_PREDECLARED"
+              if HISTORIC_W36_W37 else
+              "ORIGINAL_PEPPERSTONE_OPENAPI_2026_W45_FX_M5_BREADTH_AND_SHOCK_PREDECLARED"),
               "Bars":bars,"Marks":marks}
         with tempfile.TemporaryDirectory(prefix="mxm-openapi-native-") as folder:
             input_file=Path(folder)/"source.json"
@@ -279,7 +290,8 @@ def collect_and_evaluate():
             process=subprocess.run(["dotnet",
                 "src/Mxm.Replay/bin/Release/net8.0/Mxm.Replay.dll",
                 str(input_file),str(output_file),
-                "--native-original-openapi-w45"],
+                ("--native-original-openapi-historic-w36w37"
+                 if HISTORIC_W36_W37 else "--native-original-openapi-w45")],
                 stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,env=env,timeout=150)
             need(process.returncode==0 and output_file.is_file(),
@@ -287,10 +299,19 @@ def collect_and_evaluate():
             evaluated=json.loads(output_file.read_text())
         receipt=evaluated["Receipt"]
         result={
-            "Schema":"MXM_OPENAPI_AUTHENTIC_NATIVE_W45_FX_V1",
-            "ProtocolPath":"research/fx_w45_new_mechanisms_protocol.json",
-            "WindowRole":"EXPLORATORY_DEVELOPMENT_NOT_INDEPENDENT_CONFIRMATION",
-            "Week":"2026-W45",
+            "Schema":("MXM_OPENAPI_AUTHENTIC_NATIVE_HISTORICAL_W36_W37_V1"
+                      if HISTORIC_W36_W37 else "MXM_OPENAPI_AUTHENTIC_NATIVE_W45_FX_V1"),
+            "ProtocolPath":("research/fx_historical_w36_w37_protocol.json"
+                            if HISTORIC_W36_W37 else
+                            "research/fx_w45_new_mechanisms_protocol.json"),
+            "WindowRole":("RETROSPECTIVE_GLOBALLY_EXPOSED_DEV_W36_SELECTION_W37_NOT_CONFIRMATION"
+                          if HISTORIC_W36_W37 else
+                          "EXPLORATORY_DEVELOPMENT_NOT_INDEPENDENT_CONFIRMATION"),
+            "Week":("2026-W36_W37" if HISTORIC_W36_W37 else "2026-W45"),
+            "HistoricalDevelopmentStartUtcMs":(DECISION_START if HISTORIC_W36_W37 else None),
+            "HistoricalSelectionStartUtcMs":(
+                int(datetime(2026,9,7,tzinfo=timezone.utc).timestamp()*1000)
+                if HISTORIC_W36_W37 else None),
             "FutureW46HoldoutNotScored":True,
             "ReadOnlyOriginalPepperstoneAuthenticated":True,
             "ExplicitViewScopeVerified":False,
@@ -304,9 +325,11 @@ def collect_and_evaluate():
             "ContractsActuallyObservedAtUtcMs":{
                 name:terms[name][0]["ObservedAtUtcMs"] for name in SYMBOLS},
             "HistoricContractTariffsAreRetrospectiveScenarios":True,
-            "ResearchMechanismsPreregistered":[
-                "FX_USD_BREADTH_DELAYED_CATCHUP",
-                "FX_M5_SHOCK_EXHAUSTION_REVERSION"],
+            "ResearchMechanismsPreregistered":(
+                ["FX_M5_SHOCK_EXHAUSTION_REVERSION",
+                 "FX_HIGH_TICK_ACTIVITY_ABSORPTION"] if HISTORIC_W36_W37 else
+                ["FX_USD_BREADTH_DELAYED_CATCHUP",
+                 "FX_M5_SHOCK_EXHAUSTION_REVERSION"]),
             "FrozenLegacyM5M15NotRetunedOrPromoted":True,
             "M5BarsBySymbol":{b["Symbol"]:len(b["M5"]) for b in bars},
             "AuthenticBidAskAsOfObservations":len(marks),
