@@ -119,7 +119,7 @@ public static class NativeHistoricalProductReplayChecks
             System.Reflection.BindingFlags.Static);
         check(classify is not null && (string)classify.Invoke(null,new object[]{
             "CONDITIONAL_ESTIMATE_NO_POSITIVE_UNCERTAINTY_ADJUSTED_INCREMENTAL_UTILITY"
-        })!=="NO_DEMONSTRATED_EDGE",
+        })! == "NO_DEMONSTRATED_EDGE",
             "nonpositive native incremental utility is an economic edge rejection, never OTHER");
         Console.WriteLine("MXM_PRODUCT_HISTORICAL_ADAPTER_SYNTHETIC_RECEIPT="+
             JsonSerializer.Serialize(new {
