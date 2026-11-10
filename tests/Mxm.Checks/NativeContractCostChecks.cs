@@ -89,6 +89,61 @@ static class NativeContractCostChecks
         check(buyPrice.OneSideCommissionEur>sellPrice.OneSideCommissionEur &&
             buyPrice.OneSideCommissionEur-sellPrice.OneSideCommissionEur==.00006m,
             "percentage commission follows the execution side bid/ask, not extra spread");
+        // Synthetic prices test arithmetic only, NEVER claim these
+        // specific HKD source quotes came from the original broker.
+        long fxAt=1793765701009L;
+        var usdToEur=NativeBrokerContractCosts.ComposeCausalQuoteToEur(
+            "USD",fxAt,new[]{
+                new NativeOriginalFxHop("EURUSD","EUR","USD",fxAt-1000,
+                    1.08m,1.09m,true)
+            });
+        check(usdToEur.CreditToEur==1m/1.09m &&
+            usdToEur.DebitToEur==1m/1.08m &&
+            usdToEur.RouteSymbols.Length==1,
+            "real BID/ASK reverse pair produces distinct signed USD to EUR rates");
+        var chain=new[]{
+            new NativeOriginalFxHop("USDHKD","USD","HKD",fxAt-1000,
+                7.79m,7.81m,true),
+            new NativeOriginalFxHop("EURUSD","EUR","USD",fxAt-1000,
+                1.08m,1.09m,true)
+        };
+        var hkd=NativeBrokerContractCosts.ComposeCausalQuoteToEur(
+            "HKD",fxAt,chain);
+        check(hkd.CreditToEur==(1m/7.81m)/1.09m &&
+            hkd.DebitToEur==(1m/7.79m)/1.08m &&
+            hkd.DebitToEur>hkd.CreditToEur &&
+            hkd.RouteSymbols.Length==2,
+            "multi-hop currency route composes the causal two-sided spread");
+        bool RejectFx(NativeOriginalFxHop[] hops)
+        {
+            try{
+                _=NativeBrokerContractCosts.ComposeCausalQuoteToEur(
+                    "HKD",fxAt,hops);
+                return false;
+            }
+            catch(ArgumentException){return true;}
+        }
+        check(!RejectFx(chain),
+            "valid synthetic route passes only when fully connected");
+        check(RejectFx(new[]{chain[0]}) &&
+            RejectFx(new[]{chain[0],chain[1] with {AtUtcMs=fxAt+1}}) &&
+            RejectFx(new[]{chain[0] with {Bid=0m},chain[1]}) &&
+            RejectFx(new[]{chain[0] with {OriginalBrokerAuthenticated=false},chain[1]}),
+            "missing EUR leg, future quote, invalid bid and unauthenticated hop all rejected");
+        bool wrongFeeRejected=false;
+        try{
+            _=NativeBrokerContractCosts.Quote(
+                terms with {MinimumCommissionAsset="HKD",
+                    PreciseMinimumWire=2000000L},context);
+        }catch(ArgumentException){wrongFeeRejected=true;}
+        check(wrongFeeRejected,"missing nonUSD minimum fee currency must never be priced as USD");
+        var fundedFee=NativeBrokerContractCosts.Quote(
+            terms with {MinimumCommissionAsset="HKD",
+                PreciseMinimumWire=2000000L},
+            context with {MinimumFeeAssetToEur=hkd.DebitToEur});
+        check(fundedFee.OneSideCommissionEur>0m &&
+            fundedFee.Quote.ExitFeeFloor>0m,
+            "existing native cost model accepts only explicit nonUSD fee route");
         check(!priced.HistoricalExecutionCertified,
             "synthetic parity never asserts actual broker-funded profit");
     }
