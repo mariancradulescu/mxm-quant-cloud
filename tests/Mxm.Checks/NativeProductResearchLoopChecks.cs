@@ -46,6 +46,13 @@ public static class NativeProductResearchLoopChecks
             refused.RejectedIntents>=1&&refused.ModelCashEur==300m&&
             refused.ModelClosedRoundTrips==0,
             "no independent predictive benchmark refuses prospective entry without mutating EUR300 cash");
+        var assertedSupport=new NativeProductResearchLoop().Advance(at,
+            new[]{Market("SYNTH_A",at,0,support:true)},EnableUnqualifiedShadowSimulation:false);
+        check(assertedSupport.Forecasts==1 && assertedSupport.AcceptedModelIntents==0 &&
+              assertedSupport.ModelPendingIntents==0 &&
+              assertedSupport.LatestSignals.Single().DecisionReason==
+                  "SPECIALIST_NO_PREDICTIVE_BENCHMARK_SUPPORT",
+            "benchmark support flag cannot convert a raw gross forecast into measured incremental edge");
         // Two distinct markets arriving on different M5 decision clocks
         // must still compete against ONE existing held and pending budget.
         var staggered=new NativeProductResearchLoop();

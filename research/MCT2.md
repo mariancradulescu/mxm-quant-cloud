@@ -50,7 +50,7 @@ the specified instrument, mechanism and regime.
 | EURJPY and USDJPY | JRC1 risk participation and volatility unwind, H1 and M15 | EURJPY closed on losses, USDJPY inconclusive with zero signals | AUDJPY context, USDJPY and EURUSD for conversion |
 | XAGUSD and NZDUSD | LDP1 silver repricing and local NZD unwind, H1 and M15 | Initial exploratory positive, exact configuration closed after failed replication | EURUSD and AUDUSD context, EURUSD conversion |
 | ETHUSD and XAUUSD | MCT2 H4/H1 persistence and M15 range release | Exact configurations closed, both negative marginal NET central and adverse | NAS100 context, EURUSD context and conversion |
-| EURUSD and XAUUSD | BMR1 continuation after scheduled CPI and US employment releases, completed M15 reaction | New preregistered hypotheses | GBPUSD context, EURUSD context and conversion |
+| EURUSD and XAUUSD | BMR1 continuation after scheduled CPI and US employment releases, completed M15 reaction | Exact configurations closed, negative absolute and marginal NET in both scenarios | GBPUSD context, EURUSD context and conversion |
 
 Sources: [CIT1](https://github.com/mariancradulescu/mxm-quant-cloud/actions/runs/42773706175/artifacts/13742509291),
 [RCG1](https://github.com/mariancradulescu/mxm-quant-cloud/actions/runs/42776222946/artifacts/13743777877),
@@ -64,3 +64,5 @@ Sources: [CIT1](https://github.com/mariancradulescu/mxm-quant-cloud/actions/runs
 MCT2 recorded 20 modeled closures, −32.2647 EUR central and −33.5675 EUR
 adverse. See the [original receipt](https://github.com/mariancradulescu/mxm-quant-cloud/actions/runs/42822802931/artifacts/13769185362)
 and [frozen protocol version](https://github.com/mariancradulescu/mxm-quant-cloud/blob/5ac826231f9ee39d2c274eca86cb02ae7d07f313/research/MCT2.md).
+
+[BMR1 original receipt](https://github.com/mariancradulescu/mxm-quant-cloud/actions/runs/42838094280/artifacts/13774657456) records 17 modeled closures, −2.9109 EUR central and −5.4101 EUR adverse.
