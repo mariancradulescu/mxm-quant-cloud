@@ -70,7 +70,9 @@ public sealed class NativeProductResearchLoop
             "US_INDEX_JOINT_W20W21" or "US_INDEX_NAS_ONLY_W20W21" or
             "US_INDEX_SP_ONLY_W20W21" or
             "NG_AUD_JOINT_W38W39" or "NG_ONLY_W38W39" or
-            "AUD_ONLY_W38W39"))
+            "AUD_ONLY_W38W39" or
+            "HK_BRENT_JOINT_W40W41" or "HK_ONLY_W40W41" or
+            "BRENT_ONLY_W40W41"))
             throw new ArgumentException("UNDECLARED_RESEARCH_MECHANISM");
         this.researchMode=researchMode;
     }
@@ -468,6 +470,88 @@ public sealed class NativeProductResearchLoop
                 }
                 else continue;
             }
+            else if(researchMode is "HK_BRENT_JOINT_W40W41" or
+                "HK_ONLY_W40W41" or "BRENT_ONLY_W40W41")
+            {
+                // Protocol-fixed HK cash opening range false-break and
+                // European Brent range expansion. Both are globally exposed
+                // 2026-W40/W41 development, NEVER independent confirmation.
+                var utc=DateTimeOffset.FromUnixTimeMilliseconds(at).UtcDateTime;
+                if(market.M15.Length<16 || 
+                   market.M15[^1].CloseAt+1500L!=at)continue;
+                if(market.Symbol=="HK50" &&
+                   researchMode!="BRENT_ONLY_W40W41" &&
+                   utc.Hour>=2 && (utc.Hour>2 || utc.Minute>=15) &&
+                   (utc.Hour<3 || (utc.Hour==3 && utc.Minute<=30)))
+                {
+                    var day=utc.Date;
+                    long openStart=new DateTimeOffset(day.AddHours(1).AddMinutes(30),
+                        TimeSpan.Zero).ToUnixTimeMilliseconds();
+                    long openStop=openStart+30*60000L;
+                    var opening=market.M15.Where(x=>x.OpenAt>=openStart &&
+                        x.CloseAt<=openStop).ToArray();
+                    if(opening.Length!=2 ||
+                       opening[0].OpenAt!=openStart ||
+                       opening[^1].CloseAt!=openStop ||
+                       opening[0].CloseAt!=opening[1].OpenAt)continue;
+                    var bar=market.M15[^1];
+                    if(bar.OpenAt<openStop)continue;
+                    decimal high=Math.Max(opening[0].High,opening[1].High);
+                    decimal low=Math.Min(opening[0].Low,opening[1].Low);
+                    decimal averageRange=opening.Average(x=>x.High-x.Low);
+                    decimal averageVolume=opening.Average(x=>(decimal)x.TickVolume);
+                    decimal barRange=bar.High-bar.Low;
+                    decimal openingSpread=market.Quote.Ask-market.Quote.Bid;
+                    if(averageRange<=0m || averageVolume<=0m ||
+                       barRange<=0m || bar.TickVolume<0.70m*averageVolume ||
+                       openingSpread>0.35m*barRange ||
+                       bar.Close<=low || bar.Close>=high)continue;
+                    if(bar.High>=high+0.10m*averageRange && 
+                       bar.Close<bar.Open)
+                    {
+                        side=-1;
+                        driver=(bar.High-high)/bar.Close;
+                    }
+                    else if(bar.Low<=low-0.10m*averageRange &&
+                        bar.Close>bar.Open)
+                    {
+                        side=1;
+                        driver=(low-bar.Low)/bar.Close;
+                    }
+                    else continue;
+                    mechanism="HK50_HK_CASH_OPEN_RANGE_FALSE_BREAK_REVERSION";
+                }
+                else if(market.Symbol=="SpotBrent" &&
+                    researchMode!="HK_ONLY_W40W41" &&
+                    utc.Hour>=7 && utc.Hour<12)
+                {
+                    var sixteen=market.M15.TakeLast(16).ToArray();
+                    if(!sixteen.Zip(sixteen.Skip(1)).All(x=>
+                        x.First.CloseAt==x.Second.OpenAt))continue;
+                    var prior=sixteen.Take(12).ToArray();
+                    var current=sixteen.Skip(12).ToArray();
+                    decimal oldRange=prior.Average(x=>(x.High-x.Low)/x.Close);
+                    decimal newRange=current.Average(x=>(x.High-x.Low)/x.Close);
+                    decimal oldActivity=prior.Average(x=>(decimal)x.TickVolume);
+                    decimal oldMeanAbs=prior.Zip(prior.Skip(1)).Average(x=>
+                        Math.Abs(x.Second.Close/x.First.Close-1m));
+                    decimal move=current[^1].Close/prior[^1].Close-1m;
+                    decimal latestBody=current[^1].Close-current[^1].Open;
+                    decimal latestBarRange=current[^1].High-current[^1].Low;
+                    decimal brentSpread=market.Quote.Ask-market.Quote.Bid;
+                    if(oldRange<=0m || oldActivity<=0m || oldMeanAbs<=0m ||
+                       latestBarRange<=0m ||
+                       newRange<1.25m*oldRange ||
+                       Math.Abs(move)<1.10m*oldMeanAbs ||
+                       move*latestBody<=0m ||
+                       current[^1].TickVolume<1.10m*oldActivity ||
+                       brentSpread>0.35m*latestBarRange)continue;
+                    side=move>0m?1:-1;
+                    driver=Math.Abs(move);
+                    mechanism="SPOTBRENT_EU_OPEN_RANGE_EXPANSION_CONTINUATION";
+                }
+                else continue;
+            }
             else if(researchMode is "NG_AUD_JOINT_W38W39" or
                 "NG_ONLY_W38W39" or "AUD_ONLY_W38W39")
             {
@@ -823,6 +907,10 @@ public sealed class NativeProductResearchLoop
                     NativeCausalExitResearch.VolatilityTarget,
                 "CRUDE_US_SESSION_TICK_ACTIVITY_DRIFT"=>
                     NativeCausalExitResearch.PredictionInvalidation,
+                "HK50_HK_CASH_OPEN_RANGE_FALSE_BREAK_REVERSION"=>
+                    NativeCausalExitResearch.EquilibriumReversion,
+                "SPOTBRENT_EU_OPEN_RANGE_EXPANSION_CONTINUATION"=>
+                    NativeCausalExitResearch.Chandelier,
                 "NATGAS_US_LIQUIDITY_VOL_COMPRESSION_REVERSION"=>
                     NativeCausalExitResearch.EquilibriumReversion,
                 "AUDUSD_LATE_ASIA_LONDON_SWEEP_FAILURE"=>
@@ -841,6 +929,8 @@ public sealed class NativeProductResearchLoop
                 "AMD_US_OPENING_HOUR_TICKFLOW"=>180,
                 "CRYPTO_M5_LIQUIDITY_WICK_ABSORPTION"=>150,
                 "CRUDE_US_SESSION_TICK_ACTIVITY_DRIFT"=>120,
+                "HK50_HK_CASH_OPEN_RANGE_FALSE_BREAK_REVERSION"=>105,
+                "SPOTBRENT_EU_OPEN_RANGE_EXPANSION_CONTINUATION"=>120,
                 "NATGAS_US_LIQUIDITY_VOL_COMPRESSION_REVERSION"=>105,
                 "AUDUSD_LATE_ASIA_LONDON_SWEEP_FAILURE"=>120,
                 "NAS100_US_CASH_INDEX_RELATIVE_DISPERSION_FADE"=>105,
@@ -998,6 +1088,10 @@ public sealed class NativeProductResearchLoop
                         (Policy:NativeCausalExitResearch.VolatilityTarget,Minutes:150),
                     "CRUDE_US_SESSION_TICK_ACTIVITY_DRIFT"=>
                         (Policy:NativeCausalExitResearch.PredictionInvalidation,Minutes:120),
+                    "HK50_HK_CASH_OPEN_RANGE_FALSE_BREAK_REVERSION"=>
+                        (Policy:NativeCausalExitResearch.EquilibriumReversion,Minutes:105),
+                    "SPOTBRENT_EU_OPEN_RANGE_EXPANSION_CONTINUATION"=>
+                        (Policy:NativeCausalExitResearch.Chandelier,Minutes:120),
                     "NATGAS_US_LIQUIDITY_VOL_COMPRESSION_REVERSION"=>
                         (Policy:NativeCausalExitResearch.EquilibriumReversion,Minutes:105),
                     "AUDUSD_LATE_ASIA_LONDON_SWEEP_FAILURE"=>
