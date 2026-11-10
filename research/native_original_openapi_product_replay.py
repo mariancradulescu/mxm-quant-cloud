@@ -143,7 +143,17 @@ def contract(symbol, c, quote_asset, observed_at):
         "HistoricalTariffContinuityCertified": False
     }
 
-def collect_and_evaluate():
+def collect_and_evaluate(profile=None):
+    symbols = SYMBOLS if profile is None else profile["symbols"]
+    source_start = SOURCE_START if profile is None else profile["source_start"]
+    decision_start = DECISION_START if profile is None else profile["start"]
+    decision_end = DECISION_END if profile is None else profile["end"]
+    source_end = decision_end + M5
+
+    def eligible(clock):
+        day = datetime.fromtimestamp(clock / 1000, timezone.utc)
+        return day.weekday() < 5 and (profile is None or 14 <= day.hour < 21)
+
     transport = StdlibCTraderTransport()
     counter = 0
 
@@ -174,11 +184,11 @@ def collect_and_evaluate():
              and assets.get(trader.trader.depositAssetId) == "EUR",
              "BROKER_OR_EUR_ACCOUNT_MISMATCH")
         roster = {x.symbolName:x for x in roster_reply.symbol if x.enabled}
-        need(all(x in roster for x in SYMBOLS), "PREREGISTERED_FX_SYMBOL_UNAVAILABLE")
+        need(all(x in roster for x in symbols), "PREREGISTERED_FX_SYMBOL_UNAVAILABLE")
         terms = {}
         ids = {}
 
-        for name in SYMBOLS:
+        for name in symbols:
             light = roster[name]
             ids[name] = int(light.symbolId)
             need(assets.get(light.quoteAssetId) == "USD",
@@ -190,7 +200,7 @@ def collect_and_evaluate():
                  and detail.symbol[0].symbolId == ids[name],
                  "CONTRACT_SYMBOL_MISMATCH")
             c = detail.symbol[0]
-            need((0<=int(c.digits)<=8 if (CROSS_ENERGY_EQUITY or CRYPTO_CRUDE_HISTORIC or US_INDEX_ANY or NG_AUD_W38W39 or HK_BRENT_W40W41 or BRENT_AMD_W42W43) else c.digits==5)
+            need((0<=int(c.digits)<=8 if (profile is not None or CROSS_ENERGY_EQUITY or CRYPTO_CRUDE_HISTORIC or US_INDEX_ANY or NG_AUD_W38W39 or HK_BRENT_W40W41 or BRENT_AMD_W42W43) else c.digits==5)
                  and int(c.tradingMode)==0 and
                  c.minVolume>0 and c.stepVolume>0 and
                  c.maxVolume>=c.minVolume and c.lotSize>0 and
@@ -217,11 +227,11 @@ def collect_and_evaluate():
                             int(datetime.now(timezone.utc).timestamp()*1000)),
                            minimum_margin)
         bars = []
-        for name in SYMBOLS:
+        for name in symbols:
             history = {}
-            lo = SOURCE_START
-            while lo < SOURCE_END:
-                hi = min(lo + 6*3600000, SOURCE_END)
+            lo = source_start
+            while lo < source_end:
+                hi = min(lo + 6*3600000, source_end)
                 res = req(m.ProtoOAGetTrendbarsReq(
                     ctidTraderAccountId=account,symbolId=ids[name],
                     period=e.M5,fromTimestamp=lo,toTimestamp=hi),
@@ -240,21 +250,21 @@ def collect_and_evaluate():
                      "Low":price(v[3]),"Close":price(v[4]),
                      "TickVolume":v[5]}
                     for t,v in sorted(history.items())
-                    if v[0] <= SOURCE_END]
+                    if v[0] <= source_end]
             need(len(rows)>=(400 if (CROSS_ENERGY_EQUITY or CRYPTO_CRUDE_HISTORIC or US_INDEX_ANY or NG_AUD_W38W39 or HK_BRENT_W40W41 or BRENT_AMD_W42W43)
                                  and name not in ("EURUSD","AUDUSD")
                             else 2100 if HISTORIC_W36_W37 else 1100),
                  "INSUFFICIENT_PREDECLARED_COMPLETE_M5")
             # Mandatory development window integrity check before further
             # tick data is requested; weekend bars are not manufactured.
-            first_week=DECISION_START+7*86400000
+            first_week=decision_start+7*86400000
             minimum_week=(200 if (CROSS_ENERGY_EQUITY or CRYPTO_CRUDE_HISTORIC or US_INDEX_ANY or NG_AUD_W38W39 or HK_BRENT_W40W41 or BRENT_AMD_W42W43)
                             and name not in ("EURUSD","AUDUSD") else 1000)
-            need(sum(DECISION_START<=x["OpenAt"]<first_week for x in rows)>=minimum_week,
+            need(sum(decision_start<=x["OpenAt"]<first_week for x in rows)>=minimum_week,
                  "FIRST_COMPLETE_WEEK_M5_COVERAGE_UNSATISFACTORY")
             if NAS100_FROZEN_W32W33 or NG_AUD_W38W39 or HK_BRENT_W40W41 or BRENT_AMD_W42W43:
                 # No empty/gappy second scoring week counted as genuine.
-                need(sum(first_week<=x["OpenAt"]<DECISION_END for x in rows)>=minimum_week,
+                need(sum(first_week<=x["OpenAt"]<decision_end for x in rows)>=minimum_week,
                      "SECOND_COMPLETE_WEEK_M5_COVERAGE_UNSATISFACTORY")
             bars.append({"Symbol":name,"M5":rows})
 
@@ -284,19 +294,19 @@ def collect_and_evaluate():
         # then discard raw ticks after deriving the six as-of M5 snapshots.
         # No price is reconstructed from OHLCV, no future tick is used, no
         # weekend gaps are forward-filled, and raw ticks never leave runner.
-        sampled={name:{e.BID:{},e.ASK:{}} for name in SYMBOLS}
+        sampled={name:{e.BID:{},e.ASK:{}} for name in symbols}
         quote_windows=0
-        for lo in range(DECISION_START-120000,DECISION_END+1500,
+        for lo in range(decision_start-120000,decision_end+1500,
                         QUOTING_WINDOW):
-            hi=min(lo+QUOTING_WINDOW-1,DECISION_END+1500)
-            first=DECISION_START+1500+max(
-                0,(lo-(DECISION_START+1500)+M5-1)//M5)*M5
+            hi=min(lo+QUOTING_WINDOW-1,decision_end+1500)
+            first=decision_start+1500+max(
+                0,(lo-(decision_start+1500)+M5-1)//M5)*M5
             clocks=[clock for clock in range(first,hi+1,M5)
-                    if clock<DECISION_END and
-                    datetime.fromtimestamp(clock/1000,timezone.utc).weekday()<5]
+                    if clock<decision_end and
+                    eligible(clock)]
             if not clocks:continue
             quote_windows+=1
-            for name in SYMBOLS:
+            for name in symbols:
                 for side in (e.BID,e.ASK):
                     points=ticks(name,side,lo,hi)
                     ts=[t for t,_ in points]
@@ -307,19 +317,19 @@ def collect_and_evaluate():
         marks=[]
         total_clocks=0
         missing_pair_clock=0
-        for clock in range(DECISION_START+1500,DECISION_END,M5):
-            if datetime.fromtimestamp(clock/1000,timezone.utc).weekday()>=5:
+        for clock in range(decision_start+1500,decision_end,M5):
+            if not eligible(clock):
                 continue
             total_clocks+=1
             eur_bid=sampled["EURUSD"][e.BID].get(clock)
             eur_ask=sampled["EURUSD"][e.ASK].get(clock)
             if eur_bid is None or eur_ask is None or eur_bid<=0 or eur_ask<eur_bid:
-                missing_pair_clock+=len(SYMBOLS)
+                missing_pair_clock+=len(symbols)
                 continue
             fx_credit=D(1)/eur_ask
             fx_debit=D(1)/eur_bid
             usd_to_eur=(fx_credit+fx_debit)/2
-            for name in SYMBOLS:
+            for name in symbols:
                 bid=sampled[name][e.BID].get(clock)
                 ask=sampled[name][e.ASK].get(clock)
                 if bid is None or ask is None or bid<=0 or ask<bid:
@@ -341,7 +351,7 @@ def collect_and_evaluate():
         need(len(marks)>=300, "INSUFFICIENT_MULTI_WEEK_ASOF_BIDASK_CLOCKS")
         # The only file sent to the C# replay contains time-labeled market
         # readings, never OAuth values, original account ID, or broker orders.
-        tape={"SourceLabel":(
+        tape={"SourceLabel":(profile["label"] if profile is not None else (
               "ORIGINAL_PEPPERSTONE_OPENAPI_2026_W42_W43_BRENT_AMD_PREDECLARED"
               if BRENT_AMD_W42W43 else
               "ORIGINAL_PEPPERSTONE_OPENAPI_2026_W40_W41_HK_BRENT_PREDECLARED"
@@ -358,7 +368,7 @@ def collect_and_evaluate():
               if CROSS_ENERGY_EQUITY else
               "ORIGINAL_PEPPERSTONE_OPENAPI_2026_W36_W37_FX_M5_SHOCK_TICKFLOW_PREDECLARED"
               if HISTORIC_W36_W37 else
-              "ORIGINAL_PEPPERSTONE_OPENAPI_2026_W45_FX_M5_BREADTH_AND_SHOCK_PREDECLARED"),
+              "ORIGINAL_PEPPERSTONE_OPENAPI_2026_W45_FX_M5_BREADTH_AND_SHOCK_PREDECLARED")),
               "Bars":bars,"Marks":marks}
         with tempfile.TemporaryDirectory(prefix="mxm-openapi-native-") as folder:
             input_file=Path(folder)/"source.json"
@@ -370,7 +380,8 @@ def collect_and_evaluate():
             process=subprocess.run(["dotnet",
                 "src/Mxm.Replay/bin/Release/net8.0/Mxm.Replay.dll",
                 str(input_file),str(output_file),
-                ("--native-original-openapi-brent-amd-w42w43"
+                (profile["mode"] if profile is not None else
+                 "--native-original-openapi-brent-amd-w42w43"
                   if BRENT_AMD_W42W43 else
                   "--native-original-openapi-hk50-spotbrent-w40w41"
                  if HK_BRENT_W40W41 else
@@ -392,6 +403,15 @@ def collect_and_evaluate():
                  "NATIVE_CSHARP_REPLAY_EXECUTION_FAILED")
             evaluated=json.loads(output_file.read_text())
         receipt=evaluated["Receipt"]
+        if profile is not None:
+            return dict(evaluated, OriginalPepperstoneAccountAuthenticated=True,
+                        PostAuthenticationReadOnlyRequests=counter,
+                        OriginalBarsBySymbol={b["Symbol"]:len(b["M5"]) for b in bars},
+                        OriginalBidAskAsOfMarks=len(marks), QuoteWindows=quote_windows,
+                        MissingQuoteInstrumentClocks=missing_pair_clock,
+                        ExpectedClocksPerSymbol=total_clocks,
+                        InitialModelCapitalEur=300, OrdersSubmitted=0,
+                        CloudActivated=False, IndependentConfirmation=False)
         result={
             "Schema":("MXM_OPENAPI_ORIGINAL_BRENT_AMD_W42_W43_V1"
                        if BRENT_AMD_W42W43 else"MXM_OPENAPI_ORIGINAL_HK50_SPOTBRENT_W40_W41_V1"
