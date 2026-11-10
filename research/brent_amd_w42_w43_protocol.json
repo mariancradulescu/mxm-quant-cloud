@@ -1,0 +1,72 @@
+{
+  "id": "MXM_SPOTBRENT_AMD_W42_W43_CROSS_ASSET_FUNDED_RESEARCH_V1",
+  "authority": "docs/OWNER_SPEC.md OWNER v2.0 / post PR170-171 OWNER 2026-11-10",
+  "frozenBeforeAnyNewOriginalReadOnlySource": true,
+  "sourceSelection": {
+    "warmup": "2026-10-09T08:00:00Z",
+    "windowFrom": "2026-10-12T00:00:00Z",
+    "windowToExclusive": "2026-10-26T00:00:00Z",
+    "development": "2026-W42",
+    "chronologicalSelection": "2026-W43",
+    "historicallyGloballyExposed": true,
+    "independentConfirmation": false,
+    "doNotQueryW46": true,
+    "originalPepperstoneEurLiveAccount": true,
+    "reader": "existing READ-ONLY OpenAPI collector, M5, authentic independent <=60s BID/ASK ticks as-of M5+1.5s",
+    "assets": [
+      "EURUSD",
+      "SpotBrent",
+      "AMD.US"
+    ],
+    "eurusdConversionOnly": true,
+    "instrumentPreEvidence": [
+      "SpotBrent: original XUA1 + W30/W31 original trade preflight: current min margin ~EUR8.67, original live quote asset USD and 18 observed fresh paired BID/ASK (older, not current)",
+      "AMD.US: original CMA2 + W30/W31 source: current min margin ~EUR7.99, original live quote asset USD, 1 fresh paired BID/ASK CMA2; session-dependent source",
+      "EURUSD: original account USD conversion via historical BID/ASK, current min margin ~EUR33.33 CMA1; never traded"
+    ],
+    "marginAndCosts": "At collection validate roster enabled, both original min volume buy/sell expected margin <=300 EUR, current commission/floor/financing, USD actual quote asset, min 200 observed complete M5 per target each week; abort if false. Never assume historical tariff continuity.",
+    "requestBudget": "existing 7000 original-account read-only API max; no DOM claim, no historical order fills, no Cloud activation"
+  },
+  "mechanisms": [
+    {
+      "id": "SPOTBRENT_EU_MORNING_DRIVE_PULLBACK_CONTINUATION",
+      "market": "SpotBrent",
+      "assetClass": "energy CFD",
+      "timeframes": "M15 opening 2h (8x completed M15), M5 native entry checks",
+      "hypothesis": "Europe 07:00-09:00 UTC establishes 2h directional price displacement, then a 40%-80% retracement with final M15 turning back in original direction between 10:00 and 15:00 UTC. Trend continuation after retracement, neither closed Brent->Crude lead-lag nor rejected 4H oil impulse.",
+      "signal": "Same calendar-day 8 strictly contiguous completed M15 07:00-09:00 UTC. Initial signed displacement >=1.0x average first8 M15 high-low range. Latest completed M15 has retracement fraction in [0.40,0.80] of initial drive measured against 09:00 opening-drive close; candle body same direction as opening signed displacement. TickVolume latest >=0.65x opening mean. Real original BID/ASK spread <=0.35x latest completed M15 range. Only weekdays 10:00–15:00 UTC, last M15 strictly prior to decision. One signal per newly closed M15.",
+      "direction": "sign(09:00 close - 07:00 open)",
+      "driver": "absolute drive displacement divided by current close, no posterior calibration",
+      "exit": "existing NativeCausalExitResearch.VolatilityTarget (1.5 ATR quote-side invalidation and 2.5 ATR target) with 150-minute cap, native observed future bid/ask; model min contract volume, common EUR300",
+      "rulesFrozen": true
+    },
+    {
+      "id": "AMD_US_LATE_CASH_COMPRESSION_BREAK_TICK_ACCELERATION",
+      "market": "AMD.US",
+      "assetClass": "US individual equity CFD",
+      "timeframes": "M15 3h rolling regime and M5 as-of fill",
+      "hypothesis": "US equities cash late-session price compression (first 2h prior) followed by breakout supported by growing original M15 tick activity between 17:00 and 19:30 UTC; not the closed 13:30–14:30 UTC AMD opening-hour directional tickflow experiment.",
+      "signal": "Last 13 strictly contiguous completed M15: first8 prior reference and last4 compression context, last1 breakout bar. Mean high-low last4 <=0.85 times first8; final bar closes beyond first8 highest high or lowest low by >=0.05x first8 mean range; final candle body agrees breakout, latest tickVolume >=1.10x first8 mean; real BID/ASK spread <=0.35x last range. US cash period 17:00–19:30 UTC in 2026-W42/W43 when New York EDT UTC-4. One signal per newly completed M15; no assumed exchange holiday filling.",
+      "direction": "up breakout => long, down breakout => short",
+      "driver": "breakout excess above/below prior8 extreme divided by last close, no outcome-trained model",
+      "exit": "existing NativeCausalExitResearch.Chandelier, ATR protection 1.5 ATR, 120-minute cap; min account volume; no cross-contract capital",
+      "rulesFrozen": true
+    }
+  ],
+  "evaluation": {
+    "runs": [
+      "BRENT_AMD_JOINT_W42W43",
+      "ONLY_BRENT_W42W43",
+      "ONLY_AMD_W42W43"
+    ],
+    "book": "re-use existing native C# selector/orchestrator, NativeFundedSession, NativeBrokerContractCosts, NativeHistoricalProductReplay, one EUR300 wallet per run no reset between W42 and W43; do not add multiple wallet outcomes",
+    "required": "original M5 and genuine BID/ASK counts/gaps; BRUT, NET central/adverse EUR; same-clock directional long short flipped and cash reference; independent fully funded one-wallet ablations and marginal contribution; weekly complete funded model roundtrips and HARD21; max observed capital margin, observed sampled floating DD, missing clocks, original provider custody digests, closures",
+    "promotion": "never call these 2 globally exposed weeks independent; require ≥12 relevant months and independent unexposed holdout, positive adverse NET incremental vs suitable benchmark and system HARD21 >=21 per eligible week, continuous max DD<=30%",
+    "safety": "no actual orders LIVE or DEMO, no Cloud trading, never refresh credentials, TRADE_CAPABLE not user approval; preserve closed PR169 NAS100, PR170 NatGas/AUDUSD, PR171 HK50/Brent W40/W41 unchanged"
+  },
+  "relatedCurrencyRoadmap": {
+    "existingCore": "NativeOriginalOpenApiProductAdapter + NativeBrokerContractCosts accept quote credit/debit to EUR and original min-fee currency conversion; no new ledger",
+    "officialSpotware": "ProtoOASymbolsForConversionReq between original asset IDs; mandatory original supported chain and as-of historical BID/ASK on every symbol of route",
+    "noFalsePromise": "No non-USD market promoted until original route established with complete causal as-of quotes and correct fee/margin/financing denomination; do not block this USD-compatible study"
+  }
+}
