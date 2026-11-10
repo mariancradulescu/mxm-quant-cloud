@@ -73,6 +73,7 @@ public sealed class NativeProductResearchLoop
             "AUD_ONLY_W38W39" or
             "HK_BRENT_JOINT_W40W41" or "HK_ONLY_W40W41" or
             "BRENT_ONLY_W40W41" or
+            "OTC1_JOINT" or "OTC1_OIL" or "OTC1_FX" or "OTC1_LONG" or "OTC1_SHORT" or
             "JRC1_JOINT" or "JRC1_RISK" or "JRC1_REVERSION" or "JRC1_LONG" or "JRC1_SHORT" or
             "LDP1_JOINT" or "LDP1_SILVER" or "LDP1_FX" or "LDP1_LONG" or "LDP1_SHORT" or
             "RRP1_JOINT" or "RRP1_EQUITY" or "RRP1_GOLD" or
@@ -299,7 +300,8 @@ public sealed class NativeProductResearchLoop
                 }
                 catch(InvalidOperationException ex) when(
                     (researchMode.StartsWith("LDP1_",StringComparison.Ordinal) ||
-                     researchMode.StartsWith("JRC1_",StringComparison.Ordinal)) &&
+                     researchMode.StartsWith("JRC1_",StringComparison.Ordinal) ||
+                     researchMode.StartsWith("OTC1_",StringComparison.Ordinal)) &&
                     ex.Message=="NATIVE_LEDGER_UNFINANCED_MODEL_FILL")
                 {
                     // ApplyResearchFacts is transactional. Record the refused
@@ -503,6 +505,36 @@ public sealed class NativeProductResearchLoop
                     mechanism="US500_US_CASH_H1_VOLATILITY_PERSISTENCE";
                 }
                 else continue;
+            }
+            else if(researchMode is "OTC1_JOINT" or "OTC1_OIL" or "OTC1_FX" or
+                "OTC1_LONG" or "OTC1_SHORT")
+            {
+                var clock=DateTimeOffset.FromUnixTimeMilliseconds(at).UtcDateTime;
+                if(clock.Hour<13 || clock.Hour>=17 || p5.LastClosedAt!=at-1500L ||
+                   RrpHourMove(market.M15,at) is not decimal own)continue;
+                var last=market.M15[^1];
+                if(market.Symbol=="SpotCrude" && researchMode!="OTC1_FX" &&
+                   byName.TryGetValue("SpotBrent",out var brent) &&
+                   RrpHourMove(brent.M15,at) is decimal peer &&
+                   Math.Abs(peer)<=.0010m && Math.Abs(own-peer)>=.0025m &&
+                   (own-peer)*(last.Close-last.Open)<0m)
+                {
+                    side=-Math.Sign(own-peer);driver=Math.Abs(own-peer);
+                    mechanism="OTC1_WTI_LOCAL_BASIS_REVERSION";
+                }
+                else if(market.Symbol=="GBPUSD" && researchMode!="OTC1_OIL" &&
+                   byName.TryGetValue("EURUSD",out var eur) &&
+                   RrpHourMove(eur.M15,at) is decimal euro &&
+                   Math.Abs(euro)>=.0005m && own*euro>0m &&
+                   Math.Abs(own)>=Math.Abs(euro)+.0007m &&
+                   own*(last.Close-last.Open)>0m)
+                {
+                    side=Math.Sign(own);driver=Math.Abs(own);
+                    mechanism="OTC1_GBP_RELATIVE_STRENGTH_CONTINUATION";
+                }
+                else continue;
+                if(researchMode=="OTC1_LONG")side=1;
+                if(researchMode=="OTC1_SHORT")side=-1;
             }
             else if(researchMode is "JRC1_JOINT" or "JRC1_RISK" or "JRC1_REVERSION" or
                 "JRC1_LONG" or "JRC1_SHORT")
@@ -1149,6 +1181,8 @@ public sealed class NativeProductResearchLoop
                 "LDP1_NZD_LOCAL_INVENTORY_UNWIND"=>NativeCausalExitResearch.EquilibriumReversion,
                 "JRC1_EURJPY_JPY_RISK_PARTICIPATION"=>NativeCausalExitResearch.PredictionInvalidation,
                 "JRC1_USDJPY_VOLATILITY_CLIMAX_UNWIND"=>NativeCausalExitResearch.EquilibriumReversion,
+                "OTC1_WTI_LOCAL_BASIS_REVERSION"=>NativeCausalExitResearch.EquilibriumReversion,
+                "OTC1_GBP_RELATIVE_STRENGTH_CONTINUATION"=>NativeCausalExitResearch.PredictionInvalidation,
                 _=>market.ExitPolicy
             };
             int effectiveHolding=mechanism switch {
@@ -1173,6 +1207,8 @@ public sealed class NativeProductResearchLoop
                 "LDP1_NZD_LOCAL_INVENTORY_UNWIND"=>60,
                 "JRC1_EURJPY_JPY_RISK_PARTICIPATION"=>60,
                 "JRC1_USDJPY_VOLATILITY_CLIMAX_UNWIND"=>60,
+                "OTC1_WTI_LOCAL_BASIS_REVERSION"=>60,
+                "OTC1_GBP_RELATIVE_STRENGTH_CONTINUATION"=>60,
                 _=>market.HoldingMinutes
             };
             if(effectiveExitPolicy!=NativeCausalExitResearch.FrozenFixed &&
@@ -1348,6 +1384,8 @@ public sealed class NativeProductResearchLoop
                     "LDP1_NZD_LOCAL_INVENTORY_UNWIND"=>(Policy:NativeCausalExitResearch.EquilibriumReversion,Minutes:60),
                     "JRC1_EURJPY_JPY_RISK_PARTICIPATION"=>(Policy:NativeCausalExitResearch.PredictionInvalidation,Minutes:60),
                     "JRC1_USDJPY_VOLATILITY_CLIMAX_UNWIND"=>(Policy:NativeCausalExitResearch.EquilibriumReversion,Minutes:60),
+                    "OTC1_WTI_LOCAL_BASIS_REVERSION"=>(Policy:NativeCausalExitResearch.EquilibriumReversion,Minutes:60),
+                    "OTC1_GBP_RELATIVE_STRENGTH_CONTINUATION"=>(Policy:NativeCausalExitResearch.PredictionInvalidation,Minutes:60),
                     _=>(Policy:market.ExitPolicy,Minutes:market.HoldingMinutes)
                 };
                 tracked.Add(chosen.Id,new(market.Symbol,opportunity.Direction,
