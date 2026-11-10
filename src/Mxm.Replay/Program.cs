@@ -1,6 +1,85 @@
 using System.Text.Json;
 using System.Security.Cryptography;
 
+// New read-only crypto and metals portfolio.
+if(args.Length==3 && args[2] is ("--native-mct2" or "--native-mct2-contracts"))
+{
+    string stage="input";
+    try
+    {
+        var bytes=File.ReadAllBytes(args[0]);
+        var parse=new JsonSerializerOptions {
+            NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString
+        };
+        var universe=new[]{"ETHUSD","EURUSD","NAS100","XAUUSD"};
+        if(args[2]=="--native-mct2-contracts")
+        {
+            var contracts=JsonSerializer.Deserialize<Mxm.Core.NativeObservedContractTerms[]>(bytes,parse)
+                ??throw new ArgumentException("MCT2_CONTRACTS_EMPTY");
+            foreach(var contract in contracts)
+            {
+                if(!universe.Contains(contract.Symbol,StringComparer.Ordinal))
+                    throw new ArgumentException("MCT2_CONTRACT_UNIVERSE");
+                Mxm.Core.NativeBrokerContractCosts.Validate(contract,contract.MinimumUnits);
+            }
+            File.WriteAllText(args[1],"{}");
+            return 0;
+        }
+        var source=JsonSerializer.Deserialize<Mxm.Core.NativeOriginalOpenApiTape>(bytes,parse)
+            ??throw new ArgumentException("MCT2_EMPTY_SOURCE");
+        if(source.SourceLabel!="ORIGINAL_PEPPERSTONE_MCT2_W36_W40" ||
+           !source.Bars.Select(x=>x.Symbol).OrderBy(x=>x,StringComparer.Ordinal).SequenceEqual(universe) ||
+           source.Marks.Any(x=>!universe.Contains(x.Symbol,StringComparer.Ordinal)))
+            throw new ArgumentException("MCT2_SOURCE_OR_FX_ROUTE_BINDING");
+        var tape=Mxm.Core.NativeOriginalOpenApiProductAdapter.Convert(source);
+        Mxm.Core.NativeHistoricalMarketReceipt Run(string mode)
+        {
+            stage=mode;
+            return Mxm.Core.NativeHistoricalProductReplay.Evaluate(tape,
+                UnqualifiedShadowMode:true,ResearchMode:mode);
+        }
+        var joint=Run("MCT2_JOINT");
+        var crypto=Run("MCT2_CRYPTO");
+        var metal=Run("MCT2_METAL");
+        var longOnly=Run("MCT2_LONG");
+        var shortOnly=Run("MCT2_SHORT");
+        object Summary(Mxm.Core.NativeHistoricalMarketReceipt r)=>new {
+            r.CompletedModelRoundTrips,r.ModelClosedCentralNetEur,r.ModelClosedAdverseNetEur,
+            r.ModelTripsPerObservedIsoWeek,r.MaximumObservedMarginEur,r.MaximumSampledCentralDrawdown,
+            r.OpenModelPositions,r.PendingModelRequests,r.UnfinancedModelOpenCancellations,
+            r.AdverseFailureKind,r.AdverseFailureAt,r.AdverseFailureEventKind
+        };
+        decimal peak=300m,drawdown=0m;
+        foreach(var mark in joint.SampledEquity)
+        {
+            if(mark.AdverseEquityEur is not decimal value)continue;
+            peak=Math.Max(peak,value);
+            drawdown=Math.Max(drawdown,(peak-value)/peak);
+        }
+        File.WriteAllText(args[1],JsonSerializer.Serialize(new {
+            Study="MCT2",SourceSha256=Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant(),
+            Receipt=joint,OnlyCrypto=Summary(crypto),OnlyMetal=Summary(metal),
+            FundedLong=Summary(longOnly),FundedShort=Summary(shortOnly),
+            CryptoMarginalCentralEur=joint.ModelClosedCentralNetEur-metal.ModelClosedCentralNetEur,
+            CryptoMarginalAdverseEur=joint.ModelClosedAdverseNetEur-metal.ModelClosedAdverseNetEur,
+            MetalMarginalCentralEur=joint.ModelClosedCentralNetEur-crypto.ModelClosedCentralNetEur,
+            MetalMarginalAdverseEur=joint.ModelClosedAdverseNetEur-crypto.ModelClosedAdverseNetEur,
+            SampledAdverseDrawdown=drawdown,
+            MissingAdverseMarks=joint.SampledEquity.Count(x=>!x.AdverseEquityEur.HasValue),
+            CashResetBetweenWeeks=false,Qualification="EXPOSED_SHADOW_REPLAY_ONLY",
+            ExpectedWeeks=new[]{"2026-W36","2026-W37","2026-W38","2026-W39","2026-W40"}
+        }));
+        return 0;
+    }
+    catch(Exception ex)
+    {
+        var reason=System.Text.RegularExpressions.Regex.IsMatch(ex.Message,@"^[A-Z][A-Z0-9_]{2,100}$")
+            ?ex.Message:ex.GetType().Name;
+        Console.Error.WriteLine("MCT2_NATIVE_REPLAY_REJECTED:"+stage+":"+reason);
+        return 67;
+    }
+}
+
 // New read-only oil and FX portfolio.
 if(args.Length==3 && args[2] is ("--native-otc1" or "--native-otc1-contracts"))
 {
