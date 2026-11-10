@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/ldp1.yml"
+      - "research/ldp1.py"
 permissions:
   contents: read
   actions: read

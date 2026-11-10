@@ -21,6 +21,7 @@ def main():
         quote_hour_end=13,
         label="ORIGINAL_PEPPERSTONE_LDP1_W26_W30",
         mode="--native-ldp1",
+        contract_preflight="--native-ldp1-contracts",
     ))
     report["ProtocolSha256"] = sha256(Path("research/LDP1.md").read_bytes()).hexdigest()
     Path("ldp1-public.json").write_text(json.dumps(report, indent=2) + "\n")

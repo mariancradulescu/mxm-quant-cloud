@@ -10,6 +10,7 @@ from __future__ import annotations
 import bisect
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -143,6 +144,13 @@ def contract(symbol, c, quote_asset, observed_at):
         "HistoricalTariffContinuityCertified": False
     }
 
+def emit_native_failure(process):
+    match = re.search(r"^LDP1_NATIVE_REPLAY_REJECTED:[A-Za-z0-9_-]+:[A-Za-z0-9_]+$",
+                      process.stderr or "", re.MULTILINE)
+    if process.returncode and match:
+        print(match.group(0), flush=True)
+
+
 def collect_and_evaluate(profile=None):
     symbols = SYMBOLS if profile is None else profile["symbols"]
     source_start = SOURCE_START if profile is None else profile["source_start"]
@@ -226,6 +234,18 @@ def collect_and_evaluate(profile=None):
             terms[name] = (contract(name,c,"USD",
                             int(datetime.now(timezone.utc).timestamp()*1000)),
                            minimum_margin)
+        if profile is not None and profile.get("contract_preflight"):
+            with tempfile.TemporaryDirectory(prefix="mxm-contract-preflight-") as folder:
+                inp, out = Path(folder)/"terms.json", Path(folder)/"result.json"
+                inp.write_text(json.dumps([terms[name][0] for name in symbols]))
+                inp.chmod(0o600)
+                env = {k: v for k, v in os.environ.items()
+                       if not k.startswith(("R3_CTRADER_", "CTRADER_", "MXM_V4_"))}
+                preflight = subprocess.run(["dotnet", "src/Mxm.Replay/bin/Release/net8.0/Mxm.Replay.dll",
+                    str(inp), str(out), profile["contract_preflight"]], capture_output=True,
+                    text=True, env=env, timeout=30)
+                emit_native_failure(preflight)
+                need(preflight.returncode == 0 and out.is_file(), "NATIVE_CONTRACT_PREFLIGHT_FAILED")
         bars = []
         for name in symbols:
             history = {}
@@ -398,7 +418,10 @@ def collect_and_evaluate(profile=None):
                  "--native-original-openapi-historic-w36w37"
                  if HISTORIC_W36_W37 else "--native-original-openapi-w45")],
                 stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,env=env,timeout=150)
+                stderr=subprocess.PIPE if profile and profile.get("contract_preflight") else subprocess.DEVNULL,
+                text=True,env=env,timeout=150)
+            if profile and profile.get("contract_preflight"):
+                emit_native_failure(process)
             need(process.returncode==0 and output_file.is_file(),
                  "NATIVE_CSHARP_REPLAY_EXECUTION_FAILED")
             evaluated=json.loads(output_file.read_text())
