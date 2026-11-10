@@ -9,7 +9,8 @@ public sealed record NativeOriginalOpenApiMarketMark(
     long At,string Symbol,decimal Bid,decimal Ask,
     decimal QuoteCreditToEur,decimal QuoteDebitToEur,decimal UsdToEur,
     decimal MarginRequirementEur,decimal SlippagePerSideQuote,
-    NativeObservedContractTerms Contract);
+    NativeObservedContractTerms Contract,
+    decimal? MinimumFeeAssetToEur=null);
 public sealed record NativeOriginalOpenApiTape(
     string SourceLabel,NativeHistoricalBars[] Bars,
     NativeOriginalOpenApiMarketMark[] Marks);
@@ -31,7 +32,7 @@ public static class NativeOriginalOpenApiProductAdapter
                 throw new ArgumentException("OPENAPI_PRODUCT_CURRENT_CONTRACT_PROVENANCE_INVALID");
             var ctx=new NativeMarketCostContext(m.At,m.Bid,m.Ask,
                 m.QuoteCreditToEur,m.QuoteDebitToEur,m.UsdToEur,
-                m.UsdToEur,m.MarginRequirementEur,
+                m.MinimumFeeAssetToEur,m.MarginRequirementEur,
                 m.Contract.MinimumUnits,m.SlippagePerSideQuote);
             var priced=NativeBrokerContractCosts.Quote(m.Contract,ctx);
             return new NativeHistoricalQuoteObservation(m.At,priced.Quote,

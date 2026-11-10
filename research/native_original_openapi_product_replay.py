@@ -36,12 +36,14 @@ US_INDEX_W20W21 = "--us-index-w20w21" in sys.argv
 NAS100_FROZEN_W32W33 = "--nas100-frozen-w32w33" in sys.argv
 NG_AUD_W38W39 = "--natgas-audusd-w38w39" in sys.argv
 HK_BRENT_W40W41 = "--hk50-spotbrent-w40w41" in sys.argv
+BRENT_AMD_W42W43 = "--brent-amd-w42w43" in sys.argv
 US_INDEX_ANY = US_INDEX_W20W21 or NAS100_FROZEN_W32W33
 if sum((HISTORIC_W36_W37, CROSS_ENERGY_EQUITY, CRYPTO_CRUDE_HISTORIC,
         US_INDEX_W20W21, NAS100_FROZEN_W32W33, NG_AUD_W38W39,
-        HK_BRENT_W40W41))>1:
+        HK_BRENT_W40W41, BRENT_AMD_W42W43))>1:
     raise RuntimeError("MULTIPLE_RESEARCH_PROFILES_NOT_ALLOWED")
-SYMBOLS = (("EURUSD","HK50","SpotBrent") if HK_BRENT_W40W41 else
+SYMBOLS = (("EURUSD","SpotBrent","AMD.US") if BRENT_AMD_W42W43 else
+           ("EURUSD","HK50","SpotBrent") if HK_BRENT_W40W41 else
            ("EURUSD","AUDUSD","NatGas") if NG_AUD_W38W39 else
            ("EURUSD","US500","NAS100") if US_INDEX_ANY else
            ("EURUSD","ETHUSD","SpotCrude") if CRYPTO_CRUDE_HISTORIC else
@@ -50,7 +52,11 @@ SYMBOLS = (("EURUSD","HK50","SpotBrent") if HK_BRENT_W40W41 else
            ("EURUSD","GBPUSD","AUDUSD","NZDUSD") if HISTORIC_W36_W37
            else ("EURUSD","GBPUSD","AUDUSD"))
 M5 = 300000
-if HK_BRENT_W40W41:
+if BRENT_AMD_W42W43:
+    SOURCE_START = int(datetime(2026,10,9,8,tzinfo=timezone.utc).timestamp()*1000)
+    DECISION_START = int(datetime(2026,10,12,tzinfo=timezone.utc).timestamp()*1000)
+    DECISION_END = int(datetime(2026,10,26,tzinfo=timezone.utc).timestamp()*1000)
+elif HK_BRENT_W40W41:
     # Original predeclared index/energy cross-session weeks, no W46 use.
     SOURCE_START = int(datetime(2026,9,25,8,tzinfo=timezone.utc).timestamp()*1000)
     DECISION_START = int(datetime(2026,9,28,tzinfo=timezone.utc).timestamp()*1000)
@@ -184,7 +190,7 @@ def collect_and_evaluate():
                  and detail.symbol[0].symbolId == ids[name],
                  "CONTRACT_SYMBOL_MISMATCH")
             c = detail.symbol[0]
-            need((0<=int(c.digits)<=8 if (CROSS_ENERGY_EQUITY or CRYPTO_CRUDE_HISTORIC or US_INDEX_ANY or NG_AUD_W38W39 or HK_BRENT_W40W41 or HK_BRENT_W40W41) else c.digits==5)
+            need((0<=int(c.digits)<=8 if (CROSS_ENERGY_EQUITY or CRYPTO_CRUDE_HISTORIC or US_INDEX_ANY or NG_AUD_W38W39 or HK_BRENT_W40W41 or BRENT_AMD_W42W43) else c.digits==5)
                  and int(c.tradingMode)==0 and
                  c.minVolume>0 and c.stepVolume>0 and
                  c.maxVolume>=c.minVolume and c.lotSize>0 and
@@ -235,18 +241,18 @@ def collect_and_evaluate():
                      "TickVolume":v[5]}
                     for t,v in sorted(history.items())
                     if v[0] <= SOURCE_END]
-            need(len(rows)>=(400 if (CROSS_ENERGY_EQUITY or CRYPTO_CRUDE_HISTORIC or US_INDEX_ANY or NG_AUD_W38W39 or HK_BRENT_W40W41)
+            need(len(rows)>=(400 if (CROSS_ENERGY_EQUITY or CRYPTO_CRUDE_HISTORIC or US_INDEX_ANY or NG_AUD_W38W39 or HK_BRENT_W40W41 or BRENT_AMD_W42W43)
                                  and name not in ("EURUSD","AUDUSD")
                             else 2100 if HISTORIC_W36_W37 else 1100),
                  "INSUFFICIENT_PREDECLARED_COMPLETE_M5")
             # Mandatory development window integrity check before further
             # tick data is requested; weekend bars are not manufactured.
             first_week=DECISION_START+7*86400000
-            minimum_week=(200 if (CROSS_ENERGY_EQUITY or CRYPTO_CRUDE_HISTORIC or US_INDEX_ANY or NG_AUD_W38W39 or HK_BRENT_W40W41)
+            minimum_week=(200 if (CROSS_ENERGY_EQUITY or CRYPTO_CRUDE_HISTORIC or US_INDEX_ANY or NG_AUD_W38W39 or HK_BRENT_W40W41 or BRENT_AMD_W42W43)
                             and name not in ("EURUSD","AUDUSD") else 1000)
             need(sum(DECISION_START<=x["OpenAt"]<first_week for x in rows)>=minimum_week,
                  "FIRST_COMPLETE_WEEK_M5_COVERAGE_UNSATISFACTORY")
-            if NAS100_FROZEN_W32W33 or NG_AUD_W38W39 or HK_BRENT_W40W41:
+            if NAS100_FROZEN_W32W33 or NG_AUD_W38W39 or HK_BRENT_W40W41 or BRENT_AMD_W42W43:
                 # No empty/gappy second scoring week counted as genuine.
                 need(sum(first_week<=x["OpenAt"]<DECISION_END for x in rows)>=minimum_week,
                      "SECOND_COMPLETE_WEEK_M5_COVERAGE_UNSATISFACTORY")
@@ -336,6 +342,8 @@ def collect_and_evaluate():
         # The only file sent to the C# replay contains time-labeled market
         # readings, never OAuth values, original account ID, or broker orders.
         tape={"SourceLabel":(
+              "ORIGINAL_PEPPERSTONE_OPENAPI_2026_W42_W43_BRENT_AMD_PREDECLARED"
+              if BRENT_AMD_W42W43 else
               "ORIGINAL_PEPPERSTONE_OPENAPI_2026_W40_W41_HK_BRENT_PREDECLARED"
               if HK_BRENT_W40W41 else
               "ORIGINAL_PEPPERSTONE_OPENAPI_2026_W38_W39_NG_AUD_PREDECLARED"
@@ -362,7 +370,9 @@ def collect_and_evaluate():
             process=subprocess.run(["dotnet",
                 "src/Mxm.Replay/bin/Release/net8.0/Mxm.Replay.dll",
                 str(input_file),str(output_file),
-                ("--native-original-openapi-hk50-spotbrent-w40w41"
+                ("--native-original-openapi-brent-amd-w42w43"
+                  if BRENT_AMD_W42W43 else
+                  "--native-original-openapi-hk50-spotbrent-w40w41"
                  if HK_BRENT_W40W41 else
                  "--native-original-openapi-natgas-audusd-w38w39"
                  if NG_AUD_W38W39 else
@@ -383,7 +393,8 @@ def collect_and_evaluate():
             evaluated=json.loads(output_file.read_text())
         receipt=evaluated["Receipt"]
         result={
-            "Schema":("MXM_OPENAPI_ORIGINAL_HK50_SPOTBRENT_W40_W41_V1"
+            "Schema":("MXM_OPENAPI_ORIGINAL_BRENT_AMD_W42_W43_V1"
+                       if BRENT_AMD_W42W43 else"MXM_OPENAPI_ORIGINAL_HK50_SPOTBRENT_W40_W41_V1"
                       if HK_BRENT_W40W41 else
                       "MXM_OPENAPI_ORIGINAL_NATGAS_AUDUSD_W38_W39_V1"
                       if NG_AUD_W38W39 else
@@ -397,7 +408,8 @@ def collect_and_evaluate():
                       if CROSS_ENERGY_EQUITY else
                       "MXM_OPENAPI_AUTHENTIC_NATIVE_HISTORICAL_W36_W37_V1"
                       if HISTORIC_W36_W37 else "MXM_OPENAPI_AUTHENTIC_NATIVE_W45_FX_V1"),
-            "ProtocolPath":("research/hk50_spotbrent_w40_w41_protocol.json"
+            "ProtocolPath":("research/brent_amd_w42_w43_protocol.json"
+                             if BRENT_AMD_W42W43 else"research/hk50_spotbrent_w40_w41_protocol.json"
                             if HK_BRENT_W40W41 else
                             "research/natgas_audusd_w38_w39_protocol.json"
                             if NG_AUD_W38W39 else
@@ -412,7 +424,8 @@ def collect_and_evaluate():
                             "research/fx_historical_w36_w37_protocol.json"
                             if HISTORIC_W36_W37 else
                             "research/fx_w45_new_mechanisms_protocol.json"),
-            "WindowRole":("EXPOSED_2026_W40_W41_NEW_HK_BRENT_CROSS_SESSION_NOT_INDEPENDENT"
+            "WindowRole":("EXPOSED_2026_W42_W43_NEW_BRENT_AMD_MULTI_CLASS_NOT_INDEPENDENT"
+                           if BRENT_AMD_W42W43 else"EXPOSED_2026_W40_W41_NEW_HK_BRENT_CROSS_SESSION_NOT_INDEPENDENT"
                           if HK_BRENT_W40W41 else
                           "EXPOSED_2026_W38_W39_NEW_MULTICLASS_CAUSAL_DEVELOPMENT_NOT_INDEPENDENT"
                           if NG_AUD_W38W39 else
@@ -427,7 +440,7 @@ def collect_and_evaluate():
                           "RETROSPECTIVE_GLOBALLY_EXPOSED_DEV_W36_SELECTION_W37_NOT_CONFIRMATION"
                           if HISTORIC_W36_W37 else
                           "EXPLORATORY_DEVELOPMENT_NOT_INDEPENDENT_CONFIRMATION"),
-            "Week":("2026-W40_W41" if HK_BRENT_W40W41 else
+            "Week":("2026-W42_W43" if BRENT_AMD_W42W43 else"2026-W40_W41" if HK_BRENT_W40W41 else
                      "2026-W38_W39" if NG_AUD_W38W39 else
                      "2026-W32_W33" if NAS100_FROZEN_W32W33 else
                      "2026-W20_W21" if US_INDEX_W20W21 else
@@ -438,6 +451,8 @@ def collect_and_evaluate():
                  (CRYPTO_CRUDE_HISTORIC or CROSS_ENERGY_EQUITY or
                   HISTORIC_W36_W37 or US_INDEX_ANY or NG_AUD_W38W39) else None),
             "HistoricalSelectionStartUtcMs":(
+                 int(datetime(2026,10,19,tzinfo=timezone.utc).timestamp()*1000)
+                 if BRENT_AMD_W42W43 else
                  int(datetime(2026,10,5,tzinfo=timezone.utc).timestamp()*1000)
                  if HK_BRENT_W40W41 else
                  int(datetime(2026,9,21,tzinfo=timezone.utc).timestamp()*1000)
@@ -458,13 +473,16 @@ def collect_and_evaluate():
                 if NAS100_FROZEN_W32W33 else None),
             "FrozenW20W21MechanismsAndExitsUnchanged":US_INDEX_ANY,
             "NewRegimeSessionsUtc":(
+                ["SpotBrent 10:00-15:00 UTC after 07:00-09:00 2h drive",
+                 "AMD.US 17:00-19:30 UTC late US cash"]
+                if BRENT_AMD_W42W43 else
                 ["HK50 02:15-03:30 UTC; HKEX HKT UTC+8",
                  "SpotBrent 07:00-12:00 UTC"]
                 if HK_BRENT_W40W41 else
                 ["NatGas 13:00-19:00 UTC","AUDUSD 07:00-09:30 UTC"]
                 if NG_AUD_W38W39 else None),
             "TwoFundedConstantSideAndInvertedBenchmarks":(
-                NG_AUD_W38W39 or HK_BRENT_W40W41),
+                NG_AUD_W38W39 or HK_BRENT_W40W41 or BRENT_AMD_W42W43),
             "ReadOnlyOriginalPepperstoneAuthenticated":True,
             "ExplicitViewScopeVerified":False,
             "ViewPermissionRequestPath":"EXISTING_OWNER_READONLY_AUTH_SCOPE_DECLARED_IN_RUN_LOG",
@@ -478,6 +496,9 @@ def collect_and_evaluate():
                 name:terms[name][0]["ObservedAtUtcMs"] for name in SYMBOLS},
             "HistoricContractTariffsAreRetrospectiveScenarios":True,
             "ResearchMechanismsPreregistered":(
+                ["SPOTBRENT_EU_MORNING_DRIVE_PULLBACK_CONTINUATION",
+                 "AMD_US_LATE_CASH_COMPRESSION_BREAK_TICK_ACCELERATION"]
+                if BRENT_AMD_W42W43 else
                 ["HK50_HK_CASH_OPEN_RANGE_FALSE_BREAK_REVERSION",
                  "SPOTBRENT_EU_OPEN_RANGE_EXPANSION_CONTINUATION"]
                 if HK_BRENT_W40W41 else
@@ -497,8 +518,9 @@ def collect_and_evaluate():
                 ["FX_USD_BREADTH_DELAYED_CATCHUP",
                  "FX_M5_SHOCK_EXHAUSTION_REVERSION"]),
             "EURUSDOnlyUsdToEurConversionContext":(
-                 CROSS_ENERGY_EQUITY or CRYPTO_CRUDE_HISTORIC or US_INDEX_ANY or NG_AUD_W38W39 or HK_BRENT_W40W41),
-            "SourceAssetClasses":(["index","energy"]
+                 CROSS_ENERGY_EQUITY or CRYPTO_CRUDE_HISTORIC or US_INDEX_ANY or NG_AUD_W38W39 or HK_BRENT_W40W41 or BRENT_AMD_W42W43),
+            "SourceAssetClasses":(["energy","equity"]
+                    if BRENT_AMD_W42W43 else["index","energy"]
                    if HK_BRENT_W40W41 else
                    ["fx","energy"]
                    if NG_AUD_W38W39 else
@@ -522,7 +544,7 @@ def collect_and_evaluate():
             "NativeProductReceipt":receipt,
             "CounterfactualFamilyAblations":(
                 evaluated["FundedAblations"] if
-                 (CROSS_ENERGY_EQUITY or CRYPTO_CRUDE_HISTORIC or US_INDEX_ANY or NG_AUD_W38W39 or HK_BRENT_W40W41)
+                 (CROSS_ENERGY_EQUITY or CRYPTO_CRUDE_HISTORIC or US_INDEX_ANY or NG_AUD_W38W39 or HK_BRENT_W40W41 or BRENT_AMD_W42W43)
                 else evaluated["CounterfactualAblation"])
         }
         Path("native-original-openapi-public-receipt.json").write_text(
