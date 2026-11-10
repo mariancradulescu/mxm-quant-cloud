@@ -145,7 +145,7 @@ def contract(symbol, c, quote_asset, observed_at):
     }
 
 def emit_native_failure(process):
-    match = re.search(r"^LDP1_NATIVE_REPLAY_REJECTED:[A-Za-z0-9_-]+:[A-Za-z0-9_]+$",
+    match = re.search(r"^(?:LDP1|JRC1)_NATIVE_REPLAY_REJECTED:[A-Za-z0-9_-]+:[A-Za-z0-9_]+$",
                       process.stderr or "", re.MULTILINE)
     if process.returncode and match:
         print(match.group(0), flush=True)
@@ -199,7 +199,9 @@ def collect_and_evaluate(profile=None):
         for name in symbols:
             light = roster[name]
             ids[name] = int(light.symbolId)
-            need(assets.get(light.quoteAssetId) == "USD",
+            quote_asset=assets.get(light.quoteAssetId)
+            allowed=("USD","JPY") if profile and profile.get("jpy_route") else ("USD",)
+            need(quote_asset in allowed,
                  "RESEARCH_FX_QUOTE_ASSET_NOT_USD")
             detail = req(m.ProtoOASymbolByIdReq(
                 ctidTraderAccountId=account, symbolId=[ids[name]]),
@@ -231,7 +233,7 @@ def collect_and_evaluate(profile=None):
                                 D(10)**margin.moneyDigits)
             need(minimum_margin>0 and minimum_margin<=D(300),
                  "MINIMUM_BROKER_MARGIN_EXCEEDS_SINGLE_300_EUR_BUDGET")
-            terms[name] = (contract(name,c,"USD",
+            terms[name] = (contract(name,c,quote_asset,
                             int(datetime.now(timezone.utc).timestamp()*1000)),
                            minimum_margin)
         if profile is not None and profile.get("contract_preflight"):
@@ -315,6 +317,7 @@ def collect_and_evaluate(profile=None):
         # No price is reconstructed from OHLCV, no future tick is used, no
         # weekend gaps are forward-filled, and raw ticks never leave runner.
         sampled={name:{e.BID:{},e.ASK:{}} for name in symbols}
+        quote_stamps={name:{e.BID:{},e.ASK:{}} for name in symbols}
         quote_windows=0
         for lo in range(decision_start-120000,decision_end+1500,
                         QUOTING_WINDOW):
@@ -334,6 +337,7 @@ def collect_and_evaluate(profile=None):
                         i=bisect.bisect_right(ts,clock)-1
                         if i>=0 and clock-ts[i]<=60000:
                             sampled[name][side][clock]=D(points[i][1])/D(100000)
+                            quote_stamps[name][side][clock]=points[i][0]
         marks=[]
         total_clocks=0
         missing_pair_clock=0
@@ -356,6 +360,22 @@ def collect_and_evaluate(profile=None):
                     missing_pair_clock+=1
                     continue
                 c,margin=terms[name]
+                route = None
+                if profile and profile.get("jpy_route"):
+                    names = ("USDJPY","EURUSD") if c["QuoteAsset"]=="JPY" else ("EURUSD",)
+                    route=[]
+                    for pair in names:
+                        pair_bid=sampled[pair][e.BID].get(clock)
+                        pair_ask=sampled[pair][e.ASK].get(clock)
+                        light=roster[pair]
+                        if pair_bid is None or pair_ask is None or pair_bid<=0 or pair_ask<pair_bid:
+                            break
+                        route.append(dict(Symbol=pair,BaseAsset=assets[light.baseAssetId],
+                            QuoteAsset=assets[light.quoteAssetId],AtUtcMs=min(quote_stamps[pair][e.BID][clock],quote_stamps[pair][e.ASK][clock]),
+                            Bid=str(pair_bid),Ask=str(pair_ask),OriginalBrokerAuthenticated=True))
+                    if len(route)!=len(names):
+                        missing_pair_clock+=1
+                        continue
                 spread=ask-bid
                 # Conditional slippage model, not authentic broker fill.
                 slip=max(D("0.00001"),spread/4)
@@ -366,7 +386,8 @@ def collect_and_evaluate(profile=None):
                     "UsdToEur":str(usd_to_eur),
                     "MarginRequirementEur":str(margin),
                     "SlippagePerSideQuote":str(slip),
-                    "Contract":c
+                    "Contract":c,
+                    **({"OriginalFxRoute":route} if route is not None else {})
                 })
         need(len(marks)>=300, "INSUFFICIENT_MULTI_WEEK_ASOF_BIDASK_CLOCKS")
         # The only file sent to the C# replay contains time-labeled market

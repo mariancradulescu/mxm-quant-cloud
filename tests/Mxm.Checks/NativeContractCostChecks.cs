@@ -24,6 +24,34 @@ static class NativeContractCostChecks
             priced.Quote.EurCredit==.006m &&
             !priced.HistoricalExecutionCertified,
             "bid-ask and slippage separated; no historical tariff certificate");
+        var route=new[] {
+            new NativeOriginalFxHop("USDJPY","USD","JPY",2000,150m,150.02m,true),
+            new NativeOriginalFxHop("EURUSD","EUR","USD",2000,1.10m,1.1002m,true)
+        };
+        var originalMark=new NativeOriginalOpenApiMarketMark(2000,"EURJPY",161m,161.02m,
+            1m,1m,.9m,33.33m,.0005m,terms,null,route);
+        var routed=NativeOriginalOpenApiProductAdapter.Convert(
+            new NativeOriginalOpenApiTape("SYNTHETIC_ROUTE_ADAPTER_ONLY",
+                Array.Empty<NativeHistoricalBars>(),new[]{originalMark}));
+        var expected=NativeBrokerContractCosts.ComposeCausalQuoteToEur("JPY",2000,route);
+        check(routed.Quotes[0].Quote.EurCredit==expected.CreditToEur &&
+              routed.Quotes[0].Quote.EurDebit==expected.DebitToEur,
+            "native original adapter prices JPY from explicit causal route instead of supplied placeholder rates");
+        var stressed=new NativeProductAdverseBook();
+        const string stressHash="bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+        var stressQuote=new LedgerQuote("EURJPY",1000,161m,161.02m,.006m,.006m,0,0,.301m);
+        var intent=new LedgerEvent("stress-request",1000,"REQUEST_OPEN","stress-open","EURJPY",1,
+            1000,0,0,.301m,0,0,0,1000,"SYNTHETIC_MARGIN_RECHECK",stressHash,new[]{stressQuote});
+        stressed.Apply(intent);
+        stressed.Apply(intent with {EventId="stress-fill",At=2000,Kind="OPEN_FILL",
+            ExecutionPrice=161.02m,Quotes=new[]{stressQuote with {At=2000}}});
+        check(!stressed.Complete && stressed.Summary is null &&
+              stressed.FailureKind=="UNFINANCEABLE_OPEN_AT_STRESSED_MARK" &&
+              stressed.FailureAt==2000 && stressed.FailureEventKind=="OPEN_FILL",
+            "adverse funding failure has its own classification and no invented completed NET");
+        var restoredStress=NativeProductAdverseBook.Restore(stressed.Export());
+        check(restoredStress.FailureKind==stressed.FailureKind && restoredStress.FailureAt==2000,
+            "adverse failure classification survives the existing checkpoint");
         var source=new NativeFundedLedger(1000);
         const string hash="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
         LedgerEvent E(string id,long at,string kind,decimal price=0,LedgerQuote[]? quotes=null,decimal fee=.027m)=>

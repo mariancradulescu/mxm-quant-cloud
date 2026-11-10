@@ -10,7 +10,7 @@ public sealed record NativeOriginalOpenApiMarketMark(
     decimal QuoteCreditToEur,decimal QuoteDebitToEur,decimal UsdToEur,
     decimal MarginRequirementEur,decimal SlippagePerSideQuote,
     NativeObservedContractTerms Contract,
-    decimal? MinimumFeeAssetToEur=null);
+    decimal? MinimumFeeAssetToEur=null,NativeOriginalFxHop[]? OriginalFxRoute=null);
 public sealed record NativeOriginalOpenApiTape(
     string SourceLabel,NativeHistoricalBars[] Bars,
     NativeOriginalOpenApiMarketMark[] Marks);
@@ -30,8 +30,16 @@ public static class NativeOriginalOpenApiProductAdapter
                m.Contract.Symbol!=m.Symbol||
                m.Contract.ObservedAtUtcMs<=0)
                 throw new ArgumentException("OPENAPI_PRODUCT_CURRENT_CONTRACT_PROVENANCE_INVALID");
+            decimal credit=m.QuoteCreditToEur,debit=m.QuoteDebitToEur;
+            if(m.OriginalFxRoute is not null)
+            {
+                var conversion=NativeBrokerContractCosts.ComposeCausalQuoteToEur(
+                    m.Contract.QuoteAsset,m.At,m.OriginalFxRoute);
+                credit=conversion.CreditToEur;
+                debit=conversion.DebitToEur;
+            }
             var ctx=new NativeMarketCostContext(m.At,m.Bid,m.Ask,
-                m.QuoteCreditToEur,m.QuoteDebitToEur,m.UsdToEur,
+                credit,debit,m.UsdToEur,
                 m.MinimumFeeAssetToEur,m.MarginRequirementEur,
                 m.Contract.MinimumUnits,m.SlippagePerSideQuote);
             var priced=NativeBrokerContractCosts.Quote(m.Contract,ctx);
