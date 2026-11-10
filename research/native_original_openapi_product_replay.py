@@ -145,7 +145,7 @@ def contract(symbol, c, quote_asset, observed_at):
     }
 
 def emit_native_failure(process):
-    match = re.search(r"^(?:LDP1|JRC1|OTC1|MCT2)_NATIVE_REPLAY_REJECTED:[A-Za-z0-9_-]+:[A-Za-z0-9_]+$",
+    match = re.search(r"^(?:LDP1|JRC1|OTC1|MCT2|BMR1)_NATIVE_REPLAY_REJECTED:[A-Za-z0-9_-]+:[A-Za-z0-9_]+$",
                       process.stderr or "", re.MULTILINE)
     if process.returncode and match:
         print(match.group(0), flush=True)
@@ -157,10 +157,11 @@ def collect_and_evaluate(profile=None):
     decision_start = DECISION_START if profile is None else profile["start"]
     decision_end = DECISION_END if profile is None else profile["end"]
     source_end = decision_end + M5
+    event_days = frozenset(profile.get("event_days", ())) if profile else frozenset()
 
     def eligible(clock):
         day = datetime.fromtimestamp(clock / 1000, timezone.utc)
-        return day.weekday() < 5 and (profile is None or profile.get("quote_hour_start", 14) <= day.hour < profile.get("quote_hour_end", 21))
+        return day.weekday() < 5 and (not event_days or day.date().isoformat() in event_days) and (profile is None or profile.get("quote_hour_start", 14) <= day.hour < profile.get("quote_hour_end", 21))
 
     transport = StdlibCTraderTransport()
     counter = 0
@@ -251,43 +252,49 @@ def collect_and_evaluate(profile=None):
         bars = []
         for name in symbols:
             history = {}
-            lo = source_start
-            while lo < source_end:
-                hi = min(lo + 6*3600000, source_end)
-                res = req(m.ProtoOAGetTrendbarsReq(
-                    ctidTraderAccountId=account,symbolId=ids[name],
-                    period=e.M5,fromTimestamp=lo,toTimestamp=hi),
-                    m.ProtoOAGetTrendbarsRes)
-                need(res.period==e.M5 and
-                     (not res.HasField("symbolId") or res.symbolId==ids[name]) and
-                     not res.hasMore, "M5_TRENDBAR_BATCH_TRUNCATED")
-                for t,closed,o,h,l,c,v in decode_bars(
-                    res.trendbar,lo-M5,hi+M5,5):
-                    need(t not in history or history[t]==(closed,o,h,l,c,v),
-                         "M5_DUPLICATE_CONFLICT")
-                    history[t]=(closed,o,h,l,c,v)
-                lo = hi
+            windows = (profile["bar_ranges"] if event_days else ((source_start, source_end),))
+            for lo, window_end in windows:
+                while lo < window_end:
+                    hi = min(lo + 6*3600000, window_end)
+                    res = req(m.ProtoOAGetTrendbarsReq(
+                        ctidTraderAccountId=account,symbolId=ids[name],
+                        period=e.M5,fromTimestamp=lo,toTimestamp=hi),
+                        m.ProtoOAGetTrendbarsRes)
+                    need(res.period==e.M5 and
+                         (not res.HasField("symbolId") or res.symbolId==ids[name]) and
+                         not res.hasMore, "M5_TRENDBAR_BATCH_TRUNCATED")
+                    for t,closed,o,h,l,c,v in decode_bars(
+                        res.trendbar,lo-M5,hi+M5,5):
+                        need(t not in history or history[t]==(closed,o,h,l,c,v),
+                             "M5_DUPLICATE_CONFLICT")
+                        history[t]=(closed,o,h,l,c,v)
+                    lo = hi
             rows = [{"OpenAt":t,"CloseAt":v[0],
                      "Open":price(v[1]),"High":price(v[2]),
                      "Low":price(v[3]),"Close":price(v[4]),
                      "TickVolume":v[5]}
                     for t,v in sorted(history.items())
                     if v[0] <= source_end]
-            need(len(rows)>=(400 if (CROSS_ENERGY_EQUITY or CRYPTO_CRUDE_HISTORIC or US_INDEX_ANY or NG_AUD_W38W39 or HK_BRENT_W40W41 or BRENT_AMD_W42W43)
-                                 and name not in ("EURUSD","AUDUSD")
-                            else 2100 if HISTORIC_W36_W37 else 1100),
-                 "INSUFFICIENT_PREDECLARED_COMPLETE_M5")
-            # Mandatory development window integrity check before further
-            # tick data is requested; weekend bars are not manufactured.
-            first_week=decision_start+7*86400000
-            minimum_week=(200 if (CROSS_ENERGY_EQUITY or CRYPTO_CRUDE_HISTORIC or US_INDEX_ANY or NG_AUD_W38W39 or HK_BRENT_W40W41 or BRENT_AMD_W42W43)
-                            and name not in ("EURUSD","AUDUSD") else 1000)
-            need(sum(decision_start<=x["OpenAt"]<first_week for x in rows)>=minimum_week,
-                 "FIRST_COMPLETE_WEEK_M5_COVERAGE_UNSATISFACTORY")
-            if NAS100_FROZEN_W32W33 or NG_AUD_W38W39 or HK_BRENT_W40W41 or BRENT_AMD_W42W43:
-                # No empty/gappy second scoring week counted as genuine.
-                need(sum(first_week<=x["OpenAt"]<decision_end for x in rows)>=minimum_week,
-                     "SECOND_COMPLETE_WEEK_M5_COVERAGE_UNSATISFACTORY")
+            if event_days:
+                for lo, hi in windows:
+                    need(sum(lo<=row["OpenAt"] and row["CloseAt"]<=hi for row in rows)>=100,
+                         "EVENT_WARMUP_BARS_INCOMPLETE")
+            else:
+                need(len(rows)>=(400 if (CROSS_ENERGY_EQUITY or CRYPTO_CRUDE_HISTORIC or US_INDEX_ANY or NG_AUD_W38W39 or HK_BRENT_W40W41 or BRENT_AMD_W42W43)
+                                     and name not in ("EURUSD","AUDUSD")
+                                else 2100 if HISTORIC_W36_W37 else 1100),
+                     "INSUFFICIENT_PREDECLARED_COMPLETE_M5")
+                # Mandatory development window integrity check before further
+                # tick data is requested; weekend bars are not manufactured.
+                first_week=decision_start+7*86400000
+                minimum_week=(200 if (CROSS_ENERGY_EQUITY or CRYPTO_CRUDE_HISTORIC or US_INDEX_ANY or NG_AUD_W38W39 or HK_BRENT_W40W41 or BRENT_AMD_W42W43)
+                                and name not in ("EURUSD","AUDUSD") else 1000)
+                need(sum(decision_start<=x["OpenAt"]<first_week for x in rows)>=minimum_week,
+                     "FIRST_COMPLETE_WEEK_M5_COVERAGE_UNSATISFACTORY")
+                if NAS100_FROZEN_W32W33 or NG_AUD_W38W39 or HK_BRENT_W40W41 or BRENT_AMD_W42W43:
+                    # No empty/gappy second scoring week counted as genuine.
+                    need(sum(first_week<=x["OpenAt"]<decision_end for x in rows)>=minimum_week,
+                         "SECOND_COMPLETE_WEEK_M5_COVERAGE_UNSATISFACTORY")
             bars.append({"Symbol":name,"M5":rows})
 
         def ticks(name, side, start, end):

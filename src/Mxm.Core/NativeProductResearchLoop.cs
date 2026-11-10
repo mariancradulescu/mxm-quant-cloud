@@ -73,6 +73,7 @@ public sealed class NativeProductResearchLoop
             "AUD_ONLY_W38W39" or
             "HK_BRENT_JOINT_W40W41" or "HK_ONLY_W40W41" or
             "BRENT_ONLY_W40W41" or
+            "BMR1_JOINT" or "BMR1_FX" or "BMR1_GOLD" or "BMR1_LONG" or "BMR1_SHORT" or
             "MCT2_JOINT" or "MCT2_CRYPTO" or "MCT2_METAL" or "MCT2_LONG" or "MCT2_SHORT" or
             "OTC1_JOINT" or "OTC1_OIL" or "OTC1_FX" or "OTC1_LONG" or "OTC1_SHORT" or
             "JRC1_JOINT" or "JRC1_RISK" or "JRC1_REVERSION" or "JRC1_LONG" or "JRC1_SHORT" or
@@ -303,7 +304,8 @@ public sealed class NativeProductResearchLoop
                     (researchMode.StartsWith("LDP1_",StringComparison.Ordinal) ||
                      researchMode.StartsWith("JRC1_",StringComparison.Ordinal) ||
                      researchMode.StartsWith("OTC1_",StringComparison.Ordinal) ||
-                     researchMode.StartsWith("MCT2_",StringComparison.Ordinal)) &&
+                     researchMode.StartsWith("MCT2_",StringComparison.Ordinal) ||
+                     researchMode.StartsWith("BMR1_",StringComparison.Ordinal)) &&
                     ex.Message=="NATIVE_LEDGER_UNFINANCED_MODEL_FILL")
                 {
                     // ApplyResearchFacts is transactional. Record the refused
@@ -507,6 +509,39 @@ public sealed class NativeProductResearchLoop
                     mechanism="US500_US_CASH_H1_VOLATILITY_PERSISTENCE";
                 }
                 else continue;
+            }
+            else if(researchMode is "BMR1_JOINT" or "BMR1_FX" or "BMR1_GOLD" or
+                "BMR1_LONG" or "BMR1_SHORT")
+            {
+                var clock=DateTimeOffset.FromUnixTimeMilliseconds(at).UtcDateTime;
+                if(clock.Hour!=12 || clock.Minute!=45 || p5.LastClosedAt!=at-1500L ||
+                   !byName.TryGetValue("EURUSD",out var euro) ||
+                   !byName.TryGetValue("GBPUSD",out var sterling))continue;
+                decimal Pulse(NativeProductMarket input)
+                {
+                    if(input.M15.Length==0 || input.M15[^1].CloseAt!=at-1500L)
+                        return 0m;
+                    var bar=input.M15[^1];
+                    return bar.Close/bar.Open-1m;
+                }
+                decimal euroPulse=Pulse(euro),sterlingPulse=Pulse(sterling);
+                if(Math.Abs(euroPulse)<.0008m || Math.Abs(sterlingPulse)<.0006m ||
+                   euroPulse*sterlingPulse<=0m)continue;
+                if(market.Symbol=="EURUSD" && researchMode!="BMR1_GOLD")
+                {
+                    side=Math.Sign(euroPulse);driver=Math.Abs(euroPulse);
+                    mechanism="BMR1_EURUSD_RELEASE_PRICE_DISCOVERY";
+                }
+                else if(market.Symbol=="XAUUSD" && researchMode!="BMR1_FX")
+                {
+                    decimal goldPulse=Pulse(market);
+                    if(Math.Abs(goldPulse)<.0015m || euroPulse*goldPulse<=0m)continue;
+                    side=Math.Sign(goldPulse);driver=Math.Abs(goldPulse);
+                    mechanism="BMR1_XAUUSD_RELEASE_REPRICING";
+                }
+                else continue;
+                if(researchMode=="BMR1_LONG")side=1;
+                if(researchMode=="BMR1_SHORT")side=-1;
             }
             else if(researchMode is "MCT2_JOINT" or "MCT2_CRYPTO" or "MCT2_METAL" or
                 "MCT2_LONG" or "MCT2_SHORT")
@@ -1225,6 +1260,8 @@ public sealed class NativeProductResearchLoop
                 "OTC1_GBP_RELATIVE_STRENGTH_CONTINUATION"=>NativeCausalExitResearch.PredictionInvalidation,
                 "MCT2_ETH_CRYPTO_SPECIFIC_PERSISTENCE"=>NativeCausalExitResearch.Chandelier,
                 "MCT2_XAU_DOLLAR_CONFIRMED_RANGE_RELEASE"=>NativeCausalExitResearch.PredictionInvalidation,
+                "BMR1_EURUSD_RELEASE_PRICE_DISCOVERY"=>NativeCausalExitResearch.PredictionInvalidation,
+                "BMR1_XAUUSD_RELEASE_REPRICING"=>NativeCausalExitResearch.PredictionInvalidation,
                 _=>market.ExitPolicy
             };
             int effectiveHolding=mechanism switch {
@@ -1253,6 +1290,8 @@ public sealed class NativeProductResearchLoop
                 "OTC1_GBP_RELATIVE_STRENGTH_CONTINUATION"=>60,
                 "MCT2_ETH_CRYPTO_SPECIFIC_PERSISTENCE"=>60,
                 "MCT2_XAU_DOLLAR_CONFIRMED_RANGE_RELEASE"=>60,
+                "BMR1_EURUSD_RELEASE_PRICE_DISCOVERY"=>45,
+                "BMR1_XAUUSD_RELEASE_REPRICING"=>45,
                 _=>market.HoldingMinutes
             };
             if(effectiveExitPolicy!=NativeCausalExitResearch.FrozenFixed &&
@@ -1432,6 +1471,8 @@ public sealed class NativeProductResearchLoop
                     "OTC1_GBP_RELATIVE_STRENGTH_CONTINUATION"=>(Policy:NativeCausalExitResearch.PredictionInvalidation,Minutes:60),
                     "MCT2_ETH_CRYPTO_SPECIFIC_PERSISTENCE"=>(Policy:NativeCausalExitResearch.Chandelier,Minutes:60),
                     "MCT2_XAU_DOLLAR_CONFIRMED_RANGE_RELEASE"=>(Policy:NativeCausalExitResearch.PredictionInvalidation,Minutes:60),
+                    "BMR1_EURUSD_RELEASE_PRICE_DISCOVERY"=>(Policy:NativeCausalExitResearch.PredictionInvalidation,Minutes:45),
+                    "BMR1_XAUUSD_RELEASE_REPRICING"=>(Policy:NativeCausalExitResearch.PredictionInvalidation,Minutes:45),
                     _=>(Policy:market.ExitPolicy,Minutes:market.HoldingMinutes)
                 };
                 tracked.Add(chosen.Id,new(market.Symbol,opportunity.Direction,
