@@ -73,6 +73,7 @@ public sealed class NativeProductResearchLoop
             "AUD_ONLY_W38W39" or
             "HK_BRENT_JOINT_W40W41" or "HK_ONLY_W40W41" or
             "BRENT_ONLY_W40W41" or
+            "MCT2_JOINT" or "MCT2_CRYPTO" or "MCT2_METAL" or "MCT2_LONG" or "MCT2_SHORT" or
             "OTC1_JOINT" or "OTC1_OIL" or "OTC1_FX" or "OTC1_LONG" or "OTC1_SHORT" or
             "JRC1_JOINT" or "JRC1_RISK" or "JRC1_REVERSION" or "JRC1_LONG" or "JRC1_SHORT" or
             "LDP1_JOINT" or "LDP1_SILVER" or "LDP1_FX" or "LDP1_LONG" or "LDP1_SHORT" or
@@ -301,7 +302,8 @@ public sealed class NativeProductResearchLoop
                 catch(InvalidOperationException ex) when(
                     (researchMode.StartsWith("LDP1_",StringComparison.Ordinal) ||
                      researchMode.StartsWith("JRC1_",StringComparison.Ordinal) ||
-                     researchMode.StartsWith("OTC1_",StringComparison.Ordinal)) &&
+                     researchMode.StartsWith("OTC1_",StringComparison.Ordinal) ||
+                     researchMode.StartsWith("MCT2_",StringComparison.Ordinal)) &&
                     ex.Message=="NATIVE_LEDGER_UNFINANCED_MODEL_FILL")
                 {
                     // ApplyResearchFacts is transactional. Record the refused
@@ -505,6 +507,44 @@ public sealed class NativeProductResearchLoop
                     mechanism="US500_US_CASH_H1_VOLATILITY_PERSISTENCE";
                 }
                 else continue;
+            }
+            else if(researchMode is "MCT2_JOINT" or "MCT2_CRYPTO" or "MCT2_METAL" or
+                "MCT2_LONG" or "MCT2_SHORT")
+            {
+                var clock=DateTimeOffset.FromUnixTimeMilliseconds(at).UtcDateTime;
+                if(clock.Hour<13 || clock.Hour>=17 || p5.LastClosedAt!=at-1500L ||
+                   RrpHourMove(market.M15,at) is not decimal own)continue;
+                var window=market.M15.TakeLast(17).ToArray();
+                if(window.Length!=17 || window.Zip(window.Skip(1))
+                    .Any(x=>x.First.CloseAt!=x.Second.OpenAt))continue;
+                var last=window[^1];
+                if(market.Symbol=="ETHUSD" && researchMode!="MCT2_METAL" &&
+                   byName.TryGetValue("NAS100",out var nas) &&
+                   RrpHourMove(nas.M15,at) is decimal equity && Math.Abs(equity)<=.0008m)
+                {
+                    decimal fourHours=last.Close/window[0].Close-1m;
+                    if(Math.Abs(fourHours)<.004m || Math.Abs(own)<.0015m ||
+                       own*fourHours<=0m || own*(last.Close-last.Open)<=0m)continue;
+                    side=Math.Sign(own);driver=Math.Abs(own);
+                    mechanism="MCT2_ETH_CRYPTO_SPECIFIC_PERSISTENCE";
+                }
+                else if(market.Symbol=="XAUUSD" && researchMode!="MCT2_CRYPTO" &&
+                        byName.TryGetValue("EURUSD",out var euro) &&
+                        RrpHourMove(euro.M15,at) is decimal dollarMove && Math.Abs(dollarMove)>=.0004m)
+                {
+                    var compressed=window.Skip(12).Take(4).ToArray();
+                    var previous=window.Skip(8).Take(4).ToArray();
+                    decimal high=compressed.Max(x=>x.High),low=compressed.Min(x=>x.Low);
+                    decimal priorWidth=previous.Max(x=>x.High)-previous.Min(x=>x.Low);
+                    if(priorWidth<=0m || high-low>.60m*priorWidth)continue;
+                    side=last.Close>high && dollarMove>0m?1:last.Close<low && dollarMove<0m?-1:0;
+                    if(side==0)continue;
+                    driver=Math.Abs(last.Close-last.Open)/last.Open;
+                    mechanism="MCT2_XAU_DOLLAR_CONFIRMED_RANGE_RELEASE";
+                }
+                else continue;
+                if(researchMode=="MCT2_LONG")side=1;
+                if(researchMode=="MCT2_SHORT")side=-1;
             }
             else if(researchMode is "OTC1_JOINT" or "OTC1_OIL" or "OTC1_FX" or
                 "OTC1_LONG" or "OTC1_SHORT")
@@ -1183,6 +1223,8 @@ public sealed class NativeProductResearchLoop
                 "JRC1_USDJPY_VOLATILITY_CLIMAX_UNWIND"=>NativeCausalExitResearch.EquilibriumReversion,
                 "OTC1_WTI_LOCAL_BASIS_REVERSION"=>NativeCausalExitResearch.EquilibriumReversion,
                 "OTC1_GBP_RELATIVE_STRENGTH_CONTINUATION"=>NativeCausalExitResearch.PredictionInvalidation,
+                "MCT2_ETH_CRYPTO_SPECIFIC_PERSISTENCE"=>NativeCausalExitResearch.Chandelier,
+                "MCT2_XAU_DOLLAR_CONFIRMED_RANGE_RELEASE"=>NativeCausalExitResearch.PredictionInvalidation,
                 _=>market.ExitPolicy
             };
             int effectiveHolding=mechanism switch {
@@ -1209,6 +1251,8 @@ public sealed class NativeProductResearchLoop
                 "JRC1_USDJPY_VOLATILITY_CLIMAX_UNWIND"=>60,
                 "OTC1_WTI_LOCAL_BASIS_REVERSION"=>60,
                 "OTC1_GBP_RELATIVE_STRENGTH_CONTINUATION"=>60,
+                "MCT2_ETH_CRYPTO_SPECIFIC_PERSISTENCE"=>60,
+                "MCT2_XAU_DOLLAR_CONFIRMED_RANGE_RELEASE"=>60,
                 _=>market.HoldingMinutes
             };
             if(effectiveExitPolicy!=NativeCausalExitResearch.FrozenFixed &&
@@ -1386,6 +1430,8 @@ public sealed class NativeProductResearchLoop
                     "JRC1_USDJPY_VOLATILITY_CLIMAX_UNWIND"=>(Policy:NativeCausalExitResearch.EquilibriumReversion,Minutes:60),
                     "OTC1_WTI_LOCAL_BASIS_REVERSION"=>(Policy:NativeCausalExitResearch.EquilibriumReversion,Minutes:60),
                     "OTC1_GBP_RELATIVE_STRENGTH_CONTINUATION"=>(Policy:NativeCausalExitResearch.PredictionInvalidation,Minutes:60),
+                    "MCT2_ETH_CRYPTO_SPECIFIC_PERSISTENCE"=>(Policy:NativeCausalExitResearch.Chandelier,Minutes:60),
+                    "MCT2_XAU_DOLLAR_CONFIRMED_RANGE_RELEASE"=>(Policy:NativeCausalExitResearch.PredictionInvalidation,Minutes:60),
                     _=>(Policy:market.ExitPolicy,Minutes:market.HoldingMinutes)
                 };
                 tracked.Add(chosen.Id,new(market.Symbol,opportunity.Direction,
