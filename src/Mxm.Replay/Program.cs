@@ -1,6 +1,84 @@
 using System.Text.Json;
 using System.Security.Cryptography;
 
+// New read-only BLS event FX and gold portfolio.
+if(args.Length==3 && args[2] is ("--native-bmr1" or "--native-bmr1-contracts"))
+{
+    string stage="input";
+    try
+    {
+        var bytes=File.ReadAllBytes(args[0]);
+        var parse=new JsonSerializerOptions {
+            NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString
+        };
+        var universe=new[]{"EURUSD","GBPUSD","XAUUSD"};
+        if(args[2]=="--native-bmr1-contracts")
+        {
+            var contracts=JsonSerializer.Deserialize<Mxm.Core.NativeObservedContractTerms[]>(bytes,parse)
+                ??throw new ArgumentException("BMR1_CONTRACTS_EMPTY");
+            foreach(var contract in contracts)
+            {
+                if(!universe.Contains(contract.Symbol,StringComparer.Ordinal))
+                    throw new ArgumentException("BMR1_CONTRACT_UNIVERSE");
+                Mxm.Core.NativeBrokerContractCosts.Validate(contract,contract.MinimumUnits);
+            }
+            File.WriteAllText(args[1],"{}");
+            return 0;
+        }
+        var source=JsonSerializer.Deserialize<Mxm.Core.NativeOriginalOpenApiTape>(bytes,parse)
+            ??throw new ArgumentException("BMR1_EMPTY_SOURCE");
+        if(source.SourceLabel!="ORIGINAL_PEPPERSTONE_BMR1_BLS_MAY_OCT" ||
+           !source.Bars.Select(x=>x.Symbol).OrderBy(x=>x,StringComparer.Ordinal).SequenceEqual(universe) ||
+           source.Marks.Any(x=>!universe.Contains(x.Symbol,StringComparer.Ordinal)))
+            throw new ArgumentException("BMR1_SOURCE_OR_FX_ROUTE_BINDING");
+        var tape=Mxm.Core.NativeOriginalOpenApiProductAdapter.Convert(source);
+        Mxm.Core.NativeHistoricalMarketReceipt Run(string mode)
+        {
+            stage=mode;
+            return Mxm.Core.NativeHistoricalProductReplay.Evaluate(tape,
+                UnqualifiedShadowMode:true,ResearchMode:mode);
+        }
+        var joint=Run("BMR1_JOINT");
+        var fx=Run("BMR1_FX");
+        var gold=Run("BMR1_GOLD");
+        var longOnly=Run("BMR1_LONG");
+        var shortOnly=Run("BMR1_SHORT");
+        object Summary(Mxm.Core.NativeHistoricalMarketReceipt r)=>new {
+            r.CompletedModelRoundTrips,r.ModelClosedCentralNetEur,r.ModelClosedAdverseNetEur,
+            r.ModelTripsPerObservedIsoWeek,r.MaximumObservedMarginEur,r.MaximumSampledCentralDrawdown,
+            r.OpenModelPositions,r.PendingModelRequests,r.UnfinancedModelOpenCancellations,
+            r.AdverseFailureKind,r.AdverseFailureAt,r.AdverseFailureEventKind
+        };
+        decimal peak=300m,drawdown=0m;
+        foreach(var mark in joint.SampledEquity)
+        {
+            if(mark.AdverseEquityEur is not decimal value)continue;
+            peak=Math.Max(peak,value);
+            drawdown=Math.Max(drawdown,(peak-value)/peak);
+        }
+        File.WriteAllText(args[1],JsonSerializer.Serialize(new {
+            Study="BMR1",SourceSha256=Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant(),
+            Receipt=joint,OnlyFx=Summary(fx),OnlyGold=Summary(gold),
+            FundedLong=Summary(longOnly),FundedShort=Summary(shortOnly),
+            FxMarginalCentralEur=joint.ModelClosedCentralNetEur-gold.ModelClosedCentralNetEur,
+            FxMarginalAdverseEur=joint.ModelClosedAdverseNetEur-gold.ModelClosedAdverseNetEur,
+            GoldMarginalCentralEur=joint.ModelClosedCentralNetEur-fx.ModelClosedCentralNetEur,
+            GoldMarginalAdverseEur=joint.ModelClosedAdverseNetEur-fx.ModelClosedAdverseNetEur,
+            SampledAdverseDrawdown=drawdown,
+            MissingAdverseMarks=joint.SampledEquity.Count(x=>!x.AdverseEquityEur.HasValue),
+            CashResetBetweenWeeks=false,Qualification="EXPOSED_SHADOW_REPLAY_ONLY"
+        }));
+        return 0;
+    }
+    catch(Exception ex)
+    {
+        var reason=System.Text.RegularExpressions.Regex.IsMatch(ex.Message,@"^[A-Z][A-Z0-9_]{2,100}$")
+            ?ex.Message:ex.GetType().Name;
+        Console.Error.WriteLine("BMR1_NATIVE_REPLAY_REJECTED:"+stage+":"+reason);
+        return 67;
+    }
+}
+
 // New read-only crypto and metals portfolio.
 if(args.Length==3 && args[2] is ("--native-mct2" or "--native-mct2-contracts"))
 {
