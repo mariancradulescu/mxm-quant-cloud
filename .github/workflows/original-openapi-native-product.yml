@@ -9,6 +9,7 @@ on:
       - "research/native_original_openapi_product_replay.py"
       - "research/nas100_frozen_w32_w33_replication_protocol.json"
       - "research/natgas_audusd_w38_w39_protocol.json"
+      - "research/hk50_spotbrent_w40_w41_protocol.json"
       - "src/Mxm.Core/NativeProductResearchLoop.cs"
       - "src/Mxm.Core/NativeHistoricalProductReplay.cs"
       - "src/Mxm.Core/NativeOriginalOpenApiProductAdapter.cs"
@@ -49,7 +50,7 @@ jobs:
           python -m pip install -r research/requirements.txt
           dotnet build src/Mxm.Replay -c Release
       - name: Collect original Pepperstone SCOPE_VIEW M5+tick BID/ASK and execute native EUR300 model
-        run: python -m research.native_original_openapi_product_replay --natgas-audusd-w38w39
+        run: python -m research.native_original_openapi_product_replay --hk50-spotbrent-w40w41
         env:
           R3_CTRADER_CLIENT_ID: ${{ secrets.R3_CTRADER_CLIENT_ID }}
           R3_CTRADER_CLIENT_SECRET: ${{ secrets.R3_CTRADER_CLIENT_SECRET }}
