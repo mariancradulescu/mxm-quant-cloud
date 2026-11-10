@@ -36,12 +36,14 @@ US_INDEX_W20W21 = "--us-index-w20w21" in sys.argv
 NAS100_FROZEN_W32W33 = "--nas100-frozen-w32w33" in sys.argv
 NG_AUD_W38W39 = "--natgas-audusd-w38w39" in sys.argv
 HK_BRENT_W40W41 = "--hk50-spotbrent-w40w41" in sys.argv
+BRENT_AMD_W42W43 = "--brent-amd-w42w43" in sys.argv
 US_INDEX_ANY = US_INDEX_W20W21 or NAS100_FROZEN_W32W33
 if sum((HISTORIC_W36_W37, CROSS_ENERGY_EQUITY, CRYPTO_CRUDE_HISTORIC,
         US_INDEX_W20W21, NAS100_FROZEN_W32W33, NG_AUD_W38W39,
-        HK_BRENT_W40W41))>1:
+        HK_BRENT_W40W41, BRENT_AMD_W42W43))>1:
     raise RuntimeError("MULTIPLE_RESEARCH_PROFILES_NOT_ALLOWED")
-SYMBOLS = (("EURUSD","HK50","SpotBrent") if HK_BRENT_W40W41 else
+SYMBOLS = (("EURUSD","SpotBrent","AMD.US") if BRENT_AMD_W42W43 else
+           ("EURUSD","HK50","SpotBrent") if HK_BRENT_W40W41 else
            ("EURUSD","AUDUSD","NatGas") if NG_AUD_W38W39 else
            ("EURUSD","US500","NAS100") if US_INDEX_ANY else
            ("EURUSD","ETHUSD","SpotCrude") if CRYPTO_CRUDE_HISTORIC else
@@ -50,7 +52,11 @@ SYMBOLS = (("EURUSD","HK50","SpotBrent") if HK_BRENT_W40W41 else
            ("EURUSD","GBPUSD","AUDUSD","NZDUSD") if HISTORIC_W36_W37
            else ("EURUSD","GBPUSD","AUDUSD"))
 M5 = 300000
-if HK_BRENT_W40W41:
+if BRENT_AMD_W42W43:
+    SOURCE_START = int(datetime(2026,10,9,8,tzinfo=timezone.utc).timestamp()*1000)
+    DECISION_START = int(datetime(2026,10,12,tzinfo=timezone.utc).timestamp()*1000)
+    DECISION_END = int(datetime(2026,10,26,tzinfo=timezone.utc).timestamp()*1000)
+elif HK_BRENT_W40W41:
     # Original predeclared index/energy cross-session weeks, no W46 use.
     SOURCE_START = int(datetime(2026,9,25,8,tzinfo=timezone.utc).timestamp()*1000)
     DECISION_START = int(datetime(2026,9,28,tzinfo=timezone.utc).timestamp()*1000)
@@ -184,7 +190,7 @@ def collect_and_evaluate():
                  and detail.symbol[0].symbolId == ids[name],
                  "CONTRACT_SYMBOL_MISMATCH")
             c = detail.symbol[0]
-            need((0<=int(c.digits)<=8 if (CROSS_ENERGY_EQUITY or CRYPTO_CRUDE_HISTORIC or US_INDEX_ANY or NG_AUD_W38W39 or HK_BRENT_W40W41 or HK_BRENT_W40W41) else c.digits==5)
+            need((0<=int(c.digits)<=8 if (CROSS_ENERGY_EQUITY or CRYPTO_CRUDE_HISTORIC or US_INDEX_ANY or NG_AUD_W38W39 or HK_BRENT_W40W41 or BRENT_AMD_W42W43) else c.digits==5)
                  and int(c.tradingMode)==0 and
                  c.minVolume>0 and c.stepVolume>0 and
                  c.maxVolume>=c.minVolume and c.lotSize>0 and
@@ -235,18 +241,18 @@ def collect_and_evaluate():
                      "TickVolume":v[5]}
                     for t,v in sorted(history.items())
                     if v[0] <= SOURCE_END]
-            need(len(rows)>=(400 if (CROSS_ENERGY_EQUITY or CRYPTO_CRUDE_HISTORIC or US_INDEX_ANY or NG_AUD_W38W39 or HK_BRENT_W40W41)
+            need(len(rows)>=(400 if (CROSS_ENERGY_EQUITY or CRYPTO_CRUDE_HISTORIC or US_INDEX_ANY or NG_AUD_W38W39 or HK_BRENT_W40W41 or BRENT_AMD_W42W43)
                                  and name not in ("EURUSD","AUDUSD")
                             else 2100 if HISTORIC_W36_W37 else 1100),
                  "INSUFFICIENT_PREDECLARED_COMPLETE_M5")
             # Mandatory development window integrity check before further
             # tick data is requested; weekend bars are not manufactured.
             first_week=DECISION_START+7*86400000
-            minimum_week=(200 if (CROSS_ENERGY_EQUITY or CRYPTO_CRUDE_HISTORIC or US_INDEX_ANY or NG_AUD_W38W39 or HK_BRENT_W40W41)
+            minimum_week=(200 if (CROSS_ENERGY_EQUITY or CRYPTO_CRUDE_HISTORIC or US_INDEX_ANY or NG_AUD_W38W39 or HK_BRENT_W40W41 or BRENT_AMD_W42W43)
                             and name not in ("EURUSD","AUDUSD") else 1000)
             need(sum(DECISION_START<=x["OpenAt"]<first_week for x in rows)>=minimum_week,
                  "FIRST_COMPLETE_WEEK_M5_COVERAGE_UNSATISFACTORY")
-            if NAS100_FROZEN_W32W33 or NG_AUD_W38W39 or HK_BRENT_W40W41:
+            if NAS100_FROZEN_W32W33 or NG_AUD_W38W39 or HK_BRENT_W40W41 or BRENT_AMD_W42W43:
                 # No empty/gappy second scoring week counted as genuine.
                 need(sum(first_week<=x["OpenAt"]<DECISION_END for x in rows)>=minimum_week,
                      "SECOND_COMPLETE_WEEK_M5_COVERAGE_UNSATISFACTORY")
@@ -497,7 +503,7 @@ def collect_and_evaluate():
                 ["FX_USD_BREADTH_DELAYED_CATCHUP",
                  "FX_M5_SHOCK_EXHAUSTION_REVERSION"]),
             "EURUSDOnlyUsdToEurConversionContext":(
-                 CROSS_ENERGY_EQUITY or CRYPTO_CRUDE_HISTORIC or US_INDEX_ANY or NG_AUD_W38W39 or HK_BRENT_W40W41),
+                 CROSS_ENERGY_EQUITY or CRYPTO_CRUDE_HISTORIC or US_INDEX_ANY or NG_AUD_W38W39 or HK_BRENT_W40W41 or BRENT_AMD_W42W43),
             "SourceAssetClasses":(["index","energy"]
                    if HK_BRENT_W40W41 else
                    ["fx","energy"]
@@ -522,7 +528,7 @@ def collect_and_evaluate():
             "NativeProductReceipt":receipt,
             "CounterfactualFamilyAblations":(
                 evaluated["FundedAblations"] if
-                 (CROSS_ENERGY_EQUITY or CRYPTO_CRUDE_HISTORIC or US_INDEX_ANY or NG_AUD_W38W39 or HK_BRENT_W40W41)
+                 (CROSS_ENERGY_EQUITY or CRYPTO_CRUDE_HISTORIC or US_INDEX_ANY or NG_AUD_W38W39 or HK_BRENT_W40W41 or BRENT_AMD_W42W43)
                 else evaluated["CounterfactualAblation"])
         }
         Path("native-original-openapi-public-receipt.json").write_text(
