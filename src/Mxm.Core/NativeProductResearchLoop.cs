@@ -530,14 +530,14 @@ public sealed class NativeProductResearchLoop
                 }
                 else if(market.Symbol=="XAUUSD" && researchMode!="MCT2_CRYPTO" &&
                         byName.TryGetValue("EURUSD",out var euro) &&
-                        RrpHourMove(euro.M15,at) is decimal fx && Math.Abs(fx)>=.0004m)
+                        RrpHourMove(euro.M15,at) is decimal dollarMove && Math.Abs(dollarMove)>=.0004m)
                 {
                     var compressed=window.Skip(12).Take(4).ToArray();
                     var previous=window.Skip(8).Take(4).ToArray();
                     decimal high=compressed.Max(x=>x.High),low=compressed.Min(x=>x.Low);
                     decimal priorWidth=previous.Max(x=>x.High)-previous.Min(x=>x.Low);
                     if(priorWidth<=0m || high-low>.60m*priorWidth)continue;
-                    side=last.Close>high && fx>0m?1:last.Close<low && fx<0m?-1:0;
+                    side=last.Close>high && dollarMove>0m?1:last.Close<low && dollarMove<0m?-1:0;
                     if(side==0)continue;
                     driver=Math.Abs(last.Close-last.Open)/last.Open;
                     mechanism="MCT2_XAU_DOLLAR_CONFIRMED_RANGE_RELEASE";
