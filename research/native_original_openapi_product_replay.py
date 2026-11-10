@@ -152,7 +152,7 @@ def collect_and_evaluate(profile=None):
 
     def eligible(clock):
         day = datetime.fromtimestamp(clock / 1000, timezone.utc)
-        return day.weekday() < 5 and (profile is None or 14 <= day.hour < 21)
+        return day.weekday() < 5 and (profile is None or profile.get("quote_hour_start", 14) <= day.hour < profile.get("quote_hour_end", 21))
 
     transport = StdlibCTraderTransport()
     counter = 0

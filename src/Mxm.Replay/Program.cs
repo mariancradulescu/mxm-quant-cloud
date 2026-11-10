@@ -58,6 +58,66 @@ if(args.Length==3 && args[2]=="--native-rrp1")
     }
 }
 
+// Locked LDP1 original market study. Only the forecast family changes.
+if(args.Length==3 && args[2]=="--native-ldp1")
+{
+    try
+    {
+        var bytes=File.ReadAllBytes(args[0]);
+        var parse=new JsonSerializerOptions {
+            NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString
+        };
+        var source=JsonSerializer.Deserialize<Mxm.Core.NativeOriginalOpenApiTape>(bytes,parse)
+            ??throw new ArgumentException("LDP1_EMPTY_SOURCE");
+        var universe=new[]{"AUDUSD","EURUSD","NZDUSD","XAGUSD"};
+        if(source.SourceLabel!="ORIGINAL_PEPPERSTONE_LDP1_W26_W30" ||
+           !source.Bars.Select(x=>x.Symbol).OrderBy(x=>x,StringComparer.Ordinal).SequenceEqual(universe) ||
+           source.Marks.Any(x=>!universe.Contains(x.Symbol,StringComparer.Ordinal)))
+            throw new ArgumentException("LDP1_SOURCE_BINDING");
+        var tape=Mxm.Core.NativeOriginalOpenApiProductAdapter.Convert(source);
+        Mxm.Core.NativeHistoricalMarketReceipt Run(string mode)=>
+            Mxm.Core.NativeHistoricalProductReplay.Evaluate(tape,
+                UnqualifiedShadowMode:true,ResearchMode:mode);
+        var joint=Run("LDP1_JOINT");
+        var fx=Run("LDP1_FX");
+        var silver=Run("LDP1_SILVER");
+        var alwaysLong=Run("LDP1_LONG");
+        var alwaysShort=Run("LDP1_SHORT");
+        var adversePeak=300m;
+        var sampledAdverseDrawdown=0m;
+        foreach(var mark in joint.SampledEquity)
+        {
+            if(mark.AdverseEquityEur is not decimal value)continue;
+            adversePeak=Math.Max(adversePeak,value);
+            sampledAdverseDrawdown=Math.Max(sampledAdverseDrawdown,(adversePeak-value)/adversePeak);
+        }
+        object Summary(Mxm.Core.NativeHistoricalMarketReceipt r)=>new {
+            r.CompletedModelRoundTrips,r.ModelClosedCentralNetEur,r.ModelClosedAdverseNetEur,
+            r.ModelTripsPerObservedIsoWeek,r.MaximumObservedMarginEur,r.MaximumSampledCentralDrawdown,
+            r.OpenModelPositions,r.PendingModelRequests
+        };
+        File.WriteAllText(args[1],JsonSerializer.Serialize(new {
+            Study="LDP1",SourceSha256=Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant(),
+            Receipt=joint,OnlyFx=Summary(fx),OnlySilver=Summary(silver),
+            FundedLong=Summary(alwaysLong),FundedShort=Summary(alwaysShort),
+            SilverMarginalCentralEur=joint.ModelClosedCentralNetEur-fx.ModelClosedCentralNetEur,
+            SilverMarginalAdverseEur=joint.ModelClosedAdverseNetEur-fx.ModelClosedAdverseNetEur,
+            FxMarginalCentralEur=joint.ModelClosedCentralNetEur-silver.ModelClosedCentralNetEur,
+            FxMarginalAdverseEur=joint.ModelClosedAdverseNetEur-silver.ModelClosedAdverseNetEur,
+            MissingAdverseMarks=joint.SampledEquity.Count(x=>!x.AdverseEquityEur.HasValue),
+            SampledAdverseDrawdown=sampledAdverseDrawdown,
+            CashResetBetweenWeeks=false,Qualification="EXPOSED_SHADOW_REPLAY_ONLY",
+            ExpectedWeeks=new[]{"2026-W26","2026-W27","2026-W28","2026-W29","2026-W30"}
+        }));
+        return 0;
+    }
+    catch(Exception ex)
+    {
+        Console.Error.WriteLine("LDP1_NATIVE_REPLAY_REJECTED:"+ex.GetType().Name);
+        return 66;
+    }
+}
+
 // Original Pepperstone SOURCE-FROZEN SpotBrent / AMD.US W42-W43 multiclass
 // economic development, using existing NativeHistoricalProductReplay.
 // Never orders, never Cloud, no unexposed confirmation or historic fee certification.

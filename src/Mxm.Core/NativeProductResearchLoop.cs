@@ -73,6 +73,7 @@ public sealed class NativeProductResearchLoop
             "AUD_ONLY_W38W39" or
             "HK_BRENT_JOINT_W40W41" or "HK_ONLY_W40W41" or
             "BRENT_ONLY_W40W41" or
+            "LDP1_JOINT" or "LDP1_SILVER" or "LDP1_FX" or "LDP1_LONG" or "LDP1_SHORT" or
             "RRP1_JOINT" or "RRP1_EQUITY" or "RRP1_GOLD" or
             "BRENT_AMD_JOINT_W42W43" or
             "ONLY_BRENT_W42W43" or "ONLY_AMD_W42W43"))
@@ -480,6 +481,39 @@ public sealed class NativeProductResearchLoop
                     mechanism="US500_US_CASH_H1_VOLATILITY_PERSISTENCE";
                 }
                 else continue;
+            }
+            else if(researchMode is "LDP1_JOINT" or "LDP1_SILVER" or "LDP1_FX" or
+                "LDP1_LONG" or "LDP1_SHORT")
+            {
+                var clock=DateTimeOffset.FromUnixTimeMilliseconds(at).UtcDateTime;
+                if(clock.Hour<7 || clock.Hour>=11 || p5.LastClosedAt!=at-1500L ||
+                   RrpHourMove(market.M15,at) is not decimal own)
+                    continue;
+                if(market.Symbol=="XAGUSD" && researchMode!="LDP1_FX" &&
+                   byName.TryGetValue("EURUSD",out var eur) &&
+                   RrpHourMove(eur.M15,at) is decimal eurMove &&
+                   Math.Abs(own)>=.002m && Math.Abs(eurMove)>=.0004m &&
+                   own*eurMove>0m && Math.Sign(market.M15[^1].Close-market.M15[^1].Open)==Math.Sign(own))
+                {
+                    side=Math.Sign(own);
+                    driver=Math.Abs(own);
+                    mechanism="LDP1_SILVER_USD_REPRICING";
+                }
+                else if(market.Symbol=="NZDUSD" && researchMode!="LDP1_SILVER" &&
+                        byName.TryGetValue("AUDUSD",out var aud) &&
+                        RrpHourMove(aud.M15,at) is decimal audMove &&
+                        Math.Abs(audMove)<=.0005m && Math.Abs(own-audMove)>=.0009m)
+                {
+                    decimal residual=own-audMove;
+                    decimal last=market.M15[^1].Close-market.M15[^1].Open;
+                    if(last*residual>=0m)continue;
+                    side=-Math.Sign(residual);
+                    driver=Math.Abs(residual);
+                    mechanism="LDP1_NZD_LOCAL_INVENTORY_UNWIND";
+                }
+                else continue;
+                if(researchMode=="LDP1_LONG")side=1;
+                if(researchMode=="LDP1_SHORT")side=-1;
             }
             else if(researchMode is "RRP1_JOINT" or "RRP1_EQUITY" or "RRP1_GOLD")
             {
@@ -1056,6 +1090,8 @@ public sealed class NativeProductResearchLoop
                     NativeCausalExitResearch.Chandelier,
                 "RRP1_US500_LEADERSHIP_TRANSMISSION"=>NativeCausalExitResearch.PredictionInvalidation,
                 "RRP1_XAUUSD_DEFENSIVE_ROTATION"=>NativeCausalExitResearch.VolatilityTarget,
+                "LDP1_SILVER_USD_REPRICING"=>NativeCausalExitResearch.Chandelier,
+                "LDP1_NZD_LOCAL_INVENTORY_UNWIND"=>NativeCausalExitResearch.EquilibriumReversion,
                 _=>market.ExitPolicy
             };
             int effectiveHolding=mechanism switch {
@@ -1076,6 +1112,8 @@ public sealed class NativeProductResearchLoop
                 "US500_US_CASH_H1_VOLATILITY_PERSISTENCE"=>180,
                 "RRP1_US500_LEADERSHIP_TRANSMISSION"=>90,
                 "RRP1_XAUUSD_DEFENSIVE_ROTATION"=>120,
+                "LDP1_SILVER_USD_REPRICING"=>60,
+                "LDP1_NZD_LOCAL_INVENTORY_UNWIND"=>60,
                 _=>market.HoldingMinutes
             };
             if(effectiveExitPolicy!=NativeCausalExitResearch.FrozenFixed &&
@@ -1247,6 +1285,8 @@ public sealed class NativeProductResearchLoop
                         (Policy:NativeCausalExitResearch.Chandelier,Minutes:180),
                     "RRP1_US500_LEADERSHIP_TRANSMISSION"=>(Policy:NativeCausalExitResearch.PredictionInvalidation,Minutes:90),
                     "RRP1_XAUUSD_DEFENSIVE_ROTATION"=>(Policy:NativeCausalExitResearch.VolatilityTarget,Minutes:120),
+                    "LDP1_SILVER_USD_REPRICING"=>(Policy:NativeCausalExitResearch.Chandelier,Minutes:60),
+                    "LDP1_NZD_LOCAL_INVENTORY_UNWIND"=>(Policy:NativeCausalExitResearch.EquilibriumReversion,Minutes:60),
                     _=>(Policy:market.ExitPolicy,Minutes:market.HoldingMinutes)
                 };
                 tracked.Add(chosen.Id,new(market.Symbol,opportunity.Direction,
