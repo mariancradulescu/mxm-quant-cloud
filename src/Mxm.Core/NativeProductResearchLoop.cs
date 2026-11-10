@@ -66,7 +66,9 @@ public sealed class NativeProductResearchLoop
             "CRYPTO_CRUDE_W24W25" or "ONLY_CRYPTO_W24W25" or
             "ONLY_CRUDE_W24W25" or
             "US_INDEX_JOINT_W20W21" or "US_INDEX_NAS_ONLY_W20W21" or
-            "US_INDEX_SP_ONLY_W20W21"))
+            "US_INDEX_SP_ONLY_W20W21" or
+            "NG_AUD_JOINT_W38W39" or "NG_ONLY_W38W39" or
+            "AUD_ONLY_W38W39"))
             throw new ArgumentException("UNDECLARED_RESEARCH_MECHANISM");
         this.researchMode=researchMode;
     }
@@ -79,6 +81,8 @@ public sealed class NativeProductResearchLoop
     private long maximumBarObservationLagMs;
     private bool historicalPathComplete=true;
     private decimal matchedLongBenchmarkNetEur;
+    private decimal matchedShortBenchmarkNetEur;
+    private decimal matchedInverseBenchmarkNetEur;
     private bool benchmarkSettlementComplete=true;
     private readonly Dictionary<string,int> weekly=new(StringComparer.Ordinal);
     private readonly Dictionary<string,int> exitReasonCounts=new(StringComparer.Ordinal);
@@ -113,6 +117,8 @@ public sealed class NativeProductResearchLoop
             MaxLag=maximumBarObservationLagMs,
             HistoryPathComplete=historicalPathComplete,
             Benchmark=matchedLongBenchmarkNetEur,
+            MatchedShort=matchedShortBenchmarkNetEur,
+            MatchedInverse=matchedInverseBenchmarkNetEur,
             BenchmarkSettlementComplete=benchmarkSettlementComplete,
             ResearchMode=researchMode
         });
@@ -161,6 +167,10 @@ public sealed class NativeProductResearchLoop
         loop.maximumBarObservationLagMs=p.GetProperty("MaxLag").GetInt64();
         loop.historicalPathComplete=p.GetProperty("HistoryPathComplete").GetBoolean();
         loop.matchedLongBenchmarkNetEur=p.GetProperty("Benchmark").GetDecimal();
+        loop.matchedShortBenchmarkNetEur=p.TryGetProperty("MatchedShort",out var shortB)
+            ?shortB.GetDecimal():0m;
+        loop.matchedInverseBenchmarkNetEur=p.TryGetProperty("MatchedInverse",out var invertedB)
+            ?invertedB.GetDecimal():0m;
         loop.benchmarkSettlementComplete=p.GetProperty(
             "BenchmarkSettlementComplete").GetBoolean();
         loop.lastClock=p.GetProperty("LastClock").GetInt64();
@@ -287,9 +297,21 @@ public sealed class NativeProductResearchLoop
                     decimal converted=gross*(gross>=0?q.EurCredit:q.EurDebit);
                     var longCarry=Financing(p.Contract,p.OpenAt,at,1,
                         p.Units,q.EurCredit,q.EurDebit);
-                    if(longCarry is decimal carry)
-                        matchedLongBenchmarkNetEur+=converted-
-                            Fee(entry,p.Units)-Fee(q,p.Units)+carry;
+                    var shortCarry=Financing(p.Contract,p.OpenAt,at,-1,
+                        p.Units,q.EurCredit,q.EurDebit);
+                    decimal shortGross=(entry.Bid-p.SlippagePerSideQuote-
+                        q.Ask-p.SlippagePerSideQuote)*p.Units;
+                    decimal shortConverted=shortGross*(shortGross>=0?
+                        q.EurCredit:q.EurDebit);
+                    decimal fees=Fee(entry,p.Units)+Fee(q,p.Units);
+                    if(longCarry is decimal carry && shortCarry is decimal shortFunding)
+                    {
+                        decimal longNet=converted-fees+carry;
+                        decimal shortNet=shortConverted-fees+shortFunding;
+                        matchedLongBenchmarkNetEur+=longNet;
+                        matchedShortBenchmarkNetEur+=shortNet;
+                        matchedInverseBenchmarkNetEur+=p.Side>0?shortNet:longNet;
+                    }
                     else benchmarkSettlementComplete=false;
                 }
                 else benchmarkSettlementComplete=false;
@@ -441,6 +463,90 @@ public sealed class NativeProductResearchLoop
                     side=change>0m?1:-1;
                     driver=Math.Abs(change);
                     mechanism="US500_US_CASH_H1_VOLATILITY_PERSISTENCE";
+                }
+                else continue;
+            }
+            else if(researchMode is "NG_AUD_JOINT_W38W39" or
+                "NG_ONLY_W38W39" or "AUD_ONLY_W38W39")
+            {
+                // Predeclared 2026-W38/W39 economic *development*, NOT independent.
+                // NatGas: H1 compression around prior-three-hour equilibrium.
+                // AUDUSD: session-specific 02–05 UTC late-Asia range sweep
+                // rejected on a completed M15 bar, NOT FX M5 shock or breadth.
+                var utc=DateTimeOffset.FromUnixTimeMilliseconds(at).UtcDateTime;
+                var newest=market.M15[^1];
+                if(newest.CloseAt>=at || newest.CloseAt<=0)continue;
+                if(market.Symbol=="NatGas" &&
+                   researchMode!="AUD_ONLY_W38W39" &&
+                   utc.Hour>=13 && utc.Hour<19 && market.M15.Length>=16)
+                {
+                    var bars=market.M15.TakeLast(16).ToArray();
+                    if(!bars.Zip(bars.Skip(1)).All(x=>
+                        x.First.CloseAt==x.Second.OpenAt))continue;
+                    var prior=bars.Take(12).ToArray();
+                    var current=bars.Skip(12).ToArray();
+                    decimal oldRange=prior.Average(x=>x.High-x.Low);
+                    decimal recentRange=current.Average(x=>x.High-x.Low);
+                    decimal mean=prior.Average(x=>x.Close);
+                    decimal oldVolume=prior.Average(x=>(decimal)x.TickVolume);
+                    decimal deviation=mean-current[^1].Close;
+                    decimal body=current[^1].Close-current[^1].Open;
+                    decimal spread=market.Quote.Ask-market.Quote.Bid;
+                    if(oldRange<=0m || oldVolume<=0m ||
+                       recentRange>0.75m*oldRange ||
+                       Math.Abs(deviation)<1.25m*oldRange ||
+                       deviation*body<=0m ||
+                       current[^1].TickVolume<0.75m*oldVolume ||
+                       spread>0.50m*(current[^1].High-current[^1].Low))
+                        continue;
+                    side=deviation>0m?1:-1;
+                    driver=Math.Abs(deviation)/current[^1].Close;
+                    mechanism="NATGAS_US_LIQUIDITY_VOL_COMPRESSION_REVERSION";
+                }
+                else if(market.Symbol=="AUDUSD" &&
+                    researchMode!="NG_ONLY_W38W39" &&
+                    utc.Hour>=7 &&
+                    (utc.Hour<9 || (utc.Hour==9 && utc.Minute<=30)))
+                {
+                    // The 33-bar feature prefix covers the full 02–05 range
+                    // at every allowed 07:00–09:30 UTC decision clock.
+                    var date=utc.Date;
+                    long start=new DateTimeOffset(date.AddHours(2),TimeSpan.Zero)
+                        .ToUnixTimeMilliseconds();
+                    long stop=new DateTimeOffset(date.AddHours(5),TimeSpan.Zero)
+                        .ToUnixTimeMilliseconds();
+                    var asia=market.M15.Where(x=>x.OpenAt>=start &&
+                        x.CloseAt<=stop).ToArray();
+                    if(asia.Length!=12||asia[0].OpenAt!=start||
+                       asia[^1].CloseAt!=stop||
+                       !asia.Zip(asia.Skip(1)).All(x=>
+                           x.First.CloseAt==x.Second.OpenAt))continue;
+                    decimal high=asia.Max(x=>x.High);
+                    decimal low=asia.Min(x=>x.Low);
+                    decimal meanRange=asia.Average(x=>x.High-x.Low);
+                    decimal volume=asia.Average(x=>(decimal)x.TickVolume);
+                    var bar=market.M15[^1];
+                    decimal barRange=bar.High-bar.Low;
+                    decimal spread=market.Quote.Ask-market.Quote.Bid;
+                    if(meanRange<=0m||volume<=0m||barRange<=0m||
+                       bar.TickVolume<0.85m*volume||
+                       spread>0.40m*barRange)continue;
+                    if(bar.High>=high+0.15m*meanRange &&
+                       bar.Close<high && bar.Close>low &&
+                       bar.Close<bar.Open)
+                    {
+                        side=-1;
+                        driver=(bar.High-high)/bar.Close;
+                    }
+                    else if(bar.Low<=low-0.15m*meanRange &&
+                       bar.Close>low && bar.Close<high &&
+                       bar.Close>bar.Open)
+                    {
+                        side=1;
+                        driver=(low-bar.Low)/bar.Close;
+                    }
+                    else continue;
+                    mechanism="AUDUSD_LATE_ASIA_LONDON_SWEEP_FAILURE";
                 }
                 else continue;
             }
@@ -715,6 +821,10 @@ public sealed class NativeProductResearchLoop
                     NativeCausalExitResearch.VolatilityTarget,
                 "CRUDE_US_SESSION_TICK_ACTIVITY_DRIFT"=>
                     NativeCausalExitResearch.PredictionInvalidation,
+                "NATGAS_US_LIQUIDITY_VOL_COMPRESSION_REVERSION"=>
+                    NativeCausalExitResearch.EquilibriumReversion,
+                "AUDUSD_LATE_ASIA_LONDON_SWEEP_FAILURE"=>
+                    NativeCausalExitResearch.VolatilityTarget,
                 "NAS100_US_CASH_INDEX_RELATIVE_DISPERSION_FADE"=>
                     NativeCausalExitResearch.EquilibriumReversion,
                 "US500_US_CASH_H1_VOLATILITY_PERSISTENCE"=>
@@ -729,6 +839,8 @@ public sealed class NativeProductResearchLoop
                 "AMD_US_OPENING_HOUR_TICKFLOW"=>180,
                 "CRYPTO_M5_LIQUIDITY_WICK_ABSORPTION"=>150,
                 "CRUDE_US_SESSION_TICK_ACTIVITY_DRIFT"=>120,
+                "NATGAS_US_LIQUIDITY_VOL_COMPRESSION_REVERSION"=>105,
+                "AUDUSD_LATE_ASIA_LONDON_SWEEP_FAILURE"=>120,
                 "NAS100_US_CASH_INDEX_RELATIVE_DISPERSION_FADE"=>105,
                 "US500_US_CASH_H1_VOLATILITY_PERSISTENCE"=>180,
                 _=>market.HoldingMinutes
@@ -884,6 +996,10 @@ public sealed class NativeProductResearchLoop
                         (Policy:NativeCausalExitResearch.VolatilityTarget,Minutes:150),
                     "CRUDE_US_SESSION_TICK_ACTIVITY_DRIFT"=>
                         (Policy:NativeCausalExitResearch.PredictionInvalidation,Minutes:120),
+                    "NATGAS_US_LIQUIDITY_VOL_COMPRESSION_REVERSION"=>
+                        (Policy:NativeCausalExitResearch.EquilibriumReversion,Minutes:105),
+                    "AUDUSD_LATE_ASIA_LONDON_SWEEP_FAILURE"=>
+                        (Policy:NativeCausalExitResearch.VolatilityTarget,Minutes:120),
                     "NAS100_US_CASH_INDEX_RELATIVE_DISPERSION_FADE"=>
                         (Policy:NativeCausalExitResearch.EquilibriumReversion,Minutes:105),
                     "US500_US_CASH_H1_VOLATILITY_PERSISTENCE"=>
