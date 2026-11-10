@@ -38,7 +38,9 @@ public sealed record NativeProductResearchReport(
     long MaxObservedM5LagMs=0,bool HistoryPathComplete=false,
     string ModelEpochId="",string ContinuityBoundary="ISOLATED_MODEL_EPISODE",
     int UnresolvedCalendarGaps=0,
-    Dictionary<string,int>? ModelExitReasons=null);
+    Dictionary<string,int>? ModelExitReasons=null,
+    decimal? ModelMatchedShortBenchmarkEur=null,
+    decimal? ModelMatchedOppositeSignalBenchmarkEur=null);
 
 public sealed class NativeProductResearchLoop
 {
@@ -1055,6 +1057,10 @@ public sealed class NativeProductResearchLoop
                 "VERIFIED_INTEGRITY_CHECKPOINT_SAME_SOURCE_EPOCH_NOT_BROKER_CERTIFIED":
                 "NEW_ISOLATED_MODEL_EPOCH_NOT_CLOUD_HISTORY_CONTINUATION",
             UnresolvedCalendarGaps:unresolvedCalendarGaps,
-            ModelExitReasons:new Dictionary<string,int>(exitReasonCounts,StringComparer.Ordinal));
+            ModelExitReasons:new Dictionary<string,int>(exitReasonCounts,StringComparer.Ordinal),
+            ModelMatchedShortBenchmarkEur:benchmarkSettlementComplete?
+                matchedShortBenchmarkNetEur:null,
+            ModelMatchedOppositeSignalBenchmarkEur:benchmarkSettlementComplete?
+                matchedInverseBenchmarkNetEur:null);
     }
 }
