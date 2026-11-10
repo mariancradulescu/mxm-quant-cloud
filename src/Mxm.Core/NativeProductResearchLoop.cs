@@ -99,6 +99,7 @@ public sealed class NativeProductResearchLoop
     private string epochId="EPISODE-"+Guid.NewGuid().ToString("N");
     private bool recoveredCheckpoint=false;
     private int eventSequence, forecasts, accepted, rejected;
+    public int UnfinancedModelOpenCancellations {get;private set;}
 
     public NativeFundedSession ResearchSession=>session;
     public string ModelEpochId=>epochId;
@@ -120,6 +121,7 @@ public sealed class NativeProductResearchLoop
             LastSeenM5=lastSeenM5Bar,Weekly=weekly,Signals=signals,
             EventSequence=eventSequence,Forecasts=forecasts,
             Accepted=accepted,Rejected=rejected,
+            UnfinancedModelOpenCancellations,
             UnobservedM5=unobservedM5DecisionSlots,
             UnresolvedGaps=unresolvedCalendarGaps,
             MaxLag=maximumBarObservationLagMs,
@@ -170,6 +172,8 @@ public sealed class NativeProductResearchLoop
         loop.forecasts=p.GetProperty("Forecasts").GetInt32();
         loop.accepted=p.GetProperty("Accepted").GetInt32();
         loop.rejected=p.GetProperty("Rejected").GetInt32();
+        if(p.TryGetProperty("UnfinancedModelOpenCancellations",out var cancellations))
+            loop.UnfinancedModelOpenCancellations=cancellations.GetInt32();
         loop.unobservedM5DecisionSlots=p.GetProperty("UnobservedM5").GetInt32();
         loop.unresolvedCalendarGaps=p.GetProperty("UnresolvedGaps").GetInt32();
         loop.maximumBarObservationLagMs=p.GetProperty("MaxLag").GetInt64();
@@ -287,8 +291,24 @@ public sealed class NativeProductResearchLoop
                     continue;
                 }
                 decimal px=p.Side>0?q.Ask+p.SlippagePerSideQuote:q.Bid-p.SlippagePerSideQuote;
-                ApplyFacts(new[]{Event("OPEN_FILL",at,id,p.Symbol,p.Side,
-                    p.Units,px,Fee(q,p.Units),q.MarginPerUnit,p.SlippagePerSideQuote)});
+                try
+                {
+                    ApplyFacts(new[]{Event("OPEN_FILL",at,id,p.Symbol,p.Side,
+                        p.Units,px,Fee(q,p.Units),q.MarginPerUnit,p.SlippagePerSideQuote)});
+                }
+                catch(InvalidOperationException ex) when(
+                    researchMode.StartsWith("LDP1_",StringComparison.Ordinal) &&
+                    ex.Message=="NATIVE_LEDGER_UNFINANCED_MODEL_FILL")
+                {
+                    // ApplyResearchFacts is transactional. Record the refused
+                    // model fill as a cancellation in both books, without a fee.
+                    ApplyFacts(new[]{Event("CONFIRMED_CANCEL",at,id,p.Symbol,p.Side,p.Units) with {
+                        Reason="MODEL_MARGIN_RECHECK_AT_FILL_FAILED"
+                    }});
+                    tracked.Remove(id);
+                    UnfinancedModelOpenCancellations++;
+                    continue;
+                }
                 tracked[id]=p with {OpenAt=at,EntryQuote=q,
                     EntryPrice=px,EntryAtr=seed.AtrQuote,
                     EntryEquilibrium=seed.EquilibriumQuote,

@@ -54,7 +54,8 @@ public sealed record NativeHistoricalMarketReceipt(
     decimal? MatchedShortBenchmarkNetEur=null,
     decimal? MatchedOppositeSignalBenchmarkNetEur=null,
     decimal? IncrementalVsBestConstantSideEur=null,
-    decimal? IncrementalVsOppositeSignalEur=null);
+    decimal? IncrementalVsOppositeSignalEur=null,
+    int UnfinancedModelOpenCancellations=0);
 
 public static class NativeHistoricalProductReplay
 {
@@ -268,6 +269,7 @@ public static class NativeHistoricalProductReplay
                 last.ModelCentralNetEur-Math.Max(0m,Math.Max(sh,lo)):null,
             IncrementalVsOppositeSignalEur:
                 last.ModelMatchedOppositeSignalBenchmarkEur is decimal flip ?
-                last.ModelCentralNetEur-flip:null);
+                last.ModelCentralNetEur-flip:null,
+            UnfinancedModelOpenCancellations:simulation.UnfinancedModelOpenCancellations);
     }
 }

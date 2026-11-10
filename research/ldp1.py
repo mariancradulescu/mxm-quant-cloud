@@ -23,6 +23,7 @@ def main():
         mode="--native-ldp1",
         contract_preflight="--native-ldp1-contracts",
     ))
+    report["ExecutionRecovery"] = "CANCEL_UNFINANCED_OPEN_ON_MARK_RECHECK"
     report["ProtocolSha256"] = sha256(Path("research/LDP1.md").read_bytes()).hexdigest()
     Path("ldp1-public.json").write_text(json.dumps(report, indent=2) + "\n")
     print(json.dumps({k: v for k, v in report.items() if k != "Receipt"}, separators=(",", ":")))
