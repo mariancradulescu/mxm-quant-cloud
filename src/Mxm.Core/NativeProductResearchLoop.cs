@@ -1358,16 +1358,16 @@ public sealed class NativeProductResearchLoop
             offered.Add(new EconomicOpportunity(id,mechanism,
                 market.Symbol,id,side,at-1,baseClock,
                 EvidenceLevel.Exploratory,false,grid,candidates));
+            // This market adapter has a gross forecast, but no measured
+            // benchmark excess. A caller's support flag cannot supply it.
             evidence.Add(new(id,baseClock,at-1,5,effectiveHolding,
-                true,market.IndependentlySupportedAgainstBenchmark,true,true,
-                false,projectedGross,uncertainty,spread,
+                true,false,true,true,
+                false,null,uncertainty,spread,
                 Fee(q,units),Fee(q,units),conversion,slippage,fundingDebit,minMargin));
             terms.Add(new(id,1000,market.SlippagePerSideQuote,Fingerprint(id)));
             recent.Add(new(market.Symbol,at,side,"MODEL_FORECAST_ONLY",
                 projectedGross,predictedNet,adverse,
-                market.IndependentlySupportedAgainstBenchmark?
-                    "EXTERNAL_BENCHMARK_SUPPORT_SUPPLIED":"EXPLORATORY_NO_INDEPENDENT_BENCHMARK_SUPPORT",
-                mechanism));
+                "EXPLORATORY_NO_MEASURED_BENCHMARK_EXCESS",mechanism));
         }
         if(offered.Count>0)
         {
