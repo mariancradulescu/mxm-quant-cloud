@@ -101,8 +101,19 @@ if(args.Length==3 && args[2] is ("--native-ldp1" or "--native-ldp1-contracts"))
         var joint=Run("LDP1_JOINT");
         var fx=Run("LDP1_FX");
         var silver=Run("LDP1_SILVER");
-        var alwaysLong=Run("LDP1_LONG");
-        var alwaysShort=Run("LDP1_SHORT");
+        var comparisonFailures=new Dictionary<string,string>(StringComparer.Ordinal);
+        Mxm.Core.NativeHistoricalMarketReceipt? Compare(string mode)
+        {
+            try { return Run(mode); }
+            catch(InvalidOperationException ex)
+            {
+                comparisonFailures[mode]=System.Text.RegularExpressions.Regex.IsMatch(ex.Message,@"\A[A-Z][A-Z0-9_]{2,100}\z")
+                    ?ex.Message:ex.GetType().Name;
+                return null;
+            }
+        }
+        var alwaysLong=Compare("LDP1_LONG");
+        var alwaysShort=Compare("LDP1_SHORT");
         var adversePeak=300m;
         var sampledAdverseDrawdown=0m;
         foreach(var mark in joint.SampledEquity)
@@ -111,15 +122,15 @@ if(args.Length==3 && args[2] is ("--native-ldp1" or "--native-ldp1-contracts"))
             adversePeak=Math.Max(adversePeak,value);
             sampledAdverseDrawdown=Math.Max(sampledAdverseDrawdown,(adversePeak-value)/adversePeak);
         }
-        object Summary(Mxm.Core.NativeHistoricalMarketReceipt r)=>new {
+        object? Summary(Mxm.Core.NativeHistoricalMarketReceipt? r)=>r is null?null:new {
             r.CompletedModelRoundTrips,r.ModelClosedCentralNetEur,r.ModelClosedAdverseNetEur,
             r.ModelTripsPerObservedIsoWeek,r.MaximumObservedMarginEur,r.MaximumSampledCentralDrawdown,
-            r.OpenModelPositions,r.PendingModelRequests
+            r.OpenModelPositions,r.PendingModelRequests,r.UnfinancedModelOpenCancellations
         };
         File.WriteAllText(args[1],JsonSerializer.Serialize(new {
             Study="LDP1",SourceSha256=Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant(),
             Receipt=joint,OnlyFx=Summary(fx),OnlySilver=Summary(silver),
-            FundedLong=Summary(alwaysLong),FundedShort=Summary(alwaysShort),
+            FundedLong=Summary(alwaysLong),FundedShort=Summary(alwaysShort),ComparisonFailures=comparisonFailures,
             SilverMarginalCentralEur=joint.ModelClosedCentralNetEur-fx.ModelClosedCentralNetEur,
             SilverMarginalAdverseEur=joint.ModelClosedAdverseNetEur-fx.ModelClosedAdverseNetEur,
             FxMarginalCentralEur=joint.ModelClosedCentralNetEur-silver.ModelClosedCentralNetEur,
