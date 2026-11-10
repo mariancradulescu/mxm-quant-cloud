@@ -1,6 +1,98 @@
 using System.Text.Json;
 using System.Security.Cryptography;
 
+// Original Pepperstone SOURCE-FROZEN SpotBrent / AMD.US W42-W43 multiclass
+// economic development, using existing NativeHistoricalProductReplay.
+// Never orders, never Cloud, no unexposed confirmation or historic fee certification.
+if(args.Length==3 && args[2]=="--native-original-openapi-brent-amd-w42w43")
+{
+    try
+    {
+        var bytes=File.ReadAllBytes(args[0]);
+        var parse=new JsonSerializerOptions{
+            NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString
+        };
+        var source=JsonSerializer.Deserialize<Mxm.Core.NativeOriginalOpenApiTape>(
+            bytes,parse)??throw new ArgumentException("BRENT_AMD_W42W43_EMPTY_SOURCE");
+        if(source.SourceLabel!="ORIGINAL_PEPPERSTONE_OPENAPI_2026_W42_W43_BRENT_AMD_PREDECLARED"||
+           !source.Bars.Select(x=>x.Symbol).OrderBy(x=>x,StringComparer.Ordinal)
+               .SequenceEqual(new[]{"AMD.US","EURUSD","SpotBrent"})||
+           source.Marks.Any(x=>!new[]{"AMD.US","EURUSD","SpotBrent"}
+               .Contains(x.Symbol,StringComparer.Ordinal)))
+            throw new ArgumentException("BRENT_AMD_W42W43_UNAUTHORISED_SYMBOL_OR_SOURCE");
+        var tape=Mxm.Core.NativeOriginalOpenApiProductAdapter.Convert(source);
+        var joint=Mxm.Core.NativeHistoricalProductReplay.Evaluate(tape,
+            UnqualifiedShadowMode:true,ResearchMode:"BRENT_AMD_JOINT_W42W43");
+        var onlyHk=Mxm.Core.NativeHistoricalProductReplay.Evaluate(tape,
+            UnqualifiedShadowMode:true,ResearchMode:"ONLY_BRENT_W42W43");
+        var onlyBrent=Mxm.Core.NativeHistoricalProductReplay.Evaluate(tape,
+            UnqualifiedShadowMode:true,ResearchMode:"ONLY_AMD_W42W43");
+        var chronology=joint.SampledEquity.GroupBy(x=>{
+            var d=DateTimeOffset.FromUnixTimeMilliseconds(x.At).UtcDateTime;
+            return System.Globalization.ISOWeek.GetYear(d)+"-W"+
+                System.Globalization.ISOWeek.GetWeekOfYear(d).ToString("00");
+        }).OrderBy(x=>x.Key,StringComparer.Ordinal).Select(g=>{
+            var first=g.First();var last=g.Last();
+            return new {
+                Week=g.Key,FirstSampleAtMs=first.At,LastSampleAtMs=last.At,
+                SampledCentralEquityChangeEur=
+                    last.CentralEquityEur-first.CentralEquityEur,
+                SampledAdverseEquityChangeEur=
+                    last.AdverseEquityEur-first.AdverseEquityEur,
+                FirstSampledCentralEquityEur=first.CentralEquityEur,
+                LastSampledCentralEquityEur=last.CentralEquityEur,
+                FirstSampledAdverseEquityEur=first.AdverseEquityEur,
+                LastSampledAdverseEquityEur=last.AdverseEquityEur,
+                ModelCompletedRoundTripsCumulative=last.ClosedModelRoundTrips,
+                NoCashReset=true,NotIndependentConfirmation=true
+            };
+        }).ToArray();
+        File.WriteAllText(args[1],JsonSerializer.Serialize(new {
+            Protocol="research/brent_amd_w42_w43_protocol.json",
+            Window="2026_W42_W43_EXPOSED_BRENT_AMD_MULTI_CLASS_RESEARCH_NOT_CONFIRMATION",
+            OriginalMarketSourceSha256=Convert.ToHexString(
+                SHA256.HashData(bytes)).ToLowerInvariant(),
+            Receipt=joint,ChronologicalWeeklySampledEconomics=chronology,
+            FundedAblations=new {
+                OnlyBrentDrivePullback=onlyHk,
+                OnlyAMDLateCashBreakout=onlyBrent,
+                MarginalBrentNetEur=
+                    joint.ModelClosedCentralNetEur-onlyBrent.ModelClosedCentralNetEur,
+                MarginalAMDNetEur=
+                    joint.ModelClosedCentralNetEur-onlyHk.ModelClosedCentralNetEur,
+                SeparateFullEUR300AblationsNeverSummed=true,
+                IndependentSupportClaimed=false
+            },
+            DirectionalBenchmarks=new {
+                FlatCashEur=0m,
+                JointMatchedLongNetEur=joint.MatchedLongBenchmarkNetEur,
+                JointMatchedShortNetEur=joint.MatchedShortBenchmarkNetEur,
+                JointOppositeSignalNetEur=joint.MatchedOppositeSignalBenchmarkNetEur,
+                IncrementalVsBestLongShortFlat=joint.IncrementalVsBestConstantSideEur,
+                IncrementalVsOppositeSignal=joint.IncrementalVsOppositeSignalEur,
+                EntryExitClocksAndSelectedVolumeMatched=true,
+                NeverExtraCapitalWallet=true
+            },
+            EURUSDConversionContextOnly=true,
+            CurrentContractObservedAtMs=source.Marks.Min(x=>x.Contract.ObservedAtUtcMs),
+            FirstHistoricalQuoteAtMs=source.Marks.Min(x=>x.At),
+            CurrentTermsAppliedRetrospectively=
+                source.Marks.Any(x=>x.Contract.ObservedAtUtcMs>x.At),
+            NoHistoricalCommissionContinuityCertified=true,
+            BrokerNetCertified=false,IndependentConfirmation=false,
+            ContinuousDrawdownCertified=false,OriginalBrokerFill=false,
+            OrdersSubmitted=0,CloudActivated=false
+        }));
+        return 0;
+    }
+    catch(Exception ex)
+    {
+        Console.Error.WriteLine("BRENT_AMD_W42W43_NATIVE_REPLAY_REJECTED:"+
+            ex.GetType().Name);
+        return 60;
+    }
+}
+
 // Original Pepperstone SOURCE-FROZEN HK50 / SpotBrent W40-W41 multiclass
 // economic development, using existing NativeHistoricalProductReplay.
 // Never orders, never Cloud, no unexposed confirmation or historic fee certification.
