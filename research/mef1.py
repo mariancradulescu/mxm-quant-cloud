@@ -134,7 +134,7 @@ def main():
                 terms[symbol] = dict(
                     tradingMode=int(c.tradingMode),
                     currentContract=contract(symbol, c, currencies.get(light.quoteAssetId),
-                                             int(datetime.now(ET).timestamp() * 1000)),
+                                             int(datetime.now(UTC).timestamp() * 1000)),
                     currentMinimumMarginEur=None,
                 )
                 if c.tradingMode == 0 and c.minVolume > 0:
