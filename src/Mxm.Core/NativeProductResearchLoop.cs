@@ -72,7 +72,9 @@ public sealed class NativeProductResearchLoop
             "NG_AUD_JOINT_W38W39" or "NG_ONLY_W38W39" or
             "AUD_ONLY_W38W39" or
             "HK_BRENT_JOINT_W40W41" or "HK_ONLY_W40W41" or
-            "BRENT_ONLY_W40W41"))
+            "BRENT_ONLY_W40W41" or
+            "BRENT_AMD_JOINT_W42W43" or
+            "ONLY_BRENT_W42W43" or "ONLY_AMD_W42W43"))
             throw new ArgumentException("UNDECLARED_RESEARCH_MECHANISM");
         this.researchMode=researchMode;
     }
@@ -467,6 +469,94 @@ public sealed class NativeProductResearchLoop
                     side=change>0m?1:-1;
                     driver=Math.Abs(change);
                     mechanism="US500_US_CASH_H1_VOLATILITY_PERSISTENCE";
+                }
+                else continue;
+            }
+            else if(researchMode is "BRENT_AMD_JOINT_W42W43" or
+                "ONLY_BRENT_W42W43" or "ONLY_AMD_W42W43")
+            {
+                // Immutable source-frozen 2026-W42/W43 new families.
+                // Distinct from old Brent-to-Crude lag, energy 4H H1 impulse,
+                // AMD first-hour momentum and failed HK index W40/W41.
+                var utc=DateTimeOffset.FromUnixTimeMilliseconds(at).UtcDateTime;
+                if(market.M15.Length<13 ||
+                   market.M15[^1].CloseAt+1500L!=at)continue;
+                var day=utc.Date;
+                if(market.Symbol=="SpotBrent" &&
+                   researchMode!="ONLY_AMD_W42W43" &&
+                   utc.Hour>=10 && utc.Hour<15)
+                {
+                    long openStart=new DateTimeOffset(day.AddHours(7),
+                        TimeSpan.Zero).ToUnixTimeMilliseconds();
+                    long openStop=openStart+120*60000L;
+                    var morning=market.M15.Where(x=>x.OpenAt>=openStart &&
+                        x.CloseAt<=openStop).ToArray();
+                    if(morning.Length!=8 || morning[0].OpenAt!=openStart ||
+                       morning[^1].CloseAt!=openStop ||
+                       !morning.Zip(morning.Skip(1)).All(x=>
+                           x.First.CloseAt==x.Second.OpenAt))continue;
+                    decimal start=morning[0].Open;
+                    decimal end=morning[^1].Close;
+                    decimal impulse=end-start;
+                    decimal averageRange=morning.Average(x=>x.High-x.Low);
+                    decimal averageTicks=morning.Average(x=>(decimal)x.TickVolume);
+                    var last=market.M15[^1];
+                    decimal lastRange=last.High-last.Low;
+                    decimal spreadObserved=market.Quote.Ask-market.Quote.Bid;
+                    if(averageRange<=0m||averageTicks<=0m||
+                       Math.Abs(impulse)<averageRange || lastRange<=0m ||
+                       last.CloseAt<openStop ||
+                       last.TickVolume<0.65m*averageTicks ||
+                       spreadObserved>0.35m*lastRange ||
+                       impulse*(last.Close-last.Open)<=0m)continue;
+                    // Opposite impulse retracement 40%-80% of first drive.
+                    decimal pullback=(end-last.Close)/impulse;
+                    if(pullback<0.40m || pullback>0.80m)continue;
+                    side=impulse>0m?1:-1;
+                    driver=Math.Abs(impulse)/last.Close;
+                    mechanism="SPOTBRENT_EU_MORNING_DRIVE_PULLBACK_CONTINUATION";
+                }
+                else if(market.Symbol=="AMD.US" &&
+                   researchMode!="ONLY_BRENT_W42W43" &&
+                   utc.Hour>=17 && (utc.Hour<19 ||
+                       (utc.Hour==19 && utc.Minute<=30)) &&
+                   market.M15.Length>=13)
+                {
+                    var group=market.M15.TakeLast(13).ToArray();
+                    if(!group.Zip(group.Skip(1)).All(x=>
+                         x.First.CloseAt==x.Second.OpenAt))continue;
+                    var p=group.Take(8).ToArray();
+                    var compress=group.Skip(8).Take(4).ToArray();
+                    var latest=group[^1];
+                    if(DateTimeOffset.FromUnixTimeMilliseconds(group[0].OpenAt)
+                           .UtcDateTime.Date!=day)continue;
+                    decimal baseRange=p.Average(x=>x.High-x.Low);
+                    decimal baseVolume=p.Average(x=>(decimal)x.TickVolume);
+                    decimal contraction=compress.Average(x=>x.High-x.Low);
+                    decimal upper=p.Max(x=>x.High);
+                    decimal lower=p.Min(x=>x.Low);
+                    decimal latestRange=latest.High-latest.Low;
+                    decimal spreadObserved=market.Quote.Ask-market.Quote.Bid;
+                    if(baseRange<=0m||baseVolume<=0m||latestRange<=0m||
+                       contraction>0.85m*baseRange ||
+                       latest.TickVolume<1.10m*baseVolume ||
+                       spreadObserved>0.35m*latestRange ||
+                       compress.Any(x=>x.High>upper+0.10m*baseRange ||
+                           x.Low<lower-0.10m*baseRange))continue;
+                    if(latest.Close>upper+0.05m*baseRange &&
+                       latest.Close>latest.Open)
+                    {
+                        side=1;
+                        driver=(latest.Close-upper)/latest.Close;
+                    }
+                    else if(latest.Close<lower-0.05m*baseRange &&
+                        latest.Close<latest.Open)
+                    {
+                        side=-1;
+                        driver=(lower-latest.Close)/latest.Close;
+                    }
+                    else continue;
+                    mechanism="AMD_US_LATE_CASH_COMPRESSION_BREAK_TICK_ACCELERATION";
                 }
                 else continue;
             }
@@ -907,6 +997,10 @@ public sealed class NativeProductResearchLoop
                     NativeCausalExitResearch.VolatilityTarget,
                 "CRUDE_US_SESSION_TICK_ACTIVITY_DRIFT"=>
                     NativeCausalExitResearch.PredictionInvalidation,
+                "SPOTBRENT_EU_MORNING_DRIVE_PULLBACK_CONTINUATION"=>
+                    NativeCausalExitResearch.VolatilityTarget,
+                "AMD_US_LATE_CASH_COMPRESSION_BREAK_TICK_ACCELERATION"=>
+                    NativeCausalExitResearch.Chandelier,
                 "HK50_HK_CASH_OPEN_RANGE_FALSE_BREAK_REVERSION"=>
                     NativeCausalExitResearch.EquilibriumReversion,
                 "SPOTBRENT_EU_OPEN_RANGE_EXPANSION_CONTINUATION"=>
@@ -929,6 +1023,8 @@ public sealed class NativeProductResearchLoop
                 "AMD_US_OPENING_HOUR_TICKFLOW"=>180,
                 "CRYPTO_M5_LIQUIDITY_WICK_ABSORPTION"=>150,
                 "CRUDE_US_SESSION_TICK_ACTIVITY_DRIFT"=>120,
+                "SPOTBRENT_EU_MORNING_DRIVE_PULLBACK_CONTINUATION"=>150,
+                "AMD_US_LATE_CASH_COMPRESSION_BREAK_TICK_ACCELERATION"=>120,
                 "HK50_HK_CASH_OPEN_RANGE_FALSE_BREAK_REVERSION"=>105,
                 "SPOTBRENT_EU_OPEN_RANGE_EXPANSION_CONTINUATION"=>120,
                 "NATGAS_US_LIQUIDITY_VOL_COMPRESSION_REVERSION"=>105,
@@ -1088,6 +1184,10 @@ public sealed class NativeProductResearchLoop
                         (Policy:NativeCausalExitResearch.VolatilityTarget,Minutes:150),
                     "CRUDE_US_SESSION_TICK_ACTIVITY_DRIFT"=>
                         (Policy:NativeCausalExitResearch.PredictionInvalidation,Minutes:120),
+                    "SPOTBRENT_EU_MORNING_DRIVE_PULLBACK_CONTINUATION"=>
+                        (Policy:NativeCausalExitResearch.VolatilityTarget,Minutes:150),
+                    "AMD_US_LATE_CASH_COMPRESSION_BREAK_TICK_ACCELERATION"=>
+                        (Policy:NativeCausalExitResearch.Chandelier,Minutes:120),
                     "HK50_HK_CASH_OPEN_RANGE_FALSE_BREAK_REVERSION"=>
                         (Policy:NativeCausalExitResearch.EquilibriumReversion,Minutes:105),
                     "SPOTBRENT_EU_OPEN_RANGE_EXPANSION_CONTINUATION"=>
