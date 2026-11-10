@@ -1,0 +1,83 @@
+{
+  "Protocol": "MXM_HK50_SPOTBRENT_ORIGINAL_W40_W41_DISTINCT_SESSIONS_V1",
+  "Authority": "docs/OWNER_SPEC.md OWNER v2.0; OWNER after PR170; immutable 2026-11-10 preregistration before original W40/W41 source",
+  "FrozenBeforeSource": true,
+  "PriorStudiesClosedNoRerun": true,
+  "SourceSelection": {
+    "SourceWarmupUtc": "2026-09-25T08:00:00Z",
+    "DecisionStartUtc": "2026-09-28T00:00:00Z",
+    "DecisionEndExclusiveUtc": "2026-10-12T00:00:00Z",
+    "Weeks": [
+      "2026-W40",
+      "2026-W41"
+    ],
+    "WindowRole": "HISTORIC_GLOBALLY_EXPOSED_DESCRIPTIVE_DEVELOPMENT_NOT_INDEPENDENT",
+    "NoW46Source": true,
+    "NoRegimeOptimisation": true,
+    "Targets": [
+      "HK50",
+      "SpotBrent"
+    ],
+    "ConversionOnly": "EURUSD",
+    "Source": "original LIVE Pepperstone EUR account, previously proven enabled/affordable in XUA1/CMA cost evidence but source-date recheck mandatory; complete M5 and independent as-of genuine BID/ASK <=60s; 3 contiguous complete M5 -> native M15; never infer DOM or fabricated fill",
+    "Eligibility": "USD quotation for three symbols, original broker min volumes, buy/sell minimum expected margin both <=EUR300, current fee/floor/financing fields; each target >=200 original completed M5 bars per week",
+    "HistoricFeeCaveat": "Only current original broker tariffs retro-applied; not proven historical broker charges. Observed BID/ASK and model slippage, no original order fills."
+  },
+  "Mechanisms": [
+    {
+      "Id": "HK50_HK_CASH_OPEN_RANGE_FALSE_BREAK_REVERSION",
+      "Symbol": "HK50",
+      "Class": "Asian equity index CFD",
+      "DistinctRationale": "Failed expansion beyond the first half hour of Hong Kong cash session can retrace as opening imbalance dissipates, not previously closed Asian synchronized H1 3h impulse, not NAS100/US500 US index fade.",
+      "Session": "02:15–03:30 UTC Monday–Friday, 10:15–11:30 HKT (Hong Kong UTC+8; no DST). HKEX underlying cash continuous session begins 09:30 HKT (01:30 UTC). CFD broker schedule separately verified by original bars/quotes; holidays not assumed.",
+      "Features": "Two contiguous completed M15 cash-open bars 01:30–02:00 UTC, same date with high/low and mean candle range; latest completed signal M15 bar within session, no intrabar hindsight or lookahead.",
+      "Signal": "Latest completed M15 high >= first-half-hour high +0.10*mean open M15 range and closes strictly inside first-half-hour high/low with bearish body => SHORT. Mirror low <= opening low-0.10*mean open range and bullish body => LONG. Tick volume latest >=0.7*open mean; last bar range>0; real spread <=0.35*last bar range.",
+      "Driver": "Normalized rejected overshoot beyond opening high/low / latest close",
+      "Entry": "Minimum broker volume, existing one EUR300 native selector; max one position per symbol; signal on completed new M5 with M15 update.",
+      "Exit": "existing native M15_EQUILIBRIUM_REVERSION with entry-frozen prior eight completed M15 mean; adverse side 1.5 ATR14 M5; 105-minute cap; actual future as-of quote only."
+    },
+    {
+      "Id": "SPOTBRENT_EU_OPEN_RANGE_EXPANSION_CONTINUATION",
+      "Symbol": "SpotBrent",
+      "Class": "Energy CFD",
+      "DistinctRationale": "Brent European liquidity-window early-range expansion with genuine tick activity tests directional repricing, not closed Brent-to-Crude lag, not NatGas H1 compression and not US500 index-volatility rule.",
+      "Session": "07:00–12:00 UTC Monday–Friday, 08:00–13:00 BST during Sep28–Oct09 2026; fixed UTC windows, not inferred exchange open or scheduled macro releases.",
+      "Features": "16 strictly contiguous completed M15: prior twelve M15 baseline + most recent four M15. Latest M15 closes strictly before decision quote. No invented H1 bars.",
+      "Signal": "Recent four M15 average relative high-low >=1.25*prior12 avg; abs(recent four M15 close return) >=1.10*prior12 average abs 15m return; last M15 signed candle body agrees recent4 return; newest genuine tick volume >=1.10*prior12 average; original BID/ASK spread <=0.35*last bar range.",
+      "Driver": "Absolute 4xM15 change / first of four M15 close, no fitted parameter grid.",
+      "Direction": "sign of last four M15 close return",
+      "Entry": "Broker original minimum volume, native common selector and EUR300 ledger",
+      "Exit": "existing native M5_ATR_CHANDELIER 2x entry ATR14, adverse side 1.5 ATR14 M5, 120-minute max, future genuine as-of quote only."
+    }
+  ],
+  "Financial": {
+    "Currency": "EUR",
+    "SingleInitialCapital": 300,
+    "NoReset": true,
+    "NoDeposit": true,
+    "Modes": [
+      "HK_BRENT_JOINT_W40W41",
+      "HK_ONLY_W40W41",
+      "BRENT_ONLY_W40W41"
+    ],
+    "ExistingModules": [
+      "NativeHistoricalProductReplay",
+      "NativeProductResearchLoop",
+      "NativeFundedSession",
+      "NativeOriginalOpenApiProductAdapter"
+    ],
+    "Benchmarks": "same sampled entry/exit clocks and units: constant long, constant short, inverted directions, flat zero; unfunded descriptive controls; matched commission, spread, swap and hypothetical slippage",
+    "Score": "one original C# EUR300 simulated wallet plus two separate full EUR300 family-removal ablations not summed; gross, central/adverse NET, incremental versus best long/short/flat and opposite-side, weekly funded roundtrips, used margin and floating sampled maxDD, signal declines and exits",
+    "HARD21": "system-wide >=21 funded completed per eligible week only; never force/optimize entries",
+    "DD": "<=30% continuous-path global objective; M5 and sparse marks alone cannot certify it",
+    "Promotion": "No positive alpha or independent confirmation claim based on any of these exposed weeks; >=12month walk-forward and genuinely unexposed holdout required before promotion."
+  },
+  "Security": {
+    "OriginalAccountReadOnlyAllowlist": true,
+    "NoOrdersLiveDemo": true,
+    "NoCloudTrading": true,
+    "NoOAuthMutation": true,
+    "TRADE_CAPABLE_NotPermission": true
+  },
+  "StopRules": "If source coverage, fees, quote eligibility, or original broker contract fails, report unsupported honestly, do not pick another date/market after results, do not retune, no rerun negative."
+}
