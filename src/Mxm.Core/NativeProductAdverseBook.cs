@@ -15,9 +15,13 @@ public sealed class NativeProductAdverseBook
     private Dictionary<string,LedgerQuote> market=new(StringComparer.Ordinal);
     public bool Complete {get;private set;}=true;
     public string Failure {get;private set;}="";
+    public string FailureKind {get;private set;}="";
+    public long? FailureAt {get;private set;}
+    public string FailureEventKind {get;private set;}="";
+
     public LedgerSummary? Summary=>Complete?book.Summary():null;
     public string Export()=>JsonSerializer.Serialize(new {
-        Version=1,Book=book.Checkpoint(),Market=market,Complete,Failure
+        Version=1,Book=book.Checkpoint(),Market=market,Complete,Failure,FailureKind,FailureAt,FailureEventKind
     });
     public static NativeProductAdverseBook Restore(string json)
     {
@@ -30,6 +34,11 @@ public sealed class NativeProductAdverseBook
             d.RootElement.GetProperty("Market").GetRawText())!;
         a.Complete=d.RootElement.GetProperty("Complete").GetBoolean();
         a.Failure=d.RootElement.GetProperty("Failure").GetString()??"";
+        if(d.RootElement.TryGetProperty("FailureKind",out var kind))a.FailureKind=kind.GetString()??"";
+        if(d.RootElement.TryGetProperty("FailureAt",out var at) && at.ValueKind==JsonValueKind.Number)
+            a.FailureAt=at.GetInt64();
+        if(d.RootElement.TryGetProperty("FailureEventKind",out var eventKind))
+            a.FailureEventKind=eventKind.GetString()??"";
         return a;
     }
     private static LedgerQuote Stress(LedgerQuote q)
@@ -67,11 +76,12 @@ public sealed class NativeProductAdverseBook
     public void Apply(params LedgerEvent[] facts)
     {
         if(!Complete)return;
+        LedgerEvent? active=null;
         try
         {
             var candidate=NativeFundedLedger.Restore(book.Checkpoint());
             var next=new Dictionary<string,LedgerQuote>(market,StringComparer.Ordinal);
-            foreach(var f in facts)candidate.Apply(Reprice(f,next));
+            foreach(var f in facts) { active=f; candidate.Apply(Reprice(f,next)); }
             book=candidate;market=next;
         }
         catch(Exception ex) when(ex is InvalidOperationException or ArgumentException
@@ -79,6 +89,14 @@ public sealed class NativeProductAdverseBook
         {
             Complete=false;
             Failure="ADVERSE_REPRICED_PATH_UNFINANCEABLE_OR_INCOMPLETE:"+ex.GetType().Name;
+            FailureKind=ex.Message switch {
+                "NATIVE_LEDGER_UNFINANCED_MODEL_FILL"=>"UNFINANCEABLE_OPEN_AT_STRESSED_MARK",
+                "ADVERSE_MISSING_MARK"=>"MISSING_ADVERSE_MARK",
+                _=>"OTHER_ACCOUNTING_OR_EVIDENCE_FAILURE"
+            };
+            FailureAt=active?.At;
+            FailureEventKind=active?.Kind??"";
+
         }
     }
 }

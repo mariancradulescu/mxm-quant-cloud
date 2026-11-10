@@ -55,7 +55,8 @@ public sealed record NativeHistoricalMarketReceipt(
     decimal? MatchedOppositeSignalBenchmarkNetEur=null,
     decimal? IncrementalVsBestConstantSideEur=null,
     decimal? IncrementalVsOppositeSignalEur=null,
-    int UnfinancedModelOpenCancellations=0);
+    int UnfinancedModelOpenCancellations=0,
+    string AdverseFailureKind="",long? AdverseFailureAt=null,string AdverseFailureEventKind="");
 
 public static class NativeHistoricalProductReplay
 {
@@ -270,6 +271,9 @@ public static class NativeHistoricalProductReplay
             IncrementalVsOppositeSignalEur:
                 last.ModelMatchedOppositeSignalBenchmarkEur is decimal flip ?
                 last.ModelCentralNetEur-flip:null,
-            UnfinancedModelOpenCancellations:simulation.UnfinancedModelOpenCancellations);
+            UnfinancedModelOpenCancellations:simulation.UnfinancedModelOpenCancellations,
+            AdverseFailureKind:simulation.AdverseScenario.FailureKind,
+            AdverseFailureAt:simulation.AdverseScenario.FailureAt,
+            AdverseFailureEventKind:simulation.AdverseScenario.FailureEventKind);
     }
 }

@@ -1,6 +1,86 @@
 using System.Text.Json;
 using System.Security.Cryptography;
 
+// New read-only JPY portfolio, original-account conversion routes.
+if(args.Length==3 && args[2] is ("--native-jrc1" or "--native-jrc1-contracts"))
+{
+    string stage="input";
+    try
+    {
+        var bytes=File.ReadAllBytes(args[0]);
+        var parse=new JsonSerializerOptions {
+            NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString
+        };
+        var universe=new[]{"AUDJPY","EURJPY","EURUSD","USDJPY"};
+        if(args[2]=="--native-jrc1-contracts")
+        {
+            var contracts=JsonSerializer.Deserialize<Mxm.Core.NativeObservedContractTerms[]>(bytes,parse)
+                ??throw new ArgumentException("JRC1_CONTRACTS_EMPTY");
+            foreach(var contract in contracts)
+            {
+                if(!universe.Contains(contract.Symbol,StringComparer.Ordinal))
+                    throw new ArgumentException("JRC1_CONTRACT_UNIVERSE");
+                Mxm.Core.NativeBrokerContractCosts.Validate(contract,contract.MinimumUnits);
+            }
+            File.WriteAllText(args[1],"{}");
+            return 0;
+        }
+        var source=JsonSerializer.Deserialize<Mxm.Core.NativeOriginalOpenApiTape>(bytes,parse)
+            ??throw new ArgumentException("JRC1_EMPTY_SOURCE");
+        if(source.SourceLabel!="ORIGINAL_PEPPERSTONE_JRC1_W31_W35" ||
+           !source.Bars.Select(x=>x.Symbol).OrderBy(x=>x,StringComparer.Ordinal).SequenceEqual(universe) ||
+           source.Marks.Any(x=>!universe.Contains(x.Symbol,StringComparer.Ordinal) ||
+               x.OriginalFxRoute is null))
+            throw new ArgumentException("JRC1_SOURCE_OR_FX_ROUTE_BINDING");
+        var tape=Mxm.Core.NativeOriginalOpenApiProductAdapter.Convert(source);
+        Mxm.Core.NativeHistoricalMarketReceipt Run(string mode)
+        {
+            stage=mode;
+            return Mxm.Core.NativeHistoricalProductReplay.Evaluate(tape,
+                UnqualifiedShadowMode:true,ResearchMode:mode);
+        }
+        var joint=Run("JRC1_JOINT");
+        var risk=Run("JRC1_RISK");
+        var reversion=Run("JRC1_REVERSION");
+        var longOnly=Run("JRC1_LONG");
+        var shortOnly=Run("JRC1_SHORT");
+        object Summary(Mxm.Core.NativeHistoricalMarketReceipt r)=>new {
+            r.CompletedModelRoundTrips,r.ModelClosedCentralNetEur,r.ModelClosedAdverseNetEur,
+            r.ModelTripsPerObservedIsoWeek,r.MaximumObservedMarginEur,r.MaximumSampledCentralDrawdown,
+            r.OpenModelPositions,r.PendingModelRequests,r.UnfinancedModelOpenCancellations,
+            r.AdverseFailureKind,r.AdverseFailureAt,r.AdverseFailureEventKind
+        };
+        decimal peak=300m,drawdown=0m;
+        foreach(var mark in joint.SampledEquity)
+        {
+            if(mark.AdverseEquityEur is not decimal value)continue;
+            peak=Math.Max(peak,value);
+            drawdown=Math.Max(drawdown,(peak-value)/peak);
+        }
+        File.WriteAllText(args[1],JsonSerializer.Serialize(new {
+            Study="JRC1",SourceSha256=Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant(),
+            Receipt=joint,OnlyRisk=Summary(risk),OnlyReversion=Summary(reversion),
+            FundedLong=Summary(longOnly),FundedShort=Summary(shortOnly),
+            RiskMarginalCentralEur=joint.ModelClosedCentralNetEur-reversion.ModelClosedCentralNetEur,
+            RiskMarginalAdverseEur=joint.ModelClosedAdverseNetEur-reversion.ModelClosedAdverseNetEur,
+            ReversionMarginalCentralEur=joint.ModelClosedCentralNetEur-risk.ModelClosedCentralNetEur,
+            ReversionMarginalAdverseEur=joint.ModelClosedAdverseNetEur-risk.ModelClosedAdverseNetEur,
+            SampledAdverseDrawdown=drawdown,
+            MissingAdverseMarks=joint.SampledEquity.Count(x=>!x.AdverseEquityEur.HasValue),
+            CashResetBetweenWeeks=false,Qualification="EXPOSED_SHADOW_REPLAY_ONLY",
+            ExpectedWeeks=new[]{"2026-W31","2026-W32","2026-W33","2026-W34","2026-W35"}
+        }));
+        return 0;
+    }
+    catch(Exception ex)
+    {
+        var reason=System.Text.RegularExpressions.Regex.IsMatch(ex.Message,@"A[A-Z][A-Z0-9_]{2,100}z")
+            ?ex.Message:ex.GetType().Name;
+        Console.Error.WriteLine("JRC1_NATIVE_REPLAY_REJECTED:"+stage+":"+reason);
+        return 67;
+    }
+}
+
 // Locked RRP1 original market study. Only the forecast family changes.
 if(args.Length==3 && args[2]=="--native-rrp1")
 {

@@ -73,6 +73,7 @@ public sealed class NativeProductResearchLoop
             "AUD_ONLY_W38W39" or
             "HK_BRENT_JOINT_W40W41" or "HK_ONLY_W40W41" or
             "BRENT_ONLY_W40W41" or
+            "JRC1_JOINT" or "JRC1_RISK" or "JRC1_REVERSION" or "JRC1_LONG" or "JRC1_SHORT" or
             "LDP1_JOINT" or "LDP1_SILVER" or "LDP1_FX" or "LDP1_LONG" or "LDP1_SHORT" or
             "RRP1_JOINT" or "RRP1_EQUITY" or "RRP1_GOLD" or
             "BRENT_AMD_JOINT_W42W43" or
@@ -297,7 +298,8 @@ public sealed class NativeProductResearchLoop
                         p.Units,px,Fee(q,p.Units),q.MarginPerUnit,p.SlippagePerSideQuote)});
                 }
                 catch(InvalidOperationException ex) when(
-                    researchMode.StartsWith("LDP1_",StringComparison.Ordinal) &&
+                    (researchMode.StartsWith("LDP1_",StringComparison.Ordinal) ||
+                     researchMode.StartsWith("JRC1_",StringComparison.Ordinal)) &&
                     ex.Message=="NATIVE_LEDGER_UNFINANCED_MODEL_FILL")
                 {
                     // ApplyResearchFacts is transactional. Record the refused
@@ -501,6 +503,39 @@ public sealed class NativeProductResearchLoop
                     mechanism="US500_US_CASH_H1_VOLATILITY_PERSISTENCE";
                 }
                 else continue;
+            }
+            else if(researchMode is "JRC1_JOINT" or "JRC1_RISK" or "JRC1_REVERSION" or
+                "JRC1_LONG" or "JRC1_SHORT")
+            {
+                var clock=DateTimeOffset.FromUnixTimeMilliseconds(at).UtcDateTime;
+                if(clock.Hour<7 || clock.Hour>=11 || p5.LastClosedAt!=at-1500L ||
+                   RrpHourMove(market.M15,at) is not decimal own)continue;
+                if(market.Symbol=="EURJPY" && researchMode!="JRC1_REVERSION" &&
+                   byName.TryGetValue("AUDJPY",out var risk) &&
+                   byName.TryGetValue("EURUSD",out var eur) &&
+                   RrpHourMove(risk.M15,at) is decimal riskMove &&
+                   RrpHourMove(eur.M15,at) is decimal euroMove &&
+                   Math.Abs(riskMove)>=.0015m && Math.Abs(own)>=.0010m &&
+                   Math.Abs(euroMove)<=.0004m && riskMove*own>0m &&
+                   own*(market.M15[^1].Close-market.M15[^1].Open)>0m)
+                {
+                    side=Math.Sign(own);driver=Math.Abs(riskMove);
+                    mechanism="JRC1_EURJPY_JPY_RISK_PARTICIPATION";
+                }
+                else if(market.Symbol=="USDJPY" && researchMode!="JRC1_RISK")
+                {
+                    var window=market.M15.TakeLast(5).ToArray();
+                    if(window.Length!=5 || Math.Abs(own)<.0015m)continue;
+                    decimal priorRange=window.Take(4).Average(x=>x.High-x.Low);
+                    var last=window[^1];
+                    if(priorRange<=0 || last.High-last.Low<1.5m*priorRange ||
+                       own*(last.Close-last.Open)>=0m)continue;
+                    side=-Math.Sign(own);driver=Math.Abs(own);
+                    mechanism="JRC1_USDJPY_VOLATILITY_CLIMAX_UNWIND";
+                }
+                else continue;
+                if(researchMode=="JRC1_LONG")side=1;
+                if(researchMode=="JRC1_SHORT")side=-1;
             }
             else if(researchMode is "LDP1_JOINT" or "LDP1_SILVER" or "LDP1_FX" or
                 "LDP1_LONG" or "LDP1_SHORT")
@@ -1112,6 +1147,8 @@ public sealed class NativeProductResearchLoop
                 "RRP1_XAUUSD_DEFENSIVE_ROTATION"=>NativeCausalExitResearch.VolatilityTarget,
                 "LDP1_SILVER_USD_REPRICING"=>NativeCausalExitResearch.Chandelier,
                 "LDP1_NZD_LOCAL_INVENTORY_UNWIND"=>NativeCausalExitResearch.EquilibriumReversion,
+                "JRC1_EURJPY_JPY_RISK_PARTICIPATION"=>NativeCausalExitResearch.PredictionInvalidation,
+                "JRC1_USDJPY_VOLATILITY_CLIMAX_UNWIND"=>NativeCausalExitResearch.EquilibriumReversion,
                 _=>market.ExitPolicy
             };
             int effectiveHolding=mechanism switch {
@@ -1134,6 +1171,8 @@ public sealed class NativeProductResearchLoop
                 "RRP1_XAUUSD_DEFENSIVE_ROTATION"=>120,
                 "LDP1_SILVER_USD_REPRICING"=>60,
                 "LDP1_NZD_LOCAL_INVENTORY_UNWIND"=>60,
+                "JRC1_EURJPY_JPY_RISK_PARTICIPATION"=>60,
+                "JRC1_USDJPY_VOLATILITY_CLIMAX_UNWIND"=>60,
                 _=>market.HoldingMinutes
             };
             if(effectiveExitPolicy!=NativeCausalExitResearch.FrozenFixed &&
@@ -1307,6 +1346,8 @@ public sealed class NativeProductResearchLoop
                     "RRP1_XAUUSD_DEFENSIVE_ROTATION"=>(Policy:NativeCausalExitResearch.VolatilityTarget,Minutes:120),
                     "LDP1_SILVER_USD_REPRICING"=>(Policy:NativeCausalExitResearch.Chandelier,Minutes:60),
                     "LDP1_NZD_LOCAL_INVENTORY_UNWIND"=>(Policy:NativeCausalExitResearch.EquilibriumReversion,Minutes:60),
+                    "JRC1_EURJPY_JPY_RISK_PARTICIPATION"=>(Policy:NativeCausalExitResearch.PredictionInvalidation,Minutes:60),
+                    "JRC1_USDJPY_VOLATILITY_CLIMAX_UNWIND"=>(Policy:NativeCausalExitResearch.EquilibriumReversion,Minutes:60),
                     _=>(Policy:market.ExitPolicy,Minutes:market.HoldingMinutes)
                 };
                 tracked.Add(chosen.Id,new(market.Symbol,opportunity.Direction,
