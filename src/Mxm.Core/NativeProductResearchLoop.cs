@@ -493,13 +493,13 @@ public sealed class NativeProductResearchLoop
                     decimal oldVolume=prior.Average(x=>(decimal)x.TickVolume);
                     decimal deviation=mean-current[^1].Close;
                     decimal body=current[^1].Close-current[^1].Open;
-                    decimal spread=market.Quote.Ask-market.Quote.Bid;
+                    decimal gasSpread=market.Quote.Ask-market.Quote.Bid;
                     if(oldRange<=0m || oldVolume<=0m ||
                        recentRange>0.75m*oldRange ||
                        Math.Abs(deviation)<1.25m*oldRange ||
                        deviation*body<=0m ||
                        current[^1].TickVolume<0.75m*oldVolume ||
-                       spread>0.50m*(current[^1].High-current[^1].Low))
+                       gasSpread>0.50m*(current[^1].High-current[^1].Low))
                         continue;
                     side=deviation>0m?1:-1;
                     driver=Math.Abs(deviation)/current[^1].Close;
@@ -529,10 +529,10 @@ public sealed class NativeProductResearchLoop
                     decimal volume=asia.Average(x=>(decimal)x.TickVolume);
                     var bar=market.M15[^1];
                     decimal barRange=bar.High-bar.Low;
-                    decimal spread=market.Quote.Ask-market.Quote.Bid;
+                    decimal asiaSpread=market.Quote.Ask-market.Quote.Bid;
                     if(meanRange<=0m||volume<=0m||barRange<=0m||
                        bar.TickVolume<0.85m*volume||
-                       spread>0.40m*barRange)continue;
+                       asiaSpread>0.40m*barRange)continue;
                     if(bar.High>=high+0.15m*meanRange &&
                        bar.Close<high && bar.Close>low &&
                        bar.Close<bar.Open)
