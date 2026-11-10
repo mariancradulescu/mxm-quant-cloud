@@ -50,7 +50,11 @@ public sealed record NativeHistoricalMarketReceipt(
     Dictionary<string,decimal>? ClosedNetByMechanismEur=null,
     decimal? MaximumObservedMarginEur=null,
     string ResearchMode="FROZEN_LEGACY_M5_M15",
-    Dictionary<string,int>? ExitReasonCounts=null);
+    Dictionary<string,int>? ExitReasonCounts=null,
+    decimal? MatchedShortBenchmarkNetEur=null,
+    decimal? MatchedOppositeSignalBenchmarkNetEur=null,
+    decimal? IncrementalVsBestConstantSideEur=null,
+    decimal? IncrementalVsOppositeSignalEur=null);
 
 public static class NativeHistoricalProductReplay
 {
@@ -254,6 +258,16 @@ public static class NativeHistoricalProductReplay
                     x=>x.Key,x=>x.Sum(v=>v.NetEur),StringComparer.Ordinal),
             MaximumObservedMarginEur:maxMargin,
             ResearchMode:ResearchMode,
-            ExitReasonCounts:last.ModelExitReasons);
+            ExitReasonCounts:last.ModelExitReasons,
+            MatchedShortBenchmarkNetEur:last.ModelMatchedShortBenchmarkEur,
+            MatchedOppositeSignalBenchmarkNetEur:
+                last.ModelMatchedOppositeSignalBenchmarkEur,
+            IncrementalVsBestConstantSideEur:
+                last.ModelMatchedShortBenchmarkEur is decimal sh &&
+                last.ModelMatchedLongBenchmarkEur is decimal lo ?
+                last.ModelCentralNetEur-Math.Max(0m,Math.Max(sh,lo)):null,
+            IncrementalVsOppositeSignalEur:
+                last.ModelMatchedOppositeSignalBenchmarkEur is decimal flip ?
+                last.ModelCentralNetEur-flip:null);
     }
 }
