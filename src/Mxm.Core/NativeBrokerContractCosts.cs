@@ -33,8 +33,77 @@ public sealed record NativeCostAttribution(
     decimal? SpreadRoundTripEur, bool HistoricalExecutionCertified,
     string EvidenceLevel);
 
+// A route is evidence about genuine as-of original-market BID/ASK, NOT a
+// replacement market feed, broker fill or synthetic rate. Its caller must
+// bind every hop to the authenticated original account source.
+public sealed record NativeOriginalFxHop(
+    string Symbol,string BaseAsset,string QuoteAsset,long AtUtcMs,
+    decimal Bid,decimal Ask,bool OriginalBrokerAuthenticated);
+public sealed record NativeOriginalFxRate(
+    decimal CreditToEur,decimal DebitToEur,string[] RouteSymbols);
+
 public static class NativeBrokerContractCosts
 {
+    /// <summary>
+    /// Compose genuinely observed as-of bid/ask conversion rates into the
+    /// EXISTING QuoteCreditToEur / QuoteDebitToEur ledger fields.
+    /// On each leg a sale of the source asset uses BID; a purchase uses ASK.
+    /// For reverse pairs the corresponding reciprocal ASK/BID is used.
+    /// This accepts observed market facts only: no guessed FX, no mid-rate,
+    /// no future/old quotes, no missing path and no zero-cost fallback.
+    /// </summary>
+    public static NativeOriginalFxRate ComposeCausalQuoteToEur(
+        string quoteAsset,long decisionClockUtcMs,
+        IReadOnlyList<NativeOriginalFxHop> route)
+    {
+        if(string.IsNullOrWhiteSpace(quoteAsset)||
+           decisionClockUtcMs<=0||route is null)
+            throw new ArgumentException("NATIVE_FX_ROUTE_INPUT_INVALID");
+        if(quoteAsset=="EUR")
+        {
+            if(route.Count!=0)
+                throw new ArgumentException("NATIVE_FX_EUR_ROUTE_MUST_BE_EMPTY");
+            return new NativeOriginalFxRate(1m,1m,Array.Empty<string>());
+        }
+        if(route.Count is <1 or >4)
+            throw new ArgumentException("NATIVE_FX_ROUTE_MISSING_OR_EXCESSIVE");
+        decimal credit=1m,debit=1m;
+        string current=quoteAsset;
+        var visited=new HashSet<string>(StringComparer.Ordinal){current};
+        var names=new List<string>();
+        foreach(var hop in route)
+        {
+            if(!hop.OriginalBrokerAuthenticated ||
+               string.IsNullOrWhiteSpace(hop.Symbol) ||
+               string.IsNullOrWhiteSpace(hop.BaseAsset) ||
+               string.IsNullOrWhiteSpace(hop.QuoteAsset) ||
+               hop.BaseAsset==hop.QuoteAsset ||
+               hop.AtUtcMs<=0 || hop.AtUtcMs>decisionClockUtcMs ||
+               decisionClockUtcMs-hop.AtUtcMs>60000L ||
+               hop.Bid<=0m || hop.Ask<hop.Bid)
+                throw new ArgumentException("NATIVE_FX_ASOF_OR_ORIGINAL_BIDASK_INVALID");
+            if(hop.BaseAsset==current)
+            {
+                credit*=hop.Bid;
+                debit*=hop.Ask;
+                current=hop.QuoteAsset;
+            }
+            else if(hop.QuoteAsset==current)
+            {
+                credit/=hop.Ask;
+                debit/=hop.Bid;
+                current=hop.BaseAsset;
+            }
+            else throw new ArgumentException("NATIVE_FX_CONVERSION_CHAIN_DISCONNECTED");
+            if(!visited.Add(current))
+                throw new ArgumentException("NATIVE_FX_CONVERSION_ROUTE_CYCLE");
+            names.Add(hop.Symbol);
+        }
+        if(current!="EUR" || credit<=0m || debit<credit)
+            throw new ArgumentException("NATIVE_FX_CONVERSION_EUR_END_MISSING");
+        return new NativeOriginalFxRate(credit,debit,names.ToArray());
+    }
+
     const decimal Million = 1000000m;
     const decimal Wire = 100000000m;
     static decimal Pip(int position)
