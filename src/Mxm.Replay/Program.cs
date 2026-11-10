@@ -59,14 +59,30 @@ if(args.Length==3 && args[2]=="--native-rrp1")
 }
 
 // Locked LDP1 original market study. Only the forecast family changes.
-if(args.Length==3 && args[2]=="--native-ldp1")
+if(args.Length==3 && args[2] is ("--native-ldp1" or "--native-ldp1-contracts"))
 {
+    string stage="input";
     try
     {
         var bytes=File.ReadAllBytes(args[0]);
         var parse=new JsonSerializerOptions {
             NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString
         };
+        if(args[2]=="--native-ldp1-contracts")
+        {
+            var contracts=JsonSerializer.Deserialize<Mxm.Core.NativeObservedContractTerms[]>(bytes,parse)
+                ??throw new ArgumentException("LDP1_CONTRACTS_EMPTY");
+            foreach(var contract in contracts)
+            {
+                stage=contract.Symbol switch {
+                    "AUDUSD"=>"AUDUSD", "EURUSD"=>"EURUSD", "NZDUSD"=>"NZDUSD", "XAGUSD"=>"XAGUSD",
+                    _=>"unknown-symbol"
+                };
+                Mxm.Core.NativeBrokerContractCosts.Validate(contract,contract.MinimumUnits);
+            }
+            File.WriteAllText(args[1],"{}");
+            return 0;
+        }
         var source=JsonSerializer.Deserialize<Mxm.Core.NativeOriginalOpenApiTape>(bytes,parse)
             ??throw new ArgumentException("LDP1_EMPTY_SOURCE");
         var universe=new[]{"AUDUSD","EURUSD","NZDUSD","XAGUSD"};
@@ -74,10 +90,14 @@ if(args.Length==3 && args[2]=="--native-ldp1")
            !source.Bars.Select(x=>x.Symbol).OrderBy(x=>x,StringComparer.Ordinal).SequenceEqual(universe) ||
            source.Marks.Any(x=>!universe.Contains(x.Symbol,StringComparer.Ordinal)))
             throw new ArgumentException("LDP1_SOURCE_BINDING");
+        stage="quote-adapter";
         var tape=Mxm.Core.NativeOriginalOpenApiProductAdapter.Convert(source);
-        Mxm.Core.NativeHistoricalMarketReceipt Run(string mode)=>
-            Mxm.Core.NativeHistoricalProductReplay.Evaluate(tape,
+        Mxm.Core.NativeHistoricalMarketReceipt Run(string mode)
+        {
+            stage=mode;
+            return Mxm.Core.NativeHistoricalProductReplay.Evaluate(tape,
                 UnqualifiedShadowMode:true,ResearchMode:mode);
+        }
         var joint=Run("LDP1_JOINT");
         var fx=Run("LDP1_FX");
         var silver=Run("LDP1_SILVER");
@@ -113,7 +133,9 @@ if(args.Length==3 && args[2]=="--native-ldp1")
     }
     catch(Exception ex)
     {
-        Console.Error.WriteLine("LDP1_NATIVE_REPLAY_REJECTED:"+ex.GetType().Name);
+        var reason=System.Text.RegularExpressions.Regex.IsMatch(ex.Message,@"\A[A-Z][A-Z0-9_]{2,100}\z")
+            ?ex.Message:ex.GetType().Name;
+        Console.Error.WriteLine("LDP1_NATIVE_REPLAY_REJECTED:"+stage+":"+reason);
         return 66;
     }
 }

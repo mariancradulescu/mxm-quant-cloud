@@ -126,7 +126,7 @@ public static class NativeBrokerContractCosts
             c.CommissionType is <1 or >4 || c.MinimumCommissionType is <1 or >2 ||
             c.PreciseRateWire<0 || c.PreciseMinimumWire<0 ||
             c.PnlConversionFeeBps<0 || c.PnlConversionFeeBps>=10000 ||
-            (c.MinimumCommissionType==1 && string.IsNullOrWhiteSpace(c.MinimumCommissionAsset)))
+            (c.PreciseMinimumWire>0 && c.MinimumCommissionType==1 && string.IsNullOrWhiteSpace(c.MinimumCommissionAsset)))
             throw new ArgumentException("NATIVE_COST_CONTRACT_OR_VOLUME_UNVERIFIED");
     }
     static decimal CommissionPerUnit(NativeObservedContractTerms c, decimal price,
@@ -176,7 +176,8 @@ public static class NativeBrokerContractCosts
         decimal pnl=q.PnlConversionRate(c.PnlConversionFeeBps);
         decimal credit=q.QuoteCreditToEur*(1-pnl);
         decimal debit=q.QuoteDebitToEur*(1+pnl);
-        decimal feeAssetToEur=c.MinimumCommissionType==2 ? q.QuoteDebitToEur :
+        decimal feeAssetToEur=c.PreciseMinimumWire==0 ? 0m :
+            c.MinimumCommissionType==2 ? q.QuoteDebitToEur :
             c.MinimumCommissionAsset==c.QuoteAsset ? q.QuoteDebitToEur :
             c.MinimumCommissionAsset=="USD" ? q.UsdToEur :
             q.MinimumFeeAssetToEur ?? throw new ArgumentException("NATIVE_COST_MINIMUM_FX_ROUTE_UNKNOWN");
