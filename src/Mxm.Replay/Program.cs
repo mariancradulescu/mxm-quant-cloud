@@ -1,6 +1,101 @@
 using System.Text.Json;
 using System.Security.Cryptography;
 
+// Original read-only Pepperstone NatGas/AUDUSD research. New mechanisms are
+// preregistered in natgas_audusd_w38_w39_protocol.json before ANY source request.
+// Existing C# NativeHistoricalProductReplay: one shared EUR300 model capital,
+// three fully funded ablations; no historical broker fill or tariff certification.
+if(args.Length==3 && args[2]=="--native-original-openapi-natgas-audusd-w38w39")
+{
+    try
+    {
+        var bytes=File.ReadAllBytes(args[0]);
+        var parse=new JsonSerializerOptions {
+            NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString
+        };
+        var source=JsonSerializer.Deserialize<Mxm.Core.NativeOriginalOpenApiTape>(
+            bytes,parse)??throw new ArgumentException("NG_AUD_W38W39_EMPTY_SOURCE");
+        if(source.SourceLabel!="ORIGINAL_PEPPERSTONE_OPENAPI_2026_W38_W39_NG_AUD_PREDECLARED"||
+           !source.Bars.Select(x=>x.Symbol).OrderBy(x=>x,StringComparer.Ordinal)
+                .SequenceEqual(new[]{"AUDUSD","EURUSD","NatGas"})||
+           source.Marks.Any(x=>!new[]{"AUDUSD","EURUSD","NatGas"}
+                .Contains(x.Symbol,StringComparer.Ordinal)))
+            throw new ArgumentException("NG_AUD_W38W39_UNAUTHORISED_SYMBOL_OR_SOURCE");
+        var tape=Mxm.Core.NativeOriginalOpenApiProductAdapter.Convert(source);
+        var joint=Mxm.Core.NativeHistoricalProductReplay.Evaluate(tape,
+            UnqualifiedShadowMode:true,ResearchMode:"NG_AUD_JOINT_W38W39");
+        var onlyNg=Mxm.Core.NativeHistoricalProductReplay.Evaluate(tape,
+            UnqualifiedShadowMode:true,ResearchMode:"NG_ONLY_W38W39");
+        var onlyAud=Mxm.Core.NativeHistoricalProductReplay.Evaluate(tape,
+            UnqualifiedShadowMode:true,ResearchMode:"AUD_ONLY_W38W39");
+        var chronology=joint.SampledEquity.GroupBy(x=>{
+            var d=DateTimeOffset.FromUnixTimeMilliseconds(x.At).UtcDateTime;
+            return System.Globalization.ISOWeek.GetYear(d)+"-W"+
+                System.Globalization.ISOWeek.GetWeekOfYear(d).ToString("00");
+        }).OrderBy(x=>x.Key,StringComparer.Ordinal).Select(g=>{
+            var first=g.First();var last=g.Last();
+            return new {
+                Week=g.Key,FirstSampleAtMs=first.At,LastSampleAtMs=last.At,
+                FirstSampledCentralEquityEur=first.CentralEquityEur,
+                LastSampledCentralEquityEur=last.CentralEquityEur,
+                SampledCentralEquityChangeEur=
+                    last.CentralEquityEur-first.CentralEquityEur,
+                FirstSampledAdverseEquityEur=first.AdverseEquityEur,
+                LastSampledAdverseEquityEur=last.AdverseEquityEur,
+                SampledAdverseEquityChangeEur=
+                    last.AdverseEquityEur-first.AdverseEquityEur,
+                ModelCompletedRoundTripsCumulative=last.ClosedModelRoundTrips,
+                NoCashReset=true,NotIndependentConfirmation=true
+            };
+        }).ToArray();
+        File.WriteAllText(args[1],JsonSerializer.Serialize(new {
+            Protocol="research/natgas_audusd_w38_w39_protocol.json",
+            Window="2026_W38_W39_EXPOSED_NEW_MULTICLASS_DEVELOPMENT_NOT_CONFIRMATION",
+            OriginalMarketSourceSha256=Convert.ToHexString(
+                SHA256.HashData(bytes)).ToLowerInvariant(),
+            Receipt=joint,
+            ChronologicalWeeklySampledEconomics=chronology,
+            FundedAblations=new {
+                OnlyNatGasCompression=onlyNg,
+                OnlyAUDUSDAsiaSweep=onlyAud,
+                MarginalNatGasNetEur=
+                    joint.ModelClosedCentralNetEur-onlyAud.ModelClosedCentralNetEur,
+                MarginalAUDUSDNetEur=
+                    joint.ModelClosedCentralNetEur-onlyNg.ModelClosedCentralNetEur,
+                SeparateFullEUR300AblationsNeverSummed=true,
+                IndependentSupportClaimed=false
+            },
+            DirectionalBenchmarks=new {
+                CashEur=0m, JointMatchedLongNetEur=joint.MatchedLongBenchmarkNetEur,
+                JointMatchedShortNetEur=joint.MatchedShortBenchmarkNetEur,
+                JointOppositeEachSignalNetEur=joint.MatchedOppositeSignalBenchmarkNetEur,
+                IncrementalVsBestConstantSideEur=joint.IncrementalVsBestConstantSideEur,
+                IncrementalVsOppositeSignalEur=joint.IncrementalVsOppositeSignalEur,
+                SameFundedSignalEntryExitClocksAndUnits=true,
+                DescriptiveUnfundedCounterfactualsNeverIndependentWallets=true
+            },
+            EURUSDConversionContextOnly=true,
+            FirstHistoricalQuoteAtMs=source.Marks.Min(x=>x.At),
+            CurrentBrokerContractFirstObservedMs=
+                source.Marks.Min(x=>x.Contract.ObservedAtUtcMs),
+            CurrentContractTermsRetrospectivelyApplied=
+                source.Marks.Any(x=>x.Contract.ObservedAtUtcMs>x.At),
+            NoHistoricalCommissionContinuityCertified=true,
+            BrokerNetCertified=false,IndependentConfirmation=false,
+            BrokerOrderFillsCertified=false,OriginalBrokerSourceOnlyInCollector=true,
+            OrdersSubmitted=0,CloudActivated=false
+        }));
+        return 0;
+    }
+    catch(Exception ex)
+    {
+        Console.Error.WriteLine("NG_AUD_W38W39_NATIVE_REPLAY_REJECTED:"+
+            ex.GetType().Name);
+        return 59;
+    }
+}
+
+
 // US indices research, preregistered BEFORE original Pepperstone W20/W21
 // historical read-only requests. No orders, Cloud activation, or historic
 // commission continuity claim. One original-funded EUR300 ledger per replay.
