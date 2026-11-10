@@ -59,7 +59,7 @@ if(args.Length==3 && args[2]=="--native-rrp1")
 }
 
 // Locked LDP1 original market study. Only the forecast family changes.
-if(args.Length==3 && args[2] is ("--native-ldp1" or "--native-ldp1-contracts"))
+if(args.Length==3 && args[2] is ("--native-ldp1" or "--native-ldp1-contracts" or "--native-ldp1-replica-w39w43"))
 {
     string stage="input";
     try
@@ -86,10 +86,20 @@ if(args.Length==3 && args[2] is ("--native-ldp1" or "--native-ldp1-contracts"))
         var source=JsonSerializer.Deserialize<Mxm.Core.NativeOriginalOpenApiTape>(bytes,parse)
             ??throw new ArgumentException("LDP1_EMPTY_SOURCE");
         var universe=new[]{"AUDUSD","EURUSD","NZDUSD","XAGUSD"};
-        if(source.SourceLabel!="ORIGINAL_PEPPERSTONE_LDP1_W26_W30" ||
+        bool replica=args[2]=="--native-ldp1-replica-w39w43";
+        string expectedSource=replica?"ORIGINAL_PEPPERSTONE_LDP1_REPLICA_W39_W43"
+            :"ORIGINAL_PEPPERSTONE_LDP1_W26_W30";
+        if(source.SourceLabel!=expectedSource ||
            !source.Bars.Select(x=>x.Symbol).OrderBy(x=>x,StringComparer.Ordinal).SequenceEqual(universe) ||
            source.Marks.Any(x=>!universe.Contains(x.Symbol,StringComparer.Ordinal)))
             throw new ArgumentException("LDP1_SOURCE_BINDING");
+        if(replica)
+        {
+            long startAt=new DateTimeOffset(2026,9,21,0,0,0,TimeSpan.Zero).ToUnixTimeMilliseconds();
+            long endAt=new DateTimeOffset(2026,10,26,0,0,0,TimeSpan.Zero).ToUnixTimeMilliseconds();
+            if(source.Marks.Any(mark=>mark.At<startAt || mark.At>=endAt))
+                throw new ArgumentException("LDP1_REPLICA_CLOCK_OUTSIDE_LOCKED_INTERVAL");
+        }
         stage="quote-adapter";
         var tape=Mxm.Core.NativeOriginalOpenApiProductAdapter.Convert(source);
         Mxm.Core.NativeHistoricalMarketReceipt Run(string mode)
@@ -128,7 +138,7 @@ if(args.Length==3 && args[2] is ("--native-ldp1" or "--native-ldp1-contracts"))
             r.OpenModelPositions,r.PendingModelRequests,r.UnfinancedModelOpenCancellations
         };
         File.WriteAllText(args[1],JsonSerializer.Serialize(new {
-            Study="LDP1",SourceSha256=Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant(),
+            Study=replica?"LDP1_REPLICA_W39_W43":"LDP1",SourceSha256=Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant(),
             Receipt=joint,OnlyFx=Summary(fx),OnlySilver=Summary(silver),
             FundedLong=Summary(alwaysLong),FundedShort=Summary(alwaysShort),ComparisonFailures=comparisonFailures,
             SilverMarginalCentralEur=joint.ModelClosedCentralNetEur-fx.ModelClosedCentralNetEur,
@@ -138,7 +148,8 @@ if(args.Length==3 && args[2] is ("--native-ldp1" or "--native-ldp1-contracts"))
             MissingAdverseMarks=joint.SampledEquity.Count(x=>!x.AdverseEquityEur.HasValue),
             SampledAdverseDrawdown=sampledAdverseDrawdown,
             CashResetBetweenWeeks=false,Qualification="EXPOSED_SHADOW_REPLAY_ONLY",
-            ExpectedWeeks=new[]{"2026-W26","2026-W27","2026-W28","2026-W29","2026-W30"}
+            ExpectedWeeks=replica?new[]{"2026-W39","2026-W40","2026-W41","2026-W42","2026-W43"}
+                :new[]{"2026-W26","2026-W27","2026-W28","2026-W29","2026-W30"}
         }));
         return 0;
     }
