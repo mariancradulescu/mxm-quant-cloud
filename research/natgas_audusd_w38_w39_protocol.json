@@ -1,0 +1,89 @@
+{
+  "id": "MXM_NATGAS_AUDUSD_COMPLEMENTARY_W38_W39_V1",
+  "owner": "docs/OWNER_SPEC.md OWNER v2.0 and OWNER decision after PR169 2026-11-10",
+  "frozenBeforeNewOpenApiSource": true,
+  "immutablePriorStudies": [
+    "research/us_index_w20_w21_protocol.json",
+    "research/nas100_frozen_w32_w33_replication_protocol.json",
+    "research/crypto_crude_w24_w25_protocol.json",
+    "research/cross_asset_energy_equity_w30_w31_protocol.json"
+  ],
+  "scope": "New economically distinct natural-gas micro-regime mean reversion and AUDUSD late-Asia liquidity sweep; none of the exact closed FX shock/absorption, energy lag, crypto wick, US index rules rerun or optimized.",
+  "clock": {
+    "sourceWarmupUtc": "2026-09-11T08:00:00Z",
+    "decisionFromUtc": "2026-09-14T00:00:00Z",
+    "decisionToUtcExclusive": "2026-09-28T00:00:00Z",
+    "weeks": [
+      "2026-W38",
+      "2026-W39"
+    ],
+    "chronology": "W38 predeclared first scoring, W39 later descriptive scoring; both historically globally exposed across MXM. No independent confirmation, no W46 use.",
+    "sessionDst": "September 2026 Europe/London observes BST UTC+1 (07:00 UTC is 08:00 London local), New York EDT UTC-4 (13:00 UTC is 09:00 NYC). Signal sessions are fixed UTC, no inference from unverified broker holiday calendars.",
+    "sourceM5": "Original LIVE Pepperstone original EUR account, genuine read-only M5, GBP/USD conversion not required; EURUSD solely USD->EUR conversion, original causal BID and ASK <=60s old at M5 clock plus 1.5s, three contiguous completed M5 -> M15; no mid synthetic quote, no DOM claims.",
+    "eligibleSymbols": [
+      "EURUSD",
+      "AUDUSD",
+      "NatGas"
+    ],
+    "minM5PerTargetPerWeek": 200,
+    "brokerValidation": "Enabled symbols USD quoted, current minimum volume step lot and expected margins each <=EUR300, commission/floor, swap details, causal matched EURUSD quote, enforce no source fallback.",
+    "sourceEvidence": "CMA1 AUDUSD current min margin 30.97 EUR; CMA2 NatGas current min margin 24.74 EUR and only one valid sampled pair. Recheck original contract. These are historic observations, not predictive outcomes.",
+    "historicalCostLabel": "Current original broker tariff metadata retrospective historical scenario only, slippage modeled, no authentic historic fills, no full path DD certification"
+  },
+  "candidates": [
+    {
+      "id": "NATGAS_US_LIQUIDITY_VOL_COMPRESSION_REVERSION",
+      "category": "Energy / Natural Gas CFD",
+      "mechanism": "After US liquidity injection and initial volatility, four sequential M15 bars contract to <=0.75 mean normalized true-range of previous twelve; last completed price diverges >=1.25 times prior12 mean raw range from prior12 mean close but final M15 body starts pointing back to that prior mean; tick volume latest >=0.75 times prior12 M15 average and real spread <=0.50 times last bar range. Fade towards prior mean.",
+      "symbol": "NatGas",
+      "session": "Weekdays 13:00–19:00 UTC only; explicitly NOT a claim of EIA release-time synchronization",
+      "causalInputs": "16 contiguous M15 closes (12 prior / 4 recent), last close strictly earlier than decision clock, no forward fill, recent 4 H1 equivalent; current observed NatGas as-of BID/ASK",
+      "signalDirection": "sign(prior12 meanClose - lastM15 close), with latest candle body signed in same direction",
+      "driver": "absolute difference between prior mean and current close divided by current close",
+      "exit": "native M15_EQUILIBRIUM_REVERSION mean of prior8 M15, protective 1.5 ATR14 M5 and max 105m, future bid/ask only",
+      "size": "original current broker min volume, one EUR300 common allocator",
+      "independentOf": "Previously closed Brent->Crude lead/lag and US500 H1 momentum; this is NG-specific H1 range compression with mean-reversion hypothesis"
+    },
+    {
+      "id": "AUDUSD_LATE_ASIA_LONDON_SWEEP_FAILURE",
+      "category": "FX",
+      "mechanism": "Late Asian 02:00–05:00 UTC established high/low from 12 contiguous completed M15 bars. During 07:00–09:30 UTC, newest fully closed M15 breaches Asian extreme by >=0.15 times mean Asian M15 candle range but closes back inside with body in reversal direction, latest tick volume >=0.85 of Asian mean, original as-of spread <=0.40 of signal-bar high-low. Trade against rejected sweep. No second cross-sectional FX factor or M5 shock rule.",
+      "symbol": "AUDUSD",
+      "session": "Weekdays 07:00–09:30 UTC, London local BST 08:00–10:30 during these dates",
+      "causalInputs": "12 contiguous M15 02:00–05:00 same UTC date and latest completed M15 decision strictly before M5 quote clock, no future extrema",
+      "signalDirection": "short after failed upper sweep; long after failed lower sweep, one signal per completed M15",
+      "driver": "absolute distance between sweep high/low and late-Asia boundary divided by current close",
+      "exit": "native M15_VOLATILITY_TARGET, quote-side -1.5 ATR14 M5, max 120m, no intrabar assumed fill",
+      "size": "original current broker min volume, one EUR300 common allocator",
+      "independentOf": "Previously closed FX M5 expansion shock, FX breadth factor, M5 tick-absorption, index residual fade"
+    }
+  ],
+  "experimentModes": [
+    "NG_AUD_JOINT_W38W39",
+    "NG_ONLY_W38W39",
+    "AUD_ONLY_W38W39"
+  ],
+  "benchmark": {
+    "cash": "zero with same interval, no ghost fills",
+    "alwaysLong": "same observed entry/exit quote clocks/units and cost, descriptive, never separately financed",
+    "alwaysShort": "same observed entry/exit quote clocks/units and cost, descriptive, never separately financed",
+    "flippedSignal": "inverse side at same observed entry/exit, costs + financing, descriptive conditional benchmark only",
+    "rule": "report NET vs long, short, flipped sign and cash; positive absolute NET alone is insufficient"
+  },
+  "portfolio": {
+    "initialEur": 300,
+    "oneUnresetWallet": true,
+    "cost": "actual historical independently observed original BID/ASK + contractual commission floor and conversion + modeled nonzero slippage and financing, explicitly conditional historical scenario",
+    "jointCapital": "same original NativeFundedSession + NativeHistoricalProductReplay, two EUR300 funded family-only ablations never added",
+    "report": "model funded roundtrips per week vs HARD21 (>=21 each eligible week), maximum USED margin vs changing equity, sampled central/adverse equity and max DD with continuity caveat; gross, central/adverse NET, matched benchmarks, capital drawdown, signal counts, exit/rejection categories",
+    "promote": "do not promote based on already exposed dates, incomplete cost or M5 sampling; >=12months authentic chrono and genuinely unexposed confirmation plus system HARD21 and max continuous DD30 required"
+  },
+  "safety": {
+    "originalReadOnlyAllowlist": true,
+    "tradeCapableDoesNotAuthoriseTrading": true,
+    "ordersLiveDemo": 0,
+    "cloudActivated": false,
+    "oauthSecretMutation": false,
+    "readonlyMainProtectedJobAfterMergeOnly": true
+  }
+}

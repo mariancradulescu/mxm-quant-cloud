@@ -34,18 +34,26 @@ CROSS_ENERGY_EQUITY = "--cross-energy-equity" in sys.argv
 CRYPTO_CRUDE_HISTORIC = "--crypto-crude-w24w25" in sys.argv
 US_INDEX_W20W21 = "--us-index-w20w21" in sys.argv
 NAS100_FROZEN_W32W33 = "--nas100-frozen-w32w33" in sys.argv
+NG_AUD_W38W39 = "--natgas-audusd-w38w39" in sys.argv
 US_INDEX_ANY = US_INDEX_W20W21 or NAS100_FROZEN_W32W33
 if sum((HISTORIC_W36_W37, CROSS_ENERGY_EQUITY, CRYPTO_CRUDE_HISTORIC,
-        US_INDEX_W20W21, NAS100_FROZEN_W32W33))>1:
+        US_INDEX_W20W21, NAS100_FROZEN_W32W33, NG_AUD_W38W39))>1:
     raise RuntimeError("MULTIPLE_RESEARCH_PROFILES_NOT_ALLOWED")
-SYMBOLS = (("EURUSD","US500","NAS100") if US_INDEX_ANY else
+SYMBOLS = (("EURUSD","AUDUSD","NatGas") if NG_AUD_W38W39 else
+           ("EURUSD","US500","NAS100") if US_INDEX_ANY else
            ("EURUSD","ETHUSD","SpotCrude") if CRYPTO_CRUDE_HISTORIC else
            ("EURUSD","SpotBrent","SpotCrude","AMD.US")
            if CROSS_ENERGY_EQUITY else
            ("EURUSD","GBPUSD","AUDUSD","NZDUSD") if HISTORIC_W36_W37
            else ("EURUSD","GBPUSD","AUDUSD"))
 M5 = 300000
-if NAS100_FROZEN_W32W33:
+if NG_AUD_W38W39:
+    # ORIGINAL newly frozen multi-class NatGas (energy) + AUDUSD (FX)
+    # All 2026 W38/W39 source is globally exposed, never a holdout.
+    SOURCE_START = int(datetime(2026,9,11,8,tzinfo=timezone.utc).timestamp()*1000)
+    DECISION_START = int(datetime(2026,9,14,tzinfo=timezone.utc).timestamp()*1000)
+    DECISION_END = int(datetime(2026,9,28,tzinfo=timezone.utc).timestamp()*1000)
+elif NAS100_FROZEN_W32W33:
     # Same W20/W21 NAS100 and US500 fixed trading rules. NEVER a holdout.
     # Freeze dates and original source before Pepperstone source access.
     SOURCE_START = int(datetime(2026,7,31,8,tzinfo=timezone.utc).timestamp()*1000)
@@ -168,7 +176,7 @@ def collect_and_evaluate():
                  and detail.symbol[0].symbolId == ids[name],
                  "CONTRACT_SYMBOL_MISMATCH")
             c = detail.symbol[0]
-            need((0<=int(c.digits)<=8 if (CROSS_ENERGY_EQUITY or CRYPTO_CRUDE_HISTORIC or US_INDEX_ANY) else c.digits==5)
+            need((0<=int(c.digits)<=8 if (CROSS_ENERGY_EQUITY or CRYPTO_CRUDE_HISTORIC or US_INDEX_ANY or NG_AUD_W38W39) else c.digits==5)
                  and int(c.tradingMode)==0 and
                  c.minVolume>0 and c.stepVolume>0 and
                  c.maxVolume>=c.minVolume and c.lotSize>0 and
@@ -219,19 +227,19 @@ def collect_and_evaluate():
                      "TickVolume":v[5]}
                     for t,v in sorted(history.items())
                     if v[0] <= SOURCE_END]
-            need(len(rows)>=(400 if (CROSS_ENERGY_EQUITY or CRYPTO_CRUDE_HISTORIC or US_INDEX_ANY)
-                                 and name!="EURUSD"
+            need(len(rows)>=(400 if (CROSS_ENERGY_EQUITY or CRYPTO_CRUDE_HISTORIC or US_INDEX_ANY or NG_AUD_W38W39)
+                                 and name not in ("EURUSD","AUDUSD")
                             else 2100 if HISTORIC_W36_W37 else 1100),
                  "INSUFFICIENT_PREDECLARED_COMPLETE_M5")
             # Mandatory development window integrity check before further
             # tick data is requested; weekend bars are not manufactured.
             first_week=DECISION_START+7*86400000
-            minimum_week=(200 if (CROSS_ENERGY_EQUITY or CRYPTO_CRUDE_HISTORIC or US_INDEX_ANY)
-                            and name!="EURUSD" else 1000)
+            minimum_week=(200 if (CROSS_ENERGY_EQUITY or CRYPTO_CRUDE_HISTORIC or US_INDEX_ANY or NG_AUD_W38W39)
+                            and name not in ("EURUSD","AUDUSD") else 1000)
             need(sum(DECISION_START<=x["OpenAt"]<first_week for x in rows)>=minimum_week,
                  "FIRST_COMPLETE_WEEK_M5_COVERAGE_UNSATISFACTORY")
-            if NAS100_FROZEN_W32W33:
-                # No zero-coverage week accepted as a successful replication.
+            if NAS100_FROZEN_W32W33 or NG_AUD_W38W39:
+                # No empty/gappy second scoring week counted as genuine.
                 need(sum(first_week<=x["OpenAt"]<DECISION_END for x in rows)>=minimum_week,
                      "SECOND_COMPLETE_WEEK_M5_COVERAGE_UNSATISFACTORY")
             bars.append({"Symbol":name,"M5":rows})
@@ -320,6 +328,8 @@ def collect_and_evaluate():
         # The only file sent to the C# replay contains time-labeled market
         # readings, never OAuth values, original account ID, or broker orders.
         tape={"SourceLabel":(
+              "ORIGINAL_PEPPERSTONE_OPENAPI_2026_W38_W39_NG_AUD_PREDECLARED"
+              if NG_AUD_W38W39 else
               "ORIGINAL_PEPPERSTONE_OPENAPI_2026_W32_W33_NAS_REPLICATION_EXPOSED"
               if NAS100_FROZEN_W32W33 else
               "ORIGINAL_PEPPERSTONE_OPENAPI_2026_W20_W21_US_INDEX_PREDECLARED"
@@ -342,7 +352,9 @@ def collect_and_evaluate():
             process=subprocess.run(["dotnet",
                 "src/Mxm.Replay/bin/Release/net8.0/Mxm.Replay.dll",
                 str(input_file),str(output_file),
-                ("--native-original-openapi-nas100-w32w33"
+                ("--native-original-openapi-natgas-audusd-w38w39"
+                 if NG_AUD_W38W39 else
+                 "--native-original-openapi-nas100-w32w33"
                  if NAS100_FROZEN_W32W33 else
                  "--native-original-openapi-us-index-w20w21"
                  if US_INDEX_W20W21 else
@@ -359,7 +371,9 @@ def collect_and_evaluate():
             evaluated=json.loads(output_file.read_text())
         receipt=evaluated["Receipt"]
         result={
-            "Schema":("MXM_OPENAPI_ORIGINAL_NAS100_FROZEN_W32_W33_V1"
+            "Schema":("MXM_OPENAPI_ORIGINAL_NATGAS_AUDUSD_W38_W39_V1"
+                      if NG_AUD_W38W39 else
+                      "MXM_OPENAPI_ORIGINAL_NAS100_FROZEN_W32_W33_V1"
                       if NAS100_FROZEN_W32W33 else
                       "MXM_OPENAPI_ORIGINAL_US_INDEX_W20W21_V1"
                       if US_INDEX_W20W21 else
@@ -369,7 +383,9 @@ def collect_and_evaluate():
                       if CROSS_ENERGY_EQUITY else
                       "MXM_OPENAPI_AUTHENTIC_NATIVE_HISTORICAL_W36_W37_V1"
                       if HISTORIC_W36_W37 else "MXM_OPENAPI_AUTHENTIC_NATIVE_W45_FX_V1"),
-            "ProtocolPath":("research/nas100_frozen_w32_w33_replication_protocol.json"
+            "ProtocolPath":("research/natgas_audusd_w38_w39_protocol.json"
+                            if NG_AUD_W38W39 else
+                            "research/nas100_frozen_w32_w33_replication_protocol.json"
                             if NAS100_FROZEN_W32W33 else
                             "research/us_index_w20_w21_protocol.json"
                             if US_INDEX_W20W21 else
@@ -380,7 +396,9 @@ def collect_and_evaluate():
                             "research/fx_historical_w36_w37_protocol.json"
                             if HISTORIC_W36_W37 else
                             "research/fx_w45_new_mechanisms_protocol.json"),
-            "WindowRole":("EXPOSED_2026_W32_W33_FIXED_UNCHANGED_NAS_REPLICATION_NOT_INDEPENDENT"
+            "WindowRole":("EXPOSED_2026_W38_W39_NEW_MULTICLASS_CAUSAL_DEVELOPMENT_NOT_INDEPENDENT"
+                          if NG_AUD_W38W39 else
+                          "EXPOSED_2026_W32_W33_FIXED_UNCHANGED_NAS_REPLICATION_NOT_INDEPENDENT"
                           if NAS100_FROZEN_W32W33 else
                           "EXPOSED_2026_W20_DEV_W21_CHRONO_SELECTION_NOT_INDEPENDENT"
                           if US_INDEX_W20W21 else
@@ -391,15 +409,18 @@ def collect_and_evaluate():
                           "RETROSPECTIVE_GLOBALLY_EXPOSED_DEV_W36_SELECTION_W37_NOT_CONFIRMATION"
                           if HISTORIC_W36_W37 else
                           "EXPLORATORY_DEVELOPMENT_NOT_INDEPENDENT_CONFIRMATION"),
-            "Week":("2026-W32_W33" if NAS100_FROZEN_W32W33 else
+            "Week":("2026-W38_W39" if NG_AUD_W38W39 else
+                     "2026-W32_W33" if NAS100_FROZEN_W32W33 else
                      "2026-W20_W21" if US_INDEX_W20W21 else
                      "2026-W24_W25" if CRYPTO_CRUDE_HISTORIC else
                      "2026-W30_W31" if CROSS_ENERGY_EQUITY else
                      "2026-W36_W37" if HISTORIC_W36_W37 else "2026-W45"),
             "HistoricalDevelopmentStartUtcMs":(DECISION_START if
                  (CRYPTO_CRUDE_HISTORIC or CROSS_ENERGY_EQUITY or
-                  HISTORIC_W36_W37 or US_INDEX_ANY) else None),
+                  HISTORIC_W36_W37 or US_INDEX_ANY or NG_AUD_W38W39) else None),
             "HistoricalSelectionStartUtcMs":(
+                 int(datetime(2026,9,21,tzinfo=timezone.utc).timestamp()*1000)
+                 if NG_AUD_W38W39 else
                  int(datetime(2026,8,10,tzinfo=timezone.utc).timestamp()*1000)
                  if NAS100_FROZEN_W32W33 else
                  int(datetime(2026,5,18,tzinfo=timezone.utc).timestamp()*1000)
@@ -415,6 +436,10 @@ def collect_and_evaluate():
                 "14:30-19:00 fixed UTC post-open, NOT full cash session"
                 if NAS100_FROZEN_W32W33 else None),
             "FrozenW20W21MechanismsAndExitsUnchanged":US_INDEX_ANY,
+            "NewRegimeSessionsUtc":(
+                ["NatGas 13:00-19:00 UTC","AUDUSD 07:00-09:30 UTC"]
+                if NG_AUD_W38W39 else None),
+            "TwoFundedConstantSideAndInvertedBenchmarks":NG_AUD_W38W39,
             "ReadOnlyOriginalPepperstoneAuthenticated":True,
             "ExplicitViewScopeVerified":False,
             "ViewPermissionRequestPath":"EXISTING_OWNER_READONLY_AUTH_SCOPE_DECLARED_IN_RUN_LOG",
@@ -428,6 +453,9 @@ def collect_and_evaluate():
                 name:terms[name][0]["ObservedAtUtcMs"] for name in SYMBOLS},
             "HistoricContractTariffsAreRetrospectiveScenarios":True,
             "ResearchMechanismsPreregistered":(
+                ["NATGAS_US_LIQUIDITY_VOL_COMPRESSION_REVERSION",
+                 "AUDUSD_LATE_ASIA_LONDON_SWEEP_FAILURE"]
+                if NG_AUD_W38W39 else
                 ["NAS100_US_CASH_INDEX_RELATIVE_DISPERSION_FADE",
                  "US500_US_CASH_H1_VOLATILITY_PERSISTENCE"]
                 if US_INDEX_ANY else
@@ -441,8 +469,10 @@ def collect_and_evaluate():
                 ["FX_USD_BREADTH_DELAYED_CATCHUP",
                  "FX_M5_SHOCK_EXHAUSTION_REVERSION"]),
             "EURUSDOnlyUsdToEurConversionContext":(
-                 CROSS_ENERGY_EQUITY or CRYPTO_CRUDE_HISTORIC or US_INDEX_ANY),
-            "SourceAssetClasses":(["index","index"]
+                 CROSS_ENERGY_EQUITY or CRYPTO_CRUDE_HISTORIC or US_INDEX_ANY or NG_AUD_W38W39),
+            "SourceAssetClasses":(["fx","energy"]
+                   if NG_AUD_W38W39 else
+                   ["index","index"]
                    if US_INDEX_ANY else
                    ["crypto","energy"]
                    if CRYPTO_CRUDE_HISTORIC else
@@ -462,7 +492,7 @@ def collect_and_evaluate():
             "NativeProductReceipt":receipt,
             "CounterfactualFamilyAblations":(
                 evaluated["FundedAblations"] if
-                 (CROSS_ENERGY_EQUITY or CRYPTO_CRUDE_HISTORIC or US_INDEX_ANY)
+                 (CROSS_ENERGY_EQUITY or CRYPTO_CRUDE_HISTORIC or US_INDEX_ANY or NG_AUD_W38W39)
                 else evaluated["CounterfactualAblation"])
         }
         Path("native-original-openapi-public-receipt.json").write_text(
