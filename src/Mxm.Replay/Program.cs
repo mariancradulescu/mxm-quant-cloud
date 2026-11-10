@@ -1,6 +1,63 @@
 using System.Text.Json;
 using System.Security.Cryptography;
 
+// Locked RRP1 original market study. Only the forecast family changes.
+if(args.Length==3 && args[2]=="--native-rrp1")
+{
+    try
+    {
+        var bytes=File.ReadAllBytes(args[0]);
+        var parse=new JsonSerializerOptions {
+            NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString
+        };
+        var source=JsonSerializer.Deserialize<Mxm.Core.NativeOriginalOpenApiTape>(bytes,parse)
+            ??throw new ArgumentException("RRP1_EMPTY_SOURCE");
+        var universe=new[]{"EURUSD","NAS100","US500","XAUUSD"};
+        if(source.SourceLabel!="ORIGINAL_PEPPERSTONE_RRP1_W39_W44" ||
+           !source.Bars.Select(x=>x.Symbol).OrderBy(x=>x,StringComparer.Ordinal).SequenceEqual(universe) ||
+           source.Marks.Any(x=>!universe.Contains(x.Symbol,StringComparer.Ordinal)))
+            throw new ArgumentException("RRP1_SOURCE_BINDING");
+        var tape=Mxm.Core.NativeOriginalOpenApiProductAdapter.Convert(source);
+        Mxm.Core.NativeHistoricalMarketReceipt Run(string mode)=>
+            Mxm.Core.NativeHistoricalProductReplay.Evaluate(tape,
+                UnqualifiedShadowMode:true,ResearchMode:mode);
+        var joint=Run("RRP1_JOINT");
+        var equity=Run("RRP1_EQUITY");
+        var gold=Run("RRP1_GOLD");
+        var adversePeak=300m;
+        var sampledAdverseDrawdown=0m;
+        foreach(var mark in joint.SampledEquity)
+        {
+            if(mark.AdverseEquityEur is not decimal value)continue;
+            adversePeak=Math.Max(adversePeak,value);
+            sampledAdverseDrawdown=Math.Max(sampledAdverseDrawdown,(adversePeak-value)/adversePeak);
+        }
+        object Summary(Mxm.Core.NativeHistoricalMarketReceipt r)=>new {
+            r.CompletedModelRoundTrips,r.ModelClosedCentralNetEur,r.ModelClosedAdverseNetEur,
+            r.ModelTripsPerObservedIsoWeek,r.MaximumObservedMarginEur,r.MaximumSampledCentralDrawdown,
+            r.OpenModelPositions,r.PendingModelRequests
+        };
+        File.WriteAllText(args[1],JsonSerializer.Serialize(new {
+            Study="RRP1",SourceSha256=Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant(),
+            Receipt=joint,OnlyEquity=Summary(equity),OnlyGold=Summary(gold),
+            GoldMarginalCentralEur=joint.ModelClosedCentralNetEur-equity.ModelClosedCentralNetEur,
+            GoldMarginalAdverseEur=joint.ModelClosedAdverseNetEur-equity.ModelClosedAdverseNetEur,
+            EquityMarginalCentralEur=joint.ModelClosedCentralNetEur-gold.ModelClosedCentralNetEur,
+            EquityMarginalAdverseEur=joint.ModelClosedAdverseNetEur-gold.ModelClosedAdverseNetEur,
+            MissingAdverseMarks=joint.SampledEquity.Count(x=>!x.AdverseEquityEur.HasValue),
+            SampledAdverseDrawdown=sampledAdverseDrawdown,
+            CashResetBetweenWeeks=false,Qualification="EXPOSED_SHADOW_REPLAY_ONLY",
+            ExpectedWeeks=new[]{"2026-W39","2026-W40","2026-W41","2026-W42","2026-W43","2026-W44"}
+        }));
+        return 0;
+    }
+    catch(Exception ex)
+    {
+        Console.Error.WriteLine("RRP1_NATIVE_REPLAY_REJECTED:"+ex.GetType().Name);
+        return 66;
+    }
+}
+
 // Original Pepperstone SOURCE-FROZEN SpotBrent / AMD.US W42-W43 multiclass
 // economic development, using existing NativeHistoricalProductReplay.
 // Never orders, never Cloud, no unexposed confirmation or historic fee certification.

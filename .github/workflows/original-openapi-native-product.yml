@@ -1,20 +1,8 @@
 name: Original Pepperstone Open API native product economic replay
+# Historical W42–W43 workflow. Core research edits must not repeat the
+# frozen collection automatically. The original execution remains archived.
 on:
-  push:
-    branches:
-      - mxm-original-openapi-native-replay-20261109
-      - main
-    paths:
-      - ".github/workflows/original-openapi-native-product.yml"
-      - "research/native_original_openapi_product_replay.py"
-      - "research/nas100_frozen_w32_w33_replication_protocol.json"
-      - "research/natgas_audusd_w38_w39_protocol.json"
-      - "research/hk50_spotbrent_w40_w41_protocol.json"
-      - "research/brent_amd_w42_w43_protocol.json"
-      - "src/Mxm.Core/NativeProductResearchLoop.cs"
-      - "src/Mxm.Core/NativeHistoricalProductReplay.cs"
-      - "src/Mxm.Core/NativeOriginalOpenApiProductAdapter.cs"
-      - "src/Mxm.Replay/Program.cs"
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:

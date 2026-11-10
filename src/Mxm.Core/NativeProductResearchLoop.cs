@@ -73,6 +73,7 @@ public sealed class NativeProductResearchLoop
             "AUD_ONLY_W38W39" or
             "HK_BRENT_JOINT_W40W41" or "HK_ONLY_W40W41" or
             "BRENT_ONLY_W40W41" or
+            "RRP1_JOINT" or "RRP1_EQUITY" or "RRP1_GOLD" or
             "BRENT_AMD_JOINT_W42W43" or
             "ONLY_BRENT_W42W43" or "ONLY_AMD_W42W43"))
             throw new ArgumentException("UNDECLARED_RESEARCH_MECHANISM");
@@ -222,6 +223,14 @@ public sealed class NativeProductResearchLoop
                 side,units,credit,debit)
             :NativeBrokerContractCosts.SignedFinancingCurrentAlgo(c,opened,closed,
                 side,units,credit,debit);
+    private static decimal? RrpHourMove(NativeClosedMarketBar[] bars,long at)
+    {
+        var window=bars.TakeLast(5).ToArray();
+        if(window.Length!=5 || window[^1].CloseAt!=at-1500L ||
+           window.Zip(window.Skip(1)).Any(pair=>pair.First.CloseAt!=pair.Second.OpenAt))
+            return null;
+        return window[^1].Close/window[0].Close-1m;
+    }
     private static decimal Fee(LedgerQuote q,decimal units)=>
         Math.Max(q.ExitFeePerUnit*units,q.ExitFeeFloor);
     private static string Week(long at)
@@ -469,6 +478,38 @@ public sealed class NativeProductResearchLoop
                     side=change>0m?1:-1;
                     driver=Math.Abs(change);
                     mechanism="US500_US_CASH_H1_VOLATILITY_PERSISTENCE";
+                }
+                else continue;
+            }
+            else if(researchMode is "RRP1_JOINT" or "RRP1_EQUITY" or "RRP1_GOLD")
+            {
+                var clock=DateTimeOffset.FromUnixTimeMilliseconds(at).UtcDateTime;
+                if(clock.TimeOfDay<TimeSpan.FromMinutes(870) ||
+                   clock.TimeOfDay>=TimeSpan.FromHours(18) ||
+                   p5.LastClosedAt!=at-1500L ||
+                   !byName.TryGetValue("US500",out var broad))
+                    continue;
+                decimal? broadMove=RrpHourMove(broad.M15,at);
+                if(broadMove is not decimal broadReturn)continue;
+                if(market.Symbol=="US500" && researchMode!="RRP1_GOLD" &&
+                   byName.TryGetValue("NAS100",out var lead) &&
+                   RrpHourMove(lead.M15,at) is decimal leadReturn &&
+                   Math.Abs(leadReturn)>=.0015m &&
+                   broadReturn*leadReturn>=0m &&
+                   Math.Abs(broadReturn)<=Math.Abs(leadReturn)*.5m)
+                {
+                    side=Math.Sign(leadReturn);
+                    driver=Math.Abs(leadReturn-broadReturn);
+                    mechanism="RRP1_US500_LEADERSHIP_TRANSMISSION";
+                }
+                else if(market.Symbol=="XAUUSD" && researchMode!="RRP1_EQUITY" &&
+                        RrpHourMove(market.M15,at) is decimal goldReturn &&
+                        Math.Abs(broadReturn)>=.0015m &&
+                        Math.Abs(goldReturn)>=.0010m && goldReturn*broadReturn<0m)
+                {
+                    side=Math.Sign(goldReturn);
+                    driver=Math.Abs(goldReturn);
+                    mechanism="RRP1_XAUUSD_DEFENSIVE_ROTATION";
                 }
                 else continue;
             }
@@ -1013,6 +1054,8 @@ public sealed class NativeProductResearchLoop
                     NativeCausalExitResearch.EquilibriumReversion,
                 "US500_US_CASH_H1_VOLATILITY_PERSISTENCE"=>
                     NativeCausalExitResearch.Chandelier,
+                "RRP1_US500_LEADERSHIP_TRANSMISSION"=>NativeCausalExitResearch.PredictionInvalidation,
+                "RRP1_XAUUSD_DEFENSIVE_ROTATION"=>NativeCausalExitResearch.VolatilityTarget,
                 _=>market.ExitPolicy
             };
             int effectiveHolding=mechanism switch {
@@ -1031,6 +1074,8 @@ public sealed class NativeProductResearchLoop
                 "AUDUSD_LATE_ASIA_LONDON_SWEEP_FAILURE"=>120,
                 "NAS100_US_CASH_INDEX_RELATIVE_DISPERSION_FADE"=>105,
                 "US500_US_CASH_H1_VOLATILITY_PERSISTENCE"=>180,
+                "RRP1_US500_LEADERSHIP_TRANSMISSION"=>90,
+                "RRP1_XAUUSD_DEFENSIVE_ROTATION"=>120,
                 _=>market.HoldingMinutes
             };
             if(effectiveExitPolicy!=NativeCausalExitResearch.FrozenFixed &&
@@ -1200,6 +1245,8 @@ public sealed class NativeProductResearchLoop
                         (Policy:NativeCausalExitResearch.EquilibriumReversion,Minutes:105),
                     "US500_US_CASH_H1_VOLATILITY_PERSISTENCE"=>
                         (Policy:NativeCausalExitResearch.Chandelier,Minutes:180),
+                    "RRP1_US500_LEADERSHIP_TRANSMISSION"=>(Policy:NativeCausalExitResearch.PredictionInvalidation,Minutes:90),
+                    "RRP1_XAUUSD_DEFENSIVE_ROTATION"=>(Policy:NativeCausalExitResearch.VolatilityTarget,Minutes:120),
                     _=>(Policy:market.ExitPolicy,Minutes:market.HoldingMinutes)
                 };
                 tracked.Add(chosen.Id,new(market.Symbol,opportunity.Direction,
