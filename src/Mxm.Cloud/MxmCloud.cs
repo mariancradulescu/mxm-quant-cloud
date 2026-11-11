@@ -117,10 +117,8 @@ public class MxmCloud : Robot
         }
         if(pip!=1m)return null;
         var quoteFx=(decimal)AssetConverter.Convert(1d,market.QuoteAsset,Account.Asset);
-        var usdFx=(decimal)AssetConverter.Convert(1d,"USD",Account.Asset);
         string minimumAsset=market.MinCommissionType==SymbolMinCommissionType.QuoteAsset
-            ?market.QuoteAsset.Name:market.MinCommissionAsset.Name;
-        decimal minAssetFx=(decimal)AssetConverter.Convert(1d,minimumAsset,Account.Asset);
+            ?market.QuoteAsset.Name:market.MinCommissionAsset?.Name ?? "";
         decimal minimum=(decimal)market.VolumeInUnitsMin;
         if(minimum<=0)return null;
         decimal requiredMargin=(decimal)System.Math.Max(
@@ -147,6 +145,11 @@ public class MxmCloud : Robot
             market.SwapCalculationType==SymbolSwapCalculationType.Pips?0:1,
             (decimal)market.SwapLong,(decimal)market.SwapShort,pipPosition,
             24,1320,triple,false,0,false,false);
+        var usdFx=NativeBrokerContractCosts.RequiresUsdCommissionRate(terms)
+            ?(decimal)AssetConverter.Convert(1d,"USD",Account.Asset):0m;
+        decimal? minAssetFx=minWire>0 && terms.MinimumCommissionType==1 &&
+            minimumAsset.Length>0 && minimumAsset!=terms.QuoteAsset && minimumAsset!="USD"
+            ?(decimal)AssetConverter.Convert(1d,minimumAsset,Account.Asset):null;
         var context=new NativeMarketCostContext(clock,(decimal)market.Bid,
             (decimal)market.Ask,quoteFx,quoteFx,usdFx,minAssetFx,
             requiredMargin,minimum,(decimal)(market.Ask-market.Bid)/4m);
