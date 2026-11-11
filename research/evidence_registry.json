@@ -1434,7 +1434,7 @@
     },
     {
       "id": "LFR1",
-      "status": "PREDECLARED_UNSCORED",
+      "status": "REJECT_EXACT_RULE",
       "protocolFile": "research/london_fix_residual.md",
       "sourceFile": "research/london_fix_residual.py",
       "universe": [
@@ -1447,7 +1447,46 @@
       "readOnlyOriginalPepperstone": true,
       "independentConfirmation": false,
       "fundedNetEur": null,
-      "nativePortfolioAdmitted": false
+      "nativePortfolioAdmitted": false,
+      "closedNoRetune": true,
+      "protocolSha256": "d32e1a37c5a26ff9b2385c5bbfad8b794d60fb3b1a9fe0462deb0538ef252559",
+      "sourceRunId": 43022217480,
+      "sourceMainHead": "8679a401a96615f3579b2f852fb4aba26f1fc0a0",
+      "sourcePublicArtifactId": 13855474732,
+      "sourcePublicArchiveSha256": "7e2cfc17f16d0c07f45f3d9a8deca31d771c774f9b115e7eb65d814e2ef55905",
+      "sourceEncryptedArtifactId": 13856102923,
+      "sourceEncryptedArchiveSha256": "194c2967eab9ec202dc31ab619c3da272c62d7e0952b188c078a162dafabf719",
+      "sourceCiphertextSha256": "498b842947b8015a4d200651d6c6295909d1d2ec38139bec7a3a537e58032995",
+      "permanentPublicReceipt": "docs/LFR1_AUTHENTIC_PUBLIC_RECEIPT_20261111.json",
+      "publicReceiptSha256": "1a04ea085d35baac736f36b940d5af6b618a28a911fb0e29862d3fb50177129d",
+      "readOnlyRequestsAfterAuth": 5063,
+      "fixFullyPricedByHalf": [
+        63,
+        59
+      ],
+      "controlFullyPricedByHalf": [
+        63,
+        57
+      ],
+      "matchedDaysByHalf": [
+        65,
+        65
+      ],
+      "fixCentralBpsByHalf": [
+        -1.1534666766973956,
+        -1.224107302118832
+      ],
+      "fixAdverseBpsByHalf": [
+        -2.6534666766973953,
+        -2.724107302118832
+      ],
+      "matchedAdversePolicyDifferenceBpsByHalf": [
+        -0.041070952053269175,
+        0.36750319668102716
+      ],
+      "systemHard21Proven": false,
+      "ordersSubmitted": 0,
+      "cloudActivated": false
     }
   ],
   "schema": "mxm-project-data-exposure-v1",
