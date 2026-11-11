@@ -1,0 +1,108 @@
+name: LFR1 London fixing relative FX dislocation
+on:
+  pull_request:
+    paths:
+      - 'research/london_fix_residual.py'
+      - 'research/london_fix_residual.md'
+      - '.github/workflows/london-fix-residual.yml'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/london-fix-residual.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - name: Check relative direction, tie, and spread threshold
+        run: |
+          python - <<'PY'
+          from decimal import Decimal as D
+          from research.london_fix_residual import SYMBOLS, signal
+          before = dict.fromkeys(SYMBOLS, (D("1"), D("1.0001")))
+          up = before | {"GBPUSD": (D("1.0020"), D("1.0021"))}
+          down = before | {"NZDUSD": (D("0.9980"), D("0.9981"))}
+          tied = up | {"NZDUSD": (D("0.9980"), D("0.9981"))}
+          small = before | {"AUDUSD": (D("1.0001"), D("1.0002"))}
+          assert signal(before, up) == ("GBPUSD", -1)
+          assert signal(before, down) == ("NZDUSD", 1)
+          assert signal(before, tied) is None
+          assert signal(before, small) is None
+          PY
+  custody-recipient:
+    needs: verify
+    if: >-
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      github.actor == 'mariancradulescu' &&
+      github.run_attempt == '1' &&
+      startsWith(github.event.head_commit.message, 'LFR1_ORIGINAL_READONLY_ONE_TIME')
+    environment: mxm-r3-custody-v1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - name: Derive existing run-bound public recipient
+        run: python -m research.custody_new
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: lfr1-custody-recipient-public
+          path: new-recipient-output/
+          if-no-files-found: error
+          retention-days: 30
+  original-pepperstone-development:
+    needs: custody-recipient
+    environment: mxm-r3-pepperstone-v1
+    concurrency:
+      group: mxm-existing-oauth-read-only
+      cancel-in-progress: false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: lfr1-custody-recipient-public
+          path: new-recipient-output
+      - name: Evaluate original Pepperstone BID and ASK after ex-ante registration
+        run: python -m research.london_fix_residual
+        env:
+          R3_CTRADER_CLIENT_ID: ${{ secrets.R3_CTRADER_CLIENT_ID }}
+          R3_CTRADER_CLIENT_SECRET: ${{ secrets.R3_CTRADER_CLIENT_SECRET }}
+          R3_CTRADER_ACCESS_TOKEN: ${{ secrets.R3_CTRADER_ACCESS_TOKEN }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: lfr1-original-pepperstone-encrypted-source
+          path: lfr1-source.v2.enc
+          if-no-files-found: ignore
+          retention-days: 90
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: lfr1-original-pepperstone-public-receipt
+          path: lfr1-public.json
+          if-no-files-found: error
+          retention-days: 90

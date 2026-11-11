@@ -1,0 +1,311 @@
+{
+  "study": "SQIC1_POOLED_SPREAD_STABLE_QUOTE_IMPULSE",
+  "frozenProtocolSha256": "bc2da8d805b69dc54c915a80a7591ec7949575664473da4b398c2d97f8e3e4e5",
+  "source": "ORIGINAL_PEPPERSTONE_READ_ONLY_EXPOSED_26_WEEKS",
+  "initialProspectiveCapitalEur": 300,
+  "marketSourceEligibility": {
+    "AUDUSD": "CURRENT_INDIVIDUAL_MINIMUM_ELIGIBLE_ONLY",
+    "US2000": "CURRENT_INDIVIDUAL_MINIMUM_ELIGIBLE_ONLY",
+    "SpotCrude": "CURRENT_INDIVIDUAL_MINIMUM_ELIGIBLE_ONLY"
+  },
+  "originalBrokerFillsCertified": false,
+  "independentConfirmation": false,
+  "orders": 0,
+  "cloudActivated": false,
+  "fundedNativeNetEur": null,
+  "historicalTariffCertified": false,
+  "currentTerms": {
+    "AUDUSD": {
+      "Symbol": "AUDUSD",
+      "QuoteAsset": "USD",
+      "ObservedAtUtcMs": 1794396364818,
+      "MinimumUnits": "1000",
+      "VolumeStepUnits": "1000",
+      "MaximumUnits": "10000000",
+      "LotUnits": "100000",
+      "CommissionType": 2,
+      "PreciseRateWire": 300000000,
+      "MinimumCommissionType": 1,
+      "PreciseMinimumWire": 0,
+      "MinimumCommissionAsset": "USD",
+      "PnlConversionFeeBps": 0,
+      "SwapCalculationType": 0,
+      "LongSwap": "0.01",
+      "ShortSwap": "-0.32",
+      "PipPosition": 4,
+      "SwapPeriodHours": 24,
+      "SwapTimeUtcMinute": 1320,
+      "TripleSwapWeekday": 3,
+      "ChargeSwapAtWeekends": false,
+      "SkipSwapPeriods": 0,
+      "OriginalBrokerAuthenticated": true,
+      "HistoricalTariffContinuityCertified": false
+    },
+    "US2000": {
+      "Symbol": "US2000",
+      "QuoteAsset": "USD",
+      "ObservedAtUtcMs": 1794396365237,
+      "MinimumUnits": "0.1",
+      "VolumeStepUnits": "0.1",
+      "MaximumUnits": "200",
+      "LotUnits": "1",
+      "CommissionType": 2,
+      "PreciseRateWire": 0,
+      "MinimumCommissionType": 1,
+      "PreciseMinimumWire": 0,
+      "MinimumCommissionAsset": "USD",
+      "PnlConversionFeeBps": 0,
+      "SwapCalculationType": 1,
+      "LongSwap": "-6.41",
+      "ShortSwap": "1.41",
+      "PipPosition": 0,
+      "SwapPeriodHours": 24,
+      "SwapTimeUtcMinute": 1320,
+      "TripleSwapWeekday": 5,
+      "ChargeSwapAtWeekends": false,
+      "SkipSwapPeriods": 0,
+      "OriginalBrokerAuthenticated": true,
+      "HistoricalTariffContinuityCertified": false
+    },
+    "SpotCrude": {
+      "Symbol": "SpotCrude",
+      "QuoteAsset": "USD",
+      "ObservedAtUtcMs": 1794396365659,
+      "MinimumUnits": "1",
+      "VolumeStepUnits": "1",
+      "MaximumUnits": "5000",
+      "LotUnits": "100",
+      "CommissionType": 2,
+      "PreciseRateWire": 0,
+      "MinimumCommissionType": 1,
+      "PreciseMinimumWire": 0,
+      "MinimumCommissionAsset": "USD",
+      "PnlConversionFeeBps": 0,
+      "SwapCalculationType": 0,
+      "LongSwap": "3.34",
+      "ShortSwap": "-4.12",
+      "PipPosition": 2,
+      "SwapPeriodHours": 24,
+      "SwapTimeUtcMinute": 1320,
+      "TripleSwapWeekday": 5,
+      "ChargeSwapAtWeekends": false,
+      "SkipSwapPeriods": 0,
+      "OriginalBrokerAuthenticated": true,
+      "HistoricalTariffContinuityCertified": false
+    }
+  },
+  "results": {
+    "verdict": "REJECT_EXACT_SQIC1_RULE",
+    "halves": [
+      {
+        "scheduled": 585,
+        "sourceAndMarketEligibilityUnknown": 0,
+        "missingPriorQuote": 0,
+        "causalSignals": 202,
+        "missingPricedQuoteOrFx": 0,
+        "missingCostOrFx": 0,
+        "priced": 202,
+        "activeWeeks": 13,
+        "counts": {
+          "scheduled": 585,
+          "noQuotePressureSignal": 383,
+          "causalSignals": 202,
+          "pricedWithExactCost": 202
+        },
+        "centralBps": {
+          "model": -5.730911031429402,
+          "long": -4.452278361418539,
+          "short": 0.1080039071249326,
+          "cash": 0.0
+        },
+        "adverseBps": {
+          "model": -7.230911031429402,
+          "long": -5.952278361418539,
+          "short": -1.3919960928750674,
+          "cash": 0.0
+        },
+        "coverageGate": true,
+        "passed": false
+      },
+      {
+        "scheduled": 585,
+        "sourceAndMarketEligibilityUnknown": 0,
+        "missingPriorQuote": 0,
+        "causalSignals": 180,
+        "missingPricedQuoteOrFx": 0,
+        "missingCostOrFx": 0,
+        "priced": 180,
+        "activeWeeks": 13,
+        "counts": {
+          "scheduled": 585,
+          "noQuotePressureSignal": 405,
+          "causalSignals": 180,
+          "pricedWithExactCost": 180
+        },
+        "centralBps": {
+          "model": 0.10975461626964106,
+          "long": -0.40974897316315434,
+          "short": -3.6852905225451407,
+          "cash": 0.0
+        },
+        "adverseBps": {
+          "model": -1.3902453837303588,
+          "long": -1.9097489731631543,
+          "short": -5.185290522545141,
+          "cash": 0.0
+        },
+        "coverageGate": true,
+        "passed": false
+      }
+    ],
+    "markets": {
+      "AUDUSD": {
+        "0": {
+          "counts": {
+            "scheduled": 195,
+            "noQuotePressureSignal": 117,
+            "causalSignals": 78,
+            "pricedWithExactCost": 78
+          },
+          "pricedWeeks": 13,
+          "centralBps": {
+            "model": -1.1939459939394568,
+            "long": -1.9682222866168615,
+            "short": -0.9282249266789977,
+            "cash": 0.0
+          },
+          "adverseBps": {
+            "model": -2.6939459939394568,
+            "long": -3.4682222866168613,
+            "short": -2.4282249266789977,
+            "cash": 0.0
+          }
+        },
+        "13": {
+          "counts": {
+            "scheduled": 195,
+            "noQuotePressureSignal": 127,
+            "causalSignals": 68,
+            "pricedWithExactCost": 68
+          },
+          "pricedWeeks": 13,
+          "centralBps": {
+            "model": 0.3399912961314527,
+            "long": -3.2267059842411623,
+            "short": 0.2969878350916463,
+            "cash": 0.0
+          },
+          "adverseBps": {
+            "model": -1.1600087038685474,
+            "long": -4.726705984241162,
+            "short": -1.2030121649083536,
+            "cash": 0.0
+          }
+        }
+      },
+      "US2000": {
+        "0": {
+          "counts": {
+            "scheduled": 195,
+            "causalSignals": 74,
+            "pricedWithExactCost": 74,
+            "noQuotePressureSignal": 121
+          },
+          "pricedWeeks": 13,
+          "centralBps": {
+            "model": -5.676370111346423,
+            "long": -5.513388528532586,
+            "short": 2.3578760521849693,
+            "cash": 0.0
+          },
+          "adverseBps": {
+            "model": -7.176370111346424,
+            "long": -7.013388528532586,
+            "short": 0.8578760521849693,
+            "cash": 0.0
+          }
+        },
+        "13": {
+          "counts": {
+            "scheduled": 195,
+            "noQuotePressureSignal": 142,
+            "causalSignals": 53,
+            "pricedWithExactCost": 53
+          },
+          "pricedWeeks": 13,
+          "centralBps": {
+            "model": 1.1704228596789306,
+            "long": -8.463757286530923,
+            "short": 5.393418663563855,
+            "cash": 0.0
+          },
+          "adverseBps": {
+            "model": -0.3295771403210695,
+            "long": -9.963757286530923,
+            "short": 3.893418663563855,
+            "cash": 0.0
+          }
+        }
+      },
+      "SpotCrude": {
+        "0": {
+          "counts": {
+            "scheduled": 195,
+            "causalSignals": 50,
+            "pricedWithExactCost": 50,
+            "noQuotePressureSignal": 145
+          },
+          "pricedWeeks": 13,
+          "centralBps": {
+            "model": -15.13497932922919,
+            "long": -8.850040235720213,
+            "short": 0.5146155940318635,
+            "cash": 0.0
+          },
+          "adverseBps": {
+            "model": -16.63497932922919,
+            "long": -10.350040235720213,
+            "short": -0.9853844059681365,
+            "cash": 0.0
+          }
+        },
+        "13": {
+          "counts": {
+            "scheduled": 195,
+            "noQuotePressureSignal": 136,
+            "causalSignals": 59,
+            "pricedWithExactCost": 59
+          },
+          "pricedWeeks": 13,
+          "centralBps": {
+            "model": -3.6777020087186507,
+            "long": 8.64166285851946,
+            "short": -14.893780860418818,
+            "cash": 0.0
+          },
+          "adverseBps": {
+            "model": -5.177702008718651,
+            "long": 7.14166285851946,
+            "short": -16.39378086041882,
+            "cash": 0.0
+          }
+        }
+      }
+    }
+  },
+  "readOnlyRequestsAfterAuth": 4641,
+  "currentIndividualMinimumMarginsEur": {
+    "AUDUSD": [
+      30.85,
+      30.85
+    ],
+    "US2000": [
+      25.53,
+      25.53
+    ],
+    "SpotCrude": [
+      7.81,
+      7.81
+    ]
+  }
+}
