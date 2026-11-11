@@ -1363,7 +1363,7 @@
     {
       "id": "CMR1",
       "phase": "PROSPECTIVE_US2000_CASH_CLOSE_SESSION_ANCHOR_MEAN_REVERSION",
-      "status": "PREDECLARED_UNSCORED",
+      "status": "CLOSED_EXACT_INSUFFICIENT_COMPARABLE_SIGNALS",
       "protocolFile": "research/cmr1.md",
       "originalPepperstoneReadOnly": true,
       "oneTarget": "US2000",
@@ -1374,7 +1374,27 @@
       "netEur": null,
       "financedPortfolio": false,
       "closedStudiesUnmodified": true,
-      "tradingCloudActivated": false
+      "tradingCloudActivated": false,
+      "executionRunId": 42994900911,
+      "publicArtifactId": 13843721294,
+      "originalArtifactSha256": "306107af54cbce04c9efe8c3c7b2d182c41351f50e0ea8bfd8f1ac313a00da12",
+      "originalPublicReceiptSha256": "dfd867512c2a58c2d0e2eaa126d84dc51af4271370e9469cadebf03486dce570",
+      "originalProtocolSha256": "375edf39e4934b2056b95b3f10b4a98dfe4e5832a9181e29e0e534fff7bc2820",
+      "sourceBarsM5": 25416,
+      "readOnlyRequestsAfterAuth": 249,
+      "barSignalsByHalf": [
+        16,
+        8
+      ],
+      "costComparableByHalf": [
+        5,
+        0
+      ],
+      "sourceCoveragePassed": false,
+      "selectionPassed": false,
+      "closedNoRetune": true,
+      "receipt": "docs/CMR1_AUTHENTIC_CLOSURE_20261111.md",
+      "permanentPublicReceipt": "docs/CMR1_AUTHENTIC_PUBLIC_RECEIPT_20261111.json"
     }
   ],
   "schema": "mxm-project-data-exposure-v1",
