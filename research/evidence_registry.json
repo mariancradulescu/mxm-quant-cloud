@@ -1399,7 +1399,7 @@
     {
       "id": "SQIC1",
       "phase": "THREE_MARKET_POOLED_ORIGINAL_BID_ASK_PRESSURE_COST_SCREEN",
-      "status": "PREDECLARED_UNSCORED",
+      "status": "REJECT_EXACT_SQIC1_RULE",
       "protocolFile": "research/sqic1_quote_impulse.md",
       "sourceFile": "research/sqic1_quote_impulse.py",
       "universe": [
@@ -1416,7 +1416,38 @@
       "nativePortfolioAdmitted": false,
       "systemHard21Uncertified": true,
       "ordersSubmitted": 0,
-      "cloudActivated": false
+      "cloudActivated": false,
+      "closedNoRetune": true,
+      "sourceRunId": 43011844654,
+      "sourceArtifactId": 13852066326,
+      "sourceArchiveSha256": "91d1067fdcb8f1faa667c8d6f0a0356cf434039c9697d5776029c3494d0c21a7",
+      "permanentPublicReceipt": "docs/SQIC1_AUTHENTIC_PUBLIC_RECEIPT_20261111.json",
+      "publicReceiptSha256": "c843d9f74aae27d196270872f06ce8dd43f4e608667b52e107b552df9c03d11f",
+      "fullyPricedByHalf": [
+        202,
+        180
+      ],
+      "modelAdverseBpsByHalf": [
+        -7.230911031429402,
+        -1.3902453837303588
+      ]
+    },
+    {
+      "id": "LFR1",
+      "status": "PREDECLARED_UNSCORED",
+      "protocolFile": "research/london_fix_residual.md",
+      "sourceFile": "research/london_fix_residual.py",
+      "universe": [
+        "AUDUSD",
+        "GBPUSD",
+        "NZDUSD"
+      ],
+      "fxConversion": "EURUSD",
+      "calendar": "2026-05-04/2026-10-30_EXPOSED_DEVELOPMENT",
+      "readOnlyOriginalPepperstone": true,
+      "independentConfirmation": false,
+      "fundedNetEur": null,
+      "nativePortfolioAdmitted": false
     }
   ],
   "schema": "mxm-project-data-exposure-v1",
