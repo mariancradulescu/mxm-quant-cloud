@@ -1393,7 +1393,8 @@
       "sourceCoveragePassed": false,
       "selectionPassed": false,
       "closedNoRetune": true,
-      "receipt": "docs/CMR1_AUTHENTIC_CLOSURE_20261111.md"
+      "receipt": "docs/CMR1_AUTHENTIC_CLOSURE_20261111.md",
+      "permanentPublicReceipt": "docs/CMR1_AUTHENTIC_PUBLIC_RECEIPT_20261111.json"
     }
   ],
   "schema": "mxm-project-data-exposure-v1",
