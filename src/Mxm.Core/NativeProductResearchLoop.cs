@@ -73,6 +73,7 @@ public sealed class NativeProductResearchLoop
             "AUD_ONLY_W38W39" or
             "HK_BRENT_JOINT_W40W41" or "HK_ONLY_W40W41" or
             "BRENT_ONLY_W40W41" or
+            "JRS1_JOINT" or "JRS1_FX" or "JRS1_COMMODITY" or "JRS1_LONG" or "JRS1_SHORT" or "JRS1_REPEATED" or
             "FCE1_JOINT" or "FCE1_FX" or "FCE1_COMMODITY" or "FCE1_LONG" or "FCE1_SHORT" or "FCE1_MINIMUM" or
             "PRR1_JOINT" or "PRR1_INDEX" or "PRR1_CRUDE" or "PRR1_LONG" or "PRR1_SHORT" or
             "BMR1_JOINT" or "BMR1_FX" or "BMR1_GOLD" or "BMR1_LONG" or "BMR1_SHORT" or
@@ -106,6 +107,8 @@ public sealed class NativeProductResearchLoop
     private bool recoveredCheckpoint=false;
     private int eventSequence, forecasts, accepted, rejected;
     public int UnfinancedModelOpenCancellations {get;private set;}
+    public int DistinctHistoricalStressDecisions {get;private set;}
+    public int DistinctHistoricalStressDecisionsWithExposure {get;private set;}
 
     public NativeFundedSession ResearchSession=>session;
     public string ModelEpochId=>epochId;
@@ -307,6 +310,7 @@ public sealed class NativeProductResearchLoop
                      researchMode.StartsWith("JRC1_",StringComparison.Ordinal) ||
                      researchMode.StartsWith("OTC1_",StringComparison.Ordinal) ||
                      researchMode.StartsWith("MCT2_",StringComparison.Ordinal) ||
+                     researchMode.StartsWith("JRS1_",StringComparison.Ordinal) ||
                      researchMode.StartsWith("FCE1_",StringComparison.Ordinal) ||
                      researchMode.StartsWith("PRR1_",StringComparison.Ordinal) ||
                      researchMode.StartsWith("BMR1_",StringComparison.Ordinal)) &&
@@ -412,6 +416,9 @@ public sealed class NativeProductResearchLoop
             crossMedian=d.Length%2==1?d[d.Length/2]:
                 (d[d.Length/2-1]+d[d.Length/2])/2m;
         }
+        bool jointStudy=researchMode.StartsWith("JRS1_",StringComparison.Ordinal);
+        bool useJointStress=jointStudy && researchMode!="JRS1_REPEATED";
+        var stressEuro=jointStudy?byName.GetValueOrDefault("EURUSD"):null;
         bool factorStudy=researchMode.StartsWith("FCE1_",StringComparison.Ordinal);
         var offered=new List<EconomicOpportunity>();
         var evidence=new List<SpecialistEuroEvidence>();
@@ -514,6 +521,18 @@ public sealed class NativeProductResearchLoop
                     mechanism="US500_US_CASH_H1_VOLATILITY_PERSISTENCE";
                 }
                 else continue;
+            }
+            else if(jointStudy)
+            {
+                bool isFx=NativeRelativeRotationResearch.IsFx(market.Symbol);
+                if((isFx && researchMode=="JRS1_COMMODITY") ||
+                   (!isFx && researchMode=="JRS1_FX"))continue;
+                var forecast=NativeRelativeRotationResearch.Forecast(market,byName,at);
+                if(forecast.Side==0)continue;
+                side=researchMode=="JRS1_LONG"?1:
+                    researchMode=="JRS1_SHORT"?-1:forecast.Side;
+                driver=forecast.Magnitude;
+                mechanism=forecast.Mechanism;
             }
             else if(factorStudy)
             {
@@ -1385,14 +1404,26 @@ public sealed class NativeProductResearchLoop
                 factorStudy && researchMode!="FCE1_MINIMUM"
                     ?Math.Min(c.MaximumUnits,units+c.VolumeStepUnits):units,
                 q.MarginPerUnit,0m,false,false,2,0m);
-            decimal perUnit=(predictedNet-uncertainty)/(factorStudy?units:Math.Max(1,units))*.5m;
-            decimal riskPerUnit=factorStudy
+            decimal perUnit=(predictedNet-uncertainty)/(factorStudy||jointStudy?units:Math.Max(1,units))*.5m;
+            decimal riskPerUnit=factorStudy||jointStudy
                 ? (1.5m*decisionSeed.AtrQuote+q.Ask-q.Bid+
                     2m*market.SlippagePerSideQuote)*q.EurDebit+commission/units
                 : Math.Abs(a)*mid*fx*.25m+.00001m;
-            var candidates=Enumerable.Range(0,8).Select(i=>
-                new OpportunityScenario("STATE"+i,baseClock,true,perUnit,0m,
-                    riskPerUnit,0m)).ToArray();
+            var shocks=jointStudy?NativeHistoricalJointStress.Observe(market,stressEuro,side,at):null;
+            if(jointStudy && shocks is null)
+            {
+                rejected++;
+                recent.Add(new(market.Symbol,at,side,"MODEL_JOINT_STRESS_HISTORY_MISSING",
+                    projectedGross,predictedNet,adverse,"SOURCE_JOINT_STRESS_HISTORY_MISSING",mechanism));
+                continue;
+            }
+            decimal meanShock=shocks?.Average(x=>x.NetPerUnit)??0m;
+            var candidates=useJointStress
+                ?shocks!.Select(x=>new OpportunityScenario(x.Id,x.KnownAt,true,
+                    perUnit+x.NetPerUnit-meanShock,0m,riskPerUnit+x.LossPerUnit,x.PeakPerUnit)).ToArray()
+                :Enumerable.Range(0,8).Select(i=>
+                    new OpportunityScenario("STATE"+i,baseClock,true,perUnit,0m,
+                        riskPerUnit,0m)).ToArray();
             offered.Add(new EconomicOpportunity(id,mechanism,
                 market.Symbol,id,side,at-1,baseClock,
                 EvidenceLevel.Exploratory,false,grid,candidates));
@@ -1410,7 +1441,8 @@ public sealed class NativeProductResearchLoop
         if(offered.Count>0)
         {
             var states=Enumerable.Range(0,8).Select(i=>
-                new PortfolioScenario("STATE"+i,at-2,true,0m,0m,0m,0m)).ToArray();
+                new PortfolioScenario((useJointStress?"ALIGNED_H15_":"STATE")+i,
+                    at-2,true,0m,0m,0m,0m)).ToArray();
             // Capital and risk are common across staggered decisions. All
             // genuinely held and pending positions are carried into EACH
             // joint adverse state; no independent-capital accounts, no hidden
@@ -1439,11 +1471,23 @@ public sealed class NativeProductResearchLoop
                 decimal fx=(q.EurCredit+q.EurDebit)/2m;
                 decimal loss=p.Units*(Math.Max(range,q.Ask-q.Bid)*fx*2m+
                     quoteEvidence.SlippagePerSideQuote*fx);
-                exposures.Add(new(p.Id,p.Symbol,p.Side,p.Units,
-                    states.Select(st=>st with {
+                var shocks=jointStudy?NativeHistoricalJointStress.Observe(
+                    quoteEvidence,stressEuro,p.Side,at):null;
+                if(jointStudy && shocks is null)continue;
+                exposures.Add(new(p.Id,p.Symbol,p.Side,p.Units,useJointStress
+                    ?shocks!.Select(x=>new PortfolioScenario(x.Id,x.KnownAt,true,
+                        x.NetPerUnit*p.Units,loss+x.LossPerUnit*p.Units,
+                        x.PeakPerUnit*p.Units,margin)).ToArray()
+                    :states.Select(st=>st with {
                         KnownAt=at-2,NetEur=0m,LossEur=loss,
                         MarginEur=margin,PeakEur=0m
                     }).ToArray()));
+            }
+            if(useJointStress && offered.Any(x=>x.Scenarios.Select(v=>
+                (v.NetPerUnitEur,v.LossPerUnitEur,v.PeakPerUnitEur)).Distinct().Count()>1))
+            {
+                DistinctHistoricalStressDecisions++;
+                if(exposures.Count>0)DistinctHistoricalStressDecisionsWithExposure++;
             }
             var d=new NativeResearchDecision("PRODUCT/"+at,at,
                 new ScenarioSizingInputs(300,300,300,1,1,1,1,1,2,0),

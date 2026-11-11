@@ -1597,6 +1597,27 @@
       "continuousHistoricalEquityObserved": false,
       "hard21Proven": false,
       "nativePortfolioQualified": false
+    },
+    {
+      "id": "JRS1",
+      "status": "PREDECLARED_UNSCORED",
+      "protocolFile": "research/JRS1.md",
+      "calendar": "2026-02-09/2026-03-20_EXPOSED_DEVELOPMENT",
+      "sourceRunId": 43036474843,
+      "sourceArtifactId": 13863803890,
+      "targets": [
+        "AUDUSD",
+        "NZDUSD",
+        "SpotBrent",
+        "XAUUSD"
+      ],
+      "context": [
+        "EURUSD"
+      ],
+      "initialModelCapitalEur": 300,
+      "independentConfirmation": false,
+      "ordersSubmitted": 0,
+      "cloudActivated": false
     }
   ],
   "schema": "mxm-project-data-exposure-v1",

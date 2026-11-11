@@ -57,7 +57,13 @@ public sealed record NativeHistoricalMarketReceipt(
     decimal? IncrementalVsBestConstantSideEur=null,
     decimal? IncrementalVsOppositeSignalEur=null,
     int UnfinancedModelOpenCancellations=0,
-    string AdverseFailureKind="",long? AdverseFailureAt=null,string AdverseFailureEventKind="");
+    string AdverseFailureKind="",long? AdverseFailureAt=null,string AdverseFailureEventKind="",
+    [property: System.Text.Json.Serialization.JsonIgnore(
+        Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    int? DistinctHistoricalStressDecisions=null,
+    [property: System.Text.Json.Serialization.JsonIgnore(
+        Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    int? DistinctHistoricalStressDecisionsWithExposure=null);
 
 public static class NativeHistoricalProductReplay
 {
@@ -278,6 +284,10 @@ public static class NativeHistoricalProductReplay
             UnfinancedModelOpenCancellations:simulation.UnfinancedModelOpenCancellations,
             AdverseFailureKind:simulation.AdverseScenario.FailureKind,
             AdverseFailureAt:simulation.AdverseScenario.FailureAt,
-            AdverseFailureEventKind:simulation.AdverseScenario.FailureEventKind);
+            AdverseFailureEventKind:simulation.AdverseScenario.FailureEventKind,
+            DistinctHistoricalStressDecisions:ResearchMode.StartsWith("JRS1_",StringComparison.Ordinal)
+                ?simulation.DistinctHistoricalStressDecisions:null,
+            DistinctHistoricalStressDecisionsWithExposure:ResearchMode.StartsWith("JRS1_",StringComparison.Ordinal)
+                ?simulation.DistinctHistoricalStressDecisionsWithExposure:null);
     }
 }
