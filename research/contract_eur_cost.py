@@ -49,16 +49,16 @@ def fee_at_current_contract(symbol, quote_asset, units, price, asset_eur):
     if any(x<=0 for x in rates.values()):
         raise IncompleteCostEvidence("NONPOSITIVE_EUR_RATE")
     def eur(amount,asset):
+        if amount == 0:
+            return D(0)
         if asset not in rates:
             raise IncompleteCostEvidence("MISSING_EUR_ROUTE_"+asset)
         return amount*rates[asset]
     typ=int(symbol.commissionType)
     if typ==1:  # USD per million USD notional
-        # Quote value -> EUR -> USD, then USD-rate, never USD == quote inferred.
-        notional_eur=eur(units*price,quote_asset)
-        if "USD" not in rates:
-            raise IncompleteCostEvidence("USD_RATE_NOT_OBSERVED")
-        base_eur=eur((rate/D(10)**8)*(notional_eur/rates["USD"])/D(10)**6,"USD")
+        # The same USD conversion cancels on the way into and out of USD.
+        # Matches NativeBrokerContractCosts.CommissionPerUnit.
+        base_eur=eur((rate/D(10)**8)/D(10)**6*units*price,quote_asset)
     elif typ==2:  # USD per lot
         base_eur=eur((rate/D(10)**8)*units/lot,"USD")
     elif typ==3:  # % of notional (rate multiplier 1e5, then /100)
