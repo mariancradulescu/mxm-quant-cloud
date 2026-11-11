@@ -1,0 +1,35 @@
+name: Weekend crypto information and Asia FX price discovery
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/weekend-crypto-fx-transmission.yml"
+permissions:
+  contents: read
+  actions: read
+jobs:
+  weekend-crypto-fx-transmission-research:
+    if: github.actor == 'mariancradulescu' && github.ref == 'refs/heads/main'
+    environment: mxm-r3-pepperstone-v1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - name: Test preregistered weekend information transmission with authenticated historical data
+        run: python -m research.weekend_crypto_fx_transmission
+        env:
+          R3_CTRADER_CLIENT_ID: ${{ secrets.R3_CTRADER_CLIENT_ID }}
+          R3_CTRADER_CLIENT_SECRET: ${{ secrets.R3_CTRADER_CLIENT_SECRET }}
+          R3_CTRADER_ACCESS_TOKEN: ${{ secrets.R3_CTRADER_ACCESS_TOKEN }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: weekend-crypto-fx-transmission-public-receipt
+          path: weekend-crypto-fx-transmission-public.json
+          if-no-files-found: error
+          retention-days: 90
