@@ -1708,6 +1708,29 @@
       "continuousHistoricalEquityObserved": false,
       "hard21Proven": false,
       "nativePortfolioQualified": false
+    },
+    {
+      "id": "WFG1",
+      "status": "PREDECLARED_UNSCORED",
+      "protocolFile": "research/WFG1.md",
+      "selectionCalendar": "2026-02-09/2026-02-27_EXPOSED_DEVELOPMENT",
+      "evaluationCalendar": "2026-03-02/2026-03-20_EXPOSED_DEVELOPMENT",
+      "sourceRunId": 43036474843,
+      "sourceArtifactId": 13863803890,
+      "targets": [
+        "AUDUSD",
+        "GBPUSD",
+        "NZDUSD",
+        "SpotBrent",
+        "XAUUSD"
+      ],
+      "context": [
+        "EURUSD"
+      ],
+      "initialModelCapitalEur": 300,
+      "independentConfirmation": false,
+      "ordersSubmitted": 0,
+      "cloudActivated": false
     }
   ],
   "schema": "mxm-project-data-exposure-v1",
