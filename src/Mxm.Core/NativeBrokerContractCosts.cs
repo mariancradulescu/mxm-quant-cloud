@@ -160,6 +160,11 @@ public static class NativeBrokerContractCosts
         return Price(c,q,holdingOpenedAt,side,executionIsBuy,false);
     }
 
+    public static bool RequiresUsdCommissionRate(NativeObservedContractTerms c) =>
+        (c.CommissionType==2 && c.PreciseRateWire>0) ||
+        (c.PreciseMinimumWire>0 && c.MinimumCommissionType==1 &&
+         c.MinimumCommissionAsset=="USD" && c.QuoteAsset!="USD");
+
     private static NativeCostAttribution Price(NativeObservedContractTerms c,
         NativeMarketCostContext q,long? holdingOpenedAt,int? side,
         bool executionIsBuy,bool requireOriginalBroker)
@@ -167,10 +172,12 @@ public static class NativeBrokerContractCosts
         Validate(c,q.Units,requireOriginalBroker);
         if(q.AtUtcMs<=0 || q.Bid<=0 || q.Ask<q.Bid ||
             q.QuoteCreditToEur<=0 || q.QuoteDebitToEur<q.QuoteCreditToEur ||
-            q.UsdToEur<=0 || q.MarginRequirementEur<=0 ||
+            q.UsdToEur<0 || q.MarginRequirementEur<=0 ||
             q.SlippagePerSideQuote<0 ||
             (q.MinimumFeeAssetToEur is decimal x && x<=0))
             throw new ArgumentException("NATIVE_COST_QUOTE_OR_ROUTE_INVALID");
+        if(RequiresUsdCommissionRate(c) && q.UsdToEur==0m)
+            throw new ArgumentException("NATIVE_COST_USD_COMMISSION_ROUTE_UNKNOWN");
         // Preserve signed FX conversion and conversion fee explicitly within
         // existing LedgerQuote EurCredit/EurDebit; never add spread to bid/ask.
         decimal pnl=q.PnlConversionRate(c.PnlConversionFeeBps);
