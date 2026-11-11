@@ -1,6 +1,9 @@
 using System.Text.Json;
 using System.Security.Cryptography;
 
+if(args.Length==3 && args[2]=="--native-wfg1")
+    return NativeChronologicalFundingExperiment.Run(args[0],args[1]);
+
 // Preregistered relative rotation and joint historical stress portfolio.
 if(args.Length==3 && args[2] is ("--native-jrs1" or "--native-sct1"))
 {

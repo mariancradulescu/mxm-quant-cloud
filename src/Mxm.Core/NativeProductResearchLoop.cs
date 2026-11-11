@@ -73,6 +73,9 @@ public sealed class NativeProductResearchLoop
             "AUD_ONLY_W38W39" or
             "HK_BRENT_JOINT_W40W41" or "HK_ONLY_W40W41" or
             "BRENT_ONLY_W40W41" or
+            "WFG1_JOINT" or "WFG1_FX" or "WFG1_COMMODITY" or "WFG1_LONG" or "WFG1_SHORT" or
+            "WFG1_FX_LONG" or "WFG1_FX_SHORT" or "WFG1_COMMODITY_LONG" or "WFG1_COMMODITY_SHORT" or
+            "WFG1_CASH" or
             "SCT1_JOINT" or "SCT1_INDEX" or "SCT1_OIL" or "SCT1_LONG" or "SCT1_SHORT" or "SCT1_REPEATED" or
             "JRS1_JOINT" or "JRS1_FX" or "JRS1_COMMODITY" or "JRS1_LONG" or "JRS1_SHORT" or "JRS1_REPEATED" or
             "FCE1_JOINT" or "FCE1_FX" or "FCE1_COMMODITY" or "FCE1_LONG" or "FCE1_SHORT" or "FCE1_MINIMUM" or
@@ -311,6 +314,7 @@ public sealed class NativeProductResearchLoop
                      researchMode.StartsWith("JRC1_",StringComparison.Ordinal) ||
                      researchMode.StartsWith("OTC1_",StringComparison.Ordinal) ||
                      researchMode.StartsWith("MCT2_",StringComparison.Ordinal) ||
+                     researchMode.StartsWith("WFG1_",StringComparison.Ordinal) ||
                      researchMode.StartsWith("SCT1_",StringComparison.Ordinal) ||
                      researchMode.StartsWith("JRS1_",StringComparison.Ordinal) ||
                      researchMode.StartsWith("FCE1_",StringComparison.Ordinal) ||
@@ -419,7 +423,8 @@ public sealed class NativeProductResearchLoop
                 (d[d.Length/2-1]+d[d.Length/2])/2m;
         }
         bool sessionStudy=researchMode.StartsWith("SCT1_",StringComparison.Ordinal);
-        bool jointStudy=sessionStudy || researchMode.StartsWith("JRS1_",StringComparison.Ordinal);
+        bool fundingGateStudy=researchMode.StartsWith("WFG1_",StringComparison.Ordinal);
+        bool jointStudy=fundingGateStudy || sessionStudy || researchMode.StartsWith("JRS1_",StringComparison.Ordinal);
         bool useJointStress=jointStudy && researchMode is not ("JRS1_REPEATED" or "SCT1_REPEATED");
         var stressEuro=jointStudy?byName.GetValueOrDefault("EURUSD"):null;
         bool factorStudy=researchMode.StartsWith("FCE1_",StringComparison.Ordinal);
@@ -524,6 +529,20 @@ public sealed class NativeProductResearchLoop
                     mechanism="US500_US_CASH_H1_VOLATILITY_PERSISTENCE";
                 }
                 else continue;
+            }
+            else if(fundingGateStudy)
+            {
+                bool isFx=NativeLiquidityRegimeResearch.IsFx(market.Symbol);
+                if(researchMode=="WFG1_CASH" ||
+                   (isFx && researchMode.StartsWith("WFG1_COMMODITY",StringComparison.Ordinal)) ||
+                   (!isFx && researchMode.StartsWith("WFG1_FX",StringComparison.Ordinal)))
+                    continue;
+                var forecast=NativeLiquidityRegimeResearch.Forecast(market,stressEuro,at);
+                if(forecast.Side==0)continue;
+                side=researchMode.EndsWith("_LONG",StringComparison.Ordinal)?1:
+                    researchMode.EndsWith("_SHORT",StringComparison.Ordinal)?-1:forecast.Side;
+                driver=forecast.Magnitude;
+                mechanism=forecast.Mechanism;
             }
             else if(sessionStudy)
             {
@@ -1406,7 +1425,8 @@ public sealed class NativeProductResearchLoop
                 fundingDebit-conversion;
             decimal adverse=predictedNet-spread-slippage;
             string id="EXPLORATORY/"+mechanism+"/"+market.Symbol+"/"+p5.LastClosedAt;
-            var baseClock=Math.Min(p5.LastClosedAt,p15.LastClosedAt);
+            var baseClock=fundingGateStudy?Math.Max(p5.LastClosedAt,p15.LastClosedAt)
+                :Math.Min(p5.LastClosedAt,p15.LastClosedAt);
             if(baseClock>=at-1)
             {
                 rejected++;
