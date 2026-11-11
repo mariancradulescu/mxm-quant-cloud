@@ -1,0 +1,268 @@
+{
+  "study": "LFR1",
+  "runId": "43022217480",
+  "protocolSha256": "d32e1a37c5a26ff9b2385c5bbfad8b794d60fb3b1a9fe0462deb0538ef252559",
+  "calendar": "2026-05-04/2026-10-30_EXPOSED_DEVELOPMENT",
+  "originalTerms": {
+    "AUDUSD": {
+      "terms": {
+        "Symbol": "AUDUSD",
+        "QuoteAsset": "USD",
+        "ObservedAtUtcMs": 1794400805790,
+        "MinimumUnits": "1000",
+        "VolumeStepUnits": "1000",
+        "MaximumUnits": "10000000",
+        "LotUnits": "100000",
+        "CommissionType": 2,
+        "PreciseRateWire": 300000000,
+        "MinimumCommissionType": 1,
+        "PreciseMinimumWire": 0,
+        "MinimumCommissionAsset": "USD",
+        "PnlConversionFeeBps": 0,
+        "SwapCalculationType": 0,
+        "LongSwap": "0.01",
+        "ShortSwap": "-0.32",
+        "PipPosition": 4,
+        "SwapPeriodHours": 24,
+        "SwapTimeUtcMinute": 1320,
+        "TripleSwapWeekday": 3,
+        "ChargeSwapAtWeekends": false,
+        "SkipSwapPeriods": 0,
+        "OriginalBrokerAuthenticated": true,
+        "HistoricalTariffContinuityCertified": false
+      },
+      "minimumMarginEur": [
+        30.81,
+        30.8
+      ]
+    },
+    "GBPUSD": {
+      "terms": {
+        "Symbol": "GBPUSD",
+        "QuoteAsset": "USD",
+        "ObservedAtUtcMs": 1794400805790,
+        "MinimumUnits": "1000",
+        "VolumeStepUnits": "1000",
+        "MaximumUnits": "10000000",
+        "LotUnits": "100000",
+        "CommissionType": 2,
+        "PreciseRateWire": 300000000,
+        "MinimumCommissionType": 1,
+        "PreciseMinimumWire": 0,
+        "MinimumCommissionAsset": "USD",
+        "PnlConversionFeeBps": 0,
+        "SwapCalculationType": 0,
+        "LongSwap": "-0.24",
+        "ShortSwap": "-0.27",
+        "PipPosition": 4,
+        "SwapPeriodHours": 24,
+        "SwapTimeUtcMinute": 1320,
+        "TripleSwapWeekday": 3,
+        "ChargeSwapAtWeekends": false,
+        "SkipSwapPeriods": 0,
+        "OriginalBrokerAuthenticated": true,
+        "HistoricalTariffContinuityCertified": false
+      },
+      "minimumMarginEur": [
+        39.85,
+        39.85
+      ]
+    },
+    "NZDUSD": {
+      "terms": {
+        "Symbol": "NZDUSD",
+        "QuoteAsset": "USD",
+        "ObservedAtUtcMs": 1794400805790,
+        "MinimumUnits": "1000",
+        "VolumeStepUnits": "1000",
+        "MaximumUnits": "10000000",
+        "LotUnits": "100000",
+        "CommissionType": 2,
+        "PreciseRateWire": 300000000,
+        "MinimumCommissionType": 1,
+        "PreciseMinimumWire": 0,
+        "MinimumCommissionAsset": "USD",
+        "PnlConversionFeeBps": 0,
+        "SwapCalculationType": 0,
+        "LongSwap": "-0.33",
+        "ShortSwap": "0.07",
+        "PipPosition": 4,
+        "SwapPeriodHours": 24,
+        "SwapTimeUtcMinute": 1320,
+        "TripleSwapWeekday": 3,
+        "ChargeSwapAtWeekends": false,
+        "SkipSwapPeriods": 0,
+        "OriginalBrokerAuthenticated": true,
+        "HistoricalTariffContinuityCertified": false
+      },
+      "minimumMarginEur": [
+        25.08,
+        25.08
+      ]
+    }
+  },
+  "fundedNetEur": null,
+  "independentConfirmation": false,
+  "brokerFillsCertified": false,
+  "orders": 0,
+  "cloudActivated": false,
+  "result": {
+    "verdict": "REJECT_EXACT_RULE",
+    "halves": [
+      {
+        "firstWeekIndex": 0,
+        "windows": {
+          "fix": {
+            "counts": {
+              "scheduled": 65,
+              "signals": 63,
+              "signals_GBPUSD": 34,
+              "priced": 63,
+              "priced_GBPUSD": 34,
+              "signals_AUDUSD": 14,
+              "priced_AUDUSD": 14,
+              "abstained": 2,
+              "signals_NZDUSD": 15,
+              "priced_NZDUSD": 15
+            },
+            "pricedWeeks": 13,
+            "central": {
+              "model": -1.1534666766973956,
+              "long": -1.4130047125882115,
+              "short": -1.256910532126184,
+              "cash": 0.0
+            },
+            "adverse": {
+              "model": -2.6534666766973953,
+              "long": -2.9130047125882115,
+              "short": -2.756910532126184,
+              "cash": 0.0
+            },
+            "costs": {
+              "entrySpreadBps": 0.15358707141871233,
+              "exitSpreadBps": 0.16011122635213024,
+              "roundTripCommissionBps": 0.6781038014359808,
+              "conversionFeeBps": 0.0
+            }
+          },
+          "control": {
+            "counts": {
+              "scheduled": 65,
+              "signals": 63,
+              "signals_GBPUSD": 38,
+              "priced": 63,
+              "priced_GBPUSD": 38,
+              "signals_NZDUSD": 14,
+              "priced_NZDUSD": 14,
+              "signals_AUDUSD": 11,
+              "priced_AUDUSD": 11,
+              "abstained": 2
+            },
+            "pricedWeeks": 13,
+            "central": {
+              "model": -1.070873815079437,
+              "long": -1.8570792578173765,
+              "short": -0.7488324476591559,
+              "cash": 0.0
+            },
+            "adverse": {
+              "model": -2.570873815079437,
+              "long": -3.3570792578173765,
+              "short": -2.2488324476591557,
+              "cash": 0.0
+            },
+            "costs": {
+              "entrySpreadBps": 0.16825156374555592,
+              "exitSpreadBps": 0.15331872186315693,
+              "roundTripCommissionBps": 0.6421677681624139,
+              "conversionFeeBps": 0.0
+            }
+          }
+        },
+        "matchedDays": 65,
+        "matchedWeeks": 13,
+        "matchedAdversePolicyDifferenceBps": -0.041070952053269175,
+        "coverageGate": true,
+        "passed": false
+      },
+      {
+        "firstWeekIndex": 13,
+        "windows": {
+          "fix": {
+            "counts": {
+              "scheduled": 65,
+              "signals": 59,
+              "signals_AUDUSD": 19,
+              "priced": 59,
+              "priced_AUDUSD": 19,
+              "signals_GBPUSD": 28,
+              "priced_GBPUSD": 28,
+              "abstained": 6,
+              "signals_NZDUSD": 12,
+              "priced_NZDUSD": 12
+            },
+            "pricedWeeks": 13,
+            "central": {
+              "model": -1.224107302118832,
+              "long": -2.057500146227822,
+              "short": -0.6964976385988686,
+              "cash": 0.0
+            },
+            "adverse": {
+              "model": -2.724107302118832,
+              "long": -3.5575001462278215,
+              "short": -2.196497638598869,
+              "cash": 0.0
+            },
+            "costs": {
+              "entrySpreadBps": 0.17142269217981607,
+              "exitSpreadBps": 0.16573094719063874,
+              "roundTripCommissionBps": 0.7084102354497267,
+              "conversionFeeBps": 0.0
+            }
+          },
+          "control": {
+            "counts": {
+              "scheduled": 65,
+              "signals": 57,
+              "signals_NZDUSD": 18,
+              "priced": 57,
+              "priced_NZDUSD": 18,
+              "signals_AUDUSD": 15,
+              "priced_AUDUSD": 15,
+              "abstained": 8,
+              "signals_GBPUSD": 24,
+              "priced_GBPUSD": 24
+            },
+            "pricedWeeks": 13,
+            "central": {
+              "model": -1.9518639927816093,
+              "long": -0.2550173317275689,
+              "short": -2.5962238602415515,
+              "cash": 0.0
+            },
+            "adverse": {
+              "model": -3.451863992781609,
+              "long": -1.755017331727569,
+              "short": -4.096223860241552,
+              "cash": 0.0
+            },
+            "costs": {
+              "entrySpreadBps": 0.176645740601586,
+              "exitSpreadBps": 0.20182506020675653,
+              "roundTripCommissionBps": 0.7363812892583369,
+              "conversionFeeBps": 0.0
+            }
+          }
+        },
+        "matchedDays": 65,
+        "matchedWeeks": 13,
+        "matchedAdversePolicyDifferenceBps": 0.36750319668102716,
+        "coverageGate": true,
+        "passed": false
+      }
+    ]
+  },
+  "ciphertextSha256": "498b842947b8015a4d200651d6c6295909d1d2ec38139bec7a3a537e58032995",
+  "readOnlyRequestsAfterAuth": 5063
+}
