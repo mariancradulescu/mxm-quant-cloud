@@ -12,6 +12,7 @@ or [CMR1 evaluator](../research/cmr1.py).
 - Original public ZIP artifact: [#13843721294](https://github.com/mariancradulescu/mxm-quant-cloud/actions/runs/42994900911/artifacts/13843721294)
 - Original ZIP SHA-256: `306107af54cbce04c9efe8c3c7b2d182c41351f50e0ea8bfd8f1ac313a00da12`; matches GitHub artifact digest.
 - Original uncompressed `cmr1-public-receipt.json` SHA-256: `dfd867512c2a58c2d0e2eaa126d84dc51af4271370e9469cadebf03486dce570`.
+- Permanent original public bytes: [`CMR1_AUTHENTIC_PUBLIC_RECEIPT_20261111.json`](CMR1_AUTHENTIC_PUBLIC_RECEIPT_20261111.json); the Git blob SHA-1 `86326129b4a1e0b04681f4785c4a42475d0028ae` **exactly matches** the entry extracted from the original ZIP (2,668 bytes).
 - Ex-ante protocol SHA-256, recorded by original run: `375edf39e4934b2056b95b3f10b4a98dfe4e5832a9181e29e0e534fff7bc2820`.
 - 249 original read-only Pepperstone requests after account authentication, 25,416 decoded historical M5 bars, minimum observed current buy/sell margin 25.45/25.45 EUR.
 - No orders, no Cloud activation, no funded C# replay, no certified historical fills/tariffs, no independent confirmation. Read-only authenticated original LIVE account; zero LIVE/DEMO trading operations.
