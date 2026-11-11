@@ -2,8 +2,11 @@ using System.Text.Json;
 using System.Security.Cryptography;
 
 // Preregistered relative rotation and joint historical stress portfolio.
-if(args.Length==3 && args[2]=="--native-jrs1")
+if(args.Length==3 && args[2] is ("--native-jrs1" or "--native-sct1"))
 {
+    bool sessionStudy=args[2]=="--native-sct1";
+    string study=sessionStudy?"SCT1":"JRS1";
+    long markInterval=sessionStudy?300000L:60000L;
     string stage="input";
     try
     {
@@ -11,16 +14,23 @@ if(args.Length==3 && args[2]=="--native-jrs1")
         var parse=new JsonSerializerOptions {
             NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString
         };
-        var universe=new[]{"AUDUSD","EURUSD","GBPUSD","NZDUSD","SpotBrent","XAUUSD"};
+        var universe=sessionStudy?new[]{"EURUSD","SpotCrude","US2000","US500"}
+            :new[]{"AUDUSD","EURUSD","GBPUSD","NZDUSD","SpotBrent","XAUUSD"};
+        string sourceLabel=sessionStudy?"ORIGINAL_PEPPERSTONE_PRR1_APRIL_2026"
+            :"ORIGINAL_PEPPERSTONE_FCE1_FEB_MAR_2026";
         var source=JsonSerializer.Deserialize<Mxm.Core.NativeOriginalOpenApiTape>(bytes,parse)
             ??throw new ArgumentException("JRS1_EMPTY_SOURCE");
-        if(source.SourceLabel!="ORIGINAL_PEPPERSTONE_FCE1_FEB_MAR_2026" ||
+        if(source.SourceLabel!=sourceLabel ||
            !source.Bars.Select(x=>x.Symbol).OrderBy(x=>x,StringComparer.Ordinal).SequenceEqual(universe) ||
            source.Marks.Any(x=>!universe.Contains(x.Symbol,StringComparer.Ordinal)))
             throw new ArgumentException("JRS1_SOURCE_OR_FX_ROUTE_BINDING");
         var adapted=Mxm.Core.NativeOriginalOpenApiProductAdapter.Convert(source);
         var tape=adapted with { Quotes=adapted.Quotes.Select(mark=>mark.Quote.Symbol switch
         {
+            "US2000" or "US500" when sessionStudy=>mark with { HoldingMinutes=120,
+                ExitPolicy=Mxm.Core.NativeCausalExitResearch.PredictionInvalidation },
+            "SpotCrude" when sessionStudy=>mark with { HoldingMinutes=105,
+                ExitPolicy=Mxm.Core.NativeCausalExitResearch.Chandelier },
             "AUDUSD" or "NZDUSD"=>mark with { HoldingMinutes=75,
                 ExitPolicy=Mxm.Core.NativeCausalExitResearch.PredictionInvalidation },
             "SpotBrent" or "XAUUSD"=>mark with { HoldingMinutes=75,
@@ -35,12 +45,12 @@ if(args.Length==3 && args[2]=="--native-jrs1")
             return Mxm.Core.NativeHistoricalProductReplay.Evaluate(tape,
                 UnqualifiedShadowMode:true,ResearchMode:mode,ObserveFinalLedger:observe);
         }
-        var joint=Run("JRS1_JOINT",ledger=>closed=ledger.ClosedFragments());
-        var fx=Run("JRS1_FX");
-        var commodity=Run("JRS1_COMMODITY");
-        var longOnly=Run("JRS1_LONG");
-        var shortOnly=Run("JRS1_SHORT");
-        var repeated=Run("JRS1_REPEATED");
+        var joint=Run(study+"_JOINT",ledger=>closed=ledger.ClosedFragments());
+        var fx=Run(sessionStudy?"SCT1_INDEX":"JRS1_FX");
+        var commodity=Run(sessionStudy?"SCT1_OIL":"JRS1_COMMODITY");
+        var longOnly=Run(study+"_LONG");
+        var shortOnly=Run(study+"_SHORT");
+        var repeated=Run(study+"_REPEATED");
         object Summary(Mxm.Core.NativeHistoricalMarketReceipt r)=>new {
             r.CompletedModelRoundTrips,r.ModelClosedCentralNetEur,r.ModelClosedAdverseNetEur,
             r.ModelTripsPerObservedIsoWeek,r.MaximumObservedMarginEur,r.MaximumSampledCentralDrawdown,
@@ -60,7 +70,7 @@ if(args.Length==3 && args[2]=="--native-jrs1")
             .ToDictionary(g=>g.Key,g=>g.First().Contract!.MinimumUnits,StringComparer.Ordinal);
         long requiredHeld=0,missingHeld=0;
         foreach(var fill in closed)
-            for(long at=fill.OpenedAt;at<=fill.ClosedAt;at+=60000L)
+            for(long at=fill.OpenedAt;at<=fill.ClosedAt;at+=markInterval)
             {
                 requiredHeld++;
                 if(!marks.Contains((at,fill.Symbol)))missingHeld++;
@@ -71,7 +81,7 @@ if(args.Length==3 && args[2]=="--native-jrs1")
         int peakPositions=joint.SampledEquity.Max(mark=>closed.Count(
             fill=>fill.OpenedAt<=mark.At && mark.At<fill.ClosedAt));
         File.WriteAllText(args[1],JsonSerializer.Serialize(new {
-            Study="JRS1",SourceSha256=Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant(),
+            Study=study,SourceSha256=Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant(),
             Receipt=joint with {SampledEquity=heldTrace},OnlyFx=Summary(fx),OnlyCommodity=Summary(commodity),
             FundedLong=Summary(longOnly),FundedShort=Summary(shortOnly),
             FundedRepeatedStress=Summary(repeated),
@@ -96,7 +106,7 @@ if(args.Length==3 && args[2]=="--native-jrs1")
     {
         var reason=System.Text.RegularExpressions.Regex.IsMatch(ex.Message,@"^[A-Z][A-Z0-9_]{2,100}$")
             ?ex.Message:ex.GetType().Name;
-        Console.Error.WriteLine("JRS1_NATIVE_REPLAY_REJECTED:"+stage+":"+reason);
+        Console.Error.WriteLine(study+"_NATIVE_REPLAY_REJECTED:"+stage+":"+reason);
         return 67;
     }
 }

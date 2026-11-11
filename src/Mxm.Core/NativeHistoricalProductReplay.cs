@@ -136,9 +136,9 @@ public static class NativeHistoricalProductReplay
         return left;
     }
     private static NativeClosedMarketBar[] Prefix(
-        NativeClosedMarketBar[] all,long at)
+        NativeClosedMarketBar[] all,long at,int limit=NativeCausalWarmup.WindowBars)
     {
-        int until=Until(all,at),n=Math.Min(until,NativeCausalWarmup.WindowBars);
+        int until=Until(all,at),n=Math.Min(until,limit);
         var prefix=new NativeClosedMarketBar[n];
         Array.Copy(all,until-n,prefix,0,n);
         return prefix;
@@ -186,6 +186,8 @@ public static class NativeHistoricalProductReplay
         if(samples.Zip(samples.Skip(1)).Any(x=>
             x.First.At==x.Second.At&&x.First.Quote.Symbol==x.Second.Quote.Symbol))
             throw new ArgumentException("HISTORICAL_TAPE_DUPLICATED_QUOTE_SYMBOL_CLOCK");
+        bool sessionStudy=ResearchMode.StartsWith("SCT1_",StringComparison.Ordinal);
+        bool historicalStress=sessionStudy || ResearchMode.StartsWith("JRS1_",StringComparison.Ordinal);
         var simulation=new NativeProductResearchLoop(ResearchMode);
         var reasonCounts=new Dictionary<string,int>(StringComparer.Ordinal);
         var categoryCounts=new Dictionary<string,int>(StringComparer.Ordinal);
@@ -201,7 +203,8 @@ public static class NativeHistoricalProductReplay
                 // Both complete M5 and M15 windows are anchored at the
                 // current quote clock, never at the tape's final future bar.
                 return new NativeProductMarket(x.Quote.Symbol,
-                    Prefix(bars.M5,group.Key),Prefix(bars.M15,group.Key),
+                    Prefix(bars.M5,group.Key),Prefix(bars.M15,group.Key,
+                        sessionStudy?128:NativeCausalWarmup.WindowBars),
                     x.Quote,x.Contract,x.SlippagePerSideQuote,x.HoldingMinutes,
                     IndependentlySupportedAgainstBenchmark:false,
                     ExitPolicy:x.ExitPolicy);
@@ -285,9 +288,9 @@ public static class NativeHistoricalProductReplay
             AdverseFailureKind:simulation.AdverseScenario.FailureKind,
             AdverseFailureAt:simulation.AdverseScenario.FailureAt,
             AdverseFailureEventKind:simulation.AdverseScenario.FailureEventKind,
-            DistinctHistoricalStressDecisions:ResearchMode.StartsWith("JRS1_",StringComparison.Ordinal)
+            DistinctHistoricalStressDecisions:historicalStress
                 ?simulation.DistinctHistoricalStressDecisions:null,
-            DistinctHistoricalStressDecisionsWithExposure:ResearchMode.StartsWith("JRS1_",StringComparison.Ordinal)
+            DistinctHistoricalStressDecisionsWithExposure:historicalStress
                 ?simulation.DistinctHistoricalStressDecisionsWithExposure:null);
     }
 }

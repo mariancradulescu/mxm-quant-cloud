@@ -73,6 +73,7 @@ public sealed class NativeProductResearchLoop
             "AUD_ONLY_W38W39" or
             "HK_BRENT_JOINT_W40W41" or "HK_ONLY_W40W41" or
             "BRENT_ONLY_W40W41" or
+            "SCT1_JOINT" or "SCT1_INDEX" or "SCT1_OIL" or "SCT1_LONG" or "SCT1_SHORT" or "SCT1_REPEATED" or
             "JRS1_JOINT" or "JRS1_FX" or "JRS1_COMMODITY" or "JRS1_LONG" or "JRS1_SHORT" or "JRS1_REPEATED" or
             "FCE1_JOINT" or "FCE1_FX" or "FCE1_COMMODITY" or "FCE1_LONG" or "FCE1_SHORT" or "FCE1_MINIMUM" or
             "PRR1_JOINT" or "PRR1_INDEX" or "PRR1_CRUDE" or "PRR1_LONG" or "PRR1_SHORT" or
@@ -310,6 +311,7 @@ public sealed class NativeProductResearchLoop
                      researchMode.StartsWith("JRC1_",StringComparison.Ordinal) ||
                      researchMode.StartsWith("OTC1_",StringComparison.Ordinal) ||
                      researchMode.StartsWith("MCT2_",StringComparison.Ordinal) ||
+                     researchMode.StartsWith("SCT1_",StringComparison.Ordinal) ||
                      researchMode.StartsWith("JRS1_",StringComparison.Ordinal) ||
                      researchMode.StartsWith("FCE1_",StringComparison.Ordinal) ||
                      researchMode.StartsWith("PRR1_",StringComparison.Ordinal) ||
@@ -416,8 +418,9 @@ public sealed class NativeProductResearchLoop
             crossMedian=d.Length%2==1?d[d.Length/2]:
                 (d[d.Length/2-1]+d[d.Length/2])/2m;
         }
-        bool jointStudy=researchMode.StartsWith("JRS1_",StringComparison.Ordinal);
-        bool useJointStress=jointStudy && researchMode!="JRS1_REPEATED";
+        bool sessionStudy=researchMode.StartsWith("SCT1_",StringComparison.Ordinal);
+        bool jointStudy=sessionStudy || researchMode.StartsWith("JRS1_",StringComparison.Ordinal);
+        bool useJointStress=jointStudy && researchMode is not ("JRS1_REPEATED" or "SCT1_REPEATED");
         var stressEuro=jointStudy?byName.GetValueOrDefault("EURUSD"):null;
         bool factorStudy=researchMode.StartsWith("FCE1_",StringComparison.Ordinal);
         var offered=new List<EconomicOpportunity>();
@@ -521,6 +524,18 @@ public sealed class NativeProductResearchLoop
                     mechanism="US500_US_CASH_H1_VOLATILITY_PERSISTENCE";
                 }
                 else continue;
+            }
+            else if(sessionStudy)
+            {
+                bool isIndex=NativeCashTransmissionResearch.IsIndex(market.Symbol);
+                if((isIndex && researchMode=="SCT1_OIL") ||
+                   (!isIndex && researchMode=="SCT1_INDEX"))continue;
+                var forecast=NativeCashTransmissionResearch.Forecast(market,byName,at);
+                if(forecast.Side==0)continue;
+                side=researchMode=="SCT1_LONG"?1:
+                    researchMode=="SCT1_SHORT"?-1:forecast.Side;
+                driver=forecast.Magnitude;
+                mechanism=forecast.Mechanism;
             }
             else if(jointStudy)
             {
