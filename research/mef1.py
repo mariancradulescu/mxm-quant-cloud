@@ -41,7 +41,8 @@ def latest(request, account, symbol_id, stamp):
         if not rows:
             return None
         prices.append(Decimal(rows[-1][1]) / 100_000)
-    return prices if 0 < prices[0] < prices[1] else None
+    # Observed locked BID=ASK is a valid quote, NOT a guaranteed fill.
+    return prices if 0 < prices[0] <= prices[1] else None
 
 
 def compare(request, account, tape, contracts, terms):
