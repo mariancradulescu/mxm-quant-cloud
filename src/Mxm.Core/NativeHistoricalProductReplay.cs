@@ -24,7 +24,8 @@ public sealed record NativeHistoricalMarketTape(
 public sealed record NativeHistoricalEquityObservation(
     long At,decimal? CentralEquityEur,decimal? AdverseEquityEur,
     decimal? UsedMarginEur,int ClosedModelRoundTrips,
-    int ForecastCount,int CumulativeUnknownM5Slots);
+    int ForecastCount,int CumulativeUnknownM5Slots,
+    decimal? AdverseUsedMarginEur=null,decimal? AdverseFreeMarginEur=null);
 public sealed record NativeHistoricalMarketReceipt(
     string SourceLabel,string OriginalProviderAuthenticity,
     int InstrumentsWithCompleteM5,int OriginalM5Bars,
@@ -216,7 +217,8 @@ public static class NativeHistoricalProductReplay
             traces.Add(new(group.Key,central.LiquidationEquityEur,
                 adverse?.LiquidationEquityEur,central.UsedMarginEur,
                 central.CompleteRoundTrips,last.Forecasts,
-                last.ObservedM5SlotsNotScored));
+                last.ObservedM5SlotsNotScored,adverse?.UsedMarginEur,
+                adverse?.FreeMarginEur));
             weeks.TryAdd(Week(group.Key),0);
         }
         if(last is null)throw new ArgumentException("HISTORICAL_TAPE_NO_QUOTES");

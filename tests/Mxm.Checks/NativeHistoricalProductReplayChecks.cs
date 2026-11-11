@@ -51,6 +51,11 @@ public static class NativeHistoricalProductReplayChecks
               out1.ModelTripsPerObservedIsoWeek.Count>=1 &&
               out1.ModelTripsPerObservedIsoWeek.Values.Sum()==out1.CompletedModelRoundTrips,
             "weekly model frequency accounts for all observed weeks including zero-trade weeks");
+        check(out1.SampledEquity.Any(x=>x.AdverseUsedMarginEur.HasValue) &&
+              out1.SampledEquity.All(x=>
+                  x.AdverseFreeMarginEur==x.AdverseEquityEur-x.AdverseUsedMarginEur &&
+                  (x.AdverseEquityEur.HasValue || !x.AdverseUsedMarginEur.HasValue)),
+            "historical samples expose adverse margin from the adverse ledger with unknown evidence preserved");
         // Alter ONLY future source prices, but keep earlier quote readings
         // exactly frozen: prior equity, signals and earlier model decisions
         // cannot change when the future OHLCV tape changes.
