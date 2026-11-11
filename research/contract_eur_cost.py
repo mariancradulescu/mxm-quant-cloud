@@ -100,7 +100,8 @@ def attribute_costs(symbol, quote_asset, units, bid, ask, asset_eur,
     Financing and slippage remain unknown if not supplied.
     """
     bid=dec(bid);ask=dec(ask);units=dec(units)
-    if bid<=0 or ask<=bid:
+    # Locked BID=ASK is observable; commission/slippage/fill uncertainty remain.
+    if bid<=0 or ask<bid:
         raise IncompleteCostEvidence("INVALID_BID_ASK")
     qrate=dec(asset_eur.get(quote_asset))
     if qrate<=0:
