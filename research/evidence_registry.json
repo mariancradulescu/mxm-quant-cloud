@@ -1395,6 +1395,28 @@
       "closedNoRetune": true,
       "receipt": "docs/CMR1_AUTHENTIC_CLOSURE_20261111.md",
       "permanentPublicReceipt": "docs/CMR1_AUTHENTIC_PUBLIC_RECEIPT_20261111.json"
+    },
+    {
+      "id": "SQIC1",
+      "phase": "THREE_MARKET_POOLED_ORIGINAL_BID_ASK_PRESSURE_COST_SCREEN",
+      "status": "PREDECLARED_UNSCORED",
+      "protocolFile": "research/sqic1_quote_impulse.md",
+      "sourceFile": "research/sqic1_quote_impulse.py",
+      "universe": [
+        "AUDUSD",
+        "US2000",
+        "SpotCrude"
+      ],
+      "readOnlyOriginalPepperstone": true,
+      "costContext": "CURRENT_EXACT_MIN_VOLUME_QUOTE_CONVERSION_AND_MODELED_ADVERSE_SLIPPAGE",
+      "calendar": "2026-05-04/2026-10-30_TWO_13_WEEK_HALVES_ALREADY_GLOBALLY_EXPOSED",
+      "fundedNetEur": null,
+      "independentConfirmation": false,
+      "brokerFillsCertified": false,
+      "nativePortfolioAdmitted": false,
+      "systemHard21Uncertified": true,
+      "ordersSubmitted": 0,
+      "cloudActivated": false
     }
   ],
   "schema": "mxm-project-data-exposure-v1",
