@@ -11,7 +11,7 @@ jobs:
   mef1-authentic-economic-research:
     # MEF1 is frozen. Owner authorization prohibits any postclosure rerun;
     # workflow edits themselves may trigger a workflow but MUST skip the job.
-    if: \${{ false }}
+    if: ${{ false }}
     environment: mxm-r3-pepperstone-v1
     runs-on: ubuntu-24.04
     timeout-minutes: 45
