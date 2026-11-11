@@ -1490,7 +1490,7 @@
     },
     {
       "id": "PRR1",
-      "status": "PREDECLARED_UNSCORED",
+      "status": "REJECT_EXACT_JOINT_CONFIGURATION_NO_ADMISSION",
       "protocolFile": "research/PRR1.md",
       "calendar": "2026-04-06/2026-05-01_EXPOSED_DEVELOPMENT",
       "targets": [
@@ -1504,7 +1504,36 @@
       "initialModelCapitalEur": 300,
       "independentConfirmation": false,
       "ordersSubmitted": 0,
-      "cloudActivated": false
+      "cloudActivated": false,
+      "closedNoRetune": true,
+      "indexStandaloneInterpretation": "TWO_TRIPS_INSUFFICIENT_EVIDENCE",
+      "crudeStandaloneInterpretation": "NEGATIVE_ADVERSE_NET",
+      "sourceRunId": 43031103899,
+      "sourceMainHead": "dad2cbe49ecdd18ddbc505ae85923092776e3677",
+      "sourcePublicArtifactId": 13862270571,
+      "sourcePublicArchiveSha256": "21523f5df891084b3ae2b4254e531e29d2770acd2152fae36460c8447ab68946",
+      "sourceEncryptedArtifactId": 13861254511,
+      "sourceEncryptedArchiveSha256": "2937449114cd05829deed3fd9aa4954c32155dc0a398d776d6c319555f1cc299",
+      "sourceCiphertextSha256": "072184ff6c2a67222d9901826f576e8eb2c2070cf2214d9eeffc20afb64367bb",
+      "nativeInputTapeSha256": "8893c3348a306c05680f427c79d8f0829a76221783378303f540116b0be0b116",
+      "protocolSha256": "9c1ec5db684d5cabef4e524aba71ff515648b3decb2d9d0731bcd75ac63db67f",
+      "permanentPublicReceipt": "docs/PRR1_AUTHENTIC_PUBLIC_RECEIPT_20261111.json",
+      "publicReceiptSha256": "ce7e6a3c21a84d29950fe946a1a877bc8e284b1d96ab82441bcbe8824716c465",
+      "completedModeledRoundTrips": 7,
+      "modeledClosuresByIsoWeek": {
+        "2026-W15": 2,
+        "2026-W16": 0,
+        "2026-W17": 2,
+        "2026-W18": 3
+      },
+      "grossEur": 0.5386064875385925,
+      "centralNetEur": 0.2230159874603585,
+      "adverseNetEur": -0.09872340586592673,
+      "fundedShortAdverseNetEur": 2.123685935448157,
+      "sampledAdverseDrawdown": 0.012519859248143892,
+      "continuousHistoricalEquityObserved": false,
+      "hard21Proven": false,
+      "nativePortfolioQualified": false
     }
   ],
   "schema": "mxm-project-data-exposure-v1",
