@@ -1,0 +1,53 @@
+name: MEF1 two-receipt technical impact audit - no broker access
+on:
+  pull_request:
+    paths:
+      - "research/mef1_technical_impact.py"
+      - "research/test_mef1_technical_impact.py"
+      - ".github/workflows/mef1-technical-impact.yml"
+  push:
+    branches: [main]
+    paths:
+      - "research/mef1_technical_impact.py"
+      - ".github/workflows/mef1-technical-impact.yml"
+permissions:
+  contents: read
+  actions: read
+jobs:
+  compare-original-public-receipts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Unit test technical diagnostic, no source or returns
+        run: python -m unittest research.test_mef1_technical_impact -v
+      - name: Download frozen original MEF1 public receipt
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: mef1-authentic-economic-public-receipt
+          run-id: 42889124457
+          github-token: ${{ github.token }}
+          path: mef1-original
+      - name: Download incidental MEF1 technical reobservation, kept separate
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: mef1-authentic-economic-public-receipt
+          run-id: 42999359354
+          github-token: ${{ github.token }}
+          path: mef1-incidental
+      - name: Verify exact JSON bytes and compare quote and fee coverage only
+        run: |
+          python -m research.mef1_technical_impact \
+            --original mef1-original/mef1-public.json \
+            --diagnostic mef1-incidental/mef1-public.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: mef1-source-and-cost-technical-impact-no-new-broker-reads
+          path: mef1-technical-impact-public.json
+          if-no-files-found: error
+          retention-days: 90
