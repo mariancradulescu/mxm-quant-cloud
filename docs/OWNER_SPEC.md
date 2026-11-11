@@ -1,5 +1,28 @@
 # Active OWNER specification v2.0 — updated 2026-11-05 (single normative authority)
 
+## OWNER methodological clarification — 2026-11-11 (active, prospective)
+
+This is the explicit OWNER decision after PR #201–#202. The prohibition on
+retrospective tuning, favorable selection, replacement of original receipts
+and labeling exposed history as independent confirmation remains absolute.
+It does **not** prohibit technical verification, original-source diagnosis,
+or a justified bounded reexecution needed to measure material source or
+valuation bugs. Such checks are labeled *postclosure technical diagnostics*,
+retain original run/artifact/cryptographic custody separately, disclose
+every changed assumption and cannot automatically qualify economic models.
+
+Do not globally deactivate useful existing research or broker-read-only
+capabilities for formal compliance. Old exact closed study runs are not
+retriggered on incidental source edits; diagnostic workflows require an
+explicit narrowly scoped intent, documented provenance and no performance
+promotion. New economically distinct, prospectively frozen research can
+proceed normally after valid source/contract/cost gates, with causal
+benefit over comparable funded benchmarks and shared EUR300 native replay
+only when warranted. Per-family HARD21 is never an admission requirement;
+weekly HARD21 is a common portfolio objective. All no-order/Cloud and
+risk/capital/independent chronology safeguards remain.
+
+
 Authority: explicit OWNER system-orchestration decision in this continuation.
 This is the single current specification. README, architecture and acceptance
 link here; older dated directives remain provenance, never competing authority.
