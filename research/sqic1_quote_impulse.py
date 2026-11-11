@@ -201,7 +201,8 @@ def evaluate(request, account, tape, contracts, margins, receipt):
                   "signals", counts["causalSignals"],
                   "priced", counts["pricedWithExactCost"], flush=True)
     halves = [summarise(None, first, market_results) for first in (0, 13)]
-    eligible_market_count = len(receipt["marketSourceEligibility"])
+    eligible_market_count = sum(1 for s in receipt["marketSourceEligibility"].values()
+                                if s == "CURRENT_INDIVIDUAL_MINIMUM_ELIGIBLE_ONLY")
     if any(h["coverageGate"] and not h["passed"] for h in halves):
         verdict = "REJECT_EXACT_SQIC1_RULE"
     elif all(h["passed"] for h in halves) and eligible_market_count == len(SYMBOLS):
