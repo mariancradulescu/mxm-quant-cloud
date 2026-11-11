@@ -19,8 +19,8 @@ and decision gates in the research PR before accessing any outcomes.
   zero. EUBobl-F is informational only. Same clocks, target and costs.
 
 From 2026-05-04 through 2026-10-30, split into two fixed 13-week halves.
-Use weekdays, completed M5 closes, and contiguous paths. A close at the
-start of a source interval serves as its opening reference. Missing bars
+Use weekdays and contiguous completed M5 bars. The first bar opening at the
+start of a source interval supplies its opening reference. Missing bars
 and nonpositive prices are absent evidence. No forward fill, session
 substitution or indicator tuning. Report authenticated bar count and tick
 volume sum per symbol. Report both halves, all benchmarks and sample sizes.
