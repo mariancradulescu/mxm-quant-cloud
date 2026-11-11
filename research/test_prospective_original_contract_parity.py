@@ -11,6 +11,8 @@ from decimal import Decimal as D
 from datetime import datetime,timezone
 from pathlib import Path
 from .portfolio_economic_replay import native
+from .contract_eur_cost import IncompleteCostEvidence,fee_at_current_contract
+from .test_contract_eur_cost import contract as protobuf_contract
 
 P=Path("research/fixtures/prospective_original_contract_cost_parity_20261108.json")
 M=Path("docs/CMA1_AUTHENTIC_CONTRACT_TERMS_20261108.json")
@@ -126,6 +128,55 @@ class AuthenticatedContractNativeMoneyParity(unittest.TestCase):
                 self.assertFalse(summary["BrokerStateReconciled"])
                 self.assertFalse(summary["GlobalDrawdownCertified"])
                 self.assertFalse(summary["OrdersEnabled"])
+
+    def test_prospective_fee_route_eligibility_matches_python(self):
+        from subprocess import CalledProcessError
+
+        template=self.rows[0]
+        for kind,rate,floor,usd,eligible in (
+            (1,0,0,0,True),
+            (2,0,0,0,True),
+            (3,0,0,0,True),
+            (4,0,0,0,True),
+            (1,5000000000,0,0,True),
+            (2,300000000,0,0,False),
+            (2,0,2000000,0,False),
+            (2,0,2000000,D(".9"),True),
+        ):
+            with self.subTest(kind=kind,rate=rate,floor=floor,usd=usd):
+                row=dict(template)
+                row["Contract"]=dict(template["Contract"],QuoteAsset="EUR",
+                                     CommissionType=kind,PreciseRateWire=rate,
+                                     PreciseMinimumWire=floor)
+                for clock in ("Entry","Exit"):
+                    row[clock]=dict(template[clock],UsdToEur=usd,QuoteCreditToEur=1,
+                                    QuoteDebitToEur=1)
+                broker=protobuf_contract(kind,rate,floor)
+                terms=row["Contract"]
+                for field,key in (("minVolume","MinimumUnits"),("stepVolume","VolumeStepUnits"),
+                                  ("maxVolume","MaximumUnits"),("lotSize","LotUnits")):
+                    setattr(broker,field,int(dec(terms[key])*100))
+                rates={"EUR":1}
+                if usd:
+                    rates["USD"]=usd
+                def expected(clock,price_side):
+                    mark=row[clock]
+                    return dec(fee_at_current_contract(broker,"EUR",mark["Units"],
+                                                       mark[price_side],rates)
+                               ["oneSideContractCommissionEur"])
+                entry_side,exit_side=("Ask","Bid") if row["Side"]>0 else ("Bid","Ask")
+                if not eligible:
+                    with self.assertRaises(IncompleteCostEvidence):
+                        expected("Entry",entry_side)
+                    with self.assertRaises(CalledProcessError):
+                        native([row],"--prospective-native-contract-ledger-parity")
+                    continue
+                receipt=native([row],"--prospective-native-contract-ledger-parity")[
+                    "NativeContractAndLedgerReceipts"][0]
+                self.assertEqual(dec(receipt["Entry"]["OneSideCommissionEur"]),
+                                 expected("Entry",entry_side))
+                self.assertEqual(dec(receipt["Exit"]["OneSideCommissionEur"]),
+                                 expected("Exit",exit_side))
 
     def test_missing_contract_and_route_never_zero(self):
         bad=dict(self.rows[0])
