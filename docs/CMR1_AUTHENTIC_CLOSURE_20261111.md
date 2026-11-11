@@ -30,7 +30,7 @@ or [CMR1 evaluator](../research/cmr1.py).
 | Same-clock long adverse mean, bps | +14.246683403538768 | unknown |
 
 First-half conditional modeled reversion is inferior to the same-clock
-always-long benchmark by 1.181421562... bps on only five priced
+always-long benchmark by approximately 1.18 bps on only five priced
 observations. The second half has zero priced observations, and the
 comparison is unknown. These bps are retrospective same-clock
 current-term quote/cost scenarios, **not funded EUR NET** or a C# cash
