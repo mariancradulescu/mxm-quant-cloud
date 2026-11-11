@@ -38,7 +38,7 @@ jobs:
           assert signal(before, tied) is None
           assert signal(before, small) is None
           PY
-  original-pepperstone-development:
+  custody-recipient:
     needs: verify
     if: >-
       github.event_name == 'push' &&
@@ -46,7 +46,33 @@ jobs:
       github.actor == 'mariancradulescu' &&
       github.run_attempt == '1' &&
       startsWith(github.event.head_commit.message, 'LFR1_ORIGINAL_READONLY_ONE_TIME')
+    environment: mxm-r3-custody-v1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - name: Derive existing run-bound public recipient
+        run: python -m research.custody_new
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: lfr1-custody-recipient-public
+          path: new-recipient-output/
+          if-no-files-found: error
+          retention-days: 30
+  original-pepperstone-development:
+    needs: custody-recipient
     environment: mxm-r3-pepperstone-v1
+    concurrency:
+      group: mxm-existing-oauth-read-only
+      cancel-in-progress: false
     runs-on: ubuntu-24.04
     timeout-minutes: 75
     steps:
@@ -57,10 +83,10 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install -r research/requirements.txt
-      - name: Verify existing custody recipient
-        run: python -m research.custody_new
-        env:
-          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: lfr1-custody-recipient-public
+          path: new-recipient-output
       - name: Evaluate original Pepperstone BID and ASK after ex-ante registration
         run: python -m research.london_fix_residual
         env:
