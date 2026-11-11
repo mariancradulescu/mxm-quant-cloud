@@ -599,6 +599,7 @@ jobs:
       - run: python -m unittest research.test_mbf1 -v
       - run: python -m unittest research.test_oil_cad_research -v
       - run: python -m unittest research.test_contract_eur_cost research.test_integrated_economic_surface -v
+      - run: python -m unittest research.test_observed_quote_consistency -v
       - run: python -m unittest research.test_cma1_cost_recovery -v
       - run: python -m unittest research.test_cma2_cost_preflight -v
       - run: python -m unittest research.test_sfx1 -v
