@@ -1,0 +1,92 @@
+{
+  "hypothesis": "CMR1_US2000_CASH_CLOSE_SESSION_TICK_ANCHOR",
+  "protocolSha256": "375edf39e4934b2056b95b3f10b4a98dfe4e5832a9181e29e0e534fff7bc2820",
+  "sourceCalendar": "2026-05-04/2026-10-30; globally exposed development",
+  "scenario": "CURRENT_TERMS_MODELLED_NOT_HISTORICAL_FILLS",
+  "fundedNetEur": null,
+  "independentConfirmation": false,
+  "orders": 0,
+  "cloudActivated": false,
+  "currentContract": {
+    "Symbol": "US2000",
+    "QuoteAsset": "USD",
+    "ObservedAtUtcMs": 1794389091605,
+    "MinimumUnits": "0.1",
+    "VolumeStepUnits": "0.1",
+    "MaximumUnits": "200",
+    "LotUnits": "1",
+    "CommissionType": 2,
+    "PreciseRateWire": 0,
+    "MinimumCommissionType": 1,
+    "PreciseMinimumWire": 0,
+    "MinimumCommissionAsset": "USD",
+    "PnlConversionFeeBps": 0,
+    "SwapCalculationType": 1,
+    "LongSwap": "-6.41",
+    "ShortSwap": "1.41",
+    "PipPosition": 0,
+    "SwapPeriodHours": 24,
+    "SwapTimeUtcMinute": 1320,
+    "TripleSwapWeekday": 5,
+    "ChargeSwapAtWeekends": false,
+    "SkipSwapPeriods": 0,
+    "OriginalBrokerAuthenticated": true,
+    "HistoricalTariffContinuityCertified": false
+  },
+  "minimumMarginEurBuySell": [
+    25.45,
+    25.45
+  ],
+  "completedM5SourceBars": 25416,
+  "result": {
+    "verdict": "INSUFFICIENT_COMPARABLE_SIGNALS",
+    "halves": [
+      {
+        "firstWeek": 0,
+        "counts": {
+          "scheduledDays": 65,
+          "notSignaledOrIncompleteBars": 49,
+          "completedBarSignals": 16,
+          "missingFreshTargetOrFxSides": 11,
+          "priced": 5
+        },
+        "activeWeeks": 5,
+        "centralBps": {
+          "model": 14.565261840503256,
+          "long": 15.746683403538768,
+          "short": -19.08497150612167,
+          "momentum": -14.73234338104288,
+          "cash": 0.0
+        },
+        "adverseBps": {
+          "model": 13.065261840503256,
+          "long": 14.246683403538768,
+          "short": -20.58497150612167,
+          "momentum": -16.232343381042877,
+          "cash": 0.0
+        },
+        "meanSignalDeviationBps": -23.097784611698355,
+        "meanObservedEntrySpreadBps": 1.1000070484063091,
+        "coverageGate": false,
+        "passed": false
+      },
+      {
+        "firstWeek": 13,
+        "counts": {
+          "scheduledDays": 65,
+          "notSignaledOrIncompleteBars": 57,
+          "completedBarSignals": 8,
+          "missingFreshTargetOrFxSides": 8
+        },
+        "activeWeeks": 0,
+        "centralBps": {},
+        "adverseBps": {},
+        "meanSignalDeviationBps": null,
+        "meanObservedEntrySpreadBps": null,
+        "coverageGate": false,
+        "passed": false
+      }
+    ]
+  },
+  "readOnlyRequestsAfterAuth": 249
+}
