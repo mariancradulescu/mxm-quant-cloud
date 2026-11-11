@@ -4,13 +4,14 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/mef1.yml"
-      - "research/mef1.py"
 permissions:
   contents: read
   actions: read
 jobs:
   mef1-authentic-economic-research:
-    if: github.actor == 'mariancradulescu' && github.ref == 'refs/heads/main'
+    # MEF1 is frozen. Owner authorization prohibits any postclosure rerun;
+    # workflow edits themselves may trigger a workflow but MUST skip the job.
+    if: ${{ false }}
     environment: mxm-r3-pepperstone-v1
     runs-on: ubuntu-24.04
     timeout-minutes: 45
