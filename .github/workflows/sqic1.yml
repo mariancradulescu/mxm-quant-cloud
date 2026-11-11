@@ -33,7 +33,7 @@ jobs:
       github.event_name == 'push' &&
       github.actor == 'mariancradulescu' &&
       github.ref == 'refs/heads/main' &&
-      github.event.head_commit.message == 'SQIC1_ORIGINAL_READONLY_ONE_TIME'
+      startsWith(github.event.head_commit.message, 'SQIC1_ORIGINAL_READONLY_ONE_TIME')
     environment: mxm-r3-pepperstone-v1
     runs-on: ubuntu-24.04
     timeout-minutes: 75
