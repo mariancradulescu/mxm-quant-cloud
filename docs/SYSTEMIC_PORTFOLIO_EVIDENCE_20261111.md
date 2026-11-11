@@ -5,7 +5,7 @@ receipts at audited baseline `d6aae7d3462fef40b0c5ffcecc4a0841abd33dd6`.
 The cohort consists of the W20–W21 and W32–W33 equity-index windows and the
 RRP1, LDP1 original and replica, JRC1, OTC1, MCT2 and BMR1 receipts. Each has
 one EUR300 joint C# book and two separately reported one-family counterfactuals.
-This is a bounded cohort, not a census of all Pepperstone research. Each row
+The cohort covers these nine Pepperstone runs. Each row
 is one preserved simulation. Cross-study totals have no common-capital meaning.
 
 ## Results on the original books
@@ -40,9 +40,8 @@ For each run and cost scenario, subtract both one-family counterfactual
 NETs from the joint NET. For all nine central and eight complete adverse
 comparisons the absolute residual was at most EUR 0.000000000000009,
 consistent with JSON export precision. The ninth adverse comparison is
-unknown. This measures the interaction in closed NET on these particular
-simulated paths. It does not measure interaction in drawdown, position
-overlap or future diversification. An exact-time join of the published
+unknown. The residual measures interaction in closed NET on these particular paths.
+Drawdown, overlapping positions and future diversification require separate evidence. An exact-time join of the published
 joint margin snapshots found only one cross-study pair with positive
 margin on both books at the same timestamp. RRP1 and MCT2 had nine such
 timestamps out of 600 common marks. No cross-study balance or exposure
@@ -84,9 +83,22 @@ inverting or promoting it.
   exposed weeks can be used for development only. None of the configurations
   in this analysis enters the next common ledger on these receipts.
 
+## Prospective margin evidence
+
+Original snapshots pair adverse equity with the central ledger's used margin
+field. In the LDP1 replica, one sample at 2026-10-21 08:20:01.500 UTC
+shows EUR232.9791 adverse equity and EUR233.22 central used margin.
+These values come from different scenarios. The adverse free margin
+at that time is unknown in the original receipt.
+
+Future native historical receipts expose adverse used and free margin
+directly from the same adverse ledger summary as adverse equity. Both
+fields are nullable when the adverse evidence is unavailable. Central
+used margin keeps its original definition. This supports measuring
+simultaneous capital pressure in future common-portfolio evaluations.
+
 This review made zero broker requests, scored zero new signals and reran
-zero historical configurations. It does not add a trading feature,
-introduce a portfolio admission rule or certify future risk.
+zero historical configurations.
 
 ## Original archives
 
