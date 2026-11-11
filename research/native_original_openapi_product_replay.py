@@ -145,7 +145,7 @@ def contract(symbol, c, quote_asset, observed_at):
     }
 
 def emit_native_failure(process):
-    match = re.search(r"^(?:LDP1|JRC1|OTC1|MCT2|BMR1|PRR1)_NATIVE_REPLAY_REJECTED:[A-Za-z0-9_-]+:[A-Za-z0-9_]+$",
+    match = re.search(r"^(?:LDP1|JRC1|OTC1|MCT2|BMR1|PRR1|FCE1)_NATIVE_REPLAY_REJECTED:[A-Za-z0-9_-]+:[A-Za-z0-9_]+$",
                       process.stderr or "", re.MULTILINE)
     if process.returncode and match:
         print(match.group(0), flush=True)
@@ -157,6 +157,8 @@ def collect_and_evaluate(profile=None):
     decision_start = DECISION_START if profile is None else profile["start"]
     decision_end = DECISION_END if profile is None else profile["end"]
     source_end = decision_end + M5
+    quote_interval = profile.get("quote_interval_ms", M5) if profile else M5
+    quote_age = profile.get("quote_age_ms", 60000) if profile else 60000
     event_days = frozenset(profile.get("event_days", ())) if profile else frozenset()
 
     def eligible(clock):
@@ -200,6 +202,7 @@ def collect_and_evaluate(profile=None):
              "BROKER_OR_EUR_ACCOUNT_MISMATCH")
         roster = {x.symbolName:x for x in roster_reply.symbol if x.enabled}
         need(all(x in roster for x in symbols), "PREREGISTERED_FX_SYMBOL_UNAVAILABLE")
+        observed_margin_grid = {}
         terms = {}
         ids = {}
 
@@ -231,16 +234,33 @@ def collect_and_evaluate(profile=None):
             if profile and name in profile.get("two_sided_targets", ()):
                 need(c.HasField("enableShortSelling") and c.enableShortSelling,
                      "PREREGISTERED_TARGET_SHORT_PERMISSION_UNATTESTED")
+            volumes = [c.minVolume]
+            if (profile and name in profile.get("margin_grid_targets", ()) and
+                    c.minVolume + c.stepVolume <= c.maxVolume):
+                volumes.append(c.minVolume + c.stepVolume)
             margin = req(m.ProtoOAExpectedMarginReq(
                 ctidTraderAccountId=account, symbolId=ids[name],
-                volume=[c.minVolume]), m.ProtoOAExpectedMarginRes)
-            need(len(margin.margin)==1 and
-                 margin.margin[0].volume==c.minVolume
+                volume=volumes), m.ProtoOAExpectedMarginRes)
+            rows = {row.volume: row for row in margin.margin}
+            need(len(margin.margin)==len(volumes) and set(rows)==set(volumes)
                  and margin.HasField("moneyDigits"),
                  "BROKER_MINIMUM_MARGIN_UNAVAILABLE")
-            minimum_margin = D(max(margin.margin[0].buyMargin,
-                                margin.margin[0].sellMargin)) / (
-                                D(10)**margin.moneyDigits)
+            scale = D(10)**margin.moneyDigits
+            minimum_margin = D(max(rows[c.minVolume].buyMargin,
+                                   rows[c.minVolume].sellMargin))/scale
+            if profile and name in profile.get("margin_grid_targets", ()):
+                need(all(min(row.buyMargin,row.sellMargin)>0 for row in rows.values()),
+                     "BROKER_MARGIN_GRID_DIRECTION_UNAVAILABLE")
+                observed_margin_grid[name] = [
+                    dict(VolumeUnits=str(D(v)/100),
+                         BuyMarginEur=str(D(rows[v].buyMargin)/scale),
+                         SellMarginEur=str(D(rows[v].sellMargin)/scale))
+                    for v in volumes
+                ]
+                minimum_margin = max(
+                    D(max(rows[v].buyMargin,rows[v].sellMargin))*c.minVolume/(scale*v)
+                    for v in volumes
+                )
             need(minimum_margin>0 and minimum_margin<=D(300),
                  "MINIMUM_BROKER_MARGIN_EXCEEDS_SINGLE_300_EUR_BUDGET")
             terms[name] = (contract(name,c,quote_asset,
@@ -348,8 +368,8 @@ def collect_and_evaluate(profile=None):
                         QUOTING_WINDOW):
             hi=min(lo+QUOTING_WINDOW-1,decision_end+1500)
             first=decision_start+1500+max(
-                0,(lo-(decision_start+1500)+M5-1)//M5)*M5
-            clocks=[clock for clock in range(first,hi+1,M5)
+                0,(lo-(decision_start+1500)+quote_interval-1)//quote_interval)*quote_interval
+            clocks=[clock for clock in range(first,hi+1,quote_interval)
                     if clock<decision_end and
                     eligible(clock)]
             if not clocks:continue
@@ -360,13 +380,13 @@ def collect_and_evaluate(profile=None):
                     ts=[t for t,_ in points]
                     for clock in clocks:
                         i=bisect.bisect_right(ts,clock)-1
-                        if i>=0 and clock-ts[i]<=60000:
+                        if i>=0 and clock-ts[i]<=quote_age:
                             sampled[name][side][clock]=D(points[i][1])/D(100000)
                             quote_stamps[name][side][clock]=points[i][0]
         marks=[]
         total_clocks=0
         missing_pair_clock=0
-        for clock in range(decision_start+1500,decision_end,M5):
+        for clock in range(decision_start+1500,decision_end,quote_interval):
             if not eligible(clock):
                 continue
             total_clocks+=1
@@ -467,7 +487,7 @@ def collect_and_evaluate(profile=None):
                  if HISTORIC_W36_W37 else "--native-original-openapi-w45")],
                 stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,
                 stderr=subprocess.PIPE if profile and profile.get("contract_preflight") else subprocess.DEVNULL,
-                text=True,env=env,timeout=150)
+                text=True,env=env,timeout=profile.get("replay_timeout",150) if profile else 150)
             if profile and profile.get("contract_preflight"):
                 emit_native_failure(process)
             need(process.returncode==0 and output_file.is_file(),
@@ -481,6 +501,7 @@ def collect_and_evaluate(profile=None):
                         OriginalBidAskAsOfMarks=len(marks), QuoteWindows=quote_windows,
                         MissingQuoteInstrumentClocks=missing_pair_clock,
                         ExpectedClocksPerSymbol=total_clocks,
+                        **({"ObservedMarginGridBySymbol":observed_margin_grid} if observed_margin_grid else {}),
                         InitialModelCapitalEur=300, OrdersSubmitted=0,
                         CloudActivated=False, IndependentConfirmation=False)
         result={

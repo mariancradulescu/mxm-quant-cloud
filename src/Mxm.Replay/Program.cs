@@ -1,6 +1,117 @@
 using System.Text.Json;
 using System.Security.Cryptography;
 
+// Preregistered factor and exhaustion development portfolio.
+if(args.Length==3 && args[2] is ("--native-fce1" or "--native-fce1-contracts"))
+{
+    string stage="input";
+    try
+    {
+        var bytes=File.ReadAllBytes(args[0]);
+        var parse=new JsonSerializerOptions {
+            NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString
+        };
+        var universe=new[]{"AUDUSD","EURUSD","GBPUSD","NZDUSD","SpotBrent","XAUUSD"};
+        if(args[2]=="--native-fce1-contracts")
+        {
+            var contracts=JsonSerializer.Deserialize<Mxm.Core.NativeObservedContractTerms[]>(bytes,parse)
+                ??throw new ArgumentException("FCE1_CONTRACTS_EMPTY");
+            foreach(var contract in contracts)
+            {
+                if(!universe.Contains(contract.Symbol,StringComparer.Ordinal))
+                    throw new ArgumentException("FCE1_CONTRACT_UNIVERSE");
+                Mxm.Core.NativeBrokerContractCosts.Validate(contract,contract.MinimumUnits);
+            }
+            File.WriteAllText(args[1],"{}");
+            return 0;
+        }
+        var source=JsonSerializer.Deserialize<Mxm.Core.NativeOriginalOpenApiTape>(bytes,parse)
+            ??throw new ArgumentException("FCE1_EMPTY_SOURCE");
+        if(source.SourceLabel!="ORIGINAL_PEPPERSTONE_FCE1_FEB_MAR_2026" ||
+           !source.Bars.Select(x=>x.Symbol).OrderBy(x=>x,StringComparer.Ordinal).SequenceEqual(universe) ||
+           source.Marks.Any(x=>!universe.Contains(x.Symbol,StringComparer.Ordinal)))
+            throw new ArgumentException("FCE1_SOURCE_OR_FX_ROUTE_BINDING");
+        var adapted=Mxm.Core.NativeOriginalOpenApiProductAdapter.Convert(source);
+        var tape=adapted with { Quotes=adapted.Quotes.Select(mark=>mark.Quote.Symbol switch
+        {
+            "AUDUSD" or "GBPUSD" or "NZDUSD"=>mark with { HoldingMinutes=90,
+                ExitPolicy=Mxm.Core.NativeCausalExitResearch.PredictionInvalidation },
+            "SpotBrent" or "XAUUSD"=>mark with { HoldingMinutes=60,
+                ExitPolicy=Mxm.Core.NativeCausalExitResearch.EquilibriumReversion },
+            _=>mark
+        }).ToArray() };
+        Mxm.Core.LedgerClosedFragment[] closed=Array.Empty<Mxm.Core.LedgerClosedFragment>();
+        Mxm.Core.NativeHistoricalMarketReceipt Run(string mode,
+            Action<Mxm.Core.NativeFundedLedger>? observe=null)
+        {
+            stage=mode;
+            return Mxm.Core.NativeHistoricalProductReplay.Evaluate(tape,
+                UnqualifiedShadowMode:true,ResearchMode:mode,ObserveFinalLedger:observe);
+        }
+        var joint=Run("FCE1_JOINT",ledger=>closed=ledger.ClosedFragments());
+        var fx=Run("FCE1_FX");
+        var commodity=Run("FCE1_COMMODITY");
+        var longOnly=Run("FCE1_LONG");
+        var shortOnly=Run("FCE1_SHORT");
+        var minimum=Run("FCE1_MINIMUM");
+        object Summary(Mxm.Core.NativeHistoricalMarketReceipt r)=>new {
+            r.CompletedModelRoundTrips,r.ModelClosedCentralNetEur,r.ModelClosedAdverseNetEur,
+            r.ModelTripsPerObservedIsoWeek,r.MaximumObservedMarginEur,r.MaximumSampledCentralDrawdown,
+            r.OpenModelPositions,r.PendingModelRequests,r.UnfinancedModelOpenCancellations,
+            r.AdverseFailureKind,r.AdverseFailureAt,r.AdverseFailureEventKind
+        };
+        decimal peak=300m,drawdown=0m;
+        foreach(var mark in joint.SampledEquity)
+        {
+            if(mark.AdverseEquityEur is not decimal value)continue;
+            peak=Math.Max(peak,value);
+            drawdown=Math.Max(drawdown,(peak-value)/peak);
+        }
+        var marks=tape.Quotes.Select(q=>(q.At,q.Quote.Symbol)).ToHashSet();
+        var contractMinimum=tape.Quotes.GroupBy(x=>x.Quote.Symbol)
+            .ToDictionary(g=>g.Key,g=>g.First().Contract!.MinimumUnits,StringComparer.Ordinal);
+        long requiredHeld=0,missingHeld=0;
+        foreach(var fill in closed)
+            for(long at=fill.OpenedAt;at<=fill.ClosedAt;at+=60000L)
+            {
+                requiredHeld++;
+                if(!marks.Contains((at,fill.Symbol)))missingHeld++;
+            }
+        var heldTrace=joint.SampledEquity.Where(x=>x.UsedMarginEur>0m ||
+            x.AdverseUsedMarginEur>0m || !x.CentralEquityEur.HasValue ||
+            !x.AdverseEquityEur.HasValue).ToArray();
+        int peakPositions=joint.SampledEquity.Max(mark=>closed.Count(
+            fill=>fill.OpenedAt<=mark.At && mark.At<fill.ClosedAt));
+        File.WriteAllText(args[1],JsonSerializer.Serialize(new {
+            Study="FCE1",SourceSha256=Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant(),
+            Receipt=joint with {SampledEquity=heldTrace},OnlyFx=Summary(fx),OnlyCommodity=Summary(commodity),
+            FundedLong=Summary(longOnly),FundedShort=Summary(shortOnly),
+            FundedMinimumOnly=Summary(minimum),
+            SizingMarginalAdverseEur=joint.ModelClosedAdverseNetEur-minimum.ModelClosedAdverseNetEur,
+            AboveMinimumClosedTrades=closed.Count(x=>x.Units>contractMinimum[x.Symbol]),
+            PeakConcurrentClosedTradePositions=peakPositions,
+            RequiredClosedTradeHeldMinuteMarks=requiredHeld,
+            MissingClosedTradeHeldMinuteMarks=missingHeld,
+            RetainedEquityTrace="HELD_OR_UNKNOWN_ONLY; STATISTICS_USE_ALL_OBSERVED_MARKS",
+            FxMarginalCentralEur=joint.ModelClosedCentralNetEur-commodity.ModelClosedCentralNetEur,
+            FxMarginalAdverseEur=joint.ModelClosedAdverseNetEur-commodity.ModelClosedAdverseNetEur,
+            CommodityMarginalCentralEur=joint.ModelClosedCentralNetEur-fx.ModelClosedCentralNetEur,
+            CommodityMarginalAdverseEur=joint.ModelClosedAdverseNetEur-fx.ModelClosedAdverseNetEur,
+            SampledAdverseDrawdown=drawdown,
+            MissingAdverseMarks=joint.SampledEquity.Count(x=>!x.AdverseEquityEur.HasValue),
+            CashResetBetweenWeeks=false,Qualification="EXPOSED_SHADOW_REPLAY_ONLY"
+        }));
+        return 0;
+    }
+    catch(Exception ex)
+    {
+        var reason=System.Text.RegularExpressions.Regex.IsMatch(ex.Message,@"^[A-Z][A-Z0-9_]{2,100}$")
+            ?ex.Message:ex.GetType().Name;
+        Console.Error.WriteLine("FCE1_NATIVE_REPLAY_REJECTED:"+stage+":"+reason);
+        return 67;
+    }
+}
+
 // Preregistered pullback and range-rejection development portfolio.
 if(args.Length==3 && args[2] is ("--native-prr1" or "--native-prr1-contracts"))
 {
