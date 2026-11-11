@@ -145,7 +145,7 @@ def contract(symbol, c, quote_asset, observed_at):
     }
 
 def emit_native_failure(process):
-    match = re.search(r"^(?:LDP1|JRC1|OTC1|MCT2|BMR1)_NATIVE_REPLAY_REJECTED:[A-Za-z0-9_-]+:[A-Za-z0-9_]+$",
+    match = re.search(r"^(?:LDP1|JRC1|OTC1|MCT2|BMR1|PRR1)_NATIVE_REPLAY_REJECTED:[A-Za-z0-9_-]+:[A-Za-z0-9_]+$",
                       process.stderr or "", re.MULTILINE)
     if process.returncode and match:
         print(match.group(0), flush=True)
@@ -175,6 +175,12 @@ def collect_and_evaluate(profile=None):
             require_read_only_request(q)
             result = transport.request(q)
             counter += 1
+            if (profile and profile.get("ordered_tick_history") and
+                    klass is m.ProtoOAGetTickDataRes and
+                    type(result) is m.ProtoOAErrorRes and
+                    result.errorCode == "NO_QUOTES" and
+                    result.ctidTraderAccountId == account):
+                return klass(ctidTraderAccountId=account, hasMore=False)
             need(type(result) is klass and result.IsInitialized()
                  and result.ctidTraderAccountId == q.ctidTraderAccountId == account,
                  "ORIGINAL_LIVE_ACCOUNT_REQUEST_RESPONSE")
@@ -222,6 +228,9 @@ def collect_and_evaluate(profile=None):
                  and int(c.minCommissionType) in (1,2)
                  and c.minCommissionAsset in ("USD",""),
                  "CONTRACT_COMMISSION_CONVERSION_UNAVAILABLE")
+            if profile and name in profile.get("two_sided_targets", ()):
+                need(c.HasField("enableShortSelling") and c.enableShortSelling,
+                     "PREREGISTERED_TARGET_SHORT_PERMISSION_UNATTESTED")
             margin = req(m.ProtoOAExpectedMarginReq(
                 ctidTraderAccountId=account, symbolId=ids[name],
                 volume=[c.minVolume]), m.ProtoOAExpectedMarginRes)
@@ -299,6 +308,8 @@ def collect_and_evaluate(profile=None):
 
         def ticks(name, side, start, end):
             all_rows = []
+            ordered_pages = []
+            preserve_order = profile and profile.get("ordered_tick_history")
             window_to = end
             pages = 0
             while window_to >= start:
@@ -310,13 +321,20 @@ def collect_and_evaluate(profile=None):
                     fromTimestamp=start,toTimestamp=window_to),
                     m.ProtoOAGetTickDataRes)
                 data = decode_side(res.tickData,start,window_to)
-                all_rows.extend(data)
+                if preserve_order:
+                    ordered_pages.append(data)
+                else:
+                    all_rows.extend(data)
                 if not res.hasMore:
                     break
                 need(len(data)>0, "TICK_PAGINATION_EMPTY")
                 earliest = data[0][0]
                 need(earliest>start, "TICK_PAGINATION_TIME_BOUNDARY")
                 window_to = earliest-1
+            if preserve_order:
+                # Pages travel backwards. Within each page, retain the decoded
+                # sequence of equal-millisecond events for as-of lookup.
+                return [row for page in reversed(ordered_pages) for row in page]
             return sorted(set((int(t),int(v)) for t,v in all_rows))
 
         # Query complete genuine BID and ASK events in 30-minute windows,
@@ -423,6 +441,8 @@ def collect_and_evaluate(profile=None):
             output_file=Path(folder)/"receipt.json"
             input_file.write_text(json.dumps(tape,separators=(",",":")))
             input_file.chmod(0o600)
+            if profile and profile.get("tape_consumer"):
+                profile["tape_consumer"](input_file.read_bytes())
             env={k:v for k,v in os.environ.items() if not k.startswith(
                 ("R3_CTRADER_","CTRADER_","MXM_V4_"))}
             process=subprocess.run(["dotnet",
