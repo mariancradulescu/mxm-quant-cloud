@@ -66,7 +66,7 @@ def complete_session(bars, day):
     if abs(deviation) < 20 or abs(earlier) - abs(deviation) < 3:
         return None
     model = -1 if deviation > 0 else 1
-    lookback = D(rows[-1][5]) / D(rows[-13][2]) - 1
+    lookback = D(rows[-1][5]) / D(rows[-12][2]) - 1
     momentum = (lookback > 0) - (lookback < 0)
     return dict(model=model, momentum=int(momentum), deviationBps=float(deviation),
                 reversionBps=float(abs(earlier) - abs(deviation)))
