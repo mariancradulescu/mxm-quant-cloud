@@ -36,6 +36,23 @@ class CurrentContractCostTests(unittest.TestCase):
         c=contract(kind=4,rate=1500000000,minimum=0)
         x=fee_at_current_contract(c,"JPY",1000,D("2"),{"JPY":D("0.006"),"USD":D("0.9")})
         self.assertEqual(D(x["baseCommissionEur"]),D("0.0009"))
+    def test_explicit_zero_components_do_not_require_fx(self):
+        for kind in (1, 2, 3, 4):
+            with self.subTest(kind=kind):
+                c=contract(kind=kind,rate=0,minimum=0)
+                self.assertEqual(D(fee_at_current_contract(c,"EUR",1000,D("2"),{})
+                                   ["oneSideContractCommissionEur"]),0)
+
+    def test_positive_usd_floor_still_requires_fx_with_zero_base(self):
+        c=contract(kind=2,rate=0)
+        with self.assertRaisesRegex(IncompleteCostEvidence,"MISSING_EUR_ROUTE_USD"):
+            fee_at_current_contract(c,"EUR",1000,D("2"),{"EUR":1})
+
+    def test_million_notional_uses_quote_conversion(self):
+        c=contract(rate=5000000000,minimum=0)
+        self.assertEqual(D(fee_at_current_contract(c,"EUR",1000,D("2"),{"EUR":1})
+                           ["oneSideContractCommissionEur"]),D("0.1"))
+
     def test_missing_fx_route_does_not_default_to_zero(self):
         c=contract(kind=2)
         with self.assertRaises(IncompleteCostEvidence):
