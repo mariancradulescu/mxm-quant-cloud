@@ -73,6 +73,7 @@ public sealed class NativeProductResearchLoop
             "AUD_ONLY_W38W39" or
             "HK_BRENT_JOINT_W40W41" or "HK_ONLY_W40W41" or
             "BRENT_ONLY_W40W41" or
+            "PRR1_JOINT" or "PRR1_INDEX" or "PRR1_CRUDE" or "PRR1_LONG" or "PRR1_SHORT" or
             "BMR1_JOINT" or "BMR1_FX" or "BMR1_GOLD" or "BMR1_LONG" or "BMR1_SHORT" or
             "MCT2_JOINT" or "MCT2_CRYPTO" or "MCT2_METAL" or "MCT2_LONG" or "MCT2_SHORT" or
             "OTC1_JOINT" or "OTC1_OIL" or "OTC1_FX" or "OTC1_LONG" or "OTC1_SHORT" or
@@ -305,6 +306,7 @@ public sealed class NativeProductResearchLoop
                      researchMode.StartsWith("JRC1_",StringComparison.Ordinal) ||
                      researchMode.StartsWith("OTC1_",StringComparison.Ordinal) ||
                      researchMode.StartsWith("MCT2_",StringComparison.Ordinal) ||
+                     researchMode.StartsWith("PRR1_",StringComparison.Ordinal) ||
                      researchMode.StartsWith("BMR1_",StringComparison.Ordinal)) &&
                     ex.Message=="NATIVE_LEDGER_UNFINANCED_MODEL_FILL")
                 {
@@ -509,6 +511,20 @@ public sealed class NativeProductResearchLoop
                     mechanism="US500_US_CASH_H1_VOLATILITY_PERSISTENCE";
                 }
                 else continue;
+            }
+            else if(researchMode.StartsWith("PRR1_",StringComparison.Ordinal))
+            {
+                if(market.Symbol is not ("US2000" or "SpotCrude") ||
+                    (market.Symbol=="US2000" && researchMode=="PRR1_CRUDE") ||
+                    (market.Symbol=="SpotCrude" && researchMode=="PRR1_INDEX"))
+                    continue;
+                var forecast=NativePullbackRangeResearch.Forecast(market,
+                    byName.GetValueOrDefault("US500"),at);
+                if(forecast.Side==0)continue;
+                side=researchMode=="PRR1_LONG"?1:
+                    researchMode=="PRR1_SHORT"?-1:forecast.Side;
+                driver=forecast.Magnitude;
+                mechanism=forecast.Mechanism;
             }
             else if(researchMode is "BMR1_JOINT" or "BMR1_FX" or "BMR1_GOLD" or
                 "BMR1_LONG" or "BMR1_SHORT")

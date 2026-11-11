@@ -1487,6 +1487,24 @@
       "systemHard21Proven": false,
       "ordersSubmitted": 0,
       "cloudActivated": false
+    },
+    {
+      "id": "PRR1",
+      "status": "PREDECLARED_UNSCORED",
+      "protocolFile": "research/PRR1.md",
+      "calendar": "2026-04-06/2026-05-01_EXPOSED_DEVELOPMENT",
+      "targets": [
+        "US2000",
+        "SpotCrude"
+      ],
+      "context": [
+        "US500",
+        "EURUSD"
+      ],
+      "initialModelCapitalEur": 300,
+      "independentConfirmation": false,
+      "ordersSubmitted": 0,
+      "cloudActivated": false
     }
   ],
   "schema": "mxm-project-data-exposure-v1",
