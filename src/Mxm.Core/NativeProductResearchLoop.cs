@@ -418,7 +418,7 @@ public sealed class NativeProductResearchLoop
         }
         bool jointStudy=researchMode.StartsWith("JRS1_",StringComparison.Ordinal);
         bool useJointStress=jointStudy && researchMode!="JRS1_REPEATED";
-        var euro=jointStudy?byName.GetValueOrDefault("EURUSD"):null;
+        var stressEuro=jointStudy?byName.GetValueOrDefault("EURUSD"):null;
         bool factorStudy=researchMode.StartsWith("FCE1_",StringComparison.Ordinal);
         var offered=new List<EconomicOpportunity>();
         var evidence=new List<SpecialistEuroEvidence>();
@@ -1409,7 +1409,7 @@ public sealed class NativeProductResearchLoop
                 ? (1.5m*decisionSeed.AtrQuote+q.Ask-q.Bid+
                     2m*market.SlippagePerSideQuote)*q.EurDebit+commission/units
                 : Math.Abs(a)*mid*fx*.25m+.00001m;
-            var shocks=jointStudy?NativeHistoricalJointStress.Observe(market,euro,side,at):null;
+            var shocks=jointStudy?NativeHistoricalJointStress.Observe(market,stressEuro,side,at):null;
             if(jointStudy && shocks is null)
             {
                 rejected++;
@@ -1472,7 +1472,7 @@ public sealed class NativeProductResearchLoop
                 decimal loss=p.Units*(Math.Max(range,q.Ask-q.Bid)*fx*2m+
                     quoteEvidence.SlippagePerSideQuote*fx);
                 var shocks=jointStudy?NativeHistoricalJointStress.Observe(
-                    quoteEvidence,euro,p.Side,at):null;
+                    quoteEvidence,stressEuro,p.Side,at):null;
                 if(jointStudy && shocks is null)continue;
                 exposures.Add(new(p.Id,p.Symbol,p.Side,p.Units,useJointStress
                     ?shocks!.Select(x=>new PortfolioScenario(x.Id,x.KnownAt,true,
