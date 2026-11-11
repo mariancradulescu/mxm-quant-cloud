@@ -139,7 +139,8 @@ public static class NativeHistoricalProductReplay
     }
     public static NativeHistoricalMarketReceipt Evaluate(
         NativeHistoricalMarketTape tape,bool UnqualifiedShadowMode=true,
-        string ResearchMode="FROZEN_LEGACY_M5_M15")
+        string ResearchMode="FROZEN_LEGACY_M5_M15",
+        Action<NativeFundedLedger>? ObserveFinalLedger=null)
     {
         if(tape is null||tape.Bars is null||tape.Quotes is null||
            string.IsNullOrWhiteSpace(tape.SourceLabel)||
@@ -225,6 +226,7 @@ public static class NativeHistoricalProductReplay
         foreach(var pair in last.ModelRoundTripsPerIsoWeek)
             weeks[pair.Key]=pair.Value;
         var monetary=simulation.ResearchSession.Ledger.Summary();
+        ObserveFinalLedger?.Invoke(simulation.ResearchSession.Ledger);
         // Quote clocks are evidence of market MARKS, not a complete intrabar
         // equity path. No zero DD is certified when between-mark prices absent.
         bool complete=last.HistoryPathComplete &&

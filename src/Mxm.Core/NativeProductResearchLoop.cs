@@ -73,6 +73,7 @@ public sealed class NativeProductResearchLoop
             "AUD_ONLY_W38W39" or
             "HK_BRENT_JOINT_W40W41" or "HK_ONLY_W40W41" or
             "BRENT_ONLY_W40W41" or
+            "FCE1_JOINT" or "FCE1_FX" or "FCE1_COMMODITY" or "FCE1_LONG" or "FCE1_SHORT" or "FCE1_MINIMUM" or
             "PRR1_JOINT" or "PRR1_INDEX" or "PRR1_CRUDE" or "PRR1_LONG" or "PRR1_SHORT" or
             "BMR1_JOINT" or "BMR1_FX" or "BMR1_GOLD" or "BMR1_LONG" or "BMR1_SHORT" or
             "MCT2_JOINT" or "MCT2_CRYPTO" or "MCT2_METAL" or "MCT2_LONG" or "MCT2_SHORT" or
@@ -306,6 +307,7 @@ public sealed class NativeProductResearchLoop
                      researchMode.StartsWith("JRC1_",StringComparison.Ordinal) ||
                      researchMode.StartsWith("OTC1_",StringComparison.Ordinal) ||
                      researchMode.StartsWith("MCT2_",StringComparison.Ordinal) ||
+                     researchMode.StartsWith("FCE1_",StringComparison.Ordinal) ||
                      researchMode.StartsWith("PRR1_",StringComparison.Ordinal) ||
                      researchMode.StartsWith("BMR1_",StringComparison.Ordinal)) &&
                     ex.Message=="NATIVE_LEDGER_UNFINANCED_MODEL_FILL")
@@ -410,6 +412,7 @@ public sealed class NativeProductResearchLoop
             crossMedian=d.Length%2==1?d[d.Length/2]:
                 (d[d.Length/2-1]+d[d.Length/2])/2m;
         }
+        bool factorStudy=researchMode.StartsWith("FCE1_",StringComparison.Ordinal);
         var offered=new List<EconomicOpportunity>();
         var evidence=new List<SpecialistEuroEvidence>();
         var terms=new List<ResearchEntryTerms>();
@@ -511,6 +514,19 @@ public sealed class NativeProductResearchLoop
                     mechanism="US500_US_CASH_H1_VOLATILITY_PERSISTENCE";
                 }
                 else continue;
+            }
+            else if(factorStudy)
+            {
+                bool isFx=NativeFactorExhaustionResearch.IsFx(market.Symbol);
+                if((isFx && researchMode=="FCE1_COMMODITY") ||
+                   (!isFx && researchMode=="FCE1_FX"))continue;
+                var forecast=NativeFactorExhaustionResearch.Forecast(market,
+                    byName.GetValueOrDefault("EURUSD"),at);
+                if(forecast.Side==0)continue;
+                side=researchMode=="FCE1_LONG"?1:
+                    researchMode=="FCE1_SHORT"?-1:forecast.Side;
+                driver=forecast.Magnitude;
+                mechanism=forecast.Mechanism;
             }
             else if(researchMode.StartsWith("PRR1_",StringComparison.Ordinal))
             {
@@ -1310,9 +1326,10 @@ public sealed class NativeProductResearchLoop
                 "BMR1_XAUUSD_RELEASE_REPRICING"=>45,
                 _=>market.HoldingMinutes
             };
+            NativeExitSeed decisionSeed=new(0m,0m);
             if(effectiveExitPolicy!=NativeCausalExitResearch.FrozenFixed &&
                !NativeCausalExitResearch.TrySeed(market.M5,market.M15,
-                    at,out _))
+                    at,out decisionSeed))
             {
                 rejected++;
                 recent.Add(new(market.Symbol,at,side,
@@ -1365,9 +1382,14 @@ public sealed class NativeProductResearchLoop
             }
             decimal minMargin=q.MarginPerUnit*units;
             var grid=new AdaptiveRiskInputs(300m,0m,300m,units,c.VolumeStepUnits,
-                units,q.MarginPerUnit,0m,false,false,2,0m);
-            decimal perUnit=(predictedNet-uncertainty)/Math.Max(1,units)*.5m;
-            decimal riskPerUnit=Math.Abs(a)*mid*fx*.25m+.00001m;
+                factorStudy && researchMode!="FCE1_MINIMUM"
+                    ?Math.Min(c.MaximumUnits,units+c.VolumeStepUnits):units,
+                q.MarginPerUnit,0m,false,false,2,0m);
+            decimal perUnit=(predictedNet-uncertainty)/(factorStudy?units:Math.Max(1,units))*.5m;
+            decimal riskPerUnit=factorStudy
+                ? (1.5m*decisionSeed.AtrQuote+q.Ask-q.Bid+
+                    2m*market.SlippagePerSideQuote)*q.EurDebit+commission/units
+                : Math.Abs(a)*mid*fx*.25m+.00001m;
             var candidates=Enumerable.Range(0,8).Select(i=>
                 new OpportunityScenario("STATE"+i,baseClock,true,perUnit,0m,
                     riskPerUnit,0m)).ToArray();

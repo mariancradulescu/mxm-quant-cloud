@@ -1534,6 +1534,27 @@
       "continuousHistoricalEquityObserved": false,
       "hard21Proven": false,
       "nativePortfolioQualified": false
+    },
+    {
+      "id": "FCE1",
+      "status": "PREDECLARED_UNSCORED",
+      "protocolFile": "research/FCE1.md",
+      "calendar": "2026-02-09/2026-03-20_EXPOSED_DEVELOPMENT",
+      "targets": [
+        "AUDUSD",
+        "GBPUSD",
+        "NZDUSD",
+        "SpotBrent",
+        "XAUUSD"
+      ],
+      "context": [
+        "EURUSD"
+      ],
+      "initialModelCapitalEur": 300,
+      "valuationSamplingMs": 60000,
+      "independentConfirmation": false,
+      "ordersSubmitted": 0,
+      "cloudActivated": false
     }
   ],
   "schema": "mxm-project-data-exposure-v1",
