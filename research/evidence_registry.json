@@ -2461,5 +2461,26 @@
       138
     ],
     "status": "CLOSED_EXACT_NO_ECONOMIC_PROMOTION"
+  },
+  "cal1AuthenticPostEntryCalibration": {
+    "id": "CAL1",
+    "status": "CLOSED_EXACT_NO_PREDICTIVE_OR_ECONOMIC_PROMOTION",
+    "closedNoRetune": true,
+    "sourceClassification": "AUTHENTIC_EXPOSED_DEVELOPMENT_ONLY",
+    "runId": 43164330940,
+    "mainHead": "098bbf5a73f15fb2759530697f367fe7066e87a6",
+    "publicArtifactId": 13918494755,
+    "publicArchiveSha256": "516281cb2ebd4acd342d2ac00b610262cc427e571db95b0833a94d40941cca16",
+    "receipt": "docs/CAL1_AUTHENTIC_PUBLIC_RECEIPT_20261112.json",
+    "receiptSha256": "37632bbb0f348fa7986cff3e5b8acea249457f491bbd60198edfe7c0d18f03ec",
+    "protocolSha256": "f388ffe0610ff383ad2d4464106dd4423845e2dda4561adc09497d3a959a0343",
+    "sourceRunId": 43036474843,
+    "sourceArtifactId": 13863803890,
+    "frozenTrainingSha256": "3ad710abb5616117896fa597ff30e184b2a97c56d19b6143dc4bd623f8df9f84",
+    "scoredAfterEntry": 449,
+    "closedModeledRoundTrips": 0,
+    "independentConfirmation": false,
+    "ordersSubmitted": 0,
+    "cloudActivated": false
   }
 }
