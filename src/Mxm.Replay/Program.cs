@@ -1,8 +1,8 @@
 using System.Text.Json;
 using System.Security.Cryptography;
 
-if(args.Length==3 && args[2] is "--native-sem1" or "--native-sem1-contracts")
-    return NativeSessionEconomicsMap.Run(args[0],args[1],args[2]=="--native-sem1-contracts");
+if(args.Length==3 && args[2] is "--native-sem1" or "--native-sem1-contracts" or "--native-sem1-filter-diagnostic")
+    return NativeSessionEconomicsMap.Run(args[0],args[1],args[2]=="--native-sem1-contracts",args[2]=="--native-sem1-filter-diagnostic");
 
 if(args.Length==3 && args[2] is "--native-esd1" or "--native-esd1-contracts")
     return NativeExtendedSessionExperiment.Run(args[0],args[1],args[2]=="--native-esd1-contracts");

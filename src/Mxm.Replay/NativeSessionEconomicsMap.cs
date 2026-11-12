@@ -7,6 +7,7 @@ using Mxm.Core;
 internal static class NativeSessionEconomicsMap
 {
     private static readonly string[] Targets = { "EURUSD", "NAS100", "XAUUSD", "SpotBrent", "XAGEUR", "ETHEUR" };
+    private static readonly string[] FilterTargets = { "NAS100", "XAGEUR", "ETHEUR" };
     private static readonly int[] Horizons = { 30, 90 };
     private static readonly JsonSerializerOptions Wire = new() { NumberHandling = JsonNumberHandling.AllowReadingFromString };
     private const long Minute = 60000;
@@ -21,7 +22,7 @@ internal static class NativeSessionEconomicsMap
         bool RawQuotes, bool EntryQuote, decimal? SpreadBps, Payoff? Buy, Payoff? Sell, int? Signal, int Momentum);
     private sealed record Bounds(int Weeks, decimal? Mean, decimal? Lower);
 
-    internal static int Run(string input, string output, bool contracts)
+    internal static int Run(string input, string output, bool contracts, bool filterDiagnostic = false)
     {
         try
         {
@@ -44,7 +45,7 @@ internal static class NativeSessionEconomicsMap
             var marks = tape.Marks.GroupBy(m => m.Symbol).ToDictionary(g => g.Key, g => g.ToDictionary(x => x.At));
             var results = new Dictionary<string, object>();
             var active = new List<(string Symbol, int Horizon, long At)>();
-            foreach (string symbol in Targets)
+            foreach (string symbol in filterDiagnostic ? FilterTargets : Targets)
             {
                 if (!bars.ContainsKey(symbol))
                 {
@@ -98,6 +99,13 @@ internal static class NativeSessionEconomicsMap
                     Payoff Momentum(Row r) => r.Momentum switch {
                         > 0 => r.Buy!, < 0 => r.Sell!, _ => new(0, 0, 0, r.Buy!.Notional, 0)
                     };
+                    if (filterDiagnostic)
+                    {
+                        routes.Add(horizon, CompareFilter(rows.Where(r => Complete(r) &&
+                            r.Signal.HasValue && r.Momentum != 0).ToArray()));
+                        continue;
+                    }
+
                     var earlyOwn = Bound(first, r => Select(r).Adverse);
                     var earlyDelta = Bound(first, r => Select(r).Adverse - Momentum(r).Adverse);
                     var lateOwn = Bound(last, r => Select(r).Adverse);
@@ -138,7 +146,7 @@ internal static class NativeSessionEconomicsMap
                 results.Add(symbol, routes);
             }
             File.WriteAllText(output, JsonSerializer.Serialize(new {
-                Study = "SEM1", Receipt = results, SourceSha256 = Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant(),
+                Study = filterDiagnostic ? "SEM1_FILTER_DIAGNOSTIC" : "SEM1", Receipt = results, SourceSha256 = Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant(),
                 EntryClocksWithConcurrentSymbols = active.GroupBy(r => r.At).Count(g => g.Select(r => r.Symbol).Distinct().Count() > 1),
                 PortfolioExecuted = false, PortfolioAdmission = false, ContinuousDrawdownMeasured = false
             }));
@@ -149,6 +157,30 @@ internal static class NativeSessionEconomicsMap
             Console.Error.WriteLine("SEM1_NATIVE_REPLAY_REJECTED:" + error.GetType().Name);
             return 67;
         }
+    }
+
+    private static object CompareFilter(Row[] eligible)
+    {
+        Payoff OwnMomentum(Row r) => r.Momentum > 0 ? r.Buy! : r.Sell!;
+        decimal Bps(Row r) => 10000m * OwnMomentum(r).Adverse / OwnMomentum(r).Notional;
+        object Half(Row[] rows)
+        {
+            var controls = rows.Where(r => r.Signal == 0)
+                .GroupBy(r => (r.Weekend, r.Hour, r.Momentum))
+                .ToDictionary(g => g.Key, g => g.Average(Bps));
+            var selected = rows.Where(r => r.Signal == r.Momentum).ToArray();
+            var matched = selected.Where(r => controls.ContainsKey((r.Weekend, r.Hour, r.Momentum))).ToArray();
+            return new {
+                Selected = selected.Length, Matched = matched.Length, AvailableUnselectedControls = rows.Length - selected.Length,
+                Own = Bound(matched, Bps),
+                Incremental = Bound(matched, r => Bps(r) - controls[(r.Weekend, r.Hour, r.Momentum)]),
+                MatchedSelectedEconomics = Summary(matched.Select(OwnMomentum))
+            };
+        }
+        return new {
+            Early = Half(eligible.Where(r => r.Week < 5).ToArray()),
+            Late = Half(eligible.Where(r => r.Week >= 5).ToArray())
+        };
     }
 
     private static TimeZoneInfo? Zone(string? name)
