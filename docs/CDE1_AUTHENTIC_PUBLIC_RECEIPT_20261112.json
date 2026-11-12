@@ -1,0 +1,972 @@
+{
+  "Study": "CDE1",
+  "SourceSha256": "fd7986487be347376aa1e139915f90786155d2b1b6de1787382aa7d8666faeaf",
+  "EvaluationBoundaryUtcMs": 1786924800000,
+  "NominalSlotsPerWeek": 50,
+  "ProbabilityTarget": "POSITIVE_ADVERSE_NET",
+  "Policies": {
+    "JOINT": {
+      "ForecastsGenerated": 149,
+      "ModelIntentCount": 0,
+      "CompletedModelRoundTrips": 0,
+      "ModelClosedGrossEur": 0,
+      "ModelClosedCentralNetEur": 0,
+      "ModelClosedAdverseNetEur": 0,
+      "RejectionReasons": {
+        "NO_EUR_EDGE_AFTER_COST_AND_UNCERTAINTY": 147,
+        "INSUFFICIENT_MATURE_TRAINING_DAYS": 2
+      },
+      "ClosedNetByMechanismEur": {},
+      "MaximumObservedMarginEur": 0,
+      "MaximumSampledCentralDrawdown": 0,
+      "OpenModelPositions": 0,
+      "PendingModelRequests": 0,
+      "AdverseFailureKind": "",
+      "MissingCentralMarks": 0,
+      "MissingAdverseMarks": 0,
+      "MaximumSampledAdverseDrawdown": 0,
+      "PeakConcurrentClosedPositions": 0,
+      "ReservationsByWeek": {},
+      "Weeks": {
+        "2026-W34": 0,
+        "2026-W35": 0,
+        "2026-W36": 0,
+        "2026-W37": 0,
+        "2026-W38": 0,
+        "2026-W39": 0
+      },
+      "Diagnostics": {
+        "TrainingPairs": 151,
+        "EvaluationPairs": 148,
+        "MissingPairs": 2,
+        "ScoredForecasts": 146,
+        "MeanRealizedGrossBps": -0.3746445438965204,
+        "MeanRealizedNetBps": -2.774636638783262,
+        "DirectionBrier": 0.22086387225289797,
+        "NeutralBrier": 0.25,
+        "UnconditionalBrier": 0.21142750658485707,
+        "PredictedPositiveGross": 0,
+        "RealizedPositiveGross": 44,
+        "FrozenTrainingSha256": "001187192f0fef13e4fe1a478c85991a4a3d07bcb0b04f4a5546a59daded0984",
+        "Inventory": {
+          "Pairs": 148,
+          "FadeGrossBps": 0.21484767729388335,
+          "FadeCentralNetBps": -2.243749667083121,
+          "FadeAdverseNetBps": -4.7129282829007035,
+          "ContinuationAdverseNetBps": -4.70769966593594
+        },
+        "OpportunityFunnel": {
+          "2026-W34": {
+            "QuoteComplete": 50,
+            "FeatureEligible": 20,
+            "PredictionReady": 20,
+            "NetSupported": 0
+          },
+          "2026-W35": {
+            "QuoteComplete": 50,
+            "FeatureEligible": 30,
+            "PredictionReady": 30,
+            "NetSupported": 0
+          },
+          "2026-W36": {
+            "QuoteComplete": 50,
+            "FeatureEligible": 29,
+            "PredictionReady": 28,
+            "NetSupported": 0
+          },
+          "2026-W37": {
+            "QuoteComplete": 50,
+            "FeatureEligible": 18,
+            "PredictionReady": 18,
+            "NetSupported": 0
+          },
+          "2026-W38": {
+            "QuoteComplete": 50,
+            "FeatureEligible": 19,
+            "PredictionReady": 19,
+            "NetSupported": 0
+          },
+          "2026-W39": {
+            "QuoteComplete": 50,
+            "FeatureEligible": 33,
+            "PredictionReady": 32,
+            "NetSupported": 0
+          }
+        },
+        "FrozenModel": "F5E2C77E1A27B43A8B18A9F28E42E8E1DF702078FF33764942A9DAF774E25474.eyJCb3VuZGFyeSI6MTc4NjkyNDgwMDAwMCwiRngiOm51bGwsIk1ldGFsIjpudWxsLCJDb25kaXRpb25hbCI6eyJGWC9ISUdIIjp7IkZlYXR1cmVzS25vd25BdCI6MCwiT3V0Y29tZXNLbm93blRocm91Z2giOjE3ODY2OTk1MDE1MDAsIkRpcmVjdGlvbiI6MCwiVHJhaW5pbmdEYXlzIjo2LCJQb3NpdGl2ZUdyb3NzUHJvYmFiaWxpdHkiOjAuMjkyODEzMzI3MDIzODUzMzM5NjQyODEzMzI3LCJVbmNvbmRpdGlvbmFsUG9zaXRpdmVHcm9zc1Byb2JhYmlsaXR5IjowLjI5MDc0NjkxNDcwNzkxMjE1MDM2NzM5MzMzNDIsIk1lYW5Hcm9zc1JldHVybiI6MC4wMDAwNTA4OTk3OTY0OTg5MjEwNzM4NDAwOTc2LCJNZWFuQmVuY2htYXJrR3Jvc3NSZXR1cm4iOjAsIk1lYW5VbmNlcnRhaW50eVJldHVybiI6MC4wMDAzOTUzMDUwODkxNTcyNTEsIkRvd25zaWRlUmV0dXJuIjowLjAwMDQ0NTExMDQ5NTc1NjU5MzAzOTcxMzg3NTUsIlN0YW5kYWxvbmVBZHZlcnNlTmV0UmV0dXJuIjotMC4wMDAyNjI3OTkzMTQ3OTMyMTU1MTA5NTQ2OTMzLCJJbmNyZW1lbnRhbEFkdmVyc2VOZXRSZXR1cm4iOjAuMDAwMDYzMzMyNTgyNTg2NTQ4NTE2MzA2MjEwNiwiTWVhbkFkdmVyc2VGcmljdGlvblJldHVybiI6MC4wMDAzMTM2OTkxMTEyOTIxMzY1ODQ3OTQ3OTA5fSwiRlgvTE9XIjp7IkZlYXR1cmVzS25vd25BdCI6MCwiT3V0Y29tZXNLbm93blRocm91Z2giOjE3ODY3MjExMDE1MDAsIkRpcmVjdGlvbiI6MCwiVHJhaW5pbmdEYXlzIjo2LCJQb3NpdGl2ZUdyb3NzUHJvYmFiaWxpdHkiOjAuMTg2MTExMTExMTExMTExMTExMTExMTExMTExMSwiVW5jb25kaXRpb25hbFBvc2l0aXZlR3Jvc3NQcm9iYWJpbGl0eSI6MC4yOTA3NDY5MTQ3MDc5MTIxNTAzNjczOTMzMzQyLCJNZWFuR3Jvc3NSZXR1cm4iOi0wLjAwMDE2MTk0NzY1MzMwODg3OTEwOTI2Mzk3NTIsIk1lYW5CZW5jaG1hcmtHcm9zc1JldHVybiI6MCwiTWVhblVuY2VydGFpbnR5UmV0dXJuIjowLjAwMTA0MzI4MjMyOTMyNDIzMywiRG93bnNpZGVSZXR1cm4iOjAuMDAwNjA2ODk1MDQ5NDk4NzExOTQ5Mjk2MjI2LCJTdGFuZGFsb25lQWR2ZXJzZU5ldFJldHVybiI6LTAuMDAwNDQ5NTM5MjE5ODA4MTg2NDQ4OTI2NDMxLCJJbmNyZW1lbnRhbEFkdmVyc2VOZXRSZXR1cm4iOi0wLjAwMDIzNzU4MjE4MzkyNzA3NTI5NzE3NTI4NzQsIk1lYW5BZHZlcnNlRnJpY3Rpb25SZXR1cm4iOjAuMDAwMjg3NTkxNTY2NDk5MzA3MzM5NjYyNDU1OH0sIk1FVEFML0hJR0giOnsiRmVhdHVyZXNLbm93bkF0IjowLCJPdXRjb21lc0tub3duVGhyb3VnaCI6MTc4NjY5NzQwMTUwMCwiRGlyZWN0aW9uIjowLCJUcmFpbmluZ0RheXMiOjYsIlBvc2l0aXZlR3Jvc3NQcm9iYWJpbGl0eSI6MC4yNTI3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc4LCJVbmNvbmRpdGlvbmFsUG9zaXRpdmVHcm9zc1Byb2JhYmlsaXR5IjowLjI1Mjc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3NzgsIk1lYW5Hcm9zc1JldHVybiI6MC4wMDA2OTg5NzA1NjA2NzIwNTkxNzUwNTYyNjg5LCJNZWFuQmVuY2htYXJrR3Jvc3NSZXR1cm4iOjAsIk1lYW5VbmNlcnRhaW50eVJldHVybiI6MC4wMDE4MDczMTM3OTIxNzY4NTEsIkRvd25zaWRlUmV0dXJuIjowLjAwMTI0NjEzNzY3ODg4OTYzNDEzODM2NDE2NzcsIlN0YW5kYWxvbmVBZHZlcnNlTmV0UmV0dXJuIjotMC4wMDA2NTY5MzAzNzcyNzQwOTg0MDIyOTE0MzczLCJJbmNyZW1lbnRhbEFkdmVyc2VOZXRSZXR1cm4iOjAuMDAxMTExODIxMTk2MTc0Njk5MjEzMTc3OTAxMSwiTWVhbkFkdmVyc2VGcmljdGlvblJldHVybiI6MC4wMDEzNTU5MDA5Mzc5NDYxNTc1NzczNDc3MDYyfSwiTUVUQUwvTE9XIjpudWxsfX0=",
+        "ConditionalDistributions": {
+          "FX/HIGH": {
+            "Pairs": 78,
+            "Wins": 19,
+            "Losses": 59,
+            "Flat": 0,
+            "GrossBps": -0.7230706389589944,
+            "CentralBps": -2.229862777221004,
+            "AdverseBps": -3.7440830301776726,
+            "ReverseBps": -2.7247985776760393,
+            "AdverseP10Bps": -12.798212863044661,
+            "AdverseMedianBps": -4.572494572763208,
+            "AdverseP90Bps": 6.619695754942128,
+            "MeanWinBps": 7.371216180855039,
+            "MeanLossBps": -7.323586165933969,
+            "MeanAdverseFrictionBps": 3.021012391218678,
+            "Brier": 0.18667674157372133,
+            "TrainingPooledBrier": 0.1864775791954948
+          },
+          "METAL/HIGH": {
+            "Pairs": 24,
+            "Wins": 8,
+            "Losses": 16,
+            "Flat": 0,
+            "GrossBps": 0.28379372709397965,
+            "CentralBps": -6.691316117115958,
+            "AdverseBps": -13.689522621188981,
+            "ReverseBps": -11.173890655158658,
+            "AdverseP10Bps": -37.02124188882672,
+            "AdverseMedianBps": -18.953824438864874,
+            "AdverseP90Bps": 9.945502176746842,
+            "MeanWinBps": 11.814985133196158,
+            "MeanLossBps": -26.44177649838155,
+            "MeanAdverseFrictionBps": 13.973316348282962,
+            "Brier": 0.22871141975308643,
+            "TrainingPooledBrier": 0.22871141975308643
+          },
+          "FX/LOW": {
+            "Pairs": 44,
+            "Wins": 17,
+            "Losses": 27,
+            "Flat": 0,
+            "GrossBps": -0.11612825046240742,
+            "CentralBps": -1.6040014960985218,
+            "AdverseBps": -3.101151399439445,
+            "ReverseBps": -3.884726371199673,
+            "AdverseP10Bps": -15.716511216353057,
+            "AdverseMedianBps": -2.5498169087246825,
+            "AdverseP90Bps": 6.567357510225943,
+            "MeanWinBps": 6.2578057155230855,
+            "MeanLossBps": -8.99382810145289,
+            "MeanAdverseFrictionBps": 2.9850231489770374,
+            "Brier": 0.2771878507295174,
+            "TrainingPooledBrier": 0.24622933431969238
+          },
+          "METAL/LOW": {
+            "Pairs": 2,
+            "Wins": 1,
+            "Losses": 1,
+            "Flat": 0,
+            "GrossBps": 43.24777982419336,
+            "CentralBps": 36.51099926702719,
+            "AdverseBps": 29.762147484212743,
+            "ReverseBps": -22.551962721597302,
+            "AdverseP10Bps": -14.784619678435538,
+            "AdverseMedianBps": -14.784619678435538,
+            "AdverseP90Bps": -14.784619678435538,
+            "MeanWinBps": 74.30891464686103,
+            "MeanLossBps": -14.784619678435538,
+            "MeanAdverseFrictionBps": 13.485632339980613,
+            "Brier": null,
+            "TrainingPooledBrier": null
+          }
+        },
+        "IntegratedFamilies": {
+          "FX/HIGH": {
+            "Pairs": 78,
+            "GrossBps": -0.7230706389589944,
+            "CentralNetBps": -2.229862777221004,
+            "AdverseNetBps": -3.7440830301776726,
+            "ReverseAdverseNetBps": -2.7247985776760393,
+            "PositiveAdversePairs": 19,
+            "Brier": 0.18667674157372133
+          },
+          "METAL/HIGH": {
+            "Pairs": 24,
+            "GrossBps": 0.28379372709397965,
+            "CentralNetBps": -6.691316117115958,
+            "AdverseNetBps": -13.689522621188981,
+            "ReverseAdverseNetBps": -11.173890655158658,
+            "PositiveAdversePairs": 8,
+            "Brier": 0.22871141975308643
+          },
+          "FX/LOW": {
+            "Pairs": 44,
+            "GrossBps": -0.11612825046240742,
+            "CentralNetBps": -1.6040014960985218,
+            "AdverseNetBps": -3.101151399439445,
+            "ReverseAdverseNetBps": -3.884726371199673,
+            "PositiveAdversePairs": 17,
+            "Brier": 0.2771878507295174
+          },
+          "METAL/LOW": {
+            "Pairs": 2,
+            "GrossBps": 43.24777982419336,
+            "CentralNetBps": 36.51099926702719,
+            "AdverseNetBps": 29.762147484212743,
+            "ReverseAdverseNetBps": -22.551962721597302,
+            "PositiveAdversePairs": 1,
+            "Brier": null
+          }
+        }
+      }
+    },
+    "FX": {
+      "ForecastsGenerated": 122,
+      "ModelIntentCount": 0,
+      "CompletedModelRoundTrips": 0,
+      "ModelClosedGrossEur": 0,
+      "ModelClosedCentralNetEur": 0,
+      "ModelClosedAdverseNetEur": 0,
+      "RejectionReasons": {
+        "NO_EUR_EDGE_AFTER_COST_AND_UNCERTAINTY": 122
+      },
+      "ClosedNetByMechanismEur": {},
+      "MaximumObservedMarginEur": 0,
+      "MaximumSampledCentralDrawdown": 0,
+      "OpenModelPositions": 0,
+      "PendingModelRequests": 0,
+      "AdverseFailureKind": "",
+      "MissingCentralMarks": 0,
+      "MissingAdverseMarks": 0,
+      "MaximumSampledAdverseDrawdown": 0,
+      "PeakConcurrentClosedPositions": 0,
+      "ReservationsByWeek": {},
+      "Weeks": {
+        "2026-W34": 0,
+        "2026-W35": 0,
+        "2026-W36": 0,
+        "2026-W37": 0,
+        "2026-W38": 0,
+        "2026-W39": 0
+      },
+      "Diagnostics": {
+        "TrainingPairs": 151,
+        "EvaluationPairs": 148,
+        "MissingPairs": 2,
+        "ScoredForecasts": 146,
+        "MeanRealizedGrossBps": -0.3746445438965204,
+        "MeanRealizedNetBps": -2.774636638783262,
+        "DirectionBrier": 0.22086387225289797,
+        "NeutralBrier": 0.25,
+        "UnconditionalBrier": 0.21142750658485707,
+        "PredictedPositiveGross": 0,
+        "RealizedPositiveGross": 44,
+        "FrozenTrainingSha256": "001187192f0fef13e4fe1a478c85991a4a3d07bcb0b04f4a5546a59daded0984",
+        "Inventory": {
+          "Pairs": 148,
+          "FadeGrossBps": 0.21484767729388335,
+          "FadeCentralNetBps": -2.243749667083121,
+          "FadeAdverseNetBps": -4.7129282829007035,
+          "ContinuationAdverseNetBps": -4.70769966593594
+        },
+        "OpportunityFunnel": {
+          "2026-W34": {
+            "QuoteComplete": 50,
+            "FeatureEligible": 20,
+            "PredictionReady": 20,
+            "NetSupported": 0
+          },
+          "2026-W35": {
+            "QuoteComplete": 50,
+            "FeatureEligible": 30,
+            "PredictionReady": 30,
+            "NetSupported": 0
+          },
+          "2026-W36": {
+            "QuoteComplete": 50,
+            "FeatureEligible": 29,
+            "PredictionReady": 28,
+            "NetSupported": 0
+          },
+          "2026-W37": {
+            "QuoteComplete": 50,
+            "FeatureEligible": 18,
+            "PredictionReady": 18,
+            "NetSupported": 0
+          },
+          "2026-W38": {
+            "QuoteComplete": 50,
+            "FeatureEligible": 19,
+            "PredictionReady": 19,
+            "NetSupported": 0
+          },
+          "2026-W39": {
+            "QuoteComplete": 50,
+            "FeatureEligible": 33,
+            "PredictionReady": 32,
+            "NetSupported": 0
+          }
+        },
+        "FrozenModel": "F5E2C77E1A27B43A8B18A9F28E42E8E1DF702078FF33764942A9DAF774E25474.eyJCb3VuZGFyeSI6MTc4NjkyNDgwMDAwMCwiRngiOm51bGwsIk1ldGFsIjpudWxsLCJDb25kaXRpb25hbCI6eyJGWC9ISUdIIjp7IkZlYXR1cmVzS25vd25BdCI6MCwiT3V0Y29tZXNLbm93blRocm91Z2giOjE3ODY2OTk1MDE1MDAsIkRpcmVjdGlvbiI6MCwiVHJhaW5pbmdEYXlzIjo2LCJQb3NpdGl2ZUdyb3NzUHJvYmFiaWxpdHkiOjAuMjkyODEzMzI3MDIzODUzMzM5NjQyODEzMzI3LCJVbmNvbmRpdGlvbmFsUG9zaXRpdmVHcm9zc1Byb2JhYmlsaXR5IjowLjI5MDc0NjkxNDcwNzkxMjE1MDM2NzM5MzMzNDIsIk1lYW5Hcm9zc1JldHVybiI6MC4wMDAwNTA4OTk3OTY0OTg5MjEwNzM4NDAwOTc2LCJNZWFuQmVuY2htYXJrR3Jvc3NSZXR1cm4iOjAsIk1lYW5VbmNlcnRhaW50eVJldHVybiI6MC4wMDAzOTUzMDUwODkxNTcyNTEsIkRvd25zaWRlUmV0dXJuIjowLjAwMDQ0NTExMDQ5NTc1NjU5MzAzOTcxMzg3NTUsIlN0YW5kYWxvbmVBZHZlcnNlTmV0UmV0dXJuIjotMC4wMDAyNjI3OTkzMTQ3OTMyMTU1MTA5NTQ2OTMzLCJJbmNyZW1lbnRhbEFkdmVyc2VOZXRSZXR1cm4iOjAuMDAwMDYzMzMyNTgyNTg2NTQ4NTE2MzA2MjEwNiwiTWVhbkFkdmVyc2VGcmljdGlvblJldHVybiI6MC4wMDAzMTM2OTkxMTEyOTIxMzY1ODQ3OTQ3OTA5fSwiRlgvTE9XIjp7IkZlYXR1cmVzS25vd25BdCI6MCwiT3V0Y29tZXNLbm93blRocm91Z2giOjE3ODY3MjExMDE1MDAsIkRpcmVjdGlvbiI6MCwiVHJhaW5pbmdEYXlzIjo2LCJQb3NpdGl2ZUdyb3NzUHJvYmFiaWxpdHkiOjAuMTg2MTExMTExMTExMTExMTExMTExMTExMTExMSwiVW5jb25kaXRpb25hbFBvc2l0aXZlR3Jvc3NQcm9iYWJpbGl0eSI6MC4yOTA3NDY5MTQ3MDc5MTIxNTAzNjczOTMzMzQyLCJNZWFuR3Jvc3NSZXR1cm4iOi0wLjAwMDE2MTk0NzY1MzMwODg3OTEwOTI2Mzk3NTIsIk1lYW5CZW5jaG1hcmtHcm9zc1JldHVybiI6MCwiTWVhblVuY2VydGFpbnR5UmV0dXJuIjowLjAwMTA0MzI4MjMyOTMyNDIzMywiRG93bnNpZGVSZXR1cm4iOjAuMDAwNjA2ODk1MDQ5NDk4NzExOTQ5Mjk2MjI2LCJTdGFuZGFsb25lQWR2ZXJzZU5ldFJldHVybiI6LTAuMDAwNDQ5NTM5MjE5ODA4MTg2NDQ4OTI2NDMxLCJJbmNyZW1lbnRhbEFkdmVyc2VOZXRSZXR1cm4iOi0wLjAwMDIzNzU4MjE4MzkyNzA3NTI5NzE3NTI4NzQsIk1lYW5BZHZlcnNlRnJpY3Rpb25SZXR1cm4iOjAuMDAwMjg3NTkxNTY2NDk5MzA3MzM5NjYyNDU1OH0sIk1FVEFML0hJR0giOnsiRmVhdHVyZXNLbm93bkF0IjowLCJPdXRjb21lc0tub3duVGhyb3VnaCI6MTc4NjY5NzQwMTUwMCwiRGlyZWN0aW9uIjowLCJUcmFpbmluZ0RheXMiOjYsIlBvc2l0aXZlR3Jvc3NQcm9iYWJpbGl0eSI6MC4yNTI3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc4LCJVbmNvbmRpdGlvbmFsUG9zaXRpdmVHcm9zc1Byb2JhYmlsaXR5IjowLjI1Mjc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3NzgsIk1lYW5Hcm9zc1JldHVybiI6MC4wMDA2OTg5NzA1NjA2NzIwNTkxNzUwNTYyNjg5LCJNZWFuQmVuY2htYXJrR3Jvc3NSZXR1cm4iOjAsIk1lYW5VbmNlcnRhaW50eVJldHVybiI6MC4wMDE4MDczMTM3OTIxNzY4NTEsIkRvd25zaWRlUmV0dXJuIjowLjAwMTI0NjEzNzY3ODg4OTYzNDEzODM2NDE2NzcsIlN0YW5kYWxvbmVBZHZlcnNlTmV0UmV0dXJuIjotMC4wMDA2NTY5MzAzNzcyNzQwOTg0MDIyOTE0MzczLCJJbmNyZW1lbnRhbEFkdmVyc2VOZXRSZXR1cm4iOjAuMDAxMTExODIxMTk2MTc0Njk5MjEzMTc3OTAxMSwiTWVhbkFkdmVyc2VGcmljdGlvblJldHVybiI6MC4wMDEzNTU5MDA5Mzc5NDYxNTc1NzczNDc3MDYyfSwiTUVUQUwvTE9XIjpudWxsfX0=",
+        "ConditionalDistributions": {
+          "FX/HIGH": {
+            "Pairs": 78,
+            "Wins": 19,
+            "Losses": 59,
+            "Flat": 0,
+            "GrossBps": -0.7230706389589944,
+            "CentralBps": -2.229862777221004,
+            "AdverseBps": -3.7440830301776726,
+            "ReverseBps": -2.7247985776760393,
+            "AdverseP10Bps": -12.798212863044661,
+            "AdverseMedianBps": -4.572494572763208,
+            "AdverseP90Bps": 6.619695754942128,
+            "MeanWinBps": 7.371216180855039,
+            "MeanLossBps": -7.323586165933969,
+            "MeanAdverseFrictionBps": 3.021012391218678,
+            "Brier": 0.18667674157372133,
+            "TrainingPooledBrier": 0.1864775791954948
+          },
+          "METAL/HIGH": {
+            "Pairs": 24,
+            "Wins": 8,
+            "Losses": 16,
+            "Flat": 0,
+            "GrossBps": 0.28379372709397965,
+            "CentralBps": -6.691316117115958,
+            "AdverseBps": -13.689522621188981,
+            "ReverseBps": -11.173890655158658,
+            "AdverseP10Bps": -37.02124188882672,
+            "AdverseMedianBps": -18.953824438864874,
+            "AdverseP90Bps": 9.945502176746842,
+            "MeanWinBps": 11.814985133196158,
+            "MeanLossBps": -26.44177649838155,
+            "MeanAdverseFrictionBps": 13.973316348282962,
+            "Brier": 0.22871141975308643,
+            "TrainingPooledBrier": 0.22871141975308643
+          },
+          "FX/LOW": {
+            "Pairs": 44,
+            "Wins": 17,
+            "Losses": 27,
+            "Flat": 0,
+            "GrossBps": -0.11612825046240742,
+            "CentralBps": -1.6040014960985218,
+            "AdverseBps": -3.101151399439445,
+            "ReverseBps": -3.884726371199673,
+            "AdverseP10Bps": -15.716511216353057,
+            "AdverseMedianBps": -2.5498169087246825,
+            "AdverseP90Bps": 6.567357510225943,
+            "MeanWinBps": 6.2578057155230855,
+            "MeanLossBps": -8.99382810145289,
+            "MeanAdverseFrictionBps": 2.9850231489770374,
+            "Brier": 0.2771878507295174,
+            "TrainingPooledBrier": 0.24622933431969238
+          },
+          "METAL/LOW": {
+            "Pairs": 2,
+            "Wins": 1,
+            "Losses": 1,
+            "Flat": 0,
+            "GrossBps": 43.24777982419336,
+            "CentralBps": 36.51099926702719,
+            "AdverseBps": 29.762147484212743,
+            "ReverseBps": -22.551962721597302,
+            "AdverseP10Bps": -14.784619678435538,
+            "AdverseMedianBps": -14.784619678435538,
+            "AdverseP90Bps": -14.784619678435538,
+            "MeanWinBps": 74.30891464686103,
+            "MeanLossBps": -14.784619678435538,
+            "MeanAdverseFrictionBps": 13.485632339980613,
+            "Brier": null,
+            "TrainingPooledBrier": null
+          }
+        },
+        "IntegratedFamilies": {
+          "FX/HIGH": {
+            "Pairs": 78,
+            "GrossBps": -0.7230706389589944,
+            "CentralNetBps": -2.229862777221004,
+            "AdverseNetBps": -3.7440830301776726,
+            "ReverseAdverseNetBps": -2.7247985776760393,
+            "PositiveAdversePairs": 19,
+            "Brier": 0.18667674157372133
+          },
+          "METAL/HIGH": {
+            "Pairs": 24,
+            "GrossBps": 0.28379372709397965,
+            "CentralNetBps": -6.691316117115958,
+            "AdverseNetBps": -13.689522621188981,
+            "ReverseAdverseNetBps": -11.173890655158658,
+            "PositiveAdversePairs": 8,
+            "Brier": 0.22871141975308643
+          },
+          "FX/LOW": {
+            "Pairs": 44,
+            "GrossBps": -0.11612825046240742,
+            "CentralNetBps": -1.6040014960985218,
+            "AdverseNetBps": -3.101151399439445,
+            "ReverseAdverseNetBps": -3.884726371199673,
+            "PositiveAdversePairs": 17,
+            "Brier": 0.2771878507295174
+          },
+          "METAL/LOW": {
+            "Pairs": 2,
+            "GrossBps": 43.24777982419336,
+            "CentralNetBps": 36.51099926702719,
+            "AdverseNetBps": 29.762147484212743,
+            "ReverseAdverseNetBps": -22.551962721597302,
+            "PositiveAdversePairs": 1,
+            "Brier": null
+          }
+        }
+      }
+    },
+    "METAL": {
+      "ForecastsGenerated": 27,
+      "ModelIntentCount": 0,
+      "CompletedModelRoundTrips": 0,
+      "ModelClosedGrossEur": 0,
+      "ModelClosedCentralNetEur": 0,
+      "ModelClosedAdverseNetEur": 0,
+      "RejectionReasons": {
+        "NO_EUR_EDGE_AFTER_COST_AND_UNCERTAINTY": 25,
+        "INSUFFICIENT_MATURE_TRAINING_DAYS": 2
+      },
+      "ClosedNetByMechanismEur": {},
+      "MaximumObservedMarginEur": 0,
+      "MaximumSampledCentralDrawdown": 0,
+      "OpenModelPositions": 0,
+      "PendingModelRequests": 0,
+      "AdverseFailureKind": "",
+      "MissingCentralMarks": 0,
+      "MissingAdverseMarks": 0,
+      "MaximumSampledAdverseDrawdown": 0,
+      "PeakConcurrentClosedPositions": 0,
+      "ReservationsByWeek": {},
+      "Weeks": {
+        "2026-W34": 0,
+        "2026-W35": 0,
+        "2026-W36": 0,
+        "2026-W37": 0,
+        "2026-W38": 0,
+        "2026-W39": 0
+      },
+      "Diagnostics": {
+        "TrainingPairs": 151,
+        "EvaluationPairs": 148,
+        "MissingPairs": 2,
+        "ScoredForecasts": 146,
+        "MeanRealizedGrossBps": -0.3746445438965204,
+        "MeanRealizedNetBps": -2.774636638783262,
+        "DirectionBrier": 0.22086387225289797,
+        "NeutralBrier": 0.25,
+        "UnconditionalBrier": 0.21142750658485707,
+        "PredictedPositiveGross": 0,
+        "RealizedPositiveGross": 44,
+        "FrozenTrainingSha256": "001187192f0fef13e4fe1a478c85991a4a3d07bcb0b04f4a5546a59daded0984",
+        "Inventory": {
+          "Pairs": 148,
+          "FadeGrossBps": 0.21484767729388335,
+          "FadeCentralNetBps": -2.243749667083121,
+          "FadeAdverseNetBps": -4.7129282829007035,
+          "ContinuationAdverseNetBps": -4.70769966593594
+        },
+        "OpportunityFunnel": {
+          "2026-W34": {
+            "QuoteComplete": 50,
+            "FeatureEligible": 20,
+            "PredictionReady": 20,
+            "NetSupported": 0
+          },
+          "2026-W35": {
+            "QuoteComplete": 50,
+            "FeatureEligible": 30,
+            "PredictionReady": 30,
+            "NetSupported": 0
+          },
+          "2026-W36": {
+            "QuoteComplete": 50,
+            "FeatureEligible": 29,
+            "PredictionReady": 28,
+            "NetSupported": 0
+          },
+          "2026-W37": {
+            "QuoteComplete": 50,
+            "FeatureEligible": 18,
+            "PredictionReady": 18,
+            "NetSupported": 0
+          },
+          "2026-W38": {
+            "QuoteComplete": 50,
+            "FeatureEligible": 19,
+            "PredictionReady": 19,
+            "NetSupported": 0
+          },
+          "2026-W39": {
+            "QuoteComplete": 50,
+            "FeatureEligible": 33,
+            "PredictionReady": 32,
+            "NetSupported": 0
+          }
+        },
+        "FrozenModel": "F5E2C77E1A27B43A8B18A9F28E42E8E1DF702078FF33764942A9DAF774E25474.eyJCb3VuZGFyeSI6MTc4NjkyNDgwMDAwMCwiRngiOm51bGwsIk1ldGFsIjpudWxsLCJDb25kaXRpb25hbCI6eyJGWC9ISUdIIjp7IkZlYXR1cmVzS25vd25BdCI6MCwiT3V0Y29tZXNLbm93blRocm91Z2giOjE3ODY2OTk1MDE1MDAsIkRpcmVjdGlvbiI6MCwiVHJhaW5pbmdEYXlzIjo2LCJQb3NpdGl2ZUdyb3NzUHJvYmFiaWxpdHkiOjAuMjkyODEzMzI3MDIzODUzMzM5NjQyODEzMzI3LCJVbmNvbmRpdGlvbmFsUG9zaXRpdmVHcm9zc1Byb2JhYmlsaXR5IjowLjI5MDc0NjkxNDcwNzkxMjE1MDM2NzM5MzMzNDIsIk1lYW5Hcm9zc1JldHVybiI6MC4wMDAwNTA4OTk3OTY0OTg5MjEwNzM4NDAwOTc2LCJNZWFuQmVuY2htYXJrR3Jvc3NSZXR1cm4iOjAsIk1lYW5VbmNlcnRhaW50eVJldHVybiI6MC4wMDAzOTUzMDUwODkxNTcyNTEsIkRvd25zaWRlUmV0dXJuIjowLjAwMDQ0NTExMDQ5NTc1NjU5MzAzOTcxMzg3NTUsIlN0YW5kYWxvbmVBZHZlcnNlTmV0UmV0dXJuIjotMC4wMDAyNjI3OTkzMTQ3OTMyMTU1MTA5NTQ2OTMzLCJJbmNyZW1lbnRhbEFkdmVyc2VOZXRSZXR1cm4iOjAuMDAwMDYzMzMyNTgyNTg2NTQ4NTE2MzA2MjEwNiwiTWVhbkFkdmVyc2VGcmljdGlvblJldHVybiI6MC4wMDAzMTM2OTkxMTEyOTIxMzY1ODQ3OTQ3OTA5fSwiRlgvTE9XIjp7IkZlYXR1cmVzS25vd25BdCI6MCwiT3V0Y29tZXNLbm93blRocm91Z2giOjE3ODY3MjExMDE1MDAsIkRpcmVjdGlvbiI6MCwiVHJhaW5pbmdEYXlzIjo2LCJQb3NpdGl2ZUdyb3NzUHJvYmFiaWxpdHkiOjAuMTg2MTExMTExMTExMTExMTExMTExMTExMTExMSwiVW5jb25kaXRpb25hbFBvc2l0aXZlR3Jvc3NQcm9iYWJpbGl0eSI6MC4yOTA3NDY5MTQ3MDc5MTIxNTAzNjczOTMzMzQyLCJNZWFuR3Jvc3NSZXR1cm4iOi0wLjAwMDE2MTk0NzY1MzMwODg3OTEwOTI2Mzk3NTIsIk1lYW5CZW5jaG1hcmtHcm9zc1JldHVybiI6MCwiTWVhblVuY2VydGFpbnR5UmV0dXJuIjowLjAwMTA0MzI4MjMyOTMyNDIzMywiRG93bnNpZGVSZXR1cm4iOjAuMDAwNjA2ODk1MDQ5NDk4NzExOTQ5Mjk2MjI2LCJTdGFuZGFsb25lQWR2ZXJzZU5ldFJldHVybiI6LTAuMDAwNDQ5NTM5MjE5ODA4MTg2NDQ4OTI2NDMxLCJJbmNyZW1lbnRhbEFkdmVyc2VOZXRSZXR1cm4iOi0wLjAwMDIzNzU4MjE4MzkyNzA3NTI5NzE3NTI4NzQsIk1lYW5BZHZlcnNlRnJpY3Rpb25SZXR1cm4iOjAuMDAwMjg3NTkxNTY2NDk5MzA3MzM5NjYyNDU1OH0sIk1FVEFML0hJR0giOnsiRmVhdHVyZXNLbm93bkF0IjowLCJPdXRjb21lc0tub3duVGhyb3VnaCI6MTc4NjY5NzQwMTUwMCwiRGlyZWN0aW9uIjowLCJUcmFpbmluZ0RheXMiOjYsIlBvc2l0aXZlR3Jvc3NQcm9iYWJpbGl0eSI6MC4yNTI3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc4LCJVbmNvbmRpdGlvbmFsUG9zaXRpdmVHcm9zc1Byb2JhYmlsaXR5IjowLjI1Mjc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3NzgsIk1lYW5Hcm9zc1JldHVybiI6MC4wMDA2OTg5NzA1NjA2NzIwNTkxNzUwNTYyNjg5LCJNZWFuQmVuY2htYXJrR3Jvc3NSZXR1cm4iOjAsIk1lYW5VbmNlcnRhaW50eVJldHVybiI6MC4wMDE4MDczMTM3OTIxNzY4NTEsIkRvd25zaWRlUmV0dXJuIjowLjAwMTI0NjEzNzY3ODg4OTYzNDEzODM2NDE2NzcsIlN0YW5kYWxvbmVBZHZlcnNlTmV0UmV0dXJuIjotMC4wMDA2NTY5MzAzNzcyNzQwOTg0MDIyOTE0MzczLCJJbmNyZW1lbnRhbEFkdmVyc2VOZXRSZXR1cm4iOjAuMDAxMTExODIxMTk2MTc0Njk5MjEzMTc3OTAxMSwiTWVhbkFkdmVyc2VGcmljdGlvblJldHVybiI6MC4wMDEzNTU5MDA5Mzc5NDYxNTc1NzczNDc3MDYyfSwiTUVUQUwvTE9XIjpudWxsfX0=",
+        "ConditionalDistributions": {
+          "FX/HIGH": {
+            "Pairs": 78,
+            "Wins": 19,
+            "Losses": 59,
+            "Flat": 0,
+            "GrossBps": -0.7230706389589944,
+            "CentralBps": -2.229862777221004,
+            "AdverseBps": -3.7440830301776726,
+            "ReverseBps": -2.7247985776760393,
+            "AdverseP10Bps": -12.798212863044661,
+            "AdverseMedianBps": -4.572494572763208,
+            "AdverseP90Bps": 6.619695754942128,
+            "MeanWinBps": 7.371216180855039,
+            "MeanLossBps": -7.323586165933969,
+            "MeanAdverseFrictionBps": 3.021012391218678,
+            "Brier": 0.18667674157372133,
+            "TrainingPooledBrier": 0.1864775791954948
+          },
+          "METAL/HIGH": {
+            "Pairs": 24,
+            "Wins": 8,
+            "Losses": 16,
+            "Flat": 0,
+            "GrossBps": 0.28379372709397965,
+            "CentralBps": -6.691316117115958,
+            "AdverseBps": -13.689522621188981,
+            "ReverseBps": -11.173890655158658,
+            "AdverseP10Bps": -37.02124188882672,
+            "AdverseMedianBps": -18.953824438864874,
+            "AdverseP90Bps": 9.945502176746842,
+            "MeanWinBps": 11.814985133196158,
+            "MeanLossBps": -26.44177649838155,
+            "MeanAdverseFrictionBps": 13.973316348282962,
+            "Brier": 0.22871141975308643,
+            "TrainingPooledBrier": 0.22871141975308643
+          },
+          "FX/LOW": {
+            "Pairs": 44,
+            "Wins": 17,
+            "Losses": 27,
+            "Flat": 0,
+            "GrossBps": -0.11612825046240742,
+            "CentralBps": -1.6040014960985218,
+            "AdverseBps": -3.101151399439445,
+            "ReverseBps": -3.884726371199673,
+            "AdverseP10Bps": -15.716511216353057,
+            "AdverseMedianBps": -2.5498169087246825,
+            "AdverseP90Bps": 6.567357510225943,
+            "MeanWinBps": 6.2578057155230855,
+            "MeanLossBps": -8.99382810145289,
+            "MeanAdverseFrictionBps": 2.9850231489770374,
+            "Brier": 0.2771878507295174,
+            "TrainingPooledBrier": 0.24622933431969238
+          },
+          "METAL/LOW": {
+            "Pairs": 2,
+            "Wins": 1,
+            "Losses": 1,
+            "Flat": 0,
+            "GrossBps": 43.24777982419336,
+            "CentralBps": 36.51099926702719,
+            "AdverseBps": 29.762147484212743,
+            "ReverseBps": -22.551962721597302,
+            "AdverseP10Bps": -14.784619678435538,
+            "AdverseMedianBps": -14.784619678435538,
+            "AdverseP90Bps": -14.784619678435538,
+            "MeanWinBps": 74.30891464686103,
+            "MeanLossBps": -14.784619678435538,
+            "MeanAdverseFrictionBps": 13.485632339980613,
+            "Brier": null,
+            "TrainingPooledBrier": null
+          }
+        },
+        "IntegratedFamilies": {
+          "FX/HIGH": {
+            "Pairs": 78,
+            "GrossBps": -0.7230706389589944,
+            "CentralNetBps": -2.229862777221004,
+            "AdverseNetBps": -3.7440830301776726,
+            "ReverseAdverseNetBps": -2.7247985776760393,
+            "PositiveAdversePairs": 19,
+            "Brier": 0.18667674157372133
+          },
+          "METAL/HIGH": {
+            "Pairs": 24,
+            "GrossBps": 0.28379372709397965,
+            "CentralNetBps": -6.691316117115958,
+            "AdverseNetBps": -13.689522621188981,
+            "ReverseAdverseNetBps": -11.173890655158658,
+            "PositiveAdversePairs": 8,
+            "Brier": 0.22871141975308643
+          },
+          "FX/LOW": {
+            "Pairs": 44,
+            "GrossBps": -0.11612825046240742,
+            "CentralNetBps": -1.6040014960985218,
+            "AdverseNetBps": -3.101151399439445,
+            "ReverseAdverseNetBps": -3.884726371199673,
+            "PositiveAdversePairs": 17,
+            "Brier": 0.2771878507295174
+          },
+          "METAL/LOW": {
+            "Pairs": 2,
+            "GrossBps": 43.24777982419336,
+            "CentralNetBps": 36.51099926702719,
+            "AdverseNetBps": 29.762147484212743,
+            "ReverseAdverseNetBps": -22.551962721597302,
+            "PositiveAdversePairs": 1,
+            "Brier": null
+          }
+        }
+      }
+    },
+    "LONG": {
+      "ForecastsGenerated": 149,
+      "ModelIntentCount": 123,
+      "CompletedModelRoundTrips": 122,
+      "ModelClosedGrossEur": -7.104206279395182,
+      "ModelClosedCentralNetEur": -17.15695051583095,
+      "ModelClosedAdverseNetEur": -27.251937901677408,
+      "RejectionReasons": {
+        "SINGLE_POSITION_PER_SYMBOL": 26
+      },
+      "ClosedNetByMechanismEur": {
+        "CDE1_FX": -15.158133983699376,
+        "CDE1_METAL": -1.998816532131574
+      },
+      "MaximumObservedMarginEur": 67.255,
+      "MaximumSampledCentralDrawdown": 0.06295983788354982,
+      "OpenModelPositions": 0,
+      "PendingModelRequests": 0,
+      "AdverseFailureKind": "",
+      "MissingCentralMarks": 0,
+      "MissingAdverseMarks": 0,
+      "MaximumSampledAdverseDrawdown": 0.09534871413966135,
+      "PeakConcurrentClosedPositions": 3,
+      "ReservationsByWeek": {
+        "2026-W34": 15,
+        "2026-W35": 25,
+        "2026-W36": 24,
+        "2026-W37": 17,
+        "2026-W38": 16,
+        "2026-W39": 26
+      },
+      "Weeks": {
+        "2026-W34": 15,
+        "2026-W35": 25,
+        "2026-W36": 24,
+        "2026-W37": 17,
+        "2026-W38": 15,
+        "2026-W39": 26
+      },
+      "Diagnostics": null
+    },
+    "SHORT": {
+      "ForecastsGenerated": 149,
+      "ModelIntentCount": 119,
+      "CompletedModelRoundTrips": 118,
+      "ModelClosedGrossEur": 4.844898389906288,
+      "ModelClosedCentralNetEur": -4.862686793730199,
+      "ModelClosedAdverseNetEur": -14.611205231384838,
+      "RejectionReasons": {
+        "SINGLE_POSITION_PER_SYMBOL": 30
+      },
+      "ClosedNetByMechanismEur": {
+        "CDE1_FX": -4.32766493346834,
+        "CDE1_METAL": -0.5350218602618585
+      },
+      "MaximumObservedMarginEur": 67.255,
+      "MaximumSampledCentralDrawdown": 0.029738331397047835,
+      "OpenModelPositions": 0,
+      "PendingModelRequests": 0,
+      "AdverseFailureKind": "",
+      "MissingCentralMarks": 1,
+      "MissingAdverseMarks": 1,
+      "MaximumSampledAdverseDrawdown": 0.049547474860735505,
+      "PeakConcurrentClosedPositions": 3,
+      "ReservationsByWeek": {
+        "2026-W34": 15,
+        "2026-W35": 24,
+        "2026-W36": 22,
+        "2026-W37": 17,
+        "2026-W38": 17,
+        "2026-W39": 24
+      },
+      "Weeks": {
+        "2026-W34": 15,
+        "2026-W35": 24,
+        "2026-W36": 22,
+        "2026-W37": 17,
+        "2026-W38": 16,
+        "2026-W39": 24
+      },
+      "Diagnostics": null
+    },
+    "CASH": {
+      "ForecastsGenerated": 0,
+      "ModelIntentCount": 0,
+      "CompletedModelRoundTrips": 0,
+      "ModelClosedGrossEur": 0,
+      "ModelClosedCentralNetEur": 0,
+      "ModelClosedAdverseNetEur": 0,
+      "RejectionReasons": {},
+      "ClosedNetByMechanismEur": {},
+      "MaximumObservedMarginEur": 0,
+      "MaximumSampledCentralDrawdown": 0,
+      "OpenModelPositions": 0,
+      "PendingModelRequests": 0,
+      "AdverseFailureKind": "",
+      "MissingCentralMarks": 0,
+      "MissingAdverseMarks": 0,
+      "MaximumSampledAdverseDrawdown": 0,
+      "PeakConcurrentClosedPositions": 0,
+      "ReservationsByWeek": {},
+      "Weeks": {
+        "2026-W34": 0,
+        "2026-W35": 0,
+        "2026-W36": 0,
+        "2026-W37": 0,
+        "2026-W38": 0,
+        "2026-W39": 0
+      },
+      "Diagnostics": null
+    }
+  },
+  "Receipt": {
+    "ForecastsGenerated": 149,
+    "ModelIntentCount": 0,
+    "CompletedModelRoundTrips": 0,
+    "ModelClosedGrossEur": 0,
+    "ModelClosedCentralNetEur": 0,
+    "ModelClosedAdverseNetEur": 0,
+    "RejectionReasons": {
+      "NO_EUR_EDGE_AFTER_COST_AND_UNCERTAINTY": 147,
+      "INSUFFICIENT_MATURE_TRAINING_DAYS": 2
+    },
+    "ClosedNetByMechanismEur": {},
+    "MaximumObservedMarginEur": 0,
+    "MaximumSampledCentralDrawdown": 0,
+    "OpenModelPositions": 0,
+    "PendingModelRequests": 0,
+    "AdverseFailureKind": "",
+    "MissingCentralMarks": 0,
+    "MissingAdverseMarks": 0,
+    "MaximumSampledAdverseDrawdown": 0,
+    "PeakConcurrentClosedPositions": 0,
+    "ReservationsByWeek": {},
+    "Weeks": {
+      "2026-W34": 0,
+      "2026-W35": 0,
+      "2026-W36": 0,
+      "2026-W37": 0,
+      "2026-W38": 0,
+      "2026-W39": 0
+    },
+    "Diagnostics": {
+      "TrainingPairs": 151,
+      "EvaluationPairs": 148,
+      "MissingPairs": 2,
+      "ScoredForecasts": 146,
+      "MeanRealizedGrossBps": -0.3746445438965204,
+      "MeanRealizedNetBps": -2.774636638783262,
+      "DirectionBrier": 0.22086387225289797,
+      "NeutralBrier": 0.25,
+      "UnconditionalBrier": 0.21142750658485707,
+      "PredictedPositiveGross": 0,
+      "RealizedPositiveGross": 44,
+      "FrozenTrainingSha256": "001187192f0fef13e4fe1a478c85991a4a3d07bcb0b04f4a5546a59daded0984",
+      "Inventory": {
+        "Pairs": 148,
+        "FadeGrossBps": 0.21484767729388335,
+        "FadeCentralNetBps": -2.243749667083121,
+        "FadeAdverseNetBps": -4.7129282829007035,
+        "ContinuationAdverseNetBps": -4.70769966593594
+      },
+      "OpportunityFunnel": {
+        "2026-W34": {
+          "QuoteComplete": 50,
+          "FeatureEligible": 20,
+          "PredictionReady": 20,
+          "NetSupported": 0
+        },
+        "2026-W35": {
+          "QuoteComplete": 50,
+          "FeatureEligible": 30,
+          "PredictionReady": 30,
+          "NetSupported": 0
+        },
+        "2026-W36": {
+          "QuoteComplete": 50,
+          "FeatureEligible": 29,
+          "PredictionReady": 28,
+          "NetSupported": 0
+        },
+        "2026-W37": {
+          "QuoteComplete": 50,
+          "FeatureEligible": 18,
+          "PredictionReady": 18,
+          "NetSupported": 0
+        },
+        "2026-W38": {
+          "QuoteComplete": 50,
+          "FeatureEligible": 19,
+          "PredictionReady": 19,
+          "NetSupported": 0
+        },
+        "2026-W39": {
+          "QuoteComplete": 50,
+          "FeatureEligible": 33,
+          "PredictionReady": 32,
+          "NetSupported": 0
+        }
+      },
+      "FrozenModel": "F5E2C77E1A27B43A8B18A9F28E42E8E1DF702078FF33764942A9DAF774E25474.eyJCb3VuZGFyeSI6MTc4NjkyNDgwMDAwMCwiRngiOm51bGwsIk1ldGFsIjpudWxsLCJDb25kaXRpb25hbCI6eyJGWC9ISUdIIjp7IkZlYXR1cmVzS25vd25BdCI6MCwiT3V0Y29tZXNLbm93blRocm91Z2giOjE3ODY2OTk1MDE1MDAsIkRpcmVjdGlvbiI6MCwiVHJhaW5pbmdEYXlzIjo2LCJQb3NpdGl2ZUdyb3NzUHJvYmFiaWxpdHkiOjAuMjkyODEzMzI3MDIzODUzMzM5NjQyODEzMzI3LCJVbmNvbmRpdGlvbmFsUG9zaXRpdmVHcm9zc1Byb2JhYmlsaXR5IjowLjI5MDc0NjkxNDcwNzkxMjE1MDM2NzM5MzMzNDIsIk1lYW5Hcm9zc1JldHVybiI6MC4wMDAwNTA4OTk3OTY0OTg5MjEwNzM4NDAwOTc2LCJNZWFuQmVuY2htYXJrR3Jvc3NSZXR1cm4iOjAsIk1lYW5VbmNlcnRhaW50eVJldHVybiI6MC4wMDAzOTUzMDUwODkxNTcyNTEsIkRvd25zaWRlUmV0dXJuIjowLjAwMDQ0NTExMDQ5NTc1NjU5MzAzOTcxMzg3NTUsIlN0YW5kYWxvbmVBZHZlcnNlTmV0UmV0dXJuIjotMC4wMDAyNjI3OTkzMTQ3OTMyMTU1MTA5NTQ2OTMzLCJJbmNyZW1lbnRhbEFkdmVyc2VOZXRSZXR1cm4iOjAuMDAwMDYzMzMyNTgyNTg2NTQ4NTE2MzA2MjEwNiwiTWVhbkFkdmVyc2VGcmljdGlvblJldHVybiI6MC4wMDAzMTM2OTkxMTEyOTIxMzY1ODQ3OTQ3OTA5fSwiRlgvTE9XIjp7IkZlYXR1cmVzS25vd25BdCI6MCwiT3V0Y29tZXNLbm93blRocm91Z2giOjE3ODY3MjExMDE1MDAsIkRpcmVjdGlvbiI6MCwiVHJhaW5pbmdEYXlzIjo2LCJQb3NpdGl2ZUdyb3NzUHJvYmFiaWxpdHkiOjAuMTg2MTExMTExMTExMTExMTExMTExMTExMTExMSwiVW5jb25kaXRpb25hbFBvc2l0aXZlR3Jvc3NQcm9iYWJpbGl0eSI6MC4yOTA3NDY5MTQ3MDc5MTIxNTAzNjczOTMzMzQyLCJNZWFuR3Jvc3NSZXR1cm4iOi0wLjAwMDE2MTk0NzY1MzMwODg3OTEwOTI2Mzk3NTIsIk1lYW5CZW5jaG1hcmtHcm9zc1JldHVybiI6MCwiTWVhblVuY2VydGFpbnR5UmV0dXJuIjowLjAwMTA0MzI4MjMyOTMyNDIzMywiRG93bnNpZGVSZXR1cm4iOjAuMDAwNjA2ODk1MDQ5NDk4NzExOTQ5Mjk2MjI2LCJTdGFuZGFsb25lQWR2ZXJzZU5ldFJldHVybiI6LTAuMDAwNDQ5NTM5MjE5ODA4MTg2NDQ4OTI2NDMxLCJJbmNyZW1lbnRhbEFkdmVyc2VOZXRSZXR1cm4iOi0wLjAwMDIzNzU4MjE4MzkyNzA3NTI5NzE3NTI4NzQsIk1lYW5BZHZlcnNlRnJpY3Rpb25SZXR1cm4iOjAuMDAwMjg3NTkxNTY2NDk5MzA3MzM5NjYyNDU1OH0sIk1FVEFML0hJR0giOnsiRmVhdHVyZXNLbm93bkF0IjowLCJPdXRjb21lc0tub3duVGhyb3VnaCI6MTc4NjY5NzQwMTUwMCwiRGlyZWN0aW9uIjowLCJUcmFpbmluZ0RheXMiOjYsIlBvc2l0aXZlR3Jvc3NQcm9iYWJpbGl0eSI6MC4yNTI3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc4LCJVbmNvbmRpdGlvbmFsUG9zaXRpdmVHcm9zc1Byb2JhYmlsaXR5IjowLjI1Mjc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3NzgsIk1lYW5Hcm9zc1JldHVybiI6MC4wMDA2OTg5NzA1NjA2NzIwNTkxNzUwNTYyNjg5LCJNZWFuQmVuY2htYXJrR3Jvc3NSZXR1cm4iOjAsIk1lYW5VbmNlcnRhaW50eVJldHVybiI6MC4wMDE4MDczMTM3OTIxNzY4NTEsIkRvd25zaWRlUmV0dXJuIjowLjAwMTI0NjEzNzY3ODg4OTYzNDEzODM2NDE2NzcsIlN0YW5kYWxvbmVBZHZlcnNlTmV0UmV0dXJuIjotMC4wMDA2NTY5MzAzNzcyNzQwOTg0MDIyOTE0MzczLCJJbmNyZW1lbnRhbEFkdmVyc2VOZXRSZXR1cm4iOjAuMDAxMTExODIxMTk2MTc0Njk5MjEzMTc3OTAxMSwiTWVhbkFkdmVyc2VGcmljdGlvblJldHVybiI6MC4wMDEzNTU5MDA5Mzc5NDYxNTc1NzczNDc3MDYyfSwiTUVUQUwvTE9XIjpudWxsfX0=",
+      "ConditionalDistributions": {
+        "FX/HIGH": {
+          "Pairs": 78,
+          "Wins": 19,
+          "Losses": 59,
+          "Flat": 0,
+          "GrossBps": -0.7230706389589944,
+          "CentralBps": -2.229862777221004,
+          "AdverseBps": -3.7440830301776726,
+          "ReverseBps": -2.7247985776760393,
+          "AdverseP10Bps": -12.798212863044661,
+          "AdverseMedianBps": -4.572494572763208,
+          "AdverseP90Bps": 6.619695754942128,
+          "MeanWinBps": 7.371216180855039,
+          "MeanLossBps": -7.323586165933969,
+          "MeanAdverseFrictionBps": 3.021012391218678,
+          "Brier": 0.18667674157372133,
+          "TrainingPooledBrier": 0.1864775791954948
+        },
+        "METAL/HIGH": {
+          "Pairs": 24,
+          "Wins": 8,
+          "Losses": 16,
+          "Flat": 0,
+          "GrossBps": 0.28379372709397965,
+          "CentralBps": -6.691316117115958,
+          "AdverseBps": -13.689522621188981,
+          "ReverseBps": -11.173890655158658,
+          "AdverseP10Bps": -37.02124188882672,
+          "AdverseMedianBps": -18.953824438864874,
+          "AdverseP90Bps": 9.945502176746842,
+          "MeanWinBps": 11.814985133196158,
+          "MeanLossBps": -26.44177649838155,
+          "MeanAdverseFrictionBps": 13.973316348282962,
+          "Brier": 0.22871141975308643,
+          "TrainingPooledBrier": 0.22871141975308643
+        },
+        "FX/LOW": {
+          "Pairs": 44,
+          "Wins": 17,
+          "Losses": 27,
+          "Flat": 0,
+          "GrossBps": -0.11612825046240742,
+          "CentralBps": -1.6040014960985218,
+          "AdverseBps": -3.101151399439445,
+          "ReverseBps": -3.884726371199673,
+          "AdverseP10Bps": -15.716511216353057,
+          "AdverseMedianBps": -2.5498169087246825,
+          "AdverseP90Bps": 6.567357510225943,
+          "MeanWinBps": 6.2578057155230855,
+          "MeanLossBps": -8.99382810145289,
+          "MeanAdverseFrictionBps": 2.9850231489770374,
+          "Brier": 0.2771878507295174,
+          "TrainingPooledBrier": 0.24622933431969238
+        },
+        "METAL/LOW": {
+          "Pairs": 2,
+          "Wins": 1,
+          "Losses": 1,
+          "Flat": 0,
+          "GrossBps": 43.24777982419336,
+          "CentralBps": 36.51099926702719,
+          "AdverseBps": 29.762147484212743,
+          "ReverseBps": -22.551962721597302,
+          "AdverseP10Bps": -14.784619678435538,
+          "AdverseMedianBps": -14.784619678435538,
+          "AdverseP90Bps": -14.784619678435538,
+          "MeanWinBps": 74.30891464686103,
+          "MeanLossBps": -14.784619678435538,
+          "MeanAdverseFrictionBps": 13.485632339980613,
+          "Brier": null,
+          "TrainingPooledBrier": null
+        }
+      },
+      "IntegratedFamilies": {
+        "FX/HIGH": {
+          "Pairs": 78,
+          "GrossBps": -0.7230706389589944,
+          "CentralNetBps": -2.229862777221004,
+          "AdverseNetBps": -3.7440830301776726,
+          "ReverseAdverseNetBps": -2.7247985776760393,
+          "PositiveAdversePairs": 19,
+          "Brier": 0.18667674157372133
+        },
+        "METAL/HIGH": {
+          "Pairs": 24,
+          "GrossBps": 0.28379372709397965,
+          "CentralNetBps": -6.691316117115958,
+          "AdverseNetBps": -13.689522621188981,
+          "ReverseAdverseNetBps": -11.173890655158658,
+          "PositiveAdversePairs": 8,
+          "Brier": 0.22871141975308643
+        },
+        "FX/LOW": {
+          "Pairs": 44,
+          "GrossBps": -0.11612825046240742,
+          "CentralNetBps": -1.6040014960985218,
+          "AdverseNetBps": -3.101151399439445,
+          "ReverseAdverseNetBps": -3.884726371199673,
+          "PositiveAdversePairs": 17,
+          "Brier": 0.2771878507295174
+        },
+        "METAL/LOW": {
+          "Pairs": 2,
+          "GrossBps": 43.24777982419336,
+          "CentralNetBps": 36.51099926702719,
+          "AdverseNetBps": 29.762147484212743,
+          "ReverseAdverseNetBps": -22.551962721597302,
+          "PositiveAdversePairs": 1,
+          "Brier": null
+        }
+      }
+    }
+  },
+  "Reconstruction": {
+    "SameSignalTrace": true,
+    "SameFundedResult": true,
+    "SignalTraceSha256": "386FA0A86AB32ED1C7DDEBA9ECCA80E761CAB8A82CDECA3150D8656DD7391189"
+  },
+  "IndependentConfirmation": false,
+  "CloudActivated": false,
+  "OrdersSubmitted": 0,
+  "JointStress": {
+    "JOINT": {
+      "DistinctHistoricalStressDecisions": 93,
+      "DistinctHistoricalStressDecisionsWithExposure": 0
+    },
+    "FX": {
+      "DistinctHistoricalStressDecisions": 82,
+      "DistinctHistoricalStressDecisionsWithExposure": 0
+    },
+    "METAL": {
+      "DistinctHistoricalStressDecisions": 25,
+      "DistinctHistoricalStressDecisionsWithExposure": 0
+    },
+    "LONG": {
+      "DistinctHistoricalStressDecisions": 82,
+      "DistinctHistoricalStressDecisionsWithExposure": 18
+    },
+    "SHORT": {
+      "DistinctHistoricalStressDecisions": 81,
+      "DistinctHistoricalStressDecisionsWithExposure": 17
+    },
+    "CASH": {
+      "DistinctHistoricalStressDecisions": 0,
+      "DistinctHistoricalStressDecisionsWithExposure": 0
+    }
+  },
+  "SourceRunId": 43176793567,
+  "SourceArtifactId": 13925405999,
+  "SourceCiphertextSha256": "aceca6ea879201ce16caba708a1ae47a953ad66e6b58977fe044bbd4b740e64a",
+  "BrokerRequests": 0,
+  "ProtocolSha256": "b0ffa3418adcd293f95ccd91ef0d735db5e54625b44f78d4ded9bbc50dd88f4a",
+  "Classification": "AUTHENTIC_EXPOSED_DEVELOPMENT_ONLY",
+  "Costs": "ORIGINAL_ACCOUNT_CURRENT_AT_COLLECTION_CONDITIONAL_HISTORICAL"
+}

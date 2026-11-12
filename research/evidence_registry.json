@@ -2547,5 +2547,36 @@
     "independentConfirmation": false,
     "ordersSubmitted": 0,
     "cloudActivated": false
+  },
+  "cde1AuthenticConditionalEconomics": {
+    "id": "CDE1",
+    "status": "CLOSED_EXACT_NO_FUNDED_ECONOMIC_PROMOTION",
+    "closedNoRetune": true,
+    "runId": 43185407119,
+    "mainHead": "c447164f5a3dc7d563bb6b3f11cd5222e34e4ec0",
+    "protocolSha256": "b0ffa3418adcd293f95ccd91ef0d735db5e54625b44f78d4ded9bbc50dd88f4a",
+    "publicArtifactId": 13928401712,
+    "publicArchiveSha256": "e6bde82322bbb39015e1a629990c3333b655d2a7ec9c7945107ecad4b8e795dc",
+    "publicReceiptPath": "docs/CDE1_AUTHENTIC_PUBLIC_RECEIPT_20261112.json",
+    "publicReceiptSha256": "5dd02cbbfd3e41062e787bbc9615a0a4ed9df0a9e1e7fd6019e0320457804a54",
+    "sourceRunId": 43176793567,
+    "sourceEncryptedArtifactId": 13925405999,
+    "sourceSha256": "fd7986487be347376aa1e139915f90786155d2b1b6de1787382aa7d8666faeaf",
+    "sourceCiphertextSha256": "aceca6ea879201ce16caba708a1ae47a953ad66e6b58977fe044bbd4b740e64a",
+    "probabilityTarget": "POSITIVE_ADVERSE_NET",
+    "trainingBlock": "ISO_WEEK",
+    "comparisonCells": [
+      "FX/HIGH",
+      "FX/LOW",
+      "METAL/HIGH",
+      "METAL/LOW"
+    ],
+    "legacyInsufficientTrainingReasonSaysDaysButThresholdUsesWeeks": true,
+    "sameResearchSignalTraceAfterRestoration": true,
+    "sameFundedResultAfterRestoration": true,
+    "completedPortfolioRoundTrips": 0,
+    "independentConfirmation": false,
+    "ordersSubmitted": 0,
+    "cloudActivated": false
   }
 }
