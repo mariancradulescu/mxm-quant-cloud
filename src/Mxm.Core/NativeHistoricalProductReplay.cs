@@ -190,7 +190,7 @@ public static class NativeHistoricalProductReplay
             x.First.At==x.Second.At&&x.First.Quote.Symbol==x.Second.Quote.Symbol))
             throw new ArgumentException("HISTORICAL_TAPE_DUPLICATED_QUOTE_SYMBOL_CLOCK");
         bool sessionStudy=ResearchMode.StartsWith("SCT1_",StringComparison.Ordinal);
-        bool historicalStress=sessionStudy || ResearchMode.StartsWith("WFG1_",StringComparison.Ordinal) || ResearchMode.StartsWith("JRS1_",StringComparison.Ordinal);
+        bool historicalStress=ResearchMode.StartsWith("CDE1_",StringComparison.Ordinal)||sessionStudy || ResearchMode.StartsWith("WFG1_",StringComparison.Ordinal) || ResearchMode.StartsWith("JRS1_",StringComparison.Ordinal);
         var simulation=new NativeProductResearchLoop(ResearchMode,integratedSnapshot:IntegratedSnapshot);
         var reasonCounts=new Dictionary<string,int>(StringComparer.Ordinal);
         var categoryCounts=new Dictionary<string,int>(StringComparer.Ordinal);

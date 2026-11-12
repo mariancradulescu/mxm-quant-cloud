@@ -50,6 +50,10 @@ public static class NativeIntegratedResearch
 
 public sealed record NativeIntegratedSnapshot(long Boundary,NativeEntryForecast? Fx,NativeEntryForecast? Metal)
 {
+    [System.Text.Json.Serialization.JsonIgnore(Condition=
+        System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public Dictionary<string,NativeEntryForecast?>? Conditional {get;init;}
+
     public string Seal()
     {
         byte[] payload=JsonSerializer.SerializeToUtf8Bytes(this);
@@ -64,11 +68,15 @@ public sealed record NativeIntegratedSnapshot(long Boundary,NativeEntryForecast?
             throw new ArgumentException("INTEGRATED_MODEL_DIGEST");
         var model=JsonSerializer.Deserialize<NativeIntegratedSnapshot>(payload)
             ??throw new ArgumentException("INTEGRATED_MODEL_EMPTY");
-        if(model.Boundary<=0 || new[]{model.Fx,model.Metal}.Any(f=>f is not null &&
+        if(model.Boundary<=0 || new[]{model.Fx,model.Metal}.Concat(model.Conditional?.Values.AsEnumerable() ??
+                Enumerable.Empty<NativeEntryForecast?>()).Any(f=>f is not null &&
             (f.OutcomesKnownThrough>=model.Boundary || f.TrainingDays<4 ||
              f.PositiveGrossProbability is <0m or >1m || f.StandaloneAdverseNetReturn is null ||
              f.IncrementalAdverseNetReturn is null || f.MeanUncertaintyReturn<0m)))
             throw new ArgumentException("INTEGRATED_MODEL_CAUSAL_BOUNDARY");
+        if(model.Conditional is not null && !model.Conditional.Keys.OrderBy(x=>x,StringComparer.Ordinal)
+                .SequenceEqual(new[]{"FX/HIGH","FX/LOW","METAL/HIGH","METAL/LOW"}))
+            throw new ArgumentException("CONDITIONAL_MODEL_COHORTS");
         return model;
     }
 }
