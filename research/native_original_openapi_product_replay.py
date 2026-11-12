@@ -296,23 +296,26 @@ def collect_and_evaluate(profile=None):
                         D(max(rows[v].buyMargin,rows[v].sellMargin))*c.minVolume/(scale*v)
                         for v in volumes
                     )
+                if extended:
+                    current_contracts[name] = contract(name, c, quote_asset,
+                        int(datetime.now(timezone.utc).timestamp() * 1000))
                 need(minimum_margin>0 and minimum_margin<=D(300),
                      "MINIMUM_BROKER_MARGIN_EXCEEDS_SINGLE_300_EUR_BUDGET")
                 terms[name] = (contract(name,c,quote_asset,
                                 int(datetime.now(timezone.utc).timestamp()*1000)),
                                minimum_margin)
-                if extended:
-                    current_contracts[name] = terms[name][0]
             except MarketReplayError as exc:
-                if name not in optional or str(exc) not in {
+                reason = str(exc).removeprefix("ORIGINAL_OPENAPI_PRODUCT_") if extended else str(exc)
+                if name not in optional or reason not in {
                     "RESEARCH_FX_QUOTE_ASSET_NOT_USD", "CONTRACT_COST_OR_PRICE_PRECISION_UNAVAILABLE",
                     "CONTRACT_COMMISSION_CONVERSION_UNAVAILABLE", "PREREGISTERED_TARGET_SHORT_PERMISSION_UNATTESTED",
                     "BROKER_MINIMUM_MARGIN_UNAVAILABLE", "BROKER_MARGIN_GRID_DIRECTION_UNAVAILABLE",
                     "MINIMUM_BROKER_MARGIN_EXCEEDS_SINGLE_300_EUR_BUDGET",
                 }:
                     raise
-                excluded[name] = str(exc)
-                observed_margin_grid.pop(name, None)
+                excluded[name] = reason
+                if not extended:
+                    observed_margin_grid.pop(name, None)
         symbols = tuple(x for x in symbols if x not in excluded)
         if profile is not None and profile.get("contract_preflight"):
             with tempfile.TemporaryDirectory(prefix="mxm-contract-preflight-") as folder:
@@ -355,7 +358,11 @@ def collect_and_evaluate(profile=None):
                      "TickVolume":v[5]}
                     for t,v in sorted(history.items())
                     if v[0] <= source_end]
-            if event_days:
+            if extended and name in optional:
+                if not rows:
+                    excluded[name] = "NO_COMPLETED_M5"
+                    continue
+            elif event_days:
                 for lo, hi in windows:
                     need(sum(lo<=row["OpenAt"] and row["CloseAt"]<=hi for row in rows)>=100,
                          "EVENT_WARMUP_BARS_INCOMPLETE")
@@ -380,6 +387,9 @@ def collect_and_evaluate(profile=None):
             bars.append({"Symbol":name,"M5":rows})
             if profile and profile.get("report_source_progress"):
                 print("Historical original bar collection completed", name, len(rows), flush=True)
+
+        if extended:
+            symbols = tuple(name for name in symbols if name not in excluded)
 
         def ticks(name, side, start, end):
             all_rows = []

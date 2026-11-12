@@ -35,7 +35,7 @@ jobs:
       github.ref == 'refs/heads/main' &&
       github.actor == 'mariancradulescu' &&
       github.run_attempt == '1' &&
-      startsWith(github.event.head_commit.message, 'ESD1_OWNER_EXTENDED_SESSIONS_READONLY_ONCE')
+      startsWith(github.event.head_commit.message, 'ESD1_OWNER_PREFLIGHT_RECOVERY_ONCE')
     environment: mxm-r3-custody-v1
     runs-on: ubuntu-24.04
     timeout-minutes: 8
