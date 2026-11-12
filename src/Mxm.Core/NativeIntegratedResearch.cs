@@ -54,6 +54,10 @@ public sealed record NativeIntegratedSnapshot(long Boundary,NativeEntryForecast?
         System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public Dictionary<string,NativeEntryForecast?>? Conditional {get;init;}
 
+    [System.Text.Json.Serialization.JsonIgnore(Condition=
+        System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? Profile {get;init;}
+
     public string Seal()
     {
         byte[] payload=JsonSerializer.SerializeToUtf8Bytes(this);
@@ -68,6 +72,9 @@ public sealed record NativeIntegratedSnapshot(long Boundary,NativeEntryForecast?
             throw new ArgumentException("INTEGRATED_MODEL_DIGEST");
         var model=JsonSerializer.Deserialize<NativeIntegratedSnapshot>(payload)
             ??throw new ArgumentException("INTEGRATED_MODEL_EMPTY");
+        if(model.Profile is not (null or NativeDiscoveryResearch.Profile) ||
+            (model.Profile is not null && model.Conditional is null))
+            throw new ArgumentException("INTEGRATED_MODEL_PROFILE");
         if(model.Boundary<=0 || new[]{model.Fx,model.Metal}.Concat(model.Conditional?.Values.AsEnumerable() ??
                 Enumerable.Empty<NativeEntryForecast?>()).Any(f=>f is not null &&
             (f.OutcomesKnownThrough>=model.Boundary || f.TrainingDays<4 ||

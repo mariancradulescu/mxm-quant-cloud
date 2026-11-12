@@ -1,6 +1,9 @@
 using System.Text.Json;
 using System.Security.Cryptography;
 
+if(args.Length==3 && args[2]=="--native-dcp1")
+    return NativeDiscoveryExperiment.Run(args[0],args[1]);
+
 if(args.Length==3 && args[2]=="--native-cde1")
     return NativeIntegratedPortfolioExperiment.Run(args[0],args[1],conditional:true);
 
