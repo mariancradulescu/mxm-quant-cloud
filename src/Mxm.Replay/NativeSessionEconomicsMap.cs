@@ -14,7 +14,7 @@ internal static class NativeSessionEconomicsMap
     private const long M5 = 5 * Minute;
     private static readonly DateTimeOffset Start = new(2026, 8, 17, 0, 0, 0, TimeSpan.Zero);
 
-    private sealed record Schedule(string? TimeZone, int[][] Intervals);
+    internal sealed record Schedule(string? TimeZone, int[][] Intervals);
     private sealed record Tape(string SourceLabel, NativeHistoricalBars[] Bars, NativeOriginalOpenApiMarketMark[] Marks,
         Dictionary<string, Schedule> Schedules, Dictionary<string, long[]> RawPairClocks);
     private sealed record Payoff(decimal Gross, decimal Central, decimal Adverse, decimal Notional, decimal AdverseFrictionBps);
@@ -183,7 +183,7 @@ internal static class NativeSessionEconomicsMap
         };
     }
 
-    private static TimeZoneInfo? Zone(string? name)
+    internal static TimeZoneInfo? Zone(string? name)
     {
         if (string.IsNullOrWhiteSpace(name)) return null;
         try { return TimeZoneInfo.FindSystemTimeZoneById(name); }
@@ -191,7 +191,7 @@ internal static class NativeSessionEconomicsMap
         catch (InvalidTimeZoneException) { return null; }
     }
 
-    private static bool IsOpen(Schedule? schedule, TimeZoneInfo? zone, long start, long end)
+    internal static bool IsOpen(Schedule? schedule, TimeZoneInfo? zone, long start, long end)
     {
         if (schedule is null || zone is null) return false;
         int WeekSecond(long at)
@@ -203,7 +203,7 @@ internal static class NativeSessionEconomicsMap
         return schedule.Intervals.Any(interval => interval[0] <= from && from <= until && until < interval[1]);
     }
 
-    private static (int? Signal, int Momentum) Signal(string name,
+    internal static (int? Signal, int Momentum) Signal(string name,
         Dictionary<string, Dictionary<long, NativeClosedMarketBar>> bars, long clock)
     {
         NativeClosedMarketBar[]? Prefix(string symbol, int count)

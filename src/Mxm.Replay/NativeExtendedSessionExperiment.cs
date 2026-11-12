@@ -135,7 +135,7 @@ internal static class NativeExtendedSessionExperiment
         };
     }
 
-    private static int Signal(string symbol, IReadOnlyList<NativeClosedMarketBar> bars)
+    internal static int Signal(string symbol, IReadOnlyList<NativeClosedMarketBar> bars)
     {
         var latest = bars[^1];
         if (symbol == "NAS100")
