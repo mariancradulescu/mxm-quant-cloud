@@ -2482,5 +2482,46 @@
     "independentConfirmation": false,
     "ordersSubmitted": 0,
     "cloudActivated": false
+  },
+  "wir1AuthenticFridayInventory": {
+    "id": "WIR1",
+    "status": "CLOSED_EXACT_NO_FUNDED_ECONOMIC_PROMOTION",
+    "closedNoRetune": true,
+    "runId": 43167179194,
+    "mainHead": "413748feb64f675292d6f0677d51bc4af0e68b3e",
+    "protocolSha256": "1437da78e31872f3b2910f56ef558836d85ddebf9f184a454a5b5c78c57d9983",
+    "probabilityTarget": "POSITIVE_ADVERSE_NET",
+    "probabilityCountersRetainLegacyGrossFieldNames": true,
+    "existingSourceRunId": 43036474843,
+    "existingSourceArtifactId": 13863803890,
+    "copperEncryptedArtifactId": 13920542745,
+    "copperEncryptedArchiveSha256": "981b00b172142e2a4171c63fbd250b661c2b67d2445a559d26972d3370a24348",
+    "receipts": {
+      "existing": {
+        "path": "docs/WIR1_EXISTING_AUTHENTIC_PUBLIC_RECEIPT_20261112.json",
+        "artifactId": 13920133558,
+        "receiptSha256": "7567d68a629f196788838954b9299eafcb02652106fc46929f18d054838a4f73",
+        "archiveSha256": "ee291d20a612cf9c7b89e153db9c8b427c13ee91b83eff2a14fea75fca88899c",
+        "sourceSha256": "4decd33d6c4c66a5dfbf63b4a790d062e21ff65db3f8eed034db45f72b296d60",
+        "sourceCiphertextSha256": "c780798f12380a3be2a546f1a18f7cf14be774d9377eb535bfa9d82ccee4909d",
+        "trainingSha256": "985a9be28ac322f788256c25a94f770071b3e0232284e3922b2b94cd54b7d376",
+        "evaluationPairs": 12,
+        "completedPortfolioRoundTrips": 0
+      },
+      "copper": {
+        "path": "docs/WIR1_COPPER_AUTHENTIC_PUBLIC_RECEIPT_20261112.json",
+        "artifactId": 13920801768,
+        "receiptSha256": "d137a57e9e11bb5591eb2f9e006168854241629aa5e73884ed4c52bed92cb81e",
+        "archiveSha256": "8421f9770802f3997f33bbc8cdf4c3af08a5d8afaa62d0f19cf715ffa4af9d84",
+        "sourceSha256": "cf65848a6caf5f4a7b3fc33c6cbb8a888cd5c14e3b414d04415533e36cc3d96d",
+        "sourceCiphertextSha256": "07876f9e5f7049bc3ec869456475366ac3b0c5e2baea19c71339c4fa60efaa25",
+        "trainingSha256": "ab9376d6c50de3f438515ced26acf0c1a375a31c88415d919f4e1b24fcc2cf26",
+        "evaluationPairs": 3,
+        "completedPortfolioRoundTrips": 0
+      }
+    },
+    "independentConfirmation": false,
+    "ordersSubmitted": 0,
+    "cloudActivated": false
   }
 }
