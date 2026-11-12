@@ -44,3 +44,11 @@ abstentions, funding constraints, peak occupancy, sampled drawdown, NET by
 week and symbol, and joint ablation. The existing SEM1 matched observation
 diagnostic remains the separate predictive-selection analysis. Neither the
 recalculation nor any positive result changes historic qualification.
+
+Technical recovery of run 43213998679: its second same-clock entry evaluated
+equity at a timestamp earlier than the first modeled fill. Sequence the
+one-millisecond fill delays monotonically by the already fixed ordinal
+symbol order. At most three simultaneous symbols use the very same original
+snapshot, with at most 4ms modeled age. Market clocks, prices, economic
+choices, latency per fill, initial capital and eligibility remain fixed.
+The failed run produced no result receipt.
