@@ -2578,5 +2578,43 @@
     "independentConfirmation": false,
     "ordersSubmitted": 0,
     "cloudActivated": false
+  },
+  "dcp1AuthenticChronologicalDiscovery": {
+    "id": "DCP1",
+    "status": "CLOSED_EXACT_NO_CELL_SHORTLISTED",
+    "closedNoRetune": true,
+    "runId": 43188616884,
+    "mainHead": "c7588b6a287a465916ddeb3710c76f12096c9ba0",
+    "protocolSha256": "3fdf43f53e10a05504fcf3e93b4686ffbad9bb65e05b6ef38d29302d33ac6cfc",
+    "publicArtifactId": 13929532608,
+    "publicArchiveSha256": "5b067924dcf6a2457c16421fcce2443162c3deabe99e8a7b62c62db8a66b91e7",
+    "publicReceiptPath": "docs/DCP1_AUTHENTIC_PUBLIC_RECEIPT_20261112.json",
+    "publicReceiptSha256": "042b6abb83f8cf454ca9ab7bb5b4ae57134e64cd84f7865399819978e6e3a3c5",
+    "sourceRunId": 43176793567,
+    "sourceEncryptedArtifactId": 13925405999,
+    "sourceSha256": "fd7986487be347376aa1e139915f90786155d2b1b6de1787382aa7d8666faeaf",
+    "sourceCiphertextSha256": "aceca6ea879201ce16caba708a1ae47a953ad66e6b58977fe044bbd4b740e64a",
+    "trainingWeeks": "2026-W28..W31",
+    "screeningWeeks": "2026-W32..W35",
+    "evaluationWeeks": "2026-W36..W39",
+    "comparisonCells": [
+      "FX/HIGH",
+      "FX/LOW",
+      "METAL/HIGH",
+      "METAL/LOW"
+    ],
+    "fixedExitDiagnosticOnly": true,
+    "trainingPairs": 120,
+    "screeningPairs": 104,
+    "evaluationPairs": 127,
+    "completedPortfolioRoundTrips": 0,
+    "legacyCalibratorReasonInFilteredReplayMeansNoShortlistedForecast": true,
+    "selectionAndFundedReplayUseSeparateSegments": true,
+    "retrospectiveExposure": "PROJECT_EXPOSED_DEVELOPMENT_ONLY",
+    "sameResearchSignalTraceAfterRestoration": true,
+    "sameFundedResultAfterRestoration": true,
+    "independentConfirmation": false,
+    "ordersSubmitted": 0,
+    "cloudActivated": false
   }
 }
