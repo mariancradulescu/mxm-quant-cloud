@@ -145,7 +145,7 @@ def contract(symbol, c, quote_asset, observed_at):
     }
 
 def emit_native_failure(process):
-    match = re.search(r"^(?:LDP1|JRC1|OTC1|MCT2|BMR1|PRR1|FCE1|IPC2)_NATIVE_REPLAY_REJECTED:(?:[A-Za-z0-9_-]+:)?[A-Za-z0-9_]+$",
+    match = re.search(r"^(?:LDP1|JRC1|OTC1|MCT2|BMR1|PRR1|FCE1|IPC2|FSD1)_NATIVE_REPLAY_REJECTED:(?:[A-Za-z0-9_-]+:)?[A-Za-z0-9_]+$",
                       process.stderr or "", re.MULTILINE)
     if process.returncode and match:
         print(match.group(0), flush=True)
@@ -161,12 +161,21 @@ def collect_and_evaluate(profile=None):
     quote_age = profile.get("quote_age_ms", 60000) if profile else 60000
     event_days = frozenset(profile.get("event_days", ())) if profile else frozenset()
 
+    quote_minutes = frozenset(profile.get("quote_minutes", ())) if profile else frozenset()
+    symbol_quote_minutes = profile.get("symbol_quote_minutes", {}) if profile else {}
+
+    def sampled_for(name, clock):
+        minutes = symbol_quote_minutes.get(name)
+        return minutes is None or clock // 60000 % 1440 in minutes
+
     def eligible(clock):
         day = datetime.fromtimestamp(clock / 1000, timezone.utc)
         if day.weekday() >= 5 or (event_days and day.date().isoformat() not in event_days):
             return False
         if profile is None:
             return True
+        if quote_minutes:
+            return day.hour * 60 + day.minute in quote_minutes
         sessions = profile.get("quote_sessions")
         return (any(lo <= day.hour < hi for lo, hi in sessions) if sessions else
                 profile.get("quote_hour_start", 14) <= day.hour < profile.get("quote_hour_end", 21))
@@ -300,7 +309,7 @@ def collect_and_evaluate(profile=None):
                 emit_native_failure(preflight)
                 need(preflight.returncode == 0 and out.is_file(), "NATIVE_CONTRACT_PREFLIGHT_FAILED")
         if profile and profile.get("report_source_progress"):
-            print("IPC2 contract preflight completed", len(symbols)-1, "eligible targets", flush=True)
+            print("Historical contract preflight completed", len(symbols)-1, "eligible targets", flush=True)
         bar_chunk = profile.get("bar_chunk_hours", 6)*3600000 if profile else 6*3600000
         bars = []
         for name in symbols:
@@ -352,7 +361,7 @@ def collect_and_evaluate(profile=None):
                          "SECOND_COMPLETE_WEEK_M5_COVERAGE_UNSATISFACTORY")
             bars.append({"Symbol":name,"M5":rows})
             if profile and profile.get("report_source_progress"):
-                print("IPC2 completed original bar collection", name, len(rows), flush=True)
+                print("Historical original bar collection completed", name, len(rows), flush=True)
 
         def ticks(name, side, start, end):
             all_rows = []
@@ -403,12 +412,15 @@ def collect_and_evaluate(profile=None):
             if not clocks:continue
             quote_windows+=1
             if profile and profile.get("report_source_progress") and quote_windows%40==0:
-                print("IPC2 historical quote windows started", quote_windows, flush=True)
+                print("Historical quote windows started", quote_windows, flush=True)
             for name in symbols:
+                symbol_clocks = [clock for clock in clocks if sampled_for(name, clock)]
+                if not symbol_clocks:
+                    continue
                 for side in (e.BID,e.ASK):
                     points=ticks(name,side,lo,hi)
                     ts=[t for t,_ in points]
-                    for clock in clocks:
+                    for clock in symbol_clocks:
                         i=bisect.bisect_right(ts,clock)-1
                         if i>=0 and clock-ts[i]<=quote_age:
                             sampled[name][side][clock]=D(points[i][1])/D(100000)
@@ -423,12 +435,14 @@ def collect_and_evaluate(profile=None):
             eur_bid=sampled["EURUSD"][e.BID].get(clock)
             eur_ask=sampled["EURUSD"][e.ASK].get(clock)
             if eur_bid is None or eur_ask is None or eur_bid<=0 or eur_ask<eur_bid:
-                missing_pair_clock+=len(symbols)
+                missing_pair_clock+=sum(sampled_for(name, clock) for name in symbols)
                 continue
             fx_credit=D(1)/eur_ask
             fx_debit=D(1)/eur_bid
             usd_to_eur=(fx_credit+fx_debit)/2
             for name in symbols:
+                if not sampled_for(name, clock):
+                    continue
                 bid=sampled[name][e.BID].get(clock)
                 ask=sampled[name][e.ASK].get(clock)
                 if bid is None or ask is None or bid<=0 or ask<bid:

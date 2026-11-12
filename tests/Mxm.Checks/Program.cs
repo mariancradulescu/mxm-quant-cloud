@@ -11,6 +11,7 @@ NativeCausalWarmupChecks.Run(Check);
 NativeResearchUniverseChecks.Run(Check);
 NativeCausalExitResearchChecks.Run(Check);
 NativeProductResearchLoopChecks.Run(Check);
+DiscoveryAdmissionChecks.Run(Check);
 NativeHistoricalProductReplayChecks.Run(Check);
 NativeMultiFamilyFeatureChecks.Run(Check);
 BrokerFlatReadbackChecks.Run(Check);
