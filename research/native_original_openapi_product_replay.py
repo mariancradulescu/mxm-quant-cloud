@@ -145,7 +145,7 @@ def contract(symbol, c, quote_asset, observed_at):
     }
 
 def emit_native_failure(process):
-    match = re.search(r"^(?:LDP1|JRC1|OTC1|MCT2|BMR1|PRR1|FCE1|IPC2|FSD1|ESD1)_NATIVE_REPLAY_REJECTED:(?:[A-Za-z0-9_-]+:)?[A-Za-z0-9_]+$",
+    match = re.search(r"^(?:LDP1|JRC1|OTC1|MCT2|BMR1|PRR1|FCE1|IPC2|FSD1|ESD1|SEM1)_NATIVE_REPLAY_REJECTED:(?:[A-Za-z0-9_-]+:)?[A-Za-z0-9_]+$",
                       process.stderr or "", re.MULTILINE)
     if process.returncode and match:
         print(match.group(0), flush=True)
@@ -170,6 +170,10 @@ def collect_and_evaluate(profile=None):
     extended = profile.get("extended_sessions", False) if profile else False
 
     def sampled_for(name, clock):
+        if extended and name in profile.get("symbol_event_days", {}):
+            date = datetime.fromtimestamp(clock / 1000, timezone.utc).date().isoformat()
+            if date not in profile["symbol_event_days"][name]:
+                return False
         days = profile.get("symbol_quote_days", {}).get(name) if extended else None
         if days is not None and datetime.fromtimestamp(clock / 1000, timezone.utc).weekday() not in days:
             return False
@@ -459,6 +463,7 @@ def collect_and_evaluate(profile=None):
         marks=[]
         total_clocks=0
         missing_pair_clock=0
+        raw_pair_clocks = {}
         for clock in range(decision_start+1500,decision_end,quote_interval):
             if not eligible(clock):
                 continue
@@ -481,7 +486,9 @@ def collect_and_evaluate(profile=None):
                 if bid is None or ask is None or bid<=0 or ask<bid:
                     missing_pair_clock+=1
                     continue
-                if extended and name in profile["session_holds"]:
+                if extended and profile.get("session_map"):
+                    raw_pair_clocks.setdefault(name, []).append(clock)
+                if extended and name in profile.get("session_holds", {}):
                     starts, hold = profile["session_holds"][name]
                     open_at = clock if clock // 60000 % 1440 in starts else clock - hold * 60000
                     if not session_ok(contract_details[name], open_at, open_at + hold * 60000):
@@ -551,6 +558,9 @@ def collect_and_evaluate(profile=None):
               if HISTORIC_W36_W37 else
               "ORIGINAL_PEPPERSTONE_OPENAPI_2026_W45_FX_M5_BREADTH_AND_SHOCK_PREDECLARED")),
               "Bars":bars,"Marks":marks}
+        if extended and profile.get("session_map"):
+            tape["Schedules"] = schedule_by_symbol
+            tape["RawPairClocks"] = raw_pair_clocks
         with tempfile.TemporaryDirectory(prefix="mxm-openapi-native-") as folder:
             input_file=Path(folder)/"source.json"
             output_file=Path(folder)/"receipt.json"
