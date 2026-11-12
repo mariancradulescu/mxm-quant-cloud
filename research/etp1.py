@@ -42,7 +42,7 @@ def main():
         "quote_hour_end":19,
         "quote_interval_ms":300_000,
         "quote_age_ms":30_000,
-        "quote_chunk_minutes":5,
+        "quote_chunk_minutes":30,
         "bar_chunk_hours":72,
         "ordered_tick_history":True,
         "extended_sessions":True,
