@@ -4,6 +4,9 @@ using System.Security.Cryptography;
 if(args.Length==3 && args[2]=="--native-etp1")
     return NativeTechPairExperiment.Run(args[0],args[1]);
 
+if(args.Length==3 && args[2]=="--native-jyp1")
+    return NativePacificYenExperiment.Run(args[0],args[1]);
+
 if(args.Length==3 && args[2]=="--native-aex1")
     return NativeAdaptiveExitExperiment.Run(args[0],args[1]);
 
