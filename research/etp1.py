@@ -66,8 +66,8 @@ def main():
     print(json.dumps({
         "Study":"ETP1",
         "SourceReadOnlyRequests":report.get("PostAuthenticationReadOnlyRequests"),
-        "ClosedModelRoundTrips":report.get("Receipt",{}).get("Joint",{}).get("CompletedModelRoundTrips"),
-        "AdverseNetEur":report.get("Receipt",{}).get("Joint",{}).get("ModelClosedAdverseNetEur")
+        "ClosedModelRoundTrips":report["Joint"]["CompletedModelRoundTrips"],
+        "AdverseNetEur":report["Joint"]["ModelClosedAdverseNetEur"]
     }),flush=True)
 
 
