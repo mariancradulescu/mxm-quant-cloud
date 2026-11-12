@@ -151,6 +151,25 @@ def emit_native_failure(process):
         print(match.group(0), flush=True)
 
 
+def require_native_profile_result(evaluated, mode):
+    """Check the exact evaluator output contract without altering old profiles."""
+    need(isinstance(evaluated, dict), "NATIVE_PROFILE_RESULT_NOT_OBJECT")
+    if mode == "--native-etp1":
+        need(evaluated.get("Study") == "ETP1", "ETP1_NATIVE_STUDY_MISMATCH")
+        required = ("Joint", "LeaderOnly", "FollowerOnly",
+                    "Long", "Short", "Fixed90", "Cash")
+        need(all(isinstance(evaluated.get(k), dict) for k in required),
+             "ETP1_NATIVE_DIRECT_RESULT_SCHEMA")
+        need(all(k in evaluated["Joint"] for k in (
+             "CompletedModelRoundTrips", "ModelClosedCentralNetEur",
+             "ModelClosedAdverseNetEur", "ModelTripsPerObservedIsoWeek")),
+             "ETP1_NATIVE_JOINT_FINANCIAL_FIELDS")
+    else:
+        need(isinstance(evaluated.get("Receipt"), dict),
+             "NATIVE_PROFILE_LEGACY_RECEIPT_SCHEMA")
+    return evaluated
+
+
 def collect_and_evaluate(profile=None):
     symbols = SYMBOLS if profile is None else profile["symbols"]
     source_start = SOURCE_START if profile is None else profile["source_start"]
@@ -598,8 +617,8 @@ def collect_and_evaluate(profile=None):
             need(process.returncode==0 and output_file.is_file(),
                  "NATIVE_CSHARP_REPLAY_EXECUTION_FAILED")
             evaluated=json.loads(output_file.read_text())
-        receipt=evaluated["Receipt"]
         if profile is not None:
+            require_native_profile_result(evaluated, profile["mode"])
             return dict(evaluated, OriginalPepperstoneAccountAuthenticated=True,
                         PostAuthenticationReadOnlyRequests=counter,
                         OriginalBarsBySymbol={b["Symbol"]:len(b["M5"]) for b in bars},
@@ -612,6 +631,7 @@ def collect_and_evaluate(profile=None):
                             "CurrentContractsBySymbol":current_contracts} if extended else {}),
                         InitialModelCapitalEur=300, OrdersSubmitted=0,
                         CloudActivated=False, IndependentConfirmation=False)
+        receipt=evaluated["Receipt"]
         result={
             "Schema":("MXM_OPENAPI_ORIGINAL_BRENT_AMD_W42_W43_V1"
                        if BRENT_AMD_W42W43 else"MXM_OPENAPI_ORIGINAL_HK50_SPOTBRENT_W40_W41_V1"
