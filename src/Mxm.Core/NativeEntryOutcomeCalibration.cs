@@ -21,6 +21,12 @@ public sealed record NativeEntryCalibrationReport(
     [System.Text.Json.Serialization.JsonIgnore(Condition=
         System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public NativeInventoryDiagnostics? Inventory {get;init;}
+    [System.Text.Json.Serialization.JsonIgnore(Condition=
+        System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public Dictionary<string,NativeIntegratedWeek>? OpportunityFunnel {get;init;}
+    [System.Text.Json.Serialization.JsonIgnore(Condition=
+        System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? FrozenModel {get;init;}
 }
 
 public sealed record NativeInventoryDiagnostics(int Pairs,decimal? FadeGrossBps,
@@ -39,6 +45,11 @@ public sealed class NativeEntryOutcomeCalibration
     public const string InventoryExitPolicy=NativeCausalExitResearch.Chandelier;
     private readonly long boundary;
     private readonly bool inventory;
+    private readonly bool integrated;
+    private readonly NativeIntegratedSnapshot? restored;
+    private NativeIntegratedSnapshot? frozen;
+    private readonly Dictionary<string,NativeIntegratedWeek> opportunitiesByWeek=new();
+    private bool priced=>inventory || integrated;
     private readonly Dictionary<string,List<InventoryLabel>> inventoryTraining=new(StringComparer.Ordinal);
     private int Holding=>inventory?InventoryHoldingMinutes:HoldingMinutes;
     private string Policy=>inventory?InventoryExitPolicy:ExitPolicy;
@@ -60,11 +71,13 @@ public sealed class NativeEntryOutcomeCalibration
     private sealed record Label(long Day,long KnownAt,decimal LongGross,decimal ShortGross,
         decimal LongDownside,decimal ShortDownside);
 
-    public NativeEntryOutcomeCalibration(long boundary,bool inventory=false)
+    public NativeEntryOutcomeCalibration(long boundary,bool inventory=false,bool integrated=false,NativeIntegratedSnapshot? restored=null)
     {
         if(boundary<=0)throw new ArgumentOutOfRangeException(nameof(boundary));
         this.boundary=boundary;
         this.inventory=inventory;
+        this.integrated=integrated;
+        this.restored=restored;
     }
 
     public static string? Family(string symbol)=>symbol switch {
@@ -82,13 +95,31 @@ public sealed class NativeEntryOutcomeCalibration
         scored>0?brier/scored:null,scored>0?neutralBrier/scored:null,
         scored>0?unconditionalBrier/scored:null,forecastPositive,actualPositive,
         Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(
-            (inventory?System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(inventoryTraining.OrderBy(x=>x.Key,StringComparer.Ordinal)):
+            (priced?System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(inventoryTraining.OrderBy(x=>x.Key,StringComparer.Ordinal)):
                 System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(training.OrderBy(x=>x.Key,StringComparer.Ordinal)))))
             .ToLowerInvariant())
         {
-            Inventory=inventory?new(evaluationPairs,Average(fadeGross),Average(fadeCentral),
-                Average(fadeAdverse),Average(continuationAdverse)):null
+            Inventory=priced?new(evaluationPairs,Average(fadeGross),Average(fadeCentral),
+                Average(fadeAdverse),Average(continuationAdverse)):null,
+            OpportunityFunnel=integrated?opportunitiesByWeek:null,
+            FrozenModel=integrated?frozen?.Seal():null
         };
+
+    private void Count(long at,int stage)
+    {
+        var day=DateTimeOffset.FromUnixTimeMilliseconds(at).UtcDateTime;
+        string key=System.Globalization.ISOWeek.GetYear(day)+"-W"+
+            System.Globalization.ISOWeek.GetWeekOfYear(day).ToString("00");
+        var row=opportunitiesByWeek.GetValueOrDefault(key)??new(0,0,0,0);
+        opportunitiesByWeek[key]=stage switch {
+            0=>row with {QuoteComplete=row.QuoteComplete+1},
+            1=>row with {FeatureEligible=row.FeatureEligible+1},
+            2=>row with {PredictionReady=row.PredictionReady+1},
+            _=>row with {NetSupported=row.NetSupported+1}
+        };
+    }
+
+    internal void CountNetSupported(long at)=>Count(at,3);
 
     private decimal? Average(decimal x)=>evaluationPairs>0?10000m*x/evaluationPairs:null;
 
@@ -98,7 +129,7 @@ public sealed class NativeEntryOutcomeCalibration
     public IReadOnlyDictionary<string,(long KnownAt,NativeEntryForecast? Forecast)> Observe(
         long at,NativeProductMarket[] markets)
     {
-        foreach(var item in pending.Where(p=>at-p.Value.Start>(inventory?120:90)*60000L ||
+        foreach(var item in pending.Where(p=>at-p.Value.Start>(priced?120:90)*60000L ||
             (p.Value.Start<boundary && at>=boundary)).ToArray())
         {
             pending.Remove(item.Key);
@@ -110,7 +141,13 @@ public sealed class NativeEntryOutcomeCalibration
 
         var opportunities=new Dictionary<string,(long,NativeEntryForecast?)>(StringComparer.Ordinal);
         long minute=at/60000L%1440;
-        if(inventory)
+        if(integrated)
+        {
+            if(!NativeIntegratedResearch.IsSlot(at))return opportunities;
+            if(at>=boundary)
+                frozen??=restored??new(boundary,PredictInventory("FX",0,0),PredictInventory("METAL",0,0));
+        }
+        else if(inventory)
         {
             if(minute!=16*60 || DateTimeOffset.FromUnixTimeMilliseconds(at).DayOfWeek!=DayOfWeek.Friday)
                 return opportunities;
@@ -118,7 +155,10 @@ public sealed class NativeEntryOutcomeCalibration
         else if(minute<15*60 || minute>17*60+30 || minute%30!=0)return opportunities;
         foreach(var market in markets)
         {
-            var family=inventory?InventoryFamily(market.Symbol):Family(market.Symbol);
+            var family=integrated?NativeIntegratedResearch.Family(market.Symbol):
+                inventory?InventoryFamily(market.Symbol):Family(market.Symbol);
+            if(integrated && at>=boundary && family is not null && market.Contract is {MinimumUnits:>0})
+                Count(at,0);
             if(family is null || market.Contract is not {MinimumUnits:>0} contract ||
                lastSlot.GetValueOrDefault(market.Symbol)==at/1800000L ||
                market.M5.Length<3 || market.M15.Length<4 ||
@@ -130,12 +170,19 @@ public sealed class NativeEntryOutcomeCalibration
             lastSlot[market.Symbol]=at/1800000L;
             var priorMove=m15.Close-market.M15[inventory?market.M15.Length-8:market.M15.Length-4].Open;
             var shortMove=m5.Close-market.M5[^3].Open;
-            if(priorMove==0m)continue;
+            if(!integrated && priorMove==0m)continue;
             // Setups are a common opportunity tape for all policies. Paired
             // hypothetical labels may overlap, unlike funded positions.
-            string cohort=inventory?family:family+"/"+Math.Sign(priorMove)+"/"+(priorMove*shortMove>0m);
-            int fade=inventory?-Math.Sign(priorMove):0;
-            var forecast=at>=boundary?(inventory?PredictInventory(cohort,m5.CloseAt,fade):Predict(cohort,m5.CloseAt)):null;
+            string cohort=priced?family:family+"/"+Math.Sign(priorMove)+"/"+(priorMove*shortMove>0m);
+            int fade=integrated?NativeIntegratedResearch.Direction(market,markets):
+                inventory?-Math.Sign(priorMove):0;
+            if(integrated && fade==0)continue;
+            if(integrated && at>=boundary)Count(at,1);
+            var archived=cohort=="FX"?frozen?.Fx:frozen?.Metal;
+            var forecast=at<boundary?null:integrated?(archived is null?null:
+                archived with {FeaturesKnownAt=m5.CloseAt,Direction=fade}):
+                inventory?PredictInventory(cohort,m5.CloseAt,fade):Predict(cohort,m5.CloseAt);
+            if(integrated && forecast is not null)Count(at,2);
             opportunities.Add(market.Symbol,(m5.CloseAt,forecast));
             pending.Add((market.Symbol,at),new(cohort,at,forecast,contract,market.SlippagePerSideQuote,FadeSide:fade));
         }
@@ -175,7 +222,7 @@ public sealed class NativeEntryOutcomeCalibration
     {
         if(!inventoryTraining.TryGetValue(cohort,out var labels))return null;
         var weeks=labels.GroupBy(x=>x.Week).ToArray();
-        if(weeks.Length<3)return null;
+        if(weeks.Length<(integrated?4:3))return null;
         var standalone=weeks.Select(w=>w.Average(x=>x.FadeAdverse)).ToArray();
         var excess=weeks.Select(w=>w.Average(x=>x.FadeAdverse-x.OppositeAdverse)).ToArray();
         // Small-sample weekly dispersion, descriptive rather than independent coverage.
@@ -198,7 +245,7 @@ public sealed class NativeEntryOutcomeCalibration
 
     private void Update(long at,NativeProductMarket market,Pending p)
     {
-        if((p.EntryAt==0 && at-p.Start>=600000L) || at-p.Start>(inventory?120:90)*60000L || (p.Start<boundary && at>=boundary))
+        if((p.EntryAt==0 && at-p.Start>=600000L) || at-p.Start>(priced?120:90)*60000L || (p.Start<boundary && at>=boundary))
         {
             pending.Remove((market.Symbol,p.Start));
             missingPairs++;
@@ -215,7 +262,7 @@ public sealed class NativeEntryOutcomeCalibration
             if(bid<=0)return;
             pending[(market.Symbol,p.Start)]=p with {EntryAt=at,EntryMid=(q.Ask+q.Bid)/2m,
                 EntryFee=Math.Max(q.ExitFeeFloor,q.ExitFeePerUnit*units),
-                EntryFx=(q.EurCredit+q.EurDebit)/2m,Seed=seed,Long=new(ask,ask),Short=new(bid,bid),EntryQuote=inventory?q:null};
+                EntryFx=(q.EurCredit+q.EurDebit)/2m,Seed=seed,Long=new(ask,ask),Short=new(bid,bid),EntryQuote=priced?q:null};
             return;
         }
 
@@ -235,7 +282,7 @@ public sealed class NativeEntryOutcomeCalibration
                 decimal net=debit*units*(debit>=0?q.EurCredit:q.EurDebit)-p.EntryFee-
                     Math.Max(q.ExitFeeFloor,q.ExitFeePerUnit*units)+financing.Value;
                 decimal stress=0m;
-                if(inventory)
+                if(priced)
                 {
                     var entry=p.EntryQuote!;
                     decimal stressedDebit=debit-
@@ -247,8 +294,8 @@ public sealed class NativeEntryOutcomeCalibration
                 return leg with {GrossReturn=side*((q.Ask+q.Bid)/2m-p.EntryMid)/p.EntryMid,
                     NetReturn=net/(p.EntryMid*units*p.EntryFx),AdverseReturn=stress/(p.EntryMid*units*p.EntryFx)};
             }
-            var verdict=NativeCausalExitResearch.Assess(Policy,at,p.EntryAt,side,leg.EntryPrice,
-                p.Seed!,leg.Extreme,q,market.M5,market.M15,Holding);
+            var verdict=NativeCausalExitResearch.Assess(integrated?NativeIntegratedResearch.Exit(market.Symbol):Policy,at,p.EntryAt,side,leg.EntryPrice,
+                p.Seed!,leg.Extreme,q,market.M5,market.M15,integrated?NativeIntegratedResearch.Holding(market.Symbol):Holding);
             return leg with {Extreme=verdict.FavorableExtreme,ExitRequested=verdict.RequestClose?at:0};
         }
 
@@ -262,13 +309,13 @@ public sealed class NativeEntryOutcomeCalibration
         pending.Remove((market.Symbol,p.Start));
         if(at<boundary)
         {
-            if(inventory)
+            if(priced)
             {
                 if(!inventoryTraining.TryGetValue(p.Cohort,out var inventoryLabels))
                     inventoryTraining[p.Cohort]=inventoryLabels=new();
                 var fade=p.FadeSide==1?lo:sh;
                 var other=p.FadeSide==1?sh:lo;
-                inventoryLabels.Add(new(p.Start/604800000L,at,fade.GrossReturn!.Value,
+                inventoryLabels.Add(new((p.Start+(integrated?259200000L:0L))/604800000L,at,fade.GrossReturn!.Value,
                     fade.AdverseReturn,other.AdverseReturn,fade.WorstReturn));
             }
             else
@@ -281,7 +328,7 @@ public sealed class NativeEntryOutcomeCalibration
         else
         {
             evaluationPairs++;
-            if(inventory)
+            if(priced)
             {
                 var fade=p.FadeSide==1?lo:sh;
                 var other=p.FadeSide==1?sh:lo;
@@ -292,7 +339,7 @@ public sealed class NativeEntryOutcomeCalibration
             }
             if(p.Forecast is not { } f)return;
             var leg=f.Direction==1?lo:sh;
-            decimal actual=(inventory?leg.AdverseReturn:leg.GrossReturn!.Value)>0?1m:0m;
+            decimal actual=(priced?leg.AdverseReturn:leg.GrossReturn!.Value)>0?1m:0m;
             scored++;
             if(actual>0)actualPositive++;
             if(f.PositiveGrossProbability>.5m)forecastPositive++;

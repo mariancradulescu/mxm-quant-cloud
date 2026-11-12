@@ -1,6 +1,22 @@
 using System.Text.Json;
 using System.Security.Cryptography;
 
+if(args.Length==3 && args[2]=="--native-ipc2")
+    return NativeIntegratedPortfolioExperiment.Run(args[0],args[1]);
+
+if(args.Length==3 && args[2]=="--native-ipc2-contracts")
+{
+    var options=new JsonSerializerOptions {
+        NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString
+    };
+    var contracts=JsonSerializer.Deserialize<Mxm.Core.NativeObservedContractTerms[]>(File.ReadAllText(args[0]),options);
+    if(contracts is null || contracts.Length is <4 or >5)return 67;
+    foreach(var contract in contracts)
+        Mxm.Core.NativeBrokerContractCosts.Validate(contract,contract.MinimumUnits);
+    File.WriteAllText(args[1],"{}");
+    return 0;
+}
+
 if(args.Length==3 && args[2]=="--native-wir1")
     return NativeCalibratedOutcomeExperiment.Run(args[0],args[1],inventory:true);
 

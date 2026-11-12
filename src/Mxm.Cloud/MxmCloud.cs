@@ -1,3 +1,4 @@
+using System.Linq;
 using cAlgo.API;
 using Mxm.Core;
 
@@ -26,6 +27,9 @@ public class MxmCloud : Robot
     public string CalibrationCutoffUtc { get; set; } = "";
     [Parameter("Friday inventory development profile (no orders)", DefaultValue = false)]
     public bool FridayInventoryResearch { get; set; }
+    [Parameter("Integrated development model envelope (no orders)", DefaultValue = "")]
+    public string IntegratedDevelopmentModel { get; set; } = "";
+    private bool _integratedResearch;
     private bool _calibratedResearch;
     private NativeProductResearchLoop? _productResearch;
     private int _lastResearchModelTrips = -1;
@@ -60,7 +64,21 @@ public class MxmCloud : Robot
         // of any broker account; historical recovery requires causal replay.
         if(EnableExploratoryReplay)
         {
-            if(string.IsNullOrWhiteSpace(CalibrationCutoffUtc) && !FridayInventoryResearch)
+            if(!string.IsNullOrWhiteSpace(IntegratedDevelopmentModel))
+            {
+                try
+                {
+                    var model=NativeIntegratedSnapshot.Open(IntegratedDevelopmentModel);
+                    if(model.Boundary>=Stamp(Server.TimeInUtc))throw new System.ArgumentException("Model not yet causal");
+                    _integratedResearch=_calibratedResearch=true;
+                    _productResearch=new NativeProductResearchLoop("IPC2_JOINT",model.Boundary,model);
+                }
+                catch(System.Exception)
+                {
+                    Print("Integrated development model rejected. Prediction remains inactive.");
+                }
+            }
+            else if(string.IsNullOrWhiteSpace(CalibrationCutoffUtc) && !FridayInventoryResearch)
                 _productResearch=new NativeProductResearchLoop();
             else if(System.DateTimeOffset.TryParseExact(CalibrationCutoffUtc,"yyyy-MM-dd",
                 System.Globalization.CultureInfo.InvariantCulture,
@@ -93,6 +111,20 @@ public class MxmCloud : Robot
     }
 
 
+    private (decimal Bid,decimal Ask)? ReadTickAsOf(string symbol,long clock)
+    {
+        var ticks=MarketData.GetTicks(symbol);
+        for(int i=ticks.Count-1;i>=0;i--)
+        {
+            var tick=ticks[i];
+            long stamp=Stamp(tick.Time);
+            if(stamp>clock)continue;
+            if(clock-stamp>30000L || tick.Bid<=0d || tick.Ask<tick.Bid)return null;
+            return ((decimal)tick.Bid,(decimal)tick.Ask);
+        }
+        return null;
+    }
+
     private NativeProductMarket? ReadProductResearchMarket(string name,long clock)
     {
         // All mappings use CURRENT cTrader platform terms, not retrospectively
@@ -101,10 +133,9 @@ public class MxmCloud : Robot
         if(!market.IsTradingEnabled || !market.MarketHours.IsOpened() ||
             market.Bid<=0 || market.Ask<market.Bid)return null;
         var m5=MarketData.GetBars(TimeFrame.Minute5,name);
-        var m15=MarketData.GetBars(TimeFrame.Minute15,name);
-        NativeClosedMarketBar[] Prefix(Bars bars,int minutes)
+
+        NativeClosedMarketBar[] Prefix(Bars bars,int minutes,int n=NativeCausalWarmup.WindowBars)
         {
-            int n=NativeCausalWarmup.WindowBars;
             if(bars.Count<n+1)return System.Array.Empty<NativeClosedMarketBar>();
             int end=bars.Count-2;
             var output=new NativeClosedMarketBar[n];
@@ -119,8 +150,11 @@ public class MxmCloud : Robot
             }
             return output;
         }
-        var shortBars=Prefix(m5,5);
-        var mediumBars=Prefix(m15,15);
+        var m5Prefix=Prefix(m5,5,_integratedResearch?3*NativeCausalWarmup.WindowBars+2:
+            NativeCausalWarmup.WindowBars);
+        var shortBars=m5Prefix.TakeLast(NativeCausalWarmup.WindowBars).ToArray();
+        var mediumBars=_integratedResearch?NativeHistoricalProductReplay.AggregateCompletedM15(m5Prefix)
+            .TakeLast(NativeCausalWarmup.WindowBars).ToArray():Prefix(MarketData.GetBars(TimeFrame.Minute15,name),15);
         if(shortBars.Length<NativeCausalWarmup.WindowBars ||
             mediumBars.Length<NativeCausalWarmup.WindowBars)return null;
         var feeType=(int)market.CommissionType+1;
@@ -136,7 +170,17 @@ public class MxmCloud : Robot
             pip*=10m;pipPosition++;
         }
         if(pip!=1m)return null;
-        var quoteFx=(decimal)AssetConverter.Convert(1d,market.QuoteAsset,Account.Asset);
+        decimal bid=(decimal)market.Bid,ask=(decimal)market.Ask;
+        decimal credit,debit;
+        if(_integratedResearch)
+        {
+            if(market.QuoteAsset.Name!="USD" || ReadTickAsOf(name,clock) is not { } pair ||
+               ReadTickAsOf("EURUSD",clock) is not { } conversion)return null;
+            (bid,ask)=pair;
+            credit=1m/conversion.Ask;
+            debit=1m/conversion.Bid;
+        }
+        else credit=debit=(decimal)AssetConverter.Convert(1d,market.QuoteAsset,Account.Asset);
         string minimumAsset=market.MinCommissionType==SymbolMinCommissionType.QuoteAsset
             ?market.QuoteAsset.Name:market.MinCommissionAsset?.Name ?? "";
         decimal minimum=(decimal)market.VolumeInUnitsMin;
@@ -166,18 +210,19 @@ public class MxmCloud : Robot
             (decimal)market.SwapLong,(decimal)market.SwapShort,pipPosition,
             24,1320,triple,false,0,false,false);
         var usdFx=NativeBrokerContractCosts.RequiresUsdCommissionRate(terms)
-            ?(decimal)AssetConverter.Convert(1d,"USD",Account.Asset):0m;
+            ?(_integratedResearch?(credit+debit)/2m:(decimal)AssetConverter.Convert(1d,"USD",Account.Asset)):0m;
         decimal? minAssetFx=minWire>0 && terms.MinimumCommissionType==1 &&
             minimumAsset.Length>0 && minimumAsset!=terms.QuoteAsset && minimumAsset!="USD"
             ?(decimal)AssetConverter.Convert(1d,minimumAsset,Account.Asset):null;
-        var context=new NativeMarketCostContext(clock,(decimal)market.Bid,
-            (decimal)market.Ask,quoteFx,quoteFx,usdFx,minAssetFx,
-            requiredMargin,minimum,(decimal)(market.Ask-market.Bid)/4m);
+        var context=new NativeMarketCostContext(clock,bid,ask,credit,debit,usdFx,minAssetFx,
+            requiredMargin,minimum,_integratedResearch?System.Math.Max(.00001m,(ask-bid)/4m):(ask-bid)/4m);
         var attribution=NativeBrokerContractCosts.QuoteCurrentAlgo(terms,context);
         return new NativeProductMarket(name,shortBars,mediumBars,
             attribution.Quote,terms,context.SlippagePerSideQuote,
+            _integratedResearch?NativeIntegratedResearch.Holding(name):
             _calibratedResearch?(FridayInventoryResearch?NativeEntryOutcomeCalibration.InventoryHoldingMinutes:
                 NativeEntryOutcomeCalibration.HoldingMinutes):30,false,
+            _integratedResearch?NativeIntegratedResearch.Exit(name):
             _calibratedResearch?(FridayInventoryResearch?NativeEntryOutcomeCalibration.InventoryExitPolicy:
                 NativeEntryOutcomeCalibration.ExitPolicy):NativeCausalExitResearch.FrozenFixed);
     }
@@ -322,7 +367,11 @@ public class MxmCloud : Robot
                 // prices, native contract snapshots and completed M5/M15 bars.
                 // Simulated fills happen on later observations only; neither
                 // this loop nor its core types contains broker order actions.
-                if(_productResearch is not null)
+                long productClock=_integratedResearch?warmupNow/300000L*300000L+1500L:warmupNow;
+                if(_productResearch is not null && productClock<=warmupNow &&
+                   (!_integratedResearch || (productClock/3600000L%24 is 8 or 9 or 14 or 15 &&
+                     new System.DateTimeOffset(System.DateTime.UnixEpoch).AddMilliseconds(productClock).DayOfWeek
+                         is not (System.DayOfWeek.Saturday or System.DayOfWeek.Sunday))))
                 {
                     try
                     {
@@ -330,7 +379,7 @@ public class MxmCloud : Robot
                         if(Account.BrokerName.Contains("Pepperstone",
                             System.StringComparison.OrdinalIgnoreCase))
                         {
-                            var active=(_calibratedResearch?(FridayInventoryResearch?"AUDUSD,GBPUSD,NZDUSD,XAUUSD,Copper":
+                            var active=(_integratedResearch?NativeIntegratedResearch.Universe:_calibratedResearch?(FridayInventoryResearch?"AUDUSD,GBPUSD,NZDUSD,XAUUSD,Copper":
                                 "AUDUSD,GBPUSD,NZDUSD,SpotBrent,XAUUSD"):
                                 ActiveM5ResearchWatchlist)
                                 .Split(new[]{',',';'},System.StringSplitOptions.TrimEntries|
@@ -356,7 +405,7 @@ public class MxmCloud : Robot
                                     if(!_calibratedResearch && !feas.EitherDirectionWithinInitial300 &&
                                         !_productResearch.ActiveSymbols.Contains(name))
                                         continue;
-                                    var market=ReadProductResearchMarket(name,warmupNow);
+                                    var market=ReadProductResearchMarket(name,productClock);
                                     if(market is not null)inputs.Add(market);
                                 }
                                 catch(System.Exception)
@@ -369,7 +418,7 @@ public class MxmCloud : Robot
                         // Explicitly process every observed clock even when
                         // no valid candidates exist, so missing marks cannot
                         // become fabricated close or profitable executions.
-                        var report=_productResearch.Advance(warmupNow,inputs.ToArray(),
+                        var report=_productResearch.Advance(productClock,inputs.ToArray(),
                             EnableUnqualifiedShadowSimulation:!_calibratedResearch);
                         string status=report.ModelClosedRoundTrips+" completed model trips; "+
                             report.AcceptedModelIntents+" conditional research intents; "+

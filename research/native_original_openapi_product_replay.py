@@ -145,7 +145,7 @@ def contract(symbol, c, quote_asset, observed_at):
     }
 
 def emit_native_failure(process):
-    match = re.search(r"^(?:LDP1|JRC1|OTC1|MCT2|BMR1|PRR1|FCE1)_NATIVE_REPLAY_REJECTED:[A-Za-z0-9_-]+:[A-Za-z0-9_]+$",
+    match = re.search(r"^(?:LDP1|JRC1|OTC1|MCT2|BMR1|PRR1|FCE1|IPC2)_NATIVE_REPLAY_REJECTED:(?:[A-Za-z0-9_-]+:)?[A-Za-z0-9_]+$",
                       process.stderr or "", re.MULTILINE)
     if process.returncode and match:
         print(match.group(0), flush=True)
@@ -163,7 +163,13 @@ def collect_and_evaluate(profile=None):
 
     def eligible(clock):
         day = datetime.fromtimestamp(clock / 1000, timezone.utc)
-        return day.weekday() < 5 and (not event_days or day.date().isoformat() in event_days) and (profile is None or profile.get("quote_hour_start", 14) <= day.hour < profile.get("quote_hour_end", 21))
+        if day.weekday() >= 5 or (event_days and day.date().isoformat() not in event_days):
+            return False
+        if profile is None:
+            return True
+        sessions = profile.get("quote_sessions")
+        return (any(lo <= day.hour < hi for lo, hi in sessions) if sessions else
+                profile.get("quote_hour_start", 14) <= day.hour < profile.get("quote_hour_end", 21))
 
     transport = StdlibCTraderTransport()
     counter = 0
@@ -201,71 +207,86 @@ def collect_and_evaluate(profile=None):
              and assets.get(trader.trader.depositAssetId) == "EUR",
              "BROKER_OR_EUR_ACCOUNT_MISMATCH")
         roster = {x.symbolName:x for x in roster_reply.symbol if x.enabled}
+        optional = frozenset(profile.get("optional_symbols", ())) if profile else frozenset()
+        excluded = {x: "SYMBOL_UNAVAILABLE" for x in symbols if x in optional and x not in roster}
+        symbols = tuple(x for x in symbols if x not in excluded)
         need(all(x in roster for x in symbols), "PREREGISTERED_FX_SYMBOL_UNAVAILABLE")
         observed_margin_grid = {}
         terms = {}
         ids = {}
 
         for name in symbols:
-            light = roster[name]
-            ids[name] = int(light.symbolId)
-            quote_asset=assets.get(light.quoteAssetId)
-            allowed=("USD","JPY") if profile and profile.get("jpy_route") else ("USD",)
-            need(quote_asset in allowed,
-                 "RESEARCH_FX_QUOTE_ASSET_NOT_USD")
-            detail = req(m.ProtoOASymbolByIdReq(
-                ctidTraderAccountId=account, symbolId=[ids[name]]),
-                m.ProtoOASymbolByIdRes)
-            need(len(detail.symbol)==1
-                 and detail.symbol[0].symbolId == ids[name],
-                 "CONTRACT_SYMBOL_MISMATCH")
-            c = detail.symbol[0]
-            need((0<=int(c.digits)<=8 if (profile is not None or CROSS_ENERGY_EQUITY or CRYPTO_CRUDE_HISTORIC or US_INDEX_ANY or NG_AUD_W38W39 or HK_BRENT_W40W41 or BRENT_AMD_W42W43) else c.digits==5)
-                 and int(c.tradingMode)==0 and
-                 c.minVolume>0 and c.stepVolume>0 and
-                 c.maxVolume>=c.minVolume and c.lotSize>0 and
-                 c.HasField("preciseTradingCommissionRate") and
-                 c.HasField("preciseMinCommission"),
-                 "CONTRACT_COST_OR_PRICE_PRECISION_UNAVAILABLE")
-            need(int(c.commissionType) in (1,2,3,4)
-                 and int(c.minCommissionType) in (1,2)
-                 and c.minCommissionAsset in ("USD",""),
-                 "CONTRACT_COMMISSION_CONVERSION_UNAVAILABLE")
-            if profile and name in profile.get("two_sided_targets", ()):
-                need(c.HasField("enableShortSelling") and c.enableShortSelling,
-                     "PREREGISTERED_TARGET_SHORT_PERMISSION_UNATTESTED")
-            volumes = [c.minVolume]
-            if (profile and name in profile.get("margin_grid_targets", ()) and
-                    c.minVolume + c.stepVolume <= c.maxVolume):
-                volumes.append(c.minVolume + c.stepVolume)
-            margin = req(m.ProtoOAExpectedMarginReq(
-                ctidTraderAccountId=account, symbolId=ids[name],
-                volume=volumes), m.ProtoOAExpectedMarginRes)
-            rows = {row.volume: row for row in margin.margin}
-            need(len(margin.margin)==len(volumes) and set(rows)==set(volumes)
-                 and margin.HasField("moneyDigits"),
-                 "BROKER_MINIMUM_MARGIN_UNAVAILABLE")
-            scale = D(10)**margin.moneyDigits
-            minimum_margin = D(max(rows[c.minVolume].buyMargin,
-                                   rows[c.minVolume].sellMargin))/scale
-            if profile and name in profile.get("margin_grid_targets", ()):
-                need(all(min(row.buyMargin,row.sellMargin)>0 for row in rows.values()),
-                     "BROKER_MARGIN_GRID_DIRECTION_UNAVAILABLE")
-                observed_margin_grid[name] = [
-                    dict(VolumeUnits=str(D(v)/100),
-                         BuyMarginEur=str(D(rows[v].buyMargin)/scale),
-                         SellMarginEur=str(D(rows[v].sellMargin)/scale))
-                    for v in volumes
-                ]
-                minimum_margin = max(
-                    D(max(rows[v].buyMargin,rows[v].sellMargin))*c.minVolume/(scale*v)
-                    for v in volumes
-                )
-            need(minimum_margin>0 and minimum_margin<=D(300),
-                 "MINIMUM_BROKER_MARGIN_EXCEEDS_SINGLE_300_EUR_BUDGET")
-            terms[name] = (contract(name,c,quote_asset,
-                            int(datetime.now(timezone.utc).timestamp()*1000)),
-                           minimum_margin)
+            try:
+                light = roster[name]
+                ids[name] = int(light.symbolId)
+                quote_asset=assets.get(light.quoteAssetId)
+                allowed=("USD","JPY") if profile and profile.get("jpy_route") else ("USD",)
+                need(quote_asset in allowed,
+                     "RESEARCH_FX_QUOTE_ASSET_NOT_USD")
+                detail = req(m.ProtoOASymbolByIdReq(
+                    ctidTraderAccountId=account, symbolId=[ids[name]]),
+                    m.ProtoOASymbolByIdRes)
+                need(len(detail.symbol)==1
+                     and detail.symbol[0].symbolId == ids[name],
+                     "CONTRACT_SYMBOL_MISMATCH")
+                c = detail.symbol[0]
+                need((0<=int(c.digits)<=8 if (profile is not None or CROSS_ENERGY_EQUITY or CRYPTO_CRUDE_HISTORIC or US_INDEX_ANY or NG_AUD_W38W39 or HK_BRENT_W40W41 or BRENT_AMD_W42W43) else c.digits==5)
+                     and int(c.tradingMode)==0 and
+                     c.minVolume>0 and c.stepVolume>0 and
+                     c.maxVolume>=c.minVolume and c.lotSize>0 and
+                     c.HasField("preciseTradingCommissionRate") and
+                     c.HasField("preciseMinCommission"),
+                     "CONTRACT_COST_OR_PRICE_PRECISION_UNAVAILABLE")
+                need(int(c.commissionType) in (1,2,3,4)
+                     and int(c.minCommissionType) in (1,2)
+                     and c.minCommissionAsset in ("USD",""),
+                     "CONTRACT_COMMISSION_CONVERSION_UNAVAILABLE")
+                if profile and name in profile.get("two_sided_targets", ()):
+                    need(c.HasField("enableShortSelling") and c.enableShortSelling,
+                         "PREREGISTERED_TARGET_SHORT_PERMISSION_UNATTESTED")
+                volumes = [c.minVolume]
+                if (profile and name in profile.get("margin_grid_targets", ()) and
+                        c.minVolume + c.stepVolume <= c.maxVolume):
+                    volumes.append(c.minVolume + c.stepVolume)
+                margin = req(m.ProtoOAExpectedMarginReq(
+                    ctidTraderAccountId=account, symbolId=ids[name],
+                    volume=volumes), m.ProtoOAExpectedMarginRes)
+                rows = {row.volume: row for row in margin.margin}
+                need(len(margin.margin)==len(volumes) and set(rows)==set(volumes)
+                     and margin.HasField("moneyDigits"),
+                     "BROKER_MINIMUM_MARGIN_UNAVAILABLE")
+                scale = D(10)**margin.moneyDigits
+                minimum_margin = D(max(rows[c.minVolume].buyMargin,
+                                       rows[c.minVolume].sellMargin))/scale
+                if profile and name in profile.get("margin_grid_targets", ()):
+                    need(all(min(row.buyMargin,row.sellMargin)>0 for row in rows.values()),
+                         "BROKER_MARGIN_GRID_DIRECTION_UNAVAILABLE")
+                    observed_margin_grid[name] = [
+                        dict(VolumeUnits=str(D(v)/100),
+                             BuyMarginEur=str(D(rows[v].buyMargin)/scale),
+                             SellMarginEur=str(D(rows[v].sellMargin)/scale))
+                        for v in volumes
+                    ]
+                    minimum_margin = max(
+                        D(max(rows[v].buyMargin,rows[v].sellMargin))*c.minVolume/(scale*v)
+                        for v in volumes
+                    )
+                need(minimum_margin>0 and minimum_margin<=D(300),
+                     "MINIMUM_BROKER_MARGIN_EXCEEDS_SINGLE_300_EUR_BUDGET")
+                terms[name] = (contract(name,c,quote_asset,
+                                int(datetime.now(timezone.utc).timestamp()*1000)),
+                               minimum_margin)
+            except MarketReplayError as exc:
+                if name not in optional or str(exc) not in {
+                    "RESEARCH_FX_QUOTE_ASSET_NOT_USD", "CONTRACT_COST_OR_PRICE_PRECISION_UNAVAILABLE",
+                    "CONTRACT_COMMISSION_CONVERSION_UNAVAILABLE", "PREREGISTERED_TARGET_SHORT_PERMISSION_UNATTESTED",
+                    "BROKER_MINIMUM_MARGIN_UNAVAILABLE", "BROKER_MARGIN_GRID_DIRECTION_UNAVAILABLE",
+                    "MINIMUM_BROKER_MARGIN_EXCEEDS_SINGLE_300_EUR_BUDGET",
+                }:
+                    raise
+                excluded[name] = str(exc)
+                observed_margin_grid.pop(name, None)
+        symbols = tuple(x for x in symbols if x not in excluded)
         if profile is not None and profile.get("contract_preflight"):
             with tempfile.TemporaryDirectory(prefix="mxm-contract-preflight-") as folder:
                 inp, out = Path(folder)/"terms.json", Path(folder)/"result.json"
@@ -318,6 +339,8 @@ def collect_and_evaluate(profile=None):
                 first_week=decision_start+7*86400000
                 minimum_week=(200 if (CROSS_ENERGY_EQUITY or CRYPTO_CRUDE_HISTORIC or US_INDEX_ANY or NG_AUD_W38W39 or HK_BRENT_W40W41 or BRENT_AMD_W42W43)
                                 and name not in ("EURUSD","AUDUSD") else 1000)
+                if profile and profile.get("minimum_first_week_bars"):
+                    minimum_week = profile["minimum_first_week_bars"]
                 need(sum(decision_start<=x["OpenAt"]<first_week for x in rows)>=minimum_week,
                      "FIRST_COMPLETE_WEEK_M5_COVERAGE_UNSATISFACTORY")
                 if NAS100_FROZEN_W32W33 or NG_AUD_W38W39 or HK_BRENT_W40W41 or BRENT_AMD_W42W43:
@@ -502,6 +525,7 @@ def collect_and_evaluate(profile=None):
                         MissingQuoteInstrumentClocks=missing_pair_clock,
                         ExpectedClocksPerSymbol=total_clocks,
                         **({"ObservedMarginGridBySymbol":observed_margin_grid} if observed_margin_grid else {}),
+                        **({"ExcludedOptionalSymbols":excluded} if optional else {}),
                         InitialModelCapitalEur=300, OrdersSubmitted=0,
                         CloudActivated=False, IndependentConfirmation=False)
         result={

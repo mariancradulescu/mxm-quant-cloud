@@ -147,7 +147,9 @@ public static class NativeHistoricalProductReplay
         NativeHistoricalMarketTape tape,bool UnqualifiedShadowMode=true,
         string ResearchMode="FROZEN_LEGACY_M5_M15",
         Action<NativeFundedLedger>? ObserveFinalLedger=null,
-        Action<NativeEntryCalibrationReport>? ObserveCalibration=null)
+        Action<NativeEntryCalibrationReport>? ObserveCalibration=null,
+        NativeIntegratedSnapshot? IntegratedSnapshot=null,
+        Action<NativeProductSignal>? ObserveSignal=null)
     {
         if(tape is null||tape.Bars is null||tape.Quotes is null||
            string.IsNullOrWhiteSpace(tape.SourceLabel)||
@@ -189,7 +191,7 @@ public static class NativeHistoricalProductReplay
             throw new ArgumentException("HISTORICAL_TAPE_DUPLICATED_QUOTE_SYMBOL_CLOCK");
         bool sessionStudy=ResearchMode.StartsWith("SCT1_",StringComparison.Ordinal);
         bool historicalStress=sessionStudy || ResearchMode.StartsWith("WFG1_",StringComparison.Ordinal) || ResearchMode.StartsWith("JRS1_",StringComparison.Ordinal);
-        var simulation=new NativeProductResearchLoop(ResearchMode);
+        var simulation=new NativeProductResearchLoop(ResearchMode,integratedSnapshot:IntegratedSnapshot);
         var reasonCounts=new Dictionary<string,int>(StringComparer.Ordinal);
         var categoryCounts=new Dictionary<string,int>(StringComparer.Ordinal);
         var signalFamilies=new Dictionary<string,int>(StringComparer.Ordinal);
@@ -213,6 +215,7 @@ public static class NativeHistoricalProductReplay
             last=simulation.Advance(group.Key,inputs,UnqualifiedShadowMode);
             foreach(var signal in last.LatestSignals)
             {
+                ObserveSignal?.Invoke(signal);
                 signalFamilies[signal.Mechanism]=
                     signalFamilies.GetValueOrDefault(signal.Mechanism)+1;
                 if(signal.Status=="SHADOW_MODEL_INTENT_ALLOCATED_NOT_TRADING")continue;
