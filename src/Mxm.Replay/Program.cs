@@ -1,8 +1,9 @@
+using System.Text.Json;
+using System.Security.Cryptography;
+
 if(args.Length==3 && args[2]=="--native-aex1")
     return NativeAdaptiveExitExperiment.Run(args[0],args[1]);
 
-using System.Text.Json;
-using System.Security.Cryptography;
 
 if(args.Length==3 && args[2] is "--native-pdr1" or "--native-pdr1-contracts")
     return NativeSessionEconomicsMap.Run(args[0],args[1],args[2]=="--native-pdr1-contracts",discovery:true);
