@@ -30,7 +30,7 @@ def phase(t,p):
     if t<q["end"]:return "exposed_audit",q["end"]
     return None,None
 
-def feature(rows,t,p):
+def feature(rows,t,p,*,include_eligible_momentum=False):
     """49 exact completed M5 closes, prior complete hourly activity baseline."""
     f=p["features"]
     end=[rows.get(t-i*M5) for i in range(48,-1,-1)]
@@ -58,6 +58,8 @@ def feature(rows,t,p):
     # integrity diagnostic even though the fixed signs are H1/H4 based.
     m15=sum(returns[-3:])
     out={}
+    if include_eligible_momentum:
+        out["UNFILTERED_MOMENTUM"]={"side":(r4>0)-(r4<0)}
     if abs(r4)*10000>=f["fourHourReturnBpsMin"] and efficiency>=f["trendEfficiencyMin"] and ratio>=f["trendLastHourActivityRatioMin"]:
         out[FAMILIES[0]]=dict(side=1 if r4>0 else -1,momentum=1 if r4>0 else -1,
             activity=ratio,efficiency=efficiency,m15Bps=10000*m15)
