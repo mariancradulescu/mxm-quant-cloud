@@ -30,6 +30,7 @@ public class MxmCloud : Robot
     [Parameter("Integrated development model envelope (no orders)", DefaultValue = "")]
     public string IntegratedDevelopmentModel { get; set; } = "";
     private bool _integratedResearch;
+    private bool _conditionalResearch;
     private bool _calibratedResearch;
     private NativeProductResearchLoop? _productResearch;
     private int _lastResearchModelTrips = -1;
@@ -71,7 +72,9 @@ public class MxmCloud : Robot
                     var model=NativeIntegratedSnapshot.Open(IntegratedDevelopmentModel);
                     if(model.Boundary>=Stamp(Server.TimeInUtc))throw new System.ArgumentException("Model not yet causal");
                     _integratedResearch=_calibratedResearch=true;
-                    _productResearch=new NativeProductResearchLoop("IPC2_JOINT",model.Boundary,model);
+                    _conditionalResearch=model.Conditional is not null;
+                    _productResearch=new NativeProductResearchLoop(_conditionalResearch?"CDE1_JOINT":"IPC2_JOINT",
+                        model.Boundary,model);
                 }
                 catch(System.Exception)
                 {
@@ -222,7 +225,7 @@ public class MxmCloud : Robot
             _integratedResearch?NativeIntegratedResearch.Holding(name):
             _calibratedResearch?(FridayInventoryResearch?NativeEntryOutcomeCalibration.InventoryHoldingMinutes:
                 NativeEntryOutcomeCalibration.HoldingMinutes):30,false,
-            _integratedResearch?NativeIntegratedResearch.Exit(name):
+            _conditionalResearch?NativeConditionalResearch.Exit(name):_integratedResearch?NativeIntegratedResearch.Exit(name):
             _calibratedResearch?(FridayInventoryResearch?NativeEntryOutcomeCalibration.InventoryExitPolicy:
                 NativeEntryOutcomeCalibration.ExitPolicy):NativeCausalExitResearch.FrozenFixed);
     }
@@ -379,7 +382,7 @@ public class MxmCloud : Robot
                         if(Account.BrokerName.Contains("Pepperstone",
                             System.StringComparison.OrdinalIgnoreCase))
                         {
-                            var active=(_integratedResearch?NativeIntegratedResearch.Universe:_calibratedResearch?(FridayInventoryResearch?"AUDUSD,GBPUSD,NZDUSD,XAUUSD,Copper":
+                            var active=(_conditionalResearch?NativeConditionalResearch.Universe:_integratedResearch?NativeIntegratedResearch.Universe:_calibratedResearch?(FridayInventoryResearch?"AUDUSD,GBPUSD,NZDUSD,XAUUSD,Copper":
                                 "AUDUSD,GBPUSD,NZDUSD,SpotBrent,XAUUSD"):
                                 ActiveM5ResearchWatchlist)
                                 .Split(new[]{',',';'},System.StringSplitOptions.TrimEntries|

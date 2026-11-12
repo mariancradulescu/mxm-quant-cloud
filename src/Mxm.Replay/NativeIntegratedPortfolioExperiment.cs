@@ -4,7 +4,7 @@ using Mxm.Core;
 
 internal static class NativeIntegratedPortfolioExperiment
 {
-    internal static int Run(string input,string output)
+    internal static int Run(string input,string output,bool conditional=false)
     {
         try
         {
@@ -13,10 +13,13 @@ internal static class NativeIntegratedPortfolioExperiment
                 NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString
             }) ?? throw new ArgumentException("IPC2_SOURCE_EMPTY");
             if(source.SourceLabel!="ORIGINAL_PEPPERSTONE_IPC2")throw new ArgumentException("IPC2_SOURCE_LABEL");
+            string study=conditional?"CDE1":"IPC2";
             var tape=NativeOriginalOpenApiProductAdapter.Convert(source);
-            tape=tape with {Quotes=tape.Quotes.Where(q=>NativeIntegratedResearch.Family(q.Quote.Symbol)!=null)
+            tape=tape with {Quotes=tape.Quotes.Where(q=>conditional?
+                NativeConditionalResearch.Family(q.Quote.Symbol)!=null||q.Quote.Symbol=="EURUSD":
+                NativeIntegratedResearch.Family(q.Quote.Symbol)!=null)
                 .Select(q=>q with {HoldingMinutes=NativeIntegratedResearch.Holding(q.Quote.Symbol),
-                    ExitPolicy=NativeIntegratedResearch.Exit(q.Quote.Symbol)}).ToArray()};
+                    ExitPolicy=conditional?NativeConditionalResearch.Exit(q.Quote.Symbol):NativeIntegratedResearch.Exit(q.Quote.Symbol)}).ToArray()};
             var boundary=NativeIntegratedResearch.Boundary;
             var testTape=tape with {Quotes=tape.Quotes.Where(q=>q.At>=boundary).ToArray()};
             static string Week(long at)
@@ -34,7 +37,7 @@ internal static class NativeIntegratedPortfolioExperiment
                 var reservations=new Dictionary<string,int>();
                 using var trace=IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
                 var result=NativeHistoricalProductReplay.Evaluate(snapshot is null?tape:testTape,
-                    UnqualifiedShadowMode:false,ResearchMode:"IPC2_"+mode,IntegratedSnapshot:snapshot,
+                    UnqualifiedShadowMode:false,ResearchMode:study+"_"+mode,IntegratedSnapshot:snapshot,
                     ObserveFinalLedger:ledger=>closed=ledger.ClosedFragments(),
                     ObserveCalibration:value=>diagnostics=value,ObserveSignal:signal=>{
                         if(signal.At<boundary)return;
@@ -47,7 +50,7 @@ internal static class NativeIntegratedPortfolioExperiment
                     });
                 var peakOpen=result.SampledEquity.Where(q=>q.At>=boundary)
                     .Select(q=>closed.Count(c=>c.OpenedAt<=q.At && c.ClosedAt>q.At)).DefaultIfEmpty().Max();
-                Console.WriteLine("IPC2 completed policy "+mode);
+                Console.WriteLine(study+" completed policy "+mode);
                 return (result,diagnostics,Convert.ToHexString(trace.GetHashAndReset()),peakOpen,reservations);
             }
 
@@ -65,10 +68,12 @@ internal static class NativeIntegratedPortfolioExperiment
                 throw new ArgumentException("IPC2_FROZEN_MODEL_RECONSTRUCTION_MISMATCH");
 
             var policies=new Dictionary<string,object>();
+            var stress=new Dictionary<string,object>();
             foreach(var mode in new[]{"JOINT","FX","METAL","LONG","SHORT","CASH"})
             {
                 var replay=mode=="JOINT"?joint:Replay(mode);
                 var r=replay.Result;
+                stress.Add(mode,new {r.DistinctHistoricalStressDecisions,r.DistinctHistoricalStressDecisionsWithExposure});
                 decimal peak=300m,adverseDd=0m;
                 var marks=r.SampledEquity.Where(q=>q.At>=boundary).ToArray();
                 foreach(var m in marks)
@@ -91,13 +96,20 @@ internal static class NativeIntegratedPortfolioExperiment
                     Diagnostics=mode is "JOINT" or "FX" or "METAL"?replay.Diagnostics:null
                 });
             }
-            File.WriteAllText(output,JsonSerializer.Serialize(new {
-                Study="IPC2",SourceSha256=Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant(),
-                EvaluationBoundaryUtcMs=boundary,NominalSlotsPerWeek=80,
+            var receipt=JsonSerializer.Serialize(new {
+                Study=study,SourceSha256=Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant(),
+                EvaluationBoundaryUtcMs=boundary,NominalSlotsPerWeek=conditional?50:80,
                 ProbabilityTarget="POSITIVE_ADVERSE_NET",Policies=policies,Receipt=policies["JOINT"],
                 Reconstruction=new {SameSignalTrace=true,SameFundedResult=true,SignalTraceSha256=joint.Trace},
                 IndependentConfirmation=false,CloudActivated=false,OrdersSubmitted=0
-            }));
+            });
+            if(conditional)
+            {
+                var node=System.Text.Json.Nodes.JsonNode.Parse(receipt)!.AsObject();
+                node["JointStress"]=JsonSerializer.SerializeToNode(stress);
+                receipt=node.ToJsonString();
+            }
+            File.WriteAllText(output,receipt);
             return 0;
         }
         catch(Exception e)

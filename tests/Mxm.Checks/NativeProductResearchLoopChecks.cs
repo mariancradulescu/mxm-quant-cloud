@@ -38,6 +38,63 @@ public static class NativeProductResearchLoopChecks
             return new(symbol,Window(symbol,m5,at-2000),
                 Window(symbol,m15,at-2000),charge.Quote,c,.005m,30,support);
         }
+        // Conditional predictor restoration and financial restoration are
+        // checked separately by providing a known synthetic favorable cell.
+        long start=DateTimeOffset.Parse("2026-08-17T08:00:01.500Z").ToUnixTimeMilliseconds();
+        var trainingEstimate=new NativeEntryForecast(0,start-86400000L,0,6,.8m,.5m,.03m,0m,.001m,.002m) {
+            StandaloneAdverseNetReturn=.02m,IncrementalAdverseNetReturn=.02m,
+            MeanAdverseFrictionReturn=.005m
+        };
+        var conditionalModel=new NativeIntegratedSnapshot(NativeIntegratedResearch.Boundary,null,null) {
+            Conditional=new() {["FX/LOW"]=trainingEstimate,["FX/HIGH"]=trainingEstimate,
+                ["METAL/LOW"]=null,["METAL/HIGH"]=null}
+        };
+        NativeProductMarket ConditionalMarket(string symbol,long clock,int tick)
+        {
+            var baseMarket=Market("SYNTH_A",clock,tick);
+            var candle=Window("SYNTH_A",m15,clock-1500L)
+                .Select(x=>x with {Open=x.Close-.12m,Low=x.Close-.15m}).ToArray();
+            return baseMarket with {Symbol=symbol,Quote=baseMarket.Quote with {Symbol=symbol},
+                Contract=baseMarket.Contract! with {Symbol=symbol},
+                M5=Window("SYNTH_A",m5,clock-1500L),M15=candle,
+                HoldingMinutes=45,ExitPolicy=NativeCausalExitResearch.Chandelier};
+        }
+        NativeProductMarket[] Slice(long clock,int tick)=>tick<6?
+            new[]{ConditionalMarket("AUDUSD",clock,tick),ConditionalMarket("EURUSD",clock,tick)}:
+            new[]{ConditionalMarket("AUDUSD",clock,tick),ConditionalMarket("NZDUSD",clock,tick),
+                ConditionalMarket("EURUSD",clock,tick)};
+        var original=new NativeProductResearchLoop("CDE1_JOINT",integratedSnapshot:conditionalModel);
+        var reloaded=new NativeProductResearchLoop("CDE1_JOINT",
+            integratedSnapshot:NativeIntegratedSnapshot.Open(conditionalModel.Seal()));
+        var first=original.Advance(start,Slice(start,0),false);
+        var sameFirst=reloaded.Advance(start,Slice(start,0),false);
+        check(first.AcceptedModelIntents==1 && sameFirst.LatestSignals.SequenceEqual(first.LatestSignals),
+            "reloaded conditional predictor makes the same admitted native decision");
+        var open=original.Advance(start+m5,Slice(start+m5,1),false);
+        check(open.ModelOpenPositions==1 && open.ModelCashEur<300m,
+            "conditional native checkpoint captured a filled position and charged costs");
+        const string conditionalSource="bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+        reloaded=NativeProductResearchLoop.RestoreIntegrityCheckpoint(
+            original.ExportIntegrityCheckpoint(conditionalSource),conditionalSource);
+        check(reloaded.ResearchSession.Checkpoint()==original.ResearchSession.Checkpoint(),
+            "financial restoration preserves the open-position ledger independently of the predictor");
+        for(int tick=2;tick<=17;tick++)
+        {
+            long clock=start+tick*m5;
+            var frame=Slice(clock,tick);
+            var one=original.Advance(clock,frame,false);
+            var two=reloaded.Advance(clock,frame,false);
+            check(one.LatestSignals.SequenceEqual(two.LatestSignals) &&
+                one.ModelEquityEur==two.ModelEquityEur && one.ModelCashEur==two.ModelCashEur,
+                "restored open state preserves conditional decisions, cash and marked equity");
+        }
+        check(original.DistinctHistoricalStressDecisionsWithExposure>0 &&
+              original.ResearchSession.Ledger.ClosedFragments().Length>0 &&
+              original.ResearchSession.Ledger.ClosedFragments()
+                  .SequenceEqual(reloaded.ResearchSession.Ledger.ClosedFragments()) &&
+              original.AdverseScenario.Export()==reloaded.AdverseScenario.Export(),
+            "differentiated joint stress is exercised with exposure and both books settle identically");
+
         var cashOnly=new NativeProductResearchLoop();
         var at=anchor+2000;
         var refused=cashOnly.Advance(at,new[]{Market("SYNTH_A",at,0)},

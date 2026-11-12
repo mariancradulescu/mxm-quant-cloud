@@ -1,6 +1,9 @@
 using System.Text.Json;
 using System.Security.Cryptography;
 
+if(args.Length==3 && args[2]=="--native-cde1")
+    return NativeIntegratedPortfolioExperiment.Run(args[0],args[1],conditional:true);
+
 if(args.Length==3 && args[2]=="--native-ipc2")
     return NativeIntegratedPortfolioExperiment.Run(args[0],args[1]);
 
