@@ -26,8 +26,10 @@ internal static class NativeCalibratedOutcomeExperiment
             foreach(var mode in new[]{"JOINT","FX","COMMODITY","LONG","SHORT","CASH"})
             {
                 NativeEntryCalibrationReport? diagnostics=null;
+                LedgerClosedFragment[] closed=Array.Empty<LedgerClosedFragment>();
                 var result=NativeHistoricalProductReplay.Evaluate(tape,
                     UnqualifiedShadowMode:false,ResearchMode:"CAL1_"+mode,
+                    ObserveFinalLedger:l=>closed=l.ClosedFragments(),
                     ObserveCalibration:r=>diagnostics=r);
                 var weeks=result.ModelTripsPerObservedIsoWeek.Where(w=>
                     StringComparer.Ordinal.Compare(w.Key,"2026-W10")>=0).ToDictionary(w=>w.Key,w=>w.Value);
@@ -49,6 +51,8 @@ internal static class NativeCalibratedOutcomeExperiment
                     result.ClosedNetByMechanismEur,result.UnfinancedModelOpenCancellations,
                     result.AdverseFailureKind,TripsByEvaluationWeek=weeks,
                     MaximumSampledAdverseDrawdown=drawdown,
+                    PeakConcurrentClosedPositions=evaluation.Max(m=>closed.Count(t=>
+                        t.OpenedAt<=m.At && m.At<t.ClosedAt)),
                     MissingCentralEquityMarks=evaluation.Count(m=>!m.CentralEquityEur.HasValue),
                     MissingAdverseEquityMarks=evaluation.Count(m=>!m.AdverseEquityEur.HasValue),
                     PredictiveDiagnostics=mode=="JOINT"?diagnostics:null

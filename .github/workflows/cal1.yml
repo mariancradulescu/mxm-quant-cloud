@@ -25,7 +25,7 @@ jobs:
     if: >-
       github.event_name == 'push' && github.ref == 'refs/heads/main' &&
       github.actor == 'mariancradulescu' && github.run_attempt == '1' &&
-      github.event.head_commit.message == 'CAL1_OWNER_AUTHENTIC_EXPOSED_DEVELOPMENT_ONCE'
+      startsWith(github.event.head_commit.message, 'CAL1_OWNER_AUTHENTIC_EXPOSED_DEVELOPMENT_ONCE')
     environment: mxm-r3-custody-v1
     permissions:
       contents: read
