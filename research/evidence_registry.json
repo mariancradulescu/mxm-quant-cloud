@@ -2644,5 +2644,36 @@
     "independentConfirmation": false,
     "ordersSubmitted": 0,
     "cloudActivated": false
+  },
+  "esd1AuthenticExtendedSessionDiscovery": {
+    "id": "ESD1",
+    "status": "CLOSED_EXACT_NO_ROUTE_QUALIFIES_FOR_FUNDED_REPLAY",
+    "closedNoRetune": true,
+    "initialContractOnlyFailureRunId": 43201633773,
+    "runId": 43202303802,
+    "mainHead": "ea3311c0c314f8cf2c6685b7c0ff63a9bddbc63d",
+    "protocolSha256": "7956ddf5bff15f49efe988c16e37e9bbb9933c295416dbe3c9a94165320c9bb3",
+    "publicArtifactId": 13936162607,
+    "publicArchiveSha256": "59fbcb0638d5a26e2d3889953c78535cd5584f834bda358306de6460edf6a0b0",
+    "publicReceiptPath": "docs/ESD1_AUTHENTIC_PUBLIC_RECEIPT_20261112.json",
+    "publicReceiptSha256": "6e58b37db203fe0b2bffeda3598846e09097e23bf7b631f04e9424399cdd1ee1",
+    "sourceEncryptedArtifactId": 13935958165,
+    "sourceEncryptedArchiveSha256": "cd3ab496141ff00e9e6918a96f91ec386a4b23812d1dab6b402da0c92d177dd1",
+    "sourceSha256": "c76cdb042b6c6801908c5cc0a5a38c42a11b89344fe2ec31906389556bf29b9c",
+    "sourceCiphertextSha256": "1ff928d0fc7863305a2527d1750d786472924e60555b948d287c550c092b0cff",
+    "originalReadOnlyRequestsAfterAuthentication": 2345,
+    "evaluationCalendarWeeks": 16,
+    "exposure": "PROJECT_DEVELOPMENT_ONLY",
+    "viabilityBySymbol": {
+      "NAS100": "NO_REPEATABLE_ADVERSE_EDGE",
+      "LTCUSD": "INSUFFICIENT_PRICED_SIGNAL_WEEKS",
+      "BTCEUR": "MINIMUM_BROKER_MARGIN_EXCEEDS_SINGLE_300_EUR_BUDGET",
+      "ETHEUR": "INSUFFICIENT_PRICED_SIGNAL_WEEKS"
+    },
+    "portfolioExecuted": false,
+    "portfolioAdmission": false,
+    "independentConfirmation": false,
+    "ordersSubmitted": 0,
+    "cloudActivated": false
   }
 }
