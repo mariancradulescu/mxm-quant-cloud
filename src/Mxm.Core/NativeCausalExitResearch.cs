@@ -16,10 +16,12 @@ public static class NativeCausalExitResearch
     public const string Chandelier = "M5_ATR_CHANDELIER";
     public const string VolatilityTarget = "M5_VOLATILITY_TARGET";
     public const string EquilibriumReversion = "M15_EQUILIBRIUM_REVERSION";
+    // YRC1 only: profit lock + original-quote stagnation observation.
+    public const string AtrProfitLock = "M5_ATR_CAUSAL_PROFIT_LOCK_STAGNATION";
 
     public static bool Supported(string mode) => mode is
         (FrozenFixed or PredictionInvalidation or Chandelier or
-         VolatilityTarget or EquilibriumReversion);
+         VolatilityTarget or EquilibriumReversion or AtrProfitLock);
 
     // ATR(14) from fifteen strictly consecutive COMPLETED M5 candles.
     // Equilibrium is the mean of eight consecutive completed M15 closes.
@@ -118,6 +120,32 @@ public static class NativeCausalExitResearch
            (side==1? actionable>=seed.EquilibriumQuote:
                      actionable<=seed.EquilibriumQuote))
             return new(true,"ENTRY_M15_EQUILIBRIUM_REACHED",extreme);
+
+        if(policy==AtrProfitLock)
+        {
+            // The quote is an observed executable BID/ASK mark, NOT an
+            // invented intrabar historical stop fill.
+            extreme=side==1 ? Math.Max(extreme,actionable):
+                               Math.Min(extreme,actionable);
+            decimal favorable=side*(extreme-entryPrice);
+            decimal gain=side*(actionable-entryPrice);
+            if(gain>=3m*seed.AtrQuote)
+                return new(true,"OBSERVED_QUOTE_ATR3_PROFIT_CAPTURE",extreme);
+            if(favorable>=1.25m*seed.AtrQuote)
+            {
+                decimal protectedTrail=side==1 ?
+                    Math.Max(entryPrice+0.35m*seed.AtrQuote,
+                             extreme-2m*seed.AtrQuote) :
+                    Math.Min(entryPrice-0.35m*seed.AtrQuote,
+                             extreme+2m*seed.AtrQuote);
+                if(side==1? actionable<=protectedTrail:
+                            actionable>=protectedTrail)
+                    return new(true,"OBSERVED_QUOTE_ATR_PROFIT_LOCK",extreme);
+            }
+            if(at-openAt>=45L*60000L &&
+               favorable<0.5m*seed.AtrQuote)
+                return new(true,"OBSERVED_QUOTE_STAGNATION_45M",extreme);
+        }
 
         // A protective maximum exposure limit, never the sole universal
         // profit-taking rule. No exit is imputed between observations.
