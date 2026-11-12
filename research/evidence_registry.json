@@ -2675,5 +2675,40 @@
     "independentConfirmation": false,
     "ordersSubmitted": 0,
     "cloudActivated": false
+  },
+  "sem1AuthenticSessionEconomics": {
+    "id": "SEM1",
+    "status": "CLOSED_EXACT_NO_ROUTE_QUALIFIES_FOR_FUNDED_REPLAY",
+    "closedNoRetune": true,
+    "runId": 43207629492,
+    "mainHead": "1d29b4c0391d35f12c49f1d7fe73d91b7e4788ca",
+    "protocolSha256": "c3e0bd89f607c724e5e8df9b61bbfe76fa272bc03c9bfba0e32af5ebd9ad39e0",
+    "publicArtifactId": 13939109584,
+    "publicArchiveSha256": "77538d4c901064e748969d754f4a268cd27acca41c7a67661751433389d12b6f",
+    "publicReceiptPath": "docs/SEM1_AUTHENTIC_PUBLIC_RECEIPT_20261112.json",
+    "publicReceiptSha256": "afe44d2c795b8d6b17f3af5d006d24ceaffeb00b3573b61e4d02ea7a48495455",
+    "sourceEncryptedArtifactId": 13938934824,
+    "sourceEncryptedArchiveSha256": "15f1ba256b7edc1320dbd263ae5d763011f763e46c8a6dcf54bb42305efb55d7",
+    "sourceSha256": "6c2605e7f23133c5e2a728f9190be87d54ff080de5c1d7bba8300916c24f8354",
+    "sourceCiphertextSha256": "707f533531d426dd5a6b98544c412a656ee0b02c28765c4915bb46dabdf0cad0",
+    "originalReadOnlyRequestsAfterAuthentication": 3525,
+    "evaluationCalendarWeeks": 10,
+    "matchedFilterDiagnostic": {
+      "runId": 43209632812,
+      "mainHead": "7db6a48d1bd18e56e21b86cce43dc53bfdcfa977",
+      "artifactId": 13939039798,
+      "publicArchiveSha256": "4072c0d1f06a5d8ee4d6221d3ae960d362552107d3d0ad8f2ab7c6a7afad5a14",
+      "publicReceiptPath": "docs/SEM1_FILTER_DIAGNOSTIC_PUBLIC_RECEIPT_20261112.json",
+      "publicReceiptSha256": "dc8a52e7b86abed21edd1538ac63b697b8bd2db058a63b8184dc61459354229c",
+      "protocolSha256": "eb0dea9de60a8ac52cfe550d50721b1a5d1a4f0f0653ced600fa03e91db1c802",
+      "brokerRequests": 0,
+      "classification": "EXPOSED_DEVELOPMENT_DIAGNOSTIC"
+    },
+    "exposure": "PROJECT_DEVELOPMENT_ONLY",
+    "portfolioExecuted": false,
+    "portfolioAdmission": false,
+    "independentConfirmation": false,
+    "ordersSubmitted": 0,
+    "cloudActivated": false
   }
 }
