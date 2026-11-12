@@ -104,9 +104,9 @@ internal static class NativeAdaptiveExitExperiment
                 JointDuration=DurationSummary(),
                 JointCommissionsEur=completed.Sum(x=>x.CommissionsEur),
                 JointSpreadEur=completed.All(x=>x.SpreadEur.HasValue)
-                    ?completed.Sum(x=>x.SpreadEur!.Value):null,
+                    ?completed.Sum(x=>x.SpreadEur!.Value):(decimal?)null,
                 JointSlippageEur=completed.All(x=>x.SlippageEur.HasValue)
-                    ?completed.Sum(x=>x.SlippageEur!.Value):null,
+                    ?completed.Sum(x=>x.SlippageEur!.Value):(decimal?)null,
                 JointFinancingEur=completed.Sum(x=>x.FinancingEur),
                 JointObservedMarginEurMinutes=observedMarginMinutes,
                 JointObservedMarginMinuteMarks=integratedMarginClockMinutes,
