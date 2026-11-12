@@ -2616,5 +2616,33 @@
     "independentConfirmation": false,
     "ordersSubmitted": 0,
     "cloudActivated": false
+  },
+  "fsd1AuthenticYearScaleViability": {
+    "id": "FSD1",
+    "status": "CLOSED_EXACT_NO_VIABILITY_SIGNAL",
+    "closedNoRetune": true,
+    "runId": 43192921401,
+    "mainHead": "21137eb5d8168be36f8d6b8642daa0d58c622f94",
+    "protocolSha256": "c59803ac958bfa0d4112fd2cd399b48b079af276ee4b7d4c5c3f9b8597722aa0",
+    "publicArtifactId": 13932862368,
+    "publicArchiveSha256": "d2a2e56084d1db0da62715bb69bcf9e1253af892120e6c114a80ccc68c94e3c6",
+    "publicReceiptPath": "docs/FSD1_AUTHENTIC_PUBLIC_RECEIPT_20261112.json",
+    "publicReceiptSha256": "66df9437c5ff2877f3fd06adf2944a00703a39cb472c12ce35c111ba3bae91db",
+    "sourceEncryptedArtifactId": 13932114673,
+    "sourceEncryptedArchiveSha256": "74606f753a8d03405eca8573d62067b7ba2d1fb8ef1fe0941e1bbc3c39d8201a",
+    "sourceSha256": "0c39d1536bff83f3599278b089c9258f3c6f34bdf0c040de9b80e02a2aeee5f8",
+    "sourceCiphertextSha256": "810b536c5e8894377e9968050bb9724a989b934164b8e4c161460cc92c2be734",
+    "originalReadOnlyRequestsAfterAuthentication": 5674,
+    "evaluationObservedWeeks": 53,
+    "exposure": "PROJECT_DEVELOPMENT_ONLY",
+    "jointMinimumMarginEnvelopeEur": 68.12,
+    "viabilityBySymbol": {
+      "GBPUSD": "NO_INCREMENTAL_PROBABILITY_SKILL",
+      "NatGas": "INSUFFICIENT_COVERAGE"
+    },
+    "portfolioExecuted": false,
+    "independentConfirmation": false,
+    "ordersSubmitted": 0,
+    "cloudActivated": false
   }
 }

@@ -1,0 +1,682 @@
+{
+  "Study": "FSD1",
+  "SourceSha256": "0c39d1536bff83f3599278b089c9258f3c6f34bdf0c040de9b80e02a2aeee5f8",
+  "Receipt": {
+    "GBPUSD": {
+      "Verdict": "NO_INCREMENTAL_PROBABILITY_SKILL",
+      "TrainingPairs": 60,
+      "TrainingConfirmedWeeks": 12,
+      "EvaluationPairs": 261,
+      "EvaluationConfirmed": 137,
+      "ConditionalBrier": 0.25290835707502374,
+      "PooledBrier": 0.25,
+      "ConditionalTrainProbability": 0.4444444444444444,
+      "PooledTrainProbability": 0.5,
+      "Coverage": {
+        "FirstBarUtcMs": 1754265600000,
+        "LastBarUtcMs": 1794182700000,
+        "FirstMarkUtcMs": 1754920801500,
+        "LastMarkUtcMs": 1793980801500,
+        "FirstPricedEvaluationUtcMs": 1762178401500,
+        "LastPricedEvaluationUtcMs": 1793973601500
+      },
+      "Rejected": {
+        "MISSING_CAUSAL_BARS_OR_NEUTRAL_DIRECTION": 4
+      },
+      "OwnAdverseWeekly": {
+        "Weeks": 52,
+        "EffectiveWeeks": 35.87116908736222,
+        "Mean": -0.010144896830413247,
+        "Lower": -0.6247378647211572
+      },
+      "IncrementalVsOppositeAdverseWeekly": {
+        "Weeks": 52,
+        "EffectiveWeeks": 35.78931147853219,
+        "Mean": 0.3413239597338399,
+        "Lower": -0.8871679693355871
+      },
+      "Weekly": {
+        "2025-W45": {
+          "Priced": 5,
+          "Confirmed": 1
+        },
+        "2025-W46": {
+          "Priced": 5,
+          "Confirmed": 4
+        },
+        "2025-W47": {
+          "Priced": 5,
+          "Confirmed": 3
+        },
+        "2025-W48": {
+          "Priced": 5,
+          "Confirmed": 2
+        },
+        "2025-W49": {
+          "Priced": 5,
+          "Confirmed": 5
+        },
+        "2025-W50": {
+          "Priced": 5,
+          "Confirmed": 5
+        },
+        "2025-W51": {
+          "Priced": 5,
+          "Confirmed": 0
+        },
+        "2025-W52": {
+          "Priced": 3,
+          "Confirmed": 3
+        },
+        "2026-W01": {
+          "Priced": 3,
+          "Confirmed": 1
+        },
+        "2026-W02": {
+          "Priced": 5,
+          "Confirmed": 1
+        },
+        "2026-W03": {
+          "Priced": 5,
+          "Confirmed": 2
+        },
+        "2026-W04": {
+          "Priced": 5,
+          "Confirmed": 3
+        },
+        "2026-W05": {
+          "Priced": 5,
+          "Confirmed": 2
+        },
+        "2026-W06": {
+          "Priced": 5,
+          "Confirmed": 1
+        },
+        "2026-W07": {
+          "Priced": 5,
+          "Confirmed": 2
+        },
+        "2026-W08": {
+          "Priced": 5,
+          "Confirmed": 3
+        },
+        "2026-W09": {
+          "Priced": 5,
+          "Confirmed": 1
+        },
+        "2026-W10": {
+          "Priced": 5,
+          "Confirmed": 4
+        },
+        "2026-W11": {
+          "Priced": 5,
+          "Confirmed": 4
+        },
+        "2026-W12": {
+          "Priced": 5,
+          "Confirmed": 2
+        },
+        "2026-W13": {
+          "Priced": 5,
+          "Confirmed": 3
+        },
+        "2026-W14": {
+          "Priced": 5,
+          "Confirmed": 3
+        },
+        "2026-W15": {
+          "Priced": 5,
+          "Confirmed": 3
+        },
+        "2026-W16": {
+          "Priced": 5,
+          "Confirmed": 2
+        },
+        "2026-W17": {
+          "Priced": 5,
+          "Confirmed": 2
+        },
+        "2026-W18": {
+          "Priced": 5,
+          "Confirmed": 3
+        },
+        "2026-W19": {
+          "Priced": 5,
+          "Confirmed": 2
+        },
+        "2026-W20": {
+          "Priced": 5,
+          "Confirmed": 2
+        },
+        "2026-W21": {
+          "Priced": 5,
+          "Confirmed": 1
+        },
+        "2026-W22": {
+          "Priced": 5,
+          "Confirmed": 3
+        },
+        "2026-W23": {
+          "Priced": 5,
+          "Confirmed": 3
+        },
+        "2026-W24": {
+          "Priced": 5,
+          "Confirmed": 3
+        },
+        "2026-W25": {
+          "Priced": 5,
+          "Confirmed": 2
+        },
+        "2026-W26": {
+          "Priced": 5,
+          "Confirmed": 4
+        },
+        "2026-W27": {
+          "Priced": 5,
+          "Confirmed": 1
+        },
+        "2026-W28": {
+          "Priced": 5,
+          "Confirmed": 3
+        },
+        "2026-W29": {
+          "Priced": 5,
+          "Confirmed": 1
+        },
+        "2026-W30": {
+          "Priced": 5,
+          "Confirmed": 4
+        },
+        "2026-W31": {
+          "Priced": 5,
+          "Confirmed": 4
+        },
+        "2026-W32": {
+          "Priced": 5,
+          "Confirmed": 2
+        },
+        "2026-W33": {
+          "Priced": 5,
+          "Confirmed": 2
+        },
+        "2026-W34": {
+          "Priced": 5,
+          "Confirmed": 3
+        },
+        "2026-W35": {
+          "Priced": 5,
+          "Confirmed": 4
+        },
+        "2026-W36": {
+          "Priced": 5,
+          "Confirmed": 3
+        },
+        "2026-W37": {
+          "Priced": 5,
+          "Confirmed": 3
+        },
+        "2026-W38": {
+          "Priced": 5,
+          "Confirmed": 5
+        },
+        "2026-W39": {
+          "Priced": 5,
+          "Confirmed": 3
+        },
+        "2026-W40": {
+          "Priced": 5,
+          "Confirmed": 3
+        },
+        "2026-W41": {
+          "Priced": 5,
+          "Confirmed": 1
+        },
+        "2026-W42": {
+          "Priced": 5,
+          "Confirmed": 3
+        },
+        "2026-W43": {
+          "Priced": 5,
+          "Confirmed": 1
+        },
+        "2026-W44": {
+          "Priced": 5,
+          "Confirmed": 3
+        },
+        "2026-W45": {
+          "Priced": 5,
+          "Confirmed": 3
+        }
+      },
+      "Confirmed": {
+        "Pairs": 137,
+        "Wins": 70,
+        "Losses": 67,
+        "MeanGrossBps": 1.1241424944166951,
+        "MeanCentralNetBps": 0.34717999633482816,
+        "MeanAdverseNetBps": -0.4410394513774148,
+        "AdverseP10Bps": -17.947875054031396,
+        "AdverseMedianBps": 0.621593465286466,
+        "AdverseP90Bps": 17.86296599536407,
+        "GrossEur": 17.70020948658433,
+        "CentralNetEur": 5.367277590220309,
+        "AdverseNetEur": -7.144063971410207,
+        "MeanAdverseFrictionBps": 1.56518194579411,
+        "MinimumVolumeMaximumMarginEur": 39.88
+      },
+      "Other": {
+        "Pairs": 124,
+        "Wins": 55,
+        "Losses": 69,
+        "MeanGrossBps": -1.4006649885427944,
+        "MeanCentralNetBps": -2.1894185949794815,
+        "MeanAdverseNetBps": -2.9911117079499205,
+        "AdverseP10Bps": -22.871538707335308,
+        "AdverseMedianBps": -1.4517922266323309,
+        "AdverseP90Bps": 16.58791357430191,
+        "GrossEur": -19.661421235111362,
+        "CentralNetEur": -30.999345672357737,
+        "AdverseNetEur": -42.523062116615336,
+        "MeanAdverseFrictionBps": 1.5904467194071261,
+        "MinimumVolumeMaximumMarginEur": 39.88
+      },
+      "MatchedLong": {
+        "Pairs": 137,
+        "Wins": 52,
+        "Losses": 85,
+        "MeanGrossBps": -0.7094692614053448,
+        "MeanCentralNetBps": -1.486431805923711,
+        "MeanAdverseNetBps": -2.2748470676496915,
+        "AdverseP10Bps": -17.213222813461456,
+        "AdverseMedianBps": -4.838591766829027,
+        "AdverseP90Bps": 17.86296599536407,
+        "GrossEur": -11.379579791152306,
+        "CentralNetEur": -23.712512408937688,
+        "AdverseNetEur": -36.22695423360728,
+        "MeanAdverseFrictionBps": 1.5653778062443464,
+        "MinimumVolumeMaximumMarginEur": 39.88
+      },
+      "MatchedShort": {
+        "Pairs": 137,
+        "Wins": 76,
+        "Losses": 61,
+        "MeanGrossBps": 0.7094692614053448,
+        "MeanCentralNetBps": -0.06749312942669833,
+        "MeanAdverseNetBps": -0.8555907326367885,
+        "AdverseP10Bps": -21.232127556123295,
+        "AdverseMedianBps": 1.4758234443183187,
+        "AdverseP90Bps": 12.864058741727314,
+        "GrossEur": 11.379579791152306,
+        "CentralNetEur": -0.9533504215750183,
+        "AdverseNetEur": -13.462755722025006,
+        "MeanAdverseFrictionBps": 1.5650599940421335,
+        "MinimumVolumeMaximumMarginEur": 39.88
+      }
+    },
+    "NatGas": {
+      "Verdict": "INSUFFICIENT_COVERAGE",
+      "TrainingPairs": 50,
+      "TrainingConfirmedWeeks": 7,
+      "EvaluationPairs": 216,
+      "EvaluationConfirmed": 65,
+      "ConditionalBrier": null,
+      "PooledBrier": 0.22759452160493826,
+      "ConditionalTrainProbability": null,
+      "PooledTrainProbability": 0.3402777777777778,
+      "Coverage": {
+        "FirstBarUtcMs": 1754265600000,
+        "LastBarUtcMs": 1794182700000,
+        "FirstMarkUtcMs": 1754920801500,
+        "LastMarkUtcMs": 1793980801500,
+        "FirstPricedEvaluationUtcMs": 1762178401500,
+        "LastPricedEvaluationUtcMs": 1793973601500
+      },
+      "Rejected": {
+        "MISSING_CAUSAL_BARS_OR_NEUTRAL_DIRECTION": 26,
+        "MISSING_ENTRY_MARK": 9,
+        "MISSING_CHOSEN_EXIT_MARK": 21,
+        "MISSING_GAS_REVIEW_MARK": 3
+      },
+      "OwnAdverseWeekly": {
+        "Weeks": 40,
+        "EffectiveWeeks": 40,
+        "Mean": -1.0266133588554947,
+        "Lower": -2.7883684065666197
+      },
+      "IncrementalVsOppositeAdverseWeekly": {
+        "Weeks": 40,
+        "EffectiveWeeks": 40,
+        "Mean": 0.17047294676302416,
+        "Lower": -3.3814820625175357
+      },
+      "Weekly": {
+        "2025-W45": {
+          "Priced": 5,
+          "Confirmed": 0
+        },
+        "2025-W46": {
+          "Priced": 5,
+          "Confirmed": 2
+        },
+        "2025-W47": {
+          "Priced": 5,
+          "Confirmed": 1
+        },
+        "2025-W48": {
+          "Priced": 4,
+          "Confirmed": 1
+        },
+        "2025-W49": {
+          "Priced": 4,
+          "Confirmed": 1
+        },
+        "2025-W50": {
+          "Priced": 5,
+          "Confirmed": 3
+        },
+        "2025-W51": {
+          "Priced": 5,
+          "Confirmed": 3
+        },
+        "2025-W52": {
+          "Priced": 3,
+          "Confirmed": 0
+        },
+        "2026-W01": {
+          "Priced": 3,
+          "Confirmed": 2
+        },
+        "2026-W02": {
+          "Priced": 5,
+          "Confirmed": 2
+        },
+        "2026-W03": {
+          "Priced": 5,
+          "Confirmed": 1
+        },
+        "2026-W04": {
+          "Priced": 4,
+          "Confirmed": 3
+        },
+        "2026-W05": {
+          "Priced": 4,
+          "Confirmed": 0
+        },
+        "2026-W06": {
+          "Priced": 5,
+          "Confirmed": 1
+        },
+        "2026-W07": {
+          "Priced": 5,
+          "Confirmed": 1
+        },
+        "2026-W08": {
+          "Priced": 4,
+          "Confirmed": 0
+        },
+        "2026-W09": {
+          "Priced": 3,
+          "Confirmed": 1
+        },
+        "2026-W10": {
+          "Priced": 5,
+          "Confirmed": 3
+        },
+        "2026-W11": {
+          "Priced": 5,
+          "Confirmed": 0
+        },
+        "2026-W12": {
+          "Priced": 4,
+          "Confirmed": 2
+        },
+        "2026-W13": {
+          "Priced": 4,
+          "Confirmed": 1
+        },
+        "2026-W14": {
+          "Priced": 4,
+          "Confirmed": 2
+        },
+        "2026-W15": {
+          "Priced": 3,
+          "Confirmed": 1
+        },
+        "2026-W16": {
+          "Priced": 5,
+          "Confirmed": 0
+        },
+        "2026-W17": {
+          "Priced": 4,
+          "Confirmed": 2
+        },
+        "2026-W18": {
+          "Priced": 3,
+          "Confirmed": 1
+        },
+        "2026-W19": {
+          "Priced": 5,
+          "Confirmed": 3
+        },
+        "2026-W20": {
+          "Priced": 3,
+          "Confirmed": 1
+        },
+        "2026-W21": {
+          "Priced": 2,
+          "Confirmed": 0
+        },
+        "2026-W22": {
+          "Priced": 2,
+          "Confirmed": 0
+        },
+        "2026-W23": {
+          "Priced": 4,
+          "Confirmed": 2
+        },
+        "2026-W24": {
+          "Priced": 4,
+          "Confirmed": 2
+        },
+        "2026-W25": {
+          "Priced": 4,
+          "Confirmed": 2
+        },
+        "2026-W26": {
+          "Priced": 3,
+          "Confirmed": 1
+        },
+        "2026-W27": {
+          "Priced": 3,
+          "Confirmed": 1
+        },
+        "2026-W28": {
+          "Priced": 4,
+          "Confirmed": 2
+        },
+        "2026-W29": {
+          "Priced": 3,
+          "Confirmed": 1
+        },
+        "2026-W30": {
+          "Priced": 4,
+          "Confirmed": 1
+        },
+        "2026-W31": {
+          "Priced": 3,
+          "Confirmed": 0
+        },
+        "2026-W32": {
+          "Priced": 4,
+          "Confirmed": 2
+        },
+        "2026-W33": {
+          "Priced": 2,
+          "Confirmed": 0
+        },
+        "2026-W34": {
+          "Priced": 3,
+          "Confirmed": 2
+        },
+        "2026-W35": {
+          "Priced": 5,
+          "Confirmed": 2
+        },
+        "2026-W36": {
+          "Priced": 5,
+          "Confirmed": 2
+        },
+        "2026-W37": {
+          "Priced": 4,
+          "Confirmed": 1
+        },
+        "2026-W38": {
+          "Priced": 5,
+          "Confirmed": 1
+        },
+        "2026-W39": {
+          "Priced": 5,
+          "Confirmed": 0
+        },
+        "2026-W40": {
+          "Priced": 5,
+          "Confirmed": 1
+        },
+        "2026-W41": {
+          "Priced": 5,
+          "Confirmed": 1
+        },
+        "2026-W42": {
+          "Priced": 5,
+          "Confirmed": 1
+        },
+        "2026-W43": {
+          "Priced": 4,
+          "Confirmed": 2
+        },
+        "2026-W44": {
+          "Priced": 4,
+          "Confirmed": 0
+        },
+        "2026-W45": {
+          "Priced": 5,
+          "Confirmed": 0
+        }
+      },
+      "Confirmed": {
+        "Pairs": 65,
+        "Wins": 24,
+        "Losses": 41,
+        "MeanGrossBps": 0.31266412416140044,
+        "MeanCentralNetBps": -19.83957711379139,
+        "MeanAdverseNetBps": -40.105855757449454,
+        "AdverseP10Bps": -181.01065014859444,
+        "AdverseMedianBps": -68.21873788392587,
+        "AdverseP90Bps": 133.5684572510614,
+        "GrossEur": 7.958932585797053,
+        "CentralNetEur": -28.652232297437287,
+        "AdverseNetEur": -65.48472638980734,
+        "MeanAdverseFrictionBps": 40.418519881610855,
+        "MinimumVolumeMaximumMarginEur": 28.24
+      },
+      "Other": {
+        "Pairs": 151,
+        "Wins": 61,
+        "Losses": 88,
+        "MeanGrossBps": 11.184041393056397,
+        "MeanCentralNetBps": -9.911829864185302,
+        "MeanAdverseNetBps": -31.119835133815762,
+        "AdverseP10Bps": -205.5787977927765,
+        "AdverseMedianBps": -36.603847139783994,
+        "AdverseP90Bps": 127.12052236305634,
+        "GrossEur": 39.17447445612337,
+        "CentralNetEur": -49.06105557313534,
+        "AdverseNetEur": -137.7951188140899,
+        "MeanAdverseFrictionBps": 42.30387652687216,
+        "MinimumVolumeMaximumMarginEur": 28.24
+      },
+      "MatchedLong": {
+        "Pairs": 65,
+        "Wins": 28,
+        "Losses": 37,
+        "MeanGrossBps": 0.9272951481171565,
+        "MeanCentralNetBps": -19.22495371078226,
+        "MeanAdverseNetBps": -39.48336308522316,
+        "AdverseP10Bps": -224.17699396602015,
+        "AdverseMedianBps": -30.80289322489772,
+        "AdverseP90Bps": 84.88290546415878,
+        "GrossEur": -1.8368429557129062,
+        "CentralNetEur": -38.44801848821857,
+        "AdverseNetEur": -75.26924643524227,
+        "MeanAdverseFrictionBps": 40.410658233340314,
+        "MinimumVolumeMaximumMarginEur": 28.24
+      },
+      "MatchedShort": {
+        "Pairs": 65,
+        "Wins": 25,
+        "Losses": 39,
+        "MeanGrossBps": -0.9272951481171565,
+        "MeanCentralNetBps": -21.07954663645024,
+        "MeanAdverseNetBps": -41.34197697302763,
+        "AdverseP10Bps": -179.42043515247548,
+        "AdverseMedianBps": -63.38938365330312,
+        "AdverseP90Bps": 133.5684572510614,
+        "GrossEur": 1.8368429557129062,
+        "CentralNetEur": -34.77433916379624,
+        "AdverseNetEur": -71.59824263647704,
+        "MeanAdverseFrictionBps": 40.414681824910474,
+        "MinimumVolumeMaximumMarginEur": 28.24
+      }
+    }
+  },
+  "EvaluationStartUtcMs": 1762128000000,
+  "JointMinimumMarginEnvelopeEur": 68.12,
+  "CashBenchmarkEur": 300,
+  "PortfolioExecuted": false,
+  "PortfolioAdmission": false,
+  "HistoricalTariffsCertified": false,
+  "OriginalPepperstoneAccountAuthenticated": true,
+  "PostAuthenticationReadOnlyRequests": 5674,
+  "OriginalBarsBySymbol": {
+    "GBPUSD": 94262,
+    "NatGas": 89001,
+    "EURUSD": 94331
+  },
+  "OriginalBidAskAsOfMarks": 2520,
+  "QuoteWindows": 975,
+  "MissingQuoteInstrumentClocks": 80,
+  "ExpectedClocksPerSymbol": 975,
+  "ObservedMarginGridBySymbol": {
+    "GBPUSD": [
+      {
+        "VolumeUnits": "1000",
+        "BuyMarginEur": "39.88",
+        "SellMarginEur": "39.88"
+      },
+      {
+        "VolumeUnits": "2000",
+        "BuyMarginEur": "79.76",
+        "SellMarginEur": "79.76"
+      }
+    ],
+    "NatGas": [
+      {
+        "VolumeUnits": "100",
+        "BuyMarginEur": "28.24",
+        "SellMarginEur": "28.2"
+      },
+      {
+        "VolumeUnits": "200",
+        "BuyMarginEur": "56.48",
+        "SellMarginEur": "56.41"
+      }
+    ]
+  },
+  "InitialModelCapitalEur": 300,
+  "OrdersSubmitted": 0,
+  "CloudActivated": false,
+  "IndependentConfirmation": false,
+  "SourceCiphertextSha256": "810b536c5e8894377e9968050bb9724a989b934164b8e4c161460cc92c2be734",
+  "ProtocolSha256": "c59803ac958bfa0d4112fd2cd399b48b079af276ee4b7d4c5c3f9b8597722aa0"
+}
