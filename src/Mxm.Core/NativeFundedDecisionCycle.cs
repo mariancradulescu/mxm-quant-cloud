@@ -20,6 +20,15 @@ public sealed partial class NativeFundedLedger
     internal LedgerEvent[] PendingSnapshot()=>state.Pending.Values.ToArray();
     internal decimal ResearchMargin(string symbol,decimal units,decimal entryMargin,long at)
         =>units*Math.Max(entryMargin,Quote(state.Quotes,symbol,at).MarginPerUnit);
+
+    internal (decimal MarginPerUnit,decimal MinimumEntryFee)? CurrentResearchEntryCosts(
+        string symbol,decimal minimumUnits,long at)
+    {
+        if(!state.Quotes.TryGetValue(symbol,out var quote) || quote.At>at ||
+           at-quote.At>maximumStalenessMs)
+            return null;
+        return (quote.MarginPerUnit,Fee(quote,minimumUnits));
+    }
 }
 
 public sealed partial class NativeFundedSession
@@ -45,18 +54,23 @@ public sealed partial class NativeFundedSession
     {
         if(d.SpecialistEvidence is null)
             throw new ArgumentException("PROSPECTIVE_SPECIALIST_EVIDENCE_REQUIRED");
-        return DecideResearch(d);
+        return DecideResearchCore(d,prospective:true);
     }
 
     public NativeResearchDecisionReceipt DecideResearch(NativeResearchDecision d)
+        =>DecideResearchCore(d,prospective:false);
+
+    private NativeResearchDecisionReceipt DecideResearchCore(NativeResearchDecision d,bool prospective)
     {
         // Null specialist evidence retains the historical exact decision hash format.
         // Existing closed/legacy development receipts must not be invalidated by
         // adding this prospective, strictly optional evidence gate.
-        string hash=Hash(d.SpecialistEvidence is null ?
+        string payload=d.SpecialistEvidence is null ?
             JsonSerializer.Serialize(new {d.Id,d.Clock,d.Sizing,d.EmptyStates,
                 d.Opportunities,d.Exposure,d.EntryTerms,d.EvidenceHash}) :
-            JsonSerializer.Serialize(d));
+            JsonSerializer.Serialize(d);
+        // A receipt saved by the historical path cannot satisfy the prospective gates.
+        string hash=Hash(prospective?"PROSPECTIVE/"+payload:payload);
         if(ResearchDecisions.TryGetValue(d.Id,out var previous))
         {
             if(previous.InputHash!=hash)throw new ArgumentException("CONFLICTING_NATIVE_RESEARCH_DECISION");
@@ -139,7 +153,8 @@ public sealed partial class NativeFundedSession
                d.Opportunities.Any(o=>!d.SpecialistEvidence.Any(e=>e.OpportunityId==o.Id)))
                 throw new ArgumentException("NATIVE_SPECIALIST_EVIDENCE_SET_MISMATCH");
             var relevant=d.SpecialistEvidence.Where(e=>offered.Any(o=>o.Id==e.OpportunityId)).ToArray();
-            selection=ResearchSpecialistAdmission.Estimate(request,relevant).NativeAllocation;
+            selection=ResearchSpecialistAdmission.Estimate(request,relevant,prospective
+                ?(o,e)=>CheckProspectiveEntryCosts(o,e,d.Clock):null).NativeAllocation;
         }
         selection=selection with {Declined=selection.Declined.Concat(blocked.Select(o=>
             new OpportunityAllocation(o.Id,0,0,0,"NATIVE_RESEARCH_SYMBOL_HELD_OR_PENDING"))).ToArray()};
@@ -157,5 +172,17 @@ public sealed partial class NativeFundedSession
             reserved+selection.ReservedMarginEur,"NATIVE_CONDITIONAL_INTENTS_ONLY_NO_FILLS_OR_TRADING");
         Ledger=candidate;ResearchDecisions.Add(d.Id,receipt);
         return receipt;
+    }
+
+    private string? CheckProspectiveEntryCosts(EconomicOpportunity opportunity,SpecialistEuroEvidence evidence,long clock)
+    {
+        var grid=opportunity.VolumeGrid;
+        var current=Ledger.CurrentResearchEntryCosts(opportunity.Symbol,grid.MinimumUnits,clock);
+        if(current is null)return "PROSPECTIVE_CURRENT_ENTRY_QUOTE_MISSING";
+        if(grid.MarginPerUnitEur<current.Value.MarginPerUnit ||
+           evidence.CurrentMinMarginEur<current.Value.MarginPerUnit*grid.MinimumUnits)
+            return "PROSPECTIVE_CURRENT_ENTRY_MARGIN_UNDERSTATED";
+        return evidence.EntryFeeEur+.000000001m<current.Value.MinimumEntryFee
+            ?"PROSPECTIVE_CURRENT_ENTRY_FEE_UNDERSTATED":null;
     }
 }

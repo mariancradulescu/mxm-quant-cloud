@@ -57,7 +57,7 @@ internal static class ProspectiveIntegratedChecks
         SpecialistEuroEvidence Evidence(EconomicOpportunity o,NativeWarmupReport warmup)=>
             new(o.Id,warmup.LastClosedAt,clock-1,5,60,
                 true,true,true,true,false,5m,.1m,.04m,.1m,.1m,.01m,.03m,.05m,
-                o.VolumeGrid.MinimumUnits*o.VolumeGrid.MarginPerUnitEur);
+                o.VolumeGrid.MinimumUnits*o.VolumeGrid.MarginPerUnitEur) {GrossStandaloneEur=5m};
         // The "authentic" and benchmark flags are deliberately synthetic
         // harness assertions, never broker/independence qualifications.
         var ex=Evidence(x,a);var ey=Evidence(y,b);
@@ -86,6 +86,35 @@ internal static class ProspectiveIntegratedChecks
         check(noEvidence && session.Ledger.Summary().CashEur==300m &&
               session.Ledger.Summary().PendingIntents==0,
               "future prospective gate cannot silently use the legacy ungated research decision path");
+        NativeResearchDecision FirstOnly(string id,EconomicOpportunity opportunity,SpecialistEuroEvidence evidence)=>
+            Decision(id,new[]{evidence}) with {Opportunities=new[]{opportunity},
+                EntryTerms=new[]{new ResearchEntryTerms(x.Id,1000,.005m,h)}};
+        void Reject(NativeResearchDecision decision,string reason)
+        {
+            var result=session.DecideProspective(decision);
+            check(result.Selection.Allocations.Length==0 && result.Ledger.PendingIntents==0 &&
+                  result.Selection.Declined.Single().Reason==reason,reason);
+        }
+        var cheapGrid=x with {VolumeGrid=x.VolumeGrid with {MarginPerUnitEur=10m}};
+        var underfunded=FirstOnly("understated-margin",cheapGrid,ex with {CurrentMinMarginEur=20m});
+        var historical=NativeFundedSession.Restore(snapshot,session.AccountBinding);
+        check(historical.DecideResearch(underfunded).PendingMarginReservedEur==20m,
+            "historical gate reproduces EUR20 reserve against EUR40 current minimum margin");
+        bool historicalReceiptRejected=false;
+        try{historical.DecideProspective(underfunded);}
+        catch(ArgumentException error){historicalReceiptRejected=error.Message=="CONFLICTING_NATIVE_RESEARCH_DECISION";}
+        check(historicalReceiptRejected,"historical receipt cannot bypass prospective entry checks");
+        Reject(underfunded,"PROSPECTIVE_CURRENT_ENTRY_MARGIN_UNDERSTATED");
+        Reject(FirstOnly("missing-entry-mark",x with {Symbol="UNKNOWN"},ex),
+            "PROSPECTIVE_CURRENT_ENTRY_QUOTE_MISSING");
+        Reject(FirstOnly("entry-fee-floor",x,ex with {EntryFeeEur=0}),
+            "PROSPECTIVE_CURRENT_ENTRY_FEE_UNDERSTATED");
+        Reject(FirstOnly("unknown-standalone",x,ex with {GrossStandaloneEur=null}),
+            "PROSPECTIVE_STANDALONE_GROSS_MISSING");
+        Reject(FirstOnly("relative-only",x,ex with {GrossStandaloneEur=.2m}),
+            "PROSPECTIVE_NO_STANDALONE_NET_AFTER_COST_AND_UNCERTAINTY");
+        Reject(FirstOnly("unsupported-scenario",x,ex with {GrossStandaloneEur=1m}),
+            "SPECIALIST_SCENARIO_NET_EXCEEDS_EVIDENCE");
         var admitted=session.DecideProspective(Decision("accepted-synthetic",new[]{ex,ey}));
         check(admitted.Selection.Allocations.Length==2 &&
             admitted.Selection.Allocations.Single(z=>z.Id==x.Id).Units==2 &&

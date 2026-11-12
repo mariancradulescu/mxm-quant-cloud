@@ -11,7 +11,13 @@ public sealed record SpecialistEuroEvidence(
     decimal? GrossAboveBenchmarkEur,decimal? PredictionUncertaintyEur,
     decimal? ObservedOneRoundTripSpreadEur,decimal? EntryFeeEur,
     decimal? ExitFeeEur,decimal? ConversionFeeEur,decimal? SlippageEur,
-    decimal? FinancingEur,decimal? CurrentMinMarginEur);
+    decimal? FinancingEur,decimal? CurrentMinMarginEur)
+{
+    // Same minimum-volume and price basis as GrossAboveBenchmarkEur.
+    [System.Text.Json.Serialization.JsonIgnore(Condition=
+        System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public decimal? GrossStandaloneEur {get;init;}
+}
 public sealed record SpecialistEuroGate(string OpportunityId,bool AdmittedForConditionalResearch,
     decimal? IncrementalLowerEur,decimal? ExtraSpreadEur,decimal? TotalFrictionEur,string Reason);
 public sealed record SpecialistEuroEstimate(OrchestrationResult NativeAllocation,
@@ -56,6 +62,10 @@ public static class ResearchSpecialistAdmission
 
     public static SpecialistEuroEstimate Estimate(ResearchOrchestrationRequest request,
         SpecialistEuroEvidence[] evidence)
+        =>Estimate(request,evidence,null);
+
+    internal static SpecialistEuroEstimate Estimate(ResearchOrchestrationRequest request,
+        SpecialistEuroEvidence[] evidence,Func<EconomicOpportunity,SpecialistEuroEvidence,string?>? checkCurrentEntry)
     {
         if(evidence.Length!=request.Opportunities.Length ||
            evidence.Select(x=>x.OpportunityId).Distinct(StringComparer.Ordinal).Count()!=evidence.Length ||
@@ -73,6 +83,21 @@ public static class ResearchSpecialistAdmission
             if(request.CommonHorizonMinutes>0 && e.HoldingMinutes!=request.CommonHorizonMinutes)
                 return gate with {AdmittedForConditionalResearch=false,
                     Reason="SPECIALIST_HORIZON_SCENARIO_MISMATCH"};
+            decimal scenarioLimit=gate.IncrementalLowerEur!.Value;
+            if(checkCurrentEntry is not null)
+            {
+                string? entryBlock=checkCurrentEntry(o,e);
+                if(entryBlock is not null)
+                    return gate with {AdmittedForConditionalResearch=false,Reason=entryBlock};
+                if(e.GrossStandaloneEur is not decimal gross)
+                    return gate with {AdmittedForConditionalResearch=false,
+                        Reason="PROSPECTIVE_STANDALONE_GROSS_MISSING"};
+                decimal standaloneLower=gross-gate.TotalFrictionEur!.Value-e.PredictionUncertaintyEur!.Value;
+                if(standaloneLower<=0)
+                    return gate with {AdmittedForConditionalResearch=false,
+                        Reason="PROSPECTIVE_NO_STANDALONE_NET_AFTER_COST_AND_UNCERTAINTY"};
+                scenarioLimit=Math.Min(scenarioLimit,standaloneLower);
+            }
             // The specialized forecast is EUR at minimum physical volume and
             // includes spread/fees/slippage/conversion/financing and uncertainty.
             // An independently supplied scenario matrix MUST NOT imply a
@@ -83,7 +108,7 @@ public static class ResearchSpecialistAdmission
             var sample=o.Scenarios.Where(s=>s.Estimation).ToArray();
             if(sample.Length<2 || sample.Average(s=>
                 o.VolumeGrid.MinimumUnits*s.NetPerUnitEur-s.FixedCostEur)>
-                gate.IncrementalLowerEur!.Value)
+                scenarioLimit)
                 return gate with {AdmittedForConditionalResearch=false,
                     Reason="SPECIALIST_SCENARIO_NET_EXCEEDS_EVIDENCE"};
             return gate;
