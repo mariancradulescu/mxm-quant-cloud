@@ -32,6 +32,9 @@ public sealed record NativeEntryCalibrationReport(
     public Dictionary<string,NativeConditionalDistribution>? ConditionalDistributions {get;init;}
     [System.Text.Json.Serialization.JsonIgnore(Condition=
         System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public Dictionary<string,Dictionary<long,NativeConditionalDistribution>>? DiscoveryWeekly {get;init;}
+    [System.Text.Json.Serialization.JsonIgnore(Condition=
+        System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public Dictionary<string,NativeIntegratedFamilyDiagnostics>? IntegratedFamilies {get;init;}
 }
 
@@ -53,6 +56,8 @@ public sealed class NativeEntryOutcomeCalibration
     private readonly bool inventory;
     private readonly bool integrated;
     private readonly bool conditional;
+    private readonly bool discovery;
+    private readonly bool fixedDiscoveryExit;
     private readonly NativeIntegratedSnapshot? restored;
     private NativeIntegratedSnapshot? frozen;
     internal string? FrozenEnvelope=>(frozen??restored)?.Seal();
@@ -61,9 +66,11 @@ public sealed class NativeEntryOutcomeCalibration
     private readonly Dictionary<string,List<(decimal Gross,decimal Central,decimal Adverse,decimal Reverse,decimal? Error)>> familyOutcomes=new();
     private readonly Dictionary<string,List<(decimal Gross,decimal Central,decimal Adverse,decimal Reverse,decimal? Error,decimal? Baseline)>> conditionalOutcomes=new();
 
-    private Dictionary<string,NativeConditionalDistribution> Distributions()=>conditionalOutcomes.ToDictionary(
-        row=>row.Key,row=>{
-            var x=row.Value;
+    private readonly Dictionary<string,Dictionary<long,List<(decimal Gross,decimal Central,decimal Adverse,decimal Reverse,decimal? Error,decimal? Baseline)>>> discoveryWeekly=new();
+
+    private static NativeConditionalDistribution Distribution(
+        List<(decimal Gross,decimal Central,decimal Adverse,decimal Reverse,decimal? Error,decimal? Baseline)> x)
+    {
             var ordered=x.Select(v=>v.Adverse).OrderBy(v=>v).ToArray();
             decimal P(decimal p)=>10000m*ordered[(int)Math.Floor((ordered.Length-1)*p)];
             var wins=x.Where(v=>v.Adverse>0).ToArray();
@@ -74,7 +81,7 @@ public sealed class NativeEntryOutcomeCalibration
                 P(.10m),P(.50m),P(.90m),wins.Length==0?null:10000m*wins.Average(v=>v.Adverse),
                 losses.Length==0?null:10000m*losses.Average(v=>v.Adverse),
                 10000m*x.Average(v=>v.Gross-v.Adverse),x.Average(v=>v.Error),x.Average(v=>v.Baseline));
-        });
+    }
     private Dictionary<string,NativeIntegratedFamilyDiagnostics> FamilyDiagnostics()=>familyOutcomes.ToDictionary(
         row=>row.Key,row=>new NativeIntegratedFamilyDiagnostics(row.Value.Count,
             10000m*row.Value.Average(x=>x.Gross),10000m*row.Value.Average(x=>x.Central),
@@ -101,13 +108,15 @@ public sealed class NativeEntryOutcomeCalibration
     private sealed record Label(long Day,long KnownAt,decimal LongGross,decimal ShortGross,
         decimal LongDownside,decimal ShortDownside);
 
-    public NativeEntryOutcomeCalibration(long boundary,bool inventory=false,bool integrated=false,NativeIntegratedSnapshot? restored=null,bool conditional=false)
+    public NativeEntryOutcomeCalibration(long boundary,bool inventory=false,bool integrated=false,NativeIntegratedSnapshot? restored=null,bool conditional=false,bool discovery=false,bool fixedDiscoveryExit=false)
     {
         if(boundary<=0)throw new ArgumentOutOfRangeException(nameof(boundary));
         this.boundary=boundary;
         this.inventory=inventory;
         this.integrated=integrated;
         this.conditional=conditional;
+        this.discovery=discovery;
+        this.fixedDiscoveryExit=fixedDiscoveryExit;
         this.restored=restored;
     }
 
@@ -135,7 +144,9 @@ public sealed class NativeEntryOutcomeCalibration
             OpportunityFunnel=integrated?opportunitiesByWeek:null,
             FrozenModel=integrated?frozen?.Seal():null,
             IntegratedFamilies=integrated?FamilyDiagnostics():null,
-            ConditionalDistributions=conditional?Distributions():null
+            ConditionalDistributions=conditional?conditionalOutcomes.ToDictionary(x=>x.Key,x=>Distribution(x.Value)):null,
+            DiscoveryWeekly=discovery?discoveryWeekly.ToDictionary(x=>x.Key,
+                x=>x.Value.ToDictionary(w=>w.Key,w=>Distribution(w.Value))):null
         };
 
     private void Count(long at,int stage)
@@ -176,9 +187,10 @@ public sealed class NativeEntryOutcomeCalibration
         long minute=at/60000L%1440;
         if(integrated)
         {
-            if(!NativeIntegratedResearch.IsSlot(at))return opportunities;
+            if(!(discovery?NativeDiscoveryResearch.IsSlot(at):NativeIntegratedResearch.IsSlot(at)))return opportunities;
             if(at>=boundary)
                 frozen??=restored??(conditional?new NativeIntegratedSnapshot(boundary,null,null) {
+                    Profile=discovery?NativeDiscoveryResearch.Profile:null,
                     Conditional=new[]{"FX/HIGH","FX/LOW","METAL/HIGH","METAL/LOW"}
                         .ToDictionary(x=>x,x=>PredictInventory(x,0,0))
                 }:new(boundary,PredictInventory("FX",0,0),PredictInventory("METAL",0,0)));
@@ -193,25 +205,26 @@ public sealed class NativeEntryOutcomeCalibration
         {
             var family=conditional?NativeConditionalResearch.Family(market.Symbol):integrated?NativeIntegratedResearch.Family(market.Symbol):
                 inventory?InventoryFamily(market.Symbol):Family(market.Symbol);
-            if(conditional && family=="METAL" && minute%60!=30)continue;
+            if(conditional && !discovery && family=="METAL" && minute%60!=30)continue;
             if(integrated && at>=boundary && family is not null && market.Contract is {MinimumUnits:>0})
                 Count(at,0);
             if(family is null || market.Contract is not {MinimumUnits:>0} contract ||
-               lastSlot.GetValueOrDefault(market.Symbol)==at/1800000L ||
+               lastSlot.GetValueOrDefault(market.Symbol)==at/(discovery?900000L:1800000L) ||
                market.M5.Length<3 || market.M15.Length<4 ||
                !NativeCausalExitResearch.TrySeed(market.M5,market.M15,at,out _))
                 continue;
             var m5=market.M5[^1];
             var m15=market.M15[^1];
             if(m5.CloseAt!=m15.CloseAt || at-m5.CloseAt>=60000L)continue;
-            lastSlot[market.Symbol]=at/1800000L;
+            lastSlot[market.Symbol]=at/(discovery?900000L:1800000L);
             var priorMove=m15.Close-market.M15[inventory?market.M15.Length-8:market.M15.Length-4].Open;
             var shortMove=m5.Close-market.M5[^3].Open;
             if(!integrated && priorMove==0m)continue;
             // Setups are a common opportunity tape for all policies. Paired
             // hypothetical labels may overlap, unlike funded positions.
             string cohort=priced?family:family+"/"+Math.Sign(priorMove)+"/"+(priorMove*shortMove>0m);
-            var conditionalFeature=conditional?NativeConditionalResearch.Observe(market):(0,null);
+            var conditionalFeature=discovery?NativeDiscoveryResearch.Observe(market,markets):
+                conditional?NativeConditionalResearch.Observe(market):(0,null);
             if(conditionalFeature.Item2 is { } selectedCohort)cohort=selectedCohort;
             int fade=conditional?conditionalFeature.Item1:integrated?NativeIntegratedResearch.Direction(market,markets):
                 inventory?-Math.Sign(priorMove):0;
@@ -335,7 +348,8 @@ public sealed class NativeEntryOutcomeCalibration
                 return leg with {GrossReturn=side*((q.Ask+q.Bid)/2m-p.EntryMid)/p.EntryMid,
                     NetReturn=net/(p.EntryMid*units*p.EntryFx),AdverseReturn=stress/(p.EntryMid*units*p.EntryFx)};
             }
-            var verdict=NativeCausalExitResearch.Assess(conditional?NativeConditionalResearch.Exit(market.Symbol):integrated?NativeIntegratedResearch.Exit(market.Symbol):Policy,at,p.EntryAt,side,leg.EntryPrice,
+            var verdict=NativeCausalExitResearch.Assess(discovery?
+                (fixedDiscoveryExit?NativeCausalExitResearch.FrozenFixed:NativeDiscoveryResearch.Exit(market.Symbol)):conditional?NativeConditionalResearch.Exit(market.Symbol):integrated?NativeIntegratedResearch.Exit(market.Symbol):Policy,at,p.EntryAt,side,leg.EntryPrice,
                 p.Seed!,leg.Extreme,q,market.M5,market.M15,integrated?NativeIntegratedResearch.Holding(market.Symbol):Holding);
             return leg with {Extreme=verdict.FavorableExtreme,ExitRequested=verdict.RequestClose?at:0};
         }
@@ -390,8 +404,17 @@ public sealed class NativeEntryOutcomeCalibration
                             conditionalOutcomes[p.Cohort]=samples=new();
                         decimal? baseline=p.Forecast?.UnconditionalPositiveGrossProbability-
                             (fade.AdverseReturn>0m?1m:0m);
-                        samples.Add((fade.GrossReturn.Value,fade.NetReturn.Value,fade.AdverseReturn,
-                            other.AdverseReturn,delta*delta,baseline*baseline));
+                        var sample=(fade.GrossReturn.Value,fade.NetReturn.Value,fade.AdverseReturn,
+                            other.AdverseReturn,delta*delta,baseline*baseline);
+                        samples.Add(sample);
+                        if(discovery)
+                        {
+                            if(!discoveryWeekly.TryGetValue(p.Cohort,out var weeks))
+                                discoveryWeekly[p.Cohort]=weeks=new();
+                            long week=(p.Start+259200000L)/604800000L*604800000L-259200000L;
+                            if(!weeks.TryGetValue(week,out var observations))weeks[week]=observations=new();
+                            observations.Add(sample);
+                        }
                     }
                 }
             }

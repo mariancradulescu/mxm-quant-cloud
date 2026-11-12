@@ -31,6 +31,7 @@ public class MxmCloud : Robot
     public string IntegratedDevelopmentModel { get; set; } = "";
     private bool _integratedResearch;
     private bool _conditionalResearch;
+    private bool _discoveryResearch;
     private bool _calibratedResearch;
     private NativeProductResearchLoop? _productResearch;
     private int _lastResearchModelTrips = -1;
@@ -73,7 +74,8 @@ public class MxmCloud : Robot
                     if(model.Boundary>=Stamp(Server.TimeInUtc))throw new System.ArgumentException("Model not yet causal");
                     _integratedResearch=_calibratedResearch=true;
                     _conditionalResearch=model.Conditional is not null;
-                    _productResearch=new NativeProductResearchLoop(_conditionalResearch?"CDE1_JOINT":"IPC2_JOINT",
+                    _discoveryResearch=model.Profile==NativeDiscoveryResearch.Profile;
+                    _productResearch=new NativeProductResearchLoop(_discoveryResearch?"DCP1_JOINT":_conditionalResearch?"CDE1_JOINT":"IPC2_JOINT",
                         model.Boundary,model);
                 }
                 catch(System.Exception)
@@ -225,7 +227,7 @@ public class MxmCloud : Robot
             _integratedResearch?NativeIntegratedResearch.Holding(name):
             _calibratedResearch?(FridayInventoryResearch?NativeEntryOutcomeCalibration.InventoryHoldingMinutes:
                 NativeEntryOutcomeCalibration.HoldingMinutes):30,false,
-            _conditionalResearch?NativeConditionalResearch.Exit(name):_integratedResearch?NativeIntegratedResearch.Exit(name):
+            _discoveryResearch?NativeDiscoveryResearch.Exit(name):_conditionalResearch?NativeConditionalResearch.Exit(name):_integratedResearch?NativeIntegratedResearch.Exit(name):
             _calibratedResearch?(FridayInventoryResearch?NativeEntryOutcomeCalibration.InventoryExitPolicy:
                 NativeEntryOutcomeCalibration.ExitPolicy):NativeCausalExitResearch.FrozenFixed);
     }
