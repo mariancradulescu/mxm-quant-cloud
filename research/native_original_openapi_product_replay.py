@@ -299,13 +299,16 @@ def collect_and_evaluate(profile=None):
                     text=True, env=env, timeout=30)
                 emit_native_failure(preflight)
                 need(preflight.returncode == 0 and out.is_file(), "NATIVE_CONTRACT_PREFLIGHT_FAILED")
+        if profile and profile.get("report_source_progress"):
+            print("IPC2 contract preflight completed", len(symbols)-1, "eligible targets", flush=True)
+        bar_chunk = profile.get("bar_chunk_hours", 6)*3600000 if profile else 6*3600000
         bars = []
         for name in symbols:
             history = {}
             windows = (profile["bar_ranges"] if event_days else ((source_start, source_end),))
             for lo, window_end in windows:
                 while lo < window_end:
-                    hi = min(lo + 6*3600000, window_end)
+                    hi = min(lo + bar_chunk, window_end)
                     res = req(m.ProtoOAGetTrendbarsReq(
                         ctidTraderAccountId=account,symbolId=ids[name],
                         period=e.M5,fromTimestamp=lo,toTimestamp=hi),
@@ -348,6 +351,8 @@ def collect_and_evaluate(profile=None):
                     need(sum(first_week<=x["OpenAt"]<decision_end for x in rows)>=minimum_week,
                          "SECOND_COMPLETE_WEEK_M5_COVERAGE_UNSATISFACTORY")
             bars.append({"Symbol":name,"M5":rows})
+            if profile and profile.get("report_source_progress"):
+                print("IPC2 completed original bar collection", name, len(rows), flush=True)
 
         def ticks(name, side, start, end):
             all_rows = []
@@ -387,9 +392,9 @@ def collect_and_evaluate(profile=None):
         sampled={name:{e.BID:{},e.ASK:{}} for name in symbols}
         quote_stamps={name:{e.BID:{},e.ASK:{}} for name in symbols}
         quote_windows=0
-        for lo in range(decision_start-120000,decision_end+1500,
-                        QUOTING_WINDOW):
-            hi=min(lo+QUOTING_WINDOW-1,decision_end+1500)
+        quote_chunk=profile.get("quote_chunk_minutes", 30)*60000 if profile else QUOTING_WINDOW
+        for lo in range(decision_start-120000,decision_end+1500,quote_chunk):
+            hi=min(lo+quote_chunk-1,decision_end+1500)
             first=decision_start+1500+max(
                 0,(lo-(decision_start+1500)+quote_interval-1)//quote_interval)*quote_interval
             clocks=[clock for clock in range(first,hi+1,quote_interval)
@@ -397,6 +402,8 @@ def collect_and_evaluate(profile=None):
                     eligible(clock)]
             if not clocks:continue
             quote_windows+=1
+            if profile and profile.get("report_source_progress") and quote_windows%40==0:
+                print("IPC2 historical quote windows started", quote_windows, flush=True)
             for name in symbols:
                 for side in (e.BID,e.ASK):
                     points=ticks(name,side,lo,hi)

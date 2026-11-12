@@ -32,6 +32,7 @@ def main():
         "contract_preflight": "--native-ipc2-contracts", "two_sided_targets": targets,
         "margin_grid_targets": targets, "optional_symbols": ("Aluminium",),
         "minimum_first_week_bars": 650, "tape_consumer": preserve, "replay_timeout": 600,
+        "bar_chunk_hours": 24, "quote_chunk_minutes": 60, "report_source_progress": True,
     })
     report["SourceCiphertextSha256"] = sha256(encrypted.read_bytes()).hexdigest()
     report["ProtocolSha256"] = sha256(Path("research/IPC2.md").read_bytes()).hexdigest()
