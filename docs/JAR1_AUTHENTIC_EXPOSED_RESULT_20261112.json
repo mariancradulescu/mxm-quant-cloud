@@ -1,0 +1,253 @@
+{
+  "Study": "JAR1_CAUSAL_PRIOR_SESSION_INDEX_OPENING_REVERSAL",
+  "Classification": "EXPOSED_NEW_DISTINCT_PREDICTIVE_MECHANISM_ONLY",
+  "FrozenProtocolCommit": "a0133ba9d7b1e256279175aee723b589e52749e4",
+  "SourceFile": "docs/AIP1_AUTHENTIC_RESULT.json",
+  "OriginalPublicSourceSha256": "ed23b6d7ce289ce1eeede6626ef8d9bce09d2cfbdb59fd6fe4b4493a75a4bd3c",
+  "OriginalPepperstoneRunId": 41735441128,
+  "OriginalSourcePublicArtifactId": 13279217153,
+  "OriginalSelectionWeeks": 13,
+  "SourceScheduledClocks": 287,
+  "CausalSignalClocks": 274,
+  "CompleteConditionalOutcomes": 274,
+  "MissingOrInvalidCurrentOutcomes": 0,
+  "SameSymbolPriorOutcomeMatured": true,
+  "MaximumAgeHours": 96,
+  "Signal": "negative sign of latest previous completed same-symbol 120m index opening return",
+  "ClosedAIP1OrCOL1Retuned": false,
+  "AIP1FittedForecastUsed": false,
+  "BrokerRequests": 0,
+  "LiveDemoOrders": 0,
+  "CloudActivated": false,
+  "Rejections": {
+    "NO_PRIOR_SELECTION_EVENT": 6,
+    "LATEST_PRIOR_SOURCE_ZERO_MOVE": 1,
+    "LATEST_PRIOR_SOURCE_TOO_OLD": 6
+  },
+  "SourceCoverageByInstrument": {
+    "AUS200": {
+      "signalClocks": 52,
+      "pricedClocks": 52
+    },
+    "GER40": {
+      "signalClocks": 54,
+      "pricedClocks": 54
+    },
+    "JPN225": {
+      "signalClocks": 64,
+      "pricedClocks": 64
+    },
+    "NAS100": {
+      "signalClocks": 32,
+      "pricedClocks": 32
+    },
+    "UK100": {
+      "signalClocks": 41,
+      "pricedClocks": 41
+    },
+    "US500": {
+      "signalClocks": 31,
+      "pricedClocks": 31
+    }
+  },
+  "MeanAdverseNetProxyBpsByPolicy": {
+    "JAR1_Reversal": -3.887794360683591,
+    "MatchedPriorContinuation": -10.92038818079582,
+    "MatchedLong": -6.369517017156749,
+    "MatchedShort": -8.43866552432266,
+    "Cash": 0
+  },
+  "EarlySixWeeksMeanAdverseBps": -7.1078102318635885,
+  "LateSevenWeeksMeanAdverseBps": -1.1277807568150213,
+  "FullCalendarHac3AdverseVsCash": {
+    "meanBps": -3.887794360683591,
+    "hac3SeBps": 3.6021515160414572,
+    "multiplicityAdjustedLowerBps": -10.947881598981201
+  },
+  "FullCalendarHac3AdverseVersusFrequencyMatchedLong": {
+    "meanBps": 2.481722656473159,
+    "hac3SeBps": 4.57899072420173,
+    "multiplicityAdjustedLowerBps": -6.492934248505212
+  },
+  "WeeksWithSignalClocksAtLeast21": 4,
+  "FinancedCompletedRoundTrips": 0,
+  "Weekly": [
+    {
+      "Index": 0,
+      "SourceClocks": 20,
+      "CausalSignals": 15,
+      "PricedOutcomes": 15,
+      "EqualEventMeanAdverseBps": {
+        "JAR1_Reversal": -3.7452412227554612,
+        "MatchedPriorContinuation": -11.030782879232454,
+        "MatchedLong": 8.183666660130605,
+        "MatchedShort": -22.95969076211852,
+        "Cash": 0
+      }
+    },
+    {
+      "Index": 1,
+      "SourceClocks": 20,
+      "CausalSignals": 20,
+      "PricedOutcomes": 20,
+      "EqualEventMeanAdverseBps": {
+        "JAR1_Reversal": -19.979109098491648,
+        "MatchedPriorContinuation": 5.578180536221066,
+        "MatchedLong": -8.535733588322485,
+        "MatchedShort": -5.865194973948101,
+        "Cash": 0
+      }
+    },
+    {
+      "Index": 2,
+      "SourceClocks": 29,
+      "CausalSignals": 27,
+      "PricedOutcomes": 27,
+      "EqualEventMeanAdverseBps": {
+        "JAR1_Reversal": -19.800285667425925,
+        "MatchedPriorContinuation": 5.992567734413675,
+        "MatchedLong": -4.957339054332817,
+        "MatchedShort": -8.85037887867944,
+        "Cash": 0
+      }
+    },
+    {
+      "Index": 3,
+      "SourceClocks": 17,
+      "CausalSignals": 17,
+      "PricedOutcomes": 17,
+      "EqualEventMeanAdverseBps": {
+        "JAR1_Reversal": -7.516062331098099,
+        "MatchedPriorContinuation": -8.48313121787133,
+        "MatchedLong": 4.006928547241039,
+        "MatchedShort": -20.006122096210472,
+        "Cash": 0
+      }
+    },
+    {
+      "Index": 4,
+      "SourceClocks": 15,
+      "CausalSignals": 15,
+      "PricedOutcomes": 15,
+      "EqualEventMeanAdverseBps": {
+        "JAR1_Reversal": 14.00906031397968,
+        "MatchedPriorContinuation": -31.042580784920617,
+        "MatchedLong": -2.2684456619113833,
+        "MatchedShort": -14.765074809029553,
+        "Cash": 0
+      }
+    },
+    {
+      "Index": 5,
+      "SourceClocks": 22,
+      "CausalSignals": 19,
+      "PricedOutcomes": 19,
+      "EqualEventMeanAdverseBps": {
+        "JAR1_Reversal": -5.615223385390084,
+        "MatchedPriorContinuation": -6.27571527923497,
+        "MatchedLong": -7.0905719885473255,
+        "MatchedShort": -4.800366676077727,
+        "Cash": 0
+      }
+    },
+    {
+      "Index": 6,
+      "SourceClocks": 25,
+      "CausalSignals": 25,
+      "PricedOutcomes": 25,
+      "EqualEventMeanAdverseBps": {
+        "JAR1_Reversal": 9.70672805428093,
+        "MatchedPriorContinuation": -21.259013199998403,
+        "MatchedLong": -0.9700778745493586,
+        "MatchedShort": -10.582207271168109,
+        "Cash": 0
+      }
+    },
+    {
+      "Index": 7,
+      "SourceClocks": 19,
+      "CausalSignals": 18,
+      "PricedOutcomes": 18,
+      "EqualEventMeanAdverseBps": {
+        "JAR1_Reversal": 17.90531033352536,
+        "MatchedPriorContinuation": -33.50120257665885,
+        "MatchedLong": -7.8764781040159715,
+        "MatchedShort": -7.71941413911752,
+        "Cash": 0
+      }
+    },
+    {
+      "Index": 8,
+      "SourceClocks": 20,
+      "CausalSignals": 20,
+      "PricedOutcomes": 20,
+      "EqualEventMeanAdverseBps": {
+        "JAR1_Reversal": -2.5906329922459177,
+        "MatchedPriorContinuation": -13.923548295750802,
+        "MatchedLong": 2.3781461132536137,
+        "MatchedShort": -18.892327401250334,
+        "Cash": 0
+      }
+    },
+    {
+      "Index": 9,
+      "SourceClocks": 20,
+      "CausalSignals": 20,
+      "PricedOutcomes": 20,
+      "EqualEventMeanAdverseBps": {
+        "JAR1_Reversal": -25.732645622986922,
+        "MatchedPriorContinuation": 9.218464334990202,
+        "MatchedLong": -24.68301914099367,
+        "MatchedShort": 8.168837852996955,
+        "Cash": 0
+      }
+    },
+    {
+      "Index": 10,
+      "SourceClocks": 20,
+      "CausalSignals": 20,
+      "PricedOutcomes": 20,
+      "EqualEventMeanAdverseBps": {
+        "JAR1_Reversal": -2.884326900826167,
+        "MatchedPriorContinuation": -13.629854387170548,
+        "MatchedLong": -26.9304520919895,
+        "MatchedShort": 10.416270803992782,
+        "Cash": 0
+      }
+    },
+    {
+      "Index": 11,
+      "SourceClocks": 30,
+      "CausalSignals": 28,
+      "PricedOutcomes": 28,
+      "EqualEventMeanAdverseBps": {
+        "JAR1_Reversal": -10.61501918427111,
+        "MatchedPriorContinuation": -3.5356079169217294,
+        "MatchedLong": 8.743836298201328,
+        "MatchedShort": -22.89446339939417,
+        "Cash": 0
+      }
+    },
+    {
+      "Index": 12,
+      "SourceClocks": 30,
+      "CausalSignals": 30,
+      "PricedOutcomes": 30,
+      "EqualEventMeanAdverseBps": {
+        "JAR1_Reversal": 6.316121014818679,
+        "MatchedPriorContinuation": -20.072822418210876,
+        "MatchedLong": -22.804181337201808,
+        "MatchedShort": 9.04747993380962,
+        "Cash": 0
+      }
+    }
+  ],
+  "ExposureSelectionCalendarBias": true,
+  "HistoricFillCostAndFinancingCertified": false,
+  "NativeFundedEUR300Executed": false,
+  "IndependentConfirmation": false,
+  "ContinuousEquityDrawdownCertified": false,
+  "ActualSystemicHard21Demonstrated": false,
+  "Verdict": "REJECT_EXACT_RULE_OR_INSUFFICIENT_SUPPORT",
+  "Notes": "13 exposed selection weeks; negative costed adverse proxy in both halves; no qualified alpha or EUR-denominated portfolio result."
+}
