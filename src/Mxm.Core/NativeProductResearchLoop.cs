@@ -1491,7 +1491,12 @@ public sealed class NativeProductResearchLoop
                 decimal costs=2m*(spread+commission+slippage+fundingDebit)+conversionStress;
                 decimal benchmarkGross=(calibratedForecast?.MeanBenchmarkGrossReturn??0m)*mid*units*fx;
                 adverse=projectedGross-costs;
-                perUnit=directionalControl?.001m:(Math.Min(projectedGross,projectedGross-benchmarkGross)-costs-uncertainty)/units;
+                // Round conservatively so EUR -> physical units -> EUR cannot
+                // cross the evidence ceiling through decimal operation order.
+                decimal standalone=projectedGross-costs-uncertainty;
+                decimal incremental=projectedGross-benchmarkGross-costs-uncertainty;
+                perUnit=directionalControl?.001m:
+                    Math.Floor(1000000000m*Math.Min(standalone,incremental)/units)/1000000000m;
                 decimal downside=Math.Max(1.5m*decisionSeed.AtrQuote,
                     (calibratedForecast?.DownsideReturn??0m)*mid);
                 var scenarios=Enumerable.Range(0,8).Select(i=>new OpportunityScenario(
