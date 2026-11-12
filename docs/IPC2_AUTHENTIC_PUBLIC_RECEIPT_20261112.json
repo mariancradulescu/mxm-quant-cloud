@@ -1,0 +1,639 @@
+{
+  "Study": "IPC2",
+  "SourceSha256": "fd7986487be347376aa1e139915f90786155d2b1b6de1787382aa7d8666faeaf",
+  "EvaluationBoundaryUtcMs": 1786924800000,
+  "NominalSlotsPerWeek": 80,
+  "ProbabilityTarget": "POSITIVE_ADVERSE_NET",
+  "Policies": {
+    "JOINT": {
+      "ForecastsGenerated": 261,
+      "ModelIntentCount": 0,
+      "CompletedModelRoundTrips": 0,
+      "ModelClosedGrossEur": 0,
+      "ModelClosedCentralNetEur": 0,
+      "ModelClosedAdverseNetEur": 0,
+      "RejectionReasons": {
+        "NO_EUR_EDGE_AFTER_COST_AND_UNCERTAINTY": 261
+      },
+      "ClosedNetByMechanismEur": {},
+      "MaximumObservedMarginEur": 0,
+      "MaximumSampledCentralDrawdown": 0,
+      "OpenModelPositions": 0,
+      "PendingModelRequests": 0,
+      "AdverseFailureKind": "",
+      "MissingCentralMarks": 0,
+      "MissingAdverseMarks": 0,
+      "MaximumSampledAdverseDrawdown": 0,
+      "PeakConcurrentClosedPositions": 0,
+      "ReservationsByWeek": {},
+      "Weeks": {
+        "2026-W34": 0,
+        "2026-W35": 0,
+        "2026-W36": 0,
+        "2026-W37": 0,
+        "2026-W38": 0,
+        "2026-W39": 0
+      },
+      "Diagnostics": {
+        "TrainingPairs": 257,
+        "EvaluationPairs": 261,
+        "MissingPairs": 2,
+        "ScoredForecasts": 261,
+        "MeanRealizedGrossBps": -0.44442807348101,
+        "MeanRealizedNetBps": -7.44712969471081,
+        "DirectionBrier": 0.18204679371936588,
+        "NeutralBrier": 0.25,
+        "UnconditionalBrier": 0.25,
+        "PredictedPositiveGross": 0,
+        "RealizedPositiveGross": 65,
+        "FrozenTrainingSha256": "91c6f094a41188b6e5895cfba653126ca434144425de61c115202007ddce14d6",
+        "Inventory": {
+          "Pairs": 261,
+          "FadeGrossBps": -0.44442807348101,
+          "FadeCentralNetBps": -7.44712969471081,
+          "FadeAdverseNetBps": -14.467256894648617,
+          "ContinuationAdverseNetBps": -13.978243208178455
+        },
+        "OpportunityFunnel": {
+          "2026-W34": {
+            "QuoteComplete": 80,
+            "FeatureEligible": 32,
+            "PredictionReady": 32,
+            "NetSupported": 0
+          },
+          "2026-W35": {
+            "QuoteComplete": 80,
+            "FeatureEligible": 48,
+            "PredictionReady": 48,
+            "NetSupported": 0
+          },
+          "2026-W36": {
+            "QuoteComplete": 76,
+            "FeatureEligible": 46,
+            "PredictionReady": 46,
+            "NetSupported": 0
+          },
+          "2026-W37": {
+            "QuoteComplete": 80,
+            "FeatureEligible": 43,
+            "PredictionReady": 43,
+            "NetSupported": 0
+          },
+          "2026-W38": {
+            "QuoteComplete": 80,
+            "FeatureEligible": 40,
+            "PredictionReady": 40,
+            "NetSupported": 0
+          },
+          "2026-W39": {
+            "QuoteComplete": 80,
+            "FeatureEligible": 52,
+            "PredictionReady": 52,
+            "NetSupported": 0
+          }
+        },
+        "FrozenModel": "F444F64307F51D4668951C3D43B0986F007907B34B683F73CD07FED1D66570C9.eyJCb3VuZGFyeSI6MTc4NjkyNDgwMDAwMCwiRngiOnsiRmVhdHVyZXNLbm93bkF0IjowLCJPdXRjb21lc0tub3duVGhyb3VnaCI6MTc4NjcyMTEwMTUwMCwiRGlyZWN0aW9uIjowLCJUcmFpbmluZ0RheXMiOjYsIlBvc2l0aXZlR3Jvc3NQcm9iYWJpbGl0eSI6MC4zMzgxNjIzNDgyNzI2NDIzOTAyODk0NDkxMTMsIlVuY29uZGl0aW9uYWxQb3NpdGl2ZUdyb3NzUHJvYmFiaWxpdHkiOjAuNSwiTWVhbkdyb3NzUmV0dXJuIjowLjAwMDAyNzUzMDc5Nzc0MjQ1Njc5NTM5NjEyNTgsIk1lYW5CZW5jaG1hcmtHcm9zc1JldHVybiI6MCwiTWVhblVuY2VydGFpbnR5UmV0dXJuIjowLjAwMDA4MDcyMjgzOTgxNTgyOSwiRG93bnNpZGVSZXR1cm4iOjAuMDAwNDg4OTQ2MTE4NDMwMjI0ODY0NzU3OTI4OCwiU3RhbmRhbG9uZUFkdmVyc2VOZXRSZXR1cm4iOi0wLjAwMDI3NTk0NzkwODMwMDA0MTYxMTc1NzAxMjMsIkluY3JlbWVudGFsQWR2ZXJzZU5ldFJldHVybiI6MC4wMDAwNTE1NjA1MzE3NTU5NTMwODMxNDMxNzUxLCJNZWFuQWR2ZXJzZUZyaWN0aW9uUmV0dXJuIjowLjAwMDMwMzQ3ODcwNjA0MjQ5ODQwNzE1MzEzODF9LCJNZXRhbCI6eyJGZWF0dXJlc0tub3duQXQiOjAsIk91dGNvbWVzS25vd25UaHJvdWdoIjoxNzg2NzE5MDAxNTAwLCJEaXJlY3Rpb24iOjAsIlRyYWluaW5nRGF5cyI6NiwiUG9zaXRpdmVHcm9zc1Byb2JhYmlsaXR5IjowLjEzODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODksIlVuY29uZGl0aW9uYWxQb3NpdGl2ZUdyb3NzUHJvYmFiaWxpdHkiOjAuNSwiTWVhbkdyb3NzUmV0dXJuIjotMC4wMDAyNjYyNDc3MzIzODMwNjE1MjI1OTc2MjYxLCJNZWFuQmVuY2htYXJrR3Jvc3NSZXR1cm4iOjAsIk1lYW5VbmNlcnRhaW50eVJldHVybiI6MC4wMDIyMzcwMzg2MzcxNzMwNzQsIkRvd25zaWRlUmV0dXJuIjowLjAwMjk4NDgyNzU3MDUyMTEyOTI0Nzc0MDM5OTQsIlN0YW5kYWxvbmVBZHZlcnNlTmV0UmV0dXJuIjotMC4wMDQyMDg0NTcwMDQ0NDI5OTcwMzUxNzgxMjQ4LCJJbmNyZW1lbnRhbEFkdmVyc2VOZXRSZXR1cm4iOi0wLjAwMDM2NjA2MTEyNDcyMzQwNjIwOTg0ODYwODYsIk1lYW5BZHZlcnNlRnJpY3Rpb25SZXR1cm4iOjAuMDAzOTQyMjA5MjcyMDU5OTM1NTEyNTgwNDk4OH19",
+        "IntegratedFamilies": {
+          "FX": {
+            "Pairs": 192,
+            "GrossBps": -0.4899597966689032,
+            "CentralNetBps": -2.006665209284676,
+            "AdverseNetBps": -3.530112676364654,
+            "ReverseAdverseNetBps": -3.2206022926291915,
+            "PositiveAdversePairs": 57,
+            "Brier": 0.21044487950238647
+          },
+          "METAL": {
+            "Pairs": 69,
+            "GrossBps": -0.31773110461035053,
+            "CentralNetBps": -22.5858134802444,
+            "AdverseNetBps": -44.90104950204747,
+            "ReverseAdverseNetBps": -43.91254836448945,
+            "PositiveAdversePairs": 8,
+            "Brier": 0.10302603327965647
+          }
+        }
+      }
+    },
+    "FX": {
+      "ForecastsGenerated": 192,
+      "ModelIntentCount": 0,
+      "CompletedModelRoundTrips": 0,
+      "ModelClosedGrossEur": 0,
+      "ModelClosedCentralNetEur": 0,
+      "ModelClosedAdverseNetEur": 0,
+      "RejectionReasons": {
+        "NO_EUR_EDGE_AFTER_COST_AND_UNCERTAINTY": 192
+      },
+      "ClosedNetByMechanismEur": {},
+      "MaximumObservedMarginEur": 0,
+      "MaximumSampledCentralDrawdown": 0,
+      "OpenModelPositions": 0,
+      "PendingModelRequests": 0,
+      "AdverseFailureKind": "",
+      "MissingCentralMarks": 0,
+      "MissingAdverseMarks": 0,
+      "MaximumSampledAdverseDrawdown": 0,
+      "PeakConcurrentClosedPositions": 0,
+      "ReservationsByWeek": {},
+      "Weeks": {
+        "2026-W34": 0,
+        "2026-W35": 0,
+        "2026-W36": 0,
+        "2026-W37": 0,
+        "2026-W38": 0,
+        "2026-W39": 0
+      },
+      "Diagnostics": {
+        "TrainingPairs": 257,
+        "EvaluationPairs": 261,
+        "MissingPairs": 2,
+        "ScoredForecasts": 261,
+        "MeanRealizedGrossBps": -0.44442807348101,
+        "MeanRealizedNetBps": -7.44712969471081,
+        "DirectionBrier": 0.18204679371936588,
+        "NeutralBrier": 0.25,
+        "UnconditionalBrier": 0.25,
+        "PredictedPositiveGross": 0,
+        "RealizedPositiveGross": 65,
+        "FrozenTrainingSha256": "91c6f094a41188b6e5895cfba653126ca434144425de61c115202007ddce14d6",
+        "Inventory": {
+          "Pairs": 261,
+          "FadeGrossBps": -0.44442807348101,
+          "FadeCentralNetBps": -7.44712969471081,
+          "FadeAdverseNetBps": -14.467256894648617,
+          "ContinuationAdverseNetBps": -13.978243208178455
+        },
+        "OpportunityFunnel": {
+          "2026-W34": {
+            "QuoteComplete": 80,
+            "FeatureEligible": 32,
+            "PredictionReady": 32,
+            "NetSupported": 0
+          },
+          "2026-W35": {
+            "QuoteComplete": 80,
+            "FeatureEligible": 48,
+            "PredictionReady": 48,
+            "NetSupported": 0
+          },
+          "2026-W36": {
+            "QuoteComplete": 76,
+            "FeatureEligible": 46,
+            "PredictionReady": 46,
+            "NetSupported": 0
+          },
+          "2026-W37": {
+            "QuoteComplete": 80,
+            "FeatureEligible": 43,
+            "PredictionReady": 43,
+            "NetSupported": 0
+          },
+          "2026-W38": {
+            "QuoteComplete": 80,
+            "FeatureEligible": 40,
+            "PredictionReady": 40,
+            "NetSupported": 0
+          },
+          "2026-W39": {
+            "QuoteComplete": 80,
+            "FeatureEligible": 52,
+            "PredictionReady": 52,
+            "NetSupported": 0
+          }
+        },
+        "FrozenModel": "F444F64307F51D4668951C3D43B0986F007907B34B683F73CD07FED1D66570C9.eyJCb3VuZGFyeSI6MTc4NjkyNDgwMDAwMCwiRngiOnsiRmVhdHVyZXNLbm93bkF0IjowLCJPdXRjb21lc0tub3duVGhyb3VnaCI6MTc4NjcyMTEwMTUwMCwiRGlyZWN0aW9uIjowLCJUcmFpbmluZ0RheXMiOjYsIlBvc2l0aXZlR3Jvc3NQcm9iYWJpbGl0eSI6MC4zMzgxNjIzNDgyNzI2NDIzOTAyODk0NDkxMTMsIlVuY29uZGl0aW9uYWxQb3NpdGl2ZUdyb3NzUHJvYmFiaWxpdHkiOjAuNSwiTWVhbkdyb3NzUmV0dXJuIjowLjAwMDAyNzUzMDc5Nzc0MjQ1Njc5NTM5NjEyNTgsIk1lYW5CZW5jaG1hcmtHcm9zc1JldHVybiI6MCwiTWVhblVuY2VydGFpbnR5UmV0dXJuIjowLjAwMDA4MDcyMjgzOTgxNTgyOSwiRG93bnNpZGVSZXR1cm4iOjAuMDAwNDg4OTQ2MTE4NDMwMjI0ODY0NzU3OTI4OCwiU3RhbmRhbG9uZUFkdmVyc2VOZXRSZXR1cm4iOi0wLjAwMDI3NTk0NzkwODMwMDA0MTYxMTc1NzAxMjMsIkluY3JlbWVudGFsQWR2ZXJzZU5ldFJldHVybiI6MC4wMDAwNTE1NjA1MzE3NTU5NTMwODMxNDMxNzUxLCJNZWFuQWR2ZXJzZUZyaWN0aW9uUmV0dXJuIjowLjAwMDMwMzQ3ODcwNjA0MjQ5ODQwNzE1MzEzODF9LCJNZXRhbCI6eyJGZWF0dXJlc0tub3duQXQiOjAsIk91dGNvbWVzS25vd25UaHJvdWdoIjoxNzg2NzE5MDAxNTAwLCJEaXJlY3Rpb24iOjAsIlRyYWluaW5nRGF5cyI6NiwiUG9zaXRpdmVHcm9zc1Byb2JhYmlsaXR5IjowLjEzODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODksIlVuY29uZGl0aW9uYWxQb3NpdGl2ZUdyb3NzUHJvYmFiaWxpdHkiOjAuNSwiTWVhbkdyb3NzUmV0dXJuIjotMC4wMDAyNjYyNDc3MzIzODMwNjE1MjI1OTc2MjYxLCJNZWFuQmVuY2htYXJrR3Jvc3NSZXR1cm4iOjAsIk1lYW5VbmNlcnRhaW50eVJldHVybiI6MC4wMDIyMzcwMzg2MzcxNzMwNzQsIkRvd25zaWRlUmV0dXJuIjowLjAwMjk4NDgyNzU3MDUyMTEyOTI0Nzc0MDM5OTQsIlN0YW5kYWxvbmVBZHZlcnNlTmV0UmV0dXJuIjotMC4wMDQyMDg0NTcwMDQ0NDI5OTcwMzUxNzgxMjQ4LCJJbmNyZW1lbnRhbEFkdmVyc2VOZXRSZXR1cm4iOi0wLjAwMDM2NjA2MTEyNDcyMzQwNjIwOTg0ODYwODYsIk1lYW5BZHZlcnNlRnJpY3Rpb25SZXR1cm4iOjAuMDAzOTQyMjA5MjcyMDU5OTM1NTEyNTgwNDk4OH19",
+        "IntegratedFamilies": {
+          "FX": {
+            "Pairs": 192,
+            "GrossBps": -0.4899597966689032,
+            "CentralNetBps": -2.006665209284676,
+            "AdverseNetBps": -3.530112676364654,
+            "ReverseAdverseNetBps": -3.2206022926291915,
+            "PositiveAdversePairs": 57,
+            "Brier": 0.21044487950238647
+          },
+          "METAL": {
+            "Pairs": 69,
+            "GrossBps": -0.31773110461035053,
+            "CentralNetBps": -22.5858134802444,
+            "AdverseNetBps": -44.90104950204747,
+            "ReverseAdverseNetBps": -43.91254836448945,
+            "PositiveAdversePairs": 8,
+            "Brier": 0.10302603327965647
+          }
+        }
+      }
+    },
+    "METAL": {
+      "ForecastsGenerated": 69,
+      "ModelIntentCount": 0,
+      "CompletedModelRoundTrips": 0,
+      "ModelClosedGrossEur": 0,
+      "ModelClosedCentralNetEur": 0,
+      "ModelClosedAdverseNetEur": 0,
+      "RejectionReasons": {
+        "NO_EUR_EDGE_AFTER_COST_AND_UNCERTAINTY": 69
+      },
+      "ClosedNetByMechanismEur": {},
+      "MaximumObservedMarginEur": 0,
+      "MaximumSampledCentralDrawdown": 0,
+      "OpenModelPositions": 0,
+      "PendingModelRequests": 0,
+      "AdverseFailureKind": "",
+      "MissingCentralMarks": 0,
+      "MissingAdverseMarks": 0,
+      "MaximumSampledAdverseDrawdown": 0,
+      "PeakConcurrentClosedPositions": 0,
+      "ReservationsByWeek": {},
+      "Weeks": {
+        "2026-W34": 0,
+        "2026-W35": 0,
+        "2026-W36": 0,
+        "2026-W37": 0,
+        "2026-W38": 0,
+        "2026-W39": 0
+      },
+      "Diagnostics": {
+        "TrainingPairs": 257,
+        "EvaluationPairs": 261,
+        "MissingPairs": 2,
+        "ScoredForecasts": 261,
+        "MeanRealizedGrossBps": -0.44442807348101,
+        "MeanRealizedNetBps": -7.44712969471081,
+        "DirectionBrier": 0.18204679371936588,
+        "NeutralBrier": 0.25,
+        "UnconditionalBrier": 0.25,
+        "PredictedPositiveGross": 0,
+        "RealizedPositiveGross": 65,
+        "FrozenTrainingSha256": "91c6f094a41188b6e5895cfba653126ca434144425de61c115202007ddce14d6",
+        "Inventory": {
+          "Pairs": 261,
+          "FadeGrossBps": -0.44442807348101,
+          "FadeCentralNetBps": -7.44712969471081,
+          "FadeAdverseNetBps": -14.467256894648617,
+          "ContinuationAdverseNetBps": -13.978243208178455
+        },
+        "OpportunityFunnel": {
+          "2026-W34": {
+            "QuoteComplete": 80,
+            "FeatureEligible": 32,
+            "PredictionReady": 32,
+            "NetSupported": 0
+          },
+          "2026-W35": {
+            "QuoteComplete": 80,
+            "FeatureEligible": 48,
+            "PredictionReady": 48,
+            "NetSupported": 0
+          },
+          "2026-W36": {
+            "QuoteComplete": 76,
+            "FeatureEligible": 46,
+            "PredictionReady": 46,
+            "NetSupported": 0
+          },
+          "2026-W37": {
+            "QuoteComplete": 80,
+            "FeatureEligible": 43,
+            "PredictionReady": 43,
+            "NetSupported": 0
+          },
+          "2026-W38": {
+            "QuoteComplete": 80,
+            "FeatureEligible": 40,
+            "PredictionReady": 40,
+            "NetSupported": 0
+          },
+          "2026-W39": {
+            "QuoteComplete": 80,
+            "FeatureEligible": 52,
+            "PredictionReady": 52,
+            "NetSupported": 0
+          }
+        },
+        "FrozenModel": "F444F64307F51D4668951C3D43B0986F007907B34B683F73CD07FED1D66570C9.eyJCb3VuZGFyeSI6MTc4NjkyNDgwMDAwMCwiRngiOnsiRmVhdHVyZXNLbm93bkF0IjowLCJPdXRjb21lc0tub3duVGhyb3VnaCI6MTc4NjcyMTEwMTUwMCwiRGlyZWN0aW9uIjowLCJUcmFpbmluZ0RheXMiOjYsIlBvc2l0aXZlR3Jvc3NQcm9iYWJpbGl0eSI6MC4zMzgxNjIzNDgyNzI2NDIzOTAyODk0NDkxMTMsIlVuY29uZGl0aW9uYWxQb3NpdGl2ZUdyb3NzUHJvYmFiaWxpdHkiOjAuNSwiTWVhbkdyb3NzUmV0dXJuIjowLjAwMDAyNzUzMDc5Nzc0MjQ1Njc5NTM5NjEyNTgsIk1lYW5CZW5jaG1hcmtHcm9zc1JldHVybiI6MCwiTWVhblVuY2VydGFpbnR5UmV0dXJuIjowLjAwMDA4MDcyMjgzOTgxNTgyOSwiRG93bnNpZGVSZXR1cm4iOjAuMDAwNDg4OTQ2MTE4NDMwMjI0ODY0NzU3OTI4OCwiU3RhbmRhbG9uZUFkdmVyc2VOZXRSZXR1cm4iOi0wLjAwMDI3NTk0NzkwODMwMDA0MTYxMTc1NzAxMjMsIkluY3JlbWVudGFsQWR2ZXJzZU5ldFJldHVybiI6MC4wMDAwNTE1NjA1MzE3NTU5NTMwODMxNDMxNzUxLCJNZWFuQWR2ZXJzZUZyaWN0aW9uUmV0dXJuIjowLjAwMDMwMzQ3ODcwNjA0MjQ5ODQwNzE1MzEzODF9LCJNZXRhbCI6eyJGZWF0dXJlc0tub3duQXQiOjAsIk91dGNvbWVzS25vd25UaHJvdWdoIjoxNzg2NzE5MDAxNTAwLCJEaXJlY3Rpb24iOjAsIlRyYWluaW5nRGF5cyI6NiwiUG9zaXRpdmVHcm9zc1Byb2JhYmlsaXR5IjowLjEzODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODksIlVuY29uZGl0aW9uYWxQb3NpdGl2ZUdyb3NzUHJvYmFiaWxpdHkiOjAuNSwiTWVhbkdyb3NzUmV0dXJuIjotMC4wMDAyNjYyNDc3MzIzODMwNjE1MjI1OTc2MjYxLCJNZWFuQmVuY2htYXJrR3Jvc3NSZXR1cm4iOjAsIk1lYW5VbmNlcnRhaW50eVJldHVybiI6MC4wMDIyMzcwMzg2MzcxNzMwNzQsIkRvd25zaWRlUmV0dXJuIjowLjAwMjk4NDgyNzU3MDUyMTEyOTI0Nzc0MDM5OTQsIlN0YW5kYWxvbmVBZHZlcnNlTmV0UmV0dXJuIjotMC4wMDQyMDg0NTcwMDQ0NDI5OTcwMzUxNzgxMjQ4LCJJbmNyZW1lbnRhbEFkdmVyc2VOZXRSZXR1cm4iOi0wLjAwMDM2NjA2MTEyNDcyMzQwNjIwOTg0ODYwODYsIk1lYW5BZHZlcnNlRnJpY3Rpb25SZXR1cm4iOjAuMDAzOTQyMjA5MjcyMDU5OTM1NTEyNTgwNDk4OH19",
+        "IntegratedFamilies": {
+          "FX": {
+            "Pairs": 192,
+            "GrossBps": -0.4899597966689032,
+            "CentralNetBps": -2.006665209284676,
+            "AdverseNetBps": -3.530112676364654,
+            "ReverseAdverseNetBps": -3.2206022926291915,
+            "PositiveAdversePairs": 57,
+            "Brier": 0.21044487950238647
+          },
+          "METAL": {
+            "Pairs": 69,
+            "GrossBps": -0.31773110461035053,
+            "CentralNetBps": -22.5858134802444,
+            "AdverseNetBps": -44.90104950204747,
+            "ReverseAdverseNetBps": -43.91254836448945,
+            "PositiveAdversePairs": 8,
+            "Brier": 0.10302603327965647
+          }
+        }
+      }
+    },
+    "LONG": {
+      "ForecastsGenerated": 261,
+      "ModelIntentCount": 165,
+      "CompletedModelRoundTrips": 165,
+      "ModelClosedGrossEur": -13.61161383822285,
+      "ModelClosedCentralNetEur": -27.71978225863863,
+      "ModelClosedAdverseNetEur": -41.88249373546974,
+      "RejectionReasons": {
+        "CONDITIONAL_ESTIMATE_NO_POSITIVE_UNCERTAINTY_ADJUSTED_INCREMENTAL_UTILITY": 5,
+        "CONDITIONAL_ESTIMATE_BROKER_MINIMUM_NOT_FINANCED": 30,
+        "SINGLE_POSITION_PER_SYMBOL": 61
+      },
+      "ClosedNetByMechanismEur": {
+        "IPC2_FX": -23.365601763794633,
+        "IPC2_METAL": -4.354180494844
+      },
+      "MaximumObservedMarginEur": 67.255,
+      "MaximumSampledCentralDrawdown": 0.10360776136471139,
+      "OpenModelPositions": 0,
+      "PendingModelRequests": 0,
+      "AdverseFailureKind": "",
+      "MissingCentralMarks": 0,
+      "MissingAdverseMarks": 0,
+      "MaximumSampledAdverseDrawdown": 0.1467974786683151,
+      "PeakConcurrentClosedPositions": 3,
+      "ReservationsByWeek": {
+        "2026-W34": 19,
+        "2026-W35": 32,
+        "2026-W36": 28,
+        "2026-W37": 29,
+        "2026-W38": 24,
+        "2026-W39": 33
+      },
+      "Weeks": {
+        "2026-W34": 19,
+        "2026-W35": 32,
+        "2026-W36": 28,
+        "2026-W37": 29,
+        "2026-W38": 24,
+        "2026-W39": 33
+      },
+      "Diagnostics": null
+    },
+    "SHORT": {
+      "ForecastsGenerated": 261,
+      "ModelIntentCount": 157,
+      "CompletedModelRoundTrips": 157,
+      "ModelClosedGrossEur": 4.958425231141825,
+      "ModelClosedCentralNetEur": -8.488174333219632,
+      "ModelClosedAdverseNetEur": -21.9847963003344,
+      "RejectionReasons": {
+        "CONDITIONAL_ESTIMATE_NO_POSITIVE_UNCERTAINTY_ADJUSTED_INCREMENTAL_UTILITY": 6,
+        "CONDITIONAL_ESTIMATE_BROKER_MINIMUM_NOT_FINANCED": 29,
+        "SINGLE_POSITION_PER_SYMBOL": 69
+      },
+      "ClosedNetByMechanismEur": {
+        "IPC2_FX": -6.767822896711061,
+        "IPC2_METAL": -1.7203514365085713
+      },
+      "MaximumObservedMarginEur": 67.255,
+      "MaximumSampledCentralDrawdown": 0.03629717484340154,
+      "OpenModelPositions": 0,
+      "PendingModelRequests": 0,
+      "AdverseFailureKind": "",
+      "MissingCentralMarks": 1,
+      "MissingAdverseMarks": 1,
+      "MaximumSampledAdverseDrawdown": 0.07883855941578291,
+      "PeakConcurrentClosedPositions": 3,
+      "ReservationsByWeek": {
+        "2026-W34": 21,
+        "2026-W35": 30,
+        "2026-W36": 28,
+        "2026-W37": 28,
+        "2026-W38": 24,
+        "2026-W39": 26
+      },
+      "Weeks": {
+        "2026-W34": 21,
+        "2026-W35": 30,
+        "2026-W36": 28,
+        "2026-W37": 28,
+        "2026-W38": 24,
+        "2026-W39": 26
+      },
+      "Diagnostics": null
+    },
+    "CASH": {
+      "ForecastsGenerated": 0,
+      "ModelIntentCount": 0,
+      "CompletedModelRoundTrips": 0,
+      "ModelClosedGrossEur": 0,
+      "ModelClosedCentralNetEur": 0,
+      "ModelClosedAdverseNetEur": 0,
+      "RejectionReasons": {},
+      "ClosedNetByMechanismEur": {},
+      "MaximumObservedMarginEur": 0,
+      "MaximumSampledCentralDrawdown": 0,
+      "OpenModelPositions": 0,
+      "PendingModelRequests": 0,
+      "AdverseFailureKind": "",
+      "MissingCentralMarks": 0,
+      "MissingAdverseMarks": 0,
+      "MaximumSampledAdverseDrawdown": 0,
+      "PeakConcurrentClosedPositions": 0,
+      "ReservationsByWeek": {},
+      "Weeks": {
+        "2026-W34": 0,
+        "2026-W35": 0,
+        "2026-W36": 0,
+        "2026-W37": 0,
+        "2026-W38": 0,
+        "2026-W39": 0
+      },
+      "Diagnostics": null
+    }
+  },
+  "Receipt": {
+    "ForecastsGenerated": 261,
+    "ModelIntentCount": 0,
+    "CompletedModelRoundTrips": 0,
+    "ModelClosedGrossEur": 0,
+    "ModelClosedCentralNetEur": 0,
+    "ModelClosedAdverseNetEur": 0,
+    "RejectionReasons": {
+      "NO_EUR_EDGE_AFTER_COST_AND_UNCERTAINTY": 261
+    },
+    "ClosedNetByMechanismEur": {},
+    "MaximumObservedMarginEur": 0,
+    "MaximumSampledCentralDrawdown": 0,
+    "OpenModelPositions": 0,
+    "PendingModelRequests": 0,
+    "AdverseFailureKind": "",
+    "MissingCentralMarks": 0,
+    "MissingAdverseMarks": 0,
+    "MaximumSampledAdverseDrawdown": 0,
+    "PeakConcurrentClosedPositions": 0,
+    "ReservationsByWeek": {},
+    "Weeks": {
+      "2026-W34": 0,
+      "2026-W35": 0,
+      "2026-W36": 0,
+      "2026-W37": 0,
+      "2026-W38": 0,
+      "2026-W39": 0
+    },
+    "Diagnostics": {
+      "TrainingPairs": 257,
+      "EvaluationPairs": 261,
+      "MissingPairs": 2,
+      "ScoredForecasts": 261,
+      "MeanRealizedGrossBps": -0.44442807348101,
+      "MeanRealizedNetBps": -7.44712969471081,
+      "DirectionBrier": 0.18204679371936588,
+      "NeutralBrier": 0.25,
+      "UnconditionalBrier": 0.25,
+      "PredictedPositiveGross": 0,
+      "RealizedPositiveGross": 65,
+      "FrozenTrainingSha256": "91c6f094a41188b6e5895cfba653126ca434144425de61c115202007ddce14d6",
+      "Inventory": {
+        "Pairs": 261,
+        "FadeGrossBps": -0.44442807348101,
+        "FadeCentralNetBps": -7.44712969471081,
+        "FadeAdverseNetBps": -14.467256894648617,
+        "ContinuationAdverseNetBps": -13.978243208178455
+      },
+      "OpportunityFunnel": {
+        "2026-W34": {
+          "QuoteComplete": 80,
+          "FeatureEligible": 32,
+          "PredictionReady": 32,
+          "NetSupported": 0
+        },
+        "2026-W35": {
+          "QuoteComplete": 80,
+          "FeatureEligible": 48,
+          "PredictionReady": 48,
+          "NetSupported": 0
+        },
+        "2026-W36": {
+          "QuoteComplete": 76,
+          "FeatureEligible": 46,
+          "PredictionReady": 46,
+          "NetSupported": 0
+        },
+        "2026-W37": {
+          "QuoteComplete": 80,
+          "FeatureEligible": 43,
+          "PredictionReady": 43,
+          "NetSupported": 0
+        },
+        "2026-W38": {
+          "QuoteComplete": 80,
+          "FeatureEligible": 40,
+          "PredictionReady": 40,
+          "NetSupported": 0
+        },
+        "2026-W39": {
+          "QuoteComplete": 80,
+          "FeatureEligible": 52,
+          "PredictionReady": 52,
+          "NetSupported": 0
+        }
+      },
+      "FrozenModel": "F444F64307F51D4668951C3D43B0986F007907B34B683F73CD07FED1D66570C9.eyJCb3VuZGFyeSI6MTc4NjkyNDgwMDAwMCwiRngiOnsiRmVhdHVyZXNLbm93bkF0IjowLCJPdXRjb21lc0tub3duVGhyb3VnaCI6MTc4NjcyMTEwMTUwMCwiRGlyZWN0aW9uIjowLCJUcmFpbmluZ0RheXMiOjYsIlBvc2l0aXZlR3Jvc3NQcm9iYWJpbGl0eSI6MC4zMzgxNjIzNDgyNzI2NDIzOTAyODk0NDkxMTMsIlVuY29uZGl0aW9uYWxQb3NpdGl2ZUdyb3NzUHJvYmFiaWxpdHkiOjAuNSwiTWVhbkdyb3NzUmV0dXJuIjowLjAwMDAyNzUzMDc5Nzc0MjQ1Njc5NTM5NjEyNTgsIk1lYW5CZW5jaG1hcmtHcm9zc1JldHVybiI6MCwiTWVhblVuY2VydGFpbnR5UmV0dXJuIjowLjAwMDA4MDcyMjgzOTgxNTgyOSwiRG93bnNpZGVSZXR1cm4iOjAuMDAwNDg4OTQ2MTE4NDMwMjI0ODY0NzU3OTI4OCwiU3RhbmRhbG9uZUFkdmVyc2VOZXRSZXR1cm4iOi0wLjAwMDI3NTk0NzkwODMwMDA0MTYxMTc1NzAxMjMsIkluY3JlbWVudGFsQWR2ZXJzZU5ldFJldHVybiI6MC4wMDAwNTE1NjA1MzE3NTU5NTMwODMxNDMxNzUxLCJNZWFuQWR2ZXJzZUZyaWN0aW9uUmV0dXJuIjowLjAwMDMwMzQ3ODcwNjA0MjQ5ODQwNzE1MzEzODF9LCJNZXRhbCI6eyJGZWF0dXJlc0tub3duQXQiOjAsIk91dGNvbWVzS25vd25UaHJvdWdoIjoxNzg2NzE5MDAxNTAwLCJEaXJlY3Rpb24iOjAsIlRyYWluaW5nRGF5cyI6NiwiUG9zaXRpdmVHcm9zc1Byb2JhYmlsaXR5IjowLjEzODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODksIlVuY29uZGl0aW9uYWxQb3NpdGl2ZUdyb3NzUHJvYmFiaWxpdHkiOjAuNSwiTWVhbkdyb3NzUmV0dXJuIjotMC4wMDAyNjYyNDc3MzIzODMwNjE1MjI1OTc2MjYxLCJNZWFuQmVuY2htYXJrR3Jvc3NSZXR1cm4iOjAsIk1lYW5VbmNlcnRhaW50eVJldHVybiI6MC4wMDIyMzcwMzg2MzcxNzMwNzQsIkRvd25zaWRlUmV0dXJuIjowLjAwMjk4NDgyNzU3MDUyMTEyOTI0Nzc0MDM5OTQsIlN0YW5kYWxvbmVBZHZlcnNlTmV0UmV0dXJuIjotMC4wMDQyMDg0NTcwMDQ0NDI5OTcwMzUxNzgxMjQ4LCJJbmNyZW1lbnRhbEFkdmVyc2VOZXRSZXR1cm4iOi0wLjAwMDM2NjA2MTEyNDcyMzQwNjIwOTg0ODYwODYsIk1lYW5BZHZlcnNlRnJpY3Rpb25SZXR1cm4iOjAuMDAzOTQyMjA5MjcyMDU5OTM1NTEyNTgwNDk4OH19",
+      "IntegratedFamilies": {
+        "FX": {
+          "Pairs": 192,
+          "GrossBps": -0.4899597966689032,
+          "CentralNetBps": -2.006665209284676,
+          "AdverseNetBps": -3.530112676364654,
+          "ReverseAdverseNetBps": -3.2206022926291915,
+          "PositiveAdversePairs": 57,
+          "Brier": 0.21044487950238647
+        },
+        "METAL": {
+          "Pairs": 69,
+          "GrossBps": -0.31773110461035053,
+          "CentralNetBps": -22.5858134802444,
+          "AdverseNetBps": -44.90104950204747,
+          "ReverseAdverseNetBps": -43.91254836448945,
+          "PositiveAdversePairs": 8,
+          "Brier": 0.10302603327965647
+        }
+      }
+    }
+  },
+  "Reconstruction": {
+    "SameSignalTrace": true,
+    "SameFundedResult": true,
+    "SignalTraceSha256": "8B5D51144CCE5290889A7963100AE3BB477C4233E887470385F3C49076677A9A"
+  },
+  "IndependentConfirmation": false,
+  "CloudActivated": false,
+  "OrdersSubmitted": 0,
+  "OriginalPepperstoneAccountAuthenticated": true,
+  "PostAuthenticationReadOnlyRequests": 2853,
+  "OriginalBarsBySymbol": {
+    "AUDUSD": 17545,
+    "NZDUSD": 17497,
+    "Copper": 16746,
+    "Aluminium": 12947,
+    "EURUSD": 17556
+  },
+  "OriginalBidAskAsOfMarks": 14168,
+  "QuoteWindows": 240,
+  "MissingQuoteInstrumentClocks": 232,
+  "ExpectedClocksPerSymbol": 2880,
+  "ObservedMarginGridBySymbol": {
+    "AUDUSD": [
+      {
+        "VolumeUnits": "1000",
+        "BuyMarginEur": "30.8",
+        "SellMarginEur": "30.8"
+      },
+      {
+        "VolumeUnits": "2000",
+        "BuyMarginEur": "61.61",
+        "SellMarginEur": "61.61"
+      }
+    ],
+    "NZDUSD": [
+      {
+        "VolumeUnits": "1000",
+        "BuyMarginEur": "25.06",
+        "SellMarginEur": "25.06"
+      },
+      {
+        "VolumeUnits": "2000",
+        "BuyMarginEur": "50.12",
+        "SellMarginEur": "50.11"
+      }
+    ],
+    "Copper": [
+      {
+        "VolumeUnits": "20",
+        "BuyMarginEur": "11.39",
+        "SellMarginEur": "11.39"
+      },
+      {
+        "VolumeUnits": "40",
+        "BuyMarginEur": "22.78",
+        "SellMarginEur": "22.77"
+      }
+    ],
+    "Aluminium": [
+      {
+        "VolumeUnits": "1",
+        "BuyMarginEur": "276.56",
+        "SellMarginEur": "275.82"
+      },
+      {
+        "VolumeUnits": "2",
+        "BuyMarginEur": "553.11",
+        "SellMarginEur": "551.63"
+      }
+    ]
+  },
+  "ExcludedOptionalSymbols": {},
+  "InitialModelCapitalEur": 300,
+  "SourceCiphertextSha256": "aceca6ea879201ce16caba708a1ae47a953ad66e6b58977fe044bbd4b740e64a",
+  "ProtocolSha256": "d4778e8661e02039305c907c80068dca34b0c9f51ec1b7c70e2ba923b827cf7f"
+}

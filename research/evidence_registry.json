@@ -2523,5 +2523,29 @@
     "independentConfirmation": false,
     "ordersSubmitted": 0,
     "cloudActivated": false
+  },
+  "ipc2AuthenticIntegratedPortfolio": {
+    "id": "IPC2",
+    "status": "CLOSED_EXACT_NO_FUNDED_ECONOMIC_PROMOTION",
+    "closedNoRetune": true,
+    "runId": 43176793567,
+    "mainHead": "62b8fe7660ddc9d2740d7b9e6990de8da7d300a2",
+    "protocolSha256": "d4778e8661e02039305c907c80068dca34b0c9f51ec1b7c70e2ba923b827cf7f",
+    "probabilityTarget": "POSITIVE_ADVERSE_NET",
+    "trainingBlock": "ISO_WEEK",
+    "publicArtifactId": 13924961979,
+    "publicArchiveSha256": "0f587e481ecc1d8f51f9a91438ec44127773a17a4329d5716d4f53f892619756",
+    "publicReceiptPath": "docs/IPC2_AUTHENTIC_PUBLIC_RECEIPT_20261112.json",
+    "publicReceiptSha256": "2bcb2c14294771c2ff5848cf2bdc94d4b60b300e11a947b1a1c04eb01a53d2a9",
+    "sourceEncryptedArtifactId": 13925405999,
+    "sourceEncryptedArchiveSha256": "e589274b9d913f4501dd44921c3eb58e46309ad2bc4382eaefb46a8bfb79552c",
+    "sourceSha256": "fd7986487be347376aa1e139915f90786155d2b1b6de1787382aa7d8666faeaf",
+    "sourceCiphertextSha256": "aceca6ea879201ce16caba708a1ae47a953ad66e6b58977fe044bbd4b740e64a",
+    "sameResearchSignalTraceAfterRestoration": true,
+    "sameFundedResultAfterRestoration": true,
+    "completedPortfolioRoundTrips": 0,
+    "independentConfirmation": false,
+    "ordersSubmitted": 0,
+    "cloudActivated": false
   }
 }
