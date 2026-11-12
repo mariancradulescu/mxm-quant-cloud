@@ -54,6 +54,23 @@ public static class NativeCausalExitResearchChecks
         check(target.RequestClose &&
               target.Reason=="ENTRY_ATR_PROFIT_TARGET",
               "volatility target can close on observed quote");
+        // YRC1-only causal take-profit/locked-gain/stagnation checks.
+        var lockedTarget=Assess(NativeCausalExitResearch.AtrProfitLock,
+            entry+3.1m*atr);
+        check(lockedTarget.RequestClose &&
+              lockedTarget.Reason=="OBSERVED_QUOTE_ATR3_PROFIT_CAPTURE",
+              "YRC1 observed executable quote captures ATR profit without OHLC ordering");
+        var lockedProgress=Assess(NativeCausalExitResearch.AtrProfitLock,
+            entry+0.25m*atr,entry+2.2m*atr);
+        check(lockedProgress.RequestClose &&
+              lockedProgress.Reason=="OBSERVED_QUOTE_ATR_PROFIT_LOCK",
+              "YRC1 frozen-entry ATR locks previously observed favorable progress");
+        var dormant=NativeCausalExitResearch.Assess(
+            NativeCausalExitResearch.AtrProfitLock,now,
+            now-45L*60000L,1,entry,seed,entry,Q(entry),seen,fifteen,180);
+        check(dormant.RequestClose &&
+              dormant.Reason=="OBSERVED_QUOTE_STAGNATION_45M",
+              "YRC1 stagnation frees capital when no favorable excursion after 45m");
         var equilibrium=Assess(NativeCausalExitResearch.EquilibriumReversion,
             entry+atr,entry,entry+atr*.5m);
         check(equilibrium.RequestClose &&
