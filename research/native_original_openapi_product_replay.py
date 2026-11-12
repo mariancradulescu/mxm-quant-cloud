@@ -145,7 +145,7 @@ def contract(symbol, c, quote_asset, observed_at):
     }
 
 def emit_native_failure(process):
-    match = re.search(r"^(?:LDP1|JRC1|OTC1|MCT2|BMR1|PRR1|FCE1|IPC2|FSD1)_NATIVE_REPLAY_REJECTED:(?:[A-Za-z0-9_-]+:)?[A-Za-z0-9_]+$",
+    match = re.search(r"^(?:LDP1|JRC1|OTC1|MCT2|BMR1|PRR1|FCE1|IPC2|FSD1|ESD1)_NATIVE_REPLAY_REJECTED:(?:[A-Za-z0-9_-]+:)?[A-Za-z0-9_]+$",
                       process.stderr or "", re.MULTILINE)
     if process.returncode and match:
         print(match.group(0), flush=True)
@@ -164,13 +164,21 @@ def collect_and_evaluate(profile=None):
     quote_minutes = frozenset(profile.get("quote_minutes", ())) if profile else frozenset()
     symbol_quote_minutes = profile.get("symbol_quote_minutes", {}) if profile else {}
 
+    schedule_by_symbol = {}
+    current_contracts = {}
+    contract_details = {}
+    extended = profile.get("extended_sessions", False) if profile else False
+
     def sampled_for(name, clock):
+        days = profile.get("symbol_quote_days", {}).get(name) if extended else None
+        if days is not None and datetime.fromtimestamp(clock / 1000, timezone.utc).weekday() not in days:
+            return False
         minutes = symbol_quote_minutes.get(name)
         return minutes is None or clock // 60000 % 1440 in minutes
 
     def eligible(clock):
         day = datetime.fromtimestamp(clock / 1000, timezone.utc)
-        if day.weekday() >= 5 or (event_days and day.date().isoformat() not in event_days):
+        if (not extended and day.weekday() >= 5) or (event_days and day.date().isoformat() not in event_days):
             return False
         if profile is None:
             return True
@@ -230,6 +238,8 @@ def collect_and_evaluate(profile=None):
                 ids[name] = int(light.symbolId)
                 quote_asset=assets.get(light.quoteAssetId)
                 allowed=("USD","JPY") if profile and profile.get("jpy_route") else ("USD",)
+                if extended:
+                    allowed += ("EUR",)
                 need(quote_asset in allowed,
                      "RESEARCH_FX_QUOTE_ASSET_NOT_USD")
                 detail = req(m.ProtoOASymbolByIdReq(
@@ -248,8 +258,14 @@ def collect_and_evaluate(profile=None):
                      "CONTRACT_COST_OR_PRICE_PRECISION_UNAVAILABLE")
                 need(int(c.commissionType) in (1,2,3,4)
                      and int(c.minCommissionType) in (1,2)
-                     and c.minCommissionAsset in ("USD",""),
+                     and c.minCommissionAsset in ("USD","",quote_asset if extended else "USD"),
                      "CONTRACT_COMMISSION_CONVERSION_UNAVAILABLE")
+                if extended:
+                    contract_details[name] = c
+                    schedule_by_symbol[name] = {
+                        "TimeZone": c.scheduleTimeZone or None,
+                        "Intervals": [[x.startSecond, x.endSecond] for x in c.schedule],
+                    }
                 if profile and name in profile.get("two_sided_targets", ()):
                     need(c.HasField("enableShortSelling") and c.enableShortSelling,
                          "PREREGISTERED_TARGET_SHORT_PERMISSION_UNATTESTED")
@@ -285,6 +301,8 @@ def collect_and_evaluate(profile=None):
                 terms[name] = (contract(name,c,quote_asset,
                                 int(datetime.now(timezone.utc).timestamp()*1000)),
                                minimum_margin)
+                if extended:
+                    current_contracts[name] = terms[name][0]
             except MarketReplayError as exc:
                 if name not in optional or str(exc) not in {
                     "RESEARCH_FX_QUOTE_ASSET_NOT_USD", "CONTRACT_COST_OR_PRICE_PRECISION_UNAVAILABLE",
@@ -425,6 +443,9 @@ def collect_and_evaluate(profile=None):
                         if i>=0 and clock-ts[i]<=quote_age:
                             sampled[name][side][clock]=D(points[i][1])/D(100000)
                             quote_stamps[name][side][clock]=points[i][0]
+        if extended:
+            from .regional_equity_and_bond_transmission import session_ok
+
         marks=[]
         total_clocks=0
         missing_pair_clock=0
@@ -434,11 +455,13 @@ def collect_and_evaluate(profile=None):
             total_clocks+=1
             eur_bid=sampled["EURUSD"][e.BID].get(clock)
             eur_ask=sampled["EURUSD"][e.ASK].get(clock)
-            if eur_bid is None or eur_ask is None or eur_bid<=0 or eur_ask<eur_bid:
+            eur_rate_available = (eur_bid is not None and eur_ask is not None and
+                                  eur_bid > 0 and eur_ask >= eur_bid)
+            if not extended and not eur_rate_available:
                 missing_pair_clock+=sum(sampled_for(name, clock) for name in symbols)
                 continue
-            fx_credit=D(1)/eur_ask
-            fx_debit=D(1)/eur_bid
+            fx_credit=D(1)/eur_ask if eur_rate_available else D(0)
+            fx_debit=D(1)/eur_bid if eur_rate_available else D(0)
             usd_to_eur=(fx_credit+fx_debit)/2
             for name in symbols:
                 if not sampled_for(name, clock):
@@ -448,7 +471,25 @@ def collect_and_evaluate(profile=None):
                 if bid is None or ask is None or bid<=0 or ask<bid:
                     missing_pair_clock+=1
                     continue
+                if extended and name in profile["session_holds"]:
+                    starts, hold = profile["session_holds"][name]
+                    open_at = clock if clock // 60000 % 1440 in starts else clock - hold * 60000
+                    if not session_ok(contract_details[name], open_at, open_at + hold * 60000):
+                        missing_pair_clock += 1
+                        continue
                 c,margin=terms[name]
+                credit, debit = fx_credit, fx_debit
+                if extended and c["QuoteAsset"] == "EUR":
+                    requires_usd = ((c["CommissionType"] == 2 and c["PreciseRateWire"] > 0) or
+                                    (c["MinimumCommissionType"] == 1 and c["PreciseMinimumWire"] > 0
+                                     and c["MinimumCommissionAsset"] == "USD"))
+                    if requires_usd and not eur_rate_available:
+                        missing_pair_clock += 1
+                        continue
+                    credit = debit = D(1)
+                elif not eur_rate_available:
+                    missing_pair_clock += 1
+                    continue
                 route = None
                 if profile and profile.get("jpy_route"):
                     names = ("USDJPY","EURUSD") if c["QuoteAsset"]=="JPY" else ("EURUSD",)
@@ -470,15 +511,15 @@ def collect_and_evaluate(profile=None):
                 slip=max(D("0.00001"),spread/4)
                 marks.append({
                     "At":clock,"Symbol":name,"Bid":str(bid),"Ask":str(ask),
-                    "QuoteCreditToEur":str(fx_credit),
-                    "QuoteDebitToEur":str(fx_debit),
+                    "QuoteCreditToEur":str(credit),
+                    "QuoteDebitToEur":str(debit),
                     "UsdToEur":str(usd_to_eur),
                     "MarginRequirementEur":str(margin),
                     "SlippagePerSideQuote":str(slip),
                     "Contract":c,
                     **({"OriginalFxRoute":route} if route is not None else {})
                 })
-        need(len(marks)>=300, "INSUFFICIENT_MULTI_WEEK_ASOF_BIDASK_CLOCKS")
+        need(extended or len(marks)>=300, "INSUFFICIENT_MULTI_WEEK_ASOF_BIDASK_CLOCKS")
         # The only file sent to the C# replay contains time-labeled market
         # readings, never OAuth values, original account ID, or broker orders.
         tape={"SourceLabel":(profile["label"] if profile is not None else (
@@ -547,6 +588,8 @@ def collect_and_evaluate(profile=None):
                         ExpectedClocksPerSymbol=total_clocks,
                         **({"ObservedMarginGridBySymbol":observed_margin_grid} if observed_margin_grid else {}),
                         **({"ExcludedOptionalSymbols":excluded} if optional else {}),
+                        **({"CurrentScheduleBySymbol":schedule_by_symbol,
+                            "CurrentContractsBySymbol":current_contracts} if extended else {}),
                         InitialModelCapitalEur=300, OrdersSubmitted=0,
                         CloudActivated=False, IndependentConfirmation=False)
         result={

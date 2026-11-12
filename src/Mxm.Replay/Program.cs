@@ -1,6 +1,9 @@
 using System.Text.Json;
 using System.Security.Cryptography;
 
+if(args.Length==3 && args[2] is "--native-esd1" or "--native-esd1-contracts")
+    return NativeExtendedSessionExperiment.Run(args[0],args[1],args[2]=="--native-esd1-contracts");
+
 if(args.Length==3 && args[2] is "--native-fsd1" or "--native-fsd1-contracts")
     return NativeSessionDiscoveryExperiment.Run(args[0],args[1],args[2]=="--native-fsd1-contracts");
 
