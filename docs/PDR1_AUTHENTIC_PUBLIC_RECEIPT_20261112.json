@@ -1,0 +1,2703 @@
+{
+  "Study": "PDR1",
+  "Receipt": {
+    "SpotBrent": {
+      "30": {
+        "Verdict": "INSUFFICIENT_SIGNAL_WEEKS",
+        "Early": {
+          "Rule": {
+            "Count": 0,
+            "DirectionWins": 0,
+            "GrossEur": 0,
+            "CentralNetEur": 0,
+            "AdverseNetEur": 0,
+            "AdverseWins": 0,
+            "MedianAdverseBps": null
+          },
+          "Momentum": {
+            "Count": 0,
+            "DirectionWins": 0,
+            "GrossEur": 0,
+            "CentralNetEur": 0,
+            "AdverseNetEur": 0,
+            "AdverseWins": 0,
+            "MedianAdverseBps": null
+          },
+          "Long": {
+            "Count": 0,
+            "DirectionWins": 0,
+            "GrossEur": 0,
+            "CentralNetEur": 0,
+            "AdverseNetEur": 0,
+            "AdverseWins": 0,
+            "MedianAdverseBps": null
+          },
+          "Short": {
+            "Count": 0,
+            "DirectionWins": 0,
+            "GrossEur": 0,
+            "CentralNetEur": 0,
+            "AdverseNetEur": 0,
+            "AdverseWins": 0,
+            "MedianAdverseBps": null
+          },
+          "Cash": 0
+        },
+        "Late": {
+          "Rule": {
+            "Count": 1,
+            "DirectionWins": 1,
+            "GrossEur": 0.19642506383814576,
+            "CentralNetEur": 0.1535686862734594,
+            "AdverseNetEur": 0.11060159640006428,
+            "AdverseWins": 1,
+            "MedianAdverseBps": 11.42996089600694
+          },
+          "Momentum": {
+            "Count": 1,
+            "DirectionWins": 0,
+            "GrossEur": -0.19642506383814576,
+            "CentralNetEur": -0.23928144140283208,
+            "AdverseNetEur": -0.28241995678648596,
+            "AdverseWins": 0,
+            "MedianAdverseBps": -29.18627910798969
+          },
+          "Long": {
+            "Count": 1,
+            "DirectionWins": 1,
+            "GrossEur": 0.19642506383814576,
+            "CentralNetEur": 0.1535686862734594,
+            "AdverseNetEur": 0.11060159640006428,
+            "AdverseWins": 1,
+            "MedianAdverseBps": 11.42996089600694
+          },
+          "Short": {
+            "Count": 1,
+            "DirectionWins": 0,
+            "GrossEur": -0.19642506383814576,
+            "CentralNetEur": -0.23928144140283208,
+            "AdverseNetEur": -0.28241995678648596,
+            "AdverseWins": 0,
+            "MedianAdverseBps": -29.18627910798969
+          },
+          "Cash": 0
+        },
+        "EarlyOwn": {
+          "Weeks": 0,
+          "Mean": null,
+          "Lower": null
+        },
+        "EarlyDelta": {
+          "Weeks": 0,
+          "Mean": null,
+          "Lower": null
+        },
+        "LateOwn": {
+          "Weeks": 1,
+          "Mean": 0.11060159640006428,
+          "Lower": null
+        },
+        "LateDelta": {
+          "Weeks": 1,
+          "Mean": 0.39302155318655024,
+          "Lower": null
+        },
+        "WeeklyPricedSignals": {
+          "2026-W36": 0,
+          "2026-W37": 0,
+          "2026-W38": 0,
+          "2026-W39": 0,
+          "2026-W40": 0,
+          "2026-W41": 0,
+          "2026-W42": 1,
+          "2026-W43": 0
+        },
+        "Sessions": [
+          {
+            "Weekend": false,
+            "EntryHourUtc": 1,
+            "Clocks": 8,
+            "ContractOpen": 8,
+            "HistoricalQuotePairs": 8,
+            "EntryMarksAfterConversion": 8,
+            "CostComplete": 8,
+            "FeatureComplete": 8,
+            "PricedSignals": 0,
+            "MedianEntrySpreadBps": 2.9871087587629637,
+            "P90EntrySpreadBps": 3.2566659881945856,
+            "MedianAbsoluteTerminalMoveBps": 16.095185839117928,
+            "MedianAdverseCostBps": 8.970527146660956,
+            "TerminalMoveCouldCoverAdverseCost": 6,
+            "Rule": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            },
+            "Momentum": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            }
+          },
+          {
+            "Weekend": false,
+            "EntryHourUtc": 7,
+            "Clocks": 8,
+            "ContractOpen": 8,
+            "HistoricalQuotePairs": 8,
+            "EntryMarksAfterConversion": 8,
+            "CostComplete": 8,
+            "FeatureComplete": 8,
+            "PricedSignals": 0,
+            "MedianEntrySpreadBps": 3.029671848667891,
+            "P90EntrySpreadBps": 3.203363531708294,
+            "MedianAbsoluteTerminalMoveBps": 14.350503290530472,
+            "MedianAdverseCostBps": 9.09515579716838,
+            "TerminalMoveCouldCoverAdverseCost": 6,
+            "Rule": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            },
+            "Momentum": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            }
+          },
+          {
+            "Weekend": false,
+            "EntryHourUtc": 13,
+            "Clocks": 8,
+            "ContractOpen": 8,
+            "HistoricalQuotePairs": 8,
+            "EntryMarksAfterConversion": 8,
+            "CostComplete": 8,
+            "FeatureComplete": 8,
+            "PricedSignals": 0,
+            "MedianEntrySpreadBps": 3.0079711234772146,
+            "P90EntrySpreadBps": 3.4611432588826996,
+            "MedianAbsoluteTerminalMoveBps": 18.23843043913817,
+            "MedianAdverseCostBps": 9.039065737310578,
+            "TerminalMoveCouldCoverAdverseCost": 6,
+            "Rule": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            },
+            "Momentum": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            }
+          },
+          {
+            "Weekend": false,
+            "EntryHourUtc": 19,
+            "Clocks": 8,
+            "ContractOpen": 8,
+            "HistoricalQuotePairs": 8,
+            "EntryMarksAfterConversion": 8,
+            "CostComplete": 8,
+            "FeatureComplete": 8,
+            "PricedSignals": 1,
+            "MedianEntrySpreadBps": 3.0004969573085543,
+            "P90EntrySpreadBps": 3.4825004353125544,
+            "MedianAbsoluteTerminalMoveBps": 14.041892400491792,
+            "MedianAdverseCostBps": 9.140997869863801,
+            "TerminalMoveCouldCoverAdverseCost": 6,
+            "Rule": {
+              "Count": 1,
+              "DirectionWins": 1,
+              "GrossEur": 0.19642506383814576,
+              "CentralNetEur": 0.1535686862734594,
+              "AdverseNetEur": 0.11060159640006428,
+              "AdverseWins": 1,
+              "MedianAdverseBps": 11.42996089600694
+            },
+            "Momentum": {
+              "Count": 1,
+              "DirectionWins": 0,
+              "GrossEur": -0.19642506383814576,
+              "CentralNetEur": -0.23928144140283208,
+              "AdverseNetEur": -0.28241995678648596,
+              "AdverseWins": 0,
+              "MedianAdverseBps": -29.18627910798969
+            }
+          }
+        ]
+      },
+      "90": {
+        "Verdict": "INSUFFICIENT_SIGNAL_WEEKS",
+        "Early": {
+          "Rule": {
+            "Count": 0,
+            "DirectionWins": 0,
+            "GrossEur": 0,
+            "CentralNetEur": 0,
+            "AdverseNetEur": 0,
+            "AdverseWins": 0,
+            "MedianAdverseBps": null
+          },
+          "Momentum": {
+            "Count": 0,
+            "DirectionWins": 0,
+            "GrossEur": 0,
+            "CentralNetEur": 0,
+            "AdverseNetEur": 0,
+            "AdverseWins": 0,
+            "MedianAdverseBps": null
+          },
+          "Long": {
+            "Count": 0,
+            "DirectionWins": 0,
+            "GrossEur": 0,
+            "CentralNetEur": 0,
+            "AdverseNetEur": 0,
+            "AdverseWins": 0,
+            "MedianAdverseBps": null
+          },
+          "Short": {
+            "Count": 0,
+            "DirectionWins": 0,
+            "GrossEur": 0,
+            "CentralNetEur": 0,
+            "AdverseNetEur": 0,
+            "AdverseWins": 0,
+            "MedianAdverseBps": null
+          },
+          "Cash": 0
+        },
+        "Late": {
+          "Rule": {
+            "Count": 1,
+            "DirectionWins": 1,
+            "GrossEur": 0.6742004473967836,
+            "CentralNetEur": 0.6313345537348752,
+            "AdverseNetEur": 0.5878831986426754,
+            "AdverseWins": 1,
+            "MedianAdverseBps": 60.753932950477314
+          },
+          "Momentum": {
+            "Count": 1,
+            "DirectionWins": 0,
+            "GrossEur": -0.6742004473967836,
+            "CentralNetEur": -0.7170667238176882,
+            "AdverseNetEur": -0.7606899199885698,
+            "AdverseWins": 0,
+            "MedianAdverseBps": -78.61239188633398
+          },
+          "Long": {
+            "Count": 1,
+            "DirectionWins": 1,
+            "GrossEur": 0.6742004473967836,
+            "CentralNetEur": 0.6313345537348752,
+            "AdverseNetEur": 0.5878831986426754,
+            "AdverseWins": 1,
+            "MedianAdverseBps": 60.753932950477314
+          },
+          "Short": {
+            "Count": 1,
+            "DirectionWins": 0,
+            "GrossEur": -0.6742004473967836,
+            "CentralNetEur": -0.7170667238176882,
+            "AdverseNetEur": -0.7606899199885698,
+            "AdverseWins": 0,
+            "MedianAdverseBps": -78.61239188633398
+          },
+          "Cash": 0
+        },
+        "EarlyOwn": {
+          "Weeks": 0,
+          "Mean": null,
+          "Lower": null
+        },
+        "EarlyDelta": {
+          "Weeks": 0,
+          "Mean": null,
+          "Lower": null
+        },
+        "LateOwn": {
+          "Weeks": 1,
+          "Mean": 0.5878831986426754,
+          "Lower": null
+        },
+        "LateDelta": {
+          "Weeks": 1,
+          "Mean": 1.348573118631245,
+          "Lower": null
+        },
+        "WeeklyPricedSignals": {
+          "2026-W36": 0,
+          "2026-W37": 0,
+          "2026-W38": 0,
+          "2026-W39": 0,
+          "2026-W40": 0,
+          "2026-W41": 0,
+          "2026-W42": 1,
+          "2026-W43": 0
+        },
+        "Sessions": [
+          {
+            "Weekend": false,
+            "EntryHourUtc": 1,
+            "Clocks": 8,
+            "ContractOpen": 8,
+            "HistoricalQuotePairs": 8,
+            "EntryMarksAfterConversion": 8,
+            "CostComplete": 8,
+            "FeatureComplete": 8,
+            "PricedSignals": 0,
+            "MedianEntrySpreadBps": 2.9871087587629637,
+            "P90EntrySpreadBps": 3.2566659881945856,
+            "MedianAbsoluteTerminalMoveBps": 28.91946823059816,
+            "MedianAdverseCostBps": 8.964701869947827,
+            "TerminalMoveCouldCoverAdverseCost": 6,
+            "Rule": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            },
+            "Momentum": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            }
+          },
+          {
+            "Weekend": false,
+            "EntryHourUtc": 7,
+            "Clocks": 8,
+            "ContractOpen": 8,
+            "HistoricalQuotePairs": 8,
+            "EntryMarksAfterConversion": 8,
+            "CostComplete": 8,
+            "FeatureComplete": 8,
+            "PricedSignals": 0,
+            "MedianEntrySpreadBps": 3.029671848667891,
+            "P90EntrySpreadBps": 3.203363531708294,
+            "MedianAbsoluteTerminalMoveBps": 53.16654332028321,
+            "MedianAdverseCostBps": 9.10000409045827,
+            "TerminalMoveCouldCoverAdverseCost": 7,
+            "Rule": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            },
+            "Momentum": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            }
+          },
+          {
+            "Weekend": false,
+            "EntryHourUtc": 13,
+            "Clocks": 8,
+            "ContractOpen": 8,
+            "HistoricalQuotePairs": 8,
+            "EntryMarksAfterConversion": 8,
+            "CostComplete": 8,
+            "FeatureComplete": 8,
+            "PricedSignals": 0,
+            "MedianEntrySpreadBps": 3.0079711234772146,
+            "P90EntrySpreadBps": 3.4611432588826996,
+            "MedianAbsoluteTerminalMoveBps": 35.534300332186746,
+            "MedianAdverseCostBps": 9.698003803077885,
+            "TerminalMoveCouldCoverAdverseCost": 7,
+            "Rule": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            },
+            "Momentum": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            }
+          },
+          {
+            "Weekend": false,
+            "EntryHourUtc": 19,
+            "Clocks": 8,
+            "ContractOpen": 8,
+            "HistoricalQuotePairs": 8,
+            "EntryMarksAfterConversion": 8,
+            "CostComplete": 8,
+            "FeatureComplete": 8,
+            "PricedSignals": 1,
+            "MedianEntrySpreadBps": 3.0004969573085543,
+            "P90EntrySpreadBps": 3.4825004353125544,
+            "MedianAbsoluteTerminalMoveBps": 42.407443315242574,
+            "MedianAdverseCostBps": 9.015601109110769,
+            "TerminalMoveCouldCoverAdverseCost": 8,
+            "Rule": {
+              "Count": 1,
+              "DirectionWins": 1,
+              "GrossEur": 0.6742004473967836,
+              "CentralNetEur": 0.6313345537348752,
+              "AdverseNetEur": 0.5878831986426754,
+              "AdverseWins": 1,
+              "MedianAdverseBps": 60.753932950477314
+            },
+            "Momentum": {
+              "Count": 1,
+              "DirectionWins": 0,
+              "GrossEur": -0.6742004473967836,
+              "CentralNetEur": -0.7170667238176882,
+              "AdverseNetEur": -0.7606899199885698,
+              "AdverseWins": 0,
+              "MedianAdverseBps": -78.61239188633398
+            }
+          }
+        ]
+      }
+    },
+    "ETHEUR": {
+      "30": {
+        "Verdict": "INSUFFICIENT_SIGNAL_WEEKS",
+        "Early": {
+          "Rule": {
+            "Count": 1,
+            "DirectionWins": 0,
+            "GrossEur": -0.039,
+            "CentralNetEur": -0.099,
+            "AdverseNetEur": -0.159,
+            "AdverseWins": 0,
+            "MedianAdverseBps": -76.49379389974021
+          },
+          "Momentum": {
+            "Count": 1,
+            "DirectionWins": 1,
+            "GrossEur": 0.039,
+            "CentralNetEur": -0.021,
+            "AdverseNetEur": -0.081,
+            "AdverseWins": 0,
+            "MedianAdverseBps": -38.968536514962
+          },
+          "Long": {
+            "Count": 1,
+            "DirectionWins": 1,
+            "GrossEur": 0.039,
+            "CentralNetEur": -0.021,
+            "AdverseNetEur": -0.081,
+            "AdverseWins": 0,
+            "MedianAdverseBps": -38.968536514962
+          },
+          "Short": {
+            "Count": 1,
+            "DirectionWins": 0,
+            "GrossEur": -0.039,
+            "CentralNetEur": -0.099,
+            "AdverseNetEur": -0.159,
+            "AdverseWins": 0,
+            "MedianAdverseBps": -76.49379389974021
+          },
+          "Cash": 0
+        },
+        "Late": {
+          "Rule": {
+            "Count": 2,
+            "DirectionWins": 1,
+            "GrossEur": -0.028,
+            "CentralNetEur": -0.148,
+            "AdverseNetEur": -0.268,
+            "AdverseWins": 0,
+            "MedianAdverseBps": -80.68389203726828
+          },
+          "Momentum": {
+            "Count": 2,
+            "DirectionWins": 1,
+            "GrossEur": 0.028,
+            "CentralNetEur": -0.092,
+            "AdverseNetEur": -0.212,
+            "AdverseWins": 0,
+            "MedianAdverseBps": -64.14809044880754
+          },
+          "Long": {
+            "Count": 2,
+            "DirectionWins": 0,
+            "GrossEur": -0.068,
+            "CentralNetEur": -0.188,
+            "AdverseNetEur": -0.308,
+            "AdverseWins": 0,
+            "MedianAdverseBps": -80.68389203726828
+          },
+          "Short": {
+            "Count": 2,
+            "DirectionWins": 2,
+            "GrossEur": 0.068,
+            "CentralNetEur": -0.052,
+            "AdverseNetEur": -0.172,
+            "AdverseWins": 0,
+            "MedianAdverseBps": -45.8200646062911
+          },
+          "Cash": 0
+        },
+        "EarlyOwn": {
+          "Weeks": 1,
+          "Mean": -0.159,
+          "Lower": null
+        },
+        "EarlyDelta": {
+          "Weeks": 1,
+          "Mean": -0.078,
+          "Lower": null
+        },
+        "LateOwn": {
+          "Weeks": 1,
+          "Mean": -0.134,
+          "Lower": null
+        },
+        "LateDelta": {
+          "Weeks": 1,
+          "Mean": -0.028,
+          "Lower": null
+        },
+        "WeeklyPricedSignals": {
+          "2026-W36": 0,
+          "2026-W37": 0,
+          "2026-W38": 1,
+          "2026-W39": 0,
+          "2026-W40": 0,
+          "2026-W41": 0,
+          "2026-W42": 0,
+          "2026-W43": 2
+        },
+        "Sessions": [
+          {
+            "Weekend": false,
+            "EntryHourUtc": 1,
+            "Clocks": 8,
+            "ContractOpen": 8,
+            "HistoricalQuotePairs": 8,
+            "EntryMarksAfterConversion": 8,
+            "CostComplete": 8,
+            "FeatureComplete": 8,
+            "PricedSignals": 2,
+            "MedianEntrySpreadBps": 18.32802584251644,
+            "P90EntrySpreadBps": 19.098548510313215,
+            "MedianAbsoluteTerminalMoveBps": 18.762628692389107,
+            "MedianAdverseCostBps": 54.98407752754932,
+            "TerminalMoveCouldCoverAdverseCost": 1,
+            "Rule": {
+              "Count": 2,
+              "DirectionWins": 1,
+              "GrossEur": -0.019,
+              "CentralNetEur": -0.139,
+              "AdverseNetEur": -0.259,
+              "AdverseWins": 0,
+              "MedianAdverseBps": -76.49379389974021
+            },
+            "Momentum": {
+              "Count": 2,
+              "DirectionWins": 1,
+              "GrossEur": 0.019,
+              "CentralNetEur": -0.101,
+              "AdverseNetEur": -0.221,
+              "AdverseWins": 0,
+              "MedianAdverseBps": -64.14809044880754
+            }
+          },
+          {
+            "Weekend": false,
+            "EntryHourUtc": 7,
+            "Clocks": 8,
+            "ContractOpen": 8,
+            "HistoricalQuotePairs": 8,
+            "EntryMarksAfterConversion": 8,
+            "CostComplete": 8,
+            "FeatureComplete": 8,
+            "PricedSignals": 0,
+            "MedianEntrySpreadBps": 17.66433350261653,
+            "P90EntrySpreadBps": 19.011406844106464,
+            "MedianAbsoluteTerminalMoveBps": 24.381453134606822,
+            "MedianAdverseCostBps": 55.24480353566743,
+            "TerminalMoveCouldCoverAdverseCost": 0,
+            "Rule": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            },
+            "Momentum": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            }
+          },
+          {
+            "Weekend": false,
+            "EntryHourUtc": 13,
+            "Clocks": 8,
+            "ContractOpen": 8,
+            "HistoricalQuotePairs": 8,
+            "EntryMarksAfterConversion": 8,
+            "CostComplete": 8,
+            "FeatureComplete": 8,
+            "PricedSignals": 0,
+            "MedianEntrySpreadBps": 18.217839819643388,
+            "P90EntrySpreadBps": 21.646695013529186,
+            "MedianAbsoluteTerminalMoveBps": 17.896290993691558,
+            "MedianAdverseCostBps": 54.653519458930155,
+            "TerminalMoveCouldCoverAdverseCost": 0,
+            "Rule": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            },
+            "Momentum": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            }
+          },
+          {
+            "Weekend": false,
+            "EntryHourUtc": 19,
+            "Clocks": 8,
+            "ContractOpen": 8,
+            "HistoricalQuotePairs": 8,
+            "EntryMarksAfterConversion": 8,
+            "CostComplete": 8,
+            "FeatureComplete": 8,
+            "PricedSignals": 0,
+            "MedianEntrySpreadBps": 17.875497162264825,
+            "P90EntrySpreadBps": 18.74897466544798,
+            "MedianAbsoluteTerminalMoveBps": 5.5860928632077576,
+            "MedianAdverseCostBps": 53.62649148679448,
+            "TerminalMoveCouldCoverAdverseCost": 0,
+            "Rule": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            },
+            "Momentum": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            }
+          },
+          {
+            "Weekend": true,
+            "EntryHourUtc": 1,
+            "Clocks": 8,
+            "ContractOpen": 8,
+            "HistoricalQuotePairs": 7,
+            "EntryMarksAfterConversion": 7,
+            "CostComplete": 7,
+            "FeatureComplete": 8,
+            "PricedSignals": 0,
+            "MedianEntrySpreadBps": 18.573551263001487,
+            "P90EntrySpreadBps": 20.075757575757574,
+            "MedianAbsoluteTerminalMoveBps": 10.919881305637983,
+            "MedianAdverseCostBps": 55.72065378900446,
+            "TerminalMoveCouldCoverAdverseCost": 0,
+            "Rule": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            },
+            "Momentum": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            }
+          },
+          {
+            "Weekend": true,
+            "EntryHourUtc": 7,
+            "Clocks": 8,
+            "ContractOpen": 8,
+            "HistoricalQuotePairs": 5,
+            "EntryMarksAfterConversion": 6,
+            "CostComplete": 5,
+            "FeatureComplete": 7,
+            "PricedSignals": 0,
+            "MedianEntrySpreadBps": 18.453589223103894,
+            "P90EntrySpreadBps": 19.146542852356223,
+            "MedianAbsoluteTerminalMoveBps": 7.44324525493115,
+            "MedianAdverseCostBps": 55.360767669311684,
+            "TerminalMoveCouldCoverAdverseCost": 0,
+            "Rule": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            },
+            "Momentum": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            }
+          },
+          {
+            "Weekend": true,
+            "EntryHourUtc": 13,
+            "Clocks": 8,
+            "ContractOpen": 8,
+            "HistoricalQuotePairs": 7,
+            "EntryMarksAfterConversion": 7,
+            "CostComplete": 7,
+            "FeatureComplete": 8,
+            "PricedSignals": 1,
+            "MedianEntrySpreadBps": 18.724838498267953,
+            "P90EntrySpreadBps": 20.017940607147917,
+            "MedianAbsoluteTerminalMoveBps": 14.251283663418212,
+            "MedianAdverseCostBps": 56.174515494803856,
+            "TerminalMoveCouldCoverAdverseCost": 0,
+            "Rule": {
+              "Count": 1,
+              "DirectionWins": 0,
+              "GrossEur": -0.048,
+              "CentralNetEur": -0.108,
+              "AdverseNetEur": -0.168,
+              "AdverseWins": 0,
+              "MedianAdverseBps": -80.68389203726828
+            },
+            "Momentum": {
+              "Count": 1,
+              "DirectionWins": 1,
+              "GrossEur": 0.048,
+              "CentralNetEur": -0.012,
+              "AdverseNetEur": -0.072,
+              "AdverseWins": 0,
+              "MedianAdverseBps": -34.578810873114975
+            }
+          },
+          {
+            "Weekend": true,
+            "EntryHourUtc": 19,
+            "Clocks": 8,
+            "ContractOpen": 8,
+            "HistoricalQuotePairs": 8,
+            "EntryMarksAfterConversion": 8,
+            "CostComplete": 8,
+            "FeatureComplete": 8,
+            "PricedSignals": 0,
+            "MedianEntrySpreadBps": 18.485302496359914,
+            "P90EntrySpreadBps": 20.117132220069234,
+            "MedianAbsoluteTerminalMoveBps": 7.9143389199255125,
+            "MedianAdverseCostBps": 55.45590748907974,
+            "TerminalMoveCouldCoverAdverseCost": 0,
+            "Rule": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            },
+            "Momentum": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            }
+          }
+        ]
+      },
+      "90": {
+        "Verdict": "INSUFFICIENT_SIGNAL_WEEKS",
+        "Early": {
+          "Rule": {
+            "Count": 1,
+            "DirectionWins": 0,
+            "GrossEur": -0.026,
+            "CentralNetEur": -0.086,
+            "AdverseNetEur": -0.146,
+            "AdverseWins": 0,
+            "MedianAdverseBps": -70.2395843356105
+          },
+          "Momentum": {
+            "Count": 1,
+            "DirectionWins": 1,
+            "GrossEur": 0.026,
+            "CentralNetEur": -0.034,
+            "AdverseNetEur": -0.094,
+            "AdverseWins": 0,
+            "MedianAdverseBps": -45.2227460790917
+          },
+          "Long": {
+            "Count": 1,
+            "DirectionWins": 1,
+            "GrossEur": 0.026,
+            "CentralNetEur": -0.034,
+            "AdverseNetEur": -0.094,
+            "AdverseWins": 0,
+            "MedianAdverseBps": -45.2227460790917
+          },
+          "Short": {
+            "Count": 1,
+            "DirectionWins": 0,
+            "GrossEur": -0.026,
+            "CentralNetEur": -0.086,
+            "AdverseNetEur": -0.146,
+            "AdverseWins": 0,
+            "MedianAdverseBps": -70.2395843356105
+          },
+          "Cash": 0
+        },
+        "Late": {
+          "Rule": {
+            "Count": 2,
+            "DirectionWins": 1,
+            "GrossEur": 0.0315,
+            "CentralNetEur": -0.0885,
+            "AdverseNetEur": -0.2085,
+            "AdverseWins": 0,
+            "MedianAdverseBps": -69.87801363941985
+          },
+          "Momentum": {
+            "Count": 2,
+            "DirectionWins": 1,
+            "GrossEur": -0.0315,
+            "CentralNetEur": -0.1515,
+            "AdverseNetEur": -0.2715,
+            "AdverseWins": 0,
+            "MedianAdverseBps": -81.10151435313524
+          },
+          "Long": {
+            "Count": 2,
+            "DirectionWins": 0,
+            "GrossEur": -0.0825,
+            "CentralNetEur": -0.2025,
+            "AdverseNetEur": -0.3225,
+            "AdverseWins": 0,
+            "MedianAdverseBps": -81.10151435313524
+          },
+          "Short": {
+            "Count": 2,
+            "DirectionWins": 2,
+            "GrossEur": 0.0825,
+            "CentralNetEur": -0.0375,
+            "AdverseNetEur": -0.1575,
+            "AdverseWins": 0,
+            "MedianAdverseBps": -45.384689270963406
+          },
+          "Cash": 0
+        },
+        "EarlyOwn": {
+          "Weeks": 1,
+          "Mean": -0.146,
+          "Lower": null
+        },
+        "EarlyDelta": {
+          "Weeks": 1,
+          "Mean": -0.052,
+          "Lower": null
+        },
+        "LateOwn": {
+          "Weeks": 1,
+          "Mean": -0.10425,
+          "Lower": null
+        },
+        "LateDelta": {
+          "Weeks": 1,
+          "Mean": 0.0315,
+          "Lower": null
+        },
+        "WeeklyPricedSignals": {
+          "2026-W36": 0,
+          "2026-W37": 0,
+          "2026-W38": 1,
+          "2026-W39": 0,
+          "2026-W40": 0,
+          "2026-W41": 0,
+          "2026-W42": 0,
+          "2026-W43": 2
+        },
+        "Sessions": [
+          {
+            "Weekend": false,
+            "EntryHourUtc": 1,
+            "Clocks": 8,
+            "ContractOpen": 8,
+            "HistoricalQuotePairs": 8,
+            "EntryMarksAfterConversion": 8,
+            "CostComplete": 8,
+            "FeatureComplete": 8,
+            "PricedSignals": 2,
+            "MedianEntrySpreadBps": 18.32802584251644,
+            "P90EntrySpreadBps": 19.098548510313215,
+            "MedianAbsoluteTerminalMoveBps": 12.508419128259405,
+            "MedianAdverseCostBps": 54.98407752754932,
+            "TerminalMoveCouldCoverAdverseCost": 1,
+            "Rule": {
+              "Count": 2,
+              "DirectionWins": 1,
+              "GrossEur": 0.031,
+              "CentralNetEur": -0.089,
+              "AdverseNetEur": -0.209,
+              "AdverseWins": 0,
+              "MedianAdverseBps": -70.2395843356105
+            },
+            "Momentum": {
+              "Count": 2,
+              "DirectionWins": 1,
+              "GrossEur": -0.031,
+              "CentralNetEur": -0.151,
+              "AdverseNetEur": -0.271,
+              "AdverseWins": 0,
+              "MedianAdverseBps": -81.10151435313524
+            }
+          },
+          {
+            "Weekend": false,
+            "EntryHourUtc": 7,
+            "Clocks": 8,
+            "ContractOpen": 8,
+            "HistoricalQuotePairs": 8,
+            "EntryMarksAfterConversion": 8,
+            "CostComplete": 8,
+            "FeatureComplete": 8,
+            "PricedSignals": 0,
+            "MedianEntrySpreadBps": 17.66433350261653,
+            "P90EntrySpreadBps": 19.011406844106464,
+            "MedianAbsoluteTerminalMoveBps": 37.66744355769004,
+            "MedianAdverseCostBps": 55.24480353566743,
+            "TerminalMoveCouldCoverAdverseCost": 4,
+            "Rule": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            },
+            "Momentum": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            }
+          },
+          {
+            "Weekend": false,
+            "EntryHourUtc": 13,
+            "Clocks": 8,
+            "ContractOpen": 8,
+            "HistoricalQuotePairs": 8,
+            "EntryMarksAfterConversion": 8,
+            "CostComplete": 8,
+            "FeatureComplete": 8,
+            "PricedSignals": 0,
+            "MedianEntrySpreadBps": 18.217839819643388,
+            "P90EntrySpreadBps": 21.646695013529186,
+            "MedianAbsoluteTerminalMoveBps": 32.165748208415124,
+            "MedianAdverseCostBps": 54.653519458930155,
+            "TerminalMoveCouldCoverAdverseCost": 3,
+            "Rule": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            },
+            "Momentum": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            }
+          },
+          {
+            "Weekend": false,
+            "EntryHourUtc": 19,
+            "Clocks": 8,
+            "ContractOpen": 8,
+            "HistoricalQuotePairs": 8,
+            "EntryMarksAfterConversion": 8,
+            "CostComplete": 8,
+            "FeatureComplete": 8,
+            "PricedSignals": 0,
+            "MedianEntrySpreadBps": 17.875497162264825,
+            "P90EntrySpreadBps": 18.74897466544798,
+            "MedianAbsoluteTerminalMoveBps": 5.066711704104036,
+            "MedianAdverseCostBps": 53.62649148679448,
+            "TerminalMoveCouldCoverAdverseCost": 1,
+            "Rule": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            },
+            "Momentum": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            }
+          },
+          {
+            "Weekend": true,
+            "EntryHourUtc": 1,
+            "Clocks": 8,
+            "ContractOpen": 8,
+            "HistoricalQuotePairs": 7,
+            "EntryMarksAfterConversion": 7,
+            "CostComplete": 7,
+            "FeatureComplete": 8,
+            "PricedSignals": 0,
+            "MedianEntrySpreadBps": 18.573551263001487,
+            "P90EntrySpreadBps": 20.075757575757574,
+            "MedianAbsoluteTerminalMoveBps": 13.465824665676077,
+            "MedianAdverseCostBps": 55.72065378900446,
+            "TerminalMoveCouldCoverAdverseCost": 0,
+            "Rule": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            },
+            "Momentum": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            }
+          },
+          {
+            "Weekend": true,
+            "EntryHourUtc": 7,
+            "Clocks": 8,
+            "ContractOpen": 4,
+            "HistoricalQuotePairs": 3,
+            "EntryMarksAfterConversion": 6,
+            "CostComplete": 3,
+            "FeatureComplete": 7,
+            "PricedSignals": 0,
+            "MedianEntrySpreadBps": 18.453589223103894,
+            "P90EntrySpreadBps": 19.146542852356223,
+            "MedianAbsoluteTerminalMoveBps": 4.855379066379968,
+            "MedianAdverseCostBps": 55.490046472913924,
+            "TerminalMoveCouldCoverAdverseCost": 1,
+            "Rule": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            },
+            "Momentum": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            }
+          },
+          {
+            "Weekend": true,
+            "EntryHourUtc": 13,
+            "Clocks": 8,
+            "ContractOpen": 8,
+            "HistoricalQuotePairs": 7,
+            "EntryMarksAfterConversion": 7,
+            "CostComplete": 7,
+            "FeatureComplete": 8,
+            "PricedSignals": 1,
+            "MedianEntrySpreadBps": 18.724838498267953,
+            "P90EntrySpreadBps": 20.017940607147917,
+            "MedianAbsoluteTerminalMoveBps": 8.266440427244447,
+            "MedianAdverseCostBps": 56.174515494803856,
+            "TerminalMoveCouldCoverAdverseCost": 1,
+            "Rule": {
+              "Count": 1,
+              "DirectionWins": 0,
+              "GrossEur": -0.0255,
+              "CentralNetEur": -0.0855,
+              "AdverseNetEur": -0.1455,
+              "AdverseWins": 0,
+              "MedianAdverseBps": -69.87801363941985
+            },
+            "Momentum": {
+              "Count": 1,
+              "DirectionWins": 1,
+              "GrossEur": 0.0255,
+              "CentralNetEur": -0.0345,
+              "AdverseNetEur": -0.0945,
+              "AdverseWins": 0,
+              "MedianAdverseBps": -45.384689270963406
+            }
+          },
+          {
+            "Weekend": true,
+            "EntryHourUtc": 19,
+            "Clocks": 8,
+            "ContractOpen": 8,
+            "HistoricalQuotePairs": 8,
+            "EntryMarksAfterConversion": 8,
+            "CostComplete": 8,
+            "FeatureComplete": 8,
+            "PricedSignals": 0,
+            "MedianEntrySpreadBps": 18.485302496359914,
+            "P90EntrySpreadBps": 20.117132220069234,
+            "MedianAbsoluteTerminalMoveBps": 14.804815919531471,
+            "MedianAdverseCostBps": 55.865921787709496,
+            "TerminalMoveCouldCoverAdverseCost": 0,
+            "Rule": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            },
+            "Momentum": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            }
+          }
+        ]
+      }
+    },
+    "AAPL.US-24": {
+      "30": {
+        "Verdict": "INSUFFICIENT_SIGNAL_WEEKS",
+        "Early": {
+          "Rule": {
+            "Count": 0,
+            "DirectionWins": 0,
+            "GrossEur": 0,
+            "CentralNetEur": 0,
+            "AdverseNetEur": 0,
+            "AdverseWins": 0,
+            "MedianAdverseBps": null
+          },
+          "Momentum": {
+            "Count": 0,
+            "DirectionWins": 0,
+            "GrossEur": 0,
+            "CentralNetEur": 0,
+            "AdverseNetEur": 0,
+            "AdverseWins": 0,
+            "MedianAdverseBps": null
+          },
+          "Long": {
+            "Count": 0,
+            "DirectionWins": 0,
+            "GrossEur": 0,
+            "CentralNetEur": 0,
+            "AdverseNetEur": 0,
+            "AdverseWins": 0,
+            "MedianAdverseBps": null
+          },
+          "Short": {
+            "Count": 0,
+            "DirectionWins": 0,
+            "GrossEur": 0,
+            "CentralNetEur": 0,
+            "AdverseNetEur": 0,
+            "AdverseWins": 0,
+            "MedianAdverseBps": null
+          },
+          "Cash": 0
+        },
+        "Late": {
+          "Rule": {
+            "Count": 0,
+            "DirectionWins": 0,
+            "GrossEur": 0,
+            "CentralNetEur": 0,
+            "AdverseNetEur": 0,
+            "AdverseWins": 0,
+            "MedianAdverseBps": null
+          },
+          "Momentum": {
+            "Count": 0,
+            "DirectionWins": 0,
+            "GrossEur": 0,
+            "CentralNetEur": 0,
+            "AdverseNetEur": 0,
+            "AdverseWins": 0,
+            "MedianAdverseBps": null
+          },
+          "Long": {
+            "Count": 0,
+            "DirectionWins": 0,
+            "GrossEur": 0,
+            "CentralNetEur": 0,
+            "AdverseNetEur": 0,
+            "AdverseWins": 0,
+            "MedianAdverseBps": null
+          },
+          "Short": {
+            "Count": 0,
+            "DirectionWins": 0,
+            "GrossEur": 0,
+            "CentralNetEur": 0,
+            "AdverseNetEur": 0,
+            "AdverseWins": 0,
+            "MedianAdverseBps": null
+          },
+          "Cash": 0
+        },
+        "EarlyOwn": {
+          "Weeks": 0,
+          "Mean": null,
+          "Lower": null
+        },
+        "EarlyDelta": {
+          "Weeks": 0,
+          "Mean": null,
+          "Lower": null
+        },
+        "LateOwn": {
+          "Weeks": 0,
+          "Mean": null,
+          "Lower": null
+        },
+        "LateDelta": {
+          "Weeks": 0,
+          "Mean": null,
+          "Lower": null
+        },
+        "WeeklyPricedSignals": {
+          "2026-W36": 0,
+          "2026-W37": 0,
+          "2026-W38": 0,
+          "2026-W39": 0,
+          "2026-W40": 0,
+          "2026-W41": 0,
+          "2026-W42": 0,
+          "2026-W43": 0
+        },
+        "Sessions": [
+          {
+            "Weekend": false,
+            "EntryHourUtc": 1,
+            "Clocks": 8,
+            "ContractOpen": 8,
+            "HistoricalQuotePairs": 1,
+            "EntryMarksAfterConversion": 2,
+            "CostComplete": 1,
+            "FeatureComplete": 7,
+            "PricedSignals": 0,
+            "MedianEntrySpreadBps": 5.337938613705942,
+            "P90EntrySpreadBps": 5.337938613705942,
+            "MedianAbsoluteTerminalMoveBps": 13.652971536095869,
+            "MedianAdverseCostBps": 36.89588499798365,
+            "TerminalMoveCouldCoverAdverseCost": 0,
+            "Rule": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            },
+            "Momentum": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            }
+          },
+          {
+            "Weekend": false,
+            "EntryHourUtc": 7,
+            "Clocks": 8,
+            "ContractOpen": 8,
+            "HistoricalQuotePairs": 2,
+            "EntryMarksAfterConversion": 2,
+            "CostComplete": 2,
+            "FeatureComplete": 7,
+            "PricedSignals": 0,
+            "MedianEntrySpreadBps": 3.929570014358044,
+            "P90EntrySpreadBps": 3.929570014358044,
+            "MedianAbsoluteTerminalMoveBps": 3.1728547935381095,
+            "MedianAdverseCostBps": 36.42860399541336,
+            "TerminalMoveCouldCoverAdverseCost": 0,
+            "Rule": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            },
+            "Momentum": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            }
+          },
+          {
+            "Weekend": false,
+            "EntryHourUtc": 13,
+            "Clocks": 8,
+            "ContractOpen": 8,
+            "HistoricalQuotePairs": 4,
+            "EntryMarksAfterConversion": 4,
+            "CostComplete": 4,
+            "FeatureComplete": 7,
+            "PricedSignals": 0,
+            "MedianEntrySpreadBps": 4.654139275117808,
+            "P90EntrySpreadBps": 6.293266205160478,
+            "MedianAbsoluteTerminalMoveBps": 17.46005734957308,
+            "MedianAdverseCostBps": 45.539798788171225,
+            "TerminalMoveCouldCoverAdverseCost": 0,
+            "Rule": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            },
+            "Momentum": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            }
+          },
+          {
+            "Weekend": false,
+            "EntryHourUtc": 19,
+            "Clocks": 8,
+            "ContractOpen": 8,
+            "HistoricalQuotePairs": 8,
+            "EntryMarksAfterConversion": 8,
+            "CostComplete": 8,
+            "FeatureComplete": 8,
+            "PricedSignals": 0,
+            "MedianEntrySpreadBps": 1.4535517537101907,
+            "P90EntrySpreadBps": 3.31190630315986,
+            "MedianAbsoluteTerminalMoveBps": 11.119293065845191,
+            "MedianAdverseCostBps": 31.101502158620594,
+            "TerminalMoveCouldCoverAdverseCost": 0,
+            "Rule": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            },
+            "Momentum": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            }
+          }
+        ]
+      },
+      "90": {
+        "Verdict": "INSUFFICIENT_SIGNAL_WEEKS",
+        "Early": {
+          "Rule": {
+            "Count": 0,
+            "DirectionWins": 0,
+            "GrossEur": 0,
+            "CentralNetEur": 0,
+            "AdverseNetEur": 0,
+            "AdverseWins": 0,
+            "MedianAdverseBps": null
+          },
+          "Momentum": {
+            "Count": 0,
+            "DirectionWins": 0,
+            "GrossEur": 0,
+            "CentralNetEur": 0,
+            "AdverseNetEur": 0,
+            "AdverseWins": 0,
+            "MedianAdverseBps": null
+          },
+          "Long": {
+            "Count": 0,
+            "DirectionWins": 0,
+            "GrossEur": 0,
+            "CentralNetEur": 0,
+            "AdverseNetEur": 0,
+            "AdverseWins": 0,
+            "MedianAdverseBps": null
+          },
+          "Short": {
+            "Count": 0,
+            "DirectionWins": 0,
+            "GrossEur": 0,
+            "CentralNetEur": 0,
+            "AdverseNetEur": 0,
+            "AdverseWins": 0,
+            "MedianAdverseBps": null
+          },
+          "Cash": 0
+        },
+        "Late": {
+          "Rule": {
+            "Count": 0,
+            "DirectionWins": 0,
+            "GrossEur": 0,
+            "CentralNetEur": 0,
+            "AdverseNetEur": 0,
+            "AdverseWins": 0,
+            "MedianAdverseBps": null
+          },
+          "Momentum": {
+            "Count": 0,
+            "DirectionWins": 0,
+            "GrossEur": 0,
+            "CentralNetEur": 0,
+            "AdverseNetEur": 0,
+            "AdverseWins": 0,
+            "MedianAdverseBps": null
+          },
+          "Long": {
+            "Count": 0,
+            "DirectionWins": 0,
+            "GrossEur": 0,
+            "CentralNetEur": 0,
+            "AdverseNetEur": 0,
+            "AdverseWins": 0,
+            "MedianAdverseBps": null
+          },
+          "Short": {
+            "Count": 0,
+            "DirectionWins": 0,
+            "GrossEur": 0,
+            "CentralNetEur": 0,
+            "AdverseNetEur": 0,
+            "AdverseWins": 0,
+            "MedianAdverseBps": null
+          },
+          "Cash": 0
+        },
+        "EarlyOwn": {
+          "Weeks": 0,
+          "Mean": null,
+          "Lower": null
+        },
+        "EarlyDelta": {
+          "Weeks": 0,
+          "Mean": null,
+          "Lower": null
+        },
+        "LateOwn": {
+          "Weeks": 0,
+          "Mean": null,
+          "Lower": null
+        },
+        "LateDelta": {
+          "Weeks": 0,
+          "Mean": null,
+          "Lower": null
+        },
+        "WeeklyPricedSignals": {
+          "2026-W36": 0,
+          "2026-W37": 0,
+          "2026-W38": 0,
+          "2026-W39": 0,
+          "2026-W40": 0,
+          "2026-W41": 0,
+          "2026-W42": 0,
+          "2026-W43": 0
+        },
+        "Sessions": [
+          {
+            "Weekend": false,
+            "EntryHourUtc": 1,
+            "Clocks": 8,
+            "ContractOpen": 8,
+            "HistoricalQuotePairs": 2,
+            "EntryMarksAfterConversion": 2,
+            "CostComplete": 2,
+            "FeatureComplete": 7,
+            "PricedSignals": 0,
+            "MedianEntrySpreadBps": 5.337938613705942,
+            "P90EntrySpreadBps": 5.337938613705942,
+            "MedianAbsoluteTerminalMoveBps": 6.749703241442443,
+            "MedianAdverseCostBps": 35.016432185625696,
+            "TerminalMoveCouldCoverAdverseCost": 0,
+            "Rule": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            },
+            "Momentum": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            }
+          },
+          {
+            "Weekend": false,
+            "EntryHourUtc": 7,
+            "Clocks": 8,
+            "ContractOpen": 8,
+            "HistoricalQuotePairs": 1,
+            "EntryMarksAfterConversion": 2,
+            "CostComplete": 1,
+            "FeatureComplete": 7,
+            "PricedSignals": 0,
+            "MedianEntrySpreadBps": 3.929570014358044,
+            "P90EntrySpreadBps": 3.929570014358044,
+            "MedianAbsoluteTerminalMoveBps": 5.323628830827698,
+            "MedianAdverseCostBps": 42.93008717544555,
+            "TerminalMoveCouldCoverAdverseCost": 0,
+            "Rule": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            },
+            "Momentum": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            }
+          },
+          {
+            "Weekend": false,
+            "EntryHourUtc": 13,
+            "Clocks": 8,
+            "ContractOpen": 8,
+            "HistoricalQuotePairs": 4,
+            "EntryMarksAfterConversion": 4,
+            "CostComplete": 4,
+            "FeatureComplete": 7,
+            "PricedSignals": 0,
+            "MedianEntrySpreadBps": 4.654139275117808,
+            "P90EntrySpreadBps": 6.293266205160478,
+            "MedianAbsoluteTerminalMoveBps": 52.14261663447791,
+            "MedianAdverseCostBps": 36.02810459819717,
+            "TerminalMoveCouldCoverAdverseCost": 3,
+            "Rule": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            },
+            "Momentum": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            }
+          },
+          {
+            "Weekend": false,
+            "EntryHourUtc": 19,
+            "Clocks": 8,
+            "ContractOpen": 8,
+            "HistoricalQuotePairs": 2,
+            "EntryMarksAfterConversion": 8,
+            "CostComplete": 2,
+            "FeatureComplete": 8,
+            "PricedSignals": 0,
+            "MedianEntrySpreadBps": 1.4535517537101907,
+            "P90EntrySpreadBps": 3.31190630315986,
+            "MedianAbsoluteTerminalMoveBps": 5.691789833249809,
+            "MedianAdverseCostBps": 38.36183758173667,
+            "TerminalMoveCouldCoverAdverseCost": 0,
+            "Rule": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            },
+            "Momentum": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            }
+          }
+        ]
+      }
+    },
+    "GOOG.US-24": {
+      "30": {
+        "Verdict": "INSUFFICIENT_SIGNAL_WEEKS",
+        "Early": {
+          "Rule": {
+            "Count": 0,
+            "DirectionWins": 0,
+            "GrossEur": 0,
+            "CentralNetEur": 0,
+            "AdverseNetEur": 0,
+            "AdverseWins": 0,
+            "MedianAdverseBps": null
+          },
+          "Momentum": {
+            "Count": 0,
+            "DirectionWins": 0,
+            "GrossEur": 0,
+            "CentralNetEur": 0,
+            "AdverseNetEur": 0,
+            "AdverseWins": 0,
+            "MedianAdverseBps": null
+          },
+          "Long": {
+            "Count": 0,
+            "DirectionWins": 0,
+            "GrossEur": 0,
+            "CentralNetEur": 0,
+            "AdverseNetEur": 0,
+            "AdverseWins": 0,
+            "MedianAdverseBps": null
+          },
+          "Short": {
+            "Count": 0,
+            "DirectionWins": 0,
+            "GrossEur": 0,
+            "CentralNetEur": 0,
+            "AdverseNetEur": 0,
+            "AdverseWins": 0,
+            "MedianAdverseBps": null
+          },
+          "Cash": 0
+        },
+        "Late": {
+          "Rule": {
+            "Count": 0,
+            "DirectionWins": 0,
+            "GrossEur": 0,
+            "CentralNetEur": 0,
+            "AdverseNetEur": 0,
+            "AdverseWins": 0,
+            "MedianAdverseBps": null
+          },
+          "Momentum": {
+            "Count": 0,
+            "DirectionWins": 0,
+            "GrossEur": 0,
+            "CentralNetEur": 0,
+            "AdverseNetEur": 0,
+            "AdverseWins": 0,
+            "MedianAdverseBps": null
+          },
+          "Long": {
+            "Count": 0,
+            "DirectionWins": 0,
+            "GrossEur": 0,
+            "CentralNetEur": 0,
+            "AdverseNetEur": 0,
+            "AdverseWins": 0,
+            "MedianAdverseBps": null
+          },
+          "Short": {
+            "Count": 0,
+            "DirectionWins": 0,
+            "GrossEur": 0,
+            "CentralNetEur": 0,
+            "AdverseNetEur": 0,
+            "AdverseWins": 0,
+            "MedianAdverseBps": null
+          },
+          "Cash": 0
+        },
+        "EarlyOwn": {
+          "Weeks": 0,
+          "Mean": null,
+          "Lower": null
+        },
+        "EarlyDelta": {
+          "Weeks": 0,
+          "Mean": null,
+          "Lower": null
+        },
+        "LateOwn": {
+          "Weeks": 0,
+          "Mean": null,
+          "Lower": null
+        },
+        "LateDelta": {
+          "Weeks": 0,
+          "Mean": null,
+          "Lower": null
+        },
+        "WeeklyPricedSignals": {
+          "2026-W36": 0,
+          "2026-W37": 0,
+          "2026-W38": 0,
+          "2026-W39": 0,
+          "2026-W40": 0,
+          "2026-W41": 0,
+          "2026-W42": 0,
+          "2026-W43": 0
+        },
+        "Sessions": [
+          {
+            "Weekend": false,
+            "EntryHourUtc": 1,
+            "Clocks": 8,
+            "ContractOpen": 8,
+            "HistoricalQuotePairs": 2,
+            "EntryMarksAfterConversion": 3,
+            "CostComplete": 2,
+            "FeatureComplete": 7,
+            "PricedSignals": 0,
+            "MedianEntrySpreadBps": 6.451612903225806,
+            "P90EntrySpreadBps": 6.451612903225806,
+            "MedianAbsoluteTerminalMoveBps": 12.172398048285409,
+            "MedianAdverseCostBps": 39.75766507866313,
+            "TerminalMoveCouldCoverAdverseCost": 0,
+            "Rule": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            },
+            "Momentum": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            }
+          },
+          {
+            "Weekend": false,
+            "EntryHourUtc": 7,
+            "Clocks": 8,
+            "ContractOpen": 8,
+            "HistoricalQuotePairs": 1,
+            "EntryMarksAfterConversion": 1,
+            "CostComplete": 1,
+            "FeatureComplete": 7,
+            "PricedSignals": 0,
+            "MedianEntrySpreadBps": 8.651422263987708,
+            "P90EntrySpreadBps": 8.651422263987708,
+            "MedianAbsoluteTerminalMoveBps": 0.29816254483881993,
+            "MedianAdverseCostBps": 46.24405107351714,
+            "TerminalMoveCouldCoverAdverseCost": 0,
+            "Rule": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            },
+            "Momentum": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            }
+          },
+          {
+            "Weekend": false,
+            "EntryHourUtc": 13,
+            "Clocks": 8,
+            "ContractOpen": 8,
+            "HistoricalQuotePairs": 6,
+            "EntryMarksAfterConversion": 6,
+            "CostComplete": 6,
+            "FeatureComplete": 7,
+            "PricedSignals": 0,
+            "MedianEntrySpreadBps": 6.904107944226815,
+            "P90EntrySpreadBps": 7.797270955165692,
+            "MedianAbsoluteTerminalMoveBps": 14.60198499181911,
+            "MedianAdverseCostBps": 53.193130116062655,
+            "TerminalMoveCouldCoverAdverseCost": 0,
+            "Rule": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            },
+            "Momentum": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            }
+          },
+          {
+            "Weekend": false,
+            "EntryHourUtc": 19,
+            "Clocks": 8,
+            "ContractOpen": 8,
+            "HistoricalQuotePairs": 8,
+            "EntryMarksAfterConversion": 8,
+            "CostComplete": 8,
+            "FeatureComplete": 8,
+            "PricedSignals": 0,
+            "MedianEntrySpreadBps": 2.3895576331431645,
+            "P90EntrySpreadBps": 3.7740778911614,
+            "MedianAbsoluteTerminalMoveBps": 7.621443292343956,
+            "MedianAdverseCostBps": 33.254460578640405,
+            "TerminalMoveCouldCoverAdverseCost": 0,
+            "Rule": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            },
+            "Momentum": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            }
+          }
+        ]
+      },
+      "90": {
+        "Verdict": "INSUFFICIENT_SIGNAL_WEEKS",
+        "Early": {
+          "Rule": {
+            "Count": 0,
+            "DirectionWins": 0,
+            "GrossEur": 0,
+            "CentralNetEur": 0,
+            "AdverseNetEur": 0,
+            "AdverseWins": 0,
+            "MedianAdverseBps": null
+          },
+          "Momentum": {
+            "Count": 0,
+            "DirectionWins": 0,
+            "GrossEur": 0,
+            "CentralNetEur": 0,
+            "AdverseNetEur": 0,
+            "AdverseWins": 0,
+            "MedianAdverseBps": null
+          },
+          "Long": {
+            "Count": 0,
+            "DirectionWins": 0,
+            "GrossEur": 0,
+            "CentralNetEur": 0,
+            "AdverseNetEur": 0,
+            "AdverseWins": 0,
+            "MedianAdverseBps": null
+          },
+          "Short": {
+            "Count": 0,
+            "DirectionWins": 0,
+            "GrossEur": 0,
+            "CentralNetEur": 0,
+            "AdverseNetEur": 0,
+            "AdverseWins": 0,
+            "MedianAdverseBps": null
+          },
+          "Cash": 0
+        },
+        "Late": {
+          "Rule": {
+            "Count": 0,
+            "DirectionWins": 0,
+            "GrossEur": 0,
+            "CentralNetEur": 0,
+            "AdverseNetEur": 0,
+            "AdverseWins": 0,
+            "MedianAdverseBps": null
+          },
+          "Momentum": {
+            "Count": 0,
+            "DirectionWins": 0,
+            "GrossEur": 0,
+            "CentralNetEur": 0,
+            "AdverseNetEur": 0,
+            "AdverseWins": 0,
+            "MedianAdverseBps": null
+          },
+          "Long": {
+            "Count": 0,
+            "DirectionWins": 0,
+            "GrossEur": 0,
+            "CentralNetEur": 0,
+            "AdverseNetEur": 0,
+            "AdverseWins": 0,
+            "MedianAdverseBps": null
+          },
+          "Short": {
+            "Count": 0,
+            "DirectionWins": 0,
+            "GrossEur": 0,
+            "CentralNetEur": 0,
+            "AdverseNetEur": 0,
+            "AdverseWins": 0,
+            "MedianAdverseBps": null
+          },
+          "Cash": 0
+        },
+        "EarlyOwn": {
+          "Weeks": 0,
+          "Mean": null,
+          "Lower": null
+        },
+        "EarlyDelta": {
+          "Weeks": 0,
+          "Mean": null,
+          "Lower": null
+        },
+        "LateOwn": {
+          "Weeks": 0,
+          "Mean": null,
+          "Lower": null
+        },
+        "LateDelta": {
+          "Weeks": 0,
+          "Mean": null,
+          "Lower": null
+        },
+        "WeeklyPricedSignals": {
+          "2026-W36": 0,
+          "2026-W37": 0,
+          "2026-W38": 0,
+          "2026-W39": 0,
+          "2026-W40": 0,
+          "2026-W41": 0,
+          "2026-W42": 0,
+          "2026-W43": 0
+        },
+        "Sessions": [
+          {
+            "Weekend": false,
+            "EntryHourUtc": 1,
+            "Clocks": 8,
+            "ContractOpen": 8,
+            "HistoricalQuotePairs": 0,
+            "EntryMarksAfterConversion": 3,
+            "CostComplete": 0,
+            "FeatureComplete": 7,
+            "PricedSignals": 0,
+            "MedianEntrySpreadBps": 6.451612903225806,
+            "P90EntrySpreadBps": 6.451612903225806,
+            "MedianAbsoluteTerminalMoveBps": null,
+            "MedianAdverseCostBps": null,
+            "TerminalMoveCouldCoverAdverseCost": 0,
+            "Rule": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            },
+            "Momentum": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            }
+          },
+          {
+            "Weekend": false,
+            "EntryHourUtc": 7,
+            "Clocks": 8,
+            "ContractOpen": 8,
+            "HistoricalQuotePairs": 1,
+            "EntryMarksAfterConversion": 1,
+            "CostComplete": 1,
+            "FeatureComplete": 7,
+            "PricedSignals": 0,
+            "MedianEntrySpreadBps": 8.651422263987708,
+            "P90EntrySpreadBps": 8.651422263987708,
+            "MedianAbsoluteTerminalMoveBps": 24.906192160957563,
+            "MedianAdverseCostBps": 44.913716230179865,
+            "TerminalMoveCouldCoverAdverseCost": 0,
+            "Rule": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            },
+            "Momentum": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            }
+          },
+          {
+            "Weekend": false,
+            "EntryHourUtc": 13,
+            "Clocks": 8,
+            "ContractOpen": 8,
+            "HistoricalQuotePairs": 6,
+            "EntryMarksAfterConversion": 6,
+            "CostComplete": 6,
+            "FeatureComplete": 7,
+            "PricedSignals": 0,
+            "MedianEntrySpreadBps": 6.904107944226815,
+            "P90EntrySpreadBps": 7.797270955165692,
+            "MedianAbsoluteTerminalMoveBps": 51.21112361883602,
+            "MedianAdverseCostBps": 38.67323900626013,
+            "TerminalMoveCouldCoverAdverseCost": 5,
+            "Rule": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            },
+            "Momentum": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            }
+          },
+          {
+            "Weekend": false,
+            "EntryHourUtc": 19,
+            "Clocks": 8,
+            "ContractOpen": 8,
+            "HistoricalQuotePairs": 0,
+            "EntryMarksAfterConversion": 8,
+            "CostComplete": 0,
+            "FeatureComplete": 8,
+            "PricedSignals": 0,
+            "MedianEntrySpreadBps": 2.3895576331431645,
+            "P90EntrySpreadBps": 3.7740778911614,
+            "MedianAbsoluteTerminalMoveBps": null,
+            "MedianAdverseCostBps": null,
+            "TerminalMoveCouldCoverAdverseCost": 0,
+            "Rule": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            },
+            "Momentum": {
+              "Count": 0,
+              "DirectionWins": 0,
+              "GrossEur": 0,
+              "CentralNetEur": 0,
+              "AdverseNetEur": 0,
+              "AdverseWins": 0,
+              "MedianAdverseBps": null
+            }
+          }
+        ]
+      }
+    }
+  },
+  "SourceSha256": "87a8d36061530a1cf69d134453d4198a7ece891042cb0a8937d3114b5da93f0e",
+  "EntryClocksWithConcurrentSymbols": 0,
+  "PortfolioExecuted": false,
+  "PortfolioAdmission": false,
+  "ContinuousDrawdownMeasured": false,
+  "OriginalPepperstoneAccountAuthenticated": true,
+  "PostAuthenticationReadOnlyRequests": 1479,
+  "OriginalBarsBySymbol": {
+    "EURUSD": 11797,
+    "SpotBrent": 10498,
+    "SpotCrude": 11277,
+    "ETHEUR": 16615,
+    "AAPL.US-24": 11100,
+    "GOOG.US-24": 11097
+  },
+  "OriginalBidAskAsOfMarks": 574,
+  "QuoteWindows": 192,
+  "MissingQuoteInstrumentClocks": 98,
+  "ExpectedClocksPerSymbol": 192,
+  "ObservedMarginGridBySymbol": {
+    "EURUSD": [
+      {
+        "VolumeUnits": "1000",
+        "BuyMarginEur": "33.33",
+        "SellMarginEur": "33.33"
+      },
+      {
+        "VolumeUnits": "2000",
+        "BuyMarginEur": "66.67",
+        "SellMarginEur": "66.67"
+      }
+    ],
+    "SpotBrent": [
+      {
+        "VolumeUnits": "1",
+        "BuyMarginEur": "8.53",
+        "SellMarginEur": "8.53"
+      },
+      {
+        "VolumeUnits": "2",
+        "BuyMarginEur": "17.06",
+        "SellMarginEur": "17.06"
+      }
+    ],
+    "SpotCrude": [
+      {
+        "VolumeUnits": "1",
+        "BuyMarginEur": "7.77",
+        "SellMarginEur": "7.76"
+      },
+      {
+        "VolumeUnits": "2",
+        "BuyMarginEur": "15.53",
+        "SellMarginEur": "15.53"
+      }
+    ],
+    "ETHEUR": [
+      {
+        "VolumeUnits": "0.01",
+        "BuyMarginEur": "9.12",
+        "SellMarginEur": "9.1"
+      },
+      {
+        "VolumeUnits": "0.02",
+        "BuyMarginEur": "18.24",
+        "SellMarginEur": "18.2"
+      }
+    ],
+    "AAPL.US-24": [
+      {
+        "VolumeUnits": "0.1",
+        "BuyMarginEur": "6.43",
+        "SellMarginEur": "6.43"
+      },
+      {
+        "VolumeUnits": "0.2",
+        "BuyMarginEur": "12.86",
+        "SellMarginEur": "12.86"
+      }
+    ],
+    "GOOG.US-24": [
+      {
+        "VolumeUnits": "0.1",
+        "BuyMarginEur": "5.23",
+        "SellMarginEur": "5.2"
+      },
+      {
+        "VolumeUnits": "0.2",
+        "BuyMarginEur": "10.45",
+        "SellMarginEur": "10.41"
+      }
+    ]
+  },
+  "ExcludedOptionalSymbols": {},
+  "CurrentScheduleBySymbol": {
+    "EURUSD": {
+      "TimeZone": "America/New_York",
+      "Intervals": [
+        [
+          61260,
+          147540
+        ],
+        [
+          147660,
+          233940
+        ],
+        [
+          234060,
+          320340
+        ],
+        [
+          320460,
+          406740
+        ],
+        [
+          406860,
+          492900
+        ]
+      ]
+    },
+    "SpotBrent": {
+      "TimeZone": "America/New_York",
+      "Intervals": [
+        [
+          64800,
+          147540
+        ],
+        [
+          158400,
+          233940
+        ],
+        [
+          244800,
+          320340
+        ],
+        [
+          331200,
+          406740
+        ],
+        [
+          417600,
+          492900
+        ]
+      ]
+    },
+    "SpotCrude": {
+      "TimeZone": "America/New_York",
+      "Intervals": [
+        [
+          64800,
+          147540
+        ],
+        [
+          151200,
+          233940
+        ],
+        [
+          237600,
+          320340
+        ],
+        [
+          324000,
+          406740
+        ],
+        [
+          410400,
+          492900
+        ]
+      ]
+    },
+    "ETHEUR": {
+      "TimeZone": "America/New_York",
+      "Intervals": [
+        [
+          0,
+          14400
+        ],
+        [
+          21600,
+          61140
+        ],
+        [
+          61260,
+          147540
+        ],
+        [
+          147660,
+          233940
+        ],
+        [
+          234060,
+          320340
+        ],
+        [
+          320460,
+          406740
+        ],
+        [
+          406860,
+          492900
+        ],
+        [
+          493260,
+          579540
+        ],
+        [
+          579660,
+          604799
+        ]
+      ]
+    },
+    "AAPL.US-24": {
+      "TimeZone": "America/New_York",
+      "Intervals": [
+        [
+          72000,
+          147540
+        ],
+        [
+          147660,
+          233940
+        ],
+        [
+          234060,
+          320340
+        ],
+        [
+          320460,
+          406740
+        ],
+        [
+          406860,
+          492900
+        ]
+      ]
+    },
+    "GOOG.US-24": {
+      "TimeZone": "America/New_York",
+      "Intervals": [
+        [
+          72000,
+          147540
+        ],
+        [
+          147660,
+          233940
+        ],
+        [
+          234060,
+          320340
+        ],
+        [
+          320460,
+          406740
+        ],
+        [
+          406860,
+          492900
+        ]
+      ]
+    }
+  },
+  "CurrentContractsBySymbol": {
+    "EURUSD": {
+      "Symbol": "EURUSD",
+      "QuoteAsset": "USD",
+      "ObservedAtUtcMs": 1794485007593,
+      "MinimumUnits": "1000",
+      "VolumeStepUnits": "1000",
+      "MaximumUnits": "10000000",
+      "LotUnits": "100000",
+      "CommissionType": 2,
+      "PreciseRateWire": 300000000,
+      "MinimumCommissionType": 1,
+      "PreciseMinimumWire": 0,
+      "MinimumCommissionAsset": "USD",
+      "PnlConversionFeeBps": 0,
+      "SwapCalculationType": 0,
+      "LongSwap": "-0.71",
+      "ShortSwap": "0.14",
+      "PipPosition": 4,
+      "SwapPeriodHours": 24,
+      "SwapTimeUtcMinute": 1320,
+      "TripleSwapWeekday": 3,
+      "ChargeSwapAtWeekends": false,
+      "SkipSwapPeriods": 0,
+      "OriginalBrokerAuthenticated": true,
+      "HistoricalTariffContinuityCertified": false
+    },
+    "SpotBrent": {
+      "Symbol": "SpotBrent",
+      "QuoteAsset": "USD",
+      "ObservedAtUtcMs": 1794485008013,
+      "MinimumUnits": "1",
+      "VolumeStepUnits": "1",
+      "MaximumUnits": "5000",
+      "LotUnits": "100",
+      "CommissionType": 2,
+      "PreciseRateWire": 0,
+      "MinimumCommissionType": 1,
+      "PreciseMinimumWire": 0,
+      "MinimumCommissionAsset": "USD",
+      "PnlConversionFeeBps": 0,
+      "SwapCalculationType": 0,
+      "LongSwap": "13.69",
+      "ShortSwap": "-14.93",
+      "PipPosition": 2,
+      "SwapPeriodHours": 24,
+      "SwapTimeUtcMinute": 1320,
+      "TripleSwapWeekday": 5,
+      "ChargeSwapAtWeekends": false,
+      "SkipSwapPeriods": 0,
+      "OriginalBrokerAuthenticated": true,
+      "HistoricalTariffContinuityCertified": false
+    },
+    "SpotCrude": {
+      "Symbol": "SpotCrude",
+      "QuoteAsset": "USD",
+      "ObservedAtUtcMs": 1794485008433,
+      "MinimumUnits": "1",
+      "VolumeStepUnits": "1",
+      "MaximumUnits": "5000",
+      "LotUnits": "100",
+      "CommissionType": 2,
+      "PreciseRateWire": 0,
+      "MinimumCommissionType": 1,
+      "PreciseMinimumWire": 0,
+      "MinimumCommissionAsset": "USD",
+      "PnlConversionFeeBps": 0,
+      "SwapCalculationType": 0,
+      "LongSwap": "3.34",
+      "ShortSwap": "-4.12",
+      "PipPosition": 2,
+      "SwapPeriodHours": 24,
+      "SwapTimeUtcMinute": 1320,
+      "TripleSwapWeekday": 5,
+      "ChargeSwapAtWeekends": false,
+      "SkipSwapPeriods": 0,
+      "OriginalBrokerAuthenticated": true,
+      "HistoricalTariffContinuityCertified": false
+    },
+    "ETHEUR": {
+      "Symbol": "ETHEUR",
+      "QuoteAsset": "EUR",
+      "ObservedAtUtcMs": 1794485008853,
+      "MinimumUnits": "0.01",
+      "VolumeStepUnits": "0.01",
+      "MaximumUnits": "560",
+      "LotUnits": "1",
+      "CommissionType": 2,
+      "PreciseRateWire": 0,
+      "MinimumCommissionType": 1,
+      "PreciseMinimumWire": 0,
+      "MinimumCommissionAsset": "USD",
+      "PnlConversionFeeBps": 0,
+      "SwapCalculationType": 1,
+      "LongSwap": "-7.0",
+      "ShortSwap": "0.0",
+      "PipPosition": 1,
+      "SwapPeriodHours": 24,
+      "SwapTimeUtcMinute": 1320,
+      "TripleSwapWeekday": 0,
+      "ChargeSwapAtWeekends": true,
+      "SkipSwapPeriods": 0,
+      "OriginalBrokerAuthenticated": true,
+      "HistoricalTariffContinuityCertified": false
+    },
+    "AAPL.US-24": {
+      "Symbol": "AAPL.US-24",
+      "QuoteAsset": "USD",
+      "ObservedAtUtcMs": 1794485009275,
+      "MinimumUnits": "0.1",
+      "VolumeStepUnits": "0.1",
+      "MaximumUnits": "250",
+      "LotUnits": "1",
+      "CommissionType": 2,
+      "PreciseRateWire": 2000000,
+      "MinimumCommissionType": 1,
+      "PreciseMinimumWire": 2000000,
+      "MinimumCommissionAsset": "USD",
+      "PnlConversionFeeBps": 0,
+      "SwapCalculationType": 1,
+      "LongSwap": "-6.41",
+      "ShortSwap": "1.31",
+      "PipPosition": 1,
+      "SwapPeriodHours": 24,
+      "SwapTimeUtcMinute": 1320,
+      "TripleSwapWeekday": 5,
+      "ChargeSwapAtWeekends": false,
+      "SkipSwapPeriods": 0,
+      "OriginalBrokerAuthenticated": true,
+      "HistoricalTariffContinuityCertified": false
+    },
+    "GOOG.US-24": {
+      "Symbol": "GOOG.US-24",
+      "QuoteAsset": "USD",
+      "ObservedAtUtcMs": 1794485009694,
+      "MinimumUnits": "0.1",
+      "VolumeStepUnits": "0.1",
+      "MaximumUnits": "250",
+      "LotUnits": "1",
+      "CommissionType": 2,
+      "PreciseRateWire": 2000000,
+      "MinimumCommissionType": 1,
+      "PreciseMinimumWire": 2000000,
+      "MinimumCommissionAsset": "USD",
+      "PnlConversionFeeBps": 0,
+      "SwapCalculationType": 1,
+      "LongSwap": "-6.41",
+      "ShortSwap": "1.31",
+      "PipPosition": 1,
+      "SwapPeriodHours": 24,
+      "SwapTimeUtcMinute": 1320,
+      "TripleSwapWeekday": 5,
+      "ChargeSwapAtWeekends": false,
+      "SkipSwapPeriods": 0,
+      "OriginalBrokerAuthenticated": true,
+      "HistoricalTariffContinuityCertified": false
+    }
+  },
+  "InitialModelCapitalEur": 300,
+  "OrdersSubmitted": 0,
+  "CloudActivated": false,
+  "IndependentConfirmation": false,
+  "SourceCiphertextSha256": "32fb5f6a395c1c6ae19efca7ad05330b7ecde8218da2c42679f256b1c3765f95",
+  "ProtocolSha256": "c870f1f31ebe17c16dbb0b3778ce3791203f07ff59402eec5dc3aeb9a68f3f9f"
+}

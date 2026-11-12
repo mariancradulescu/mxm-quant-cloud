@@ -2710,5 +2710,80 @@
     "independentConfirmation": false,
     "ordersSubmitted": 0,
     "cloudActivated": false
+  },
+  "retrospectiveBenchmarkCorrections20261112": {
+    "status": "EXPOSED_DIAGNOSTIC_NO_PROMOTION",
+    "reportPath": "docs/BENCHMARK_CORRECTIONS_20261112.md",
+    "brokerRequests": 0,
+    "independentConfirmation": false,
+    "session": {
+      "runId": 43214539052,
+      "head": "c6a4607f6d2ffdab7d8ebc736af10f2152961c03",
+      "publicArtifactId": 13943645086,
+      "publicArchiveSha256": "4ba2aa07f0c3d1660d82a4f44f2d3aacc8dbc3a35b1dc3a279a09a37b3e28350",
+      "publicReceiptSha256": "44ca3cf8c2aeff9c46f47e7b0368af4b860ffc34c97459d3545a50655cf8309b",
+      "protocolSha256": "d16c9453b3df92ee94fb45d1215f947bd8c2d78fa9cfcfb8cb642b9ae0d16f94",
+      "originals": {
+        "SEM1": {
+          "RunId": 43207629492,
+          "ArtifactId": 13938934824,
+          "ReceiptSha256": "afe44d2c795b8d6b17f3af5d006d24ceaffeb00b3573b61e4d02ea7a48495455",
+          "SourceCiphertextSha256": "707f533531d426dd5a6b98544c412a656ee0b02c28765c4915bb46dabdf0cad0",
+          "SourceSha256": "6c2605e7f23133c5e2a728f9190be87d54ff080de5c1d7bba8300916c24f8354"
+        },
+        "ESD1": {
+          "RunId": 43202303802,
+          "ArtifactId": 13935958165,
+          "ReceiptSha256": "6e58b37db203fe0b2bffeda3598846e09097e23bf7b631f04e9424399cdd1ee1",
+          "SourceCiphertextSha256": "1ff928d0fc7863305a2527d1750d786472924e60555b948d287c550c092b0cff",
+          "SourceSha256": "c76cdb042b6c6801908c5cc0a5a38c42a11b89344fe2ec31906389556bf29b9c"
+        }
+      }
+    },
+    "pve1": {
+      "runId": 43215212868,
+      "head": "a62dc00ed11cbe2c69df8d31a3c548bfa682f119",
+      "publicArtifactId": 13943935120,
+      "publicArchiveSha256": "f95a63bf31def397bfeebeb9b7769492d9b47676441351fdba14127460fdcc3a",
+      "publicReceiptSha256": "2acb5cbc964f00a7cccff7af73cfcfb38bb98c74aa427333b966286562b4360e",
+      "protocolSha256": "62f2d84a1396a80c8fe68ec42752e31e45f141e95e01b9e16d0b35d393697357"
+    },
+    "xua1": {
+      "runId": 43215587873,
+      "head": "ea67be69a220a9e7470f120ebf1e527995e40567",
+      "publicArtifactId": 13944030336,
+      "publicArchiveSha256": "f67e1354b96d4826fd136dd2774d305a8b676893eda8acd59e650a93a4b2ee6a",
+      "publicReceiptSha256": "26a7896c9accf2df7356d8dc2541488e1091e3aa9023fec3e34ac989f67b4654",
+      "protocolSha256": "19482f51763597cae815728dacce7c512f91a2abb707b643a68d2e41a35c9c8b",
+      "publicReceiptPath": "docs/XUA1_BENCHMARK_CORRECTION_PUBLIC_20261112.json"
+    },
+    "cpf1": {
+      "runId": 43215587876,
+      "head": "ea67be69a220a9e7470f120ebf1e527995e40567",
+      "publicArtifactId": 13943666478,
+      "publicArchiveSha256": "3705becc738079054927e8afc410705d23599c0da145171ac3c745d6fff534e1",
+      "publicReceiptSha256": "b6107f0b90474b304dab95b07b7a4c81371a10920189f685dbc4804f41f99236",
+      "protocolSha256": "d449844b9d2eab292dfc153c92c075c6a15a828a44e68f4d6f8e72c67b4f4afc",
+      "publicReceiptPath": "docs/CPF1_BENCHMARK_CORRECTION_PUBLIC_20261112.json"
+    }
+  },
+  "pdr1AuthenticCrossMarketDiscovery": {
+    "runId": 43214201246,
+    "head": "26ea12fe68293f59f92f53cd6f658c776ad69851",
+    "publicArtifactId": 13942119558,
+    "publicArchiveSha256": "499698d2695f94939dd6840505c49d95d19f0abaf4b9ef5670f06adb1b886a1a",
+    "publicReceiptSha256": "13c3a9733b663662efd1e9fd239ed951e63a940dd669761a536fc9c28d956125",
+    "protocolSha256": "c870f1f31ebe17c16dbb0b3778ce3791203f07ff59402eec5dc3aeb9a68f3f9f",
+    "status": "CLOSED_EXACT_INSUFFICIENT_SIGNAL_WEEKS",
+    "publicReceiptPath": "docs/PDR1_AUTHENTIC_PUBLIC_RECEIPT_20261112.json",
+    "sourceEncryptedArtifactId": 13942014969,
+    "sourceEncryptedArchiveSha256": "34cdb1c16c573b1586b4877fca3de68f6681911613817b2a8f16132934cf5ff9",
+    "sourceCiphertextSha256": "32fb5f6a395c1c6ae19efca7ad05330b7ecde8218da2c42679f256b1c3765f95",
+    "sourceSha256": "87a8d36061530a1cf69d134453d4198a7ece891042cb0a8937d3114b5da93f0e",
+    "brokerRequests": 1479,
+    "portfolioExecuted": false,
+    "independentConfirmation": false,
+    "ordersSubmitted": 0,
+    "cloudActivated": false
   }
 }
