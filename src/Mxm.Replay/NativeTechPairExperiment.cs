@@ -26,8 +26,15 @@ internal static class NativeTechPairExperiment
                 _=>x
             }).ToArray()};
             LedgerClosedFragment[] closed=Array.Empty<LedgerClosedFragment>();
-            NativeHistoricalMarketReceipt Run(string mode,Action<NativeFundedLedger>? observe=null)=>
-                NativeHistoricalProductReplay.Evaluate(tape,true,"ETP1_"+mode,observe);
+            NativeHistoricalMarketReceipt Run(string mode,Action<NativeFundedLedger>? observe=null)
+            {
+                // Fixed control must actually use the fixed exit in the ledger,
+                // not merely in a risk-forecast variable.
+                var specific=mode=="FIXED"?tape with {Quotes=tape.Quotes.Select(x=>
+                    x with {HoldingMinutes=90,ExitPolicy=NativeCausalExitResearch.FrozenFixed}
+                    ).ToArray()}:tape;
+                return NativeHistoricalProductReplay.Evaluate(specific,true,"ETP1_"+mode,observe);
+            }
             var joint=Run("JOINT",ledger=>closed=ledger.ClosedFragments());
             var leader=Run("LEADER");
             var follower=Run("FOLLOWER");
