@@ -21,7 +21,7 @@ jobs:
     if: >-
       github.event_name == 'push' && github.ref == 'refs/heads/main' &&
       github.actor == 'mariancradulescu' && github.run_attempt == '1' &&
-      startsWith(github.event.head_commit.message, 'OWNER_XUA1_BENCHMARK_CORRECTION_ONCE')
+      startsWith(github.event.head_commit.message, 'OWNER_ADDITIONAL_BENCHMARK_CORRECTIONS_ONCE')
     environment: mxm-r3-custody-v1
     permissions:
       contents: read

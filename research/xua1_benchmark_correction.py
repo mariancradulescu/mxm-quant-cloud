@@ -7,7 +7,7 @@ import math
 from pathlib import Path
 from statistics import mean
 
-from .xua1_research import H, W, NAMES, PROTOCOL, asof_index, valid, decide, decrypt_source, cost_models
+from .xua1_research import H, W, NAMES, P as PROTOCOL, asof_index, valid, decide, decrypt_source, cost_models
 
 RECEIPT = Path("docs/XUA1_AUTHENTIC_RESULT_20261108.json")
 SYMBOL = "ETHUSD"
