@@ -12,7 +12,7 @@ public static class DiscoveryAdmissionChecks
         long evaluation = first + 6 * week;
         const string custody = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
-        NativeProductMarket Market(string symbol, long at, int tick, decimal margin, decimal spread)
+        NativeProductMarket Market(string symbol, long at, int tick, decimal margin, decimal spread, decimal drift)
         {
             NativeClosedMarketBar[] Bars(long period)
             {
@@ -27,27 +27,33 @@ public static class DiscoveryAdmissionChecks
             }
             var contract = new NativeObservedContractTerms(symbol,"USD",at,1,1,1,1,2,0,
                 1,0,"USD",0,0,0,0,2,24,1320,3,false,0,true,false);
-            decimal mid = 100m + .50m * tick;
+            decimal mid = 100m + drift * tick;
             var quote = NativeBrokerContractCosts.Quote(contract,
                 new(at,mid - spread / 2,mid + spread / 2,1m,1m,1m,null,margin,1m,.001m));
             return new(symbol,Bars(step),Bars(3 * step),quote.Quote,contract,.001m,45,false,
                 NativeCausalExitResearch.Chandelier);
         }
 
-        NativeProductMarket[] Frame(long at, int tick, decimal secondMargin = 20m, decimal spread = .01m)
+        NativeProductMarket[] Frame(long at, int tick, decimal secondMargin = 20m, decimal spread = .01m, decimal drift = .50m)
         {
-            return new[] { Market("AUDUSD",at,tick,20m,spread),
-                Market("NZDUSD",at,tick,secondMargin,spread), Market("EURUSD",at,tick,20m,.01m) };
+            return new[] { Market("AUDUSD",at,tick,20m,spread,drift),
+                Market("NZDUSD",at,tick,secondMargin,spread,drift), Market("EURUSD",at,tick,20m,.01m,.50m) };
         }
 
-        var calibration = new NativeProductResearchLoop("DCP1_CASH",evaluation);
-        for (int w = 0; w < 6; w++)
-        for (int tick = 0; tick < 23; tick++)
+        NativeProductResearchLoop Train(int weeks, decimal drift = .50m)
         {
-            long at = first + w * week + tick * step;
-            calibration.Advance(at,Frame(at,tick),false);
+            var calibration = new NativeProductResearchLoop("DCP1_CASH",evaluation);
+            for (int w = 0; w < weeks; w++)
+            for (int tick = 0; tick < 23; tick++)
+            {
+                long at = first + w * week + tick * step;
+                calibration.Advance(at,Frame(at,tick,drift:drift),false);
+            }
+            calibration.Advance(evaluation,Frame(evaluation,0),false);
+            return calibration;
         }
-        calibration.Advance(evaluation,Frame(evaluation,0),false);
+
+        var calibration = Train(6);
         var report = calibration.CalibrationReport!;
         var fitted = NativeIntegratedSnapshot.Open(report.FrozenModel!);
         var fx = fitted.Conditional!["FX/HIGH"];
@@ -86,6 +92,21 @@ public static class DiscoveryAdmissionChecks
             settled.SequenceEqual(restored.ResearchSession.Ledger.ClosedFragments()),
             "known favorable synthetic payoff settles positively after costs in both books");
 
+        var thinReport = Train(3).CalibrationReport!;
+        var thinModel = NativeIntegratedSnapshot.Open(thinReport.FrozenModel!);
+        var thin = new NativeProductResearchLoop("DCP1_JOINT",evaluation,thinModel)
+            .Advance(evaluation,Frame(evaluation,0),false);
+        check(thinReport.TrainingPairs>0 && thinModel.Conditional!["FX/HIGH"] is null &&
+            thin.AcceptedModelIntents==0 && thin.ModelCashEur==300m,
+            "positive payoff with too few completed weeks does not produce a calibration");
+        var losing = NativeIntegratedSnapshot.Open(Train(6,-.50m).CalibrationReport!.FrozenModel!);
+        var losingEstimate = losing.Conditional!["FX/HIGH"];
+        var rejectedLearned = new NativeProductResearchLoop("DCP1_JOINT",evaluation,losing)
+            .Advance(evaluation,Frame(evaluation,0),false);
+        check(losingEstimate is {StandaloneAdverseNetReturn:<0m} && rejectedLearned.AcceptedModelIntents==0 &&
+            rejectedLearned.ModelCashEur==300m,
+            "negative payoffs learned from quotes are not financed under the same setup");
+
         var unavailable = Loop(null).Advance(evaluation,Frame(evaluation,0),false);
         var uncertain = Loop(fx! with {MeanUncertaintyReturn=.20m})
             .Advance(evaluation,Frame(evaluation,0),false);
@@ -93,7 +114,7 @@ public static class DiscoveryAdmissionChecks
             .Advance(evaluation,Frame(evaluation,0),false);
         var expensive = Loop(fx).Advance(evaluation,Frame(evaluation,0,spread:4m),false);
         check(unavailable.AcceptedModelIntents==0 && unavailable.LatestSignals.All(s=>s.Status=="MODEL_CALIBRATION_UNAVAILABLE"),
-            "absent or prefiltered calibration does not reach sizing");
+            "preselection suppresses a previously learned positive forecast before sizing");
         check(uncertain.AcceptedModelIntents==0 && uncertain.LatestSignals.All(s=>
             s.DecisionReason=="NO_EUR_EDGE_AFTER_COST_AND_UNCERTAINTY"),
             "uncertainty alone prevents reservation");
@@ -105,13 +126,16 @@ public static class DiscoveryAdmissionChecks
             "executable spread alone prevents reservation");
 
         var constrained = Loop(fx).Advance(evaluation,Frame(evaluation,0,secondMargin:295m),false);
-        check(constrained.AcceptedModelIntents == 1 && constrained.ModelPendingIntents == 1,
+        check(constrained.AcceptedModelIntents == 1 && constrained.ModelPendingIntents == 1 &&
+            constrained.LatestSignals.Any(s=>s.DecisionReason=="CONDITIONAL_ESTIMATE_BROKER_MINIMUM_NOT_FINANCED"),
             "shared margin rejects competing executable demand above EUR300");
         var risky = Loop(fx with {DownsideReturn=1m}).Advance(evaluation,Frame(evaluation,0),false);
-        check(risky.AcceptedModelIntents==0 && risky.ModelCashEur==300m,
+        check(risky.AcceptedModelIntents==0 && risky.ModelCashEur==300m &&
+            risky.LatestSignals.All(s=>s.DecisionReason=="CONDITIONAL_ESTIMATE_NO_POSITIVE_UNCERTAINTY_ADJUSTED_INCREMENTAL_UTILITY"),
             "loss scenario above the drawdown limit rejects a positive expected return");
         Console.WriteLine("MXM_DISCOVERY_SYNTHETIC_ADMISSION=" + System.Text.Json.JsonSerializer.Serialize(new {
-            report.TrainingPairs, ConcurrentPositions=open.ModelOpenPositions, MarginEur=40,
+            report.TrainingPairs, ThinTrainingPairs=thinReport.TrainingPairs, LearnedNegativeAdverseReturn=losingEstimate?.StandaloneAdverseNetReturn,
+            ConcurrentPositions=open.ModelOpenPositions, MarginEur=40,
             SettledFragments=settled.Length, CentralClosedNetEur=settled.Sum(x=>x.NetEur),
             AdverseCashEur=funded.AdverseScenario.Summary?.CashEur,
             CostRejections=expensive.LatestSignals.Select(s=>s.DecisionReason),
