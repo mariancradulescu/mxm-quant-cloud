@@ -93,6 +93,7 @@ public sealed class NativeProductResearchLoop
             "AEX1_JOINT" or "AEX1_FX" or "AEX1_COMMODITY" or "AEX1_LONG" or "AEX1_SHORT" or "AEX1_FIXED" or "AEX1_CASH" or
             "ETP1_JOINT" or "ETP1_LEADER" or "ETP1_FOLLOWER" or "ETP1_LONG" or "ETP1_SHORT" or "ETP1_FIXED" or "ETP1_CASH" or
             "JYP1_JOINT" or "JYP1_NZD" or "JYP1_AUD" or "JYP1_LONG" or "JYP1_SHORT" or "JYP1_FIXED" or "JYP1_CASH" or
+            "YRC1_JOINT" or "YRC1_NZD_ONLY" or "YRC1_CAD_ONLY" or "YRC1_LONG" or "YRC1_SHORT" or "YRC1_FIXED" or "YRC1_CASH" or
             "FCE1_JOINT" or "FCE1_FX" or "FCE1_COMMODITY" or "FCE1_LONG" or "FCE1_SHORT" or "FCE1_MINIMUM" or
             "PRR1_JOINT" or "PRR1_INDEX" or "PRR1_CRUDE" or "PRR1_LONG" or "PRR1_SHORT" or
             "BMR1_JOINT" or "BMR1_FX" or "BMR1_GOLD" or "BMR1_LONG" or "BMR1_SHORT" or
@@ -480,8 +481,9 @@ public sealed class NativeProductResearchLoop
         bool adaptiveStudy=researchMode.StartsWith("AEX1_",StringComparison.Ordinal);
         bool techStudy=researchMode.StartsWith("ETP1_",StringComparison.Ordinal);
         bool yenStudy=researchMode.StartsWith("JYP1_",StringComparison.Ordinal);
+        bool yenRiskStudy=researchMode.StartsWith("YRC1_",StringComparison.Ordinal);
         bool fundingGateStudy=researchMode.StartsWith("WFG1_",StringComparison.Ordinal);
-        bool jointStudy=conditionalResearch || fundingGateStudy || sessionStudy || researchMode.StartsWith("JRS1_",StringComparison.Ordinal) || adaptiveStudy || techStudy || yenStudy;
+        bool jointStudy=conditionalResearch || fundingGateStudy || sessionStudy || researchMode.StartsWith("JRS1_",StringComparison.Ordinal) || adaptiveStudy || techStudy || yenStudy || yenRiskStudy;
         bool useJointStress=jointStudy && researchMode is not ("JRS1_REPEATED" or "SCT1_REPEATED");
         var stressEuro=jointStudy?byName.GetValueOrDefault("EURUSD"):null;
         bool factorStudy=researchMode.StartsWith("FCE1_",StringComparison.Ordinal);
@@ -633,6 +635,20 @@ public sealed class NativeProductResearchLoop
                 if(forecast.Side==0)continue;
                 side=researchMode=="SCT1_LONG"?1:
                     researchMode=="SCT1_SHORT"?-1:forecast.Side;
+                driver=forecast.Magnitude;
+                mechanism=forecast.Mechanism;
+            }
+            else if(yenRiskStudy)
+            {
+                if(researchMode=="YRC1_CASH" ||
+                   market.Symbol is not ("NZDJPY" or "CADJPY"))continue;
+                if((market.Symbol=="NZDJPY" && researchMode=="YRC1_CAD_ONLY") ||
+                   (market.Symbol=="CADJPY" && researchMode=="YRC1_NZD_ONLY"))
+                    continue;
+                var forecast=NativeYenRiskReleaseResearch.Forecast(market,byName,at);
+                if(forecast.Side==0)continue;
+                side=researchMode=="YRC1_LONG"?1:
+                     researchMode=="YRC1_SHORT"?-1:forecast.Side;
                 driver=forecast.Magnitude;
                 mechanism=forecast.Mechanism;
             }
@@ -1429,8 +1445,10 @@ public sealed class NativeProductResearchLoop
                 continue;
             }
             decimal units=c.MinimumUnits;
-            string effectiveExitPolicy=(researchMode=="AEX1_FIXED" || researchMode=="ETP1_FIXED" || researchMode=="JYP1_FIXED")?
+            string effectiveExitPolicy=(researchMode=="AEX1_FIXED" || researchMode=="ETP1_FIXED" || researchMode=="JYP1_FIXED" || researchMode=="YRC1_FIXED")?
                 NativeCausalExitResearch.FrozenFixed:mechanism switch {
+                NativeYenRiskReleaseResearch.FailedAuction=>NativeCausalExitResearch.EquilibriumReversion,
+                NativeYenRiskReleaseResearch.RelativeRepricing=>NativeCausalExitResearch.AtrProfitLock,
                 NativePacificYenResearch.CatchUp=>NativeCausalExitResearch.PredictionInvalidation,
                 NativePacificYenResearch.Acceptance=>NativeCausalExitResearch.Chandelier,
                 NativeTechPairResearch.Leader=>NativeCausalExitResearch.Chandelier,
@@ -1481,7 +1499,9 @@ public sealed class NativeProductResearchLoop
                 "BMR1_XAUUSD_RELEASE_REPRICING"=>NativeCausalExitResearch.PredictionInvalidation,
                 _=>market.ExitPolicy
             };
-            int effectiveHolding=(researchMode=="AEX1_FIXED" || researchMode=="ETP1_FIXED" || researchMode=="JYP1_FIXED")?90:mechanism switch {
+            int effectiveHolding=(researchMode=="AEX1_FIXED" || researchMode=="ETP1_FIXED" || researchMode=="JYP1_FIXED" || researchMode=="YRC1_FIXED")?90:mechanism switch {
+                NativeYenRiskReleaseResearch.FailedAuction=>120,
+                NativeYenRiskReleaseResearch.RelativeRepricing=>150,
                 NativePacificYenResearch.CatchUp=>150,
                 NativePacificYenResearch.Acceptance=>135,
                 NativeTechPairResearch.Leader=>90,
