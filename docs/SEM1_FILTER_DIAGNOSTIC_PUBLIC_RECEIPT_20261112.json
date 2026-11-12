@@ -1,0 +1,321 @@
+{
+  "Study": "SEM1_FILTER_DIAGNOSTIC",
+  "Receipt": {
+    "NAS100": {
+      "30": {
+        "Early": {
+          "Selected": 5,
+          "Matched": 3,
+          "AvailableUnselectedControls": 30,
+          "Own": {
+            "Weeks": 3,
+            "Mean": 2.6115967947941083,
+            "Lower": -13.005718528118072
+          },
+          "Incremental": {
+            "Weeks": 3,
+            "Mean": 13.614340066214046,
+            "Lower": -2.002975256698134
+          },
+          "MatchedSelectedEconomics": {
+            "Count": 3,
+            "DirectionWins": 2,
+            "GrossEur": 2.8351392662457116,
+            "CentralNetEur": 2.420174197733973,
+            "AdverseNetEur": 1.9999750780731729,
+            "AdverseWins": 2,
+            "MedianAdverseBps": 2.6864586579291334
+          }
+        },
+        "Late": {
+          "Selected": 9,
+          "Matched": 9,
+          "AvailableUnselectedControls": 26,
+          "Own": {
+            "Weeks": 5,
+            "Mean": -2.4264611047889124,
+            "Lower": -19.375004531977382
+          },
+          "Incremental": {
+            "Weeks": 5,
+            "Mean": -1.3699560693369177,
+            "Lower": -25.093414762902828
+          },
+          "MatchedSelectedEconomics": {
+            "Count": 9,
+            "DirectionWins": 3,
+            "GrossEur": -12.381981874945073,
+            "CentralNetEur": -13.989599054325053,
+            "AdverseNetEur": -15.623768133921027,
+            "AdverseWins": 3,
+            "MedianAdverseBps": -7.5898573936097335
+          }
+        }
+      },
+      "90": {
+        "Early": {
+          "Selected": 5,
+          "Matched": 3,
+          "AvailableUnselectedControls": 30,
+          "Own": {
+            "Weeks": 3,
+            "Mean": 1.9573085861212474,
+            "Lower": -13.971954898266093
+          },
+          "Incremental": {
+            "Weeks": 3,
+            "Mean": 7.8398333733253285,
+            "Lower": -8.089430111062011
+          },
+          "MatchedSelectedEconomics": {
+            "Count": 3,
+            "DirectionWins": 2,
+            "GrossEur": 2.298336982518357,
+            "CentralNetEur": 1.8768715385411279,
+            "AdverseNetEur": 1.4498047442653825,
+            "AdverseWins": 2,
+            "MedianAdverseBps": 4.058099657256962
+          }
+        },
+        "Late": {
+          "Selected": 9,
+          "Matched": 9,
+          "AvailableUnselectedControls": 26,
+          "Own": {
+            "Weeks": 5,
+            "Mean": -23.854128905269103,
+            "Lower": -84.1949869919102
+          },
+          "Incremental": {
+            "Weeks": 5,
+            "Mean": -14.045728022775142,
+            "Lower": -74.41737659455065
+          },
+          "MatchedSelectedEconomics": {
+            "Count": 9,
+            "DirectionWins": 3,
+            "GrossEur": -38.00853847667225,
+            "CentralNetEur": -39.77557942876502,
+            "AdverseNetEur": -41.58915159183106,
+            "AdverseWins": 2,
+            "MedianAdverseBps": -7.443302582840177
+          }
+        }
+      }
+    },
+    "XAGEUR": {
+      "30": {
+        "Early": {
+          "Selected": 6,
+          "Matched": 6,
+          "AvailableUnselectedControls": 29,
+          "Own": {
+            "Weeks": 4,
+            "Mean": 12.266038014363842,
+            "Lower": -16.16495929842201
+          },
+          "Incremental": {
+            "Weeks": 4,
+            "Mean": 34.74983664862003,
+            "Lower": 2.9840540656891292
+          },
+          "MatchedSelectedEconomics": {
+            "Count": 6,
+            "DirectionWins": 5,
+            "GrossEur": 39.825,
+            "CentralNetEur": 30.5625,
+            "AdverseNetEur": 21.3,
+            "AdverseWins": 4,
+            "MedianAdverseBps": 12.026356352795704
+          }
+        },
+        "Late": {
+          "Selected": 6,
+          "Matched": 4,
+          "AvailableUnselectedControls": 29,
+          "Own": {
+            "Weeks": 4,
+            "Mean": -3.18017789507983,
+            "Lower": -32.2474890035716
+          },
+          "Incremental": {
+            "Weeks": 4,
+            "Mean": 20.387199660448996,
+            "Lower": -27.8114174005888
+          },
+          "MatchedSelectedEconomics": {
+            "Count": 4,
+            "DirectionWins": 3,
+            "GrossEur": 13.025,
+            "CentralNetEur": 4.6625,
+            "AdverseNetEur": -3.7,
+            "AdverseWins": 1,
+            "MedianAdverseBps": -12.373806811486036
+          }
+        }
+      },
+      "90": {
+        "Early": {
+          "Selected": 6,
+          "Matched": 6,
+          "AvailableUnselectedControls": 29,
+          "Own": {
+            "Weeks": 4,
+            "Mean": 1.1349795377860918,
+            "Lower": -35.335959247136806
+          },
+          "Incremental": {
+            "Weeks": 4,
+            "Mean": 23.643235831404127,
+            "Lower": -41.055769844350074
+          },
+          "MatchedSelectedEconomics": {
+            "Count": 6,
+            "DirectionWins": 3,
+            "GrossEur": 21.4,
+            "CentralNetEur": 12.85,
+            "AdverseNetEur": 4.3,
+            "AdverseWins": 3,
+            "MedianAdverseBps": -14.277194440930367
+          }
+        },
+        "Late": {
+          "Selected": 6,
+          "Matched": 4,
+          "AvailableUnselectedControls": 29,
+          "Own": {
+            "Weeks": 4,
+            "Mean": 11.515371389553259,
+            "Lower": -16.94087078777959
+          },
+          "Incremental": {
+            "Weeks": 4,
+            "Mean": 39.573587498366926,
+            "Lower": 1.5147261084359296
+          },
+          "MatchedSelectedEconomics": {
+            "Count": 4,
+            "DirectionWins": 4,
+            "GrossEur": 29.05,
+            "CentralNetEur": 20.725,
+            "AdverseNetEur": 12.4,
+            "AdverseWins": 2,
+            "MedianAdverseBps": -4.713831166280395
+          }
+        }
+      }
+    },
+    "ETHEUR": {
+      "30": {
+        "Early": {
+          "Selected": 9,
+          "Matched": 9,
+          "AvailableUnselectedControls": 62,
+          "Own": {
+            "Weeks": 4,
+            "Mean": -50.810459261956225,
+            "Lower": -97.43902470872462
+          },
+          "Incremental": {
+            "Weeks": 4,
+            "Mean": 1.2672088656780125,
+            "Lower": -43.148443515082185
+          },
+          "MatchedSelectedEconomics": {
+            "Count": 9,
+            "DirectionWins": 4,
+            "GrossEur": 0.2815,
+            "CentralNetEur": -0.29735,
+            "AdverseNetEur": -0.8762,
+            "AdverseWins": 2,
+            "MedianAdverseBps": -61.87944096748388
+          }
+        },
+        "Late": {
+          "Selected": 17,
+          "Matched": 12,
+          "AvailableUnselectedControls": 48,
+          "Own": {
+            "Weeks": 4,
+            "Mean": -71.87367194553201,
+            "Lower": -110.6981953005758
+          },
+          "Incremental": {
+            "Weeks": 4,
+            "Mean": -4.578179582531207,
+            "Lower": -44.875282663712504
+          },
+          "MatchedSelectedEconomics": {
+            "Count": 12,
+            "DirectionWins": 4,
+            "GrossEur": -0.26,
+            "CentralNetEur": -1.00655,
+            "AdverseNetEur": -1.7531,
+            "AdverseWins": 0,
+            "MedianAdverseBps": -65.505371857724
+          }
+        }
+      },
+      "90": {
+        "Early": {
+          "Selected": 9,
+          "Matched": 9,
+          "AvailableUnselectedControls": 61,
+          "Own": {
+            "Weeks": 4,
+            "Mean": -29.594629537429793,
+            "Lower": -99.0485781375981
+          },
+          "Incremental": {
+            "Weeks": 4,
+            "Mean": 28.424349335672744,
+            "Lower": -14.007121523439254
+          },
+          "MatchedSelectedEconomics": {
+            "Count": 9,
+            "DirectionWins": 4,
+            "GrossEur": 0.53,
+            "CentralNetEur": -0.0481,
+            "AdverseNetEur": -0.6262,
+            "AdverseWins": 2,
+            "MedianAdverseBps": -59.99717660345396
+          }
+        },
+        "Late": {
+          "Selected": 17,
+          "Matched": 12,
+          "AvailableUnselectedControls": 49,
+          "Own": {
+            "Weeks": 4,
+            "Mean": -58.6357388691791,
+            "Lower": -76.60129900345036
+          },
+          "Incremental": {
+            "Weeks": 4,
+            "Mean": 8.027664374205271,
+            "Lower": -28.83388656391653
+          },
+          "MatchedSelectedEconomics": {
+            "Count": 12,
+            "DirectionWins": 5,
+            "GrossEur": -0.1515,
+            "CentralNetEur": -0.90945,
+            "AdverseNetEur": -1.6674,
+            "AdverseWins": 0,
+            "MedianAdverseBps": -64.08678418691979
+          }
+        }
+      }
+    }
+  },
+  "SourceSha256": "6c2605e7f23133c5e2a728f9190be87d54ff080de5c1d7bba8300916c24f8354",
+  "EntryClocksWithConcurrentSymbols": 4,
+  "PortfolioExecuted": false,
+  "PortfolioAdmission": false,
+  "ContinuousDrawdownMeasured": false,
+  "SourceRunId": 43207629492,
+  "BrokerRequests": 0,
+  "IndependentConfirmation": false,
+  "SourceCiphertextSha256": "707f533531d426dd5a6b98544c412a656ee0b02c28765c4915bb46dabdf0cad0",
+  "ProtocolSha256": "eb0dea9de60a8ac52cfe550d50721b1a5d1a4f0f0653ced600fa03e91db1c802"
+}
