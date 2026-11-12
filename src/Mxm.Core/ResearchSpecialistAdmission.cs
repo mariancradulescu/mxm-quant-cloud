@@ -17,7 +17,12 @@ public sealed record SpecialistEuroEvidence(
     [System.Text.Json.Serialization.JsonIgnore(Condition=
         System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public decimal? GrossStandaloneEur {get;init;}
+    [System.Text.Json.Serialization.JsonIgnore(Condition=
+        System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public SpecialistPricedNet? PricedNet {get;init;}
 }
+// Already stressed post-entry NET estimates at the minimum physical volume.
+public sealed record SpecialistPricedNet(decimal StandaloneEur,decimal IncrementalEur);
 public sealed record SpecialistEuroGate(string OpportunityId,bool AdmittedForConditionalResearch,
     decimal? IncrementalLowerEur,decimal? ExtraSpreadEur,decimal? TotalFrictionEur,string Reason);
 public sealed record SpecialistEuroEstimate(OrchestrationResult NativeAllocation,
@@ -38,9 +43,9 @@ public static class ResearchSpecialistAdmission
         if(!e.SupportedVsBenchmark)return Block("SPECIALIST_NO_PREDICTIVE_BENCHMARK_SUPPORT");
         // A negative or zero gross excess return is a predictive failure, not
         // a negative *cost*. No missing financing assumption can rescue it.
-        if(e.GrossAboveBenchmarkEur is decimal gross && gross<=0m)
+        if(e.PricedNet is null && e.GrossAboveBenchmarkEur is decimal gross && gross<=0m)
             return Block("SPECIALIST_NONPOSITIVE_GROSS_EDGE");
-        decimal?[] values={e.GrossAboveBenchmarkEur,e.PredictionUncertaintyEur,
+        decimal?[] values={e.PricedNet is null?e.GrossAboveBenchmarkEur:0m,e.PredictionUncertaintyEur,
             e.ObservedOneRoundTripSpreadEur,e.EntryFeeEur,e.ExitFeeEur,
             e.ConversionFeeEur,e.SlippageEur,e.FinancingEur,e.CurrentMinMarginEur};
         if(values.Any(v=>v is null))return Block("SPECIALIST_UNKNOWN_EUR_COST_OR_FINANCING");
@@ -55,7 +60,8 @@ public static class ResearchSpecialistAdmission
         decimal spread=e.PricesAlreadyContainBidAsk?0m:e.ObservedOneRoundTripSpreadEur!.Value;
         decimal friction=spread+e.EntryFeeEur!.Value+e.ExitFeeEur!.Value+
             e.ConversionFeeEur!.Value+e.SlippageEur!.Value+e.FinancingEur!.Value;
-        decimal lower=e.GrossAboveBenchmarkEur!.Value-friction-e.PredictionUncertaintyEur!.Value;
+        decimal lower=(e.PricedNet?.IncrementalEur??(e.GrossAboveBenchmarkEur!.Value-friction))
+            -e.PredictionUncertaintyEur!.Value;
         return new(o.Id,lower>0,lower,spread,friction,lower>0?
             "CONDITIONAL_BENCHMARK_AND_COST_GATE_ONLY":"NO_EUR_EDGE_AFTER_COST_AND_UNCERTAINTY");
     }
@@ -89,10 +95,11 @@ public static class ResearchSpecialistAdmission
                 string? entryBlock=checkCurrentEntry(o,e);
                 if(entryBlock is not null)
                     return gate with {AdmittedForConditionalResearch=false,Reason=entryBlock};
-                if(e.GrossStandaloneEur is not decimal gross)
+                decimal? standalone=e.PricedNet?.StandaloneEur??(e.GrossStandaloneEur-gate.TotalFrictionEur);
+                if(standalone is null)
                     return gate with {AdmittedForConditionalResearch=false,
                         Reason="PROSPECTIVE_STANDALONE_GROSS_MISSING"};
-                decimal standaloneLower=gross-gate.TotalFrictionEur!.Value-e.PredictionUncertaintyEur!.Value;
+                decimal standaloneLower=standalone.Value-e.PredictionUncertaintyEur!.Value;
                 if(standaloneLower<=0)
                     return gate with {AdmittedForConditionalResearch=false,
                         Reason="PROSPECTIVE_NO_STANDALONE_NET_AFTER_COST_AND_UNCERTAINTY"};

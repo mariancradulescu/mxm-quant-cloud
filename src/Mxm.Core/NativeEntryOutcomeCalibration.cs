@@ -5,13 +5,26 @@ namespace Mxm.Core;
 public sealed record NativeEntryForecast(
     long FeaturesKnownAt,long OutcomesKnownThrough,int Direction,int TrainingDays,
     decimal PositiveGrossProbability,decimal UnconditionalPositiveGrossProbability,decimal MeanGrossReturn,decimal MeanBenchmarkGrossReturn,
-    decimal MeanUncertaintyReturn,decimal DownsideReturn);
+    decimal MeanUncertaintyReturn,decimal DownsideReturn)
+{
+    public decimal? StandaloneAdverseNetReturn {get;init;}
+    public decimal? IncrementalAdverseNetReturn {get;init;}
+    public decimal? MeanAdverseFrictionReturn {get;init;}
+}
 
 public sealed record NativeEntryCalibrationReport(
     int TrainingPairs,int EvaluationPairs,int MissingPairs,int ScoredForecasts,
     decimal? MeanRealizedGrossBps,decimal? MeanRealizedNetBps,decimal? DirectionBrier,
     decimal? NeutralBrier,decimal? UnconditionalBrier,int PredictedPositiveGross,int RealizedPositiveGross,
-    string FrozenTrainingSha256);
+    string FrozenTrainingSha256)
+{
+    [System.Text.Json.Serialization.JsonIgnore(Condition=
+        System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public NativeInventoryDiagnostics? Inventory {get;init;}
+}
+
+public sealed record NativeInventoryDiagnostics(int Pairs,decimal? FadeGrossBps,
+    decimal? FadeCentralNetBps,decimal? FadeAdverseNetBps,decimal? ContinuationAdverseNetBps);
 
 // One kernel for native market observations and chronological replay.
 // Outcomes are paired even when the capital book abstains. Evaluation labels
@@ -22,26 +35,36 @@ public sealed class NativeEntryOutcomeCalibration
     public const string ExitPolicy=NativeCausalExitResearch.PredictionInvalidation;
     public static readonly long DevelopmentBoundary=new DateTimeOffset(
         2026,3,2,0,0,0,TimeSpan.Zero).ToUnixTimeMilliseconds();
+    public const int InventoryHoldingMinutes=90;
+    public const string InventoryExitPolicy=NativeCausalExitResearch.Chandelier;
     private readonly long boundary;
+    private readonly bool inventory;
+    private readonly Dictionary<string,List<InventoryLabel>> inventoryTraining=new(StringComparer.Ordinal);
+    private int Holding=>inventory?InventoryHoldingMinutes:HoldingMinutes;
+    private string Policy=>inventory?InventoryExitPolicy:ExitPolicy;
+    private sealed record InventoryLabel(long Week,long KnownAt,decimal FadeGross,decimal FadeAdverse,
+        decimal OppositeAdverse,decimal FadeDownside);
     private readonly Dictionary<(string Symbol,long Start),Pending> pending=new();
     private readonly Dictionary<string,long> lastSlot=new(StringComparer.Ordinal);
     private readonly Dictionary<string,List<Label>> training=new(StringComparer.Ordinal);
     private int trainingPairs,evaluationPairs,missingPairs,scored,forecastPositive,actualPositive;
     private decimal grossSum,netSum,brier,neutralBrier,unconditionalBrier;
+    private decimal fadeGross,fadeCentral,fadeAdverse,continuationAdverse;
 
     private sealed record Leg(decimal EntryPrice,decimal Extreme,long ExitRequested=0,
-        decimal? GrossReturn=null,decimal? NetReturn=null,decimal WorstReturn=0);
+        decimal? GrossReturn=null,decimal? NetReturn=null,decimal WorstReturn=0,decimal AdverseReturn=0);
     private sealed record Pending(string Cohort,long Start,NativeEntryForecast? Forecast,
         NativeObservedContractTerms Contract,decimal Slippage,long EntryAt=0,
         decimal EntryMid=0,decimal EntryFee=0,decimal EntryFx=0,NativeExitSeed? Seed=null,
-        Leg? Long=null,Leg? Short=null);
+        Leg? Long=null,Leg? Short=null,int FadeSide=0,LedgerQuote? EntryQuote=null);
     private sealed record Label(long Day,long KnownAt,decimal LongGross,decimal ShortGross,
         decimal LongDownside,decimal ShortDownside);
 
-    public NativeEntryOutcomeCalibration(long boundary)
+    public NativeEntryOutcomeCalibration(long boundary,bool inventory=false)
     {
         if(boundary<=0)throw new ArgumentOutOfRangeException(nameof(boundary));
         this.boundary=boundary;
+        this.inventory=inventory;
     }
 
     public static string? Family(string symbol)=>symbol switch {
@@ -49,13 +72,25 @@ public sealed class NativeEntryOutcomeCalibration
         "SpotBrent" or "XAUUSD"=>"COMMODITY", _=>null
     };
 
+    public static string? InventoryFamily(string symbol)=>symbol switch {
+        "AUDUSD" or "GBPUSD" or "NZDUSD"=>"FX",
+        "XAUUSD" or "Copper"=>"METAL", _=>null
+    };
+
     public NativeEntryCalibrationReport Report()=>new(trainingPairs,evaluationPairs,missingPairs+pending.Count,
         scored,scored>0?10000m*grossSum/scored:null,scored>0?10000m*netSum/scored:null,
         scored>0?brier/scored:null,scored>0?neutralBrier/scored:null,
         scored>0?unconditionalBrier/scored:null,forecastPositive,actualPositive,
         Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(
-            System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(training.OrderBy(x=>x.Key,StringComparer.Ordinal))))
-            .ToLowerInvariant());
+            (inventory?System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(inventoryTraining.OrderBy(x=>x.Key,StringComparer.Ordinal)):
+                System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(training.OrderBy(x=>x.Key,StringComparer.Ordinal)))))
+            .ToLowerInvariant())
+        {
+            Inventory=inventory?new(evaluationPairs,Average(fadeGross),Average(fadeCentral),
+                Average(fadeAdverse),Average(continuationAdverse)):null
+        };
+
+    private decimal? Average(decimal x)=>evaluationPairs>0?10000m*x/evaluationPairs:null;
 
     // Shared eligibility for features and directional controls. The last
     // 60-minute return conditions the expected direction; short-term alignment
@@ -63,7 +98,7 @@ public sealed class NativeEntryOutcomeCalibration
     public IReadOnlyDictionary<string,(long KnownAt,NativeEntryForecast? Forecast)> Observe(
         long at,NativeProductMarket[] markets)
     {
-        foreach(var item in pending.Where(p=>at-p.Value.Start>90*60000L ||
+        foreach(var item in pending.Where(p=>at-p.Value.Start>(inventory?120:90)*60000L ||
             (p.Value.Start<boundary && at>=boundary)).ToArray())
         {
             pending.Remove(item.Key);
@@ -75,10 +110,15 @@ public sealed class NativeEntryOutcomeCalibration
 
         var opportunities=new Dictionary<string,(long,NativeEntryForecast?)>(StringComparer.Ordinal);
         long minute=at/60000L%1440;
-        if(minute<15*60 || minute>17*60+30 || minute%30!=0)return opportunities;
+        if(inventory)
+        {
+            if(minute!=16*60 || DateTimeOffset.FromUnixTimeMilliseconds(at).DayOfWeek!=DayOfWeek.Friday)
+                return opportunities;
+        }
+        else if(minute<15*60 || minute>17*60+30 || minute%30!=0)return opportunities;
         foreach(var market in markets)
         {
-            var family=Family(market.Symbol);
+            var family=inventory?InventoryFamily(market.Symbol):Family(market.Symbol);
             if(family is null || market.Contract is not {MinimumUnits:>0} contract ||
                lastSlot.GetValueOrDefault(market.Symbol)==at/1800000L ||
                market.M5.Length<3 || market.M15.Length<4 ||
@@ -88,15 +128,16 @@ public sealed class NativeEntryOutcomeCalibration
             var m15=market.M15[^1];
             if(m5.CloseAt!=m15.CloseAt || at-m5.CloseAt>=60000L)continue;
             lastSlot[market.Symbol]=at/1800000L;
-            var priorMove=m15.Close-market.M15[^4].Open;
+            var priorMove=m15.Close-market.M15[inventory?market.M15.Length-8:market.M15.Length-4].Open;
             var shortMove=m5.Close-market.M5[^3].Open;
             if(priorMove==0m)continue;
             // Setups are a common opportunity tape for all policies. Paired
             // hypothetical labels may overlap, unlike funded positions.
-            string cohort=family+"/"+Math.Sign(priorMove)+"/"+(priorMove*shortMove>0m);
-            var forecast=at>=boundary?Predict(cohort,m5.CloseAt):null;
+            string cohort=inventory?family:family+"/"+Math.Sign(priorMove)+"/"+(priorMove*shortMove>0m);
+            int fade=inventory?-Math.Sign(priorMove):0;
+            var forecast=at>=boundary?(inventory?PredictInventory(cohort,m5.CloseAt,fade):Predict(cohort,m5.CloseAt)):null;
             opportunities.Add(market.Symbol,(m5.CloseAt,forecast));
-            pending.Add((market.Symbol,at),new(cohort,at,forecast,contract,market.SlippagePerSideQuote));
+            pending.Add((market.Symbol,at),new(cohort,at,forecast,contract,market.SlippagePerSideQuote,FadeSide:fade));
         }
         return opportunities;
     }
@@ -130,9 +171,34 @@ public sealed class NativeEntryOutcomeCalibration
             days.Average(d=>d.Average(x=>side==1?x.LongDownside:x.ShortDownside)));
     }
 
+    private NativeEntryForecast? PredictInventory(string cohort,long knownAt,int fade)
+    {
+        if(!inventoryTraining.TryGetValue(cohort,out var labels))return null;
+        var weeks=labels.GroupBy(x=>x.Week).ToArray();
+        if(weeks.Length<3)return null;
+        var standalone=weeks.Select(w=>w.Average(x=>x.FadeAdverse)).ToArray();
+        var excess=weeks.Select(w=>w.Average(x=>x.FadeAdverse-x.OppositeAdverse)).ToArray();
+        // Small-sample weekly dispersion, descriptive rather than independent coverage.
+        static decimal Allowance(decimal[] x)
+        {
+            decimal mean=x.Average();
+            return 3m*(decimal)Math.Sqrt((double)(x.Sum(y=>(y-mean)*(y-mean))/(x.Length*(x.Length-1))));
+        }
+        var probability=weeks.Average(w=>w.Average(x=>x.FadeAdverse>0m?1m:0m));
+        return new NativeEntryForecast(knownAt,labels.Max(x=>x.KnownAt),fade,weeks.Length,
+            probability,.5m,weeks.Average(w=>w.Average(x=>x.FadeGross)),0m,
+            Math.Max(Allowance(standalone),Allowance(excess)),
+            weeks.Average(w=>w.Average(x=>x.FadeDownside)))
+        {
+            StandaloneAdverseNetReturn=standalone.Average(),
+            IncrementalAdverseNetReturn=excess.Average(),
+            MeanAdverseFrictionReturn=weeks.Average(w=>w.Average(x=>x.FadeGross-x.FadeAdverse))
+        };
+    }
+
     private void Update(long at,NativeProductMarket market,Pending p)
     {
-        if((p.EntryAt==0 && at-p.Start>=600000L) || at-p.Start>90*60000L || (p.Start<boundary && at>=boundary))
+        if((p.EntryAt==0 && at-p.Start>=600000L) || at-p.Start>(inventory?120:90)*60000L || (p.Start<boundary && at>=boundary))
         {
             pending.Remove((market.Symbol,p.Start));
             missingPairs++;
@@ -149,7 +215,7 @@ public sealed class NativeEntryOutcomeCalibration
             if(bid<=0)return;
             pending[(market.Symbol,p.Start)]=p with {EntryAt=at,EntryMid=(q.Ask+q.Bid)/2m,
                 EntryFee=Math.Max(q.ExitFeeFloor,q.ExitFeePerUnit*units),
-                EntryFx=(q.EurCredit+q.EurDebit)/2m,Seed=seed,Long=new(ask,ask),Short=new(bid,bid)};
+                EntryFx=(q.EurCredit+q.EurDebit)/2m,Seed=seed,Long=new(ask,ask),Short=new(bid,bid),EntryQuote=inventory?q:null};
             return;
         }
 
@@ -168,11 +234,21 @@ public sealed class NativeEntryOutcomeCalibration
                 if(financing is null)return leg;
                 decimal net=debit*units*(debit>=0?q.EurCredit:q.EurDebit)-p.EntryFee-
                     Math.Max(q.ExitFeeFloor,q.ExitFeePerUnit*units)+financing.Value;
+                decimal stress=0m;
+                if(inventory)
+                {
+                    var entry=p.EntryQuote!;
+                    decimal stressedDebit=debit-
+                        (entry.Ask-entry.Bid+q.Ask-q.Bid)/2m-2m*p.Slippage;
+                    stress=stressedDebit*units*(stressedDebit>=0?q.EurCredit*.999m:q.EurDebit*1.001m)
+                        -2m*(p.EntryFee+Math.Max(q.ExitFeeFloor,q.ExitFeePerUnit*units))
+                        +2m*Math.Min(0m,financing.Value);
+                }
                 return leg with {GrossReturn=side*((q.Ask+q.Bid)/2m-p.EntryMid)/p.EntryMid,
-                    NetReturn=net/(p.EntryMid*units*p.EntryFx)};
+                    NetReturn=net/(p.EntryMid*units*p.EntryFx),AdverseReturn=stress/(p.EntryMid*units*p.EntryFx)};
             }
-            var verdict=NativeCausalExitResearch.Assess(ExitPolicy,at,p.EntryAt,side,leg.EntryPrice,
-                p.Seed!,leg.Extreme,q,market.M5,market.M15,HoldingMinutes);
+            var verdict=NativeCausalExitResearch.Assess(Policy,at,p.EntryAt,side,leg.EntryPrice,
+                p.Seed!,leg.Extreme,q,market.M5,market.M15,Holding);
             return leg with {Extreme=verdict.FavorableExtreme,ExitRequested=verdict.RequestClose?at:0};
         }
 
@@ -186,20 +262,41 @@ public sealed class NativeEntryOutcomeCalibration
         pending.Remove((market.Symbol,p.Start));
         if(at<boundary)
         {
-            if(!training.TryGetValue(p.Cohort,out var labels))training[p.Cohort]=labels=new();
-            labels.Add(new(p.Start/86400000L,at,lg,sg,lo.WorstReturn,sh.WorstReturn));
+            if(inventory)
+            {
+                if(!inventoryTraining.TryGetValue(p.Cohort,out var inventoryLabels))
+                    inventoryTraining[p.Cohort]=inventoryLabels=new();
+                var fade=p.FadeSide==1?lo:sh;
+                var other=p.FadeSide==1?sh:lo;
+                inventoryLabels.Add(new(p.Start/604800000L,at,fade.GrossReturn!.Value,
+                    fade.AdverseReturn,other.AdverseReturn,fade.WorstReturn));
+            }
+            else
+            {
+                if(!training.TryGetValue(p.Cohort,out var labels))training[p.Cohort]=labels=new();
+                labels.Add(new(p.Start/86400000L,at,lg,sg,lo.WorstReturn,sh.WorstReturn));
+            }
             trainingPairs++;
         }
         else
         {
             evaluationPairs++;
+            if(inventory)
+            {
+                var fade=p.FadeSide==1?lo:sh;
+                var other=p.FadeSide==1?sh:lo;
+                fadeGross+=fade.GrossReturn!.Value;
+                fadeCentral+=fade.NetReturn!.Value;
+                fadeAdverse+=fade.AdverseReturn;
+                continuationAdverse+=other.AdverseReturn;
+            }
             if(p.Forecast is not { } f)return;
             var leg=f.Direction==1?lo:sh;
-            decimal actual=leg.GrossReturn!.Value>0?1m:0m;
+            decimal actual=(inventory?leg.AdverseReturn:leg.GrossReturn!.Value)>0?1m:0m;
             scored++;
             if(actual>0)actualPositive++;
             if(f.PositiveGrossProbability>.5m)forecastPositive++;
-            grossSum+=leg.GrossReturn.Value;
+            grossSum+=leg.GrossReturn!.Value;
             netSum+=leg.NetReturn!.Value;
             brier+=(f.PositiveGrossProbability-actual)*(f.PositiveGrossProbability-actual);
             neutralBrier+=.25m;

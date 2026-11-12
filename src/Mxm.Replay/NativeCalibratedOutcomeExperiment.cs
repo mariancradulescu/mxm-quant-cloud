@@ -4,7 +4,7 @@ using Mxm.Core;
 
 internal static class NativeCalibratedOutcomeExperiment
 {
-    internal static int Run(string input,string output)
+    internal static int Run(string input,string output,bool inventory=false)
     {
         try
         {
@@ -12,23 +12,29 @@ internal static class NativeCalibratedOutcomeExperiment
             var source=JsonSerializer.Deserialize<NativeOriginalOpenApiTape>(bytes,new JsonSerializerOptions {
                 NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString
             }) ?? throw new ArgumentException("CAL1_SOURCE_EMPTY");
-            if(source.SourceLabel!="ORIGINAL_PEPPERSTONE_FCE1_FEB_MAR_2026")
-                throw new ArgumentException("CAL1_SOURCE_LABEL");
+            bool copper=inventory && source.SourceLabel=="ORIGINAL_PEPPERSTONE_WIR1_COPPER";
+            if(!copper && source.SourceLabel!="ORIGINAL_PEPPERSTONE_FCE1_FEB_MAR_2026")
+                throw new ArgumentException("CALIBRATED_SOURCE_LABEL");
+            var study=inventory?"WIR1":"CAL1";
+            string? Family(string name)=>inventory?NativeEntryOutcomeCalibration.InventoryFamily(name):
+                NativeEntryOutcomeCalibration.Family(name);
             var tape=NativeOriginalOpenApiProductAdapter.Convert(source);
             tape=tape with {
                 Quotes=tape.Quotes.Where(q=>q.At%300000L<60000L &&
-                    NativeEntryOutcomeCalibration.Family(q.Quote.Symbol)!=null).Select(q=>q with {
-                    HoldingMinutes=NativeEntryOutcomeCalibration.HoldingMinutes,
-                    ExitPolicy=NativeEntryOutcomeCalibration.ExitPolicy
+                    Family(q.Quote.Symbol)!=null &&
+                    (!inventory || DateTimeOffset.FromUnixTimeMilliseconds(q.At).DayOfWeek==DayOfWeek.Friday)).Select(q=>q with {
+                    HoldingMinutes=inventory?NativeEntryOutcomeCalibration.InventoryHoldingMinutes:
+                        NativeEntryOutcomeCalibration.HoldingMinutes,
+                    ExitPolicy=inventory?NativeEntryOutcomeCalibration.InventoryExitPolicy:NativeEntryOutcomeCalibration.ExitPolicy
                 }).ToArray()
             };
             var receipts=new Dictionary<string,object>(StringComparer.Ordinal);
-            foreach(var mode in new[]{"JOINT","FX","COMMODITY","LONG","SHORT","CASH"})
+            foreach(var mode in new[]{"JOINT","FX",inventory?"METAL":"COMMODITY","LONG","SHORT","CASH"})
             {
                 NativeEntryCalibrationReport? diagnostics=null;
                 LedgerClosedFragment[] closed=Array.Empty<LedgerClosedFragment>();
                 var result=NativeHistoricalProductReplay.Evaluate(tape,
-                    UnqualifiedShadowMode:false,ResearchMode:"CAL1_"+mode,
+                    UnqualifiedShadowMode:false,ResearchMode:study+"_"+mode,
                     ObserveFinalLedger:l=>closed=l.ClosedFragments(),
                     ObserveCalibration:r=>diagnostics=r);
                 var weeks=result.ModelTripsPerObservedIsoWeek.Where(w=>
@@ -57,16 +63,26 @@ internal static class NativeCalibratedOutcomeExperiment
                     MissingAdverseEquityMarks=evaluation.Count(m=>!m.AdverseEquityEur.HasValue),
                     PredictiveDiagnostics=mode=="JOINT"?diagnostics:null
                 });
-                Console.WriteLine("CAL1 completed policy "+mode);
+                Console.WriteLine(study+" completed policy "+mode);
             }
+            object? receipt=inventory?receipts["JOINT"]:null;
             File.WriteAllText(output,JsonSerializer.Serialize(new {
-                Study="CAL1",SourceSha256=Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant(),
+                Study=study,SourceSha256=Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant(),
                 EvaluationBoundaryUtcMs=NativeEntryOutcomeCalibration.DevelopmentBoundary,
                 InitialCapitalEur=300m,EvaluationQuoteMarks=tape.Quotes.Count(q=>
                     q.At>=NativeEntryOutcomeCalibration.DevelopmentBoundary),
                 Policies=receipts,IndependentConfirmation=false,CloudActivated=false,OrdersSubmitted=0,
                 ContinuousDrawdownCertified=false
             }));
+            if(inventory)
+            {
+                var json=System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(output))!.AsObject();
+                json["Receipt"]=JsonSerializer.SerializeToNode(receipt);
+                json["SourceLane"]=copper?"NEW_COPPER":"EXISTING_FCE1";
+                json["ProbabilityTarget"]="POSITIVE_ADVERSE_NET";
+                json["ExpectedEvaluationFridays"]=3;
+                File.WriteAllText(output,json.ToJsonString());
+            }
             return 0;
         }
         catch(ArgumentException e)

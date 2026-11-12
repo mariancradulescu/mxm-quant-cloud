@@ -115,6 +115,15 @@ internal static class ProspectiveIntegratedChecks
             "PROSPECTIVE_NO_STANDALONE_NET_AFTER_COST_AND_UNCERTAINTY");
         Reject(FirstOnly("unsupported-scenario",x,ex with {GrossStandaloneEur=1m}),
             "SPECIALIST_SCENARIO_NET_EXCEEDS_EVIDENCE");
+        Reject(FirstOnly("priced-net-negative",x,ex with {PricedNet=new(-.1m,5m)}),
+            "PROSPECTIVE_NO_STANDALONE_NET_AFTER_COST_AND_UNCERTAINTY");
+        var priced=ex with {GrossAboveBenchmarkEur=null,GrossStandaloneEur=null,PricedNet=new(2.22m,2.22m)};
+        var pricedSession=NativeFundedSession.Restore(snapshot,session.AccountBinding);
+        check(pricedSession.DecideProspective(FirstOnly("priced-net-no-double-charge",x,priced))
+                  .Selection.Allocations.Length==1,
+            "positive priced net is charged uncertainty but is not charged execution costs twice");
+        Reject(FirstOnly("priced-net-missing-current-fee",x,priced with {EntryFeeEur=0}),
+            "PROSPECTIVE_CURRENT_ENTRY_FEE_UNDERSTATED");
         var admitted=session.DecideProspective(Decision("accepted-synthetic",new[]{ex,ey}));
         check(admitted.Selection.Allocations.Length==2 &&
             admitted.Selection.Allocations.Single(z=>z.Id==x.Id).Units==2 &&

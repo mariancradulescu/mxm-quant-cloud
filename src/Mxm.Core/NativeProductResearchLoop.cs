@@ -55,6 +55,7 @@ public sealed class NativeProductResearchLoop
     private readonly string researchMode;
     private readonly NativeEntryOutcomeCalibration? calibration;
     private readonly long calibrationBoundary;
+    private readonly bool inventoryResearch;
     public NativeEntryCalibrationReport? CalibrationReport=>calibration?.Report();
     // Both independent economically motivated families below are fixed BEFORE
     // any new extended original-account data collection is opened.
@@ -76,6 +77,7 @@ public sealed class NativeProductResearchLoop
             "AUD_ONLY_W38W39" or
             "HK_BRENT_JOINT_W40W41" or "HK_ONLY_W40W41" or
             "BRENT_ONLY_W40W41" or
+            "WIR1_JOINT" or "WIR1_FX" or "WIR1_METAL" or "WIR1_LONG" or "WIR1_SHORT" or "WIR1_CASH" or
             "CAL1_JOINT" or "CAL1_FX" or "CAL1_COMMODITY" or "CAL1_LONG" or "CAL1_SHORT" or "CAL1_CASH" or
             "WFG1_JOINT" or "WFG1_FX" or "WFG1_COMMODITY" or "WFG1_LONG" or "WFG1_SHORT" or
             "WFG1_FX_LONG" or "WFG1_FX_SHORT" or "WFG1_COMMODITY_LONG" or "WFG1_COMMODITY_SHORT" or
@@ -94,11 +96,12 @@ public sealed class NativeProductResearchLoop
             "ONLY_BRENT_W42W43" or "ONLY_AMD_W42W43"))
             throw new ArgumentException("UNDECLARED_RESEARCH_MECHANISM");
         this.researchMode=researchMode;
-        if(researchMode.StartsWith("CAL1_",StringComparison.Ordinal))
+        inventoryResearch=researchMode.StartsWith("WIR1_",StringComparison.Ordinal);
+        if(inventoryResearch || researchMode.StartsWith("CAL1_",StringComparison.Ordinal))
         {
             this.calibrationBoundary=calibrationBoundary>0?calibrationBoundary:
                 NativeEntryOutcomeCalibration.DevelopmentBoundary;
-            calibration=new(this.calibrationBoundary);
+            calibration=new(this.calibrationBoundary,inventoryResearch);
         }
     }
     private NativeFundedSession session=new("NATIVE_PRODUCT_MODEL_REPLAY_ONLY");
@@ -132,6 +135,8 @@ public sealed class NativeProductResearchLoop
     // were observed. Caller must verify its source dataset independently.
     public string ExportIntegrityCheckpoint(string sourceDatasetSha256)
     {
+        if(calibration is not null)
+            throw new InvalidOperationException("MODEL_REPLAY_CHECKPOINT_PREDICTIVE_STATE_NOT_SERIALIZED");
         if(sourceDatasetSha256.Length!=64 ||
             !sourceDatasetSha256.All(Uri.IsHexDigit))
             throw new ArgumentException("MODEL_REPLAY_CHECKPOINT_SOURCE_SHA_MISSING");
@@ -173,6 +178,8 @@ public sealed class NativeProductResearchLoop
         var loop=new NativeProductResearchLoop(
             p.GetProperty("ResearchMode").GetString() ??
                 "FROZEN_LEGACY_M5_M15");
+        if(loop.calibration is not null)
+            throw new ArgumentException("MODEL_REPLAY_CHECKPOINT_PREDICTIVE_STATE_NOT_SERIALIZED");
         loop.epochId=p.GetProperty("EpochId").GetString()??throw new ArgumentException("MODEL_EPOCH_MISSING");
         loop.session=NativeFundedSession.Restore(
             p.GetProperty("Session").GetString()!,"NATIVE_PRODUCT_MODEL_REPLAY_ONLY");
@@ -480,22 +487,24 @@ public sealed class NativeProductResearchLoop
             int side=0;string mechanism="FROZEN_LEGACY_M5_M15";
             decimal driver=Math.Abs(4m*a+b);
             NativeEntryForecast? calibratedForecast=null;
-            bool directionalControl=researchMode is "CAL1_LONG" or "CAL1_SHORT";
+            bool directionalControl=researchMode is "CAL1_LONG" or "CAL1_SHORT" or "WIR1_LONG" or "WIR1_SHORT";
             if(calibration is not null)
             {
-                if(at<calibrationBoundary || researchMode=="CAL1_CASH" ||
+                if(at<calibrationBoundary || researchMode is "CAL1_CASH" or "WIR1_CASH" ||
                    !calibrationSetups!.TryGetValue(market.Symbol,out var setup))continue;
-                var family=NativeEntryOutcomeCalibration.Family(market.Symbol)!;
-                if((researchMode=="CAL1_FX" && family!="FX") ||
+                var family=(inventoryResearch?NativeEntryOutcomeCalibration.InventoryFamily(market.Symbol):
+                    NativeEntryOutcomeCalibration.Family(market.Symbol))!;
+                if(((researchMode is "CAL1_FX" or "WIR1_FX") && family!="FX") ||
+                   (researchMode=="WIR1_METAL" && family!="METAL") ||
                    (researchMode=="CAL1_COMMODITY" && family!="COMMODITY"))continue;
                 calibratedForecast=setup.Forecast;
-                side=directionalControl?(researchMode=="CAL1_LONG"?1:-1):calibratedForecast?.Direction??0;
-                mechanism="CAL1_"+family;
+                side=directionalControl?(researchMode is "CAL1_LONG" or "WIR1_LONG"?1:-1):calibratedForecast?.Direction??0;
+                mechanism=(inventoryResearch?"WIR1_":"CAL1_")+family;
                 if(side==0)
                 {
                     forecasts++;rejected++;
                     recent.Add(new(market.Symbol,at,0,"MODEL_CALIBRATION_UNAVAILABLE",
-                        null,null,null,"INSUFFICIENT_MATURE_TRAINING_DAYS",mechanism));
+                        null,null,null,inventoryResearch?"INSUFFICIENT_MATURE_TRAINING_WEEKS":"INSUFFICIENT_MATURE_TRAINING_DAYS",mechanism));
                     continue;
                 }
             }
@@ -1495,6 +1504,18 @@ public sealed class NativeProductResearchLoop
                 // cross the evidence ceiling through decimal operation order.
                 decimal standalone=projectedGross-costs-uncertainty;
                 decimal incremental=projectedGross-benchmarkGross-costs-uncertainty;
+                SpecialistPricedNet? pricedNet=null;
+                if(inventoryResearch && calibratedForecast?.StandaloneAdverseNetReturn is decimal stress &&
+                    calibratedForecast.IncrementalAdverseNetReturn is decimal excess)
+                {
+                    decimal scale=mid*units*fx;
+                    decimal additionalFriction=Math.Max(0m,costs-
+                        (calibratedForecast.MeanAdverseFrictionReturn??0m)*scale);
+                    pricedNet=new(stress*scale-additionalFriction,excess*scale-additionalFriction);
+                    adverse=pricedNet.StandaloneEur;
+                    standalone=adverse-uncertainty;
+                    incremental=pricedNet.IncrementalEur-uncertainty;
+                }
                 perUnit=directionalControl?.001m:
                     Math.Floor(1000000000m*Math.Min(standalone,incremental)/units)/1000000000m;
                 decimal downside=Math.Max(1.5m*decisionSeed.AtrQuote,
@@ -1503,10 +1524,10 @@ public sealed class NativeProductResearchLoop
                     "STATE"+i,baseClock,true,perUnit,0m,downside*q.EurDebit+costs/units,0m)).ToArray();
                 offered.Add(new(id,mechanism,market.Symbol,id,side,at-1,baseClock,
                     EvidenceLevel.Preliminary,false,grid,scenarios));
-                evidence.Add(new SpecialistEuroEvidence(id,signalBarClock,at,60,effectiveHolding,
+                evidence.Add(new SpecialistEuroEvidence(id,signalBarClock,at,inventoryResearch?120:60,effectiveHolding,
                     true,true,true,true,false,projectedGross-benchmarkGross,uncertainty,
                     2m*spread,2m*minFee,2m*minFee,conversionStress,2m*slippage,2m*fundingDebit,minMargin)
-                    {GrossStandaloneEur=projectedGross});
+                    {GrossStandaloneEur=projectedGross,PricedNet=pricedNet});
                 terms.Add(new(id,1000,market.SlippagePerSideQuote,Fingerprint(id)));
                 recent.Add(new(market.Symbol,at,side,"MODEL_FORECAST_ONLY",
                     projectedGross,predictedNet,adverse,directionalControl?
@@ -1604,7 +1625,7 @@ public sealed class NativeProductResearchLoop
             // Exact same prospectively gated path for independently supported
             // evidence. UNQUALIFIED shadow mode is explicit, never promoted.
             var conditional=(calibration is null?EnableUnqualifiedShadowSimulation:
-                researchMode is "CAL1_LONG" or "CAL1_SHORT")
+                researchMode is "CAL1_LONG" or "CAL1_SHORT" or "WIR1_LONG" or "WIR1_SHORT")
                 ?session.DecideResearch(d with {SpecialistEvidence=null})
                 :session.DecideProspective(d);
             // Record precisely the existing core's accepted model intents in
