@@ -53,9 +53,12 @@ public sealed class NativeProductResearchLoop
         decimal EntryEquilibrium=0m,decimal FavorableExtreme=0m);
     private const string ResearchDomain="UNQUALIFIED_CAUSAL_MODEL_REPLAY_NOT_BROKER_EXECUTION";
     private readonly string researchMode;
+    private readonly NativeEntryOutcomeCalibration? calibration;
+    private readonly long calibrationBoundary;
+    public NativeEntryCalibrationReport? CalibrationReport=>calibration?.Report();
     // Both independent economically motivated families below are fixed BEFORE
     // any new extended original-account data collection is opened.
-    public NativeProductResearchLoop(string researchMode="FROZEN_LEGACY_M5_M15")
+    public NativeProductResearchLoop(string researchMode="FROZEN_LEGACY_M5_M15",long calibrationBoundary=0)
     {
         if(researchMode is not ("FROZEN_LEGACY_M5_M15" or
             "FX_CAUSAL_BREAKOUT_PLUS_RELATIVE_VALUE" or
@@ -73,6 +76,7 @@ public sealed class NativeProductResearchLoop
             "AUD_ONLY_W38W39" or
             "HK_BRENT_JOINT_W40W41" or "HK_ONLY_W40W41" or
             "BRENT_ONLY_W40W41" or
+            "CAL1_JOINT" or "CAL1_FX" or "CAL1_COMMODITY" or "CAL1_LONG" or "CAL1_SHORT" or "CAL1_CASH" or
             "WFG1_JOINT" or "WFG1_FX" or "WFG1_COMMODITY" or "WFG1_LONG" or "WFG1_SHORT" or
             "WFG1_FX_LONG" or "WFG1_FX_SHORT" or "WFG1_COMMODITY_LONG" or "WFG1_COMMODITY_SHORT" or
             "WFG1_CASH" or
@@ -90,6 +94,12 @@ public sealed class NativeProductResearchLoop
             "ONLY_BRENT_W42W43" or "ONLY_AMD_W42W43"))
             throw new ArgumentException("UNDECLARED_RESEARCH_MECHANISM");
         this.researchMode=researchMode;
+        if(researchMode.StartsWith("CAL1_",StringComparison.Ordinal))
+        {
+            this.calibrationBoundary=calibrationBoundary>0?calibrationBoundary:
+                NativeEntryOutcomeCalibration.DevelopmentBoundary;
+            calibration=new(this.calibrationBoundary);
+        }
     }
     private NativeFundedSession session=new("NATIVE_PRODUCT_MODEL_REPLAY_ONLY");
     private NativeProductAdverseBook adverse=new();
@@ -278,6 +288,7 @@ public sealed class NativeProductResearchLoop
         // One coherent multiasset mark; no broker ledger/account state is ever
         // accessed or modified. No synthetic fill is created on the intent clock.
         ApplyFacts(new[]{Event("MARK",at,quotes:markets.Select(x=>x.Quote).ToArray())});
+        var calibrationSetups=calibration?.Observe(at,markets);
         var byName=markets.ToDictionary(x=>x.Symbol,StringComparer.Ordinal);
         foreach(var outstanding in tracked.Values)
             if(!byName.ContainsKey(outstanding.Symbol))
@@ -294,6 +305,14 @@ public sealed class NativeProductResearchLoop
             var q=m.Quote;
             if(p.OpenAt==0 && at>=p.RequestAt+1000)
             {
+                if(calibration is not null && at-p.RequestAt>=600000L)
+                {
+                    ApplyFacts(new[]{Event("CONFIRMED_CANCEL",at,id,p.Symbol,p.Side,p.Units) with {
+                        Reason="CALIBRATION_ENTRY_QUOTE_TOO_LATE"
+                    }});
+                    tracked.Remove(id);
+                    continue;
+                }
                 NativeExitSeed seed=new(0m,0m);
                 if(p.ExitPolicy!=NativeCausalExitResearch.FrozenFixed &&
                    !NativeCausalExitResearch.TrySeed(m.M5,m.M15,at,out seed))
@@ -310,7 +329,7 @@ public sealed class NativeProductResearchLoop
                         p.Units,px,Fee(q,p.Units),q.MarginPerUnit,p.SlippagePerSideQuote)});
                 }
                 catch(InvalidOperationException ex) when(
-                    (researchMode.StartsWith("LDP1_",StringComparison.Ordinal) ||
+                    (calibration is not null || researchMode.StartsWith("LDP1_",StringComparison.Ordinal) ||
                      researchMode.StartsWith("JRC1_",StringComparison.Ordinal) ||
                      researchMode.StartsWith("OTC1_",StringComparison.Ordinal) ||
                      researchMode.StartsWith("MCT2_",StringComparison.Ordinal) ||
@@ -453,13 +472,34 @@ public sealed class NativeProductResearchLoop
                 maximumBarObservationLagMs=Math.Max(maximumBarObservationLagMs,
                     Math.Max(0,at-p5.LastClosedAt));
             }
-            if(!p5.Ready || !p15.Ready || p5.NormalizedDrift is not decimal a ||
-                p15.NormalizedDrift is not decimal b ||
+            decimal a=p5.NormalizedDrift??0m,b=p15.NormalizedDrift??0m;
+            if((calibration is null && (!p5.Ready || !p15.Ready ||
+                p5.NormalizedDrift is null || p15.NormalizedDrift is null)) ||
                 previousForecastBar.GetValueOrDefault(market.Symbol)==p5.LastClosedAt)
                 continue;
             int side=0;string mechanism="FROZEN_LEGACY_M5_M15";
             decimal driver=Math.Abs(4m*a+b);
-            if(researchMode=="FROZEN_LEGACY_M5_M15")
+            NativeEntryForecast? calibratedForecast=null;
+            bool directionalControl=researchMode is "CAL1_LONG" or "CAL1_SHORT";
+            if(calibration is not null)
+            {
+                if(at<calibrationBoundary || researchMode=="CAL1_CASH" ||
+                   !calibrationSetups!.TryGetValue(market.Symbol,out var setup))continue;
+                var family=NativeEntryOutcomeCalibration.Family(market.Symbol)!;
+                if((researchMode=="CAL1_FX" && family!="FX") ||
+                   (researchMode=="CAL1_COMMODITY" && family!="COMMODITY"))continue;
+                calibratedForecast=setup.Forecast;
+                side=directionalControl?(researchMode=="CAL1_LONG"?1:-1):calibratedForecast?.Direction??0;
+                mechanism="CAL1_"+family;
+                if(side==0)
+                {
+                    forecasts++;rejected++;
+                    recent.Add(new(market.Symbol,at,0,"MODEL_CALIBRATION_UNAVAILABLE",
+                        null,null,null,"INSUFFICIENT_MATURE_TRAINING_DAYS",mechanism));
+                    continue;
+                }
+            }
+            else if(researchMode=="FROZEN_LEGACY_M5_M15")
             {
                 if(a*b<=0)continue;
                 side=a>0?1:-1;
@@ -1290,7 +1330,8 @@ public sealed class NativeProductResearchLoop
                 }
                 else continue;
             }
-            previousForecastBar[market.Symbol]=p5.LastClosedAt;
+            long signalBarClock=calibration is null?p5.LastClosedAt:calibrationSetups![market.Symbol].KnownAt;
+            previousForecastBar[market.Symbol]=signalBarClock;
             forecasts++;
             var q=market.Quote;
             if(market.Contract is not NativeObservedContractTerms c ||
@@ -1411,21 +1452,22 @@ public sealed class NativeProductResearchLoop
             // EXPLORATORY forecast, not a fitted/qualified alpha: agreement
             // between completed M5 and M15 direction, magnitude from past
             // normalized movement. No closing or future sample is consulted.
-            decimal projectedGross=driver*mid*units*fx;
+            decimal projectedGross=(calibration is null?driver:calibratedForecast?.MeanGrossReturn??0m)*mid*units*fx;
             decimal spread=(q.Ask-q.Bid)*units*fx;
             decimal commission=2m*Fee(q,units);
             decimal slippage=2m*market.SlippagePerSideQuote*units*fx;
             decimal fundingDebit=Math.Max(0,-signedFunding.Value);
-            decimal conversion=projectedGross*
+            decimal conversion=(calibration is null?projectedGross:Math.Abs(projectedGross))*
                 Math.Max(0,q.EurDebit-q.EurCredit)/Math.Max(.00000001m,fx);
-            decimal uncertainty=(researchMode=="FROZEN_LEGACY_M5_M15"?
+            decimal uncertainty=calibratedForecast is not null?
+                calibratedForecast.MeanUncertaintyReturn*mid*units*fx:(researchMode=="FROZEN_LEGACY_M5_M15"?
                 Math.Abs(a-b):Math.Abs(b)+(p15.MeanAbsoluteReturn??0m))*
                 mid*units*fx+(p5.MeanAbsoluteReturn??0m)*mid*units*fx;
             decimal predictedNet=projectedGross-spread-commission-slippage-
                 fundingDebit-conversion;
             decimal adverse=predictedNet-spread-slippage;
-            string id="EXPLORATORY/"+mechanism+"/"+market.Symbol+"/"+p5.LastClosedAt;
-            var baseClock=fundingGateStudy?Math.Max(p5.LastClosedAt,p15.LastClosedAt)
+            string id="EXPLORATORY/"+mechanism+"/"+market.Symbol+"/"+signalBarClock;
+            var baseClock=calibration is not null?(calibratedForecast?.OutcomesKnownThrough??signalBarClock):fundingGateStudy?Math.Max(p5.LastClosedAt,p15.LastClosedAt)
                 :Math.Min(p5.LastClosedAt,p15.LastClosedAt);
             if(baseClock>=at-1)
             {
@@ -1440,6 +1482,37 @@ public sealed class NativeProductResearchLoop
                     ?Math.Min(c.MaximumUnits,units+c.VolumeStepUnits):units,
                 q.MarginPerUnit,0m,false,false,2,0m);
             decimal perUnit=(predictedNet-uncertainty)/(factorStudy||jointStudy?units:Math.Max(1,units))*.5m;
+            if(calibration is not null)
+            {
+                // Underwrite at doubled execution costs, consistently with the
+                // adverse book; this is a conservative price assumption.
+                decimal minFee=Fee(q,units);
+                decimal conversionStress=conversion+(.001m*Math.Abs(projectedGross));
+                decimal costs=2m*(spread+commission+slippage+fundingDebit)+conversionStress;
+                decimal benchmarkGross=(calibratedForecast?.MeanBenchmarkGrossReturn??0m)*mid*units*fx;
+                adverse=projectedGross-costs;
+                // Round conservatively so EUR -> physical units -> EUR cannot
+                // cross the evidence ceiling through decimal operation order.
+                decimal standalone=projectedGross-costs-uncertainty;
+                decimal incremental=projectedGross-benchmarkGross-costs-uncertainty;
+                perUnit=directionalControl?.001m:
+                    Math.Floor(1000000000m*Math.Min(standalone,incremental)/units)/1000000000m;
+                decimal downside=Math.Max(1.5m*decisionSeed.AtrQuote,
+                    (calibratedForecast?.DownsideReturn??0m)*mid);
+                var scenarios=Enumerable.Range(0,8).Select(i=>new OpportunityScenario(
+                    "STATE"+i,baseClock,true,perUnit,0m,downside*q.EurDebit+costs/units,0m)).ToArray();
+                offered.Add(new(id,mechanism,market.Symbol,id,side,at-1,baseClock,
+                    EvidenceLevel.Preliminary,false,grid,scenarios));
+                evidence.Add(new SpecialistEuroEvidence(id,signalBarClock,at,60,effectiveHolding,
+                    true,true,true,true,false,projectedGross-benchmarkGross,uncertainty,
+                    2m*spread,2m*minFee,2m*minFee,conversionStress,2m*slippage,2m*fundingDebit,minMargin)
+                    {GrossStandaloneEur=projectedGross});
+                terms.Add(new(id,1000,market.SlippagePerSideQuote,Fingerprint(id)));
+                recent.Add(new(market.Symbol,at,side,"MODEL_FORECAST_ONLY",
+                    projectedGross,predictedNet,adverse,directionalControl?
+                    "FUNDED_DIRECTIONAL_CONTROL_NO_PREDICTIVE_CLAIM":"LOCKED_POST_ENTRY_CALIBRATION",mechanism));
+                continue;
+            }
             decimal riskPerUnit=factorStudy||jointStudy
                 ? (1.5m*decisionSeed.AtrQuote+q.Ask-q.Bid+
                     2m*market.SlippagePerSideQuote)*q.EurDebit+commission/units
@@ -1530,7 +1603,8 @@ public sealed class NativeProductResearchLoop
                 terms.ToArray(),Fingerprint("PRODUCT/"+at),evidence.ToArray());
             // Exact same prospectively gated path for independently supported
             // evidence. UNQUALIFIED shadow mode is explicit, never promoted.
-            var conditional=EnableUnqualifiedShadowSimulation
+            var conditional=(calibration is null?EnableUnqualifiedShadowSimulation:
+                researchMode is "CAL1_LONG" or "CAL1_SHORT")
                 ?session.DecideResearch(d with {SpecialistEvidence=null})
                 :session.DecideProspective(d);
             // Record precisely the existing core's accepted model intents in

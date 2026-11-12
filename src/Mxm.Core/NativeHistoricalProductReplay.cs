@@ -146,7 +146,8 @@ public static class NativeHistoricalProductReplay
     public static NativeHistoricalMarketReceipt Evaluate(
         NativeHistoricalMarketTape tape,bool UnqualifiedShadowMode=true,
         string ResearchMode="FROZEN_LEGACY_M5_M15",
-        Action<NativeFundedLedger>? ObserveFinalLedger=null)
+        Action<NativeFundedLedger>? ObserveFinalLedger=null,
+        Action<NativeEntryCalibrationReport>? ObserveCalibration=null)
     {
         if(tape is null||tape.Bars is null||tape.Quotes is null||
            string.IsNullOrWhiteSpace(tape.SourceLabel)||
@@ -232,6 +233,7 @@ public static class NativeHistoricalProductReplay
             weeks.TryAdd(Week(group.Key),0);
         }
         if(last is null)throw new ArgumentException("HISTORICAL_TAPE_NO_QUOTES");
+        if(simulation.CalibrationReport is { } calibration)ObserveCalibration?.Invoke(calibration);
         foreach(var pair in last.ModelRoundTripsPerIsoWeek)
             weeks[pair.Key]=pair.Value;
         var monetary=simulation.ResearchSession.Ledger.Summary();
