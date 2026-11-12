@@ -59,7 +59,8 @@ def recover():
     age = dt.datetime.now(dt.timezone.utc) - created
     if run["status"] != "queued" or job_count or age < dt.timedelta(minutes=45):
         raise RuntimeError("Original can still progress or already has jobs")
-    if request("/cancel", method="POST") != 202:
+    # The previous fenced run received HTTP 409 from ordinary cancellation.
+    if request("/force-cancel", method="POST") != 202:
         raise RuntimeError("GitHub did not accept original cancellation")
     for _ in range(24):
         run, _ = original_state()

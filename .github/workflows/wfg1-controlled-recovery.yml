@@ -13,8 +13,8 @@ jobs:
     if: >-
       github.actor == 'mariancradulescu' &&
       github.run_attempt == '1' &&
-      github.event.before == '8772dd45dc7768c48d44b50ea8bd909bd7075b28' &&
-      github.event.head_commit.message == 'WFG1_RECOVERY_CONTROL_43096900076'
+      github.event.before == '4ce7184d793a6fb015180e5d04968dc2baf5cd47' &&
+      github.event.head_commit.message == 'WFG1_FORCE_CANCEL_CONTROL_43096900076'
     permissions:
       contents: read
       actions: write
