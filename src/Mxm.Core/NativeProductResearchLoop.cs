@@ -91,6 +91,7 @@ public sealed class NativeProductResearchLoop
             "SCT1_JOINT" or "SCT1_INDEX" or "SCT1_OIL" or "SCT1_LONG" or "SCT1_SHORT" or "SCT1_REPEATED" or
             "JRS1_JOINT" or "JRS1_FX" or "JRS1_COMMODITY" or "JRS1_LONG" or "JRS1_SHORT" or "JRS1_REPEATED" or
             "AEX1_JOINT" or "AEX1_FX" or "AEX1_COMMODITY" or "AEX1_LONG" or "AEX1_SHORT" or "AEX1_FIXED" or "AEX1_CASH" or
+            "ETP1_JOINT" or "ETP1_LEADER" or "ETP1_FOLLOWER" or "ETP1_LONG" or "ETP1_SHORT" or "ETP1_FIXED" or "ETP1_CASH" or
             "FCE1_JOINT" or "FCE1_FX" or "FCE1_COMMODITY" or "FCE1_LONG" or "FCE1_SHORT" or "FCE1_MINIMUM" or
             "PRR1_JOINT" or "PRR1_INDEX" or "PRR1_CRUDE" or "PRR1_LONG" or "PRR1_SHORT" or
             "BMR1_JOINT" or "BMR1_FX" or "BMR1_GOLD" or "BMR1_LONG" or "BMR1_SHORT" or
@@ -476,8 +477,9 @@ public sealed class NativeProductResearchLoop
         }
         bool sessionStudy=researchMode.StartsWith("SCT1_",StringComparison.Ordinal);
         bool adaptiveStudy=researchMode.StartsWith("AEX1_",StringComparison.Ordinal);
+        bool techStudy=researchMode.StartsWith("ETP1_",StringComparison.Ordinal);
         bool fundingGateStudy=researchMode.StartsWith("WFG1_",StringComparison.Ordinal);
-        bool jointStudy=conditionalResearch || fundingGateStudy || sessionStudy || researchMode.StartsWith("JRS1_",StringComparison.Ordinal) || adaptiveStudy;
+        bool jointStudy=conditionalResearch || fundingGateStudy || sessionStudy || researchMode.StartsWith("JRS1_",StringComparison.Ordinal) || adaptiveStudy || techStudy;
         bool useJointStress=jointStudy && researchMode is not ("JRS1_REPEATED" or "SCT1_REPEATED");
         var stressEuro=jointStudy?byName.GetValueOrDefault("EURUSD"):null;
         bool factorStudy=researchMode.StartsWith("FCE1_",StringComparison.Ordinal);
@@ -629,6 +631,22 @@ public sealed class NativeProductResearchLoop
                 if(forecast.Side==0)continue;
                 side=researchMode=="SCT1_LONG"?1:
                     researchMode=="SCT1_SHORT"?-1:forecast.Side;
+                driver=forecast.Magnitude;
+                mechanism=forecast.Mechanism;
+            }
+            else if(techStudy)
+            {
+                if(researchMode=="ETP1_CASH")continue;
+                if(market.Symbol is not ("AAPL.US-24" or "GOOG.US-24"))continue;
+                if((market.Symbol=="AAPL.US-24" && researchMode=="ETP1_FOLLOWER") ||
+                   (market.Symbol=="GOOG.US-24" && researchMode=="ETP1_LEADER"))
+                    continue;
+                var peer=byName.GetValueOrDefault(
+                    market.Symbol=="AAPL.US-24"?"GOOG.US-24":"AAPL.US-24");
+                var forecast=NativeTechPairResearch.Forecast(market,peer,at);
+                if(forecast.Side==0)continue;
+                side=researchMode=="ETP1_LONG"?1:
+                    researchMode=="ETP1_SHORT"?-1:forecast.Side;
                 driver=forecast.Magnitude;
                 mechanism=forecast.Mechanism;
             }
@@ -1394,8 +1412,10 @@ public sealed class NativeProductResearchLoop
                 continue;
             }
             decimal units=c.MinimumUnits;
-            string effectiveExitPolicy=researchMode=="AEX1_FIXED"?
+            string effectiveExitPolicy=(researchMode=="AEX1_FIXED" || researchMode=="ETP1_FIXED")?
                 NativeCausalExitResearch.FrozenFixed:mechanism switch {
+                NativeTechPairResearch.Leader=>NativeCausalExitResearch.Chandelier,
+                NativeTechPairResearch.Follower=>NativeCausalExitResearch.PredictionInvalidation,
                 NativeAdaptiveExitResearch.Fx=>NativeCausalExitResearch.Chandelier,
                 NativeAdaptiveExitResearch.Commodity=>NativeCausalExitResearch.PredictionInvalidation,
                 "FX_USD_BREADTH_DELAYED_CATCHUP"=>
@@ -1442,7 +1462,9 @@ public sealed class NativeProductResearchLoop
                 "BMR1_XAUUSD_RELEASE_REPRICING"=>NativeCausalExitResearch.PredictionInvalidation,
                 _=>market.ExitPolicy
             };
-            int effectiveHolding=researchMode=="AEX1_FIXED"?90:mechanism switch {
+            int effectiveHolding=(researchMode=="AEX1_FIXED" || researchMode=="ETP1_FIXED")?90:mechanism switch {
+                NativeTechPairResearch.Leader=>90,
+                NativeTechPairResearch.Follower=>105,
                 NativeAdaptiveExitResearch.Fx=>135,
                 NativeAdaptiveExitResearch.Commodity=>120,
                 "FX_USD_BREADTH_DELAYED_CATCHUP"=>120,
