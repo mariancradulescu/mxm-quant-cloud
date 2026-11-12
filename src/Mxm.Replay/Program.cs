@@ -1,6 +1,9 @@
 using System.Text.Json;
 using System.Security.Cryptography;
 
+if(args.Length==4 && args[3]=="--native-session-benchmark-correction")
+    return NativeSessionBenchmarkCorrection.Run(args[0],args[1],args[2]);
+
 if(args.Length==3 && args[2] is "--native-sem1" or "--native-sem1-contracts" or "--native-sem1-filter-diagnostic")
     return NativeSessionEconomicsMap.Run(args[0],args[1],args[2]=="--native-sem1-contracts",args[2]=="--native-sem1-filter-diagnostic");
 
