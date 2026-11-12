@@ -8,6 +8,8 @@ internal static class NativeSessionEconomicsMap
 {
     private static readonly string[] Targets = { "EURUSD", "NAS100", "XAUUSD", "SpotBrent", "XAGEUR", "ETHEUR" };
     private static readonly string[] FilterTargets = { "NAS100", "XAGEUR", "ETHEUR" };
+    private static readonly string[] DiscoveryTargets = { "SpotBrent", "ETHEUR", "AAPL.US-24", "GOOG.US-24" };
+    private static readonly string[] DiscoveryContracts = { "SpotBrent", "ETHEUR", "AAPL.US-24", "GOOG.US-24", "SpotCrude", "EURUSD" };
     private static readonly int[] Horizons = { 30, 90 };
     private static readonly JsonSerializerOptions Wire = new() { NumberHandling = JsonNumberHandling.AllowReadingFromString };
     private const long Minute = 60000;
@@ -22,16 +24,20 @@ internal static class NativeSessionEconomicsMap
         bool RawQuotes, bool EntryQuote, decimal? SpreadBps, Payoff? Buy, Payoff? Sell, int? Signal, int Momentum);
     private sealed record Bounds(int Weeks, decimal? Mean, decimal? Lower);
 
-    internal static int Run(string input, string output, bool contracts, bool filterDiagnostic = false)
+    internal static int Run(string input, string output, bool contracts, bool filterDiagnostic = false, bool discovery = false)
     {
         try
         {
             byte[] bytes = File.ReadAllBytes(input);
+            var start = discovery ? new DateTimeOffset(2026, 8, 31, 0, 0, 0, TimeSpan.Zero) : Start;
+            int weeks = discovery ? 8 : 10;
+            int split = weeks / 2;
+            var entryHours = discovery ? new[] { 1, 7, 13, 19 } : Enumerable.Range(0, 8).Select(i => 1 + 3 * i).ToArray();
             if (contracts)
             {
                 var terms = JsonSerializer.Deserialize<NativeObservedContractTerms[]>(bytes, Wire)
                     ?? throw new ArgumentException("Missing terms");
-                if (terms.Count(t => t.Symbol == "EURUSD") != 1 || terms.Any(t => !Targets.Contains(t.Symbol)))
+                if (terms.Count(t => t.Symbol == "EURUSD") != 1 || terms.Any(t => !(discovery ? DiscoveryContracts : Targets).Contains(t.Symbol)))
                     throw new ArgumentException("Unexpected terms");
                 foreach (var term in terms) NativeBrokerContractCosts.Validate(term, term.MinimumUnits);
                 File.WriteAllText(output, "{}");
@@ -39,13 +45,13 @@ internal static class NativeSessionEconomicsMap
             }
 
             var tape = JsonSerializer.Deserialize<Tape>(bytes, Wire);
-            if (tape?.SourceLabel != "ORIGINAL_PEPPERSTONE_SEM1")
+            if (tape?.SourceLabel != (discovery ? "ORIGINAL_PEPPERSTONE_PDR1" : "ORIGINAL_PEPPERSTONE_SEM1"))
                 throw new ArgumentException("Unexpected source");
             var bars = tape.Bars.ToDictionary(b => b.Symbol, b => b.M5.ToDictionary(x => x.OpenAt));
             var marks = tape.Marks.GroupBy(m => m.Symbol).ToDictionary(g => g.Key, g => g.ToDictionary(x => x.At));
             var results = new Dictionary<string, object>();
             var active = new List<(string Symbol, int Horizon, long At)>();
-            foreach (string symbol in filterDiagnostic ? FilterTargets : Targets)
+            foreach (string symbol in discovery ? DiscoveryTargets : filterDiagnostic ? FilterTargets : Targets)
             {
                 if (!bars.ContainsKey(symbol))
                 {
@@ -61,16 +67,16 @@ internal static class NativeSessionEconomicsMap
                 foreach (int horizon in Horizons)
                 {
                     var rows = new List<Row>();
-                    for (int week = 0; week < 10; week++)
+                    for (int week = 0; week < weeks; week++)
                     {
-                        var day = Start.AddDays(7 * week + week % 5);
+                        var day = start.AddDays(7 * week + week % 5);
                         Observe(day, week, false);
-                        if (symbol == "ETHEUR") Observe(Start.AddDays(7 * week + 5 + week % 2), week, true);
+                        if (symbol == "ETHEUR") Observe(start.AddDays(7 * week + 5 + week % 2), week, true);
                     }
 
                     void Observe(DateTimeOffset day, int week, bool weekend)
                     {
-                        for (int hour = 1; hour < 24; hour += 3)
+                        foreach (int hour in entryHours)
                         {
                             long clock = day.AddHours(hour).ToUnixTimeMilliseconds();
                             long entry = clock + 1500;
@@ -83,7 +89,7 @@ internal static class NativeSessionEconomicsMap
                             bool pricedEndpoints = open && first is not null && last is not null;
                             Payoff? buy = pricedEndpoints ? Price(first!, last!, 1) : null;
                             Payoff? sell = pricedEndpoints ? Price(first!, last!, -1) : null;
-                            var (signal, momentum) = Signal(symbol, bars, clock);
+                            var (signal, momentum) = discovery ? DiscoverySignal(symbol, bars, clock) : Signal(symbol, bars, clock);
                             if (buy is not null && sell is not null && signal is not (null or 0))
                                 active.Add((symbol, horizon, entry));
                             rows.Add(new(week, weekend, hour, entry, open, rawPair, first is not null, spread,
@@ -93,8 +99,8 @@ internal static class NativeSessionEconomicsMap
 
                     bool Complete(Row r) => r.Buy is not null && r.Sell is not null;
                     bool Triggered(Row r) => Complete(r) && r.Signal is not (null or 0);
-                    var first = rows.Where(r => r.Week < 5 && Triggered(r)).ToArray();
-                    var last = rows.Where(r => r.Week >= 5 && Triggered(r)).ToArray();
+                    var first = rows.Where(r => r.Week < split && Triggered(r)).ToArray();
+                    var last = rows.Where(r => r.Week >= split && Triggered(r)).ToArray();
                     Payoff Select(Row r) => r.Signal > 0 ? r.Buy! : r.Sell!;
                     Payoff Momentum(Row r) => r.Momentum switch {
                         > 0 => r.Buy!, < 0 => r.Sell!, _ => new(0, 0, 0, r.Buy!.Notional, 0)
@@ -110,7 +116,8 @@ internal static class NativeSessionEconomicsMap
                     var earlyDelta = Bound(first, r => Select(r).Adverse - Momentum(r).Adverse);
                     var lateOwn = Bound(last, r => Select(r).Adverse);
                     var lateDelta = Bound(last, r => Select(r).Adverse - Momentum(r).Adverse);
-                    string verdict = earlyOwn.Weeks < 4 || lateOwn.Weeks < 4 ? "INSUFFICIENT_SIGNAL_WEEKS" :
+                    int minimumSignalWeeks = discovery ? 3 : 4;
+                    string verdict = earlyOwn.Weeks < minimumSignalWeeks || lateOwn.Weeks < minimumSignalWeeks ? "INSUFFICIENT_SIGNAL_WEEKS" :
                         earlyOwn.Mean > 0 && earlyDelta.Mean > 0 && lateOwn.Lower > 0 && lateDelta.Lower > 0
                             ? "WARRANTS_FUNDED_REPLAY" : "NO_REPEATABLE_ADVERSE_INCREMENT";
                     object Segment(Row[] rr) => new {
@@ -123,7 +130,7 @@ internal static class NativeSessionEconomicsMap
                         Early = Segment(first), Late = Segment(last),
                         EarlyOwn = earlyOwn, EarlyDelta = earlyDelta, LateOwn = lateOwn, LateDelta = lateDelta,
                         WeeklyPricedSignals = rows.GroupBy(r => r.Week).ToDictionary(g =>
-                            $"{ISOWeek.GetYear(Start.AddDays(g.Key * 7).UtcDateTime)}-W{ISOWeek.GetWeekOfYear(Start.AddDays(g.Key * 7).UtcDateTime):00}",
+                            $"{ISOWeek.GetYear(start.AddDays(g.Key * 7).UtcDateTime)}-W{ISOWeek.GetWeekOfYear(start.AddDays(g.Key * 7).UtcDateTime):00}",
                             g => g.Count(Triggered)),
                         Sessions = rows.GroupBy(r => (r.Weekend, r.Hour)).Select(g => {
                             var priced = g.Where(Complete).ToArray();
@@ -146,7 +153,7 @@ internal static class NativeSessionEconomicsMap
                 results.Add(symbol, routes);
             }
             File.WriteAllText(output, JsonSerializer.Serialize(new {
-                Study = filterDiagnostic ? "SEM1_FILTER_DIAGNOSTIC" : "SEM1", Receipt = results, SourceSha256 = Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant(),
+                Study = discovery ? "PDR1" : filterDiagnostic ? "SEM1_FILTER_DIAGNOSTIC" : "SEM1", Receipt = results, SourceSha256 = Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant(),
                 EntryClocksWithConcurrentSymbols = active.GroupBy(r => r.At).Count(g => g.Select(r => r.Symbol).Distinct().Count() > 1),
                 PortfolioExecuted = false, PortfolioAdmission = false, ContinuousDrawdownMeasured = false
             }));
@@ -259,6 +266,44 @@ internal static class NativeSessionEconomicsMap
                 bool active = own.Skip(45).Sum(b => b.TickVolume) > own.Skip(42).Take(3).Sum(b => b.TickVolume);
                 return (active && Sign(Move(own, length - 12, 36)) == momentum && lastQuarter == momentum ? momentum : 0, momentum);
         }
+    }
+
+    private static (int? Signal, int Momentum) DiscoverySignal(string name,
+        Dictionary<string,Dictionary<long,NativeClosedMarketBar>> bars,long clock)
+    {
+        NativeClosedMarketBar[]? Hour(string symbol)
+        {
+            if(!bars.TryGetValue(symbol,out var series))return null;
+            var items=new NativeClosedMarketBar[12];
+            for(int i=0;i<items.Length;i++)
+            {
+                long at=clock-(12-i)*M5;
+                if(!series.TryGetValue(at,out var b)||b.CloseAt!=at+M5||b.Open<=0||b.Close<=0)return null;
+                items[i]=b;
+            }
+            return items;
+        }
+        decimal Return(NativeClosedMarketBar[] x,int index=0)=>x[^1].Close/x[index].Open-1m;
+        var own=Hour(name);
+        if(own is null)return (null,0);
+        int side=Math.Sign(Return(own));
+        int last=Math.Sign(Return(own,9));
+        if(name=="ETHEUR")
+        {
+            int lastHalf=Math.Sign(Return(own,6));
+            int priorQuarter=Math.Sign(own[8].Close/own[6].Open-1m);
+            bool active=own.Skip(6).Sum(b=>b.TickVolume)>own.Take(6).Sum(b=>b.TickVolume);
+            return (active&&lastHalf==-side&&last==-side&&priorQuarter==-side?-side:0,side);
+        }
+        string context=name switch { "SpotBrent"=>"SpotCrude","AAPL.US-24"=>"GOOG.US-24",_=>"AAPL.US-24" };
+        var peer=Hour(context);
+        if(peer is null)return (null,side);
+        int peerSide=Math.Sign(Return(peer));
+        bool divergence=side!=0&&peerSide==-side;
+        bool turn=name=="SpotBrent"
+            ? Math.Sign(Return(own,9)-Return(peer,9))==peerSide
+            : last==peerSide;
+        return (divergence&&turn?peerSide:0,side);
     }
 
     private static Payoff? Price(NativeOriginalOpenApiMarketMark a, NativeOriginalOpenApiMarketMark b, int side)
