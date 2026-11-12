@@ -11,11 +11,16 @@ internal static class NativeSessionBenchmarkCorrection
     private static readonly JsonSerializerOptions Wire = new() { NumberHandling = JsonNumberHandling.AllowReadingFromString };
     private const long Minute = 60000;
     private sealed record Tape(string SourceLabel, NativeHistoricalBars[] Bars, NativeOriginalOpenApiMarketMark[] Marks,
-        Dictionary<string, NativeSessionEconomicsMap.Schedule>? Schedules);
+        Dictionary<string, NativeSessionEconomicsMap.Schedule>? Schedules, Dictionary<string,long[]>? RawPairClocks);
     private sealed record Candidate(string Symbol, long Entry, long Exit, int Signal, int Momentum,
         NativeOriginalOpenApiMarketMark? First, NativeOriginalOpenApiMarketMark? Last, bool ContractOpen);
     private sealed record Position(Candidate Candidate, int Side, decimal Units, decimal EntrySlip, string Id);
-    private sealed record Outcome(int CompleteTrips, int OpenPositions, int UnobservedFixedExits, decimal GrossEur,
+    // Ex-post observation audit only: none of these fields may enter admission or pricing.
+    private sealed record MissingFixedExit(string PositionId, string Symbol, string Policy,
+        long EntryClockUtcMs, long FixedExitClockUtcMs, int Side,
+        bool HasRawPairedBidAskAtFixedClock, long? NearestPriorValuationClockUtcMs,
+        long? NearestLaterValuationClockUtcMs, string ObservationStatus);
+    private sealed record Outcome(int CompleteTrips, int OpenPositions, int UnobservedFixedExits, MissingFixedExit[] MissingFixedExitObservations, decimal GrossEur,
         decimal ClosedNetEur, decimal CashEur, decimal PeakMarginEur, int PeakConcurrentPositions,
         decimal MaxSampledDrawdown, int MarkClocksWithoutFullEquity, Dictionary<string,int> Rejections,
         Dictionary<string,int> TripsByWeek, Dictionary<string,decimal> ClosedNetByWeek, Dictionary<string,int> TripsBySymbol,
@@ -129,7 +134,7 @@ internal static class NativeSessionBenchmarkCorrection
         var symbols=candidates.Select(c=>c.Symbol).ToHashSet();
         var observations=tape.Marks.Where(m=>symbols.Contains(m.Symbol)).ToArray();
         object Scenario(bool adverse,bool paired) => Policies.ToDictionary(p=>p,
-            p=>Replay(candidates,observations,hash,p,adverse,paired));
+            p=>Replay(candidates,observations,hash,p,adverse,paired,tape.RawPairClocks));
         return new {
             CausalCentral=Scenario(false,false), CausalAdverse=Scenario(true,false),
             CompleteEndpointsCentral=Scenario(false,true), CompleteEndpointsAdverse=Scenario(true,true),
@@ -159,13 +164,14 @@ internal static class NativeSessionBenchmarkCorrection
     }
 
     private static Outcome Replay(Candidate[] universe,NativeOriginalOpenApiMarketMark[] source,
-        string hash,string policy,bool adverse,bool paired)
+        string hash,string policy,bool adverse,bool paired,Dictionary<string,long[]>? rawPairClocks)
     {
         var book=new NativeFundedLedger(maximumStalenessMs:4);
         var held=new Dictionary<string,Position>(StringComparer.Ordinal);
         var rejected=new Dictionary<string,int>();
         void Reject(string cause)=>rejected[cause]=rejected.GetValueOrDefault(cause)+1;
         int sequence=0, missingExits=0, incompleteMarks=0, maxPositions=0;
+        var missingDetails=new List<MissingFixedExit>();
         decimal maxMargin=0;
         var entries=universe.ToLookup(c=>c.Entry);
         var marks=source.ToLookup(m=>m.At);
@@ -193,6 +199,15 @@ internal static class NativeSessionBenchmarkCorrection
                 if(!snapshot.TryGetValue(s,out var last))
                 {
                     missingExits++;
+                    // Diagnose recorded coverage only; do not synthesize or move this exit.
+                    bool rawPair=rawPairClocks is not null &&
+                        rawPairClocks.TryGetValue(s,out var rawClocks) && rawClocks.Contains(at);
+                    long? before=source.Where(m=>m.Symbol==s&&m.At<at)
+                        .Select(m=>(long?)m.At).DefaultIfEmpty().Max();
+                    long? after=source.Where(m=>m.Symbol==s&&m.At>at)
+                        .Select(m=>(long?)m.At).DefaultIfEmpty().Min();
+                    missingDetails.Add(new(p.Id,s,policy,p.Candidate.Entry,at,p.Side,rawPair,before,after,
+                        rawPair?"RAW_PAIR_EXISTS_BUT_COSTED_MARK_ABSENT":"PAIRED_BID_ASK_NOT_PRESENT_IN_FROZEN_TAPE"));
                     continue;
                 }
                 var funding=Funding(p.Candidate,p.Side,last)
@@ -249,7 +264,7 @@ internal static class NativeSessionBenchmarkCorrection
         var final=book.Summary();
         var closed=book.ClosedFragments();
         var weeks=universe.Select(c=>Week(c.Entry)).Distinct().Order().ToArray();
-        return new(final.CompleteRoundTrips,final.OpenPositions,missingExits,closed.Sum(f=>f.GrossEur),
+        return new(final.CompleteRoundTrips,final.OpenPositions,missingExits,missingDetails.ToArray(),closed.Sum(f=>f.GrossEur),
             final.ClosedNetEur,final.CashEur,maxMargin,maxPositions,final.MaximumSampledDrawdown,incompleteMarks,rejected,
             weeks.ToDictionary(w=>w,w=>closed.Count(f=>Week(f.ClosedAt)==w)),
             weeks.ToDictionary(w=>w,w=>closed.Where(f=>Week(f.ClosedAt)==w).Sum(f=>f.NetEur)),
