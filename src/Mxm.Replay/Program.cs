@@ -1,6 +1,9 @@
 using System.Text.Json;
 using System.Security.Cryptography;
 
+if(args.Length==3 && args[2]=="--native-cal1")
+    return NativeCalibratedOutcomeExperiment.Run(args[0],args[1]);
+
 if(args.Length==3 && args[2]=="--native-wfg1")
     return NativeChronologicalFundingExperiment.Run(args[0],args[1]);
 

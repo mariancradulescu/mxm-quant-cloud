@@ -20,6 +20,11 @@ public class MxmCloud : Robot
     public string ActiveM5ResearchWatchlist { get; set; } =
         "EURUSD,GBPUSD,AUDUSD,USDJPY,USDCAD,US500,NAS100,XAUUSD";
 
+    // Optional new observation-only calibration. Set a future UTC cutoff to
+    // collect complete outcomes before evaluating in the same model episode.
+    [Parameter("Calibration cutoff UTC (blank uses legacy)", DefaultValue = "")]
+    public string CalibrationCutoffUtc { get; set; } = "";
+    private bool _calibratedResearch;
     private NativeProductResearchLoop? _productResearch;
     private int _lastResearchModelTrips = -1;
     private string _lastResearchEconomicStatus = "";
@@ -51,7 +56,19 @@ public class MxmCloud : Robot
         // Independent MODEL_REPLAY capital, never the broker monetary domain.
         // A restart begins a fresh observational simulation, not a cash reset
         // of any broker account; historical recovery requires causal replay.
-        _productResearch=EnableExploratoryReplay ? new NativeProductResearchLoop():null;
+        if(EnableExploratoryReplay)
+        {
+            if(string.IsNullOrWhiteSpace(CalibrationCutoffUtc))_productResearch=new NativeProductResearchLoop();
+            else if(System.DateTimeOffset.TryParseExact(CalibrationCutoffUtc,"yyyy-MM-dd",
+                System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.AssumeUniversal,out var cutoff) &&
+                cutoff.ToUnixTimeMilliseconds()>0)
+            {
+                _calibratedResearch=true;
+                _productResearch=new NativeProductResearchLoop("CAL1_JOINT",cutoff.ToUnixTimeMilliseconds());
+            }
+            else Print("MXM calibration cutoff must be a UTC date in yyyy-MM-dd form.");
+        }
         if(_productResearch is not null)
             Print("MXM isolated model-only EUR300 research epoch {0}; no Cloud LocalStorage continuity or cumulative profit claim.",
                 _productResearch.ModelEpochId);
@@ -155,7 +172,9 @@ public class MxmCloud : Robot
             requiredMargin,minimum,(decimal)(market.Ask-market.Bid)/4m);
         var attribution=NativeBrokerContractCosts.QuoteCurrentAlgo(terms,context);
         return new NativeProductMarket(name,shortBars,mediumBars,
-            attribution.Quote,terms,context.SlippagePerSideQuote,30,false);
+            attribution.Quote,terms,context.SlippagePerSideQuote,
+            _calibratedResearch?NativeEntryOutcomeCalibration.HoldingMinutes:30,false,
+            _calibratedResearch?NativeEntryOutcomeCalibration.ExitPolicy:NativeCausalExitResearch.FrozenFixed);
     }
 
     private void ObserveNative()
@@ -306,7 +325,8 @@ public class MxmCloud : Robot
                         if(Account.BrokerName.Contains("Pepperstone",
                             System.StringComparison.OrdinalIgnoreCase))
                         {
-                            var active=ActiveM5ResearchWatchlist
+                            var active=(_calibratedResearch?"AUDUSD,GBPUSD,NZDUSD,SpotBrent,XAUUSD":
+                                ActiveM5ResearchWatchlist)
                                 .Split(new[]{',',';'},System.StringSplitOptions.TrimEntries|
                                     System.StringSplitOptions.RemoveEmptyEntries)
                                 .Distinct(System.StringComparer.Ordinal).ToArray();
@@ -327,7 +347,7 @@ public class MxmCloud : Robot
                                         symbol.GetEstimatedMargin(TradeType.Sell,symbol.VolumeInUnitsMin)));
                                     // Active signals must have a currently
                                     // plausible minimum-volume funding route.
-                                    if(!feas.EitherDirectionWithinInitial300 &&
+                                    if(!_calibratedResearch && !feas.EitherDirectionWithinInitial300 &&
                                         !_productResearch.ActiveSymbols.Contains(name))
                                         continue;
                                     var market=ReadProductResearchMarket(name,warmupNow);
@@ -344,7 +364,7 @@ public class MxmCloud : Robot
                         // no valid candidates exist, so missing marks cannot
                         // become fabricated close or profitable executions.
                         var report=_productResearch.Advance(warmupNow,inputs.ToArray(),
-                            EnableUnqualifiedShadowSimulation:true);
+                            EnableUnqualifiedShadowSimulation:!_calibratedResearch);
                         string status=report.ModelClosedRoundTrips+" completed model trips; "+
                             report.AcceptedModelIntents+" conditional research intents; "+
                             report.RejectedIntents+" rejected; cash EUR "+
