@@ -47,7 +47,7 @@ static class FundedDecisionCycleChecks
             SpecialistEvidence=new[]{evidence with {SupportedVsBenchmark=true,
                 GrossAboveBenchmarkEur=10m,PredictionUncertaintyEur=1m,
                 ObservedOneRoundTripSpreadEur=.1m,EntryFeeEur=.1m,ExitFeeEur=.1m,
-                ConversionFeeEur=.1m,SlippageEur=.1m,FinancingEur=.1m}}};
+                ConversionFeeEur=.1m,SlippageEur=.1m,FinancingEur=.1m,GrossStandaloneEur=10m}}};
         var beforeProspective=observedOnly.Ledger.Checkpoint();
         bool bypassRejected=false;
         try{observedOnly.DecideProspective(D("new-decision-no-gate",1000,new[]{scout}));}
