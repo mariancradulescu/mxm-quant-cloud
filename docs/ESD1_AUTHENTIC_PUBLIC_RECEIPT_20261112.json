@@ -1,0 +1,1076 @@
+{
+  "Study": "ESD1",
+  "SourceSha256": "c76cdb042b6c6801908c5cc0a5a38c42a11b89344fe2ec31906389556bf29b9c",
+  "Receipt": {
+    "NAS100": {
+      "Verdict": "NO_REPEATABLE_ADVERSE_EDGE",
+      "HistoricalBars": 22285,
+      "PairedMarks": 320,
+      "Weekly": {
+        "2026-W30": {
+          "ExpectedClocks": 10,
+          "BarComplete": 10,
+          "Signals": 4,
+          "Priced": 4
+        },
+        "2026-W31": {
+          "ExpectedClocks": 10,
+          "BarComplete": 10,
+          "Signals": 5,
+          "Priced": 5
+        },
+        "2026-W32": {
+          "ExpectedClocks": 10,
+          "BarComplete": 10,
+          "Signals": 2,
+          "Priced": 2
+        },
+        "2026-W33": {
+          "ExpectedClocks": 10,
+          "BarComplete": 10,
+          "Signals": 0,
+          "Priced": 0
+        },
+        "2026-W34": {
+          "ExpectedClocks": 10,
+          "BarComplete": 10,
+          "Signals": 2,
+          "Priced": 2
+        },
+        "2026-W35": {
+          "ExpectedClocks": 10,
+          "BarComplete": 10,
+          "Signals": 4,
+          "Priced": 4
+        },
+        "2026-W36": {
+          "ExpectedClocks": 10,
+          "BarComplete": 10,
+          "Signals": 0,
+          "Priced": 0
+        },
+        "2026-W37": {
+          "ExpectedClocks": 10,
+          "BarComplete": 10,
+          "Signals": 1,
+          "Priced": 1
+        },
+        "2026-W38": {
+          "ExpectedClocks": 10,
+          "BarComplete": 10,
+          "Signals": 1,
+          "Priced": 1
+        },
+        "2026-W39": {
+          "ExpectedClocks": 10,
+          "BarComplete": 10,
+          "Signals": 1,
+          "Priced": 1
+        },
+        "2026-W40": {
+          "ExpectedClocks": 10,
+          "BarComplete": 10,
+          "Signals": 3,
+          "Priced": 3
+        },
+        "2026-W41": {
+          "ExpectedClocks": 10,
+          "BarComplete": 10,
+          "Signals": 4,
+          "Priced": 4
+        },
+        "2026-W42": {
+          "ExpectedClocks": 10,
+          "BarComplete": 10,
+          "Signals": 2,
+          "Priced": 2
+        },
+        "2026-W43": {
+          "ExpectedClocks": 10,
+          "BarComplete": 10,
+          "Signals": 5,
+          "Priced": 5
+        },
+        "2026-W44": {
+          "ExpectedClocks": 10,
+          "BarComplete": 10,
+          "Signals": 3,
+          "Priced": 3
+        },
+        "2026-W45": {
+          "ExpectedClocks": 10,
+          "BarComplete": 10,
+          "Signals": 3,
+          "Priced": 3
+        }
+      },
+      "Rejected": {},
+      "Early": {
+        "Rule": {
+          "Count": 18,
+          "GrossDirectionalWins": 8,
+          "AdverseWins": 8,
+          "GrossEur": -7.3212133029704844,
+          "CentralNetEur": -10.30536888922336,
+          "AdverseNetEur": -13.41531004481078,
+          "AdverseMedianBps": -5.78717334489374,
+          "AdverseP10Bps": -58.9088914479942,
+          "AdverseP90Bps": 33.129322540002384,
+          "MeanAdverseFrictionBps": 1.351338160199677
+        },
+        "Momentum": {
+          "Count": 18,
+          "GrossDirectionalWins": 10,
+          "AdverseWins": 10,
+          "GrossEur": 7.3212133029704844,
+          "CentralNetEur": 4.33706801463808,
+          "AdverseNetEur": 1.2297351797855385,
+          "AdverseMedianBps": 1.563610726595168,
+          "AdverseP10Bps": -37.3327920449306,
+          "AdverseP90Bps": 36.7842928882988,
+          "MeanAdverseFrictionBps": 1.3507518347131628
+        },
+        "Long": {
+          "Count": 18,
+          "GrossDirectionalWins": 4,
+          "AdverseWins": 4,
+          "GrossEur": -56.46052873149543,
+          "CentralNetEur": -59.44468695892775,
+          "AdverseNetEur": -62.556903433245125,
+          "AdverseMedianBps": -13.674788600226407,
+          "AdverseP10Bps": -63.11452392419588,
+          "AdverseP90Bps": 33.129322540002384,
+          "MeanAdverseFrictionBps": 1.3518404079647353
+        },
+        "Short": {
+          "Count": 18,
+          "GrossDirectionalWins": 14,
+          "AdverseWins": 14,
+          "GrossEur": 56.46052873149543,
+          "CentralNetEur": 53.476386084342465,
+          "AdverseNetEur": 50.37132856821988,
+          "AdverseMedianBps": 8.692528138604112,
+          "AdverseP10Bps": -37.3327920449306,
+          "AdverseP90Bps": 36.7842928882988,
+          "MeanAdverseFrictionBps": 1.3502495869481046
+        },
+        "CashEur": 0,
+        "MaximumMinimumMarginEur": 126.96
+      },
+      "Late": {
+        "Rule": {
+          "Count": 22,
+          "GrossDirectionalWins": 7,
+          "AdverseWins": 7,
+          "GrossEur": -13.60155142961246,
+          "CentralNetEur": -17.506598417076866,
+          "AdverseNetEur": -21.51559657100274,
+          "AdverseMedianBps": -8.52329610195194,
+          "AdverseP10Bps": -24.380444272434186,
+          "AdverseP90Bps": 23.81945479784811,
+          "MeanAdverseFrictionBps": 1.3568975782651884
+        },
+        "Momentum": {
+          "Count": 22,
+          "GrossDirectionalWins": 15,
+          "AdverseWins": 14,
+          "GrossEur": 13.60155142961246,
+          "CentralNetEur": 9.696496007069669,
+          "AdverseNetEur": 5.692129761854287,
+          "AdverseMedianBps": 4.566107326611715,
+          "AdverseP10Bps": -34.76035713715242,
+          "AdverseP90Bps": 14.778518423166037,
+          "MeanAdverseFrictionBps": 1.3561101013688577
+        },
+        "Long": {
+          "Count": 22,
+          "GrossDirectionalWins": 12,
+          "AdverseWins": 12,
+          "GrossEur": 22.475230997823896,
+          "CentralNetEur": 18.57019161750373,
+          "AdverseNetEur": 14.564472538518304,
+          "AdverseMedianBps": 0.5221107425031822,
+          "AdverseP10Bps": -24.380444272434186,
+          "AdverseP90Bps": 32.515973900389305,
+          "MeanAdverseFrictionBps": 1.356340596109392
+        },
+        "Short": {
+          "Count": 22,
+          "GrossDirectionalWins": 10,
+          "AdverseWins": 9,
+          "GrossEur": -22.475230997823896,
+          "CentralNetEur": -26.380294027510924,
+          "AdverseNetEur": -30.387939347666755,
+          "AdverseMedianBps": -2.939263088670225,
+          "AdverseP10Bps": -43.07800311248336,
+          "AdverseP90Bps": 11.652943560387802,
+          "MeanAdverseFrictionBps": 1.356667083524654
+        },
+        "CashEur": 0,
+        "MaximumMinimumMarginEur": 126.96
+      },
+      "EarlyOwn": {
+        "Weeks": 6,
+        "Mean": -1.5192945360317318,
+        "Lower": -6.890553602616442
+      },
+      "EarlyIncrement": {
+        "Weeks": 6,
+        "Mean": -2.3615687807504018,
+        "Lower": -13.060024585188023
+      },
+      "LateOwn": {
+        "Weeks": 8,
+        "Mean": -1.496306259305597,
+        "Lower": -3.757047668341868
+      },
+      "LateIncrement": {
+        "Weeks": 8,
+        "Mean": -2.326462713120171,
+        "Lower": -6.926826909013911
+      }
+    },
+    "LTCUSD": {
+      "Verdict": "INSUFFICIENT_PRICED_SIGNAL_WEEKS",
+      "HistoricalBars": 32940,
+      "PairedMarks": 295,
+      "Weekly": {
+        "2026-W30": {
+          "ExpectedClocks": 10,
+          "BarComplete": 10,
+          "Signals": 4,
+          "Priced": 4
+        },
+        "2026-W31": {
+          "ExpectedClocks": 10,
+          "BarComplete": 10,
+          "Signals": 2,
+          "Priced": 1
+        },
+        "2026-W32": {
+          "ExpectedClocks": 10,
+          "BarComplete": 10,
+          "Signals": 0,
+          "Priced": 0
+        },
+        "2026-W33": {
+          "ExpectedClocks": 10,
+          "BarComplete": 10,
+          "Signals": 0,
+          "Priced": 0
+        },
+        "2026-W34": {
+          "ExpectedClocks": 10,
+          "BarComplete": 10,
+          "Signals": 2,
+          "Priced": 1
+        },
+        "2026-W35": {
+          "ExpectedClocks": 10,
+          "BarComplete": 10,
+          "Signals": 1,
+          "Priced": 1
+        },
+        "2026-W36": {
+          "ExpectedClocks": 10,
+          "BarComplete": 10,
+          "Signals": 0,
+          "Priced": 0
+        },
+        "2026-W37": {
+          "ExpectedClocks": 10,
+          "BarComplete": 10,
+          "Signals": 1,
+          "Priced": 1
+        },
+        "2026-W38": {
+          "ExpectedClocks": 10,
+          "BarComplete": 10,
+          "Signals": 2,
+          "Priced": 2
+        },
+        "2026-W39": {
+          "ExpectedClocks": 10,
+          "BarComplete": 10,
+          "Signals": 3,
+          "Priced": 3
+        },
+        "2026-W40": {
+          "ExpectedClocks": 10,
+          "BarComplete": 10,
+          "Signals": 0,
+          "Priced": 0
+        },
+        "2026-W41": {
+          "ExpectedClocks": 10,
+          "BarComplete": 10,
+          "Signals": 1,
+          "Priced": 1
+        },
+        "2026-W42": {
+          "ExpectedClocks": 10,
+          "BarComplete": 10,
+          "Signals": 1,
+          "Priced": 1
+        },
+        "2026-W43": {
+          "ExpectedClocks": 10,
+          "BarComplete": 10,
+          "Signals": 0,
+          "Priced": 0
+        },
+        "2026-W44": {
+          "ExpectedClocks": 10,
+          "BarComplete": 10,
+          "Signals": 0,
+          "Priced": 0
+        },
+        "2026-W45": {
+          "ExpectedClocks": 10,
+          "BarComplete": 10,
+          "Signals": 0,
+          "Priced": 0
+        }
+      },
+      "Rejected": {
+        "MISSING_PAIRED_MARK_OR_CONVERSION": 2
+      },
+      "Early": {
+        "Rule": {
+          "Count": 8,
+          "GrossDirectionalWins": 2,
+          "AdverseWins": 0,
+          "GrossEur": -0.2731170641252654,
+          "CentralNetEur": -0.5874576251613023,
+          "AdverseNetEur": -0.9026998359412274,
+          "AdverseMedianBps": -264.97355594435925,
+          "AdverseP10Bps": -404.43541160191495,
+          "AdverseP90Bps": -171.16593901948065,
+          "MeanAdverseFrictionBps": 187.1973747175093
+        },
+        "Momentum": {
+          "Count": 8,
+          "GrossDirectionalWins": 2,
+          "AdverseWins": 0,
+          "GrossEur": -0.2731170641252654,
+          "CentralNetEur": -0.5874576251613023,
+          "AdverseNetEur": -0.9026998359412274,
+          "AdverseMedianBps": -264.97355594435925,
+          "AdverseP10Bps": -404.43541160191495,
+          "AdverseP90Bps": -171.16593901948065,
+          "MeanAdverseFrictionBps": 187.1973747175093
+        },
+        "Long": {
+          "Count": 8,
+          "GrossDirectionalWins": 1,
+          "AdverseWins": 0,
+          "GrossEur": -0.3186699624284199,
+          "CentralNetEur": -0.6330105234644569,
+          "AdverseNetEur": -0.948298287142685,
+          "AdverseMedianBps": -264.97355594435925,
+          "AdverseP10Bps": -404.43541160191495,
+          "AdverseP90Bps": -171.41323612858392,
+          "MeanAdverseFrictionBps": 187.2112489318785
+        },
+        "Short": {
+          "Count": 8,
+          "GrossDirectionalWins": 7,
+          "AdverseWins": 2,
+          "GrossEur": 0.3186699624284199,
+          "CentralNetEur": 0.00432969798041349,
+          "AdverseNetEur": -0.31058523880730715,
+          "AdverseMedianBps": -145.80802212770573,
+          "AdverseP10Bps": -251.2964218741414,
+          "AdverseP90Bps": 121.52182899713598,
+          "MeanAdverseFrictionBps": 187.10907064928097
+        },
+        "CashEur": 0,
+        "MaximumMinimumMarginEur": 2.24
+      },
+      "Late": {
+        "Rule": {
+          "Count": 7,
+          "GrossDirectionalWins": 4,
+          "AdverseWins": 2,
+          "GrossEur": 0.3294709779559039,
+          "CentralNetEur": 0.09405842954008643,
+          "AdverseNetEur": -0.14209798418984526,
+          "AdverseMedianBps": -105.1399249413657,
+          "AdverseP10Bps": -310.52662799903,
+          "AdverseP90Bps": 35.84054328451311,
+          "MeanAdverseFrictionBps": 127.05202391882428
+        },
+        "Momentum": {
+          "Count": 7,
+          "GrossDirectionalWins": 4,
+          "AdverseWins": 2,
+          "GrossEur": 0.3294709779559039,
+          "CentralNetEur": 0.09405842954008643,
+          "AdverseNetEur": -0.14209798418984526,
+          "AdverseMedianBps": -105.1399249413657,
+          "AdverseP10Bps": -310.52662799903,
+          "AdverseP90Bps": 35.84054328451311,
+          "MeanAdverseFrictionBps": 127.05202391882428
+        },
+        "Long": {
+          "Count": 7,
+          "GrossDirectionalWins": 2,
+          "AdverseWins": 2,
+          "GrossEur": 0.27260001321151534,
+          "CentralNetEur": 0.03718746479569788,
+          "AdverseNetEur": -0.19902581989897822,
+          "AdverseMedianBps": -141.28177413996016,
+          "AdverseP10Bps": -310.52662799903,
+          "AdverseP90Bps": 35.84054328451311,
+          "MeanAdverseFrictionBps": 127.065758526234
+        },
+        "Short": {
+          "Count": 7,
+          "GrossDirectionalWins": 5,
+          "AdverseWins": 1,
+          "GrossEur": -0.27260001321151534,
+          "CentralNetEur": -0.5080128474907752,
+          "AdverseNetEur": -0.7442563176107694,
+          "AdverseMedianBps": -105.1399249413657,
+          "AdverseP10Bps": -740.7120958759086,
+          "AdverseP90Bps": -77.26698632759201,
+          "MeanAdverseFrictionBps": 127.07005038228829
+        },
+        "CashEur": 0,
+        "MaximumMinimumMarginEur": 2.24
+      },
+      "EarlyOwn": {
+        "Weeks": 5,
+        "Mean": -0.1322868111964505,
+        "Lower": -0.22352122464827628
+      },
+      "EarlyIncrement": {
+        "Weeks": 5,
+        "Mean": 0.0,
+        "Lower": 0.0
+      },
+      "LateOwn": {
+        "Weeks": 4,
+        "Mean": -0.03612236701322956,
+        "Lower": -0.11701073154022186
+      },
+      "LateIncrement": {
+        "Weeks": 4,
+        "Mean": 0.0,
+        "Lower": 0.0
+      }
+    },
+    "BTCEUR": {
+      "Verdict": "CONTRACT_UNAVAILABLE"
+    },
+    "ETHEUR": {
+      "Verdict": "INSUFFICIENT_PRICED_SIGNAL_WEEKS",
+      "HistoricalBars": 32537,
+      "PairedMarks": 90,
+      "Weekly": {
+        "2026-W30": {
+          "ExpectedClocks": 4,
+          "BarComplete": 4,
+          "Signals": 0,
+          "Priced": 0
+        },
+        "2026-W31": {
+          "ExpectedClocks": 4,
+          "BarComplete": 4,
+          "Signals": 1,
+          "Priced": 1
+        },
+        "2026-W32": {
+          "ExpectedClocks": 4,
+          "BarComplete": 3,
+          "Signals": 2,
+          "Priced": 2
+        },
+        "2026-W33": {
+          "ExpectedClocks": 4,
+          "BarComplete": 4,
+          "Signals": 1,
+          "Priced": 0
+        },
+        "2026-W34": {
+          "ExpectedClocks": 4,
+          "BarComplete": 4,
+          "Signals": 2,
+          "Priced": 1
+        },
+        "2026-W35": {
+          "ExpectedClocks": 4,
+          "BarComplete": 4,
+          "Signals": 0,
+          "Priced": 0
+        },
+        "2026-W36": {
+          "ExpectedClocks": 4,
+          "BarComplete": 3,
+          "Signals": 0,
+          "Priced": 0
+        },
+        "2026-W37": {
+          "ExpectedClocks": 4,
+          "BarComplete": 4,
+          "Signals": 1,
+          "Priced": 1
+        },
+        "2026-W38": {
+          "ExpectedClocks": 4,
+          "BarComplete": 4,
+          "Signals": 1,
+          "Priced": 1
+        },
+        "2026-W39": {
+          "ExpectedClocks": 4,
+          "BarComplete": 4,
+          "Signals": 1,
+          "Priced": 1
+        },
+        "2026-W40": {
+          "ExpectedClocks": 4,
+          "BarComplete": 3,
+          "Signals": 0,
+          "Priced": 0
+        },
+        "2026-W41": {
+          "ExpectedClocks": 4,
+          "BarComplete": 4,
+          "Signals": 0,
+          "Priced": 0
+        },
+        "2026-W42": {
+          "ExpectedClocks": 4,
+          "BarComplete": 4,
+          "Signals": 0,
+          "Priced": 0
+        },
+        "2026-W43": {
+          "ExpectedClocks": 4,
+          "BarComplete": 4,
+          "Signals": 0,
+          "Priced": 0
+        },
+        "2026-W44": {
+          "ExpectedClocks": 4,
+          "BarComplete": 4,
+          "Signals": 0,
+          "Priced": 0
+        },
+        "2026-W45": {
+          "ExpectedClocks": 4,
+          "BarComplete": 4,
+          "Signals": 0,
+          "Priced": 0
+        }
+      },
+      "Rejected": {
+        "MISSING_COMPLETED_BARS": 3,
+        "MISSING_PAIRED_MARK_OR_CONVERSION": 2
+      },
+      "Early": {
+        "Rule": {
+          "Count": 5,
+          "GrossDirectionalWins": 2,
+          "AdverseWins": 0,
+          "GrossEur": 0.005,
+          "CentralNetEur": -0.34255,
+          "AdverseNetEur": -0.6901,
+          "AdverseMedianBps": -72.4812030075188,
+          "AdverseP10Bps": -116.55546935608999,
+          "AdverseP90Bps": -51.322068489450466,
+          "MeanAdverseFrictionBps": 77.61504826130313
+        },
+        "Momentum": {
+          "Count": 5,
+          "GrossDirectionalWins": 1,
+          "AdverseWins": 0,
+          "GrossEur": 0.0285,
+          "CentralNetEur": -0.25905,
+          "AdverseNetEur": -0.5466,
+          "AdverseMedianBps": -72.4812030075188,
+          "AdverseP10Bps": -116.55546935608999,
+          "AdverseP90Bps": -7.215343077925705,
+          "MeanAdverseFrictionBps": 63.20885359759774
+        },
+        "Long": {
+          "Count": 5,
+          "GrossDirectionalWins": 3,
+          "AdverseWins": 0,
+          "GrossEur": 0.146,
+          "CentralNetEur": -0.20155,
+          "AdverseNetEur": -0.5491,
+          "AdverseMedianBps": -71.8796992481203,
+          "AdverseP10Bps": -116.55546935608999,
+          "AdverseP90Bps": -34.82647394077559,
+          "MeanAdverseFrictionBps": 77.61504826130313
+        },
+        "Short": {
+          "Count": 5,
+          "GrossDirectionalWins": 1,
+          "AdverseWins": 0,
+          "GrossEur": -0.146,
+          "CentralNetEur": -0.49355,
+          "AdverseNetEur": -0.8411,
+          "AdverseMedianBps": -104.50609812866585,
+          "AdverseP10Bps": -116.55546935608999,
+          "AdverseP90Bps": -72.4812030075188,
+          "MeanAdverseFrictionBps": 77.61504826130313
+        },
+        "CashEur": 0,
+        "MaximumMinimumMarginEur": 9.235
+      },
+      "Late": {
+        "Rule": {
+          "Count": 2,
+          "GrossDirectionalWins": 1,
+          "AdverseWins": 0,
+          "GrossEur": -0.1385,
+          "CentralNetEur": -0.27515,
+          "AdverseNetEur": -0.4118,
+          "AdverseMedianBps": -127.21343051633944,
+          "AdverseP10Bps": -127.21343051633944,
+          "AdverseP90Bps": -127.21343051633944,
+          "MeanAdverseFrictionBps": 58.869796429622056
+        },
+        "Momentum": {
+          "Count": 2,
+          "GrossDirectionalWins": 0,
+          "AdverseWins": 0,
+          "GrossEur": -0.1565,
+          "CentralNetEur": -0.29315,
+          "AdverseNetEur": -0.4298,
+          "AdverseMedianBps": -127.21343051633944,
+          "AdverseP10Bps": -127.21343051633944,
+          "AdverseP90Bps": -127.21343051633944,
+          "MeanAdverseFrictionBps": 58.869796429622056
+        },
+        "Long": {
+          "Count": 2,
+          "GrossDirectionalWins": 1,
+          "AdverseWins": 1,
+          "GrossEur": 0.1385,
+          "CentralNetEur": 0.00185,
+          "AdverseNetEur": -0.1348,
+          "AdverseMedianBps": -58.904428411230775,
+          "AdverseP10Bps": -58.904428411230775,
+          "AdverseP90Bps": -58.904428411230775,
+          "MeanAdverseFrictionBps": 58.869796429622056
+        },
+        "Short": {
+          "Count": 2,
+          "GrossDirectionalWins": 1,
+          "AdverseWins": 0,
+          "GrossEur": -0.1385,
+          "CentralNetEur": -0.27515,
+          "AdverseNetEur": -0.4118,
+          "AdverseMedianBps": -127.21343051633944,
+          "AdverseP10Bps": -127.21343051633944,
+          "AdverseP90Bps": -127.21343051633944,
+          "MeanAdverseFrictionBps": 58.869796429622056
+        },
+        "CashEur": 0,
+        "MaximumMinimumMarginEur": 9.235
+      },
+      "EarlyOwn": {
+        "Weeks": 4,
+        "Mean": -0.146775,
+        "Lower": -0.2537623619872926
+      },
+      "EarlyIncrement": {
+        "Weeks": 4,
+        "Mean": -0.0251875,
+        "Lower": -0.2472886963188178
+      },
+      "LateOwn": {
+        "Weeks": 2,
+        "Mean": -0.2059,
+        "Lower": -0.46
+      },
+      "LateIncrement": {
+        "Weeks": 2,
+        "Mean": 0.009,
+        "Lower": -0.018
+      }
+    }
+  },
+  "PortfolioExecuted": false,
+  "PortfolioAdmission": false,
+  "HistoricalTariffsCertified": false,
+  "ContinuousDrawdownMeasured": false,
+  "OriginalPepperstoneAccountAuthenticated": true,
+  "PostAuthenticationReadOnlyRequests": 2345,
+  "OriginalBarsBySymbol": {
+    "NAS100": 22285,
+    "LTCUSD": 32940,
+    "ETHEUR": 32537,
+    "EURUSD": 23295
+  },
+  "OriginalBidAskAsOfMarks": 1025,
+  "QuoteWindows": 784,
+  "MissingQuoteInstrumentClocks": 63,
+  "ExpectedClocksPerSymbol": 784,
+  "ObservedMarginGridBySymbol": {
+    "NAS100": [
+      {
+        "VolumeUnits": "0.1",
+        "BuyMarginEur": "126.96",
+        "SellMarginEur": "126.95"
+      },
+      {
+        "VolumeUnits": "0.2",
+        "BuyMarginEur": "253.92",
+        "SellMarginEur": "253.91"
+      }
+    ],
+    "LTCUSD": [
+      {
+        "VolumeUnits": "0.1",
+        "BuyMarginEur": "2.24",
+        "SellMarginEur": "2.23"
+      },
+      {
+        "VolumeUnits": "0.11",
+        "BuyMarginEur": "2.46",
+        "SellMarginEur": "2.45"
+      }
+    ],
+    "BTCEUR": [
+      {
+        "VolumeUnits": "0.01",
+        "BuyMarginEur": "331.03",
+        "SellMarginEur": "330.7"
+      },
+      {
+        "VolumeUnits": "0.02",
+        "BuyMarginEur": "662.05",
+        "SellMarginEur": "661.4"
+      }
+    ],
+    "ETHEUR": [
+      {
+        "VolumeUnits": "0.01",
+        "BuyMarginEur": "9.23",
+        "SellMarginEur": "9.21"
+      },
+      {
+        "VolumeUnits": "0.02",
+        "BuyMarginEur": "18.47",
+        "SellMarginEur": "18.42"
+      }
+    ]
+  },
+  "ExcludedOptionalSymbols": {
+    "BTCEUR": "MINIMUM_BROKER_MARGIN_EXCEEDS_SINGLE_300_EUR_BUDGET"
+  },
+  "CurrentScheduleBySymbol": {
+    "NAS100": {
+      "TimeZone": "America/New_York",
+      "Intervals": [
+        [
+          64800,
+          147540
+        ],
+        [
+          151200,
+          233940
+        ],
+        [
+          237600,
+          320340
+        ],
+        [
+          324000,
+          406740
+        ],
+        [
+          410400,
+          492900
+        ]
+      ]
+    },
+    "LTCUSD": {
+      "TimeZone": "America/New_York",
+      "Intervals": [
+        [
+          0,
+          61140
+        ],
+        [
+          61260,
+          147540
+        ],
+        [
+          147660,
+          233940
+        ],
+        [
+          234060,
+          320340
+        ],
+        [
+          320460,
+          406740
+        ],
+        [
+          406860,
+          492900
+        ],
+        [
+          493260,
+          579540
+        ],
+        [
+          579660,
+          604799
+        ]
+      ]
+    },
+    "BTCEUR": {
+      "TimeZone": "America/New_York",
+      "Intervals": [
+        [
+          0,
+          14400
+        ],
+        [
+          21600,
+          61140
+        ],
+        [
+          61260,
+          147540
+        ],
+        [
+          147660,
+          233940
+        ],
+        [
+          234060,
+          320340
+        ],
+        [
+          320460,
+          406740
+        ],
+        [
+          406860,
+          492900
+        ],
+        [
+          493260,
+          579540
+        ],
+        [
+          579660,
+          604799
+        ]
+      ]
+    },
+    "ETHEUR": {
+      "TimeZone": "America/New_York",
+      "Intervals": [
+        [
+          0,
+          14400
+        ],
+        [
+          21600,
+          61140
+        ],
+        [
+          61260,
+          147540
+        ],
+        [
+          147660,
+          233940
+        ],
+        [
+          234060,
+          320340
+        ],
+        [
+          320460,
+          406740
+        ],
+        [
+          406860,
+          492900
+        ],
+        [
+          493260,
+          579540
+        ],
+        [
+          579660,
+          604799
+        ]
+      ]
+    },
+    "EURUSD": {
+      "TimeZone": "America/New_York",
+      "Intervals": [
+        [
+          61260,
+          147540
+        ],
+        [
+          147660,
+          233940
+        ],
+        [
+          234060,
+          320340
+        ],
+        [
+          320460,
+          406740
+        ],
+        [
+          406860,
+          492900
+        ]
+      ]
+    }
+  },
+  "CurrentContractsBySymbol": {
+    "NAS100": {
+      "Symbol": "NAS100",
+      "QuoteAsset": "USD",
+      "ObservedAtUtcMs": 1794480054328,
+      "MinimumUnits": "0.1",
+      "VolumeStepUnits": "0.1",
+      "MaximumUnits": "100",
+      "LotUnits": "1",
+      "CommissionType": 2,
+      "PreciseRateWire": 0,
+      "MinimumCommissionType": 1,
+      "PreciseMinimumWire": 0,
+      "MinimumCommissionAsset": "USD",
+      "PnlConversionFeeBps": 0,
+      "SwapCalculationType": 1,
+      "LongSwap": "-6.41",
+      "ShortSwap": "1.41",
+      "PipPosition": 0,
+      "SwapPeriodHours": 24,
+      "SwapTimeUtcMinute": 1320,
+      "TripleSwapWeekday": 5,
+      "ChargeSwapAtWeekends": false,
+      "SkipSwapPeriods": 0,
+      "OriginalBrokerAuthenticated": true,
+      "HistoricalTariffContinuityCertified": false
+    },
+    "LTCUSD": {
+      "Symbol": "LTCUSD",
+      "QuoteAsset": "USD",
+      "ObservedAtUtcMs": 1794480054748,
+      "MinimumUnits": "0.1",
+      "VolumeStepUnits": "0.01",
+      "MaximumUnits": "100",
+      "LotUnits": "1",
+      "CommissionType": 2,
+      "PreciseRateWire": 0,
+      "MinimumCommissionType": 1,
+      "PreciseMinimumWire": 0,
+      "MinimumCommissionAsset": "USD",
+      "PnlConversionFeeBps": 0,
+      "SwapCalculationType": 1,
+      "LongSwap": "-11.5",
+      "ShortSwap": "-0.5",
+      "PipPosition": 1,
+      "SwapPeriodHours": 24,
+      "SwapTimeUtcMinute": 1320,
+      "TripleSwapWeekday": 0,
+      "ChargeSwapAtWeekends": true,
+      "SkipSwapPeriods": 0,
+      "OriginalBrokerAuthenticated": true,
+      "HistoricalTariffContinuityCertified": false
+    },
+    "BTCEUR": {
+      "Symbol": "BTCEUR",
+      "QuoteAsset": "EUR",
+      "ObservedAtUtcMs": 1794480055168,
+      "MinimumUnits": "0.01",
+      "VolumeStepUnits": "0.01",
+      "MaximumUnits": "22",
+      "LotUnits": "1",
+      "CommissionType": 2,
+      "PreciseRateWire": 0,
+      "MinimumCommissionType": 1,
+      "PreciseMinimumWire": 0,
+      "MinimumCommissionAsset": "USD",
+      "PnlConversionFeeBps": 0,
+      "SwapCalculationType": 1,
+      "LongSwap": "-14.0",
+      "ShortSwap": "2.0",
+      "PipPosition": 1,
+      "SwapPeriodHours": 24,
+      "SwapTimeUtcMinute": 1320,
+      "TripleSwapWeekday": 0,
+      "ChargeSwapAtWeekends": true,
+      "SkipSwapPeriods": 0,
+      "OriginalBrokerAuthenticated": true,
+      "HistoricalTariffContinuityCertified": false
+    },
+    "ETHEUR": {
+      "Symbol": "ETHEUR",
+      "QuoteAsset": "EUR",
+      "ObservedAtUtcMs": 1794480055589,
+      "MinimumUnits": "0.01",
+      "VolumeStepUnits": "0.01",
+      "MaximumUnits": "560",
+      "LotUnits": "1",
+      "CommissionType": 2,
+      "PreciseRateWire": 0,
+      "MinimumCommissionType": 1,
+      "PreciseMinimumWire": 0,
+      "MinimumCommissionAsset": "USD",
+      "PnlConversionFeeBps": 0,
+      "SwapCalculationType": 1,
+      "LongSwap": "-7.0",
+      "ShortSwap": "0.0",
+      "PipPosition": 1,
+      "SwapPeriodHours": 24,
+      "SwapTimeUtcMinute": 1320,
+      "TripleSwapWeekday": 0,
+      "ChargeSwapAtWeekends": true,
+      "SkipSwapPeriods": 0,
+      "OriginalBrokerAuthenticated": true,
+      "HistoricalTariffContinuityCertified": false
+    },
+    "EURUSD": {
+      "Symbol": "EURUSD",
+      "QuoteAsset": "USD",
+      "ObservedAtUtcMs": 1794480056009,
+      "MinimumUnits": "1000",
+      "VolumeStepUnits": "1000",
+      "MaximumUnits": "10000000",
+      "LotUnits": "100000",
+      "CommissionType": 2,
+      "PreciseRateWire": 300000000,
+      "MinimumCommissionType": 1,
+      "PreciseMinimumWire": 0,
+      "MinimumCommissionAsset": "USD",
+      "PnlConversionFeeBps": 0,
+      "SwapCalculationType": 0,
+      "LongSwap": "-0.71",
+      "ShortSwap": "0.14",
+      "PipPosition": 4,
+      "SwapPeriodHours": 24,
+      "SwapTimeUtcMinute": 1320,
+      "TripleSwapWeekday": 3,
+      "ChargeSwapAtWeekends": false,
+      "SkipSwapPeriods": 0,
+      "OriginalBrokerAuthenticated": true,
+      "HistoricalTariffContinuityCertified": false
+    }
+  },
+  "InitialModelCapitalEur": 300,
+  "OrdersSubmitted": 0,
+  "CloudActivated": false,
+  "IndependentConfirmation": false,
+  "SourceCiphertextSha256": "1ff928d0fc7863305a2527d1750d786472924e60555b948d287c550c092b0cff",
+  "ProtocolSha256": "7956ddf5bff15f49efe988c16e37e9bbb9933c295416dbe3c9a94165320c9bb3"
+}
