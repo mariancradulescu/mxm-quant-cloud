@@ -24,6 +24,8 @@ public class MxmCloud : Robot
     // collect complete outcomes before evaluating in the same model episode.
     [Parameter("Calibration cutoff UTC (blank uses legacy)", DefaultValue = "")]
     public string CalibrationCutoffUtc { get; set; } = "";
+    [Parameter("Friday inventory development profile (no orders)", DefaultValue = false)]
+    public bool FridayInventoryResearch { get; set; }
     private bool _calibratedResearch;
     private NativeProductResearchLoop? _productResearch;
     private int _lastResearchModelTrips = -1;
@@ -58,14 +60,15 @@ public class MxmCloud : Robot
         // of any broker account; historical recovery requires causal replay.
         if(EnableExploratoryReplay)
         {
-            if(string.IsNullOrWhiteSpace(CalibrationCutoffUtc))_productResearch=new NativeProductResearchLoop();
+            if(string.IsNullOrWhiteSpace(CalibrationCutoffUtc) && !FridayInventoryResearch)
+                _productResearch=new NativeProductResearchLoop();
             else if(System.DateTimeOffset.TryParseExact(CalibrationCutoffUtc,"yyyy-MM-dd",
                 System.Globalization.CultureInfo.InvariantCulture,
                 System.Globalization.DateTimeStyles.AssumeUniversal,out var cutoff) &&
                 cutoff.ToUnixTimeMilliseconds()>0)
             {
                 _calibratedResearch=true;
-                _productResearch=new NativeProductResearchLoop("CAL1_JOINT",cutoff.ToUnixTimeMilliseconds());
+                _productResearch=new NativeProductResearchLoop(FridayInventoryResearch?"WIR1_JOINT":"CAL1_JOINT",cutoff.ToUnixTimeMilliseconds());
             }
             else Print("MXM calibration cutoff must be a UTC date in yyyy-MM-dd form.");
         }
@@ -173,8 +176,10 @@ public class MxmCloud : Robot
         var attribution=NativeBrokerContractCosts.QuoteCurrentAlgo(terms,context);
         return new NativeProductMarket(name,shortBars,mediumBars,
             attribution.Quote,terms,context.SlippagePerSideQuote,
-            _calibratedResearch?NativeEntryOutcomeCalibration.HoldingMinutes:30,false,
-            _calibratedResearch?NativeEntryOutcomeCalibration.ExitPolicy:NativeCausalExitResearch.FrozenFixed);
+            _calibratedResearch?(FridayInventoryResearch?NativeEntryOutcomeCalibration.InventoryHoldingMinutes:
+                NativeEntryOutcomeCalibration.HoldingMinutes):30,false,
+            _calibratedResearch?(FridayInventoryResearch?NativeEntryOutcomeCalibration.InventoryExitPolicy:
+                NativeEntryOutcomeCalibration.ExitPolicy):NativeCausalExitResearch.FrozenFixed);
     }
 
     private void ObserveNative()
@@ -325,7 +330,8 @@ public class MxmCloud : Robot
                         if(Account.BrokerName.Contains("Pepperstone",
                             System.StringComparison.OrdinalIgnoreCase))
                         {
-                            var active=(_calibratedResearch?"AUDUSD,GBPUSD,NZDUSD,SpotBrent,XAUUSD":
+                            var active=(_calibratedResearch?(FridayInventoryResearch?"AUDUSD,GBPUSD,NZDUSD,XAUUSD,Copper":
+                                "AUDUSD,GBPUSD,NZDUSD,SpotBrent,XAUUSD"):
                                 ActiveM5ResearchWatchlist)
                                 .Split(new[]{',',';'},System.StringSplitOptions.TrimEntries|
                                     System.StringSplitOptions.RemoveEmptyEntries)
