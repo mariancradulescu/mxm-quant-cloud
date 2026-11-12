@@ -19,22 +19,36 @@ internal static class NativeIntegratedPortfolioExperiment
                     ExitPolicy=NativeIntegratedResearch.Exit(q.Quote.Symbol)}).ToArray()};
             var boundary=NativeIntegratedResearch.Boundary;
             var testTape=tape with {Quotes=tape.Quotes.Where(q=>q.At>=boundary).ToArray()};
-            (NativeHistoricalMarketReceipt Result,NativeEntryCalibrationReport? Diagnostics,string Trace,int PeakOpen)
+            static string Week(long at)
+            {
+                var day=DateTimeOffset.FromUnixTimeMilliseconds(at).UtcDateTime;
+                return System.Globalization.ISOWeek.GetYear(day)+"-W"+
+                    System.Globalization.ISOWeek.GetWeekOfYear(day).ToString("00");
+            }
+            (NativeHistoricalMarketReceipt Result,NativeEntryCalibrationReport? Diagnostics,string Trace,
+                int PeakOpen,Dictionary<string,int> Reserved)
                 Replay(string mode,NativeIntegratedSnapshot? snapshot=null)
             {
                 NativeEntryCalibrationReport? diagnostics=null;
                 LedgerClosedFragment[] closed=Array.Empty<LedgerClosedFragment>();
+                var reservations=new Dictionary<string,int>();
                 using var trace=IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
                 var result=NativeHistoricalProductReplay.Evaluate(snapshot is null?tape:testTape,
                     UnqualifiedShadowMode:false,ResearchMode:"IPC2_"+mode,IntegratedSnapshot:snapshot,
                     ObserveFinalLedger:ledger=>closed=ledger.ClosedFragments(),
                     ObserveCalibration:value=>diagnostics=value,ObserveSignal:signal=>{
-                        if(signal.At>=boundary)trace.AppendData(JsonSerializer.SerializeToUtf8Bytes(signal));
+                        if(signal.At<boundary)return;
+                        trace.AppendData(JsonSerializer.SerializeToUtf8Bytes(signal));
+                        if(signal.Status=="SHADOW_MODEL_INTENT_ALLOCATED_NOT_TRADING")
+                        {
+                            string week=Week(signal.At);
+                            reservations[week]=reservations.GetValueOrDefault(week)+1;
+                        }
                     });
                 var peakOpen=result.SampledEquity.Where(q=>q.At>=boundary)
                     .Select(q=>closed.Count(c=>c.OpenedAt<=q.At && c.ClosedAt>q.At)).DefaultIfEmpty().Max();
                 Console.WriteLine("IPC2 completed policy "+mode);
-                return (result,diagnostics,Convert.ToHexString(trace.GetHashAndReset()),peakOpen);
+                return (result,diagnostics,Convert.ToHexString(trace.GetHashAndReset()),peakOpen,reservations);
             }
 
             var joint=Replay("JOINT");
@@ -71,6 +85,7 @@ internal static class NativeIntegratedPortfolioExperiment
                     MissingCentralMarks=marks.Count(q=>q.CentralEquityEur is null),
                     MissingAdverseMarks=marks.Count(q=>q.AdverseEquityEur is null),
                     MaximumSampledAdverseDrawdown=adverseDd,PeakConcurrentClosedPositions=replay.PeakOpen,
+                    ReservationsByWeek=replay.Reserved,
                     Weeks=r.ModelTripsPerObservedIsoWeek.Where(q=>string.CompareOrdinal(q.Key,"2026-W34")>=0)
                         .ToDictionary(q=>q.Key,q=>q.Value),
                     Diagnostics=mode is "JOINT" or "FX" or "METAL"?replay.Diagnostics:null

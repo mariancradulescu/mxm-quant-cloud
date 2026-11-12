@@ -1445,7 +1445,7 @@ public sealed class NativeProductResearchLoop
                     "EXIT_ENTRY_WARMUP_OR_CALENDAR_INVALID",mechanism));
                 continue;
             }
-            if(tracked.Values.Any(x=>x.Symbol==market.Symbol))
+            if(!integratedResearch && tracked.Values.Any(x=>x.Symbol==market.Symbol))
             {
                 rejected++;
                 recent.Add(new(market.Symbol,at,side,"MODEL_SYMBOL_ALREADY_OPEN_OR_PENDING",
@@ -1522,6 +1522,13 @@ public sealed class NativeProductResearchLoop
                     incremental=pricedNet.IncrementalEur-uncertainty;
                     if(integratedResearch && !directionalControl && standalone>0m && incremental>0m)
                         calibration.CountNetSupported(at);
+                }
+                if(integratedResearch && tracked.Values.Any(x=>x.Symbol==market.Symbol))
+                {
+                    rejected++;
+                    recent.Add(new(market.Symbol,at,side,"MODEL_SYMBOL_ALREADY_OPEN_OR_PENDING",
+                        projectedGross,predictedNet,adverse,"SINGLE_POSITION_PER_SYMBOL",mechanism));
+                    continue;
                 }
                 perUnit=directionalControl?.001m:
                     Math.Floor(1000000000m*Math.Min(standalone,incremental)/units)/1000000000m;

@@ -27,6 +27,9 @@ public sealed record NativeEntryCalibrationReport(
     [System.Text.Json.Serialization.JsonIgnore(Condition=
         System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public string? FrozenModel {get;init;}
+    [System.Text.Json.Serialization.JsonIgnore(Condition=
+        System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public Dictionary<string,NativeIntegratedFamilyDiagnostics>? IntegratedFamilies {get;init;}
 }
 
 public sealed record NativeInventoryDiagnostics(int Pairs,decimal? FadeGrossBps,
@@ -50,6 +53,12 @@ public sealed class NativeEntryOutcomeCalibration
     private NativeIntegratedSnapshot? frozen;
     private readonly Dictionary<string,NativeIntegratedWeek> opportunitiesByWeek=new();
     private bool priced=>inventory || integrated;
+    private readonly Dictionary<string,List<(decimal Gross,decimal Central,decimal Adverse,decimal Reverse,decimal? Error)>> familyOutcomes=new();
+    private Dictionary<string,NativeIntegratedFamilyDiagnostics> FamilyDiagnostics()=>familyOutcomes.ToDictionary(
+        row=>row.Key,row=>new NativeIntegratedFamilyDiagnostics(row.Value.Count,
+            10000m*row.Value.Average(x=>x.Gross),10000m*row.Value.Average(x=>x.Central),
+            10000m*row.Value.Average(x=>x.Adverse),10000m*row.Value.Average(x=>x.Reverse),
+            row.Value.Count(x=>x.Adverse>0m),row.Value.Average(x=>x.Error)));
     private readonly Dictionary<string,List<InventoryLabel>> inventoryTraining=new(StringComparer.Ordinal);
     private int Holding=>inventory?InventoryHoldingMinutes:HoldingMinutes;
     private string Policy=>inventory?InventoryExitPolicy:ExitPolicy;
@@ -102,7 +111,8 @@ public sealed class NativeEntryOutcomeCalibration
             Inventory=priced?new(evaluationPairs,Average(fadeGross),Average(fadeCentral),
                 Average(fadeAdverse),Average(continuationAdverse)):null,
             OpportunityFunnel=integrated?opportunitiesByWeek:null,
-            FrozenModel=integrated?frozen?.Seal():null
+            FrozenModel=integrated?frozen?.Seal():null,
+            IntegratedFamilies=integrated?FamilyDiagnostics():null
         };
 
     private void Count(long at,int stage)
@@ -336,6 +346,14 @@ public sealed class NativeEntryOutcomeCalibration
                 fadeCentral+=fade.NetReturn!.Value;
                 fadeAdverse+=fade.AdverseReturn;
                 continuationAdverse+=other.AdverseReturn;
+                if(integrated)
+                {
+                    if(!familyOutcomes.TryGetValue(p.Cohort,out var rows))
+                        familyOutcomes[p.Cohort]=rows=new();
+                    decimal? delta=p.Forecast?.PositiveGrossProbability-(fade.AdverseReturn>0m?1m:0m);
+                    rows.Add((fade.GrossReturn.Value,fade.NetReturn.Value,fade.AdverseReturn,
+                        other.AdverseReturn,delta*delta));
+                }
             }
             if(p.Forecast is not { } f)return;
             var leg=f.Direction==1?lo:sh;

@@ -74,3 +74,6 @@ public sealed record NativeIntegratedSnapshot(long Boundary,NativeEntryForecast?
 }
 
 public sealed record NativeIntegratedWeek(int QuoteComplete,int FeatureEligible,int PredictionReady,int NetSupported);
+
+public sealed record NativeIntegratedFamilyDiagnostics(int Pairs,decimal GrossBps,decimal CentralNetBps,
+    decimal AdverseNetBps,decimal ReverseAdverseNetBps,int PositiveAdversePairs,decimal? Brier);
