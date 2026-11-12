@@ -1,0 +1,301 @@
+{
+  "Study": "WIR1",
+  "SourceSha256": "4decd33d6c4c66a5dfbf63b4a790d062e21ff65db3f8eed034db45f72b296d60",
+  "EvaluationBoundaryUtcMs": 1772409600000,
+  "InitialCapitalEur": 300,
+  "EvaluationQuoteMarks": 576,
+  "Policies": {
+    "JOINT": {
+      "ForecastsGenerated": 12,
+      "ModelIntentCount": 0,
+      "ModelRejectedCount": 12,
+      "CompletedModelRoundTrips": 0,
+      "ModelClosedGrossEur": 0,
+      "ModelClosedCentralNetEur": 0,
+      "ModelClosedAdverseNetEur": 0,
+      "MaximumObservedMarginEur": 0,
+      "MaximumSampledCentralDrawdown": 0,
+      "OpenModelPositions": 0,
+      "PendingModelRequests": 0,
+      "RejectionReasons": {
+        "PROSPECTIVE_NO_STANDALONE_NET_AFTER_COST_AND_UNCERTAINTY": 12
+      },
+      "ExitReasonCounts": {},
+      "SignalsByMechanism": {
+        "WIR1_FX": 9,
+        "WIR1_METAL": 3
+      },
+      "ClosedNetByMechanismEur": {},
+      "UnfinancedModelOpenCancellations": 0,
+      "AdverseFailureKind": "",
+      "TripsByEvaluationWeek": {
+        "2026-W10": 0,
+        "2026-W11": 0,
+        "2026-W12": 0
+      },
+      "MaximumSampledAdverseDrawdown": 0,
+      "PeakConcurrentClosedPositions": 0,
+      "MissingCentralEquityMarks": 0,
+      "MissingAdverseEquityMarks": 0,
+      "PredictiveDiagnostics": {
+        "TrainingPairs": 12,
+        "EvaluationPairs": 12,
+        "MissingPairs": 0,
+        "ScoredForecasts": 12,
+        "MeanRealizedGrossBps": 8.169157311399564,
+        "MeanRealizedNetBps": 6.978683989373245,
+        "DirectionBrier": 0.5,
+        "NeutralBrier": 0.25,
+        "UnconditionalBrier": 0.25,
+        "PredictedPositiveGross": 12,
+        "RealizedPositiveGross": 6,
+        "FrozenTrainingSha256": "985a9be28ac322f788256c25a94f770071b3e0232284e3922b2b94cd54b7d376",
+        "Inventory": {
+          "Pairs": 12,
+          "FadeGrossBps": 8.169157311399564,
+          "FadeCentralNetBps": 6.978683989373245,
+          "FadeAdverseNetBps": 5.776678773462127,
+          "ContinuationAdverseNetBps": -10.42290389648443
+        }
+      }
+    },
+    "FX": {
+      "ForecastsGenerated": 9,
+      "ModelIntentCount": 0,
+      "ModelRejectedCount": 9,
+      "CompletedModelRoundTrips": 0,
+      "ModelClosedGrossEur": 0,
+      "ModelClosedCentralNetEur": 0,
+      "ModelClosedAdverseNetEur": 0,
+      "MaximumObservedMarginEur": 0,
+      "MaximumSampledCentralDrawdown": 0,
+      "OpenModelPositions": 0,
+      "PendingModelRequests": 0,
+      "RejectionReasons": {
+        "PROSPECTIVE_NO_STANDALONE_NET_AFTER_COST_AND_UNCERTAINTY": 9
+      },
+      "ExitReasonCounts": {},
+      "SignalsByMechanism": {
+        "WIR1_FX": 9
+      },
+      "ClosedNetByMechanismEur": {},
+      "UnfinancedModelOpenCancellations": 0,
+      "AdverseFailureKind": "",
+      "TripsByEvaluationWeek": {
+        "2026-W10": 0,
+        "2026-W11": 0,
+        "2026-W12": 0
+      },
+      "MaximumSampledAdverseDrawdown": 0,
+      "PeakConcurrentClosedPositions": 0,
+      "MissingCentralEquityMarks": 0,
+      "MissingAdverseEquityMarks": 0,
+      "PredictiveDiagnostics": null
+    },
+    "METAL": {
+      "ForecastsGenerated": 3,
+      "ModelIntentCount": 0,
+      "ModelRejectedCount": 3,
+      "CompletedModelRoundTrips": 0,
+      "ModelClosedGrossEur": 0,
+      "ModelClosedCentralNetEur": 0,
+      "ModelClosedAdverseNetEur": 0,
+      "MaximumObservedMarginEur": 0,
+      "MaximumSampledCentralDrawdown": 0,
+      "OpenModelPositions": 0,
+      "PendingModelRequests": 0,
+      "RejectionReasons": {
+        "PROSPECTIVE_NO_STANDALONE_NET_AFTER_COST_AND_UNCERTAINTY": 3
+      },
+      "ExitReasonCounts": {},
+      "SignalsByMechanism": {
+        "WIR1_METAL": 3
+      },
+      "ClosedNetByMechanismEur": {},
+      "UnfinancedModelOpenCancellations": 0,
+      "AdverseFailureKind": "",
+      "TripsByEvaluationWeek": {
+        "2026-W10": 0,
+        "2026-W11": 0,
+        "2026-W12": 0
+      },
+      "MaximumSampledAdverseDrawdown": 0,
+      "PeakConcurrentClosedPositions": 0,
+      "MissingCentralEquityMarks": 0,
+      "MissingAdverseEquityMarks": 0,
+      "PredictiveDiagnostics": null
+    },
+    "LONG": {
+      "ForecastsGenerated": 12,
+      "ModelIntentCount": 9,
+      "ModelRejectedCount": 3,
+      "CompletedModelRoundTrips": 9,
+      "ModelClosedGrossEur": 2.0794704870756178,
+      "ModelClosedCentralNetEur": 1.286283168340041,
+      "ModelClosedAdverseNetEur": 0.48873855495748514,
+      "MaximumObservedMarginEur": 95.88,
+      "MaximumSampledCentralDrawdown": 0.014099636337429344,
+      "OpenModelPositions": 0,
+      "PendingModelRequests": 0,
+      "RejectionReasons": {
+        "CONDITIONAL_ESTIMATE_NO_POSITIVE_UNCERTAINTY_ADJUSTED_INCREMENTAL_UTILITY": 3
+      },
+      "ExitReasonCounts": {
+        "MAXIMUM_EXPOSURE_SAFETY_LIMIT": 9
+      },
+      "SignalsByMechanism": {
+        "WIR1_FX": 9,
+        "WIR1_METAL": 3
+      },
+      "ClosedNetByMechanismEur": {
+        "WIR1_FX": 1.286283168340041
+      },
+      "UnfinancedModelOpenCancellations": 0,
+      "AdverseFailureKind": "",
+      "TripsByEvaluationWeek": {
+        "2026-W10": 3,
+        "2026-W11": 3,
+        "2026-W12": 3
+      },
+      "MaximumSampledAdverseDrawdown": 0.014919557336403268,
+      "PeakConcurrentClosedPositions": 3,
+      "MissingCentralEquityMarks": 0,
+      "MissingAdverseEquityMarks": 0,
+      "PredictiveDiagnostics": null
+    },
+    "SHORT": {
+      "ForecastsGenerated": 12,
+      "ModelIntentCount": 9,
+      "ModelRejectedCount": 3,
+      "CompletedModelRoundTrips": 9,
+      "ModelClosedGrossEur": -1.145254356739961,
+      "ModelClosedCentralNetEur": -1.9470756401879576,
+      "ModelClosedAdverseNetEur": -2.7524673009146206,
+      "MaximumObservedMarginEur": 95.88,
+      "MaximumSampledCentralDrawdown": 0.0175161763637353,
+      "OpenModelPositions": 0,
+      "PendingModelRequests": 0,
+      "RejectionReasons": {
+        "CONDITIONAL_ESTIMATE_NO_POSITIVE_UNCERTAINTY_ADJUSTED_INCREMENTAL_UTILITY": 3
+      },
+      "ExitReasonCounts": {
+        "MAXIMUM_EXPOSURE_SAFETY_LIMIT": 8,
+        "COMPLETED_BAR_ATR_CHANDELIER": 1
+      },
+      "SignalsByMechanism": {
+        "WIR1_FX": 9,
+        "WIR1_METAL": 3
+      },
+      "ClosedNetByMechanismEur": {
+        "WIR1_FX": -1.9470756401879576
+      },
+      "UnfinancedModelOpenCancellations": 0,
+      "AdverseFailureKind": "",
+      "TripsByEvaluationWeek": {
+        "2026-W10": 3,
+        "2026-W11": 3,
+        "2026-W12": 3
+      },
+      "MaximumSampledAdverseDrawdown": 0.019287263513573495,
+      "PeakConcurrentClosedPositions": 3,
+      "MissingCentralEquityMarks": 0,
+      "MissingAdverseEquityMarks": 0,
+      "PredictiveDiagnostics": null
+    },
+    "CASH": {
+      "ForecastsGenerated": 0,
+      "ModelIntentCount": 0,
+      "ModelRejectedCount": 0,
+      "CompletedModelRoundTrips": 0,
+      "ModelClosedGrossEur": 0,
+      "ModelClosedCentralNetEur": 0,
+      "ModelClosedAdverseNetEur": 0,
+      "MaximumObservedMarginEur": 0,
+      "MaximumSampledCentralDrawdown": 0,
+      "OpenModelPositions": 0,
+      "PendingModelRequests": 0,
+      "RejectionReasons": {},
+      "ExitReasonCounts": {},
+      "SignalsByMechanism": {},
+      "ClosedNetByMechanismEur": {},
+      "UnfinancedModelOpenCancellations": 0,
+      "AdverseFailureKind": "",
+      "TripsByEvaluationWeek": {
+        "2026-W10": 0,
+        "2026-W11": 0,
+        "2026-W12": 0
+      },
+      "MaximumSampledAdverseDrawdown": 0,
+      "PeakConcurrentClosedPositions": 0,
+      "MissingCentralEquityMarks": 0,
+      "MissingAdverseEquityMarks": 0,
+      "PredictiveDiagnostics": null
+    }
+  },
+  "IndependentConfirmation": false,
+  "CloudActivated": false,
+  "OrdersSubmitted": 0,
+  "ContinuousDrawdownCertified": false,
+  "Receipt": {
+    "ForecastsGenerated": 12,
+    "ModelIntentCount": 0,
+    "ModelRejectedCount": 12,
+    "CompletedModelRoundTrips": 0,
+    "ModelClosedGrossEur": 0,
+    "ModelClosedCentralNetEur": 0,
+    "ModelClosedAdverseNetEur": 0,
+    "MaximumObservedMarginEur": 0,
+    "MaximumSampledCentralDrawdown": 0,
+    "OpenModelPositions": 0,
+    "PendingModelRequests": 0,
+    "RejectionReasons": {
+      "PROSPECTIVE_NO_STANDALONE_NET_AFTER_COST_AND_UNCERTAINTY": 12
+    },
+    "ExitReasonCounts": {},
+    "SignalsByMechanism": {
+      "WIR1_FX": 9,
+      "WIR1_METAL": 3
+    },
+    "ClosedNetByMechanismEur": {},
+    "UnfinancedModelOpenCancellations": 0,
+    "AdverseFailureKind": "",
+    "TripsByEvaluationWeek": {
+      "2026-W10": 0,
+      "2026-W11": 0,
+      "2026-W12": 0
+    },
+    "MaximumSampledAdverseDrawdown": 0,
+    "PeakConcurrentClosedPositions": 0,
+    "MissingCentralEquityMarks": 0,
+    "MissingAdverseEquityMarks": 0,
+    "PredictiveDiagnostics": {
+      "TrainingPairs": 12,
+      "EvaluationPairs": 12,
+      "MissingPairs": 0,
+      "ScoredForecasts": 12,
+      "MeanRealizedGrossBps": 8.169157311399564,
+      "MeanRealizedNetBps": 6.978683989373245,
+      "DirectionBrier": 0.5,
+      "NeutralBrier": 0.25,
+      "UnconditionalBrier": 0.25,
+      "PredictedPositiveGross": 12,
+      "RealizedPositiveGross": 6,
+      "FrozenTrainingSha256": "985a9be28ac322f788256c25a94f770071b3e0232284e3922b2b94cd54b7d376",
+      "Inventory": {
+        "Pairs": 12,
+        "FadeGrossBps": 8.169157311399564,
+        "FadeCentralNetBps": 6.978683989373245,
+        "FadeAdverseNetBps": 5.776678773462127,
+        "ContinuationAdverseNetBps": -10.42290389648443
+      }
+    }
+  },
+  "SourceLane": "EXISTING_FCE1",
+  "ProbabilityTarget": "POSITIVE_ADVERSE_NET",
+  "ExpectedEvaluationFridays": 3,
+  "SourceRunId": 43036474843,
+  "SourceArtifactId": 13863803890,
+  "SourceCiphertextSha256": "c780798f12380a3be2a546f1a18f7cf14be774d9377eb535bfa9d82ccee4909d",
+  "BrokerRequests": 0,
+  "ProtocolSha256": "1437da78e31872f3b2910f56ef558836d85ddebf9f184a454a5b5c78c57d9983"
+}
