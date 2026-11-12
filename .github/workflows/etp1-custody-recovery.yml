@@ -1,0 +1,77 @@
+name: ETP1 original encrypted source custody-only schema recovery
+on:
+  pull_request:
+    paths:
+      - 'research/ETP1_CUSTODY_RECOVERY.md'
+      - 'research/etp1_custody_recovery.py'
+      - 'research/test_etp1_schema_contract.py'
+      - 'research/native_original_openapi_product_replay.py'
+      - 'research/etp1.py'
+      - '.github/workflows/etp1-custody-recovery.yml'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/etp1-custody-recovery.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - run: python -m py_compile research/native_original_openapi_product_replay.py research/etp1.py research/etp1_custody_recovery.py
+      - run: python -m unittest research.test_etp1_schema_contract -v
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - run: dotnet build src/Mxm.Replay -c Release
+  archived-source-custody-evaluation:
+    needs: verify
+    if: >-
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      github.actor == 'mariancradulescu' &&
+      github.run_attempt == '1' &&
+      startsWith(github.event.head_commit.message, 'ETP1_CUSTODY_SCHEMA_RECOVERY_ONCE')
+    environment: mxm-r3-custody-v1
+    concurrency:
+      group: mxm-etp1-original-43242754053-custody-recovery
+      cancel-in-progress: false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - run: python -m pip install -r research/requirements.txt
+      - run: dotnet build src/Mxm.Replay -c Release
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: etp1-original-pepperstone-encrypted-source
+          run-id: 43242754053
+          github-token: ${{ github.token }}
+          path: failed-original-source
+      - name: Verify original source envelope and execute ONLY existing ETP1 C# financial replay
+        run: python -m research.etp1_custody_recovery
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: etp1-recovered-authentic-economic-receipt
+          path: etp1-recovered-financial-public.json
+          if-no-files-found: error
+          retention-days: 90
