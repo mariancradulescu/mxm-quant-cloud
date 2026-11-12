@@ -145,7 +145,7 @@ def contract(symbol, c, quote_asset, observed_at):
     }
 
 def emit_native_failure(process):
-    match = re.search(r"^(?:LDP1|JRC1|OTC1|MCT2|BMR1|PRR1|FCE1|IPC2|FSD1|ESD1|SEM1)_NATIVE_REPLAY_REJECTED:(?:[A-Za-z0-9_-]+:)?[A-Za-z0-9_]+$",
+    match = re.search(r"^(?:LDP1|JRC1|OTC1|MCT2|BMR1|PRR1|FCE1|IPC2|FSD1|ESD1|SEM1|PDR1)_NATIVE_REPLAY_REJECTED:(?:[A-Za-z0-9_-]+:)?[A-Za-z0-9_]+$",
                       process.stderr or "", re.MULTILINE)
     if process.returncode and match:
         print(match.group(0), flush=True)
