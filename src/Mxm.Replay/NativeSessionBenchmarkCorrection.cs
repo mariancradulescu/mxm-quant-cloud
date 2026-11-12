@@ -161,7 +161,7 @@ internal static class NativeSessionBenchmarkCorrection
     private static Outcome Replay(Candidate[] universe,NativeOriginalOpenApiMarketMark[] source,
         string hash,string policy,bool adverse,bool paired)
     {
-        var book=new NativeFundedLedger(maximumStalenessMs:2);
+        var book=new NativeFundedLedger(maximumStalenessMs:4);
         var held=new Dictionary<string,Position>(StringComparer.Ordinal);
         var rejected=new Dictionary<string,int>();
         void Reject(string cause)=>rejected[cause]=rejected.GetValueOrDefault(cause)+1;
@@ -212,6 +212,7 @@ internal static class NativeSessionBenchmarkCorrection
                 held.Remove(s);
             }
 
+            long nextEntryClock=at+1;
             foreach(var c in entries[at].OrderBy(c=>c.Symbol,StringComparer.Ordinal))
             {
                 int side=Pick(c,policy);
@@ -222,7 +223,7 @@ internal static class NativeSessionBenchmarkCorrection
                 if(paired && c.Last is null){Reject("PAIRED_ENDPOINT_EXCLUSION");continue;}
                 if(held.ContainsKey(c.Symbol)){Reject("SYMBOL_ALREADY_HELD");continue;}
                 if(held.Values.Any(p=>p.Candidate.Exit<=at)){Reject("UNRESOLVED_FIXED_EXIT");continue;}
-                var summary=book.Summary(at+1);
+                var summary=book.Summary(nextEntryClock);
                 if(summary.LiquidationEquityEur is not decimal eq||summary.UsedMarginEur is not decimal used)
                 { Reject("MISSING_HELD_MARK");continue; }
                 var q=quotes[c.Symbol];
@@ -236,9 +237,9 @@ internal static class NativeSessionBenchmarkCorrection
                 // Shift the fact pair by one modeled millisecond if a prior fill
                 // used this clock. Every mark remains at the original observed clock.
                 var p=new Position(c,side,units,slip,$"{c.Symbol}/{at}");
-                book.Apply(Event("REQUEST_OPEN",p,at+1));
+                book.Apply(Event("REQUEST_OPEN",p,nextEntryClock));
                 decimal price=side>0?q.Ask+slip:q.Bid-slip;
-                book.Apply(Event("OPEN_FILL",p,at+2,price,fee));
+                book.Apply(Event("OPEN_FILL",p,++nextEntryClock,price,fee));
                 held.Add(c.Symbol,p);
                 maxPositions=Math.Max(maxPositions,held.Count);
                 maxMargin=Math.Max(maxMargin,book.Summary().UsedMarginEur??0);
