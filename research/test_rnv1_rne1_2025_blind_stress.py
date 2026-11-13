@@ -31,7 +31,7 @@ class Rnv1Tests(unittest.TestCase):
         self.assertEqual(x["scheduled"],38)
         self.assertEqual(x["pricedAdaptive"],0)
         self.assertIsNone(x["meanAdaptiveMidpointGrossBps"])
-        self.assertEqual(x["currentContractConditionalEur"]["adverse"]["eia"],0)
+        self.assertIsNone(x["currentContractConditionalEur"]["adverse"]["eia"])
     def test_uses_original_event_decision_and_calendar_timezone(self):
         d=date(2025,10,23)
         # Empty bars must be explicitly unpriced, not treated as trade.
