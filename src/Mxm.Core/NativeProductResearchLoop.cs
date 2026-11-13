@@ -490,8 +490,9 @@ public sealed class NativeProductResearchLoop
         bool yenStudy=researchMode.StartsWith("JYP1_",StringComparison.Ordinal);
         bool yenRiskStudy=researchMode.StartsWith("YRC1_",StringComparison.Ordinal);
         bool multiSessionStudy=researchMode.StartsWith("MSE1_",StringComparison.Ordinal);
+        bool nextStudy=researchMode.StartsWith("NXE1_",StringComparison.Ordinal);
         bool fundingGateStudy=researchMode.StartsWith("WFG1_",StringComparison.Ordinal);
-        bool jointStudy=conditionalResearch || fundingGateStudy || sessionStudy || researchMode.StartsWith("JRS1_",StringComparison.Ordinal) || adaptiveStudy || techStudy || yenStudy || yenRiskStudy || multiSessionStudy;
+        bool jointStudy=conditionalResearch || fundingGateStudy || sessionStudy || researchMode.StartsWith("JRS1_",StringComparison.Ordinal) || adaptiveStudy || techStudy || yenStudy || yenRiskStudy || multiSessionStudy || nextStudy;
         bool useJointStress=jointStudy && researchMode is not ("JRS1_REPEATED" or "SCT1_REPEATED");
         var stressEuro=jointStudy?byName.GetValueOrDefault("EURUSD"):null;
         bool factorStudy=researchMode.StartsWith("FCE1_",StringComparison.Ordinal);
@@ -645,6 +646,16 @@ public sealed class NativeProductResearchLoop
                     researchMode=="SCT1_SHORT"?-1:forecast.Side;
                 driver=forecast.Magnitude;
                 mechanism=forecast.Mechanism;
+            }
+            else if(nextStudy)
+            {
+                if(researchMode=="NXE1_CASH" ||
+                   market.Symbol is not ("EURUSD" or "US30"))continue;
+                if(researchMode=="NXE1_EXISTING" && market.Symbol!="EURUSD" ||
+                   researchMode=="NXE1_NEW" && market.Symbol!="US30")continue;
+                var n=NativeNextEconomicResearch.Forecast(market,byName,at);
+                if(n.Side==0)continue;
+                side=n.Side;driver=n.Magnitude;mechanism=n.Mechanism;
             }
             else if(multiSessionStudy)
             {
@@ -1472,6 +1483,8 @@ public sealed class NativeProductResearchLoop
             decimal units=c.MinimumUnits;
             string effectiveExitPolicy=(researchMode=="AEX1_FIXED" || researchMode=="ETP1_FIXED" || researchMode=="JYP1_FIXED" || researchMode=="YRC1_FIXED" || researchMode=="MSE1_FIXED")?
                 NativeCausalExitResearch.FrozenFixed:mechanism switch {
+                NativeNextEconomicResearch.Existing=>NativeCausalExitResearch.PredictionInvalidation,
+                NativeNextEconomicResearch.New=>NativeCausalExitResearch.Chandelier,
                 NativeMultiSessionEconomicsResearch.Index=>NativeCausalExitResearch.Chandelier,
                 NativeMultiSessionEconomicsResearch.Oil=>NativeCausalExitResearch.AtrProfitLock,
                 NativeMultiSessionEconomicsResearch.Agriculture=>NativeCausalExitResearch.EquilibriumReversion,
@@ -1528,6 +1541,8 @@ public sealed class NativeProductResearchLoop
                 _=>market.ExitPolicy
             };
             int effectiveHolding=(researchMode=="AEX1_FIXED" || researchMode=="ETP1_FIXED" || researchMode=="JYP1_FIXED" || researchMode=="YRC1_FIXED" || researchMode=="MSE1_FIXED")?90:mechanism switch {
+                NativeNextEconomicResearch.Existing=>120,
+                NativeNextEconomicResearch.New=>180,
                 NativeMultiSessionEconomicsResearch.Index=>135,
                 NativeMultiSessionEconomicsResearch.Oil=>150,
                 NativeMultiSessionEconomicsResearch.Agriculture=>120,
@@ -1875,6 +1890,8 @@ public sealed class NativeProductResearchLoop
                     "OTC1_GBP_RELATIVE_STRENGTH_CONTINUATION"=>(Policy:NativeCausalExitResearch.PredictionInvalidation,Minutes:60),
                     "MCT2_ETH_CRYPTO_SPECIFIC_PERSISTENCE"=>(Policy:NativeCausalExitResearch.Chandelier,Minutes:60),
                     "MCT2_XAU_DOLLAR_CONFIRMED_RANGE_RELEASE"=>(Policy:NativeCausalExitResearch.PredictionInvalidation,Minutes:60),
+                    "NXE1_EURUSD_US500_RISK_TRANSFER"=>(Policy:NativeCausalExitResearch.PredictionInvalidation,Minutes:120),
+                    "NXE1_US30_BROAD_INDEX_INDUSTRIAL_RESIDUAL"=>(Policy:NativeCausalExitResearch.Chandelier,Minutes:180),
                     "BMR1_EURUSD_RELEASE_PRICE_DISCOVERY"=>(Policy:NativeCausalExitResearch.PredictionInvalidation,Minutes:45),
                     "BMR1_XAUUSD_RELEASE_REPRICING"=>(Policy:NativeCausalExitResearch.PredictionInvalidation,Minutes:45),
                     _=>(Policy:market.ExitPolicy,Minutes:market.HoldingMinutes)
