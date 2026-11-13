@@ -19,6 +19,22 @@ def utc(day):
     return int(datetime(day.year, day.month, day.day, tzinfo=timezone.utc).timestamp()) * 1000
 
 
+def jpy_to_eur(mark):
+    """Use the sealed reverse USDJPY then reverse EURUSD route."""
+    route = mark["OriginalFxRoute"]
+    need(len(route) == 2, "JPY_CONVERSION_ROUTE_LENGTH")
+    credit = debit = 1.0
+    for hop, (symbol, base, quote) in zip(
+            route, (("USDJPY", "USD", "JPY"), ("EURUSD", "EUR", "USD"))):
+        bid, ask = float(hop["Bid"]), float(hop["Ask"])
+        need((hop["Symbol"], hop["BaseAsset"], hop["QuoteAsset"]) == (symbol, base, quote)
+             and hop["OriginalBrokerAuthenticated"] and 0 <= mark["At"] - hop["AtUtcMs"] <= 2000
+             and 0 < bid <= ask, "JPY_CONVERSION_ROUTE_INVALID")
+        credit /= ask
+        debit /= bid
+    return dict(mark, QuoteCreditToEur=credit, QuoteDebitToEur=debit)
+
+
 def evaluate(tape):
     marks = {symbol: {} for symbol in SYMBOLS}
     for mark in tape["Marks"]:
@@ -27,7 +43,7 @@ def evaluate(tape):
              and 0 < float(mark["QuoteCreditToEur"]) <= float(mark["QuoteDebitToEur"])
              and float(mark["UsdToEur"]) > 0 and float(mark["SlippagePerSideQuote"]) >= 0,
              "INVALID_MARK")
-        series[mark["At"]] = mark
+        series[mark["At"]] = jpy_to_eur(mark) if mark["Symbol"] == "EURJPY" else mark
     target = marks["EURJPY"]
     need(bool(target), "EURJPY_MARKS_UNAVAILABLE")
     terms = next(iter(target.values()))["Contract"]
