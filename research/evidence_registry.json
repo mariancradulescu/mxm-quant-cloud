@@ -209,6 +209,27 @@
   },
   "prospectiveStudies": [
     {
+      "id": "RNE1-EUR",
+      "status": "ORIGINAL_SOURCE_COLLECT_PRECOMMITTED_NOT_SCORED",
+      "originalRne1RuleAndSourceUnchanged": true,
+      "priorOriginalRun": 43468457518,
+      "priorCostReadbackRun": 43470725494,
+      "independent": false,
+      "qualification": false,
+      "fundedNetEur": null,
+      "protocol": "research/RNE1_EUR_DENSE_QUOTE_ORIGINAL.md",
+      "protocolFrozenCommit": "be345c9e9c4dab64fe4f859a41fb2cb68f94c530",
+      "target": "NatGas",
+      "fxConversion": "EURUSD_AUTHENTIC_ASOF_BID_ASK",
+      "fixedPanel": "26_EIA_THURSDAYS_2026_1050_TO_1205_NY_EVERY_5_MINUTES",
+      "originalAccount": "EXISTING_ORIGINAL_BOUND_PEPPERSTONE_EUR_READ_ONLY",
+      "newBrokerCallCeiling": 2100,
+      "noHistoricalTariffOrIntrabarFillCertification": true,
+      "noLiveDemoOrders": true,
+      "noCloudTrading": true,
+      "noOauthReauthorization": true
+    },
+    {
       "id": "RNE1",
       "status": "FROZEN_BEFORE_IMPLEMENTATION_AND_NEW_PEPPESTONE_SOURCE",
       "independent": false,
