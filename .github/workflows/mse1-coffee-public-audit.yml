@@ -1,0 +1,33 @@
+name: MSE1 Coffee postclosure public receipt check (no economic replay)
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/mse1-coffee-public-audit.yml'
+      - 'research/mse1_coffee_postclosure_diagnostic.py'
+      - 'docs/MSE1_COFFEE_POSTCLOSURE_SESSION_RISK_DIAGNOSTIC_20261113.md'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify-original-public-receipt:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Read original immutable public financial artifact only
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: mse1-original-pepperstone-public-economic-receipt
+          run-id: 43366399346
+          github-token: ${{ github.token }}
+          path: original-mse1-public
+      - name: Run deterministic public-only Coffee timing reconciliation
+        shell: bash
+        run: |
+          python -m py_compile research/mse1_coffee_postclosure_diagnostic.py
+          python -m research.mse1_coffee_postclosure_diagnostic original-mse1-public/mse1-public.json
