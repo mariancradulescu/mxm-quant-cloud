@@ -17,7 +17,12 @@ public sealed record NativeProspectiveSessionRiskEvidence(
     decimal? MarginalAdverseLossEur,
     bool ExplicitSessionGapAcceptance=false,
     decimal? AdditionalGapLossReserveEur=null,
-    bool BrokerSideStopAcknowledged=false);
+    bool BrokerSideStopAcknowledged=false)
+{
+    public bool QuoteConversionRouteCovered {get;init;}
+    public long MonitoringCalendarCoveredThroughMs {get;init;}
+    public bool GapReserveCoversAllInterruptions {get;init;}
+}
 public sealed record NativeSessionAdmissionResult(
     bool Admit,string Reason,long? SessionCloseAtMs,
     bool PlannedProtectionCrossesClosure,bool StopFillCertified=false);
@@ -37,6 +42,12 @@ public static class NativeProspectiveSessionAdmission
         if(!e.HolidayCalendarCovered)return Deny("HOLIDAY_EXCEPTION_COVERAGE_UNKNOWN");
         if(!e.PriorHoldingQuoteCoverageSufficient)
             return Deny("HISTORICAL_HOLDING_QUOTE_COVERAGE_INSUFFICIENT");
+        if(!e.QuoteConversionRouteCovered)return Deny("BIDASK_OR_FINANCIAL_CONVERSION_ROUTE_MISSING");
+        long monitorUntil;
+        try { monitorUntil=checked(e.DecisionAtMs+checked((long)e.ProtectiveMinutes*60000L)+e.ExitRequestLatencyMs); }
+        catch(OverflowException){return Deny("MONITORING_DEADLINE_OVERFLOW");}
+        if(e.MonitoringCalendarCoveredThroughMs<monitorUntil)
+            return Deny("FULL_POSITION_MONITORING_CALENDAR_NOT_COVERED");
         if(e.CommonLiquidationEquityEur is not decimal equity ||
            e.CommonPeakEquityEur is not decimal peak ||
            e.CommonFreeMarginEur is not decimal free ||
@@ -93,6 +104,8 @@ public static class NativeProspectiveSessionAdmission
         bool crosses=deadline>=closing; // endSecond is exclusive, no fill at the boundary
         if(crosses&&!e.ExplicitSessionGapAcceptance)
             return Deny("PROTECTIVE_EXIT_CROSSES_SESSION_CLOSE",closing,true);
+        if(crosses&&!e.GapReserveCoversAllInterruptions)
+            return Deny("ALL_SESSION_INTERRUPTION_GAPS_NOT_UNDERWRITTEN",closing,true);
         if(crosses && (e.AdditionalGapLossReserveEur is not decimal reserve ||
                        reserve<=0m))
             return Deny("SESSION_GAP_LOSS_UNDERWRITING_MISSING",closing,true);
