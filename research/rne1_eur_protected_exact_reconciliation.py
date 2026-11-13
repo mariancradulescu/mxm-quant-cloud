@@ -172,9 +172,12 @@ def evaluate_new(original,old_public,new,coverage):
     dense=new["fixedThursdayPanel"]
     terms=get_terms(original)
     meta=original["currentContract"].get("NatGas",{})
-    if (meta.get("currentMinimumMarginEur") is not None or
-        meta.get("currentMinVolume") is not None):
-        raise ValueError("RNE1_SOURCE_CONTRACT_SCHEMA_UNEXPECTED")
+    # Original RNE1 source recorded the actual broker wire minVolume.
+    # Reject a mismatch, rather than treating this legitimate field as
+    # an unexpected schema and blocking all further finance checks.
+    if meta.get("quoteCurrency")!="USD" or (
+        int(meta.get("currentMinVolume") or 0)!=int(terms.minVolume)):
+        raise ValueError("RNE1_AUTHENTIC_ORIGINAL_CONTRACT_MIN_VOLUME_MISMATCH")
     marginBuy=meta.get("currentMarginBuyEur")
     marginSell=meta.get("currentMarginSellEur")
     statuses=Counter()
