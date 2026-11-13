@@ -1,0 +1,722 @@
+{
+  "source_run": 43377275493,
+  "source_cipher_artifact": 14015883688,
+  "source_cipher_sha256": "3e6ac925da0eaf686ff1b2cf3aae860fae1ef06813e97b2f4a88d90849c8c441",
+  "source_plaintext_sha256": "9a1c980230049103cc3713451622ab7c2b566816cbabc3c382e1b83ec5cc028f",
+  "source_receipt_sha256": "2ca870ac72869543c132eee12ae8f5b1e87ca76716e4060b458a5fa559e05db5",
+  "protocol_sha256": "ad697c6def3e3ea284aa0ae488221195f22f8d16842cd06a14a3645654422637",
+  "classification": "EXPOSED_CONDITIONAL_EUR_MINIMUM_SIZE_NO_FUNDING",
+  "hold_minutes": 60,
+  "cost_order": [
+    "gross",
+    "central",
+    "adverse"
+  ],
+  "counts": {
+    "scheduled": 255,
+    "missing_decision": 3,
+    "selected": 3,
+    "missing_path": 0,
+    "priced": 3
+  },
+  "minimum_units": 0.1,
+  "observed_margin_grid_row": {
+    "VolumeUnits": "0.1",
+    "BuyMarginEur": "34.29",
+    "SellMarginEur": "34.29"
+  },
+  "median_entry_notional_eur_credit_basis": 677.8986048719595,
+  "median_favorable_adverse_gross_excursion_eur": [
+    0.7295636351151853,
+    -0.8237444332896031
+  ],
+  "worst_sampled_adverse_markout_eur": -1.1608983530394172,
+  "totals": {
+    "reclaim": [
+      -1.0200205714651256,
+      -1.1778556891412446,
+      -1.493525924493016
+    ],
+    "momentum": [
+      -1.0200205714651256,
+      -1.1778556891412446,
+      -1.493525924493016
+    ],
+    "long": [
+      -0.12292700240885146,
+      -0.2807621200848862,
+      -0.5964323554366575
+    ],
+    "short": [
+      0.12292700240885146,
+      -0.03490811526726778,
+      -0.3505783506190391
+    ],
+    "cash": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "first_8_last_9_weeks": [
+    {
+      "reclaim": [
+        -0.8237444332896031,
+        -0.8752284603702326,
+        -0.9781965145314447
+      ],
+      "momentum": [
+        -0.8237444332896031,
+        -0.8752284603702326,
+        -0.9781965145314447
+      ],
+      "long": [
+        0.8237444332896031,
+        0.7722604062088957,
+        0.6692923520476836
+      ],
+      "short": [
+        -0.8237444332896031,
+        -0.8752284603702326,
+        -0.9781965145314447
+      ],
+      "cash": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "reclaim": [
+        -0.19627613817552236,
+        -0.3026272287710121,
+        -0.5153294099615713
+      ],
+      "momentum": [
+        -0.19627613817552236,
+        -0.3026272287710121,
+        -0.5153294099615713
+      ],
+      "long": [
+        -0.9466714356984546,
+        -1.0530225262937818,
+        -1.265724707484341
+      ],
+      "short": [
+        0.9466714356984546,
+        0.8403203451029648,
+        0.6276181639124057
+      ],
+      "cash": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    }
+  ],
+  "weekly": [
+    {
+      "week": "2026-07-13",
+      "scheduled": 15,
+      "missing_decision": 0,
+      "selected": 0,
+      "missing_path": 0,
+      "priced": 0,
+      "eur": {
+        "reclaim": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "momentum": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "long": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "short": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "cash": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "week": "2026-07-20",
+      "scheduled": 15,
+      "missing_decision": 0,
+      "selected": 0,
+      "missing_path": 0,
+      "priced": 0,
+      "eur": {
+        "reclaim": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "momentum": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "long": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "short": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "cash": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "week": "2026-07-27",
+      "scheduled": 15,
+      "missing_decision": 0,
+      "selected": 0,
+      "missing_path": 0,
+      "priced": 0,
+      "eur": {
+        "reclaim": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "momentum": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "long": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "short": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "cash": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "week": "2026-08-03",
+      "scheduled": 15,
+      "missing_decision": 0,
+      "selected": 0,
+      "missing_path": 0,
+      "priced": 0,
+      "eur": {
+        "reclaim": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "momentum": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "long": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "short": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "cash": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "week": "2026-08-10",
+      "scheduled": 15,
+      "missing_decision": 0,
+      "selected": 0,
+      "missing_path": 0,
+      "priced": 0,
+      "eur": {
+        "reclaim": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "momentum": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "long": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "short": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "cash": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "week": "2026-08-17",
+      "scheduled": 15,
+      "missing_decision": 0,
+      "selected": 0,
+      "missing_path": 0,
+      "priced": 0,
+      "eur": {
+        "reclaim": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "momentum": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "long": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "short": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "cash": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "week": "2026-08-24",
+      "scheduled": 15,
+      "missing_decision": 0,
+      "selected": 1,
+      "missing_path": 0,
+      "priced": 1,
+      "eur": {
+        "reclaim": [
+          -0.8237444332896031,
+          -0.8752284603702326,
+          -0.9781965145314447
+        ],
+        "momentum": [
+          -0.8237444332896031,
+          -0.8752284603702326,
+          -0.9781965145314447
+        ],
+        "long": [
+          0.8237444332896031,
+          0.7722604062088957,
+          0.6692923520476836
+        ],
+        "short": [
+          -0.8237444332896031,
+          -0.8752284603702326,
+          -0.9781965145314447
+        ],
+        "cash": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "week": "2026-08-31",
+      "scheduled": 15,
+      "missing_decision": 1,
+      "selected": 0,
+      "missing_path": 0,
+      "priced": 0,
+      "eur": {
+        "reclaim": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "momentum": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "long": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "short": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "cash": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "week": "2026-09-07",
+      "scheduled": 15,
+      "missing_decision": 1,
+      "selected": 0,
+      "missing_path": 0,
+      "priced": 0,
+      "eur": {
+        "reclaim": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "momentum": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "long": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "short": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "cash": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "week": "2026-09-14",
+      "scheduled": 15,
+      "missing_decision": 1,
+      "selected": 0,
+      "missing_path": 0,
+      "priced": 0,
+      "eur": {
+        "reclaim": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "momentum": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "long": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "short": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "cash": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "week": "2026-09-21",
+      "scheduled": 15,
+      "missing_decision": 0,
+      "selected": 0,
+      "missing_path": 0,
+      "priced": 0,
+      "eur": {
+        "reclaim": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "momentum": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "long": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "short": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "cash": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "week": "2026-09-28",
+      "scheduled": 15,
+      "missing_decision": 0,
+      "selected": 1,
+      "missing_path": 0,
+      "priced": 1,
+      "eur": {
+        "reclaim": [
+          -0.5714737869369885,
+          -0.6242252134235117,
+          -0.7297280663964302
+        ],
+        "momentum": [
+          -0.5714737869369885,
+          -0.6242252134235117,
+          -0.7297280663964302
+        ],
+        "long": [
+          -0.5714737869369885,
+          -0.6242252134235117,
+          -0.7297280663964302
+        ],
+        "short": [
+          0.5714737869369885,
+          0.5187223604504653,
+          0.41321950747754677
+        ],
+        "cash": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "week": "2026-10-05",
+      "scheduled": 15,
+      "missing_decision": 0,
+      "selected": 0,
+      "missing_path": 0,
+      "priced": 0,
+      "eur": {
+        "reclaim": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "momentum": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "long": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "short": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "cash": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "week": "2026-10-12",
+      "scheduled": 15,
+      "missing_decision": 0,
+      "selected": 0,
+      "missing_path": 0,
+      "priced": 0,
+      "eur": {
+        "reclaim": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "momentum": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "long": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "short": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "cash": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "week": "2026-10-19",
+      "scheduled": 15,
+      "missing_decision": 0,
+      "selected": 0,
+      "missing_path": 0,
+      "priced": 0,
+      "eur": {
+        "reclaim": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "momentum": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "long": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "short": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "cash": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "week": "2026-10-26",
+      "scheduled": 15,
+      "missing_decision": 0,
+      "selected": 0,
+      "missing_path": 0,
+      "priced": 0,
+      "eur": {
+        "reclaim": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "momentum": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "long": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "short": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "cash": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "week": "2026-11-02",
+      "scheduled": 15,
+      "missing_decision": 0,
+      "selected": 1,
+      "missing_path": 0,
+      "priced": 1,
+      "eur": {
+        "reclaim": [
+          0.3751976487614661,
+          0.32159798465249956,
+          0.2143986564348589
+        ],
+        "momentum": [
+          0.3751976487614661,
+          0.32159798465249956,
+          0.2143986564348589
+        ],
+        "long": [
+          -0.3751976487614661,
+          -0.42879731287027023,
+          -0.5359966410879109
+        ],
+        "short": [
+          0.3751976487614661,
+          0.32159798465249956,
+          0.2143986564348589
+        ],
+        "cash": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    }
+  ],
+  "funded_followup_screen_passed": false,
+  "funded_round_trips": 0,
+  "funded_net_eur": null,
+  "continuous_floating_drawdown": null,
+  "new_broker_requests": 0,
+  "orders_submitted": 0,
+  "cloud_activated": false,
+  "independent_confirmation": false
+}
