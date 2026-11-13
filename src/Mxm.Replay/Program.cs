@@ -13,6 +13,9 @@ if(args.Length==3 && args[2]=="--native-yrc1")
 if(args.Length==3 && args[2]=="--native-mse1")
     return NativeMultiSessionEconomicsExperiment.Run(args[0],args[1]);
 
+if(args.Length==3 && args[2]=="--native-nxe1")
+    return NativeNextEconomicExperiment.Run(args[0],args[1]);
+
 if(args.Length==3 && args[2]=="--native-aex1")
     return NativeAdaptiveExitExperiment.Run(args[0],args[1]);
 
