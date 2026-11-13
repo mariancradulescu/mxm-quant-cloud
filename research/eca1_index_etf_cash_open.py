@@ -60,8 +60,8 @@ def bar_at(rows,open_at):
     return found[0]
 
 
-def decision(day,index_bars,etf_bars):
-    """No feature or quote after 09:35 used to form entry intent."""
+def entry_event(day,index_bars,etf_bars):
+    """ONLY completed first cash M5 bar at 09:35: causal source intent."""
     start=stamp(day,9,30)
     idx,etf=bar_at(index_bars,start),bar_at(etf_bars,start)
     if idx is None or etf is None:
@@ -72,16 +72,26 @@ def decision(day,index_bars,etf_bars):
     d_etf=(etf[5]>etf[2])-(etf[5]<etf[2])
     if d_idx==0 or d_etf==0 or d_idx==d_etf:
         return {"state":"NO_OPENING_PRICE_DISCOVERY_DISCREPANCY"}
-    # 10:00 monitor is ONLY an exit state, never entry selection.
-    close_at_935=idx[5]
+    return {"state":"CAUSAL_0935_EVENT","side":d_idx,
+            "etfFirstSide":d_etf}
+
+
+def decision(day,index_bars,etf_bars):
+    """Only 09:35 entry feature; 10:00 later bars affect exit only."""
+    causal=entry_event(day,index_bars,etf_bars)
+    if causal["state"]!="CAUSAL_0935_EVENT":
+        return causal
+    start=stamp(day,9,30)
+    idx=bar_at(index_bars,start)
     path=[bar_at(index_bars,start+M5*i) for i in range(1,6)]
     if any(x is None for x in path):
         return {"state":"SIGNAL_EXIT_MONITOR_BARS_MISSING",
-                "side":d_idx,"etfFirstSide":d_etf}
-    index_to_1000=path[-1][5]
-    invalidated=d_idx*(index_to_1000-close_at_935)<0
+                "side":causal["side"],
+                "etfFirstSide":causal["etfFirstSide"]}
+    invalidated=causal["side"]*(path[-1][5]-idx[5])<0
     return {"state":"SIGNAL_WITH_CAUSAL_EXIT",
-            "side":d_idx,"etfFirstSide":d_etf,
+            "side":causal["side"],
+            "etfFirstSide":causal["etfFirstSide"],
             "invalidation":invalidated,
             "exit":"10:05" if invalidated else "10:30"}
 
@@ -366,9 +376,8 @@ def main():
                     v=rec["bars"][etf]
                     if i is None or v is None:
                         continue
-                    ent=decision(day,i,v)
-                    if ent["state"] in ("SIGNAL_WITH_CAUSAL_EXIT",
-                                       "SIGNAL_EXIT_MONITOR_BARS_MISSING"):
+                    ent=entry_event(day,i,v)
+                    if ent["state"]=="CAUSAL_0935_EVENT":
                         event_names.append(etf)
                 if event_names:
                     bar_quote_intents+=len(event_names)
