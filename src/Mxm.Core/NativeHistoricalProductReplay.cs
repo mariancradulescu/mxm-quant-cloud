@@ -17,7 +17,8 @@ public sealed record NativeHistoricalBars(string Symbol,
 public sealed record NativeHistoricalQuoteObservation(
     long At,LedgerQuote Quote,NativeObservedContractTerms? Contract,
     decimal SlippagePerSideQuote,int HoldingMinutes=30,
-    string ExitPolicy=NativeCausalExitResearch.FrozenFixed);
+    string ExitPolicy=NativeCausalExitResearch.FrozenFixed,
+    NativeProspectiveSessionRiskEvidence? SessionAdmissionEvidence=null);
 public sealed record NativeHistoricalMarketTape(
     string SourceLabel,NativeHistoricalBars[] Bars,
     NativeHistoricalQuoteObservation[] Quotes);
@@ -181,7 +182,8 @@ public static class NativeHistoricalProductReplay
                x.Quote.Symbol!=x.Contract.Symbol||
                !paths.ContainsKey(x.Quote.Symbol)||
                x.SlippagePerSideQuote<0||x.HoldingMinutes<15||
-               x.HoldingMinutes>240||
+               (ResearchMode.StartsWith("NXE1_",StringComparison.Ordinal)?
+                   x.HoldingMinutes>10080:x.HoldingMinutes>240)||
                !NativeCausalExitResearch.Supported(x.ExitPolicy)))
             throw new ArgumentException("HISTORICAL_TAPE_BROKER_QUOTE_CONTRACT_MISSING");
         var samples=tape.Quotes.OrderBy(x=>x.At)
@@ -191,7 +193,9 @@ public static class NativeHistoricalProductReplay
             throw new ArgumentException("HISTORICAL_TAPE_DUPLICATED_QUOTE_SYMBOL_CLOCK");
         bool sessionStudy=ResearchMode.StartsWith("SCT1_",StringComparison.Ordinal);
         bool historicalStress=ResearchMode.StartsWith("DCP1_",StringComparison.Ordinal)||ResearchMode.StartsWith("CDE1_",StringComparison.Ordinal)||sessionStudy || ResearchMode.StartsWith("WFG1_",StringComparison.Ordinal) || ResearchMode.StartsWith("JRS1_",StringComparison.Ordinal)||ResearchMode.StartsWith("AEX1_",StringComparison.Ordinal)||ResearchMode.StartsWith("ETP1_",StringComparison.Ordinal)||ResearchMode.StartsWith("JYP1_",StringComparison.Ordinal)||ResearchMode.StartsWith("YRC1_",StringComparison.Ordinal)||ResearchMode.StartsWith("MSE1_",StringComparison.Ordinal);
-        var simulation=new NativeProductResearchLoop(ResearchMode,calibrationBoundary:CalibrationBoundary,integratedSnapshot:IntegratedSnapshot);
+        var simulation=new NativeProductResearchLoop(ResearchMode,calibrationBoundary:CalibrationBoundary,
+            integratedSnapshot:IntegratedSnapshot,
+            requireProspectiveExitFeasibility:ResearchMode.StartsWith("NXE1_",StringComparison.Ordinal));
         var reasonCounts=new Dictionary<string,int>(StringComparer.Ordinal);
         var categoryCounts=new Dictionary<string,int>(StringComparer.Ordinal);
         var signalFamilies=new Dictionary<string,int>(StringComparer.Ordinal);
@@ -210,7 +214,8 @@ public static class NativeHistoricalProductReplay
                         sessionStudy?128:NativeCausalWarmup.WindowBars),
                     x.Quote,x.Contract,x.SlippagePerSideQuote,x.HoldingMinutes,
                     IndependentlySupportedAgainstBenchmark:false,
-                    ExitPolicy:x.ExitPolicy);
+                    ExitPolicy:x.ExitPolicy,
+                    SessionAdmissionEvidence:x.SessionAdmissionEvidence);
             }).ToArray();
             last=simulation.Advance(group.Key,inputs,UnqualifiedShadowMode);
             foreach(var signal in last.LatestSignals)

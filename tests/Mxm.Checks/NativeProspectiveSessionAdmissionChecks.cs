@@ -18,7 +18,11 @@ public static class NativeProspectiveSessionAdmissionChecks
         };
         var e=new NativeProspectiveSessionRiskEvidence(
             "America/New_York",intervals,at-60000,at,120,1000,
-            true,true,300m,300m,300m,249.315m,40m);
+            true,true,300m,300m,300m,249.315m,40m) {
+                QuoteConversionRouteCovered=true,
+                MonitoringCalendarCoveredThroughMs=at+1600L*60000L,
+                GapReserveCoversAllInterruptions=true
+            };
         var rejected=NativeProspectiveSessionAdmission.Assess(e);
         check(!rejected.Admit && rejected.PlannedProtectionCrossesClosure &&
             rejected.Reason=="PROTECTIVE_EXIT_CROSSES_SESSION_CLOSE",
@@ -54,6 +58,20 @@ public static class NativeProspectiveSessionAdmissionChecks
         check(!NativeProspectiveSessionAdmission.Assess(e with {
             HolidayCalendarCovered=false
         }).Admit,"uncertified holiday exceptions block protective planning");
+        check(NativeProspectiveSessionAdmission.Assess(e with {
+            QuoteConversionRouteCovered=false
+        }).Reason=="BIDASK_OR_FINANCIAL_CONVERSION_ROUTE_MISSING",
+            "missing EUR conversion rejects new position");
+        check(NativeProspectiveSessionAdmission.Assess(e with {
+            MonitoringCalendarCoveredThroughMs=at+60000
+        }).Reason=="FULL_POSITION_MONITORING_CALENDAR_NOT_COVERED",
+            "monitoring window must cover protection and latency");
+        check(NativeProspectiveSessionAdmission.Assess(e with {
+            ExplicitSessionGapAcceptance=true,
+            GapReserveCoversAllInterruptions=false,
+            AdditionalGapLossReserveEur=25m
+        }).Reason=="ALL_SESSION_INTERRUPTION_GAPS_NOT_UNDERWRITTEN",
+            "one gap reserve cannot silently authorize multiple unknown closures");
         check(NativeProspectiveSessionAdmission.Assess(e with {
             ProtectiveMinutes=1500,ExplicitSessionGapAcceptance=true,
             AdditionalGapLossReserveEur=25m

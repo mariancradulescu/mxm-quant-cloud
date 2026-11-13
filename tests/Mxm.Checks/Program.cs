@@ -11,6 +11,7 @@ NativeCausalWarmupChecks.Run(Check);
 NativeResearchUniverseChecks.Run(Check);
 NativeCausalExitResearchChecks.Run(Check);
 NativeProspectiveSessionAdmissionChecks.Run(Check);
+NativeNxe1MandatoryAdmissionChecks.Run(Check);
 NativeProductResearchLoopChecks.Run(Check);
 DiscoveryAdmissionChecks.Run(Check);
 NativeHistoricalProductReplayChecks.Run(Check);

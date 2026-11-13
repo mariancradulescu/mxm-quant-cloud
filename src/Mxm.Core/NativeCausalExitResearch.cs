@@ -71,7 +71,7 @@ public static class NativeCausalExitResearch
         if(!Supported(policy) || at<=openAt || openAt<=0 ||
            side is not (1 or -1) || entryPrice<=0 ||
            quote is null || quote.At!=at || quote.Bid<=0 ||
-           quote.Ask<quote.Bid || maximumMinutes is <15 or >240 ||
+           quote.Ask<quote.Bid || maximumMinutes<15 ||
            m5 is null || m15 is null)
             throw new ArgumentException("EXIT_POLICY_NONCAUSAL_OR_UNSUPPORTED");
         // Exact already-exposed replays must preserve their original holding
