@@ -1,0 +1,106 @@
+name: MSE1 original Pepperstone multi-class session adaptive economic research
+on:
+  pull_request:
+    paths:
+      - 'research/MSE1.md'
+      - 'research/mse1.py'
+      - 'src/Mxm.Core/NativeMultiSessionEconomicsResearch.cs'
+      - 'src/Mxm.Replay/NativeMultiSessionEconomicsExperiment.cs'
+      - 'src/Mxm.Core/NativeCausalExitResearch.cs'
+      - 'tests/Mxm.Checks/NativeCausalExitResearchChecks.cs'
+      - '.github/workflows/mse1.yml'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/mse1.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - run: python -m py_compile research/mse1.py research/native_original_openapi_product_replay.py
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - run: dotnet build src/Mxm.Replay -c Release
+  custody-recipient:
+    needs: verify
+    if: >-
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      github.actor == 'mariancradulescu' &&
+      github.run_attempt == '1' &&
+      startsWith(github.event.head_commit.message, 'MSE1_ORIGINAL_READONLY_ONE_TIME')
+    environment: mxm-r3-custody-v1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - name: Derive original protected run-bound recipient without creating new identity
+        run: python -m research.custody_new
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: mse1-original-custody-recipient
+          path: new-recipient-output/
+          if-no-files-found: error
+          retention-days: 30
+  original-pepperstone-development:
+    needs: custody-recipient
+    environment: mxm-r3-pepperstone-v1
+    concurrency:
+      group: mxm-existing-oauth-read-only
+      cancel-in-progress: false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: mse1-original-custody-recipient
+          path: new-recipient-output
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - run: dotnet build src/Mxm.Replay -c Release
+      - name: Collect frozen read-only US2000 SpotCrude Coffee US500 EURUSD original M5 BID ASK market history
+        run: python -m research.mse1
+        env:
+          R3_CTRADER_CLIENT_ID: ${{ secrets.R3_CTRADER_CLIENT_ID }}
+          R3_CTRADER_CLIENT_SECRET: ${{ secrets.R3_CTRADER_CLIENT_SECRET }}
+          R3_CTRADER_ACCESS_TOKEN: ${{ secrets.R3_CTRADER_ACCESS_TOKEN }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: mse1-original-pepperstone-encrypted-source
+          path: mse1-original-native-tape.v2.enc
+          if-no-files-found: ignore
+          retention-days: 90
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: mse1-original-pepperstone-public-economic-receipt
+          path: mse1-public.json
+          if-no-files-found: error
+          retention-days: 90

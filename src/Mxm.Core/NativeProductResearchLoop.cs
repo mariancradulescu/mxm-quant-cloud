@@ -94,6 +94,7 @@ public sealed class NativeProductResearchLoop
             "ETP1_JOINT" or "ETP1_LEADER" or "ETP1_FOLLOWER" or "ETP1_LONG" or "ETP1_SHORT" or "ETP1_FIXED" or "ETP1_CASH" or
             "JYP1_JOINT" or "JYP1_NZD" or "JYP1_AUD" or "JYP1_LONG" or "JYP1_SHORT" or "JYP1_FIXED" or "JYP1_CASH" or
             "YRC1_JOINT" or "YRC1_NZD_ONLY" or "YRC1_CAD_ONLY" or "YRC1_LONG" or "YRC1_SHORT" or "YRC1_FIXED" or "YRC1_CASH" or
+            "MSE1_JOINT" or "MSE1_INDEX" or "MSE1_OIL" or "MSE1_COFFEE" or "MSE1_LONG" or "MSE1_SHORT" or "MSE1_FIXED" or "MSE1_CASH" or "MSE1_EXCEPT_INDEX" or "MSE1_EXCEPT_OIL" or "MSE1_EXCEPT_COFFEE" or
             "FCE1_JOINT" or "FCE1_FX" or "FCE1_COMMODITY" or "FCE1_LONG" or "FCE1_SHORT" or "FCE1_MINIMUM" or
             "PRR1_JOINT" or "PRR1_INDEX" or "PRR1_CRUDE" or "PRR1_LONG" or "PRR1_SHORT" or
             "BMR1_JOINT" or "BMR1_FX" or "BMR1_GOLD" or "BMR1_LONG" or "BMR1_SHORT" or
@@ -482,8 +483,9 @@ public sealed class NativeProductResearchLoop
         bool techStudy=researchMode.StartsWith("ETP1_",StringComparison.Ordinal);
         bool yenStudy=researchMode.StartsWith("JYP1_",StringComparison.Ordinal);
         bool yenRiskStudy=researchMode.StartsWith("YRC1_",StringComparison.Ordinal);
+        bool multiSessionStudy=researchMode.StartsWith("MSE1_",StringComparison.Ordinal);
         bool fundingGateStudy=researchMode.StartsWith("WFG1_",StringComparison.Ordinal);
-        bool jointStudy=conditionalResearch || fundingGateStudy || sessionStudy || researchMode.StartsWith("JRS1_",StringComparison.Ordinal) || adaptiveStudy || techStudy || yenStudy || yenRiskStudy;
+        bool jointStudy=conditionalResearch || fundingGateStudy || sessionStudy || researchMode.StartsWith("JRS1_",StringComparison.Ordinal) || adaptiveStudy || techStudy || yenStudy || yenRiskStudy || multiSessionStudy;
         bool useJointStress=jointStudy && researchMode is not ("JRS1_REPEATED" or "SCT1_REPEATED");
         var stressEuro=jointStudy?byName.GetValueOrDefault("EURUSD"):null;
         bool factorStudy=researchMode.StartsWith("FCE1_",StringComparison.Ordinal);
@@ -635,6 +637,23 @@ public sealed class NativeProductResearchLoop
                 if(forecast.Side==0)continue;
                 side=researchMode=="SCT1_LONG"?1:
                     researchMode=="SCT1_SHORT"?-1:forecast.Side;
+                driver=forecast.Magnitude;
+                mechanism=forecast.Mechanism;
+            }
+            else if(multiSessionStudy)
+            {
+                if(researchMode=="MSE1_CASH" ||
+                   market.Symbol is not ("US2000" or "SpotCrude" or "Coffee"))continue;
+                if((researchMode=="MSE1_INDEX" && market.Symbol!="US2000") ||
+                   (researchMode=="MSE1_OIL" && market.Symbol!="SpotCrude") ||
+                   (researchMode=="MSE1_COFFEE" && market.Symbol!="Coffee") ||
+                   (researchMode=="MSE1_EXCEPT_INDEX" && market.Symbol=="US2000") ||
+                   (researchMode=="MSE1_EXCEPT_OIL" && market.Symbol=="SpotCrude") ||
+                   (researchMode=="MSE1_EXCEPT_COFFEE" && market.Symbol=="Coffee"))continue;
+                var forecast=NativeMultiSessionEconomicsResearch.Forecast(market,byName,at);
+                if(forecast.Side==0)continue;
+                side=researchMode=="MSE1_LONG"?1:
+                     researchMode=="MSE1_SHORT"?-1:forecast.Side;
                 driver=forecast.Magnitude;
                 mechanism=forecast.Mechanism;
             }
@@ -1445,8 +1464,11 @@ public sealed class NativeProductResearchLoop
                 continue;
             }
             decimal units=c.MinimumUnits;
-            string effectiveExitPolicy=(researchMode=="AEX1_FIXED" || researchMode=="ETP1_FIXED" || researchMode=="JYP1_FIXED" || researchMode=="YRC1_FIXED")?
+            string effectiveExitPolicy=(researchMode=="AEX1_FIXED" || researchMode=="ETP1_FIXED" || researchMode=="JYP1_FIXED" || researchMode=="YRC1_FIXED" || researchMode=="MSE1_FIXED")?
                 NativeCausalExitResearch.FrozenFixed:mechanism switch {
+                NativeMultiSessionEconomicsResearch.Index=>NativeCausalExitResearch.Chandelier,
+                NativeMultiSessionEconomicsResearch.Oil=>NativeCausalExitResearch.AtrProfitLock,
+                NativeMultiSessionEconomicsResearch.Agriculture=>NativeCausalExitResearch.EquilibriumReversion,
                 NativeYenRiskReleaseResearch.FailedAuction=>NativeCausalExitResearch.EquilibriumReversion,
                 NativeYenRiskReleaseResearch.RelativeRepricing=>NativeCausalExitResearch.AtrProfitLock,
                 NativePacificYenResearch.CatchUp=>NativeCausalExitResearch.PredictionInvalidation,
@@ -1499,7 +1521,10 @@ public sealed class NativeProductResearchLoop
                 "BMR1_XAUUSD_RELEASE_REPRICING"=>NativeCausalExitResearch.PredictionInvalidation,
                 _=>market.ExitPolicy
             };
-            int effectiveHolding=(researchMode=="AEX1_FIXED" || researchMode=="ETP1_FIXED" || researchMode=="JYP1_FIXED" || researchMode=="YRC1_FIXED")?90:mechanism switch {
+            int effectiveHolding=(researchMode=="AEX1_FIXED" || researchMode=="ETP1_FIXED" || researchMode=="JYP1_FIXED" || researchMode=="YRC1_FIXED" || researchMode=="MSE1_FIXED")?90:mechanism switch {
+                NativeMultiSessionEconomicsResearch.Index=>135,
+                NativeMultiSessionEconomicsResearch.Oil=>150,
+                NativeMultiSessionEconomicsResearch.Agriculture=>120,
                 NativeYenRiskReleaseResearch.FailedAuction=>120,
                 NativeYenRiskReleaseResearch.RelativeRepricing=>150,
                 NativePacificYenResearch.CatchUp=>150,
