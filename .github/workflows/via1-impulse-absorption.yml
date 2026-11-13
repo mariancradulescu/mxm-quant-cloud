@@ -24,6 +24,7 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m py_compile research/via1_impulse_absorption.py research/test_via1_impulse_absorption.py
+      - run: python -m pip install -r research/requirements.txt
       - run: python -m unittest research.test_via1_impulse_absorption
   preserved-nxe1-readonly-replay:
     needs: verify
