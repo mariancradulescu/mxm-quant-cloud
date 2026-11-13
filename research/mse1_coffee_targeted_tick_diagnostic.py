@@ -11,7 +11,7 @@ from hashlib import sha256
 import json
 import os
 from pathlib import Path
-from .collect import authenticate
+from .owner_readonly_auth import authenticate
 from .ctrader_transport import StdlibCTraderTransport
 from .ctrader_proto import OpenApiMessages_pb2 as m
 from .ctrader_proto import OpenApiModelMessages_pb2 as model
