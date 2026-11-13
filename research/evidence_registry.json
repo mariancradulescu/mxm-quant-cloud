@@ -209,6 +209,27 @@
   },
   "prospectiveStudies": [
     {
+      "id": "QPI1",
+      "status": "FROZEN_PRE_SCORE_SIGNAL_QUALITY_ORIGINAL_TICKS_NOT_EXECUTED",
+      "independent": false,
+      "qualification": false,
+      "fundedNetEur": null,
+      "protocol": "research/QPI1_QUOTE_EVENT_QUALITY.md",
+      "protocolFrozenCommit": "9d6d4740fdac6f794b88f066412576a25fbbea8f",
+      "sourceRunId": null,
+      "targets": ["USDCHF", "EURGBP"],
+      "economicPremise": "INDEPENDENT_BID_ASK_TICK_REVISION_PRESSURE_AND_CAUSAL_SCORE_MAGNITUDE",
+      "causalExit": "FIRST_10_OR_20_MINUTE_OPPOSITE_REVISION_PRESSURE_OR_30_MINUTE_CEILING",
+      "calendar": "2026-09-14/2026-11-09_EXPOSED_GLOBAL_RESEARCH",
+      "decisionTimesUtc": "MON_FRI_09_14",
+      "trialPolicy": "two fixed target symbols one exact rule no post-outcome thresholds",
+      "outcomeTraining": "prior_four_calendar_weeks_strength_only_no_outcome_selected_THRESHOLD",
+      "historicalDepth": false,
+      "historicalTariffContinuityCertified": false,
+      "newOriginalPepperstoneReadOnlyResearch": true,
+      "closedOldExactResearchUnchanged": true
+    },
+    {
       "id": "VIA1",
       "status": "CLOSED_EXACT_RULE_NO_PROMOTION_INCREMENTAL_ADVERSE_FAILED",
       "protocolFile": "research/VIA1_IMPULSE_ABSORPTION.md",
