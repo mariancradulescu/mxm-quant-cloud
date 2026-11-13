@@ -1,6 +1,7 @@
 """Read-only postclosure reconciliation of the MSE1 public financial receipt.
 
-Usage: python -m research.mse1_coffee_postclosure_diagnostic /path/to/mse1-public.json\nOR:  python -m research.mse1_coffee_postclosure_diagnostic /path/to/original_artifact.zip
+Usage: python -m research.mse1_coffee_postclosure_diagnostic /path/to/mse1-public.json
+OR:  python -m research.mse1_coffee_postclosure_diagnostic /path/to/original_artifact.zip
 No cTrader calls, ciphertext decryption, strategy rerun or synthetic prices.
 """
 import hashlib
@@ -11,8 +12,12 @@ from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
 def examine(artifact):
-    with zipfile.ZipFile(artifact) as z:
-        original=z.read("mse1-public.json")
+    if str(artifact).endswith(".zip"):
+        with zipfile.ZipFile(artifact) as z:
+            original=z.read("mse1-public.json")
+    else:
+        from pathlib import Path
+        original=Path(artifact).read_bytes()
     data=json.loads(original)
     assert data["Study"]=="MSE1"
     assert data["SourceSha256"]=="068cf7a396d0cddfc59b856f95f930b7bff83eddef4c8beae556243e168c4f7e"
