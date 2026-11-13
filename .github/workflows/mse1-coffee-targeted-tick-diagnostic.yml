@@ -28,7 +28,7 @@ jobs:
     if: >-
       github.event_name == 'push' && github.ref == 'refs/heads/main' &&
       github.actor == 'mariancradulescu' && github.run_attempt == '1' &&
-      startsWith(github.event.head_commit.message, 'OWNER_MSE1_COFFEE_TARGETED_TICKS_ONCE')
+      startsWith(github.event.head_commit.message, 'OWNER_MSE1_COFFEE_TICKS_AUTH_SCOPE_RECOVERY_ONCE')
     environment: mxm-r3-custody-v1
     runs-on: ubuntu-24.04
     timeout-minutes: 8
