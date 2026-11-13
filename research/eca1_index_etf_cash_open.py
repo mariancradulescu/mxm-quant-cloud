@@ -120,6 +120,7 @@ def mean_field(rows,path):
 
 def group(rows):
     policies=("eca1","sameSideFixed","ownEtfMomentum","long","short","cash")
+    gross=[r for r in rows if "policy" in r]
     priced=[r for r in rows if r["state"]=="MATCHED_CAUSAL_ECONOMIC_QUOTES"]
     return {
         "calendarDays":len(rows),
@@ -128,18 +129,19 @@ def group(rows):
             "SIGNAL_MISSING_ENTRY_OR_EXIT_QUOTE",
             "SIGNAL_MISSING_FX_CONVERSION",
             "SIGNAL_MONITOR_UNKNOWN",
-            "SIGNAL_FEE_OR_FINANCING_UNKNOWN",
+            "SIGNAL_PRICED_GROSS_NO_TARIFF",
             "SIGNAL_BENCHMARK_QUOTE_MISSING",
-            "MATCHED_CAUSAL_ECONOMIC_QUOTES")
-            for x in rows),
-        "matchedPriced":len(priced),
-        "weeksWithPriced":len({x["week"] for x in priced}),
-        "conditionalGrossMidpointBpsMean":mean_field(priced,("policy","eca1",0)),
-        "crossingBeforeCostBpsMean":mean_field(priced,("policy","eca1",1)),
+            "MATCHED_CAUSAL_ECONOMIC_QUOTES") for x in rows),
+        "grossComparablePriced":len(gross),
+        "currentContractNetComparablePriced":len(priced),
+        "weeksWithGross":len({x["week"] for x in gross}),
+        "weeksWithNet":len({x["week"] for x in priced}),
+        "conditionalGrossMidpointBpsMean":mean_field(gross,("policy","eca1",0)),
+        "crossingBeforeCostBpsMean":mean_field(gross,("policy","eca1",1)),
         "midpointBpsMeanByPolicy":{
-            k:mean_field(priced,("policy",k,0)) for k in policies},
+            k:mean_field(gross,("policy",k,0)) for k in policies},
         "crossingBeforeCostBpsMeanByPolicy":{
-            k:mean_field(priced,("policy",k,1)) for k in policies},
+            k:mean_field(gross,("policy",k,1)) for k in policies},
         "currentContractConditionalEur":{
             scenario:{k:{
                 "sum":round(sum(z["money"][scenario][k]["netEur"] for z in priced),6),
@@ -227,8 +229,9 @@ def evaluate(original,contracts,status):
                                 c,opening,ending,fxopen,fxclose,side,slip)
                 except (Unpriced,ValueError) as err:
                     rows.append({"week":week,
-                        "state":"SIGNAL_FEE_OR_FINANCING_UNKNOWN",
-                        "reason":str(err)[:100]})
+                        "state":"SIGNAL_PRICED_GROSS_NO_TARIFF",
+                        "reason":str(err)[:100],
+                        "policy":policy})
                     continue
                 rows.append({"week":week,
                     "state":"MATCHED_CAUSAL_ECONOMIC_QUOTES",
@@ -444,7 +447,7 @@ def main():
     print("ECA1_ORIGINAL_ECONOMIC_SCREEN",json.dumps({
         "readOnlyRequests":count,"barOnlyCausalIntents":bar_quote_intents,
         "coverage":{k:{"all":v["all"]["states"],
-                       "priced":v["all"]["matchedPriced"],
+                       "priced":v["all"]["currentContractNetComparablePriced"],
                        "adverse":v["all"]["currentContractConditionalEur"]["adverse"]["eca1"]}
                     for k,v in out.items()}}),flush=True)
 
