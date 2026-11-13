@@ -247,6 +247,12 @@ def collect_and_evaluate(profile=None):
              and assets.get(trader.trader.depositAssetId) == "EUR",
              "BROKER_OR_EUR_ACCOUNT_MISMATCH")
         roster = {x.symbolName:x for x in roster_reply.symbol if x.enabled}
+        for canonical, aliases in (profile or {}).get("source_symbol_aliases", {}).items():
+            if canonical not in roster:
+                matches = [roster[alias] for alias in aliases if alias in roster]
+                need(len(matches) <= 1, "AMBIGUOUS_SOURCE_SYMBOL_ALIAS")
+                if matches:
+                    roster[canonical] = matches[0]
         optional = frozenset(profile.get("optional_symbols", ())) if profile else frozenset()
         excluded = {x: "SYMBOL_UNAVAILABLE" for x in symbols if x in optional and x not in roster}
         symbols = tuple(x for x in symbols if x not in excluded)
@@ -580,6 +586,13 @@ def collect_and_evaluate(profile=None):
         if extended and profile.get("session_map"):
             tape["Schedules"] = schedule_by_symbol
             tape["RawPairClocks"] = raw_pair_clocks
+        if profile and profile.get("capture_only"):
+            tape["BrokerSymbolNames"] = {name: roster[name].symbolName for name in symbols}
+            tape["MarginGrid"] = observed_margin_grid
+            tape["ReadOnlyRequests"] = counter
+            tape["ExcludedOptionalSymbols"] = excluded
+            profile["tape_consumer"](json.dumps(tape,separators=(",",":")).encode())
+            return
         with tempfile.TemporaryDirectory(prefix="mxm-openapi-native-") as folder:
             input_file=Path(folder)/"source.json"
             output_file=Path(folder)/"receipt.json"
