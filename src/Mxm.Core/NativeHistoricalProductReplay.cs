@@ -182,8 +182,8 @@ public static class NativeHistoricalProductReplay
                x.Quote.Symbol!=x.Contract.Symbol||
                !paths.ContainsKey(x.Quote.Symbol)||
                x.SlippagePerSideQuote<0||x.HoldingMinutes<15||
-               (ResearchMode.StartsWith("NXE1_",StringComparison.Ordinal)?
-                   x.HoldingMinutes>10080:x.HoldingMinutes>240)||
+               (!ResearchMode.StartsWith("NXE1_",StringComparison.Ordinal)&&
+                   x.HoldingMinutes>240)||
                !NativeCausalExitResearch.Supported(x.ExitPolicy)))
             throw new ArgumentException("HISTORICAL_TAPE_BROKER_QUOTE_CONTRACT_MISSING");
         var samples=tape.Quotes.OrderBy(x=>x.At)
