@@ -106,10 +106,12 @@ public sealed class NativeProductResearchLoop
             "LDP1_JOINT" or "LDP1_SILVER" or "LDP1_FX" or "LDP1_LONG" or "LDP1_SHORT" or
             "RRP1_JOINT" or "RRP1_EQUITY" or "RRP1_GOLD" or
             "BRENT_AMD_JOINT_W42W43" or
-            "ONLY_BRENT_W42W43" or "ONLY_AMD_W42W43"))
+            "ONLY_BRENT_W42W43" or "ONLY_AMD_W42W43" or
+            "NXE1_JOINT" or "NXE1_EXISTING" or "NXE1_NEW" or "NXE1_CASH"))
             throw new ArgumentException("UNDECLARED_RESEARCH_MECHANISM");
         this.researchMode=researchMode;
-        this.requireProspectiveExitFeasibility=requireProspectiveExitFeasibility;
+        this.requireProspectiveExitFeasibility=requireProspectiveExitFeasibility ||
+            researchMode.StartsWith("NXE1_",StringComparison.Ordinal);
         inventoryResearch=researchMode.StartsWith("WIR1_",StringComparison.Ordinal);
         discoveryResearch=researchMode.StartsWith("DCP1_",StringComparison.Ordinal);
         conditionalResearch=discoveryResearch || researchMode.StartsWith("CDE1_",StringComparison.Ordinal);
@@ -313,7 +315,8 @@ public sealed class NativeProductResearchLoop
            markets.Select(x=>x.Symbol).Distinct(StringComparer.Ordinal).Count()!=markets.Length ||
            markets.Any(x=>x.Quote.At!=at||string.IsNullOrWhiteSpace(x.Symbol)||
                x.Symbol!=x.Quote.Symbol||x.SlippagePerSideQuote<0||
-               x.HoldingMinutes<15||x.HoldingMinutes>240||
+               x.HoldingMinutes<15||(researchMode.StartsWith("NXE1_",StringComparison.Ordinal)?
+                    x.HoldingMinutes>10080:x.HoldingMinutes>240)||
                !NativeCausalExitResearch.Supported(x.ExitPolicy)))
             throw new ArgumentException("PRODUCT_REPLAY_NONCAUSAL_MARKET_CLOCK");
         // Do not silently bridge unobserved intrahorizon equity. Offline replay
@@ -1565,28 +1568,6 @@ public sealed class NativeProductResearchLoop
                 "BMR1_XAUUSD_RELEASE_REPRICING"=>45,
                 _=>market.HoldingMinutes
             };
-            // Prospective-only underwriting. All previously frozen MSE1/YRC1
-            // configurations still receive their original null evidence and
-            // false constructor flag: no retrospective risk rewrite.
-            if(requireProspectiveExitFeasibility ||
-               market.SessionAdmissionEvidence is not null)
-            {
-                var e=market.SessionAdmissionEvidence;
-                var gate=e is null?new NativeSessionAdmissionResult(
-                    false,"SESSION_EVIDENCE_MISSING",null,false,false):
-                    e.DecisionAtMs!=at || e.ProtectiveMinutes!=effectiveHolding?
-                    new NativeSessionAdmissionResult(false,
-                        "SESSION_EVIDENCE_POLICY_BINDING_MISMATCH",null,false,false):
-                    NativeProspectiveSessionAdmission.Assess(e);
-                if(!gate.Admit)
-                {
-                    rejected++;
-                    recent.Add(new(market.Symbol,at,side,
-                        "PROSPECTIVE_SESSION_EXIT_RISK_REJECTED",null,null,null,
-                        gate.Reason,mechanism));
-                    continue;
-                }
-            }
             NativeExitSeed decisionSeed=new(0m,0m);
             if(effectiveExitPolicy!=NativeCausalExitResearch.FrozenFixed &&
                !NativeCausalExitResearch.TrySeed(market.M5,market.M15,
@@ -1597,6 +1578,37 @@ public sealed class NativeProductResearchLoop
                     "MODEL_CAUSAL_EXIT_EVIDENCE_MISSING",null,null,null,
                     "EXIT_ENTRY_WARMUP_OR_CALENDAR_INVALID",mechanism));
                 continue;
+            }
+            // New-mode gate binds actual common-equity and minimum physical risk.
+            if(requireProspectiveExitFeasibility || market.SessionAdmissionEvidence is not null)
+            {
+                var supplied=market.SessionAdmissionEvidence;
+                var book=session.Ledger.Summary(at);
+                decimal actualMargin=q.MarginPerUnit*units;
+                decimal lowerLoss=(1.5m*decisionSeed.AtrQuote+q.Ask-q.Bid+
+                    2m*market.SlippagePerSideQuote)*units*q.EurDebit+2m*Fee(q,units);
+                string? missing=supplied is null?"SESSION_EVIDENCE_MISSING":
+                    supplied.DecisionAtMs!=at||supplied.ProtectiveMinutes!=effectiveHolding?
+                        "SESSION_EVIDENCE_POLICY_BINDING_MISMATCH":
+                    supplied.NewMarginEur<actualMargin?
+                        "SESSION_MARGIN_BELOW_AUTHENTIC_NATIVE_COST":
+                    supplied.MarginalAdverseLossEur is not decimal loss||loss<lowerLoss?
+                        "SESSION_MARGINAL_ADVERSE_LOSS_UNDERSTATED":null;
+                var admission=missing is null?
+                    NativeProspectiveSessionAdmission.Assess(supplied! with {
+                        NewMarginEur=actualMargin,
+                        CommonLiquidationEquityEur=book.LiquidationEquityEur,
+                        CommonPeakEquityEur=book.ObservedPeakEur,
+                        CommonFreeMarginEur=book.FreeMarginEur
+                    }):new NativeSessionAdmissionResult(false,missing,null,false,false);
+                if(!admission.Admit)
+                {
+                    rejected++;
+                    recent.Add(new(market.Symbol,at,side,
+                        "PROSPECTIVE_SESSION_EXIT_RISK_REJECTED",null,null,null,
+                        admission.Reason,mechanism));
+                    continue;
+                }
             }
             if(!integratedResearch && tracked.Values.Any(x=>x.Symbol==market.Symbol))
             {
