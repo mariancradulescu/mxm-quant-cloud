@@ -1,0 +1,276 @@
+{
+  "training_slots_initial": 777,
+  "evaluation_slots": 1232,
+  "evaluation_missing": 8,
+  "median_eligible_slots_week": 40.0,
+  "horizon_minutes": 60,
+  "models_mse_bps2": {
+    "with_oil": 260.5716400759401,
+    "without_oil": 259.9615573824693
+  },
+  "mean_gross_bps_per_slot": {
+    "with_oil": -0.7984289917597073,
+    "without_oil": -0.8320592018576652,
+    "long": 0.057728193539553205,
+    "short": -0.057728193539553205,
+    "cash": 0
+  },
+  "gross_break_even_all_in_bps_per_slot": -0.7984289917597073,
+  "weekly_bootstrap_95pct": {
+    "mse_improvement_bps2": [
+      -1.8467678178629592,
+      0.33221568936232193
+    ],
+    "model_bps": [
+      -2.1952055053222526,
+      0.4026247461955792
+    ],
+    "increment_vs_no_oil_bps": [
+      -0.8793347179721424,
+      0.8664361218169275
+    ],
+    "increment_vs_long_bps": [
+      -2.418570296117381,
+      0.3762386899325261
+    ],
+    "increment_vs_short_bps": [
+      -2.242263114197974,
+      0.6570493052641654
+    ]
+  },
+  "oil_coefficient_positive_weeks": 24,
+  "oil_coefficient_range": [
+    -0.014884165916746076,
+    0.008662293993590312
+  ],
+  "gross_per_slot_bps_quantiles": {
+    "p01": -41.466379932699155,
+    "p05": -24.022923711866724,
+    "p50": -0.6085154057724143,
+    "p95": 22.87143520374231
+  },
+  "gross_losing_slots": 636,
+  "paired_development_screen_passed": false,
+  "weekly": [
+    {
+      "week_utc": "2026-02-09",
+      "slots": 40,
+      "missing": 0,
+      "gross_model_bps_sum": 32.46059623617288
+    },
+    {
+      "week_utc": "2026-02-16",
+      "slots": 40,
+      "missing": 0,
+      "gross_model_bps_sum": 111.75430584082014
+    },
+    {
+      "week_utc": "2026-02-23",
+      "slots": 40,
+      "missing": 0,
+      "gross_model_bps_sum": 94.95807579205713
+    },
+    {
+      "week_utc": "2026-03-02",
+      "slots": 40,
+      "missing": 0,
+      "gross_model_bps_sum": -42.56340936708452
+    },
+    {
+      "week_utc": "2026-03-09",
+      "slots": 40,
+      "missing": 0,
+      "gross_model_bps_sum": 32.06873745649845
+    },
+    {
+      "week_utc": "2026-03-16",
+      "slots": 40,
+      "missing": 0,
+      "gross_model_bps_sum": -78.64464010454815
+    },
+    {
+      "week_utc": "2026-03-23",
+      "slots": 40,
+      "missing": 0,
+      "gross_model_bps_sum": -103.86652911212485
+    },
+    {
+      "week_utc": "2026-03-30",
+      "slots": 32,
+      "missing": 8,
+      "gross_model_bps_sum": 56.94940734914401
+    },
+    {
+      "week_utc": "2026-04-06",
+      "slots": 40,
+      "missing": 0,
+      "gross_model_bps_sum": -36.335324110071895
+    },
+    {
+      "week_utc": "2026-04-13",
+      "slots": 40,
+      "missing": 0,
+      "gross_model_bps_sum": 59.461043091634934
+    },
+    {
+      "week_utc": "2026-04-20",
+      "slots": 40,
+      "missing": 0,
+      "gross_model_bps_sum": -30.51488402789185
+    },
+    {
+      "week_utc": "2026-04-27",
+      "slots": 40,
+      "missing": 0,
+      "gross_model_bps_sum": 313.86000345042476
+    },
+    {
+      "week_utc": "2026-05-04",
+      "slots": 40,
+      "missing": 0,
+      "gross_model_bps_sum": 36.31239882352182
+    },
+    {
+      "week_utc": "2026-05-11",
+      "slots": 40,
+      "missing": 0,
+      "gross_model_bps_sum": -38.902105362225626
+    },
+    {
+      "week_utc": "2026-05-18",
+      "slots": 40,
+      "missing": 0,
+      "gross_model_bps_sum": -106.13780204271006
+    },
+    {
+      "week_utc": "2026-05-25",
+      "slots": 40,
+      "missing": 0,
+      "gross_model_bps_sum": 69.35116698837692
+    },
+    {
+      "week_utc": "2026-06-01",
+      "slots": 40,
+      "missing": 0,
+      "gross_model_bps_sum": -129.36612567675212
+    },
+    {
+      "week_utc": "2026-06-08",
+      "slots": 40,
+      "missing": 0,
+      "gross_model_bps_sum": 0.2514470026611555
+    },
+    {
+      "week_utc": "2026-06-15",
+      "slots": 40,
+      "missing": 0,
+      "gross_model_bps_sum": -27.101185157150866
+    },
+    {
+      "week_utc": "2026-06-22",
+      "slots": 40,
+      "missing": 0,
+      "gross_model_bps_sum": -30.84967995282087
+    },
+    {
+      "week_utc": "2026-06-29",
+      "slots": 40,
+      "missing": 0,
+      "gross_model_bps_sum": -74.83492649720053
+    },
+    {
+      "week_utc": "2026-07-06",
+      "slots": 40,
+      "missing": 0,
+      "gross_model_bps_sum": -16.896218478922943
+    },
+    {
+      "week_utc": "2026-07-13",
+      "slots": 40,
+      "missing": 0,
+      "gross_model_bps_sum": -178.57138473847382
+    },
+    {
+      "week_utc": "2026-07-20",
+      "slots": 40,
+      "missing": 0,
+      "gross_model_bps_sum": 21.013680941390028
+    },
+    {
+      "week_utc": "2026-07-27",
+      "slots": 40,
+      "missing": 0,
+      "gross_model_bps_sum": -551.482369225803
+    },
+    {
+      "week_utc": "2026-08-03",
+      "slots": 40,
+      "missing": 0,
+      "gross_model_bps_sum": -84.82414414875517
+    },
+    {
+      "week_utc": "2026-08-10",
+      "slots": 40,
+      "missing": 0,
+      "gross_model_bps_sum": 2.486237971921174
+    },
+    {
+      "week_utc": "2026-08-17",
+      "slots": 40,
+      "missing": 0,
+      "gross_model_bps_sum": -71.92776795844715
+    },
+    {
+      "week_utc": "2026-08-24",
+      "slots": 40,
+      "missing": 0,
+      "gross_model_bps_sum": -13.440540253535211
+    },
+    {
+      "week_utc": "2026-08-31",
+      "slots": 40,
+      "missing": 0,
+      "gross_model_bps_sum": -77.47251201554677
+    },
+    {
+      "week_utc": "2026-09-07",
+      "slots": 40,
+      "missing": 0,
+      "gross_model_bps_sum": -120.86007056251741
+    }
+  ],
+  "classification": "EXPOSED_DEVELOPMENT_BAR_RETURN_DIAGNOSTIC",
+  "source": {
+    "archive": "MXM_RESEARCH_CORE_V3_SELECTED_M5_DEVELOPMENT.zip",
+    "account_commitment_matched": true,
+    "manifest_payload_sha256": "e4ab08b566759113ff4ce399e7de3f08bc7b4d86129c27bd7702300efa9adf50",
+    "series": {
+      "NOKJPY": {
+        "sha256": "bdaf7cafcc660b457dc659ce010e54393b2b199c6c1580e1831d93b367b2626e",
+        "bars": 74742
+      },
+      "SEKJPY": {
+        "sha256": "a6e42e717c4360e58d452935c3556075fa66284d9e14a0576d056d06e99b76a5",
+        "bars": 74728
+      },
+      "WTOIL-PERP": {
+        "sha256": "78ae738ebebe72d571b51b3be243c12a8b66f374e9dd63e68f5c95e044e32bf6",
+        "bars": 78591
+      }
+    },
+    "capture_start_utc": "2025-09-16T00:00:00Z",
+    "capture_end_utc": "2026-09-16T23:59:59Z",
+    "nokjpy_two_sided_historical_probe": true,
+    "nokjpy_minimum_margin_historical_probe_estimate_eur": 4.61,
+    "archive_sha256": "09d999a595436de73c5edbb3d4a84002dc8b8779dc94393473d43afe1c3d9259"
+  },
+  "protocol_sha256": "fbd9a37b260c00539ae4d066a912e58960118871d9bc56020029e60c04d2ded7",
+  "central_net_eur": null,
+  "adverse_net_eur": null,
+  "funded_round_trips": 0,
+  "continuous_floating_drawdown": null,
+  "independent_confirmation": false,
+  "new_broker_requests": 0,
+  "orders_submitted": 0,
+  "cloud_activated": false
+}
