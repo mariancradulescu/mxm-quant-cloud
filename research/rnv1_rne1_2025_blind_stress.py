@@ -71,12 +71,12 @@ def calc(rows):
             for p in POLICIES},
         "currentContractConditionalEur":{
             scenario:{p:round(sum(r["money"][scenario][p]["netEur"] for r in money),6)
-                      for p in POLICIES}
+                      if money else None for p in POLICIES}
             for scenario in ("central","adverse")},
         "conditionalAdverseIncrementVsFixedEur":round(
             sum(r["money"]["adverse"]["eia"]["netEur"]-
                 r["money"]["adverse"]["gasSameSideFixed"]["netEur"]
-                for r in money),6),
+                for r in money),6) if money else None,
     }
 
 
