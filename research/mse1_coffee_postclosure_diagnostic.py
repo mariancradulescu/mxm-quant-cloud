@@ -1,6 +1,6 @@
 """Read-only postclosure reconciliation of the MSE1 public financial receipt.
 
-Usage: python -m research.mse1_coffee_postclosure_diagnostic /path/to/original_artifact.zip
+Usage: python -m research.mse1_coffee_postclosure_diagnostic /path/to/mse1-public.json\nOR:  python -m research.mse1_coffee_postclosure_diagnostic /path/to/original_artifact.zip
 No cTrader calls, ciphertext decryption, strategy rerun or synthetic prices.
 """
 import hashlib
