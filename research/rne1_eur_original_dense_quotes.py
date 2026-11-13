@@ -7,7 +7,7 @@ any financial scoring; no ORDER, LIVE/DEMO execution or OAuth refresh.
 from __future__ import annotations
 import base64
 from collections import Counter
-from datetime import date,timedelta
+from datetime import date,timedelta,datetime,timezone
 from hashlib import sha256
 import json
 import os
@@ -110,7 +110,7 @@ def main():
             if len(detail.symbol)!=1 or detail.symbol[0].symbolId!=item.symbolId:
                 raise RuntimeError("RNE1_EUR_CURRENT_CONTRACT_IDENTITY_MISMATCH")
             c=detail.symbol[0]
-            statuses[symbol]={"currentContract":contract(symbol,c,"USD",stamp(START+timedelta(weeks=WEEKS,days=0),0,0)),
+            statuses[symbol]={"currentContract":contract(symbol,c,"USD",int(datetime.now(timezone.utc).timestamp()*1000)),
                "originalAccountAuthenticated":True,
                "historicalTradingEligibilityCertified":False,
                "currentMarginEur":None}
