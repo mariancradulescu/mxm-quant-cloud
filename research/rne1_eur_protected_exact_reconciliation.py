@@ -267,7 +267,8 @@ def evaluate_new(original,old_public,new,coverage):
             "long":(1,last),
             "short":(-1,last),
             "cash":(0,last)}
-        row={"week":week,"scenarioPaths":{}}
+        row={"week":week,"scenarioPaths":{},
+             "originalCausalSides":{k:v[0] for k,v in policies.items()}}
         for scenario,slip in (("central",0.5),("adverse",2.0)):
             row[scenario]={}
             row["scenarioPaths"][scenario]={}
@@ -298,9 +299,7 @@ def evaluate_new(original,old_public,new,coverage):
             for x in complete:
                 # Present-day margin is an EX POST hypothetical capacity
                 # guard, never proof of as-of historical broker permission.
-                mode=1 if policy in ("long",) else -1 if policy=="short" else None
-                if mode is None:
-                    mode=1 if x[scenario][policy]["grossEur"]>=0 else -1
+                mode=x["originalCausalSides"][policy]
                 margin=marginBuy if mode>0 else marginSell
                 if policy!="cash" and (margin is None or margin<=0 or
                     cash<=margin):
