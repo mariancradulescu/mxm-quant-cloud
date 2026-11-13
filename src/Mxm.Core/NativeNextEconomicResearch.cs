@@ -13,6 +13,12 @@ public static class NativeNextEconomicResearch
         IReadOnlyDictionary<string,NativeProductMarket> all,long at)
     {
         if(at%900000L!=1500L)return default;
+        // NXE1-specific 120/180min policy must remain observable in the
+        // recorded 08:00–21:00 UTC data horizon; not a universal market rule.
+        var utc=DateTimeOffset.FromUnixTimeMilliseconds(at).UtcDateTime;
+        if(utc.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday ||
+           utc.Hour<9 || utc.Hour>17 ||
+           (utc.Hour==17 && utc.Minute>30))return default;
         if(!all.TryGetValue("US500",out var broad))return default;
         var own=market.M15.TakeLast(8).ToArray();
         var index=broad.M15.TakeLast(8).ToArray();
