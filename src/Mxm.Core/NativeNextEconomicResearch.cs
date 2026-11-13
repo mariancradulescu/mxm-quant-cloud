@@ -3,13 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 namespace Mxm.Core;
 
-// Genuinely new hypothesized families: Cross-asset EURUSD transmission and
-// industrial equity residual convergence. No fitted alpha is claimed.
-internal static class NativeNextEconomicResearch
+// Frozen BEFORE NXE1 source acquisition; not a fitted or validated alpha.
+public static class NativeNextEconomicResearch
 {
-    internal const string Existing="NXE1_EURUSD_US500_RISK_TRANSFER";
-    internal const string New="NXE1_US30_BROAD_INDEX_INDUSTRIAL_RESIDUAL";
-    internal static (int Side,decimal Magnitude,string Mechanism) Forecast(
+    public const string Existing="NXE1_EURUSD_US500_RISK_TRANSFER";
+    public const string New="NXE1_US30_BROAD_INDEX_INDUSTRIAL_RESIDUAL";
+    public static (int Side,decimal Magnitude,string Mechanism) Forecast(
         NativeProductMarket market,
         IReadOnlyDictionary<string,NativeProductMarket> all,long at)
     {
@@ -26,18 +25,12 @@ internal static class NativeNextEconomicResearch
         if(move==0m || marketMove==0m)return default;
         if(market.Symbol=="EURUSD")
         {
-            // FX exposure to broad-equity risk-off, with lagged EUR
-            // repricing. Distinct cross-asset driver, not legacy FX
-            // range, fix or volume-only signals.
             if(marketMove>=-.001m || move>=0m ||
                Math.Abs(move)>=Math.Abs(marketMove)/3m)return default;
             return (-1,Math.Abs(marketMove)/3m-Math.Abs(move),Existing);
         }
         if(market.Symbol=="US30")
         {
-            // Industrial-vs-broad relative dispersion together with
-            // declining industrial update count; distinct from
-            // US2000 same-direction breadth acceptance in MSE1.
             decimal volume=(own[4].TickVolume+own[5].TickVolume+
                 own[6].TickVolume)/3m;
             if(volume<=0m||own[^1].TickVolume>=volume||
