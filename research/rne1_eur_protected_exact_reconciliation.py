@@ -182,6 +182,7 @@ def evaluate_new(original,old_public,new,coverage):
     marginSell=meta.get("currentMarginSellEur")
     statuses=Counter()
     endpoints=[]
+    matched_endpoints=[]
     complete=[]
     for week in range(WEEKS):
         day=START+timedelta(weeks=week,days=3)
@@ -236,30 +237,25 @@ def evaluate_new(original,old_public,new,coverage):
         endpoints.append({"week":week,"central":{"rne1":candidate["central"]},
                           "adverse":{"rne1":candidate["adverse"]}})
         statuses["COMPLETE_CONDITIONAL_EUR_ENDPOINT"]+=1
-        # Full future sampled path coverage is needed before
-        # printing any complete sampled float / financed-model book.
+        # Keep endpoint NET comparisons for ALL causally predeclared
+        # broker-priced entries, independently from path completeness.
+        # Full five-minute open equity is a SEPARATE risk test, never
+        # an extra economic filtering condition on these comparators.
         clocks=tuple(range(a,eclock+300000,300000))
-        if any(quote(dense_day,"NatGas",t) is None or
-               quote(dense_day,"EURUSD",t) is None for t in clocks):
-            statuses["INCOMPLETE_FIVE_MINUTE_OPEN_EQUITY_PATH"]+=1
-            continue
-        statuses["FULL_SAMPLED_OPEN_EQUITY_PATH"]+=1
-        # Same-entry benchmark cohorts require the fixed 12:05 mark.
+        adaptive_path_complete=all(
+            quote(dense_day,"NatGas",t) is not None and
+            quote(dense_day,"EURUSD",t) is not None for t in clocks)
+        statuses["FULL_SAMPLED_OPEN_EQUITY_PATH" if adaptive_path_complete
+                 else "INCOMPLETE_FIVE_MINUTE_OPEN_EQUITY_PATH"]+=1
         last=stamp(day,12,5)
         ref=quote(dense_day,"NatGas",last)
         old_ref=original_day["quote"].get("12:05")
-        if ref is None or old_ref is None:
-            statuses["BENCHMARK_EXIT_PRICE_UNAVAILABLE"]+=1
+        fx_ref=quote(dense_day,"EURUSD",last)
+        if ref is None or old_ref is None or fx_ref is None:
+            statuses["MATCHED_BENCHMARK_EXIT_OR_FX_UNAVAILABLE"]+=1
             continue
         if not raw_compare(old_ref,ref):
             statuses["BENCHMARK_ORIGINAL_PRICE_CONFLICT"]+=1
-            continue
-        # Full full-horizon sourced equity is required for ALL
-        # benchmark books, even after the adaptive policy exits early.
-        full_clocks=tuple(range(a,last+300000,300000))
-        if any(quote(dense_day,"NatGas",t) is None or
-               quote(dense_day,"EURUSD",t) is None for t in full_clocks):
-            statuses["BENCHMARK_FULL_PATH_INCOMPLETE"]+=1
             continue
         own=sign(bps(original_day["bars"],stamp(day,10,15),
                      stamp(day,10,45)))
@@ -272,15 +268,35 @@ def evaluate_new(original,old_public,new,coverage):
             "cash":(0,last)}
         row={"week":week,"scenarioPaths":{},
              "originalCausalSides":{k:v[0] for k,v in policies.items()}}
+        try:
+            for scenario,slip in (("central",0.5),("adverse",2.0)):
+                row[scenario]={}
+                for name,(side,until) in policies.items():
+                    q=exit_quote if name=="rne1" else ref
+                    fx=fxz if name=="rne1" else fx_ref
+                    no_swap(terms,a,until)
+                    row[scenario][name]=current_eur(
+                        terms,entry,q,fx0,fx,side,slip)
+        except Unpriced as err:
+            statuses["MATCHED_ENDPOINT_"+str(err)]+=1
+            continue
+        matched_endpoints.append(row)
+        statuses["ORIGINAL_FULLY_MATCHED_EUR_ENDPOINT_POLICIES"]+=1
+        if not adaptive_path_complete:
+            # Output the paired money comparators, BUT do not manufacture
+            # intermediate held marks, trades or sampled drawdown.
+            continue
+        full_clocks=tuple(range(a,last+300000,300000))
+        if any(quote(dense_day,"NatGas",t) is None or
+               quote(dense_day,"EURUSD",t) is None for t in full_clocks):
+            statuses["BENCHMARK_FULL_PATH_INCOMPLETE"]+=1
+            continue
+        # Only fully sourced paths may be used for a conditional
+        # sampled open-equity diagnostic. Source completeness is known
+        # retrospectively and cannot be used to claim a causal admission.
         for scenario,slip in (("central",0.5),("adverse",2.0)):
-            row[scenario]={}
             row["scenarioPaths"][scenario]={}
             for name,(side,until) in policies.items():
-                exit_q=quote(dense_day,"NatGas",until)
-                exit_fx=quote(dense_day,"EURUSD",until)
-                no_swap(terms,a,until)
-                row[scenario][name]=current_eur(
-                    terms,entry,exit_q,fx0,exit_fx,side,slip)
                 sampled=[current_eur(terms,entry,
                     quote(dense_day,"NatGas",t),fx0,
                     quote(dense_day,"EURUSD",t),side,slip)["netEur"]
@@ -330,6 +346,17 @@ def evaluate_new(original,old_public,new,coverage):
         "all26WeekDecisionClasses":dict(statuses),
         "conditionalEndpointEur":{"central":summary(endpoints,scenario="central"),
                                   "adverse":summary(endpoints,scenario="adverse")},
+        "matchedOriginalEndpointComparators":{
+            segment:{scenario:{p:summary(
+                [r for r in matched_endpoints if
+                 segment=="all" or
+                 (segment=="first13" and r["week"]<13) or
+                 (segment=="last13" and r["week"]>=13)],
+                policy=p,scenario=scenario)
+                for p in POLICIES}
+                for scenario in ("central","adverse")}
+            for segment in ("all","first13","last13")},
+        "matchedEndpointSourceCoverageNotFinanced":True,
         "matchedCompleteSampledPaths":{
             scenario:{p:summary(complete,policy=p,scenario=scenario)
                       for p in POLICIES}
