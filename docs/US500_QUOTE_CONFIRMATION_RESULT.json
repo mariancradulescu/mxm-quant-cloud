@@ -1,0 +1,1664 @@
+{
+  "classification": "EXPOSED_DEVELOPMENT_CONDITIONAL_MINIMUM_SIZE_MARKOUT",
+  "source_run": 43377275493,
+  "source_cipher_artifact": 14015883688,
+  "source_receipt_artifact": 14016671008,
+  "source_cipher_sha256": "3e6ac925da0eaf686ff1b2cf3aae860fae1ef06813e97b2f4a88d90849c8c441",
+  "source_receipt_sha256": "2ca870ac72869543c132eee12ae8f5b1e87ca76716e4060b458a5fa559e05db5",
+  "source_plaintext_sha256": "9a1c980230049103cc3713451622ab7c2b566816cbabc3c382e1b83ec5cc028f",
+  "protocol_sha256": "59ad256f42541f54941fe45f90d2b3f9f392e6cc0c8f6c48005a1730d875c05a",
+  "scheduled_clocks": 680,
+  "holding_minutes": 25,
+  "current_minimum_margin_eur": {
+    "VolumeUnits": "0.1",
+    "BuyMarginEur": "34.29",
+    "SellMarginEur": "34.29"
+  },
+  "weekly": [
+    {
+      "week": "2026-07-13",
+      "eligible": 40,
+      "missing_decision": 0,
+      "missing_path": 0,
+      "unpriced_by_policy": {
+        "cash": 0,
+        "long": 0,
+        "short": 0,
+        "bars": 0,
+        "own_quotes": 0,
+        "both_indices": 0
+      },
+      "common_complete_clocks": 40,
+      "policies": {
+        "cash": {
+          "priced_markouts": 0,
+          "gross_eur_sum": 0,
+          "central_eur_sum": 0,
+          "adverse_eur_sum": 0,
+          "adverse_eur_per_clock": 0.0,
+          "adverse_eur_per_active": null,
+          "adverse_loss_fraction": null,
+          "adverse_p05_eur": null,
+          "worst_sampled_holding_markout_eur": null
+        },
+        "long": {
+          "priced_markouts": 40,
+          "gross_eur_sum": 2.8210283361709054,
+          "central_eur_sum": 0.7213977230301384,
+          "adverse_eur_sum": -3.4778635002078477,
+          "adverse_eur_per_clock": -0.0869465875051962,
+          "adverse_eur_per_active": -0.0869465875051962,
+          "adverse_loss_fraction": 0.5,
+          "adverse_p05_eur": -1.1663414512673305,
+          "worst_sampled_holding_markout_eur": -1.9502553697613898
+        },
+        "short": {
+          "priced_markouts": 40,
+          "gross_eur_sum": -2.8210514023633526,
+          "central_eur_sum": -4.920682471304239,
+          "adverse_eur_sum": -9.119943694542226,
+          "adverse_eur_per_clock": -0.22799859236355563,
+          "adverse_eur_per_active": -0.22799859236355563,
+          "adverse_loss_fraction": 0.65,
+          "adverse_p05_eur": -1.234451793907861,
+          "worst_sampled_holding_markout_eur": -1.8444217169730344
+        },
+        "bars": {
+          "priced_markouts": 40,
+          "gross_eur_sum": 1.0284390471209934,
+          "central_eur_sum": -1.07119156202501,
+          "adverse_eur_sum": -5.2704527852629965,
+          "adverse_eur_per_clock": -0.13176131963157492,
+          "adverse_eur_per_active": -0.13176131963157492,
+          "adverse_loss_fraction": 0.575,
+          "adverse_p05_eur": -1.1571025824412895,
+          "worst_sampled_holding_markout_eur": -1.9502553697613898
+        },
+        "own_quotes": {
+          "priced_markouts": 38,
+          "gross_eur_sum": 0.6960718718333049,
+          "central_eur_sum": -1.2986448303592304,
+          "adverse_eur_sum": -5.288078239690614,
+          "adverse_eur_per_clock": -0.13220195599226534,
+          "adverse_eur_per_active": -0.1391599536760688,
+          "adverse_loss_fraction": 0.5789473684210527,
+          "adverse_p05_eur": -1.1640994693400375,
+          "worst_sampled_holding_markout_eur": -1.9502553697613898
+        },
+        "both_indices": {
+          "priced_markouts": 24,
+          "gross_eur_sum": 1.2104926964143208,
+          "central_eur_sum": -0.0496781612339921,
+          "adverse_eur_sum": -2.5700194186825525,
+          "adverse_eur_per_clock": -0.06425048546706381,
+          "adverse_eur_per_active": -0.10708414244510635,
+          "adverse_loss_fraction": 0.5833333333333334,
+          "adverse_p05_eur": -1.1331763551631409,
+          "worst_sampled_holding_markout_eur": -1.9502553697613898
+        }
+      }
+    },
+    {
+      "week": "2026-07-20",
+      "eligible": 40,
+      "missing_decision": 0,
+      "missing_path": 0,
+      "unpriced_by_policy": {
+        "cash": 0,
+        "long": 0,
+        "short": 0,
+        "bars": 0,
+        "own_quotes": 0,
+        "both_indices": 0
+      },
+      "common_complete_clocks": 40,
+      "policies": {
+        "cash": {
+          "priced_markouts": 0,
+          "gross_eur_sum": 0,
+          "central_eur_sum": 0,
+          "adverse_eur_sum": 0,
+          "adverse_eur_per_clock": 0.0,
+          "adverse_eur_per_active": null,
+          "adverse_loss_fraction": null,
+          "adverse_p05_eur": null,
+          "worst_sampled_holding_markout_eur": null
+        },
+        "long": {
+          "priced_markouts": 40,
+          "gross_eur_sum": 6.975522163431846,
+          "central_eur_sum": 4.869647475192872,
+          "adverse_eur_sum": 0.6578991818888834,
+          "adverse_eur_per_clock": 0.016447479547222085,
+          "adverse_eur_per_active": 0.016447479547222085,
+          "adverse_loss_fraction": 0.525,
+          "adverse_p05_eur": -1.221238638681437,
+          "worst_sampled_holding_markout_eur": -1.7088174982911346
+        },
+        "short": {
+          "priced_markouts": 40,
+          "gross_eur_sum": -6.975576438362186,
+          "central_eur_sum": -9.08145035077971,
+          "adverse_eur_sum": -13.293198644083699,
+          "adverse_eur_per_clock": -0.3323299661020925,
+          "adverse_eur_per_active": -0.3323299661020925,
+          "adverse_loss_fraction": 0.6,
+          "adverse_p05_eur": -1.9577435500778904,
+          "worst_sampled_holding_markout_eur": -2.1959874916551994
+        },
+        "bars": {
+          "priced_markouts": 39,
+          "gross_eur_sum": -2.3006867729172913,
+          "central_eur_sum": -4.353995360550912,
+          "adverse_eur_sum": -8.460610068491047,
+          "adverse_eur_per_clock": -0.21151525171227617,
+          "adverse_eur_per_active": -0.21693871970489864,
+          "adverse_loss_fraction": 0.6153846153846154,
+          "adverse_p05_eur": -1.468658120803309,
+          "worst_sampled_holding_markout_eur": -2.17952999490268
+        },
+        "own_quotes": {
+          "priced_markouts": 38,
+          "gross_eur_sum": -1.8800400285478074,
+          "central_eur_sum": -3.8807677731352133,
+          "adverse_eur_sum": -7.882220794983044,
+          "adverse_eur_per_clock": -0.1970555198745761,
+          "adverse_eur_per_active": -0.20742686302586957,
+          "adverse_loss_fraction": 0.6052631578947368,
+          "adverse_p05_eur": -1.4820003084415214,
+          "worst_sampled_holding_markout_eur": -2.17952999490268
+        },
+        "both_indices": {
+          "priced_markouts": 29,
+          "gross_eur_sum": -0.4927870298735363,
+          "central_eur_sum": -2.0195499051418633,
+          "adverse_eur_sum": -5.073074113480956,
+          "adverse_eur_per_clock": -0.1268268528370239,
+          "adverse_eur_per_active": -0.17493359012003298,
+          "adverse_loss_fraction": 0.5862068965517241,
+          "adverse_p05_eur": -1.6020799971854343,
+          "worst_sampled_holding_markout_eur": -2.17952999490268
+        }
+      }
+    },
+    {
+      "week": "2026-07-27",
+      "eligible": 40,
+      "missing_decision": 0,
+      "missing_path": 0,
+      "unpriced_by_policy": {
+        "cash": 0,
+        "long": 0,
+        "short": 0,
+        "bars": 0,
+        "own_quotes": 0,
+        "both_indices": 0
+      },
+      "common_complete_clocks": 40,
+      "policies": {
+        "cash": {
+          "priced_markouts": 0,
+          "gross_eur_sum": 0,
+          "central_eur_sum": 0,
+          "adverse_eur_sum": 0,
+          "adverse_eur_per_clock": 0.0,
+          "adverse_eur_per_active": null,
+          "adverse_loss_fraction": null,
+          "adverse_p05_eur": null,
+          "worst_sampled_holding_markout_eur": null
+        },
+        "long": {
+          "priced_markouts": 40,
+          "gross_eur_sum": 2.402291625530212,
+          "central_eur_sum": 0.24471924483203697,
+          "adverse_eur_sum": -4.07048624418052,
+          "adverse_eur_per_clock": -0.101762156104513,
+          "adverse_eur_per_active": -0.101762156104513,
+          "adverse_loss_fraction": 0.5,
+          "adverse_p05_eur": -2.1619054495336743,
+          "worst_sampled_holding_markout_eur": -3.1309089310056564
+        },
+        "short": {
+          "priced_markouts": 40,
+          "gross_eur_sum": -2.4030896020407506,
+          "central_eur_sum": -4.560722710360128,
+          "adverse_eur_sum": -8.875928199372686,
+          "adverse_eur_per_clock": -0.22189820498431714,
+          "adverse_eur_per_active": -0.22189820498431714,
+          "adverse_loss_fraction": 0.65,
+          "adverse_p05_eur": -1.8943132481403078,
+          "worst_sampled_holding_markout_eur": -2.9487134482396122
+        },
+        "bars": {
+          "priced_markouts": 39,
+          "gross_eur_sum": 0.5795423073213645,
+          "central_eur_sum": -1.5253759987488709,
+          "adverse_eur_sum": -5.735152325174509,
+          "adverse_eur_per_clock": -0.1433788081293627,
+          "adverse_eur_per_active": -0.14705518782498742,
+          "adverse_loss_fraction": 0.5897435897435898,
+          "adverse_p05_eur": -1.957780845330858,
+          "worst_sampled_holding_markout_eur": -2.213887586602184
+        },
+        "own_quotes": {
+          "priced_markouts": 38,
+          "gross_eur_sum": -0.357819366737088,
+          "central_eur_sum": -2.4106620242484853,
+          "adverse_eur_sum": -6.516286601573631,
+          "adverse_eur_per_clock": -0.16290716503934077,
+          "adverse_eur_per_active": -0.1714812263572008,
+          "adverse_loss_fraction": 0.6052631578947368,
+          "adverse_p05_eur": -1.9673336342232441,
+          "worst_sampled_holding_markout_eur": -2.213887586602184
+        },
+        "both_indices": {
+          "priced_markouts": 33,
+          "gross_eur_sum": 1.1121709932305783,
+          "central_eur_sum": -0.6783414162067762,
+          "adverse_eur_sum": -4.259305485770277,
+          "adverse_eur_per_clock": -0.10648263714425692,
+          "adverse_eur_per_active": -0.1290698632051599,
+          "adverse_loss_fraction": 0.6060606060606061,
+          "adverse_p05_eur": -1.948620687910476,
+          "worst_sampled_holding_markout_eur": -2.213887586602184
+        }
+      }
+    },
+    {
+      "week": "2026-08-03",
+      "eligible": 40,
+      "missing_decision": 0,
+      "missing_path": 0,
+      "unpriced_by_policy": {
+        "cash": 0,
+        "long": 0,
+        "short": 0,
+        "bars": 0,
+        "own_quotes": 0,
+        "both_indices": 0
+      },
+      "common_complete_clocks": 40,
+      "policies": {
+        "cash": {
+          "priced_markouts": 0,
+          "gross_eur_sum": 0,
+          "central_eur_sum": 0,
+          "adverse_eur_sum": 0,
+          "adverse_eur_per_clock": 0.0,
+          "adverse_eur_per_active": null,
+          "adverse_loss_fraction": null,
+          "adverse_p05_eur": null,
+          "worst_sampled_holding_markout_eur": null
+        },
+        "long": {
+          "priced_markouts": 40,
+          "gross_eur_sum": 5.604401241360415,
+          "central_eur_sum": 3.4065286003483357,
+          "adverse_eur_sum": -0.9892174725449575,
+          "adverse_eur_per_clock": -0.024730436813623937,
+          "adverse_eur_per_active": -0.024730436813623937,
+          "adverse_loss_fraction": 0.425,
+          "adverse_p05_eur": -1.2616347252621962,
+          "worst_sampled_holding_markout_eur": -1.8705347477811256
+        },
+        "short": {
+          "priced_markouts": 40,
+          "gross_eur_sum": -5.604447479266519,
+          "central_eur_sum": -7.802321098932575,
+          "adverse_eur_sum": -12.198067171825869,
+          "adverse_eur_per_clock": -0.3049516792956467,
+          "adverse_eur_per_active": -0.3049516792956467,
+          "adverse_loss_fraction": 0.725,
+          "adverse_p05_eur": -1.2470006560906208,
+          "worst_sampled_holding_markout_eur": -2.591569696393788
+        },
+        "bars": {
+          "priced_markouts": 39,
+          "gross_eur_sum": 3.235932241973555,
+          "central_eur_sum": 1.0901238423296407,
+          "adverse_eur_sum": -3.20149126852183,
+          "adverse_eur_per_clock": -0.08003728171304575,
+          "adverse_eur_per_active": -0.08208951970568795,
+          "adverse_loss_fraction": 0.48717948717948717,
+          "adverse_p05_eur": -1.2490285491726285,
+          "worst_sampled_holding_markout_eur": -2.591569696393788
+        },
+        "own_quotes": {
+          "priced_markouts": 38,
+          "gross_eur_sum": 4.1883131943545076,
+          "central_eur_sum": 2.0944528466587555,
+          "adverse_eur_sum": -2.093266160296517,
+          "adverse_eur_per_clock": -0.05233165400741292,
+          "adverse_eur_per_active": -0.05508595158675044,
+          "adverse_loss_fraction": 0.47368421052631576,
+          "adverse_p05_eur": -1.2543665447051842,
+          "worst_sampled_holding_markout_eur": -2.591569696393788
+        },
+        "both_indices": {
+          "priced_markouts": 27,
+          "gross_eur_sum": 3.743449784329718,
+          "central_eur_sum": 2.2479853247826034,
+          "adverse_eur_sum": -0.7429429206371518,
+          "adverse_eur_per_clock": -0.018573573015928796,
+          "adverse_eur_per_active": -0.02751640446804266,
+          "adverse_loss_fraction": 0.4444444444444444,
+          "adverse_p05_eur": -1.3130844955632968,
+          "worst_sampled_holding_markout_eur": -2.591569696393788
+        }
+      }
+    },
+    {
+      "week": "2026-08-10",
+      "eligible": 40,
+      "missing_decision": 0,
+      "missing_path": 0,
+      "unpriced_by_policy": {
+        "cash": 0,
+        "long": 0,
+        "short": 0,
+        "bars": 0,
+        "own_quotes": 0,
+        "both_indices": 0
+      },
+      "common_complete_clocks": 40,
+      "policies": {
+        "cash": {
+          "priced_markouts": 0,
+          "gross_eur_sum": 0,
+          "central_eur_sum": 0,
+          "adverse_eur_sum": 0,
+          "adverse_eur_per_clock": 0.0,
+          "adverse_eur_per_active": null,
+          "adverse_loss_fraction": null,
+          "adverse_p05_eur": null,
+          "worst_sampled_holding_markout_eur": null
+        },
+        "long": {
+          "priced_markouts": 40,
+          "gross_eur_sum": -1.6350232876141342,
+          "central_eur_sum": -4.110072230306702,
+          "adverse_eur_sum": -9.060171198783719,
+          "adverse_eur_per_clock": -0.22650427996959296,
+          "adverse_eur_per_active": -0.22650427996959296,
+          "adverse_loss_fraction": 0.7,
+          "adverse_p05_eur": -1.219019859502311,
+          "worst_sampled_holding_markout_eur": -1.4472532519868182
+        },
+        "short": {
+          "priced_markouts": 40,
+          "gross_eur_sum": 1.6350038055273568,
+          "central_eur_sum": -0.840046520173793,
+          "adverse_eur_sum": -5.790145488650809,
+          "adverse_eur_per_clock": -0.14475363721627021,
+          "adverse_eur_per_active": -0.14475363721627021,
+          "adverse_loss_fraction": 0.7,
+          "adverse_p05_eur": -0.9836885346884648,
+          "worst_sampled_holding_markout_eur": -1.0474467403631202
+        },
+        "bars": {
+          "priced_markouts": 40,
+          "gross_eur_sum": -1.0817741439805733,
+          "central_eur_sum": -3.556823459977294,
+          "adverse_eur_sum": -8.50692242845431,
+          "adverse_eur_per_clock": -0.21267306071135775,
+          "adverse_eur_per_active": -0.21267306071135775,
+          "adverse_loss_fraction": 0.7,
+          "adverse_p05_eur": -1.0483614306520437,
+          "worst_sampled_holding_markout_eur": -1.4472532519868182
+        },
+        "own_quotes": {
+          "priced_markouts": 40,
+          "gross_eur_sum": -1.0817741439805733,
+          "central_eur_sum": -3.556823459977294,
+          "adverse_eur_sum": -8.50692242845431,
+          "adverse_eur_per_clock": -0.21267306071135775,
+          "adverse_eur_per_active": -0.21267306071135775,
+          "adverse_loss_fraction": 0.7,
+          "adverse_p05_eur": -1.0483614306520437,
+          "worst_sampled_holding_markout_eur": -1.4472532519868182
+        },
+        "both_indices": {
+          "priced_markouts": 28,
+          "gross_eur_sum": -0.940404139269694,
+          "central_eur_sum": -2.7143513904132677,
+          "adverse_eur_sum": -6.262245217297639,
+          "adverse_eur_per_clock": -0.15655613043244096,
+          "adverse_eur_per_active": -0.2236516149034871,
+          "adverse_loss_fraction": 0.6428571428571429,
+          "adverse_p05_eur": -1.090276376689028,
+          "worst_sampled_holding_markout_eur": -1.4472532519868182
+        }
+      }
+    },
+    {
+      "week": "2026-08-17",
+      "eligible": 40,
+      "missing_decision": 0,
+      "missing_path": 0,
+      "unpriced_by_policy": {
+        "cash": 0,
+        "long": 0,
+        "short": 0,
+        "bars": 0,
+        "own_quotes": 0,
+        "both_indices": 0
+      },
+      "common_complete_clocks": 40,
+      "policies": {
+        "cash": {
+          "priced_markouts": 0,
+          "gross_eur_sum": 0,
+          "central_eur_sum": 0,
+          "adverse_eur_sum": 0,
+          "adverse_eur_per_clock": 0.0,
+          "adverse_eur_per_active": null,
+          "adverse_loss_fraction": null,
+          "adverse_p05_eur": null,
+          "worst_sampled_holding_markout_eur": null
+        },
+        "long": {
+          "priced_markouts": 40,
+          "gross_eur_sum": -3.7389396820008556,
+          "central_eur_sum": -5.936303535070123,
+          "adverse_eur_sum": -10.331033670968004,
+          "adverse_eur_per_clock": -0.2582758417742001,
+          "adverse_eur_per_active": -0.2582758417742001,
+          "adverse_loss_fraction": 0.75,
+          "adverse_p05_eur": -1.1084974495772006,
+          "worst_sampled_holding_markout_eur": -1.5241291913552453
+        },
+        "short": {
+          "priced_markouts": 40,
+          "gross_eur_sum": 3.7389210917820304,
+          "central_eur_sum": 1.5415548089494118,
+          "adverse_eur_sum": -2.8531753269484703,
+          "adverse_eur_per_clock": -0.07132938317371176,
+          "adverse_eur_per_active": -0.07132938317371176,
+          "adverse_loss_fraction": 0.5,
+          "adverse_p05_eur": -1.0730336218788312,
+          "worst_sampled_holding_markout_eur": -1.9376687958159917
+        },
+        "bars": {
+          "priced_markouts": 40,
+          "gross_eur_sum": 5.971725906406854,
+          "central_eur_sum": 3.7743587430930376,
+          "adverse_eur_sum": -0.6203713928048449,
+          "adverse_eur_per_clock": -0.015509284820121122,
+          "adverse_eur_per_active": -0.015509284820121122,
+          "adverse_loss_fraction": 0.5,
+          "adverse_p05_eur": -0.8670010851895764,
+          "worst_sampled_holding_markout_eur": -1.293583483252167
+        },
+        "own_quotes": {
+          "priced_markouts": 38,
+          "gross_eur_sum": 4.859107870381903,
+          "central_eur_sum": 2.7773000397856435,
+          "adverse_eur_sum": -1.3863114306772513,
+          "adverse_eur_per_clock": -0.03465778576693128,
+          "adverse_eur_per_active": -0.036481879754664506,
+          "adverse_loss_fraction": 0.5,
+          "adverse_p05_eur": -0.8912915751292282,
+          "worst_sampled_holding_markout_eur": -1.293583483252167
+        },
+        "both_indices": {
+          "priced_markouts": 25,
+          "gross_eur_sum": 6.856787744148186,
+          "central_eur_sum": 5.530157554466398,
+          "adverse_eur_sum": 2.8768976148216066,
+          "adverse_eur_per_clock": 0.07192244037054016,
+          "adverse_eur_per_active": 0.11507590459286426,
+          "adverse_loss_fraction": 0.44,
+          "adverse_p05_eur": -0.5393592067529814,
+          "worst_sampled_holding_markout_eur": -1.0977607396162672
+        }
+      }
+    },
+    {
+      "week": "2026-08-24",
+      "eligible": 40,
+      "missing_decision": 0,
+      "missing_path": 0,
+      "unpriced_by_policy": {
+        "cash": 0,
+        "long": 0,
+        "short": 0,
+        "bars": 0,
+        "own_quotes": 0,
+        "both_indices": 0
+      },
+      "common_complete_clocks": 40,
+      "policies": {
+        "cash": {
+          "priced_markouts": 0,
+          "gross_eur_sum": 0,
+          "central_eur_sum": 0,
+          "adverse_eur_sum": 0,
+          "adverse_eur_per_clock": 0.0,
+          "adverse_eur_per_active": null,
+          "adverse_loss_fraction": null,
+          "adverse_p05_eur": null,
+          "worst_sampled_holding_markout_eur": null
+        },
+        "long": {
+          "priced_markouts": 40,
+          "gross_eur_sum": -0.11895212932617943,
+          "central_eur_sum": -2.2956116063024377,
+          "adverse_eur_sum": -6.648930006115008,
+          "adverse_eur_per_clock": -0.1662232501528752,
+          "adverse_eur_per_active": -0.1662232501528752,
+          "adverse_loss_fraction": 0.65,
+          "adverse_p05_eur": -1.2038219010514848,
+          "worst_sampled_holding_markout_eur": -3.130011899218759
+        },
+        "short": {
+          "priced_markouts": 40,
+          "gross_eur_sum": 0.11894065678646089,
+          "central_eur_sum": -2.057718266053725,
+          "adverse_eur_sum": -6.411036665866296,
+          "adverse_eur_per_clock": -0.16027591664665738,
+          "adverse_eur_per_active": -0.16027591664665738,
+          "adverse_loss_fraction": 0.65,
+          "adverse_p05_eur": -1.0258510243217998,
+          "worst_sampled_holding_markout_eur": -2.5994147013256232
+        },
+        "bars": {
+          "priced_markouts": 40,
+          "gross_eur_sum": 0.28897462153786735,
+          "central_eur_sum": -1.8876838606886992,
+          "adverse_eur_sum": -6.241002260501269,
+          "adverse_eur_per_clock": -0.15602505651253173,
+          "adverse_eur_per_active": -0.15602505651253173,
+          "adverse_loss_fraction": 0.675,
+          "adverse_p05_eur": -1.063221745809597,
+          "worst_sampled_holding_markout_eur": -3.130011899218759
+        },
+        "own_quotes": {
+          "priced_markouts": 39,
+          "gross_eur_sum": 0.4357097646046162,
+          "central_eur_sum": -1.6891598435982766,
+          "adverse_eur_sum": -5.938900495363703,
+          "adverse_eur_per_clock": -0.1484725123840926,
+          "adverse_eur_per_active": -0.1522794998811206,
+          "adverse_loss_fraction": 0.6666666666666666,
+          "adverse_p05_eur": -1.1006131699635373,
+          "worst_sampled_holding_markout_eur": -3.130011899218759
+        },
+        "both_indices": {
+          "priced_markouts": 30,
+          "gross_eur_sum": 0.5984789030691477,
+          "central_eur_sum": -1.0370124393212155,
+          "adverse_eur_sum": -4.307996559462302,
+          "adverse_eur_per_clock": -0.10769991398655757,
+          "adverse_eur_per_active": -0.14359988531541007,
+          "adverse_loss_fraction": 0.6666666666666666,
+          "adverse_p05_eur": -0.9274495859453125,
+          "worst_sampled_holding_markout_eur": -3.130011899218759
+        }
+      }
+    },
+    {
+      "week": "2026-08-31",
+      "eligible": 39,
+      "missing_decision": 1,
+      "missing_path": 1,
+      "unpriced_by_policy": {
+        "cash": 0,
+        "long": 1,
+        "short": 1,
+        "bars": 1,
+        "own_quotes": 1,
+        "both_indices": 1
+      },
+      "common_complete_clocks": 38,
+      "policies": {
+        "cash": {
+          "priced_markouts": 0,
+          "gross_eur_sum": 0,
+          "central_eur_sum": 0,
+          "adverse_eur_sum": 0,
+          "adverse_eur_per_clock": 0.0,
+          "adverse_eur_per_active": null,
+          "adverse_loss_fraction": null,
+          "adverse_p05_eur": null,
+          "worst_sampled_holding_markout_eur": null
+        },
+        "long": {
+          "priced_markouts": 38,
+          "gross_eur_sum": 5.695462333209104,
+          "central_eur_sum": 3.6411631197752357,
+          "adverse_eur_sum": -0.4674348591029426,
+          "adverse_eur_per_clock": -0.012300917344814278,
+          "adverse_eur_per_active": -0.012300917344814278,
+          "adverse_loss_fraction": 0.5526315789473685,
+          "adverse_p05_eur": -1.0608833778319866,
+          "worst_sampled_holding_markout_eur": -1.6052056993432309
+        },
+        "short": {
+          "priced_markouts": 38,
+          "gross_eur_sum": -5.695474359745405,
+          "central_eur_sum": -7.749773569821714,
+          "adverse_eur_sum": -11.858371548699893,
+          "adverse_eur_per_clock": -0.31206240917631295,
+          "adverse_eur_per_active": -0.31206240917631295,
+          "adverse_loss_fraction": 0.6578947368421053,
+          "adverse_p05_eur": -1.4997962502207116,
+          "worst_sampled_holding_markout_eur": -2.266744662182034
+        },
+        "bars": {
+          "priced_markouts": 38,
+          "gross_eur_sum": -2.141655092829065,
+          "central_eur_sum": -4.1959543062628555,
+          "adverse_eur_sum": -8.304552285141034,
+          "adverse_eur_per_clock": -0.21854084960897457,
+          "adverse_eur_per_active": -0.21854084960897457,
+          "adverse_loss_fraction": 0.7105263157894737,
+          "adverse_p05_eur": -1.1270653141818496,
+          "worst_sampled_holding_markout_eur": -1.6052056993432309
+        },
+        "own_quotes": {
+          "priced_markouts": 37,
+          "gross_eur_sum": -1.685592035657673,
+          "central_eur_sum": -3.6882614690342947,
+          "adverse_eur_sum": -7.693599887798262,
+          "adverse_eur_per_clock": -0.20246315494205955,
+          "adverse_eur_per_active": -0.20793513210265574,
+          "adverse_loss_fraction": 0.7027027027027027,
+          "adverse_p05_eur": -1.1296408425358058,
+          "worst_sampled_holding_markout_eur": -1.6052056993432309
+        },
+        "both_indices": {
+          "priced_markouts": 28,
+          "gross_eur_sum": -0.2899028196911565,
+          "central_eur_sum": -1.8143014750395083,
+          "adverse_eur_sum": -4.863098782376286,
+          "adverse_eur_per_clock": -0.12797628374674438,
+          "adverse_eur_per_active": -0.17368209937058166,
+          "adverse_loss_fraction": 0.6785714285714286,
+          "adverse_p05_eur": -1.0809192854179641,
+          "worst_sampled_holding_markout_eur": -1.4376469787749206
+        }
+      }
+    },
+    {
+      "week": "2026-09-07",
+      "eligible": 39,
+      "missing_decision": 1,
+      "missing_path": 1,
+      "unpriced_by_policy": {
+        "cash": 0,
+        "long": 1,
+        "short": 1,
+        "bars": 1,
+        "own_quotes": 1,
+        "both_indices": 0
+      },
+      "common_complete_clocks": 38,
+      "policies": {
+        "cash": {
+          "priced_markouts": 0,
+          "gross_eur_sum": 0,
+          "central_eur_sum": 0,
+          "adverse_eur_sum": 0,
+          "adverse_eur_per_clock": 0.0,
+          "adverse_eur_per_active": null,
+          "adverse_loss_fraction": null,
+          "adverse_p05_eur": null,
+          "worst_sampled_holding_markout_eur": null
+        },
+        "long": {
+          "priced_markouts": 38,
+          "gross_eur_sum": -0.21590021717982716,
+          "central_eur_sum": -2.3969205742922632,
+          "adverse_eur_sum": -6.758959070039313,
+          "adverse_eur_per_clock": -0.17786734394840298,
+          "adverse_eur_per_active": -0.17786734394840298,
+          "adverse_loss_fraction": 0.6842105263157895,
+          "adverse_p05_eur": -0.9970692234088941,
+          "worst_sampled_holding_markout_eur": -1.8285075076367079
+        },
+        "short": {
+          "priced_markouts": 38,
+          "gross_eur_sum": 0.21588022707601845,
+          "central_eur_sum": -1.965138724976258,
+          "adverse_eur_sum": -6.327177220723308,
+          "adverse_eur_per_clock": -0.16650466370324493,
+          "adverse_eur_per_active": -0.16650466370324493,
+          "adverse_loss_fraction": 0.631578947368421,
+          "adverse_p05_eur": -1.3411429377720472,
+          "worst_sampled_holding_markout_eur": -2.047522741119394
+        },
+        "bars": {
+          "priced_markouts": 36,
+          "gross_eur_sum": -0.6402874960943492,
+          "central_eur_sum": -2.7052623699127083,
+          "adverse_eur_sum": -6.835211821403544,
+          "adverse_eur_per_clock": -0.17987399530009326,
+          "adverse_eur_per_active": -0.18986699503898735,
+          "adverse_loss_fraction": 0.5555555555555556,
+          "adverse_p05_eur": -1.4119245115407484,
+          "worst_sampled_holding_markout_eur": -2.047522741119394
+        },
+        "own_quotes": {
+          "priced_markouts": 35,
+          "gross_eur_sum": -0.6660875115743742,
+          "central_eur_sum": -2.679462354432605,
+          "adverse_eur_sum": -6.706211744003388,
+          "adverse_eur_per_clock": -0.1764792564211418,
+          "adverse_eur_per_active": -0.19160604982866825,
+          "adverse_loss_fraction": 0.5428571428571428,
+          "adverse_p05_eur": -1.4190453323707082,
+          "worst_sampled_holding_markout_eur": -2.047522741119394
+        },
+        "both_indices": {
+          "priced_markouts": 24,
+          "gross_eur_sum": 0.937750342417522,
+          "central_eur_sum": -0.46917482729353227,
+          "adverse_eur_sum": -3.2830251669270756,
+          "adverse_eur_per_clock": -0.08639539912965988,
+          "adverse_eur_per_active": -0.13679271528862816,
+          "adverse_loss_fraction": 0.5416666666666666,
+          "adverse_p05_eur": -1.3143487054780698,
+          "worst_sampled_holding_markout_eur": -2.047522741119394
+        }
+      }
+    },
+    {
+      "week": "2026-09-14",
+      "eligible": 40,
+      "missing_decision": 0,
+      "missing_path": 1,
+      "unpriced_by_policy": {
+        "cash": 0,
+        "long": 1,
+        "short": 1,
+        "bars": 1,
+        "own_quotes": 1,
+        "both_indices": 1
+      },
+      "common_complete_clocks": 39,
+      "policies": {
+        "cash": {
+          "priced_markouts": 0,
+          "gross_eur_sum": 0,
+          "central_eur_sum": 0,
+          "adverse_eur_sum": 0,
+          "adverse_eur_per_clock": 0.0,
+          "adverse_eur_per_active": null,
+          "adverse_loss_fraction": null,
+          "adverse_p05_eur": null,
+          "worst_sampled_holding_markout_eur": null
+        },
+        "long": {
+          "priced_markouts": 39,
+          "gross_eur_sum": 4.236788201323364,
+          "central_eur_sum": 2.0418217085575985,
+          "adverse_eur_sum": -2.34813352844957,
+          "adverse_eur_per_clock": -0.06020855201152744,
+          "adverse_eur_per_active": -0.06020855201152744,
+          "adverse_loss_fraction": 0.46153846153846156,
+          "adverse_p05_eur": -1.2703596310414205,
+          "worst_sampled_holding_markout_eur": -1.6042173409161198
+        },
+        "short": {
+          "priced_markouts": 39,
+          "gross_eur_sum": -4.236906623068703,
+          "central_eur_sum": -6.431895367314086,
+          "adverse_eur_sum": -10.821850604321256,
+          "adverse_eur_per_clock": -0.27748334882875014,
+          "adverse_eur_per_active": -0.27748334882875014,
+          "adverse_loss_fraction": 0.717948717948718,
+          "adverse_p05_eur": -1.0833428556624662,
+          "worst_sampled_holding_markout_eur": -1.4512719207042353
+        },
+        "bars": {
+          "priced_markouts": 39,
+          "gross_eur_sum": -2.414399341589599,
+          "central_eur_sum": -4.609367191521445,
+          "adverse_eur_sum": -8.999322428528613,
+          "adverse_eur_per_clock": -0.2307518571417593,
+          "adverse_eur_per_active": -0.2307518571417593,
+          "adverse_loss_fraction": 0.6666666666666666,
+          "adverse_p05_eur": -1.2812632846329675,
+          "worst_sampled_holding_markout_eur": -1.6042173409161198
+        },
+        "own_quotes": {
+          "priced_markouts": 39,
+          "gross_eur_sum": -2.414399341589599,
+          "central_eur_sum": -4.609367191521445,
+          "adverse_eur_sum": -8.999322428528613,
+          "adverse_eur_per_clock": -0.2307518571417593,
+          "adverse_eur_per_active": -0.2307518571417593,
+          "adverse_loss_fraction": 0.6666666666666666,
+          "adverse_p05_eur": -1.2812632846329675,
+          "worst_sampled_holding_markout_eur": -1.6042173409161198
+        },
+        "both_indices": {
+          "priced_markouts": 38,
+          "gross_eur_sum": -0.9662676049587399,
+          "central_eur_sum": -3.109206769742142,
+          "adverse_eur_sum": -7.395105087612493,
+          "adverse_eur_per_clock": -0.18961807916955112,
+          "adverse_eur_per_active": -0.1946080286213814,
+          "adverse_loss_fraction": 0.6578947368421053,
+          "adverse_p05_eur": -1.1027800556386145,
+          "worst_sampled_holding_markout_eur": -1.4535136734730354
+        }
+      }
+    },
+    {
+      "week": "2026-09-21",
+      "eligible": 40,
+      "missing_decision": 0,
+      "missing_path": 0,
+      "unpriced_by_policy": {
+        "cash": 0,
+        "long": 0,
+        "short": 0,
+        "bars": 0,
+        "own_quotes": 0,
+        "both_indices": 0
+      },
+      "common_complete_clocks": 40,
+      "policies": {
+        "cash": {
+          "priced_markouts": 0,
+          "gross_eur_sum": 0,
+          "central_eur_sum": 0,
+          "adverse_eur_sum": 0,
+          "adverse_eur_per_clock": 0.0,
+          "adverse_eur_per_active": null,
+          "adverse_loss_fraction": null,
+          "adverse_p05_eur": null,
+          "worst_sampled_holding_markout_eur": null
+        },
+        "long": {
+          "priced_markouts": 40,
+          "gross_eur_sum": 6.67658009081719,
+          "central_eur_sum": 4.258138121331308,
+          "adverse_eur_sum": -0.5787465436882312,
+          "adverse_eur_per_clock": -0.01446866359220578,
+          "adverse_eur_per_active": -0.01446866359220578,
+          "adverse_loss_fraction": 0.5,
+          "adverse_p05_eur": -1.1491600315118844,
+          "worst_sampled_holding_markout_eur": -1.8521281918489763
+        },
+        "short": {
+          "priced_markouts": 40,
+          "gross_eur_sum": -6.676612377392531,
+          "central_eur_sum": -9.095055225972677,
+          "adverse_eur_sum": -13.931939890992217,
+          "adverse_eur_per_clock": -0.34829849727480544,
+          "adverse_eur_per_active": -0.34829849727480544,
+          "adverse_loss_fraction": 0.7,
+          "adverse_p05_eur": -1.4158286680981536,
+          "worst_sampled_holding_markout_eur": -2.9343290138371105
+        },
+        "bars": {
+          "priced_markouts": 40,
+          "gross_eur_sum": 6.36174534147421,
+          "central_eur_sum": 3.9433026042355226,
+          "adverse_eur_sum": -0.8935820607840169,
+          "adverse_eur_per_clock": -0.022339551519600424,
+          "adverse_eur_per_active": -0.022339551519600424,
+          "adverse_loss_fraction": 0.55,
+          "adverse_p05_eur": -0.9565407033528445,
+          "worst_sampled_holding_markout_eur": -1.428747274389815
+        },
+        "own_quotes": {
+          "priced_markouts": 38,
+          "gross_eur_sum": 6.006598860006901,
+          "central_eur_sum": 3.7458210341206417,
+          "adverse_eur_sum": -0.775733808194185,
+          "adverse_eur_per_clock": -0.019393345204854626,
+          "adverse_eur_per_active": -0.0204140475840575,
+          "adverse_loss_fraction": 0.5526315789473685,
+          "adverse_p05_eur": -0.97526746231209,
+          "worst_sampled_holding_markout_eur": -1.428747274389815
+        },
+        "both_indices": {
+          "priced_markouts": 28,
+          "gross_eur_sum": 9.064811056783514,
+          "central_eur_sum": 7.369344406612222,
+          "adverse_eur_sum": 3.9784114537988606,
+          "adverse_eur_per_clock": 0.09946028634497152,
+          "adverse_eur_per_active": 0.14208612334995932,
+          "adverse_loss_fraction": 0.4642857142857143,
+          "adverse_p05_eur": -0.8208050555662669,
+          "worst_sampled_holding_markout_eur": -1.0085679852266087
+        }
+      }
+    },
+    {
+      "week": "2026-09-28",
+      "eligible": 40,
+      "missing_decision": 0,
+      "missing_path": 0,
+      "unpriced_by_policy": {
+        "cash": 0,
+        "long": 0,
+        "short": 0,
+        "bars": 0,
+        "own_quotes": 0,
+        "both_indices": 0
+      },
+      "common_complete_clocks": 40,
+      "policies": {
+        "cash": {
+          "priced_markouts": 0,
+          "gross_eur_sum": 0,
+          "central_eur_sum": 0,
+          "adverse_eur_sum": 0,
+          "adverse_eur_per_clock": 0.0,
+          "adverse_eur_per_active": null,
+          "adverse_loss_fraction": null,
+          "adverse_p05_eur": null,
+          "worst_sampled_holding_markout_eur": null
+        },
+        "long": {
+          "priced_markouts": 40,
+          "gross_eur_sum": -3.3443192028977613,
+          "central_eur_sum": -5.784697309567725,
+          "adverse_eur_sum": -10.665453142985719,
+          "adverse_eur_per_clock": -0.266636328574643,
+          "adverse_eur_per_active": -0.266636328574643,
+          "adverse_loss_fraction": 0.575,
+          "adverse_p05_eur": -1.3422184320677086,
+          "worst_sampled_holding_markout_eur": -3.055734124712796
+        },
+        "short": {
+          "priced_markouts": 40,
+          "gross_eur_sum": 3.344192428189622,
+          "central_eur_sum": 0.90381380187848,
+          "adverse_eur_sum": -3.976942031539514,
+          "adverse_eur_per_clock": -0.09942355078848784,
+          "adverse_eur_per_active": -0.09942355078848784,
+          "adverse_loss_fraction": 0.575,
+          "adverse_p05_eur": -1.2852402539831982,
+          "worst_sampled_holding_markout_eur": -3.24173267815796
+        },
+        "bars": {
+          "priced_markouts": 40,
+          "gross_eur_sum": -7.6179284504002585,
+          "central_eur_sum": -10.0583090288871,
+          "adverse_eur_sum": -14.939064862305095,
+          "adverse_eur_per_clock": -0.3734766215576274,
+          "adverse_eur_per_active": -0.3734766215576274,
+          "adverse_loss_fraction": 0.725,
+          "adverse_p05_eur": -1.5575348871032941,
+          "worst_sampled_holding_markout_eur": -3.055734124712796
+        },
+        "own_quotes": {
+          "priced_markouts": 40,
+          "gross_eur_sum": -7.6179284504002585,
+          "central_eur_sum": -10.0583090288871,
+          "adverse_eur_sum": -14.939064862305095,
+          "adverse_eur_per_clock": -0.3734766215576274,
+          "adverse_eur_per_active": -0.3734766215576274,
+          "adverse_loss_fraction": 0.725,
+          "adverse_p05_eur": -1.5575348871032941,
+          "worst_sampled_holding_markout_eur": -3.055734124712796
+        },
+        "both_indices": {
+          "priced_markouts": 36,
+          "gross_eur_sum": -7.281337454892882,
+          "central_eur_sum": -9.456495723688143,
+          "adverse_eur_sum": -13.806807402141382,
+          "adverse_eur_per_clock": -0.3451701850535346,
+          "adverse_eur_per_active": -0.38352242783726065,
+          "adverse_loss_fraction": 0.7222222222222222,
+          "adverse_p05_eur": -1.7264220192565236,
+          "worst_sampled_holding_markout_eur": -3.055734124712796
+        }
+      }
+    },
+    {
+      "week": "2026-10-05",
+      "eligible": 40,
+      "missing_decision": 0,
+      "missing_path": 0,
+      "unpriced_by_policy": {
+        "cash": 0,
+        "long": 0,
+        "short": 0,
+        "bars": 0,
+        "own_quotes": 0,
+        "both_indices": 0
+      },
+      "common_complete_clocks": 40,
+      "policies": {
+        "cash": {
+          "priced_markouts": 0,
+          "gross_eur_sum": 0,
+          "central_eur_sum": 0,
+          "adverse_eur_sum": 0,
+          "adverse_eur_per_clock": 0.0,
+          "adverse_eur_per_active": null,
+          "adverse_loss_fraction": null,
+          "adverse_p05_eur": null,
+          "worst_sampled_holding_markout_eur": null
+        },
+        "long": {
+          "priced_markouts": 40,
+          "gross_eur_sum": 6.599520172402196,
+          "central_eur_sum": 4.264570547596121,
+          "adverse_eur_sum": -0.4053279357525811,
+          "adverse_eur_per_clock": -0.010133198393814527,
+          "adverse_eur_per_active": -0.010133198393814527,
+          "adverse_loss_fraction": 0.475,
+          "adverse_p05_eur": -1.1841909655492782,
+          "worst_sampled_holding_markout_eur": -2.344670522437341
+        },
+        "short": {
+          "priced_markouts": 40,
+          "gross_eur_sum": -6.59958018116344,
+          "central_eur_sum": -8.934529039710029,
+          "adverse_eur_sum": -13.604427523058732,
+          "adverse_eur_per_clock": -0.34011068807646827,
+          "adverse_eur_per_active": -0.34011068807646827,
+          "adverse_loss_fraction": 0.75,
+          "adverse_p05_eur": -1.2977578266223286,
+          "worst_sampled_holding_markout_eur": -1.7250163116827075
+        },
+        "bars": {
+          "priced_markouts": 40,
+          "gross_eur_sum": 1.029198478819962,
+          "central_eur_sum": -1.3057500215553546,
+          "adverse_eur_sum": -5.975648504904058,
+          "adverse_eur_per_clock": -0.14939121262260144,
+          "adverse_eur_per_active": -0.14939121262260144,
+          "adverse_loss_fraction": 0.55,
+          "adverse_p05_eur": -1.2977578266223286,
+          "worst_sampled_holding_markout_eur": -2.344670522437341
+        },
+        "own_quotes": {
+          "priced_markouts": 37,
+          "gross_eur_sum": -0.6469449329219275,
+          "central_eur_sum": -2.8214240881320203,
+          "adverse_eur_sum": -7.170383885752305,
+          "adverse_eur_per_clock": -0.17925959714380763,
+          "adverse_eur_per_active": -0.1937941590743866,
+          "adverse_loss_fraction": 0.5675675675675675,
+          "adverse_p05_eur": -1.3003263604973212,
+          "worst_sampled_holding_markout_eur": -2.344670522437341
+        },
+        "both_indices": {
+          "priced_markouts": 30,
+          "gross_eur_sum": 0.7599221154884832,
+          "central_eur_sum": -0.9527657827401509,
+          "adverse_eur_sum": -4.378142529827995,
+          "adverse_eur_per_clock": -0.10945356324569988,
+          "adverse_eur_per_active": -0.14593808432759983,
+          "adverse_loss_fraction": 0.5,
+          "adverse_p05_eur": -1.3063196062056375,
+          "worst_sampled_holding_markout_eur": -2.344670522437341
+        }
+      }
+    },
+    {
+      "week": "2026-10-12",
+      "eligible": 40,
+      "missing_decision": 0,
+      "missing_path": 0,
+      "unpriced_by_policy": {
+        "cash": 0,
+        "long": 0,
+        "short": 0,
+        "bars": 0,
+        "own_quotes": 0,
+        "both_indices": 0
+      },
+      "common_complete_clocks": 40,
+      "policies": {
+        "cash": {
+          "priced_markouts": 0,
+          "gross_eur_sum": 0,
+          "central_eur_sum": 0,
+          "adverse_eur_sum": 0,
+          "adverse_eur_per_clock": 0.0,
+          "adverse_eur_per_active": null,
+          "adverse_loss_fraction": null,
+          "adverse_p05_eur": null,
+          "worst_sampled_holding_markout_eur": null
+        },
+        "long": {
+          "priced_markouts": 40,
+          "gross_eur_sum": -9.579761316523998,
+          "central_eur_sum": -11.99355229946615,
+          "adverse_eur_sum": -16.821132461739854,
+          "adverse_eur_per_clock": -0.42052831154349635,
+          "adverse_eur_per_active": -0.42052831154349635,
+          "adverse_loss_fraction": 0.675,
+          "adverse_p05_eur": -1.6395599991752225,
+          "worst_sampled_holding_markout_eur": -2.204797211998332
+        },
+        "short": {
+          "priced_markouts": 40,
+          "gross_eur_sum": 9.579712351851587,
+          "central_eur_sum": 7.165923172515484,
+          "adverse_eur_sum": 2.3383430102417826,
+          "adverse_eur_per_clock": 0.058458575256044566,
+          "adverse_eur_per_active": 0.058458575256044566,
+          "adverse_loss_fraction": 0.475,
+          "adverse_p05_eur": -0.811042786996929,
+          "worst_sampled_holding_markout_eur": -1.7319572902904075
+        },
+        "bars": {
+          "priced_markouts": 40,
+          "gross_eur_sum": 3.693318035886194,
+          "central_eur_sum": 1.2795288637315438,
+          "adverse_eur_sum": -3.5480512985421573,
+          "adverse_eur_per_clock": -0.08870128246355394,
+          "adverse_eur_per_active": -0.08870128246355394,
+          "adverse_loss_fraction": 0.575,
+          "adverse_p05_eur": -1.283250515515942,
+          "worst_sampled_holding_markout_eur": -1.6340015980895732
+        },
+        "own_quotes": {
+          "priced_markouts": 38,
+          "gross_eur_sum": 3.3247641013804383,
+          "central_eur_sum": 1.0188696790520673,
+          "adverse_eur_sum": -3.5929204986119068,
+          "adverse_eur_per_clock": -0.08982301246529767,
+          "adverse_eur_per_active": -0.09455053943715544,
+          "adverse_loss_fraction": 0.5789473684210527,
+          "adverse_p05_eur": -1.313187241944264,
+          "worst_sampled_holding_markout_eur": -1.6340015980895732
+        },
+        "both_indices": {
+          "priced_markouts": 25,
+          "gross_eur_sum": 1.328743518907025,
+          "central_eur_sum": -0.21315205013696192,
+          "adverse_eur_sum": -3.2969441521574456,
+          "adverse_eur_per_clock": -0.08242360380393614,
+          "adverse_eur_per_active": -0.13187776608629784,
+          "adverse_loss_fraction": 0.56,
+          "adverse_p05_eur": -1.1761751684676003,
+          "worst_sampled_holding_markout_eur": -1.5676494165850021
+        }
+      }
+    },
+    {
+      "week": "2026-10-19",
+      "eligible": 40,
+      "missing_decision": 0,
+      "missing_path": 0,
+      "unpriced_by_policy": {
+        "cash": 0,
+        "long": 0,
+        "short": 0,
+        "bars": 0,
+        "own_quotes": 0,
+        "both_indices": 0
+      },
+      "common_complete_clocks": 40,
+      "policies": {
+        "cash": {
+          "priced_markouts": 0,
+          "gross_eur_sum": 0,
+          "central_eur_sum": 0,
+          "adverse_eur_sum": 0,
+          "adverse_eur_per_clock": 0.0,
+          "adverse_eur_per_active": null,
+          "adverse_loss_fraction": null,
+          "adverse_p05_eur": null,
+          "worst_sampled_holding_markout_eur": null
+        },
+        "long": {
+          "priced_markouts": 40,
+          "gross_eur_sum": 8.865580035057109,
+          "central_eur_sum": 6.632401927883944,
+          "adverse_eur_sum": 2.1660447666211446,
+          "adverse_eur_per_clock": 0.054151119165528616,
+          "adverse_eur_per_active": 0.054151119165528616,
+          "adverse_loss_fraction": 0.475,
+          "adverse_p05_eur": -1.265954969776893,
+          "worst_sampled_holding_markout_eur": -3.9897056908871376
+        },
+        "short": {
+          "priced_markouts": 40,
+          "gross_eur_sum": -8.865649486667039,
+          "central_eur_sum": -11.098828857951192,
+          "adverse_eur_sum": -15.565186019213991,
+          "adverse_eur_per_clock": -0.38912965048034975,
+          "adverse_eur_per_active": -0.38912965048034975,
+          "adverse_loss_fraction": 0.675,
+          "adverse_p05_eur": -2.1958621622715717,
+          "worst_sampled_holding_markout_eur": -3.6331334665778376
+        },
+        "bars": {
+          "priced_markouts": 40,
+          "gross_eur_sum": -2.6730739218227892,
+          "central_eur_sum": -4.906252504374679,
+          "adverse_eur_sum": -9.372609665637478,
+          "adverse_eur_per_clock": -0.23431524164093695,
+          "adverse_eur_per_active": -0.23431524164093695,
+          "adverse_loss_fraction": 0.525,
+          "adverse_p05_eur": -2.1958621622715717,
+          "worst_sampled_holding_markout_eur": -3.9897056908871376
+        },
+        "own_quotes": {
+          "priced_markouts": 39,
+          "gross_eur_sum": -2.1563333077923743,
+          "central_eur_sum": -4.322691983357575,
+          "adverse_eur_sum": -8.655409330646995,
+          "adverse_eur_per_clock": -0.21638523326617487,
+          "adverse_eur_per_active": -0.22193357258069218,
+          "adverse_loss_fraction": 0.5128205128205128,
+          "adverse_p05_eur": -2.2423566488924713,
+          "worst_sampled_holding_markout_eur": -3.9897056908871376
+        },
+        "both_indices": {
+          "priced_markouts": 27,
+          "gross_eur_sum": -2.1197708532353317,
+          "central_eur_sum": -3.617957985631042,
+          "adverse_eur_sum": -6.614332723333072,
+          "adverse_eur_per_clock": -0.1653583180833268,
+          "adverse_eur_per_active": -0.24497528604937302,
+          "adverse_loss_fraction": 0.5185185185185185,
+          "adverse_p05_eur": -2.692229248785082,
+          "worst_sampled_holding_markout_eur": -3.9897056908871376
+        }
+      }
+    },
+    {
+      "week": "2026-10-26",
+      "eligible": 40,
+      "missing_decision": 0,
+      "missing_path": 0,
+      "unpriced_by_policy": {
+        "cash": 0,
+        "long": 0,
+        "short": 0,
+        "bars": 0,
+        "own_quotes": 0,
+        "both_indices": 0
+      },
+      "common_complete_clocks": 40,
+      "policies": {
+        "cash": {
+          "priced_markouts": 0,
+          "gross_eur_sum": 0,
+          "central_eur_sum": 0,
+          "adverse_eur_sum": 0,
+          "adverse_eur_per_clock": 0.0,
+          "adverse_eur_per_active": null,
+          "adverse_loss_fraction": null,
+          "adverse_p05_eur": null,
+          "worst_sampled_holding_markout_eur": null
+        },
+        "long": {
+          "priced_markouts": 40,
+          "gross_eur_sum": -1.3734483925001024,
+          "central_eur_sum": -3.8540608716797013,
+          "adverse_eur_sum": -8.815300844447814,
+          "adverse_eur_per_clock": -0.22038252111119533,
+          "adverse_eur_per_active": -0.22038252111119533,
+          "adverse_loss_fraction": 0.6,
+          "adverse_p05_eur": -1.5686336306195845,
+          "worst_sampled_holding_markout_eur": -2.7102459862334842
+        },
+        "short": {
+          "priced_markouts": 40,
+          "gross_eur_sum": 1.373269796058361,
+          "central_eur_sum": -1.1073581763929679,
+          "adverse_eur_sum": -6.06859814916108,
+          "adverse_eur_per_clock": -0.151714953729027,
+          "adverse_eur_per_active": -0.151714953729027,
+          "adverse_loss_fraction": 0.525,
+          "adverse_p05_eur": -1.4229380704088348,
+          "worst_sampled_holding_markout_eur": -2.5841410637005002
+        },
+        "bars": {
+          "priced_markouts": 40,
+          "gross_eur_sum": -3.570653257250203,
+          "central_eur_sum": -6.0512821922446545,
+          "adverse_eur_sum": -11.012522165012765,
+          "adverse_eur_per_clock": -0.27531305412531915,
+          "adverse_eur_per_active": -0.27531305412531915,
+          "adverse_loss_fraction": 0.625,
+          "adverse_p05_eur": -1.537517749451629,
+          "worst_sampled_holding_markout_eur": -2.7102459862334842
+        },
+        "own_quotes": {
+          "priced_markouts": 38,
+          "gross_eur_sum": -3.3282581136704894,
+          "central_eur_sum": -5.70115744981863,
+          "adverse_eur_sum": -10.44693822489438,
+          "adverse_eur_per_clock": -0.2611734556223595,
+          "adverse_eur_per_active": -0.2749194269709047,
+          "adverse_loss_fraction": 0.6052631578947368,
+          "adverse_p05_eur": -1.546910852850706,
+          "worst_sampled_holding_markout_eur": -2.7102459862334842
+        },
+        "both_indices": {
+          "priced_markouts": 28,
+          "gross_eur_sum": -4.514218662103208,
+          "central_eur_sum": -6.309040116927022,
+          "adverse_eur_sum": -9.898665610936137,
+          "adverse_eur_per_clock": -0.24746664027340343,
+          "adverse_eur_per_active": -0.35352377181914774,
+          "adverse_loss_fraction": 0.6785714285714286,
+          "adverse_p05_eur": -1.4745615359082702,
+          "worst_sampled_holding_markout_eur": -2.1148658942030027
+        }
+      }
+    },
+    {
+      "week": "2026-11-02",
+      "eligible": 40,
+      "missing_decision": 0,
+      "missing_path": 0,
+      "unpriced_by_policy": {
+        "cash": 0,
+        "long": 0,
+        "short": 0,
+        "bars": 0,
+        "own_quotes": 0,
+        "both_indices": 0
+      },
+      "common_complete_clocks": 40,
+      "policies": {
+        "cash": {
+          "priced_markouts": 0,
+          "gross_eur_sum": 0,
+          "central_eur_sum": 0,
+          "adverse_eur_sum": 0,
+          "adverse_eur_per_clock": 0.0,
+          "adverse_eur_per_active": null,
+          "adverse_loss_fraction": null,
+          "adverse_p05_eur": null,
+          "worst_sampled_holding_markout_eur": null
+        },
+        "long": {
+          "priced_markouts": 40,
+          "gross_eur_sum": -1.9201418198892066,
+          "central_eur_sum": -4.183495259969381,
+          "adverse_eur_sum": -8.710200452915723,
+          "adverse_eur_per_clock": -0.21775501132289307,
+          "adverse_eur_per_active": -0.21775501132289307,
+          "adverse_loss_fraction": 0.575,
+          "adverse_p05_eur": -2.4583536258522805,
+          "worst_sampled_holding_markout_eur": -7.693951699081081
+        },
+        "short": {
+          "priced_markouts": 40,
+          "gross_eur_sum": 1.920039475555315,
+          "central_eur_sum": -0.34331227731536756,
+          "adverse_eur_sum": -4.870017470261709,
+          "adverse_eur_per_clock": -0.12175043675654273,
+          "adverse_eur_per_active": -0.12175043675654273,
+          "adverse_loss_fraction": 0.5,
+          "adverse_p05_eur": -3.076120744196492,
+          "worst_sampled_holding_markout_eur": -5.6269881579300405
+        },
+        "bars": {
+          "priced_markouts": 40,
+          "gross_eur_sum": 7.125772871481875,
+          "central_eur_sum": 4.862420508239604,
+          "adverse_eur_sum": 0.33571531529326154,
+          "adverse_eur_per_clock": 0.008392882882331539,
+          "adverse_eur_per_active": 0.008392882882331539,
+          "adverse_loss_fraction": 0.475,
+          "adverse_p05_eur": -2.4521623091096636,
+          "worst_sampled_holding_markout_eur": -5.6269881579300405
+        },
+        "own_quotes": {
+          "priced_markouts": 40,
+          "gross_eur_sum": 7.125772871481875,
+          "central_eur_sum": 4.862420508239604,
+          "adverse_eur_sum": 0.33571531529326154,
+          "adverse_eur_per_clock": 0.008392882882331539,
+          "adverse_eur_per_active": 0.008392882882331539,
+          "adverse_loss_fraction": 0.475,
+          "adverse_p05_eur": -2.4521623091096636,
+          "worst_sampled_holding_markout_eur": -5.6269881579300405
+        },
+        "both_indices": {
+          "priced_markouts": 33,
+          "gross_eur_sum": 4.809845777417071,
+          "central_eur_sum": 2.9217124527044325,
+          "adverse_eur_sum": -0.8545546631833137,
+          "adverse_eur_per_clock": -0.021363866579582842,
+          "adverse_eur_per_active": -0.02589559585403981,
+          "adverse_loss_fraction": 0.5151515151515151,
+          "adverse_p05_eur": -2.721223243618292,
+          "worst_sampled_holding_markout_eur": -5.6269881579300405
+        }
+      }
+    }
+  ],
+  "overall": {
+    "common_complete_clocks": 675,
+    "policies": {
+      "cash": {
+        "priced_markouts": 0,
+        "gross_eur_sum": 0,
+        "central_eur_sum": 0,
+        "adverse_eur_sum": 0,
+        "adverse_eur_per_clock": 0.0,
+        "adverse_eur_per_active": null,
+        "adverse_loss_fraction": null,
+        "adverse_p05_eur": null,
+        "worst_sampled_holding_markout_eur": null
+      },
+      "long": {
+        "priced_markouts": 675,
+        "gross_eur_sum": 27.950688151370276,
+        "central_eur_sum": -10.474325218106895,
+        "adverse_eur_sum": -87.32444698341178,
+        "adverse_eur_per_clock": -0.12936955108653597,
+        "adverse_eur_per_active": -0.12936955108653597,
+        "adverse_loss_fraction": 0.5659259259259259,
+        "adverse_p05_eur": -1.442506676354625,
+        "worst_sampled_holding_markout_eur": -7.693951699081081
+      },
+      "short": {
+        "priced_markouts": 675,
+        "gross_eur_sum": -27.952428117243173,
+        "central_eur_sum": -66.37754087371509,
+        "adverse_eur_sum": -143.22766263901997,
+        "adverse_eur_per_clock": -0.21218912983558513,
+        "adverse_eur_per_active": -0.21218912983558513,
+        "adverse_loss_fraction": 0.6281481481481481,
+        "adverse_p05_eur": -1.4796991569142288,
+        "worst_sampled_holding_markout_eur": -5.6269881579300405
+      },
+      "bars": {
+        "priced_markouts": 670,
+        "gross_eur_sum": 6.874190375138746,
+        "central_eur_sum": -31.277513295120233,
+        "adverse_eur_sum": -107.58085230617631,
+        "adverse_eur_per_clock": -0.15937904045359452,
+        "adverse_eur_per_active": -0.1605684362778751,
+        "adverse_loss_fraction": 0.5940298507462687,
+        "adverse_p05_eur": -1.5264832295592143,
+        "worst_sampled_holding_markout_eur": -5.6269881579300405
+      },
+      "own_quotes": {
+        "priced_markouts": 650,
+        "gross_eur_sum": 4.801161301171382,
+        "central_eur_sum": -32.21786738864546,
+        "adverse_eur_sum": -106.25585550648094,
+        "adverse_eur_per_clock": -0.15741608223182363,
+        "adverse_eur_per_active": -0.1634705469330476,
+        "adverse_loss_fraction": 0.5923076923076923,
+        "adverse_p05_eur": -1.5406685297966645,
+        "worst_sampled_holding_markout_eur": -5.6269881579300405
+      },
+      "both_indices": {
+        "priced_markouts": 493,
+        "gross_eur_sum": 13.817764368181017,
+        "central_eur_sum": -14.371828304949961,
+        "adverse_eur_sum": -70.75095076520562,
+        "adverse_eur_per_clock": -0.10481622335586017,
+        "adverse_eur_per_active": -0.14351105631887548,
+        "adverse_loss_fraction": 0.5821501014198783,
+        "adverse_p05_eur": -1.5385283483299625,
+        "worst_sampled_holding_markout_eur": -5.6269881579300405
+      }
+    }
+  },
+  "first_8_and_last_9_weeks": [
+    {
+      "common_complete_clocks": 318,
+      "policies": {
+        "cash": {
+          "priced_markouts": 0,
+          "gross_eur_sum": 0,
+          "central_eur_sum": 0,
+          "adverse_eur_sum": 0,
+          "adverse_eur_per_clock": 0.0,
+          "adverse_eur_per_active": null,
+          "adverse_loss_fraction": null,
+          "adverse_p05_eur": null,
+          "worst_sampled_holding_markout_eur": null
+        },
+        "long": {
+          "priced_markouts": 318,
+          "gross_eur_sum": 18.005790600761312,
+          "central_eur_sum": 0.541468791499356,
+          "adverse_eur_sum": -34.38723777001412,
+          "adverse_eur_per_clock": -0.10813596783023308,
+          "adverse_eur_per_active": -0.10813596783023308,
+          "adverse_loss_fraction": 0.5754716981132075,
+          "adverse_p05_eur": -1.3469096129326945,
+          "worst_sampled_holding_markout_eur": -3.1309089310056564
+        },
+        "short": {
+          "priced_markouts": 318,
+          "gross_eur_sum": -18.006773727682365,
+          "central_eur_sum": -35.471160178476474,
+          "adverse_eur_sum": -70.39986673998995,
+          "adverse_eur_per_clock": -0.22138322874210675,
+          "adverse_eur_per_active": -0.22138322874210675,
+          "adverse_loss_fraction": 0.6415094339622641,
+          "adverse_p05_eur": -1.476045897475623,
+          "worst_sampled_holding_markout_eur": -2.9487134482396122
+        },
+        "bars": {
+          "priced_markouts": 315,
+          "gross_eur_sum": 5.580498114633705,
+          "central_eur_sum": -11.726541962830963,
+          "adverse_eur_sum": -46.34055481435184,
+          "adverse_eur_per_clock": -0.1457250151394712,
+          "adverse_eur_per_active": -0.14711287242651377,
+          "adverse_loss_fraction": 0.6063492063492063,
+          "adverse_p05_eur": -1.433129208500112,
+          "worst_sampled_holding_markout_eur": -3.130011899218759
+        },
+        "own_quotes": {
+          "priced_markouts": 306,
+          "gross_eur_sum": 5.173977126251191,
+          "central_eur_sum": -11.652566513908395,
+          "adverse_eur_sum": -45.30558603883733,
+          "adverse_eur_per_clock": -0.14247039634854508,
+          "adverse_eur_per_active": -0.14805747071515468,
+          "adverse_loss_fraction": 0.6045751633986928,
+          "adverse_p05_eur": -1.4388149823030367,
+          "worst_sampled_holding_markout_eur": -3.130011899218759
+        },
+        "both_indices": {
+          "priced_markouts": 224,
+          "gross_eur_sum": 11.798286132357564,
+          "central_eur_sum": -0.5350919081076215,
+          "adverse_eur_sum": -25.20178488288556,
+          "adverse_eur_per_clock": -0.0792508958581307,
+          "adverse_eur_per_active": -0.11250796822716767,
+          "adverse_loss_fraction": 0.5848214285714286,
+          "adverse_p05_eur": -1.4544606648880818,
+          "worst_sampled_holding_markout_eur": -3.130011899218759
+        }
+      }
+    },
+    {
+      "common_complete_clocks": 357,
+      "policies": {
+        "cash": {
+          "priced_markouts": 0,
+          "gross_eur_sum": 0,
+          "central_eur_sum": 0,
+          "adverse_eur_sum": 0,
+          "adverse_eur_per_clock": 0.0,
+          "adverse_eur_per_active": null,
+          "adverse_loss_fraction": null,
+          "adverse_p05_eur": null,
+          "worst_sampled_holding_markout_eur": null
+        },
+        "long": {
+          "priced_markouts": 357,
+          "gross_eur_sum": 9.944897550608962,
+          "central_eur_sum": -11.01579400960625,
+          "adverse_eur_sum": -52.93720921339766,
+          "adverse_eur_per_clock": -0.14828349919719233,
+          "adverse_eur_per_active": -0.14828349919719233,
+          "adverse_loss_fraction": 0.5574229691876751,
+          "adverse_p05_eur": -1.5659896888180038,
+          "worst_sampled_holding_markout_eur": -7.693951699081081
+        },
+        "short": {
+          "priced_markouts": 357,
+          "gross_eur_sum": -9.94565438956081,
+          "central_eur_sum": -30.906380695238614,
+          "adverse_eur_sum": -72.82779589903002,
+          "adverse_eur_per_clock": -0.2039994282885995,
+          "adverse_eur_per_active": -0.2039994282885995,
+          "adverse_loss_fraction": 0.6162464985994398,
+          "adverse_p05_eur": -1.475264481335023,
+          "worst_sampled_holding_markout_eur": -5.6269881579300405
+        },
+        "bars": {
+          "priced_markouts": 355,
+          "gross_eur_sum": 1.2936922605050416,
+          "central_eur_sum": -19.550971332289272,
+          "adverse_eur_sum": -61.240297491824464,
+          "adverse_eur_per_clock": -0.17154144955693126,
+          "adverse_eur_per_active": -0.17250788025866046,
+          "adverse_loss_fraction": 0.5830985915492958,
+          "adverse_p05_eur": -1.568557261635549,
+          "worst_sampled_holding_markout_eur": -5.6269881579300405
+        },
+        "own_quotes": {
+          "priced_markouts": 344,
+          "gross_eur_sum": -0.3728158250798088,
+          "central_eur_sum": -20.565300874737062,
+          "adverse_eur_sum": -60.95026946764361,
+          "adverse_eur_per_clock": -0.17072904612785325,
+          "adverse_eur_per_active": -0.17718101589431282,
+          "adverse_loss_fraction": 0.5813953488372093,
+          "adverse_p05_eur": -1.5702216442282184,
+          "worst_sampled_holding_markout_eur": -5.6269881579300405
+        },
+        "both_indices": {
+          "priced_markouts": 269,
+          "gross_eur_sum": 2.019478235823453,
+          "central_eur_sum": -13.83673639684234,
+          "adverse_eur_sum": -45.549165882320054,
+          "adverse_eur_per_clock": -0.12758869995047634,
+          "adverse_eur_per_active": -0.16932775420936824,
+          "adverse_loss_fraction": 0.5799256505576208,
+          "adverse_p05_eur": -1.5537181290518374,
+          "worst_sampled_holding_markout_eur": -5.6269881579300405
+        }
+      }
+    }
+  ],
+  "descriptive_95pct_moving_block_eur_per_clock": {
+    "both_indices_absolute": [
+      -0.14021358418499008,
+      -0.06882144838477151
+    ],
+    "both_indices_minus_own": [
+      0.03777009822083922,
+      0.07150658181153986
+    ]
+  },
+  "primary_increment_adverse_eur_per_clock": 0.052599858875963454,
+  "economic_followup_screen_passed": false,
+  "new_broker_requests": 0,
+  "funded_round_trips": 0,
+  "funded_net_eur": null,
+  "continuous_floating_drawdown": null,
+  "independent_confirmation": false,
+  "orders_submitted": 0,
+  "cloud_activated": false
+}
