@@ -210,9 +210,16 @@
   "prospectiveStudies": [
     {
       "id": "VIA1",
-      "status": "PROTOCOL_FROZEN_BEFORE_SCORING_RESULT_UNKNOWN",
+      "status": "CLOSED_EXACT_RULE_NO_PROMOTION_INCREMENTAL_ADVERSE_FAILED",
       "protocolFile": "research/VIA1_IMPULSE_ABSORPTION.md",
       "protocolFreezeCommit": "916e2f2fca6b8eb5feac2f3f30f1d101bd5ca010",
+      "economicResultRunId": 43446172811,
+      "economicResultArtifactId": 14047703774,
+      "economicResultJsonSha256": "e02101e27edff91d6e2a54003efde362fc38188bec44ba109a2dd0defb974502",
+      "economicClosure": "docs/VIA1_AUTHENTIC_ECONOMIC_CLOSURE_20261113.md",
+      "eurusdAdverseConditionalEur": 10.22861366622218,
+      "eurusdPairedFixedReversionAdverseEur": 12.379168232326018,
+      "us500AdverseConditionalEur": -10.23594009332609,
       "sourceRunId": 43377275493,
       "sourceCipherArtifactId": 14015883688,
       "sourceReceiptArtifactId": 14016671008,
