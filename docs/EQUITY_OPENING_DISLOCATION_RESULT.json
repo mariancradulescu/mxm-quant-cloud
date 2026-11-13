@@ -1,0 +1,1499 @@
+{
+  "classification": "EXPOSED_DEVELOPMENT_BID_BAR_GROSS_PROXY",
+  "archive_sha256": "09d999a595436de73c5edbb3d4a84002dc8b8779dc94393473d43afe1c3d9259",
+  "protocol_sha256": "d40483f1038de7958598f2a33eebd870d6ff989d34fda2b0b78fab1792a1e5f1",
+  "source": {
+    "AMCR.US-24": {
+      "bars": 37030,
+      "sha256": "d1f92cae512a305b4f8dd9422abb79905332e350c6568dbcd6bcd27952898afa",
+      "minimum_margin_probe_eur": 0.74
+    },
+    "BABA.US-24": {
+      "bars": 67862,
+      "sha256": "89eedffb32b2196799daa998e95fdac60e45dcc7f020c3464ccdbe9f3f7e7eaa",
+      "minimum_margin_probe_eur": 1.94
+    },
+    "CCL.US-24": {
+      "bars": 46095,
+      "sha256": "d5ef4d0aec640a377a3984e87d365f90c2d2b0481e7a60dfac25d392795a4baf",
+      "minimum_margin_probe_eur": 0.38
+    },
+    "F.US-24": {
+      "bars": 45218,
+      "sha256": "d6dfc7c85ae856ef238f103fc0ab58617564289e3672a5a87e12bca0b76d5c80",
+      "minimum_margin_probe_eur": 0.22
+    },
+    "GIS.US-24": {
+      "bars": 38101,
+      "sha256": "58a73deb23899838087d6939f166b026d8a179272641efdfe0f4bc37a06756b4",
+      "minimum_margin_probe_eur": 0.61
+    },
+    "HOOD.US-24": {
+      "bars": 69548,
+      "sha256": "dc3587b49e3140306b2a1712ccd26330bbbe18a3b303dcd1847ddafef1f7128b",
+      "minimum_margin_probe_eur": 2.13
+    },
+    "INTC.US-24": {
+      "bars": 70135,
+      "sha256": "88de9a620c263173fbd2709e3217fde45dce1e0bf278a63e4a3f22c742c0ccaa",
+      "minimum_margin_probe_eur": 2.27
+    },
+    "LULU.US-24": {
+      "bars": 50320,
+      "sha256": "3f2982d77a5194a6097d274956995c2514f263d480317b47fa58d21c1b17ecd5",
+      "minimum_margin_probe_eur": 1.78
+    },
+    "LYFT.US-24": {
+      "bars": 37026,
+      "sha256": "a3ac7a8996411465ed113debb2807b024625dd8d468743bf11fed583cca4842e",
+      "minimum_margin_probe_eur": 0.26
+    },
+    "NFLX.US-24": {
+      "bars": 68293,
+      "sha256": "37973234e9ca45db1fa48dd8ff115f61fcb79a465691646c061bab846d17f269",
+      "minimum_margin_probe_eur": 1.25
+    },
+    "NKE.US-24": {
+      "bars": 62164,
+      "sha256": "0ee93882d4bdaa565cd169dc19a4b1d182a3f017756bea14f7f022dcba66e7c0",
+      "minimum_margin_probe_eur": 0.63
+    },
+    "ORCL.US-24": {
+      "bars": 70184,
+      "sha256": "c35c10ebf10a9f250728becad3cb7b12abd2f378898f800bede13927dffcab14",
+      "minimum_margin_probe_eur": 2.46
+    },
+    "PFE.US-24": {
+      "bars": 57991,
+      "sha256": "34350002660c7b6a50432446c5dd72bcb285db60fcadcf80f95ebee64f50f2fc",
+      "minimum_margin_probe_eur": 0.5
+    },
+    "SNAP.US-24": {
+      "bars": 46141,
+      "sha256": "cb34c898b979445e44845cc9d082437ffdbd85187b496cf6605454b581efc8c1",
+      "minimum_margin_probe_eur": 0.09
+    },
+    "TSLA.US-24": {
+      "bars": 70534,
+      "sha256": "5764fe3d196194342302d610302da51fcd63995c31d5d66f668bb8b0f8b62f91",
+      "minimum_margin_probe_eur": 6.69
+    },
+    "UBER.US-24": {
+      "bars": 58845,
+      "sha256": "d30605f905b032753907dc7b60c86ec9e262559ed9a9c09b106f59a4393856ed",
+      "minimum_margin_probe_eur": 1.22
+    },
+    "WMT.US-24": {
+      "bars": 54373,
+      "sha256": "458583cfd57a2f66e40452eea2aee2d048e14d98455e8265d9e8fe6f92e9a557",
+      "minimum_margin_probe_eur": 1.89
+    }
+  },
+  "hold_minutes": 45,
+  "cash_bps": 0,
+  "counts": {
+    "scheduled": 255,
+    "no_cohort": 21,
+    "no_signal": 4,
+    "selected": 230,
+    "model_path_missing": 2,
+    "benchmark_path_missing": 1,
+    "uniform_path_missing": 29
+  },
+  "overall": {
+    "paired_clocks": 228,
+    "rank_bps": -13.203762273253327,
+    "opening_reversal_bps": -12.377356275055234,
+    "increment_bps": -0.8264059981980908,
+    "available_model_clocks": 228,
+    "available_model_bps": -13.203762273253327,
+    "median_favorable_adverse_excursion_bps": [
+      46.4438547663584,
+      -45.40780835034434
+    ],
+    "model_p05_bps": -238.87248067586296,
+    "uniform_complete_clocks": 201,
+    "uniform_bps": 0.5424870430944176,
+    "rank_bps_on_uniform_clocks": -15.783872521874889
+  },
+  "chronological_halves": [
+    {
+      "paired_clocks": 110,
+      "rank_bps": -13.155386911861255,
+      "opening_reversal_bps": -8.742053660472626,
+      "increment_bps": -4.413333251388621,
+      "available_model_clocks": 110,
+      "available_model_bps": -13.155386911861255,
+      "median_favorable_adverse_excursion_bps": [
+        40.58932674905809,
+        -41.16661015612267
+      ],
+      "model_p05_bps": -240.7171442978089,
+      "uniform_complete_clocks": 89,
+      "uniform_bps": -1.499820790276573,
+      "rank_bps_on_uniform_clocks": -21.258174255509626
+    },
+    {
+      "paired_clocks": 118,
+      "rank_bps": -13.248857949127295,
+      "opening_reversal_bps": -15.76619769542885,
+      "increment_bps": 2.517339746301557,
+      "available_model_clocks": 118,
+      "available_model_bps": -13.248857949127295,
+      "median_favorable_adverse_excursion_bps": [
+        47.04948280834479,
+        -47.21376305294956
+      ],
+      "model_p05_bps": -237.9373990343306,
+      "uniform_complete_clocks": 112,
+      "uniform_bps": 2.1653923749695787,
+      "rank_bps_on_uniform_clocks": -11.433757751397284
+    }
+  ],
+  "descriptive_95pct_4week_block_absolute_and_increment_bps": [
+    [
+      -23.609403667114425,
+      -1.9016756463400912
+    ],
+    [
+      -11.934563660254778,
+      15.730120157281261
+    ]
+  ],
+  "cost_recovery_screen_passed": false,
+  "weekly": [
+    {
+      "week": "2025-09-22",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 0,
+        "no_signal": 1,
+        "selected": 4,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 2
+      },
+      "paired_clocks": 4,
+      "rank_bps": 15.030145858173018,
+      "opening_reversal_bps": 42.02364885562107,
+      "increment_bps": -26.993502997448044,
+      "available_model_clocks": 4,
+      "available_model_bps": 15.030145858173018,
+      "median_favorable_adverse_excursion_bps": [
+        8.930725479374244,
+        -108.46041569801147
+      ],
+      "model_p05_bps": -94.59364282229029,
+      "uniform_complete_clocks": 2,
+      "uniform_bps": -34.22572083559792,
+      "rank_bps_on_uniform_clocks": -55.64331930722958
+    },
+    {
+      "week": "2025-09-29",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 0,
+        "no_signal": 0,
+        "selected": 5,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 1
+      },
+      "paired_clocks": 5,
+      "rank_bps": -93.77810454836343,
+      "opening_reversal_bps": -14.370961910989687,
+      "increment_bps": -79.40714263737375,
+      "available_model_clocks": 5,
+      "available_model_bps": -93.77810454836343,
+      "median_favorable_adverse_excursion_bps": [
+        28.35643736710019,
+        -85.9331130766462
+      ],
+      "model_p05_bps": -265.0784700875108,
+      "uniform_complete_clocks": 4,
+      "uniform_bps": -5.942769440177014,
+      "rank_bps_on_uniform_clocks": -42.34067380633189
+    },
+    {
+      "week": "2025-10-06",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 0,
+        "no_signal": 0,
+        "selected": 5,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 1
+      },
+      "paired_clocks": 5,
+      "rank_bps": 13.698375592366423,
+      "opening_reversal_bps": 41.12140279396995,
+      "increment_bps": -27.423027201603524,
+      "available_model_clocks": 5,
+      "available_model_bps": 13.698375592366423,
+      "median_favorable_adverse_excursion_bps": [
+        33.79197036478915,
+        -19.36109026866329
+      ],
+      "model_p05_bps": -88.4144095904904,
+      "uniform_complete_clocks": 4,
+      "uniform_bps": -14.366233201832294,
+      "rank_bps_on_uniform_clocks": 10.978323829807085
+    },
+    {
+      "week": "2025-10-13",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 0,
+        "no_signal": 0,
+        "selected": 5,
+        "model_path_missing": 1,
+        "benchmark_path_missing": 1,
+        "uniform_path_missing": 2
+      },
+      "paired_clocks": 4,
+      "rank_bps": 27.568706702096673,
+      "opening_reversal_bps": -13.182598344890117,
+      "increment_bps": 40.75130504698679,
+      "available_model_clocks": 4,
+      "available_model_bps": 27.568706702096673,
+      "median_favorable_adverse_excursion_bps": [
+        81.23683559565386,
+        -8.933359532038414
+      ],
+      "model_p05_bps": -66.23736291344194,
+      "uniform_complete_clocks": 3,
+      "uniform_bps": 61.08930011463462,
+      "rank_bps_on_uniform_clocks": 61.68272856508201
+    },
+    {
+      "week": "2025-10-20",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 0,
+        "no_signal": 0,
+        "selected": 5,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 0
+      },
+      "paired_clocks": 5,
+      "rank_bps": -71.15350324299689,
+      "opening_reversal_bps": -82.05937388038913,
+      "increment_bps": 10.905870637392258,
+      "available_model_clocks": 5,
+      "available_model_bps": -71.15350324299689,
+      "median_favorable_adverse_excursion_bps": [
+        58.95111192884624,
+        -64.30890330290403
+      ],
+      "model_p05_bps": -172.67631362195976,
+      "uniform_complete_clocks": 5,
+      "uniform_bps": -18.64777286366451,
+      "rank_bps_on_uniform_clocks": -71.15350324299689
+    },
+    {
+      "week": "2025-10-27",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 0,
+        "no_signal": 0,
+        "selected": 5,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 0
+      },
+      "paired_clocks": 5,
+      "rank_bps": 48.050924635522655,
+      "opening_reversal_bps": 57.88480102095114,
+      "increment_bps": -9.833876385428486,
+      "available_model_clocks": 5,
+      "available_model_bps": 48.050924635522655,
+      "median_favorable_adverse_excursion_bps": [
+        99.18256361391828,
+        -19.143996001294457
+      ],
+      "model_p05_bps": -66.19317142949284,
+      "uniform_complete_clocks": 5,
+      "uniform_bps": 18.959697625876995,
+      "rank_bps_on_uniform_clocks": 48.050924635522655
+    },
+    {
+      "week": "2025-11-03",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 0,
+        "no_signal": 0,
+        "selected": 5,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 1
+      },
+      "paired_clocks": 5,
+      "rank_bps": -5.21557801667808,
+      "opening_reversal_bps": -49.20800691561525,
+      "increment_bps": 43.99242889893717,
+      "available_model_clocks": 5,
+      "available_model_bps": -5.21557801667808,
+      "median_favorable_adverse_excursion_bps": [
+        65.48811878905462,
+        -31.22846504613234
+      ],
+      "model_p05_bps": -98.07283972202136,
+      "uniform_complete_clocks": 4,
+      "uniform_bps": 9.312560164975547,
+      "rank_bps_on_uniform_clocks": 21.144990671872968
+    },
+    {
+      "week": "2025-11-10",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 0,
+        "no_signal": 0,
+        "selected": 5,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 2
+      },
+      "paired_clocks": 5,
+      "rank_bps": -19.08219268634621,
+      "opening_reversal_bps": -74.2026467747244,
+      "increment_bps": 55.120454088378175,
+      "available_model_clocks": 5,
+      "available_model_bps": -19.08219268634621,
+      "median_favorable_adverse_excursion_bps": [
+        10.757316011545011,
+        -29.10268828536017
+      ],
+      "model_p05_bps": -117.12901977789238,
+      "uniform_complete_clocks": 3,
+      "uniform_bps": -7.66233633089337,
+      "rank_bps_on_uniform_clocks": -75.65181582088938
+    },
+    {
+      "week": "2025-11-17",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 0,
+        "no_signal": 0,
+        "selected": 5,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 1
+      },
+      "paired_clocks": 5,
+      "rank_bps": 15.80535061887787,
+      "opening_reversal_bps": -124.847839696954,
+      "increment_bps": 140.65319031583186,
+      "available_model_clocks": 5,
+      "available_model_bps": 15.80535061887787,
+      "median_favorable_adverse_excursion_bps": [
+        48.42413214215277,
+        -53.49649747240487
+      ],
+      "model_p05_bps": -76.84655068851848,
+      "uniform_complete_clocks": 4,
+      "uniform_bps": -40.4900622417982,
+      "rank_bps_on_uniform_clocks": -14.561488289769127
+    },
+    {
+      "week": "2025-11-24",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 2,
+        "no_signal": 0,
+        "selected": 3,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 0
+      },
+      "paired_clocks": 3,
+      "rank_bps": 9.522654014988229,
+      "opening_reversal_bps": 200.0384381046363,
+      "increment_bps": -190.51578408964806,
+      "available_model_clocks": 3,
+      "available_model_bps": 9.522654014988229,
+      "median_favorable_adverse_excursion_bps": [
+        31.401143681876455,
+        -139.69788246736047
+      ],
+      "model_p05_bps": -72.75522758376468,
+      "uniform_complete_clocks": 3,
+      "uniform_bps": 76.0954343101224,
+      "rank_bps_on_uniform_clocks": 9.522654014988229
+    },
+    {
+      "week": "2025-12-01",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 1,
+        "no_signal": 0,
+        "selected": 4,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 4
+      },
+      "paired_clocks": 4,
+      "rank_bps": 83.96777736642933,
+      "opening_reversal_bps": 11.77373642454447,
+      "increment_bps": 72.19404094188486,
+      "available_model_clocks": 4,
+      "available_model_bps": 83.96777736642933,
+      "median_favorable_adverse_excursion_bps": [
+        104.1367179615142,
+        -16.657427955016786
+      ],
+      "model_p05_bps": -12.47467441107628,
+      "uniform_complete_clocks": 0,
+      "uniform_bps": null,
+      "rank_bps_on_uniform_clocks": null
+    },
+    {
+      "week": "2025-12-08",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 0,
+        "no_signal": 0,
+        "selected": 5,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 0
+      },
+      "paired_clocks": 5,
+      "rank_bps": -71.46192142863438,
+      "opening_reversal_bps": -45.99226914956779,
+      "increment_bps": -25.469652279066587,
+      "available_model_clocks": 5,
+      "available_model_bps": -71.46192142863438,
+      "median_favorable_adverse_excursion_bps": [
+        39.40847172082109,
+        -25.335711550929588
+      ],
+      "model_p05_bps": -241.98645159482402,
+      "uniform_complete_clocks": 5,
+      "uniform_bps": -29.21015590149684,
+      "rank_bps_on_uniform_clocks": -71.46192142863438
+    },
+    {
+      "week": "2025-12-15",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 0,
+        "no_signal": 0,
+        "selected": 5,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 1
+      },
+      "paired_clocks": 5,
+      "rank_bps": 8.275823967607502,
+      "opening_reversal_bps": -3.236755958617368,
+      "increment_bps": 11.512579926224879,
+      "available_model_clocks": 5,
+      "available_model_bps": 8.275823967607502,
+      "median_favorable_adverse_excursion_bps": [
+        17.87614862076301,
+        -33.01171103573598
+      ],
+      "model_p05_bps": -155.76608439248957,
+      "uniform_complete_clocks": 4,
+      "uniform_bps": 2.646712540065515,
+      "rank_bps_on_uniform_clocks": 12.246885047462992
+    },
+    {
+      "week": "2025-12-22",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 2,
+        "no_signal": 0,
+        "selected": 3,
+        "model_path_missing": 1,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 2
+      },
+      "paired_clocks": 2,
+      "rank_bps": 99.78600822872346,
+      "opening_reversal_bps": 99.78600822872346,
+      "increment_bps": 0.0,
+      "available_model_clocks": 2,
+      "available_model_bps": 99.78600822872346,
+      "median_favorable_adverse_excursion_bps": [
+        121.37005434150804,
+        0.0
+      ],
+      "model_p05_bps": 79.90902258025709,
+      "uniform_complete_clocks": 1,
+      "uniform_bps": 35.2206905264752,
+      "rank_bps_on_uniform_clocks": 77.70046861931638
+    },
+    {
+      "week": "2025-12-29",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 2,
+        "no_signal": 0,
+        "selected": 3,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 1
+      },
+      "paired_clocks": 3,
+      "rank_bps": 28.204900560183116,
+      "opening_reversal_bps": 28.204900560183116,
+      "increment_bps": 0.0,
+      "available_model_clocks": 3,
+      "available_model_bps": 28.204900560183116,
+      "median_favorable_adverse_excursion_bps": [
+        58.83943158974566,
+        0.0
+      ],
+      "model_p05_bps": -5.162007429187241,
+      "uniform_complete_clocks": 2,
+      "uniform_bps": 1.1390660163075372,
+      "rank_bps_on_uniform_clocks": 47.47798211803169
+    },
+    {
+      "week": "2026-01-05",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 0,
+        "no_signal": 0,
+        "selected": 5,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 2
+      },
+      "paired_clocks": 5,
+      "rank_bps": -112.61637326970431,
+      "opening_reversal_bps": -49.47674461779328,
+      "increment_bps": -63.13962865191104,
+      "available_model_clocks": 5,
+      "available_model_bps": -112.61637326970431,
+      "median_favorable_adverse_excursion_bps": [
+        0.0,
+        -150.11540337124026
+      ],
+      "model_p05_bps": -228.64608813468607,
+      "uniform_complete_clocks": 3,
+      "uniform_bps": 21.728962485805695,
+      "rank_bps_on_uniform_clocks": -153.35404771636226
+    },
+    {
+      "week": "2026-01-12",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 0,
+        "no_signal": 0,
+        "selected": 5,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 1
+      },
+      "paired_clocks": 5,
+      "rank_bps": -4.996946146629261,
+      "opening_reversal_bps": 1.234790495629707,
+      "increment_bps": -6.231736642258968,
+      "available_model_clocks": 5,
+      "available_model_bps": -4.996946146629261,
+      "median_favorable_adverse_excursion_bps": [
+        25.806465934914915,
+        -15.974444291571755
+      ],
+      "model_p05_bps": -68.36022326623618,
+      "uniform_complete_clocks": 4,
+      "uniform_bps": -10.223948066882413,
+      "rank_bps_on_uniform_clocks": -8.240598425280853
+    },
+    {
+      "week": "2026-01-19",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 2,
+        "no_signal": 0,
+        "selected": 3,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 0
+      },
+      "paired_clocks": 3,
+      "rank_bps": 8.983915840656424,
+      "opening_reversal_bps": 5.424418086930668,
+      "increment_bps": 3.5594977537257555,
+      "available_model_clocks": 3,
+      "available_model_bps": 8.983915840656424,
+      "median_favorable_adverse_excursion_bps": [
+        64.27243297425242,
+        -28.487342406432354
+      ],
+      "model_p05_bps": -40.59430836104799,
+      "uniform_complete_clocks": 3,
+      "uniform_bps": 50.99114540989288,
+      "rank_bps_on_uniform_clocks": 8.983915840656424
+    },
+    {
+      "week": "2026-01-26",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 0,
+        "no_signal": 0,
+        "selected": 5,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 1
+      },
+      "paired_clocks": 5,
+      "rank_bps": -68.61265441216673,
+      "opening_reversal_bps": -64.0761580405125,
+      "increment_bps": -4.536496371654247,
+      "available_model_clocks": 5,
+      "available_model_bps": -68.61265441216673,
+      "median_favorable_adverse_excursion_bps": [
+        39.76148379639417,
+        -38.54019368995082
+      ],
+      "model_p05_bps": -260.45589798091675,
+      "uniform_complete_clocks": 4,
+      "uniform_bps": -29.950779304523508,
+      "rank_bps_on_uniform_clocks": -89.62086889474642
+    },
+    {
+      "week": "2026-02-02",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 0,
+        "no_signal": 0,
+        "selected": 5,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 1
+      },
+      "paired_clocks": 5,
+      "rank_bps": -94.03956168781522,
+      "opening_reversal_bps": -122.03214753231077,
+      "increment_bps": 27.99258584449555,
+      "available_model_clocks": 5,
+      "available_model_bps": -94.03956168781522,
+      "median_favorable_adverse_excursion_bps": [
+        15.491869868293188,
+        -134.91394062979845
+      ],
+      "model_p05_bps": -463.1109646803209,
+      "uniform_complete_clocks": 4,
+      "uniform_bps": -61.713923229761626,
+      "rank_bps_on_uniform_clocks": -143.76692084788866
+    },
+    {
+      "week": "2026-02-09",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 0,
+        "no_signal": 0,
+        "selected": 5,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 0
+      },
+      "paired_clocks": 5,
+      "rank_bps": -26.369302470647984,
+      "opening_reversal_bps": 53.50523703687056,
+      "increment_bps": -79.87453950751855,
+      "available_model_clocks": 5,
+      "available_model_bps": -26.369302470647984,
+      "median_favorable_adverse_excursion_bps": [
+        16.67014347285736,
+        -73.26040092072898
+      ],
+      "model_p05_bps": -171.3086104312272,
+      "uniform_complete_clocks": 5,
+      "uniform_bps": 16.45822797136963,
+      "rank_bps_on_uniform_clocks": -26.369302470647984
+    },
+    {
+      "week": "2026-02-16",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 2,
+        "no_signal": 0,
+        "selected": 3,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 0
+      },
+      "paired_clocks": 3,
+      "rank_bps": 55.87487810062593,
+      "opening_reversal_bps": 132.6138110850454,
+      "increment_bps": -76.73893298441945,
+      "available_model_clocks": 3,
+      "available_model_bps": 55.87487810062593,
+      "median_favorable_adverse_excursion_bps": [
+        40.11594414826839,
+        -15.644209247194574
+      ],
+      "model_p05_bps": -31.263992263120027,
+      "uniform_complete_clocks": 3,
+      "uniform_bps": 57.55202834246804,
+      "rank_bps_on_uniform_clocks": 55.87487810062593
+    },
+    {
+      "week": "2026-02-23",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 0,
+        "no_signal": 1,
+        "selected": 4,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 0
+      },
+      "paired_clocks": 4,
+      "rank_bps": 62.751473644443124,
+      "opening_reversal_bps": 25.305744039829246,
+      "increment_bps": 37.445729604613874,
+      "available_model_clocks": 4,
+      "available_model_bps": 62.751473644443124,
+      "median_favorable_adverse_excursion_bps": [
+        96.57352180823531,
+        -33.19698920841175
+      ],
+      "model_p05_bps": -24.53226735605957,
+      "uniform_complete_clocks": 4,
+      "uniform_bps": -15.84609464415032,
+      "rank_bps_on_uniform_clocks": 62.751473644443124
+    },
+    {
+      "week": "2026-03-02",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 0,
+        "no_signal": 0,
+        "selected": 5,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 0
+      },
+      "paired_clocks": 5,
+      "rank_bps": -48.51895284909139,
+      "opening_reversal_bps": 17.80654269520256,
+      "increment_bps": -66.32549554429394,
+      "available_model_clocks": 5,
+      "available_model_bps": -48.51895284909139,
+      "median_favorable_adverse_excursion_bps": [
+        51.356593841812156,
+        -29.472819145138658
+      ],
+      "model_p05_bps": -236.95127748926905,
+      "uniform_complete_clocks": 5,
+      "uniform_bps": 8.262704893967438,
+      "rank_bps_on_uniform_clocks": -48.51895284909139
+    },
+    {
+      "week": "2026-03-09",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 0,
+        "no_signal": 0,
+        "selected": 5,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 0
+      },
+      "paired_clocks": 5,
+      "rank_bps": -12.324591374523358,
+      "opening_reversal_bps": -46.79481886919798,
+      "increment_bps": 34.47022749467463,
+      "available_model_clocks": 5,
+      "available_model_bps": -12.324591374523358,
+      "median_favorable_adverse_excursion_bps": [
+        15.924979035721568,
+        -67.51980164499672
+      ],
+      "model_p05_bps": -77.20946561758723,
+      "uniform_complete_clocks": 5,
+      "uniform_bps": -38.94607863050528,
+      "rank_bps_on_uniform_clocks": -12.324591374523358
+    },
+    {
+      "week": "2026-03-16",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 0,
+        "no_signal": 0,
+        "selected": 5,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 0
+      },
+      "paired_clocks": 5,
+      "rank_bps": 54.729289095260924,
+      "opening_reversal_bps": 54.729289095260924,
+      "increment_bps": 0.0,
+      "available_model_clocks": 5,
+      "available_model_bps": 54.729289095260924,
+      "median_favorable_adverse_excursion_bps": [
+        91.81090370665375,
+        -17.361115471763668
+      ],
+      "model_p05_bps": -10.85968125647905,
+      "uniform_complete_clocks": 5,
+      "uniform_bps": -30.396407700522882,
+      "rank_bps_on_uniform_clocks": 54.729289095260924
+    },
+    {
+      "week": "2026-03-23",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 0,
+        "no_signal": 0,
+        "selected": 5,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 0
+      },
+      "paired_clocks": 5,
+      "rank_bps": -17.15709603805496,
+      "opening_reversal_bps": -26.370033646086284,
+      "increment_bps": 9.212937608031329,
+      "available_model_clocks": 5,
+      "available_model_bps": -17.15709603805496,
+      "median_favorable_adverse_excursion_bps": [
+        27.431188378141957,
+        -42.82661792000848
+      ],
+      "model_p05_bps": -120.85707970824599,
+      "uniform_complete_clocks": 5,
+      "uniform_bps": 8.943066406056122,
+      "rank_bps_on_uniform_clocks": -17.15709603805496
+    },
+    {
+      "week": "2026-03-30",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 1,
+        "no_signal": 0,
+        "selected": 4,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 1
+      },
+      "paired_clocks": 4,
+      "rank_bps": -13.0451592227327,
+      "opening_reversal_bps": -42.05371551054999,
+      "increment_bps": 29.008556287817292,
+      "available_model_clocks": 4,
+      "available_model_bps": -13.0451592227327,
+      "median_favorable_adverse_excursion_bps": [
+        45.18215439035945,
+        -31.804590800434244
+      ],
+      "model_p05_bps": -109.18990460443489,
+      "uniform_complete_clocks": 3,
+      "uniform_bps": 43.04102881800613,
+      "rank_bps_on_uniform_clocks": -2.355926141972437
+    },
+    {
+      "week": "2026-04-06",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 1,
+        "no_signal": 0,
+        "selected": 4,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 0
+      },
+      "paired_clocks": 4,
+      "rank_bps": -50.64065660430417,
+      "opening_reversal_bps": -50.64065660430417,
+      "increment_bps": 0.0,
+      "available_model_clocks": 4,
+      "available_model_bps": -50.64065660430417,
+      "median_favorable_adverse_excursion_bps": [
+        27.62946798555106,
+        -81.08165696570201
+      ],
+      "model_p05_bps": -219.5738301993436,
+      "uniform_complete_clocks": 4,
+      "uniform_bps": -37.29746614801172,
+      "rank_bps_on_uniform_clocks": -50.64065660430417
+    },
+    {
+      "week": "2026-04-13",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 0,
+        "no_signal": 0,
+        "selected": 5,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 0
+      },
+      "paired_clocks": 5,
+      "rank_bps": -32.20873552405639,
+      "opening_reversal_bps": -54.81572208576737,
+      "increment_bps": 22.606986561710983,
+      "available_model_clocks": 5,
+      "available_model_bps": -32.20873552405639,
+      "median_favorable_adverse_excursion_bps": [
+        58.5928380182518,
+        -67.30660925755514
+      ],
+      "model_p05_bps": -120.76748121224465,
+      "uniform_complete_clocks": 5,
+      "uniform_bps": 13.867590734440569,
+      "rank_bps_on_uniform_clocks": -32.20873552405639
+    },
+    {
+      "week": "2026-04-20",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 0,
+        "no_signal": 0,
+        "selected": 5,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 2
+      },
+      "paired_clocks": 5,
+      "rank_bps": -73.95891304019926,
+      "opening_reversal_bps": -121.59598659751387,
+      "increment_bps": 47.63707355731458,
+      "available_model_clocks": 5,
+      "available_model_bps": -73.95891304019926,
+      "median_favorable_adverse_excursion_bps": [
+        48.715773935205334,
+        -40.6401372151494
+      ],
+      "model_p05_bps": -249.96928071092006,
+      "uniform_complete_clocks": 3,
+      "uniform_bps": -46.37462685135433,
+      "rank_bps_on_uniform_clocks": -107.7601709415804
+    },
+    {
+      "week": "2026-04-27",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 0,
+        "no_signal": 0,
+        "selected": 5,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 1
+      },
+      "paired_clocks": 5,
+      "rank_bps": -13.420809672423854,
+      "opening_reversal_bps": 101.48371617059486,
+      "increment_bps": -114.90452584301872,
+      "available_model_clocks": 5,
+      "available_model_bps": -13.420809672423854,
+      "median_favorable_adverse_excursion_bps": [
+        22.02644062342318,
+        -44.45656549363801
+      ],
+      "model_p05_bps": -103.98746262428024,
+      "uniform_complete_clocks": 4,
+      "uniform_bps": 0.9497151197105307,
+      "rank_bps_on_uniform_clocks": -43.65881743973756
+    },
+    {
+      "week": "2026-05-04",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 0,
+        "no_signal": 0,
+        "selected": 5,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 0
+      },
+      "paired_clocks": 5,
+      "rank_bps": 37.51538059380016,
+      "opening_reversal_bps": 73.01671804879608,
+      "increment_bps": -35.50133745499592,
+      "available_model_clocks": 5,
+      "available_model_bps": 37.51538059380016,
+      "median_favorable_adverse_excursion_bps": [
+        57.979374750578565,
+        -34.71364755459074
+      ],
+      "model_p05_bps": -13.956001517536812,
+      "uniform_complete_clocks": 5,
+      "uniform_bps": 27.752497965863427,
+      "rank_bps_on_uniform_clocks": 37.51538059380016
+    },
+    {
+      "week": "2026-05-11",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 0,
+        "no_signal": 0,
+        "selected": 5,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 0
+      },
+      "paired_clocks": 5,
+      "rank_bps": -3.6056343637920323,
+      "opening_reversal_bps": 32.91573535739256,
+      "increment_bps": -36.5213697211846,
+      "available_model_clocks": 5,
+      "available_model_bps": -3.6056343637920323,
+      "median_favorable_adverse_excursion_bps": [
+        60.423144559626614,
+        -50.9305704243696
+      ],
+      "model_p05_bps": -119.14846537253987,
+      "uniform_complete_clocks": 5,
+      "uniform_bps": 33.6119315344261,
+      "rank_bps_on_uniform_clocks": -3.6056343637920323
+    },
+    {
+      "week": "2026-05-18",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 0,
+        "no_signal": 0,
+        "selected": 5,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 0
+      },
+      "paired_clocks": 5,
+      "rank_bps": 43.08618162234141,
+      "opening_reversal_bps": 1.7588884225663493,
+      "increment_bps": 41.327293199775056,
+      "available_model_clocks": 5,
+      "available_model_bps": 43.08618162234141,
+      "median_favorable_adverse_excursion_bps": [
+        131.15819708856043,
+        0.0
+      ],
+      "model_p05_bps": -128.19136769092862,
+      "uniform_complete_clocks": 5,
+      "uniform_bps": 10.623937993762294,
+      "rank_bps_on_uniform_clocks": 43.08618162234141
+    },
+    {
+      "week": "2026-05-25",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 2,
+        "no_signal": 0,
+        "selected": 3,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 0
+      },
+      "paired_clocks": 3,
+      "rank_bps": -13.326806221713937,
+      "opening_reversal_bps": -13.326806221713937,
+      "increment_bps": 0.0,
+      "available_model_clocks": 3,
+      "available_model_bps": -13.326806221713937,
+      "median_favorable_adverse_excursion_bps": [
+        108.85144737492344,
+        -87.0930969118697
+      ],
+      "model_p05_bps": -143.83714794566848,
+      "uniform_complete_clocks": 3,
+      "uniform_bps": 41.457515421425974,
+      "rank_bps_on_uniform_clocks": -13.326806221713937
+    },
+    {
+      "week": "2026-06-01",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 0,
+        "no_signal": 0,
+        "selected": 5,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 0
+      },
+      "paired_clocks": 5,
+      "rank_bps": -9.679309468567315,
+      "opening_reversal_bps": 35.851838398329676,
+      "increment_bps": -45.531147866896994,
+      "available_model_clocks": 5,
+      "available_model_bps": -9.679309468567315,
+      "median_favorable_adverse_excursion_bps": [
+        38.956029008304554,
+        -23.446669592542456
+      ],
+      "model_p05_bps": -73.96597084529846,
+      "uniform_complete_clocks": 5,
+      "uniform_bps": 1.2741765847257454,
+      "rank_bps_on_uniform_clocks": -9.679309468567315
+    },
+    {
+      "week": "2026-06-08",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 0,
+        "no_signal": 0,
+        "selected": 5,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 0
+      },
+      "paired_clocks": 5,
+      "rank_bps": -110.05442172193838,
+      "opening_reversal_bps": -105.06059351240631,
+      "increment_bps": -4.993828209532064,
+      "available_model_clocks": 5,
+      "available_model_bps": -110.05442172193838,
+      "median_favorable_adverse_excursion_bps": [
+        4.9615481047590535,
+        -115.76567828997622
+      ],
+      "model_p05_bps": -258.6412187456253,
+      "uniform_complete_clocks": 5,
+      "uniform_bps": -2.6542731451418264,
+      "rank_bps_on_uniform_clocks": -110.05442172193838
+    },
+    {
+      "week": "2026-06-15",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 1,
+        "no_signal": 0,
+        "selected": 4,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 0
+      },
+      "paired_clocks": 4,
+      "rank_bps": -34.6793423715168,
+      "opening_reversal_bps": -7.458308538060635,
+      "increment_bps": -27.22103383345617,
+      "available_model_clocks": 4,
+      "available_model_bps": -34.6793423715168,
+      "median_favorable_adverse_excursion_bps": [
+        118.99952051312985,
+        -32.55421907053956
+      ],
+      "model_p05_bps": -437.0253964723571,
+      "uniform_complete_clocks": 4,
+      "uniform_bps": -16.57216555321892,
+      "rank_bps_on_uniform_clocks": -34.6793423715168
+    },
+    {
+      "week": "2026-06-22",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 1,
+        "no_signal": 0,
+        "selected": 4,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 0
+      },
+      "paired_clocks": 4,
+      "rank_bps": 87.2456487454814,
+      "opening_reversal_bps": 121.61136131289953,
+      "increment_bps": -34.36571256741812,
+      "available_model_clocks": 4,
+      "available_model_bps": 87.2456487454814,
+      "median_favorable_adverse_excursion_bps": [
+        98.27428315704533,
+        -79.47990175039871
+      ],
+      "model_p05_bps": -21.017586563218615,
+      "uniform_complete_clocks": 4,
+      "uniform_bps": 35.56105913648846,
+      "rank_bps_on_uniform_clocks": 87.2456487454814
+    },
+    {
+      "week": "2026-06-29",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 1,
+        "no_signal": 0,
+        "selected": 4,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 0
+      },
+      "paired_clocks": 4,
+      "rank_bps": -49.32675902640696,
+      "opening_reversal_bps": -156.94130806121836,
+      "increment_bps": 107.6145490348114,
+      "available_model_clocks": 4,
+      "available_model_bps": -49.32675902640696,
+      "median_favorable_adverse_excursion_bps": [
+        85.14694696092718,
+        -114.48372980331332
+      ],
+      "model_p05_bps": -309.9285927767495,
+      "uniform_complete_clocks": 4,
+      "uniform_bps": -7.419886097748083,
+      "rank_bps_on_uniform_clocks": -49.32675902640696
+    },
+    {
+      "week": "2026-07-06",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 1,
+        "no_signal": 0,
+        "selected": 4,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 0
+      },
+      "paired_clocks": 4,
+      "rank_bps": -17.07262620556478,
+      "opening_reversal_bps": -27.71278566174334,
+      "increment_bps": 10.640159456178562,
+      "available_model_clocks": 4,
+      "available_model_bps": -17.07262620556478,
+      "median_favorable_adverse_excursion_bps": [
+        50.85672468590937,
+        -17.148522675006216
+      ],
+      "model_p05_bps": -203.59798215119525,
+      "uniform_complete_clocks": 4,
+      "uniform_bps": -29.998959471674425,
+      "rank_bps_on_uniform_clocks": -17.07262620556478
+    },
+    {
+      "week": "2026-07-13",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 0,
+        "no_signal": 1,
+        "selected": 4,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 1
+      },
+      "paired_clocks": 4,
+      "rank_bps": -57.442691924289065,
+      "opening_reversal_bps": 6.104113665617497,
+      "increment_bps": -63.54680558990656,
+      "available_model_clocks": 4,
+      "available_model_bps": -57.442691924289065,
+      "median_favorable_adverse_excursion_bps": [
+        48.55246768802434,
+        -43.55970301010728
+      ],
+      "model_p05_bps": -273.19825753172603,
+      "uniform_complete_clocks": 3,
+      "uniform_bps": 50.955084705909236,
+      "rank_bps_on_uniform_clocks": -53.56354555740032
+    },
+    {
+      "week": "2026-07-20",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 0,
+        "no_signal": 1,
+        "selected": 4,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 0
+      },
+      "paired_clocks": 4,
+      "rank_bps": -38.66588515345486,
+      "opening_reversal_bps": -110.7265227406144,
+      "increment_bps": 72.06063758715953,
+      "available_model_clocks": 4,
+      "available_model_bps": -38.66588515345486,
+      "median_favorable_adverse_excursion_bps": [
+        23.497861307429122,
+        -138.3192972831233
+      ],
+      "model_p05_bps": -161.168850098841,
+      "uniform_complete_clocks": 4,
+      "uniform_bps": -59.85273979144341,
+      "rank_bps_on_uniform_clocks": -38.66588515345486
+    },
+    {
+      "week": "2026-07-27",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 0,
+        "no_signal": 0,
+        "selected": 5,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 0
+      },
+      "paired_clocks": 5,
+      "rank_bps": -11.961402633610522,
+      "opening_reversal_bps": -151.0642995963112,
+      "increment_bps": 139.10289696270064,
+      "available_model_clocks": 5,
+      "available_model_bps": -11.961402633610522,
+      "median_favorable_adverse_excursion_bps": [
+        26.716553428046055,
+        -40.431321923562024
+      ],
+      "model_p05_bps": -161.79013829132685,
+      "uniform_complete_clocks": 5,
+      "uniform_bps": -34.41085568073642,
+      "rank_bps_on_uniform_clocks": -11.961402633610522
+    },
+    {
+      "week": "2026-08-03",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 0,
+        "no_signal": 0,
+        "selected": 5,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 0
+      },
+      "paired_clocks": 5,
+      "rank_bps": -17.406556842168584,
+      "opening_reversal_bps": 21.75673639662849,
+      "increment_bps": -39.163293238797074,
+      "available_model_clocks": 5,
+      "available_model_bps": -17.406556842168584,
+      "median_favorable_adverse_excursion_bps": [
+        35.07828745349582,
+        -21.6479586638529
+      ],
+      "model_p05_bps": -81.9849223930764,
+      "uniform_complete_clocks": 5,
+      "uniform_bps": 13.352032804701926,
+      "rank_bps_on_uniform_clocks": -17.406556842168584
+    },
+    {
+      "week": "2026-08-10",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 0,
+        "no_signal": 0,
+        "selected": 5,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 0
+      },
+      "paired_clocks": 5,
+      "rank_bps": 37.74390989238353,
+      "opening_reversal_bps": 18.78379863722126,
+      "increment_bps": 18.960111255162268,
+      "available_model_clocks": 5,
+      "available_model_bps": 37.74390989238353,
+      "median_favorable_adverse_excursion_bps": [
+        100.00877068215135,
+        -27.958639452935493
+      ],
+      "model_p05_bps": -36.91861808166338,
+      "uniform_complete_clocks": 5,
+      "uniform_bps": 7.240877674646197,
+      "rank_bps_on_uniform_clocks": 37.74390989238353
+    },
+    {
+      "week": "2026-08-17",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 0,
+        "no_signal": 0,
+        "selected": 5,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 1
+      },
+      "paired_clocks": 5,
+      "rank_bps": -15.378774088925871,
+      "opening_reversal_bps": -60.776905244331225,
+      "increment_bps": 45.39813115540535,
+      "available_model_clocks": 5,
+      "available_model_bps": -15.378774088925871,
+      "median_favorable_adverse_excursion_bps": [
+        24.240337382499717,
+        -42.5624963928432
+      ],
+      "model_p05_bps": -197.02309024544445,
+      "uniform_complete_clocks": 4,
+      "uniform_bps": 33.60601993465261,
+      "rank_bps_on_uniform_clocks": 38.178669731625504
+    },
+    {
+      "week": "2026-08-24",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 0,
+        "no_signal": 0,
+        "selected": 5,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 0
+      },
+      "paired_clocks": 5,
+      "rank_bps": 17.988285223941766,
+      "opening_reversal_bps": -10.165145608797552,
+      "increment_bps": 28.153430832739325,
+      "available_model_clocks": 5,
+      "available_model_bps": 17.988285223941766,
+      "median_favorable_adverse_excursion_bps": [
+        65.07199994946443,
+        -46.18945856294417
+      ],
+      "model_p05_bps": -47.59560671870009,
+      "uniform_complete_clocks": 5,
+      "uniform_bps": 3.7356482811121614,
+      "rank_bps_on_uniform_clocks": 17.988285223941766
+    },
+    {
+      "week": "2026-08-31",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 0,
+        "no_signal": 0,
+        "selected": 5,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 0
+      },
+      "paired_clocks": 5,
+      "rank_bps": 0.07991866625868607,
+      "opening_reversal_bps": 33.241951924850625,
+      "increment_bps": -33.16203325859193,
+      "available_model_clocks": 5,
+      "available_model_bps": 0.07991866625868607,
+      "median_favorable_adverse_excursion_bps": [
+        41.080797227599724,
+        -45.7027582356752
+      ],
+      "model_p05_bps": -146.2164873146237,
+      "uniform_complete_clocks": 5,
+      "uniform_bps": 6.953241787358938,
+      "rank_bps_on_uniform_clocks": 0.07991866625868607
+    },
+    {
+      "week": "2026-09-07",
+      "counts": {
+        "scheduled": 5,
+        "no_cohort": 2,
+        "no_signal": 0,
+        "selected": 3,
+        "model_path_missing": 0,
+        "benchmark_path_missing": 0,
+        "uniform_path_missing": 0
+      },
+      "paired_clocks": 3,
+      "rank_bps": -86.81049692732448,
+      "opening_reversal_bps": 10.79681611809922,
+      "increment_bps": -97.60731304542371,
+      "available_model_clocks": 3,
+      "available_model_bps": -86.81049692732448,
+      "median_favorable_adverse_excursion_bps": [
+        16.012813669738275,
+        -148.15085785140698
+      ],
+      "model_p05_bps": -150.62836551784608,
+      "uniform_complete_clocks": 3,
+      "uniform_bps": -0.027565001283332908,
+      "rank_bps_on_uniform_clocks": -86.81049692732448
+    }
+  ],
+  "gross_eur": null,
+  "net_eur": null,
+  "funded_round_trips": 0,
+  "new_broker_requests": 0,
+  "orders_submitted": 0,
+  "cloud_activated": false,
+  "independent_confirmation": false
+}
