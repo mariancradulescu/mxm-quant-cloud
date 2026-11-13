@@ -209,6 +209,27 @@
   },
   "prospectiveStudies": [
     {
+      "id": "VIA1",
+      "status": "PROTOCOL_FROZEN_BEFORE_SCORING_RESULT_UNKNOWN",
+      "protocolFile": "research/VIA1_IMPULSE_ABSORPTION.md",
+      "protocolFreezeCommit": "916e2f2fca6b8eb5feac2f3f30f1d101bd5ca010",
+      "sourceRunId": 43377275493,
+      "sourceCipherArtifactId": 14015883688,
+      "sourceReceiptArtifactId": 14016671008,
+      "targets": ["EURUSD", "US500"],
+      "family": "M5_SAMPLED_IMPULSE_ABSORPTION_STRUCTURAL_EXIT",
+      "calendar": "2026-07-13/2026-11-09_EXPOSED_DEVELOPMENT",
+      "decisionTimesUtc": "weekdays 10:00:00..16:45:00 every 15min, as-of +1500ms",
+      "trainingOrParameterSearch": false,
+      "trialMultiplicity": "two fixed targets, one exact predeclared signal and exit policy; shared calendar overlap",
+      "controls": ["SAME_SIGNAL_FIXED_REVERSION", "SAME_CLOCK_OWN_MOMENTUM", "LONG", "SHORT", "CASH"],
+      "independentConfirmation": false,
+      "sourceExposure": "GLOBAL_EXPOSED_NXE1_17_WEEK_CALENDAR_AND_OVERLAPPING_SYMBOL_DATA",
+      "historicalBrokerTariffsCertified": false,
+      "fundedNetEUR": null,
+      "liveOrDemoOrdersAuthorized": false
+    },
+    {
       "allocation": "FIRST80_ONLY_NO_PERFORMANCE_IN_LAST20",
       "families": [
         "SIX_BAR_DRIFT",
