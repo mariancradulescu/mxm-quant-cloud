@@ -315,8 +315,8 @@ public sealed class NativeProductResearchLoop
            markets.Select(x=>x.Symbol).Distinct(StringComparer.Ordinal).Count()!=markets.Length ||
            markets.Any(x=>x.Quote.At!=at||string.IsNullOrWhiteSpace(x.Symbol)||
                x.Symbol!=x.Quote.Symbol||x.SlippagePerSideQuote<0||
-               x.HoldingMinutes<15||(researchMode.StartsWith("NXE1_",StringComparison.Ordinal)?
-                    x.HoldingMinutes>10080:x.HoldingMinutes>240)||
+               x.HoldingMinutes<15||(!researchMode.StartsWith("NXE1_",StringComparison.Ordinal)&&
+                    x.HoldingMinutes>240)||
                !NativeCausalExitResearch.Supported(x.ExitPolicy)))
             throw new ArgumentException("PRODUCT_REPLAY_NONCAUSAL_MARKET_CLOCK");
         // Do not silently bridge unobserved intrahorizon equity. Offline replay
