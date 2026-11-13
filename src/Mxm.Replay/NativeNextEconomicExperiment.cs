@@ -150,8 +150,12 @@ internal static class NativeNextEconomicExperiment
             foreach(var signal in signals)
             {
                 int duration=signal.Symbol=="US30"?180:120;
-                long until=signal.At+duration*60000L;
-                if(!quotes.TryGetValue((signal.Symbol,signal.At),out var first))
+                // Freeze causal execution latency: first model entry at
+                // the NEXT observed 5-minute mark after the signal, never
+                // at the information clock used to decide the direction.
+                long opened=signal.At+M5;
+                long until=opened+duration*60000L;
+                if(!quotes.TryGetValue((signal.Symbol,signal.At),out var decision))
                     continue;
                 int missing=0;
                 for(long at=signal.At;at<=until;at+=M5)
@@ -163,6 +167,7 @@ internal static class NativeNextEconomicExperiment
                         "MISSING_HELD_BIDASK_OR_EUR_CONVERSION_CLOCK"));
                     continue;
                 }
+                var first=quotes[(signal.Symbol,opened)];
                 var last=quotes[(signal.Symbol,until)];
                 // Current tariff is an EX-POST sensitivity only; no financing
                 // default to zero at an unknown rollover.
@@ -174,7 +179,7 @@ internal static class NativeNextEconomicExperiment
                         "CONTRACT_ROLLOVER_TIME_UNATTESTED"));
                     continue;
                 }
-                var d1=DateTimeOffset.FromUnixTimeMilliseconds(signal.At).UtcDateTime;
+                var d1=DateTimeOffset.FromUnixTimeMilliseconds(opened).UtcDateTime;
                 var d2=DateTimeOffset.FromUnixTimeMilliseconds(until).UtcDateTime;
                 bool crossesSwap=false;
                 for(var d=d1.Date;d<=d2.Date;d=d.AddDays(1))
