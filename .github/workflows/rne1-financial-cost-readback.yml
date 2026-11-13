@@ -65,6 +65,6 @@ jobs:
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: rne1-current-cost-usd-screen
-          path: rne1-current-cost-usd-screen.json
+          path: rne1-current-contract-usd-cost-screen.json
           if-no-files-found: error
           retention-days: 90
