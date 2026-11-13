@@ -1,0 +1,2638 @@
+{
+  "classification": "EXPOSED_BID_BAR_GROSS_PROXY",
+  "archive_sha256": "09d999a595436de73c5edbb3d4a84002dc8b8779dc94393473d43afe1c3d9259",
+  "protocol_sha256": "aa27d86741fe712382e786a5e5fb493967af20bd3fc2f8a6acd949f2008b8532",
+  "source": {
+    "ATMUSD": {
+      "sha256": "c92057ddcc9d6ceae487c7d9e15eb250349019f6788cb10daf0128c75405ca35",
+      "bars": 104390,
+      "indicative_minimum_margin_eur": 0.78
+    },
+    "GLMRUSD": {
+      "sha256": "a4f0673dda123d81bd6efa39cba4fc650b56709ca3d534b1182d152dd45d333e",
+      "bars": 83214,
+      "indicative_minimum_margin_eur": 0.27
+    },
+    "POLUSD": {
+      "sha256": "73d04d68575809767cdf5a8c89771cffec90ee39acc0f348043e3ba25a4363c3",
+      "bars": 102691,
+      "indicative_minimum_margin_eur": 0.47
+    },
+    "TRUMPUSD": {
+      "sha256": "0c1333f22ac726e58e91cd0cf50d0565cc04d96e495383dcdfdd75978629f865",
+      "bars": 85039,
+      "indicative_minimum_margin_eur": 0.09
+    },
+    "XLMUSD": {
+      "sha256": "92fd1b375c53937f57a489e797ceb07209785b36cd43e2da5df758c87a2f7351",
+      "bars": 104843,
+      "indicative_minimum_margin_eur": 0.95
+    }
+  },
+  "hold_minutes": 60,
+  "targets": {
+    "XLMUSD": {
+      "counts": {
+        "scheduled": 1428,
+        "missing_decision": 1193,
+        "intents": 34,
+        "missing_path": 0,
+        "weekend_priced": 8
+      },
+      "own_same_flat_opposite": [
+        21,
+        2,
+        11
+      ],
+      "overall": {
+        "priced": 34,
+        "mean_gross_bps": {
+          "peer": 0.09475744993484214,
+          "own": -3.6325285353453496,
+          "long": 4.929995616274209,
+          "short": -4.929995616274209,
+          "cash": 0.0
+        },
+        "increment_vs_own_bps": 3.727285985280192,
+        "median_favorable_adverse_excursion_bps": [
+          52.72326371310059,
+          -19.467163749291263
+        ]
+      },
+      "chronological_segments": [
+        {
+          "priced": 30,
+          "mean_gross_bps": {
+            "peer": 9.604090404793434,
+            "own": -7.6323277770629545,
+            "long": -3.9093702630898424,
+            "short": 3.9093702630898424,
+            "cash": 0.0
+          },
+          "increment_vs_own_bps": 17.23641818185639,
+          "median_favorable_adverse_excursion_bps": [
+            53.057587262911696,
+            -17.74187718522874
+          ]
+        },
+        {
+          "priced": 4,
+          "mean_gross_bps": {
+            "peer": -71.2252397115046,
+            "own": 26.365965777536687,
+            "long": 71.2252397115046,
+            "short": -71.2252397115046,
+            "cash": 0.0
+          },
+          "increment_vs_own_bps": -97.59120548904129,
+          "median_favorable_adverse_excursion_bps": [
+            26.92784966296348,
+            -91.23724089517943
+          ]
+        }
+      ],
+      "descriptive_95pct_4week_interval_absolute_and_increment_bps": [
+        [
+          -45.78423184547373,
+          29.019694980881344
+        ],
+        [
+          -52.175737205470064,
+          47.99692904103351
+        ]
+      ],
+      "cost_verification_screen_passed": false,
+      "weekly": [
+        {
+          "week": "2025-09-22",
+          "scheduled": 28,
+          "missing_decision": 3,
+          "intents": 1,
+          "missing_path": 0,
+          "weekend_priced": 1,
+          "own_same_flat_opposite": [
+            1,
+            0,
+            0
+          ],
+          "priced": 1,
+          "mean_gross_bps": {
+            "peer": 0.0,
+            "own": 0.0,
+            "long": 0.0,
+            "short": 0.0,
+            "cash": 0.0
+          },
+          "increment_vs_own_bps": 0.0,
+          "median_favorable_adverse_excursion_bps": [
+            16.783220722747732,
+            -5.588153260815101
+          ]
+        },
+        {
+          "week": "2025-09-29",
+          "scheduled": 28,
+          "missing_decision": 3,
+          "intents": 7,
+          "missing_path": 0,
+          "weekend_priced": 3,
+          "own_same_flat_opposite": [
+            4,
+            0,
+            3
+          ],
+          "priced": 7,
+          "mean_gross_bps": {
+            "peer": 28.901477545878354,
+            "own": 29.899967929359132,
+            "long": -29.863000328099567,
+            "short": 29.863000328099567,
+            "cash": 0.0
+          },
+          "increment_vs_own_bps": -0.9984903834807775,
+          "median_favorable_adverse_excursion_bps": [
+            19.8511231442025,
+            -24.86944828171622
+          ]
+        },
+        {
+          "week": "2025-10-06",
+          "scheduled": 28,
+          "missing_decision": 11,
+          "intents": 6,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            3,
+            1,
+            2
+          ],
+          "priced": 6,
+          "mean_gross_bps": {
+            "peer": 31.05360647807958,
+            "own": 47.14114234036491,
+            "long": -34.721810159663576,
+            "short": 34.721810159663576,
+            "cash": 0.0
+          },
+          "increment_vs_own_bps": -16.08753586228533,
+          "median_favorable_adverse_excursion_bps": [
+            57.47374549258807,
+            -10.197240694518815
+          ]
+        },
+        {
+          "week": "2025-10-13",
+          "scheduled": 28,
+          "missing_decision": 13,
+          "intents": 2,
+          "missing_path": 0,
+          "weekend_priced": 1,
+          "own_same_flat_opposite": [
+            1,
+            0,
+            1
+          ],
+          "priced": 2,
+          "mean_gross_bps": {
+            "peer": -5.970191208486099,
+            "own": -54.33787921462604,
+            "long": 5.970191208486099,
+            "short": -5.970191208486099,
+            "cash": 0.0
+          },
+          "increment_vs_own_bps": 48.36768800613994,
+          "median_favorable_adverse_excursion_bps": [
+            36.69695625901297,
+            -75.18586166947496
+          ]
+        },
+        {
+          "week": "2025-10-20",
+          "scheduled": 28,
+          "missing_decision": 17,
+          "intents": 1,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            1,
+            0
+          ],
+          "priced": 1,
+          "mean_gross_bps": {
+            "peer": 54.062780747624494,
+            "own": 0.0,
+            "long": 54.062780747624494,
+            "short": -54.062780747624494,
+            "cash": 0.0
+          },
+          "increment_vs_own_bps": 54.062780747624494,
+          "median_favorable_adverse_excursion_bps": [
+            73.07419331786834,
+            -3.1892840327732412
+          ]
+        },
+        {
+          "week": "2025-10-27",
+          "scheduled": 28,
+          "missing_decision": 11,
+          "intents": 3,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            2,
+            0,
+            1
+          ],
+          "priced": 3,
+          "mean_gross_bps": {
+            "peer": -150.95151219653005,
+            "own": -188.77071226444684,
+            "long": 122.10349003389145,
+            "short": -122.10349003389145,
+            "cash": 0.0
+          },
+          "increment_vs_own_bps": 37.8192000679168,
+          "median_favorable_adverse_excursion_bps": [
+            55.814098381952654,
+            -377.044503256543
+          ]
+        },
+        {
+          "week": "2025-11-03",
+          "scheduled": 28,
+          "missing_decision": 6,
+          "intents": 1,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            1,
+            0,
+            0
+          ],
+          "priced": 1,
+          "mean_gross_bps": {
+            "peer": 52.34700489476919,
+            "own": 52.34700489476919,
+            "long": 52.34700489476919,
+            "short": -52.34700489476919,
+            "cash": 0.0
+          },
+          "increment_vs_own_bps": 0.0,
+          "median_favorable_adverse_excursion_bps": [
+            138.98764390815043,
+            0.0
+          ]
+        },
+        {
+          "week": "2025-11-10",
+          "scheduled": 28,
+          "missing_decision": 6,
+          "intents": 3,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            3,
+            0,
+            0
+          ],
+          "priced": 3,
+          "mean_gross_bps": {
+            "peer": 21.4798503113512,
+            "own": 21.4798503113512,
+            "long": -35.28724219892576,
+            "short": 35.28724219892576,
+            "cash": 0.0
+          },
+          "increment_vs_own_bps": 0.0,
+          "median_favorable_adverse_excursion_bps": [
+            51.59082810027423,
+            -20.711087831361844
+          ]
+        },
+        {
+          "week": "2025-11-17",
+          "scheduled": 28,
+          "missing_decision": 22,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2025-11-24",
+          "scheduled": 28,
+          "missing_decision": 26,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2025-12-01",
+          "scheduled": 28,
+          "missing_decision": 26,
+          "intents": 1,
+          "missing_path": 0,
+          "weekend_priced": 1,
+          "own_same_flat_opposite": [
+            1,
+            0,
+            0
+          ],
+          "priced": 1,
+          "mean_gross_bps": {
+            "peer": 29.258119095304224,
+            "own": 29.258119095304224,
+            "long": -29.258119095304224,
+            "short": 29.258119095304224,
+            "cash": 0.0
+          },
+          "increment_vs_own_bps": 0.0,
+          "median_favorable_adverse_excursion_bps": [
+            33.44484722847248,
+            -37.49223304521462
+          ]
+        },
+        {
+          "week": "2025-12-08",
+          "scheduled": 28,
+          "missing_decision": 20,
+          "intents": 1,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            1,
+            0,
+            0
+          ],
+          "priced": 1,
+          "mean_gross_bps": {
+            "peer": 38.20849479586216,
+            "own": 38.20849479586216,
+            "long": 38.20849479586216,
+            "short": -38.20849479586216,
+            "cash": 0.0
+          },
+          "increment_vs_own_bps": 0.0,
+          "median_favorable_adverse_excursion_bps": [
+            93.1420789569399,
+            0.0
+          ]
+        },
+        {
+          "week": "2025-12-15",
+          "scheduled": 28,
+          "missing_decision": 26,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2025-12-22",
+          "scheduled": 28,
+          "missing_decision": 26,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2025-12-29",
+          "scheduled": 28,
+          "missing_decision": 25,
+          "intents": 2,
+          "missing_path": 0,
+          "weekend_priced": 1,
+          "own_same_flat_opposite": [
+            1,
+            0,
+            1
+          ],
+          "priced": 2,
+          "mean_gross_bps": {
+            "peer": 53.40705772399087,
+            "own": -62.52282863782644,
+            "long": -53.40705772399087,
+            "short": 53.40705772399087,
+            "cash": 0.0
+          },
+          "increment_vs_own_bps": 115.92988636181731,
+          "median_favorable_adverse_excursion_bps": [
+            71.66358188651029,
+            -9.111619833610341
+          ]
+        },
+        {
+          "week": "2026-01-05",
+          "scheduled": 28,
+          "missing_decision": 26,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-01-12",
+          "scheduled": 28,
+          "missing_decision": 25,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-01-19",
+          "scheduled": 28,
+          "missing_decision": 24,
+          "intents": 1,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            1
+          ],
+          "priced": 1,
+          "mean_gross_bps": {
+            "peer": 62.24583181323984,
+            "own": -62.24583181323984,
+            "long": 62.24583181323984,
+            "short": -62.24583181323984,
+            "cash": 0.0
+          },
+          "increment_vs_own_bps": 124.49166362647968,
+          "median_favorable_adverse_excursion_bps": [
+            62.24583181323984,
+            -14.419613169012951
+          ]
+        },
+        {
+          "week": "2026-01-26",
+          "scheduled": 28,
+          "missing_decision": 28,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-02-02",
+          "scheduled": 28,
+          "missing_decision": 27,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-02-09",
+          "scheduled": 28,
+          "missing_decision": 28,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-02-16",
+          "scheduled": 28,
+          "missing_decision": 27,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-02-23",
+          "scheduled": 28,
+          "missing_decision": 28,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-03-02",
+          "scheduled": 28,
+          "missing_decision": 28,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-03-09",
+          "scheduled": 28,
+          "missing_decision": 27,
+          "intents": 1,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            1,
+            0,
+            0
+          ],
+          "priced": 1,
+          "mean_gross_bps": {
+            "peer": -43.09024826809583,
+            "own": -43.09024826809583,
+            "long": -43.09024826809583,
+            "short": 43.09024826809583,
+            "cash": 0.0
+          },
+          "increment_vs_own_bps": 0.0,
+          "median_favorable_adverse_excursion_bps": [
+            12.277472383223378,
+            -86.36697732591543
+          ]
+        },
+        {
+          "week": "2026-03-16",
+          "scheduled": 28,
+          "missing_decision": 26,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-03-23",
+          "scheduled": 28,
+          "missing_decision": 27,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-03-30",
+          "scheduled": 28,
+          "missing_decision": 28,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-04-06",
+          "scheduled": 28,
+          "missing_decision": 28,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-04-13",
+          "scheduled": 28,
+          "missing_decision": 24,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-04-20",
+          "scheduled": 28,
+          "missing_decision": 24,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-04-27",
+          "scheduled": 28,
+          "missing_decision": 28,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-05-04",
+          "scheduled": 28,
+          "missing_decision": 28,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-05-11",
+          "scheduled": 28,
+          "missing_decision": 27,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-05-18",
+          "scheduled": 28,
+          "missing_decision": 28,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-05-25",
+          "scheduled": 28,
+          "missing_decision": 28,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-06-01",
+          "scheduled": 28,
+          "missing_decision": 26,
+          "intents": 1,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            1
+          ],
+          "priced": 1,
+          "mean_gross_bps": {
+            "peer": -155.04186535965255,
+            "own": 155.04186535965255,
+            "long": 155.04186535965255,
+            "short": -155.04186535965255,
+            "cash": 0.0
+          },
+          "increment_vs_own_bps": -310.0837307193051,
+          "median_favorable_adverse_excursion_bps": [
+            53.85569932592696,
+            -169.45455101573592
+          ]
+        },
+        {
+          "week": "2026-06-08",
+          "scheduled": 28,
+          "missing_decision": 28,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-06-15",
+          "scheduled": 28,
+          "missing_decision": 28,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-06-22",
+          "scheduled": 28,
+          "missing_decision": 28,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-06-29",
+          "scheduled": 28,
+          "missing_decision": 28,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-07-06",
+          "scheduled": 28,
+          "missing_decision": 28,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-07-13",
+          "scheduled": 28,
+          "missing_decision": 28,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-07-20",
+          "scheduled": 28,
+          "missing_decision": 28,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-07-27",
+          "scheduled": 28,
+          "missing_decision": 28,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-08-03",
+          "scheduled": 28,
+          "missing_decision": 28,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-08-10",
+          "scheduled": 28,
+          "missing_decision": 28,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-08-17",
+          "scheduled": 28,
+          "missing_decision": 16,
+          "intents": 1,
+          "missing_path": 0,
+          "weekend_priced": 1,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            1
+          ],
+          "priced": 1,
+          "mean_gross_bps": {
+            "peer": -40.140545618430025,
+            "own": 40.140545618430025,
+            "long": 40.140545618430025,
+            "short": -40.140545618430025,
+            "cash": 0.0
+          },
+          "increment_vs_own_bps": -80.28109123686005,
+          "median_favorable_adverse_excursion_bps": [
+            -0.0,
+            -55.151806881101436
+          ]
+        },
+        {
+          "week": "2026-08-24",
+          "scheduled": 28,
+          "missing_decision": 17,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-08-31",
+          "scheduled": 28,
+          "missing_decision": 23,
+          "intents": 1,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            1,
+            0,
+            0
+          ],
+          "priced": 1,
+          "mean_gross_bps": {
+            "peer": 37.60412704132159,
+            "own": 37.60412704132159,
+            "long": -37.60412704132159,
+            "short": 37.60412704132159,
+            "cash": 0.0
+          },
+          "increment_vs_own_bps": 0.0,
+          "median_favorable_adverse_excursion_bps": [
+            86.16100690791053,
+            -16.072867108720597
+          ]
+        },
+        {
+          "week": "2026-09-07",
+          "scheduled": 28,
+          "missing_decision": 26,
+          "intents": 1,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            1,
+            0,
+            0
+          ],
+          "priced": 1,
+          "mean_gross_bps": {
+            "peer": -127.32267490925742,
+            "own": -127.32267490925742,
+            "long": 127.32267490925742,
+            "short": -127.32267490925742,
+            "cash": 0.0
+          },
+          "increment_vs_own_bps": 0.0,
+          "median_favorable_adverse_excursion_bps": [
+            -0.0,
+            -127.32267490925742
+          ]
+        }
+      ]
+    },
+    "POLUSD": {
+      "counts": {
+        "scheduled": 1428,
+        "missing_decision": 1193,
+        "intents": 25,
+        "missing_path": 0,
+        "weekend_priced": 5
+      },
+      "own_same_flat_opposite": [
+        15,
+        3,
+        7
+      ],
+      "overall": {
+        "priced": 25,
+        "mean_gross_bps": {
+          "peer": -12.51381658746526,
+          "own": -5.341162829197395,
+          "long": 3.68557244372229,
+          "short": -3.68557244372229,
+          "cash": 0.0
+        },
+        "increment_vs_own_bps": -7.172653758267866,
+        "median_favorable_adverse_excursion_bps": [
+          48.85641519147263,
+          -44.20873689993234
+        ]
+      },
+      "chronological_segments": [
+        {
+          "priced": 20,
+          "mean_gross_bps": {
+            "peer": 27.193028225438102,
+            "own": 25.721954104662256,
+            "long": -26.280354719146075,
+            "short": 26.280354719146075,
+            "cash": 0.0
+          },
+          "increment_vs_own_bps": 1.4710741207758482,
+          "median_favorable_adverse_excursion_bps": [
+            58.217169858872445,
+            -26.27003461641359
+          ]
+        },
+        {
+          "priced": 5,
+          "mean_gross_bps": {
+            "peer": -171.34119583907872,
+            "own": -129.593630564636,
+            "long": 123.54928109519575,
+            "short": -123.54928109519575,
+            "cash": 0.0
+          },
+          "increment_vs_own_bps": -41.74756527444272,
+          "median_favorable_adverse_excursion_bps": [
+            -0.0,
+            -112.36073266925752
+          ]
+        }
+      ],
+      "descriptive_95pct_4week_interval_absolute_and_increment_bps": [
+        [
+          -158.61551063428539,
+          38.72421722603949
+        ],
+        [
+          -52.07692401339373,
+          15.560499796344798
+        ]
+      ],
+      "cost_verification_screen_passed": false,
+      "weekly": [
+        {
+          "week": "2025-09-22",
+          "scheduled": 28,
+          "missing_decision": 3,
+          "intents": 3,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            1,
+            0,
+            2
+          ],
+          "priced": 3,
+          "mean_gross_bps": {
+            "peer": 16.847808037582816,
+            "own": 29.783298379266864,
+            "long": -62.35424184024862,
+            "short": 62.35424184024862,
+            "cash": 0.0
+          },
+          "increment_vs_own_bps": -12.93549034168405,
+          "median_favorable_adverse_excursion_bps": [
+            48.85641519147263,
+            -44.20873689993234
+          ]
+        },
+        {
+          "week": "2025-09-29",
+          "scheduled": 28,
+          "missing_decision": 3,
+          "intents": 1,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            1,
+            0,
+            0
+          ],
+          "priced": 1,
+          "mean_gross_bps": {
+            "peer": -69.055086669614,
+            "own": -69.055086669614,
+            "long": -69.055086669614,
+            "short": 69.055086669614,
+            "cash": 0.0
+          },
+          "increment_vs_own_bps": 0.0,
+          "median_favorable_adverse_excursion_bps": [
+            0.0,
+            -90.73296205674941
+          ]
+        },
+        {
+          "week": "2025-10-06",
+          "scheduled": 28,
+          "missing_decision": 11,
+          "intents": 2,
+          "missing_path": 0,
+          "weekend_priced": 1,
+          "own_same_flat_opposite": [
+            2,
+            0,
+            0
+          ],
+          "priced": 2,
+          "mean_gross_bps": {
+            "peer": 69.97001143139268,
+            "own": 69.97001143139268,
+            "long": -7.502343435191666,
+            "short": 7.502343435191666,
+            "cash": 0.0
+          },
+          "increment_vs_own_bps": 0.0,
+          "median_favorable_adverse_excursion_bps": [
+            94.59049613947738,
+            -39.31868230107288
+          ]
+        },
+        {
+          "week": "2025-10-13",
+          "scheduled": 28,
+          "missing_decision": 13,
+          "intents": 2,
+          "missing_path": 0,
+          "weekend_priced": 1,
+          "own_same_flat_opposite": [
+            1,
+            1,
+            0
+          ],
+          "priced": 2,
+          "mean_gross_bps": {
+            "peer": 53.724143835822744,
+            "own": 10.587616449536416,
+            "long": -32.548910936749905,
+            "short": 32.548910936749905,
+            "cash": 0.0
+          },
+          "increment_vs_own_bps": 43.136527386286325,
+          "median_favorable_adverse_excursion_bps": [
+            64.10899609387664,
+            -53.52804472311697
+          ]
+        },
+        {
+          "week": "2025-10-20",
+          "scheduled": 28,
+          "missing_decision": 17,
+          "intents": 1,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            1,
+            0,
+            0
+          ],
+          "priced": 1,
+          "mean_gross_bps": {
+            "peer": 99.45122533398175,
+            "own": 99.45122533398175,
+            "long": -99.45122533398175,
+            "short": 99.45122533398175,
+            "cash": 0.0
+          },
+          "increment_vs_own_bps": 0.0,
+          "median_favorable_adverse_excursion_bps": [
+            99.45122533398175,
+            -26.007817000574402
+          ]
+        },
+        {
+          "week": "2025-10-27",
+          "scheduled": 28,
+          "missing_decision": 11,
+          "intents": 5,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            4,
+            1,
+            0
+          ],
+          "priced": 5,
+          "mean_gross_bps": {
+            "peer": 53.586190317349,
+            "own": 37.74452333446101,
+            "long": -14.161048722177625,
+            "short": 14.161048722177625,
+            "cash": 0.0
+          },
+          "increment_vs_own_bps": 15.841666982887995,
+          "median_favorable_adverse_excursion_bps": [
+            78.47280656389142,
+            -16.072867108720263
+          ]
+        },
+        {
+          "week": "2025-11-03",
+          "scheduled": 28,
+          "missing_decision": 6,
+          "intents": 1,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            1,
+            0,
+            0
+          ],
+          "priced": 1,
+          "mean_gross_bps": {
+            "peer": -48.514346215519005,
+            "own": -48.514346215519005,
+            "long": -48.514346215519005,
+            "short": 48.514346215519005,
+            "cash": 0.0
+          },
+          "increment_vs_own_bps": 0.0,
+          "median_favorable_adverse_excursion_bps": [
+            0.0,
+            -164.68807713268362
+          ]
+        },
+        {
+          "week": "2025-11-10",
+          "scheduled": 28,
+          "missing_decision": 6,
+          "intents": 1,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            1
+          ],
+          "priced": 1,
+          "mean_gross_bps": {
+            "peer": 40.54450963894785,
+            "own": -40.54450963894785,
+            "long": 40.54450963894785,
+            "short": -40.54450963894785,
+            "cash": 0.0
+          },
+          "increment_vs_own_bps": 81.0890192778957,
+          "median_favorable_adverse_excursion_bps": [
+            63.6392081255741,
+            0.0
+          ]
+        },
+        {
+          "week": "2025-11-17",
+          "scheduled": 28,
+          "missing_decision": 22,
+          "intents": 1,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            1
+          ],
+          "priced": 1,
+          "mean_gross_bps": {
+            "peer": 13.315581195123912,
+            "own": -13.315581195123912,
+            "long": 13.315581195123912,
+            "short": -13.315581195123912,
+            "cash": 0.0
+          },
+          "increment_vs_own_bps": 26.631162390247823,
+          "median_favorable_adverse_excursion_bps": [
+            19.966728763230737,
+            -6.6644454316066986
+          ]
+        },
+        {
+          "week": "2025-11-24",
+          "scheduled": 28,
+          "missing_decision": 26,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2025-12-01",
+          "scheduled": 28,
+          "missing_decision": 26,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2025-12-08",
+          "scheduled": 28,
+          "missing_decision": 20,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2025-12-15",
+          "scheduled": 28,
+          "missing_decision": 26,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2025-12-22",
+          "scheduled": 28,
+          "missing_decision": 26,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2025-12-29",
+          "scheduled": 28,
+          "missing_decision": 25,
+          "intents": 1,
+          "missing_path": 0,
+          "weekend_priced": 1,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            1
+          ],
+          "priced": 1,
+          "mean_gross_bps": {
+            "peer": -61.376781892071456,
+            "own": 61.376781892071456,
+            "long": 61.376781892071456,
+            "short": -61.376781892071456,
+            "cash": 0.0
+          },
+          "increment_vs_own_bps": -122.75356378414291,
+          "median_favorable_adverse_excursion_bps": [
+            35.24232722529663,
+            -78.84403524148836
+          ]
+        },
+        {
+          "week": "2026-01-05",
+          "scheduled": 28,
+          "missing_decision": 26,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-01-12",
+          "scheduled": 28,
+          "missing_decision": 25,
+          "intents": 1,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            1,
+            0,
+            0
+          ],
+          "priced": 1,
+          "mean_gross_bps": {
+            "peer": 44.742803949210774,
+            "own": 44.742803949210774,
+            "long": -44.742803949210774,
+            "short": 44.742803949210774,
+            "cash": 0.0
+          },
+          "increment_vs_own_bps": 0.0,
+          "median_favorable_adverse_excursion_bps": [
+            76.82496172016282,
+            -19.114373452680088
+          ]
+        },
+        {
+          "week": "2026-01-19",
+          "scheduled": 28,
+          "missing_decision": 24,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-01-26",
+          "scheduled": 28,
+          "missing_decision": 28,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-02-02",
+          "scheduled": 28,
+          "missing_decision": 27,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-02-09",
+          "scheduled": 28,
+          "missing_decision": 28,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-02-16",
+          "scheduled": 28,
+          "missing_decision": 27,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-02-23",
+          "scheduled": 28,
+          "missing_decision": 28,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-03-02",
+          "scheduled": 28,
+          "missing_decision": 28,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-03-09",
+          "scheduled": 28,
+          "missing_decision": 27,
+          "intents": 1,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            1
+          ],
+          "priced": 1,
+          "mean_gross_bps": {
+            "peer": -41.11002706522206,
+            "own": 41.11002706522206,
+            "long": -41.11002706522206,
+            "short": 41.11002706522206,
+            "cash": 0.0
+          },
+          "increment_vs_own_bps": -82.22005413044413,
+          "median_favorable_adverse_excursion_bps": [
+            0.0,
+            -82.38975544552956
+          ]
+        },
+        {
+          "week": "2026-03-16",
+          "scheduled": 28,
+          "missing_decision": 26,
+          "intents": 1,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            1,
+            0,
+            0
+          ],
+          "priced": 1,
+          "mean_gross_bps": {
+            "peer": -42.59857346957452,
+            "own": -42.59857346957452,
+            "long": -42.59857346957452,
+            "short": 42.59857346957452,
+            "cash": 0.0
+          },
+          "increment_vs_own_bps": 0.0,
+          "median_favorable_adverse_excursion_bps": [
+            0.0,
+            -85.3793873803593
+          ]
+        },
+        {
+          "week": "2026-03-23",
+          "scheduled": 28,
+          "missing_decision": 27,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-03-30",
+          "scheduled": 28,
+          "missing_decision": 28,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-04-06",
+          "scheduled": 28,
+          "missing_decision": 28,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-04-13",
+          "scheduled": 28,
+          "missing_decision": 24,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-04-20",
+          "scheduled": 28,
+          "missing_decision": 24,
+          "intents": 1,
+          "missing_path": 0,
+          "weekend_priced": 1,
+          "own_same_flat_opposite": [
+            0,
+            1,
+            0
+          ],
+          "priced": 1,
+          "mean_gross_bps": {
+            "peer": -54.975399591947834,
+            "own": 0.0,
+            "long": 54.975399591947834,
+            "short": -54.975399591947834,
+            "cash": 0.0
+          },
+          "increment_vs_own_bps": -54.975399591947834,
+          "median_favorable_adverse_excursion_bps": [
+            -0.0,
+            -65.93430479831905
+          ]
+        },
+        {
+          "week": "2026-04-27",
+          "scheduled": 28,
+          "missing_decision": 28,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-05-04",
+          "scheduled": 28,
+          "missing_decision": 28,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-05-11",
+          "scheduled": 28,
+          "missing_decision": 27,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-05-18",
+          "scheduled": 28,
+          "missing_decision": 28,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-05-25",
+          "scheduled": 28,
+          "missing_decision": 28,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-06-01",
+          "scheduled": 28,
+          "missing_decision": 26,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-06-08",
+          "scheduled": 28,
+          "missing_decision": 28,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-06-15",
+          "scheduled": 28,
+          "missing_decision": 28,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-06-22",
+          "scheduled": 28,
+          "missing_decision": 28,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-06-29",
+          "scheduled": 28,
+          "missing_decision": 28,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-07-06",
+          "scheduled": 28,
+          "missing_decision": 28,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-07-13",
+          "scheduled": 28,
+          "missing_decision": 28,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-07-20",
+          "scheduled": 28,
+          "missing_decision": 28,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-07-27",
+          "scheduled": 28,
+          "missing_decision": 28,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-08-03",
+          "scheduled": 28,
+          "missing_decision": 28,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-08-10",
+          "scheduled": 28,
+          "missing_decision": 28,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        },
+        {
+          "week": "2026-08-17",
+          "scheduled": 28,
+          "missing_decision": 16,
+          "intents": 1,
+          "missing_path": 0,
+          "weekend_priced": 1,
+          "own_same_flat_opposite": [
+            1,
+            0,
+            0
+          ],
+          "priced": 1,
+          "mean_gross_bps": {
+            "peer": -635.2802977450467,
+            "own": -635.2802977450467,
+            "long": 635.2802977450467,
+            "short": -635.2802977450467,
+            "cash": 0.0
+          },
+          "increment_vs_own_bps": 0.0,
+          "median_favorable_adverse_excursion_bps": [
+            -0.0,
+            -706.3917085200684
+          ]
+        },
+        {
+          "week": "2026-08-24",
+          "scheduled": 28,
+          "missing_decision": 17,
+          "intents": 1,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            1,
+            0,
+            0
+          ],
+          "priced": 1,
+          "mean_gross_bps": {
+            "peer": -46.97049499869162,
+            "own": -46.97049499869162,
+            "long": 46.97049499869162,
+            "short": -46.97049499869162,
+            "cash": 0.0
+          },
+          "increment_vs_own_bps": 0.0,
+          "median_favorable_adverse_excursion_bps": [
+            -0.0,
+            -112.36073266925752
+          ]
+        },
+        {
+          "week": "2026-08-31",
+          "scheduled": 28,
+          "missing_decision": 23,
+          "intents": 1,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            1
+          ],
+          "priced": 1,
+          "mean_gross_bps": {
+            "peer": -76.88121339013288,
+            "own": 76.88121339013288,
+            "long": -76.88121339013288,
+            "short": 76.88121339013288,
+            "cash": 0.0
+          },
+          "increment_vs_own_bps": -153.76242678026577,
+          "median_favorable_adverse_excursion_bps": [
+            0.0,
+            -154.3580812983925
+          ]
+        },
+        {
+          "week": "2026-09-07",
+          "scheduled": 28,
+          "missing_decision": 26,
+          "intents": 0,
+          "missing_path": 0,
+          "weekend_priced": 0,
+          "own_same_flat_opposite": [
+            0,
+            0,
+            0
+          ],
+          "priced": 0,
+          "mean_gross_bps": {
+            "peer": null,
+            "own": null,
+            "long": null,
+            "short": null,
+            "cash": null
+          },
+          "increment_vs_own_bps": null,
+          "median_favorable_adverse_excursion_bps": null
+        }
+      ]
+    }
+  },
+  "gross_eur": null,
+  "net_eur": null,
+  "funded_round_trips": 0,
+  "new_broker_requests": 0,
+  "orders_submitted": 0,
+  "cloud_activated": false,
+  "independent_confirmation": false
+}
