@@ -15,7 +15,8 @@ public sealed record NativeProductMarket(
     LedgerQuote Quote, NativeObservedContractTerms? Contract,
     decimal SlippagePerSideQuote, int HoldingMinutes=30,
     bool IndependentlySupportedAgainstBenchmark=false,
-    string ExitPolicy=NativeCausalExitResearch.FrozenFixed);
+    string ExitPolicy=NativeCausalExitResearch.FrozenFixed,
+    NativeProspectiveSessionRiskEvidence? SessionAdmissionEvidence=null);
 
 public sealed record NativeProductSignal(
     string Symbol,long At,int Direction,string Status,
@@ -59,10 +60,11 @@ public sealed class NativeProductResearchLoop
     private readonly bool integratedResearch;
     private readonly bool conditionalResearch;
     private readonly bool discoveryResearch;
+    private readonly bool requireProspectiveExitFeasibility;
     public NativeEntryCalibrationReport? CalibrationReport=>calibration?.Report();
     // Both independent economically motivated families below are fixed BEFORE
     // any new extended original-account data collection is opened.
-    public NativeProductResearchLoop(string researchMode="FROZEN_LEGACY_M5_M15",long calibrationBoundary=0,NativeIntegratedSnapshot? integratedSnapshot=null)
+    public NativeProductResearchLoop(string researchMode="FROZEN_LEGACY_M5_M15",long calibrationBoundary=0,NativeIntegratedSnapshot? integratedSnapshot=null,bool requireProspectiveExitFeasibility=false)
     {
         if(researchMode is not ("FROZEN_LEGACY_M5_M15" or
             "FX_CAUSAL_BREAKOUT_PLUS_RELATIVE_VALUE" or
@@ -107,6 +109,7 @@ public sealed class NativeProductResearchLoop
             "ONLY_BRENT_W42W43" or "ONLY_AMD_W42W43"))
             throw new ArgumentException("UNDECLARED_RESEARCH_MECHANISM");
         this.researchMode=researchMode;
+        this.requireProspectiveExitFeasibility=requireProspectiveExitFeasibility;
         inventoryResearch=researchMode.StartsWith("WIR1_",StringComparison.Ordinal);
         discoveryResearch=researchMode.StartsWith("DCP1_",StringComparison.Ordinal);
         conditionalResearch=discoveryResearch || researchMode.StartsWith("CDE1_",StringComparison.Ordinal);
@@ -1562,6 +1565,28 @@ public sealed class NativeProductResearchLoop
                 "BMR1_XAUUSD_RELEASE_REPRICING"=>45,
                 _=>market.HoldingMinutes
             };
+            // Prospective-only underwriting. All previously frozen MSE1/YRC1
+            // configurations still receive their original null evidence and
+            // false constructor flag: no retrospective risk rewrite.
+            if(requireProspectiveExitFeasibility ||
+               market.SessionAdmissionEvidence is not null)
+            {
+                var e=market.SessionAdmissionEvidence;
+                var gate=e is null?new NativeSessionAdmissionResult(
+                    false,"SESSION_EVIDENCE_MISSING",null,false,false):
+                    e.DecisionAtMs!=at || e.ProtectiveMinutes!=effectiveHolding?
+                    new NativeSessionAdmissionResult(false,
+                        "SESSION_EVIDENCE_POLICY_BINDING_MISMATCH",null,false,false):
+                    NativeProspectiveSessionAdmission.Assess(e);
+                if(!gate.Admit)
+                {
+                    rejected++;
+                    recent.Add(new(market.Symbol,at,side,
+                        "PROSPECTIVE_SESSION_EXIT_RISK_REJECTED",null,null,null,
+                        gate.Reason,mechanism));
+                    continue;
+                }
+            }
             NativeExitSeed decisionSeed=new(0m,0m);
             if(effectiveExitPolicy!=NativeCausalExitResearch.FrozenFixed &&
                !NativeCausalExitResearch.TrySeed(market.M5,market.M15,
