@@ -1,0 +1,1064 @@
+{
+  "classification": "EXPOSED_DEVELOPMENT_BID_BAR_PAYOFF_PROXY",
+  "archive_sha256": "09d999a595436de73c5edbb3d4a84002dc8b8779dc94393473d43afe1c3d9259",
+  "original_account_commitment_matched": true,
+  "protocol_sha256": "1d8f7022d6636c405ea9f5cc50f7d7359aab0f4908e2967d3cd2a223324e2e4e",
+  "source": {
+    "AMCR.US-24": {
+      "bars": 37030,
+      "sha256": "d1f92cae512a305b4f8dd9422abb79905332e350c6568dbcd6bcd27952898afa",
+      "minimum_margin_probe_eur": 0.74
+    },
+    "BABA.US-24": {
+      "bars": 67862,
+      "sha256": "89eedffb32b2196799daa998e95fdac60e45dcc7f020c3464ccdbe9f3f7e7eaa",
+      "minimum_margin_probe_eur": 1.94
+    },
+    "CCL.US-24": {
+      "bars": 46095,
+      "sha256": "d5ef4d0aec640a377a3984e87d365f90c2d2b0481e7a60dfac25d392795a4baf",
+      "minimum_margin_probe_eur": 0.38
+    },
+    "F.US-24": {
+      "bars": 45218,
+      "sha256": "d6dfc7c85ae856ef238f103fc0ab58617564289e3672a5a87e12bca0b76d5c80",
+      "minimum_margin_probe_eur": 0.22
+    },
+    "GIS.US-24": {
+      "bars": 38101,
+      "sha256": "58a73deb23899838087d6939f166b026d8a179272641efdfe0f4bc37a06756b4",
+      "minimum_margin_probe_eur": 0.61
+    },
+    "HOOD.US-24": {
+      "bars": 69548,
+      "sha256": "dc3587b49e3140306b2a1712ccd26330bbbe18a3b303dcd1847ddafef1f7128b",
+      "minimum_margin_probe_eur": 2.13
+    },
+    "INTC.US-24": {
+      "bars": 70135,
+      "sha256": "88de9a620c263173fbd2709e3217fde45dce1e0bf278a63e4a3f22c742c0ccaa",
+      "minimum_margin_probe_eur": 2.27
+    },
+    "LULU.US-24": {
+      "bars": 50320,
+      "sha256": "3f2982d77a5194a6097d274956995c2514f263d480317b47fa58d21c1b17ecd5",
+      "minimum_margin_probe_eur": 1.78
+    },
+    "LYFT.US-24": {
+      "bars": 37026,
+      "sha256": "a3ac7a8996411465ed113debb2807b024625dd8d468743bf11fed583cca4842e",
+      "minimum_margin_probe_eur": 0.26
+    },
+    "NFLX.US-24": {
+      "bars": 68293,
+      "sha256": "37973234e9ca45db1fa48dd8ff115f61fcb79a465691646c061bab846d17f269",
+      "minimum_margin_probe_eur": 1.25
+    },
+    "NKE.US-24": {
+      "bars": 62164,
+      "sha256": "0ee93882d4bdaa565cd169dc19a4b1d182a3f017756bea14f7f022dcba66e7c0",
+      "minimum_margin_probe_eur": 0.63
+    },
+    "ORCL.US-24": {
+      "bars": 70184,
+      "sha256": "c35c10ebf10a9f250728becad3cb7b12abd2f378898f800bede13927dffcab14",
+      "minimum_margin_probe_eur": 2.46
+    },
+    "PFE.US-24": {
+      "bars": 57991,
+      "sha256": "34350002660c7b6a50432446c5dd72bcb285db60fcadcf80f95ebee64f50f2fc",
+      "minimum_margin_probe_eur": 0.5
+    },
+    "SNAP.US-24": {
+      "bars": 46141,
+      "sha256": "cb34c898b979445e44845cc9d082437ffdbd85187b496cf6605454b581efc8c1",
+      "minimum_margin_probe_eur": 0.09
+    },
+    "TSLA.US-24": {
+      "bars": 70534,
+      "sha256": "5764fe3d196194342302d610302da51fcd63995c31d5d66f668bb8b0f8b62f91",
+      "minimum_margin_probe_eur": 6.69
+    },
+    "UBER.US-24": {
+      "bars": 58845,
+      "sha256": "d30605f905b032753907dc7b60c86ec9e262559ed9a9c09b106f59a4393856ed",
+      "minimum_margin_probe_eur": 1.22
+    },
+    "WMT.US-24": {
+      "bars": 54373,
+      "sha256": "458583cfd57a2f66e40452eea2aee2d048e14d98455e8265d9e8fe6f92e9a557",
+      "minimum_margin_probe_eur": 1.89
+    }
+  },
+  "scheduled_clocks": 2340,
+  "holding_minutes": 25,
+  "overall": {
+    "paired_clocks": 1686,
+    "model": {
+      "gross_bps": -2.3274358832293083,
+      "gross_p05_p50_p95_bps": [
+        -94.2914558548577,
+        0.0,
+        83.60254361639106
+      ],
+      "median_favorable_excursion_bps": 14.495532520936571,
+      "median_adverse_excursion_bps": -15.548374986634014,
+      "adverse_excursion_p05_bps": -105.4856697486287,
+      "losing_fraction": 0.4928825622775801
+    },
+    "cash_bps": 0,
+    "pooled_bps": -2.9345089266681534,
+    "uniform_one_position_bps": -1.096294796408814,
+    "increment_vs_pooled_bps": 0.6070730434388445,
+    "increment_vs_uniform_bps": -1.2311410868204946
+  },
+  "chronology": [
+    {
+      "paired_clocks": 824,
+      "model": {
+        "gross_bps": -3.0102931038049707,
+        "gross_p05_p50_p95_bps": [
+          -91.36659459050685,
+          0.0,
+          75.91616854171323
+        ],
+        "median_favorable_excursion_bps": 13.261159188217974,
+        "median_adverse_excursion_bps": -15.186865496153048,
+        "adverse_excursion_p05_bps": -95.9022253045712,
+        "losing_fraction": 0.49514563106796117
+      },
+      "cash_bps": 0,
+      "pooled_bps": -3.6087197480371493,
+      "uniform_one_position_bps": -1.5826305023329885,
+      "increment_vs_pooled_bps": 0.5984266442321785,
+      "increment_vs_uniform_bps": -1.4276626014719829
+    },
+    {
+      "paired_clocks": 862,
+      "model": {
+        "gross_bps": -1.6746814171569813,
+        "gross_p05_p50_p95_bps": [
+          -106.1115077199765,
+          0.0,
+          92.69094995179324
+        ],
+        "median_favorable_excursion_bps": 16.145136800837033,
+        "median_adverse_excursion_bps": -16.22365991678589,
+        "adverse_excursion_p05_bps": -112.93903325963531,
+        "losing_fraction": 0.49071925754060325
+      },
+      "cash_bps": 0,
+      "pooled_bps": -2.29001969603236,
+      "uniform_one_position_bps": -0.631398483553223,
+      "increment_vs_pooled_bps": 0.615338278875378,
+      "increment_vs_uniform_bps": -1.0432829336037583
+    }
+  ],
+  "available_case": {
+    "clocks": 2168,
+    "gross_bps": -1.7679251683402717,
+    "gross_p05_p50_p95_bps": [
+      -90.22057308115784,
+      0.0,
+      82.18580157148055
+    ],
+    "median_favorable_excursion_bps": 14.494676499480837,
+    "median_adverse_excursion_bps": -14.950223454558309,
+    "adverse_excursion_p05_bps": -99.17677641136962,
+    "losing_fraction": 0.4907749077490775
+  },
+  "paired_weekly_count_min_median_max": [
+    12,
+    45.0,
+    59
+  ],
+  "95pct_descriptive_week_block_bps": {
+    "gross": [
+      -5.260887106098742,
+      0.6594038899309265
+    ],
+    "increment_vs_pooled": [
+      -2.3020495171164823,
+      3.9352849837388657
+    ],
+    "increment_vs_uniform": [
+      -3.3786031754569747,
+      1.1361824243044254
+    ]
+  },
+  "both_segments_positive_gross_and_increments": false,
+  "weekly": [
+    {
+      "week": "2025-12-15",
+      "paired_clocks": 43,
+      "available_model_clocks": 57,
+      "model_paired_gross_bps_sum": -240.03780082317112,
+      "selections_by_symbol": {
+        "AMCR.US-24": 5,
+        "F.US-24": 5,
+        "LULU.US-24": 15,
+        "HOOD.US-24": 10,
+        "NFLX.US-24": 5,
+        "TSLA.US-24": 10,
+        "GIS.US-24": 5,
+        "PFE.US-24": 5
+      },
+      "missing": {
+        "no_decision": 0,
+        "model_path_missing": 3,
+        "pooled_path_missing": 9,
+        "incomplete_uniform_path": 17
+      }
+    },
+    {
+      "week": "2025-12-22",
+      "paired_clocks": 12,
+      "available_model_clocks": 35,
+      "model_paired_gross_bps_sum": -134.62805388286316,
+      "selections_by_symbol": {
+        "AMCR.US-24": 4,
+        "F.US-24": 4,
+        "TSLA.US-24": 13,
+        "LULU.US-24": 8,
+        "HOOD.US-24": 4,
+        "NFLX.US-24": 4,
+        "GIS.US-24": 3,
+        "ORCL.US-24": 3
+      },
+      "missing": {
+        "no_decision": 17,
+        "model_path_missing": 8,
+        "pooled_path_missing": 5,
+        "incomplete_uniform_path": 31
+      }
+    },
+    {
+      "week": "2025-12-29",
+      "paired_clocks": 17,
+      "available_model_clocks": 41,
+      "model_paired_gross_bps_sum": 79.60153931747715,
+      "selections_by_symbol": {
+        "AMCR.US-24": 3,
+        "F.US-24": 3,
+        "LULU.US-24": 12,
+        "HOOD.US-24": 4,
+        "NFLX.US-24": 7,
+        "INTC.US-24": 4,
+        "TSLA.US-24": 8,
+        "ORCL.US-24": 4,
+        "LYFT.US-24": 1
+      },
+      "missing": {
+        "no_decision": 14,
+        "model_path_missing": 5,
+        "pooled_path_missing": 4,
+        "incomplete_uniform_path": 29
+      }
+    },
+    {
+      "week": "2026-01-05",
+      "paired_clocks": 53,
+      "available_model_clocks": 60,
+      "model_paired_gross_bps_sum": 692.0914832019733,
+      "selections_by_symbol": {
+        "INTC.US-24": 5,
+        "F.US-24": 5,
+        "LULU.US-24": 15,
+        "HOOD.US-24": 10,
+        "WMT.US-24": 5,
+        "GIS.US-24": 5,
+        "TSLA.US-24": 5,
+        "LYFT.US-24": 5,
+        "ORCL.US-24": 5
+      },
+      "missing": {
+        "no_decision": 0,
+        "model_path_missing": 0,
+        "pooled_path_missing": 0,
+        "incomplete_uniform_path": 7
+      }
+    },
+    {
+      "week": "2026-01-12",
+      "paired_clocks": 53,
+      "available_model_clocks": 60,
+      "model_paired_gross_bps_sum": -195.20086692737016,
+      "selections_by_symbol": {
+        "INTC.US-24": 5,
+        "F.US-24": 5,
+        "LULU.US-24": 10,
+        "WMT.US-24": 10,
+        "HOOD.US-24": 5,
+        "GIS.US-24": 5,
+        "TSLA.US-24": 10,
+        "ORCL.US-24": 5,
+        "NFLX.US-24": 5
+      },
+      "missing": {
+        "no_decision": 0,
+        "model_path_missing": 0,
+        "pooled_path_missing": 0,
+        "incomplete_uniform_path": 7
+      }
+    },
+    {
+      "week": "2026-01-19",
+      "paired_clocks": 43,
+      "available_model_clocks": 48,
+      "model_paired_gross_bps_sum": -281.613609503596,
+      "selections_by_symbol": {
+        "ORCL.US-24": 4,
+        "F.US-24": 4,
+        "LULU.US-24": 4,
+        "LYFT.US-24": 12,
+        "TSLA.US-24": 12,
+        "INTC.US-24": 8,
+        "NFLX.US-24": 4
+      },
+      "missing": {
+        "no_decision": 12,
+        "model_path_missing": 0,
+        "pooled_path_missing": 0,
+        "incomplete_uniform_path": 5
+      }
+    },
+    {
+      "week": "2026-01-26",
+      "paired_clocks": 54,
+      "available_model_clocks": 58,
+      "model_paired_gross_bps_sum": -522.304650436713,
+      "selections_by_symbol": {
+        "INTC.US-24": 5,
+        "SNAP.US-24": 5,
+        "LULU.US-24": 5,
+        "UBER.US-24": 10,
+        "TSLA.US-24": 15,
+        "HOOD.US-24": 5,
+        "ORCL.US-24": 5,
+        "WMT.US-24": 5,
+        "NKE.US-24": 5
+      },
+      "missing": {
+        "no_decision": 0,
+        "model_path_missing": 2,
+        "pooled_path_missing": 0,
+        "incomplete_uniform_path": 6
+      }
+    },
+    {
+      "week": "2026-02-02",
+      "paired_clocks": 56,
+      "available_model_clocks": 60,
+      "model_paired_gross_bps_sum": 652.3896254679919,
+      "selections_by_symbol": {
+        "HOOD.US-24": 5,
+        "F.US-24": 5,
+        "INTC.US-24": 5,
+        "UBER.US-24": 10,
+        "TSLA.US-24": 15,
+        "WMT.US-24": 10,
+        "ORCL.US-24": 5,
+        "LYFT.US-24": 5
+      },
+      "missing": {
+        "no_decision": 0,
+        "model_path_missing": 0,
+        "pooled_path_missing": 0,
+        "incomplete_uniform_path": 4
+      }
+    },
+    {
+      "week": "2026-02-09",
+      "paired_clocks": 56,
+      "available_model_clocks": 59,
+      "model_paired_gross_bps_sum": -22.619039093209892,
+      "selections_by_symbol": {
+        "HOOD.US-24": 5,
+        "SNAP.US-24": 5,
+        "INTC.US-24": 15,
+        "GIS.US-24": 10,
+        "TSLA.US-24": 10,
+        "CCL.US-24": 5,
+        "WMT.US-24": 5,
+        "LYFT.US-24": 5
+      },
+      "missing": {
+        "no_decision": 0,
+        "model_path_missing": 1,
+        "pooled_path_missing": 0,
+        "incomplete_uniform_path": 4
+      }
+    },
+    {
+      "week": "2026-02-16",
+      "paired_clocks": 45,
+      "available_model_clocks": 48,
+      "model_paired_gross_bps_sum": -49.18074368078646,
+      "selections_by_symbol": {
+        "HOOD.US-24": 8,
+        "INTC.US-24": 12,
+        "CCL.US-24": 8,
+        "TSLA.US-24": 8,
+        "AMCR.US-24": 8,
+        "WMT.US-24": 4
+      },
+      "missing": {
+        "no_decision": 12,
+        "model_path_missing": 0,
+        "pooled_path_missing": 0,
+        "incomplete_uniform_path": 3
+      }
+    },
+    {
+      "week": "2026-02-23",
+      "paired_clocks": 57,
+      "available_model_clocks": 60,
+      "model_paired_gross_bps_sum": 303.3245454810305,
+      "selections_by_symbol": {
+        "HOOD.US-24": 10,
+        "LYFT.US-24": 5,
+        "CCL.US-24": 10,
+        "TSLA.US-24": 10,
+        "NFLX.US-24": 5,
+        "INTC.US-24": 10,
+        "AMCR.US-24": 5,
+        "WMT.US-24": 5
+      },
+      "missing": {
+        "no_decision": 0,
+        "model_path_missing": 0,
+        "pooled_path_missing": 0,
+        "incomplete_uniform_path": 3
+      }
+    },
+    {
+      "week": "2026-03-02",
+      "paired_clocks": 59,
+      "available_model_clocks": 60,
+      "model_paired_gross_bps_sum": 60.51103088522018,
+      "selections_by_symbol": {
+        "HOOD.US-24": 15,
+        "LYFT.US-24": 5,
+        "CCL.US-24": 10,
+        "INTC.US-24": 10,
+        "AMCR.US-24": 10,
+        "TSLA.US-24": 5,
+        "WMT.US-24": 5
+      },
+      "missing": {
+        "no_decision": 0,
+        "model_path_missing": 0,
+        "pooled_path_missing": 0,
+        "incomplete_uniform_path": 1
+      }
+    },
+    {
+      "week": "2026-03-09",
+      "paired_clocks": 54,
+      "available_model_clocks": 58,
+      "model_paired_gross_bps_sum": -585.8045496060345,
+      "selections_by_symbol": {
+        "GIS.US-24": 5,
+        "HOOD.US-24": 15,
+        "PFE.US-24": 5,
+        "SNAP.US-24": 4,
+        "UBER.US-24": 5,
+        "AMCR.US-24": 10,
+        "TSLA.US-24": 5,
+        "INTC.US-24": 5,
+        "WMT.US-24": 5,
+        "CCL.US-24": 1
+      },
+      "missing": {
+        "no_decision": 0,
+        "model_path_missing": 2,
+        "pooled_path_missing": 0,
+        "incomplete_uniform_path": 6
+      }
+    },
+    {
+      "week": "2026-03-16",
+      "paired_clocks": 38,
+      "available_model_clocks": 57,
+      "model_paired_gross_bps_sum": -480.37220753494205,
+      "selections_by_symbol": {
+        "LULU.US-24": 5,
+        "HOOD.US-24": 15,
+        "INTC.US-24": 10,
+        "CCL.US-24": 2,
+        "AMCR.US-24": 15,
+        "TSLA.US-24": 5,
+        "WMT.US-24": 5,
+        "SNAP.US-24": 3
+      },
+      "missing": {
+        "no_decision": 0,
+        "model_path_missing": 3,
+        "pooled_path_missing": 0,
+        "incomplete_uniform_path": 22
+      }
+    },
+    {
+      "week": "2026-03-23",
+      "paired_clocks": 31,
+      "available_model_clocks": 59,
+      "model_paired_gross_bps_sum": -1019.9283339818369,
+      "selections_by_symbol": {
+        "GIS.US-24": 15,
+        "HOOD.US-24": 15,
+        "LYFT.US-24": 5,
+        "SNAP.US-24": 5,
+        "AMCR.US-24": 10,
+        "UBER.US-24": 5,
+        "INTC.US-24": 5
+      },
+      "missing": {
+        "no_decision": 0,
+        "model_path_missing": 1,
+        "pooled_path_missing": 0,
+        "incomplete_uniform_path": 29
+      }
+    },
+    {
+      "week": "2026-03-30",
+      "paired_clocks": 37,
+      "available_model_clocks": 48,
+      "model_paired_gross_bps_sum": -51.137507515571215,
+      "selections_by_symbol": {
+        "GIS.US-24": 12,
+        "HOOD.US-24": 8,
+        "INTC.US-24": 8,
+        "WMT.US-24": 4,
+        "AMCR.US-24": 8,
+        "UBER.US-24": 4,
+        "CCL.US-24": 4
+      },
+      "missing": {
+        "no_decision": 12,
+        "model_path_missing": 0,
+        "pooled_path_missing": 0,
+        "incomplete_uniform_path": 11
+      }
+    },
+    {
+      "week": "2026-04-06",
+      "paired_clocks": 41,
+      "available_model_clocks": 58,
+      "model_paired_gross_bps_sum": 71.95642708232367,
+      "selections_by_symbol": {
+        "GIS.US-24": 10,
+        "INTC.US-24": 5,
+        "ORCL.US-24": 5,
+        "WMT.US-24": 5,
+        "LYFT.US-24": 10,
+        "HOOD.US-24": 5,
+        "NFLX.US-24": 5,
+        "AMCR.US-24": 5,
+        "PFE.US-24": 5,
+        "CCL.US-24": 5
+      },
+      "missing": {
+        "no_decision": 0,
+        "model_path_missing": 2,
+        "pooled_path_missing": 0,
+        "incomplete_uniform_path": 19
+      }
+    },
+    {
+      "week": "2026-04-13",
+      "paired_clocks": 32,
+      "available_model_clocks": 60,
+      "model_paired_gross_bps_sum": -544.1393814607964,
+      "selections_by_symbol": {
+        "NFLX.US-24": 10,
+        "HOOD.US-24": 10,
+        "LULU.US-24": 10,
+        "PFE.US-24": 10,
+        "LYFT.US-24": 4,
+        "AMCR.US-24": 5,
+        "NKE.US-24": 5,
+        "CCL.US-24": 5,
+        "GIS.US-24": 1
+      },
+      "missing": {
+        "no_decision": 0,
+        "model_path_missing": 0,
+        "pooled_path_missing": 0,
+        "incomplete_uniform_path": 28
+      }
+    },
+    {
+      "week": "2026-04-20",
+      "paired_clocks": 43,
+      "available_model_clocks": 60,
+      "model_paired_gross_bps_sum": -213.38942452442248,
+      "selections_by_symbol": {
+        "SNAP.US-24": 5,
+        "INTC.US-24": 10,
+        "WMT.US-24": 15,
+        "NFLX.US-24": 5,
+        "CCL.US-24": 10,
+        "LYFT.US-24": 5,
+        "PFE.US-24": 10
+      },
+      "missing": {
+        "no_decision": 0,
+        "model_path_missing": 0,
+        "pooled_path_missing": 0,
+        "incomplete_uniform_path": 17
+      }
+    },
+    {
+      "week": "2026-04-27",
+      "paired_clocks": 46,
+      "available_model_clocks": 58,
+      "model_paired_gross_bps_sum": 659.058446939374,
+      "selections_by_symbol": {
+        "SNAP.US-24": 10,
+        "LULU.US-24": 5,
+        "WMT.US-24": 15,
+        "CCL.US-24": 5,
+        "PFE.US-24": 15,
+        "LYFT.US-24": 5,
+        "INTC.US-24": 5
+      },
+      "missing": {
+        "no_decision": 0,
+        "model_path_missing": 2,
+        "pooled_path_missing": 4,
+        "incomplete_uniform_path": 14
+      }
+    },
+    {
+      "week": "2026-05-04",
+      "paired_clocks": 45,
+      "available_model_clocks": 60,
+      "model_paired_gross_bps_sum": 248.65067327867465,
+      "selections_by_symbol": {
+        "SNAP.US-24": 5,
+        "LULU.US-24": 5,
+        "ORCL.US-24": 5,
+        "WMT.US-24": 5,
+        "PFE.US-24": 10,
+        "CCL.US-24": 5,
+        "LYFT.US-24": 5,
+        "INTC.US-24": 15,
+        "GIS.US-24": 5
+      },
+      "missing": {
+        "no_decision": 0,
+        "model_path_missing": 0,
+        "pooled_path_missing": 4,
+        "incomplete_uniform_path": 15
+      }
+    },
+    {
+      "week": "2026-05-11",
+      "paired_clocks": 53,
+      "available_model_clocks": 59,
+      "model_paired_gross_bps_sum": 114.65994943673468,
+      "selections_by_symbol": {
+        "SNAP.US-24": 9,
+        "LULU.US-24": 5,
+        "ORCL.US-24": 10,
+        "PFE.US-24": 15,
+        "CCL.US-24": 5,
+        "INTC.US-24": 15,
+        "WMT.US-24": 1
+      },
+      "missing": {
+        "no_decision": 0,
+        "model_path_missing": 1,
+        "pooled_path_missing": 3,
+        "incomplete_uniform_path": 7
+      }
+    },
+    {
+      "week": "2026-05-18",
+      "paired_clocks": 46,
+      "available_model_clocks": 59,
+      "model_paired_gross_bps_sum": 208.86074831259833,
+      "selections_by_symbol": {
+        "SNAP.US-24": 10,
+        "INTC.US-24": 15,
+        "ORCL.US-24": 10,
+        "LYFT.US-24": 5,
+        "AMCR.US-24": 5,
+        "UBER.US-24": 5,
+        "PFE.US-24": 5,
+        "NFLX.US-24": 5
+      },
+      "missing": {
+        "no_decision": 0,
+        "model_path_missing": 1,
+        "pooled_path_missing": 12,
+        "incomplete_uniform_path": 14
+      }
+    },
+    {
+      "week": "2026-05-25",
+      "paired_clocks": 29,
+      "available_model_clocks": 45,
+      "model_paired_gross_bps_sum": -387.4546627489272,
+      "selections_by_symbol": {
+        "SNAP.US-24": 12,
+        "INTC.US-24": 12,
+        "F.US-24": 8,
+        "ORCL.US-24": 4,
+        "GIS.US-24": 4,
+        "PFE.US-24": 4,
+        "NFLX.US-24": 4
+      },
+      "missing": {
+        "no_decision": 12,
+        "model_path_missing": 3,
+        "pooled_path_missing": 17,
+        "incomplete_uniform_path": 19
+      }
+    },
+    {
+      "week": "2026-06-01",
+      "paired_clocks": 45,
+      "available_model_clocks": 57,
+      "model_paired_gross_bps_sum": 200.86467316510496,
+      "selections_by_symbol": {
+        "F.US-24": 15,
+        "ORCL.US-24": 10,
+        "HOOD.US-24": 5,
+        "SNAP.US-24": 4,
+        "LULU.US-24": 5,
+        "INTC.US-24": 10,
+        "PFE.US-24": 5,
+        "NFLX.US-24": 5,
+        "NKE.US-24": 1
+      },
+      "missing": {
+        "no_decision": 0,
+        "model_path_missing": 3,
+        "pooled_path_missing": 0,
+        "incomplete_uniform_path": 15
+      }
+    },
+    {
+      "week": "2026-06-08",
+      "paired_clocks": 52,
+      "available_model_clocks": 57,
+      "model_paired_gross_bps_sum": -67.8514983319144,
+      "selections_by_symbol": {
+        "F.US-24": 10,
+        "ORCL.US-24": 15,
+        "HOOD.US-24": 10,
+        "WMT.US-24": 5,
+        "INTC.US-24": 10,
+        "PFE.US-24": 5,
+        "NFLX.US-24": 5
+      },
+      "missing": {
+        "no_decision": 0,
+        "model_path_missing": 3,
+        "pooled_path_missing": 0,
+        "incomplete_uniform_path": 8
+      }
+    },
+    {
+      "week": "2026-06-15",
+      "paired_clocks": 40,
+      "available_model_clocks": 48,
+      "model_paired_gross_bps_sum": -725.9193394418626,
+      "selections_by_symbol": {
+        "F.US-24": 4,
+        "ORCL.US-24": 8,
+        "HOOD.US-24": 8,
+        "WMT.US-24": 4,
+        "LULU.US-24": 4,
+        "TSLA.US-24": 4,
+        "INTC.US-24": 8,
+        "PFE.US-24": 4,
+        "NFLX.US-24": 4
+      },
+      "missing": {
+        "no_decision": 12,
+        "model_path_missing": 0,
+        "pooled_path_missing": 4,
+        "incomplete_uniform_path": 8
+      }
+    },
+    {
+      "week": "2026-06-22",
+      "paired_clocks": 54,
+      "available_model_clocks": 60,
+      "model_paired_gross_bps_sum": -431.17844500250516,
+      "selections_by_symbol": {
+        "F.US-24": 5,
+        "HOOD.US-24": 15,
+        "BABA.US-24": 5,
+        "SNAP.US-24": 5,
+        "TSLA.US-24": 10,
+        "INTC.US-24": 10,
+        "PFE.US-24": 5,
+        "NFLX.US-24": 5
+      },
+      "missing": {
+        "no_decision": 0,
+        "model_path_missing": 0,
+        "pooled_path_missing": 2,
+        "incomplete_uniform_path": 6
+      }
+    },
+    {
+      "week": "2026-06-29",
+      "paired_clocks": 31,
+      "available_model_clocks": 45,
+      "model_paired_gross_bps_sum": -600.8292301513973,
+      "selections_by_symbol": {
+        "F.US-24": 4,
+        "HOOD.US-24": 8,
+        "UBER.US-24": 4,
+        "SNAP.US-24": 4,
+        "TSLA.US-24": 8,
+        "INTC.US-24": 12,
+        "PFE.US-24": 4,
+        "NFLX.US-24": 4
+      },
+      "missing": {
+        "no_decision": 12,
+        "model_path_missing": 3,
+        "pooled_path_missing": 6,
+        "incomplete_uniform_path": 17
+      }
+    },
+    {
+      "week": "2026-07-06",
+      "paired_clocks": 36,
+      "available_model_clocks": 59,
+      "model_paired_gross_bps_sum": 236.75597133821634,
+      "selections_by_symbol": {
+        "F.US-24": 5,
+        "UBER.US-24": 5,
+        "HOOD.US-24": 10,
+        "NKE.US-24": 10,
+        "TSLA.US-24": 5,
+        "INTC.US-24": 10,
+        "LULU.US-24": 5,
+        "PFE.US-24": 5,
+        "NFLX.US-24": 5
+      },
+      "missing": {
+        "no_decision": 0,
+        "model_path_missing": 1,
+        "pooled_path_missing": 0,
+        "incomplete_uniform_path": 24
+      }
+    },
+    {
+      "week": "2026-07-13",
+      "paired_clocks": 50,
+      "available_model_clocks": 60,
+      "model_paired_gross_bps_sum": -256.57634162635946,
+      "selections_by_symbol": {
+        "GIS.US-24": 5,
+        "UBER.US-24": 5,
+        "HOOD.US-24": 10,
+        "NKE.US-24": 10,
+        "CCL.US-24": 5,
+        "TSLA.US-24": 5,
+        "INTC.US-24": 5,
+        "LULU.US-24": 5,
+        "ORCL.US-24": 5,
+        "WMT.US-24": 1,
+        "PFE.US-24": 4
+      },
+      "missing": {
+        "no_decision": 0,
+        "model_path_missing": 0,
+        "pooled_path_missing": 0,
+        "incomplete_uniform_path": 10
+      }
+    },
+    {
+      "week": "2026-07-20",
+      "paired_clocks": 43,
+      "available_model_clocks": 60,
+      "model_paired_gross_bps_sum": 420.733252332561,
+      "selections_by_symbol": {
+        "HOOD.US-24": 15,
+        "UBER.US-24": 5,
+        "LYFT.US-24": 5,
+        "INTC.US-24": 10,
+        "TSLA.US-24": 5,
+        "LULU.US-24": 5,
+        "ORCL.US-24": 5,
+        "PFE.US-24": 5,
+        "CCL.US-24": 5
+      },
+      "missing": {
+        "no_decision": 0,
+        "model_path_missing": 0,
+        "pooled_path_missing": 0,
+        "incomplete_uniform_path": 17
+      }
+    },
+    {
+      "week": "2026-07-27",
+      "paired_clocks": 52,
+      "available_model_clocks": 59,
+      "model_paired_gross_bps_sum": -303.12954822370386,
+      "selections_by_symbol": {
+        "HOOD.US-24": 5,
+        "UBER.US-24": 5,
+        "SNAP.US-24": 5,
+        "LYFT.US-24": 5,
+        "ORCL.US-24": 5,
+        "AMCR.US-24": 5,
+        "INTC.US-24": 5,
+        "LULU.US-24": 10,
+        "NFLX.US-24": 5,
+        "PFE.US-24": 5,
+        "CCL.US-24": 5
+      },
+      "missing": {
+        "no_decision": 0,
+        "model_path_missing": 1,
+        "pooled_path_missing": 0,
+        "incomplete_uniform_path": 8
+      }
+    },
+    {
+      "week": "2026-08-03",
+      "paired_clocks": 46,
+      "available_model_clocks": 60,
+      "model_paired_gross_bps_sum": -331.9558835000338,
+      "selections_by_symbol": {
+        "GIS.US-24": 10,
+        "UBER.US-24": 5,
+        "LYFT.US-24": 15,
+        "TSLA.US-24": 5,
+        "INTC.US-24": 10,
+        "LULU.US-24": 10,
+        "CCL.US-24": 5
+      },
+      "missing": {
+        "no_decision": 0,
+        "model_path_missing": 0,
+        "pooled_path_missing": 0,
+        "incomplete_uniform_path": 14
+      }
+    },
+    {
+      "week": "2026-08-10",
+      "paired_clocks": 30,
+      "available_model_clocks": 57,
+      "model_paired_gross_bps_sum": 242.58835322271838,
+      "selections_by_symbol": {
+        "HOOD.US-24": 15,
+        "SNAP.US-24": 10,
+        "INTC.US-24": 15,
+        "GIS.US-24": 10,
+        "UBER.US-24": 5,
+        "LYFT.US-24": 5
+      },
+      "missing": {
+        "no_decision": 0,
+        "model_path_missing": 3,
+        "pooled_path_missing": 0,
+        "incomplete_uniform_path": 30
+      }
+    },
+    {
+      "week": "2026-08-17",
+      "paired_clocks": 45,
+      "available_model_clocks": 60,
+      "model_paired_gross_bps_sum": 295.08413507447267,
+      "selections_by_symbol": {
+        "HOOD.US-24": 25,
+        "UBER.US-24": 10,
+        "ORCL.US-24": 5,
+        "INTC.US-24": 5,
+        "NFLX.US-24": 5,
+        "GIS.US-24": 5,
+        "LYFT.US-24": 5
+      },
+      "missing": {
+        "no_decision": 0,
+        "model_path_missing": 0,
+        "pooled_path_missing": 0,
+        "incomplete_uniform_path": 15
+      }
+    },
+    {
+      "week": "2026-08-24",
+      "paired_clocks": 39,
+      "available_model_clocks": 59,
+      "model_paired_gross_bps_sum": -379.61124429900207,
+      "selections_by_symbol": {
+        "LULU.US-24": 5,
+        "SNAP.US-24": 5,
+        "ORCL.US-24": 10,
+        "HOOD.US-24": 15,
+        "INTC.US-24": 5,
+        "GIS.US-24": 6,
+        "F.US-24": 4,
+        "TSLA.US-24": 5,
+        "LYFT.US-24": 5
+      },
+      "missing": {
+        "no_decision": 0,
+        "model_path_missing": 1,
+        "pooled_path_missing": 0,
+        "incomplete_uniform_path": 21
+      }
+    },
+    {
+      "week": "2026-08-31",
+      "paired_clocks": 44,
+      "available_model_clocks": 56,
+      "model_paired_gross_bps_sum": -255.07877001088175,
+      "selections_by_symbol": {
+        "LULU.US-24": 10,
+        "SNAP.US-24": 10,
+        "HOOD.US-24": 10,
+        "ORCL.US-24": 5,
+        "INTC.US-24": 10,
+        "GIS.US-24": 5,
+        "F.US-24": 5,
+        "LYFT.US-24": 5
+      },
+      "missing": {
+        "no_decision": 0,
+        "model_path_missing": 4,
+        "pooled_path_missing": 0,
+        "incomplete_uniform_path": 16
+      }
+    },
+    {
+      "week": "2026-09-07",
+      "paired_clocks": 36,
+      "available_model_clocks": 44,
+      "model_paired_gross_bps_sum": -331.2466213531858,
+      "selections_by_symbol": {
+        "INTC.US-24": 12,
+        "SNAP.US-24": 8,
+        "BABA.US-24": 4,
+        "ORCL.US-24": 4,
+        "F.US-24": 8,
+        "GIS.US-24": 4,
+        "AMCR.US-24": 4,
+        "WMT.US-24": 4
+      },
+      "missing": {
+        "no_decision": 12,
+        "model_path_missing": 4,
+        "pooled_path_missing": 0,
+        "incomplete_uniform_path": 12
+      }
+    }
+  ],
+  "central_net_eur": null,
+  "adverse_net_eur": null,
+  "funded_round_trips": 0,
+  "continuous_floating_drawdown": null,
+  "independent_confirmation": false,
+  "new_broker_requests": 0,
+  "orders_submitted": 0,
+  "cloud_activated": false
+}
