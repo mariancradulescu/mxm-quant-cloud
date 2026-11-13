@@ -94,7 +94,7 @@ public sealed class NativeProductResearchLoop
             "ETP1_JOINT" or "ETP1_LEADER" or "ETP1_FOLLOWER" or "ETP1_LONG" or "ETP1_SHORT" or "ETP1_FIXED" or "ETP1_CASH" or
             "JYP1_JOINT" or "JYP1_NZD" or "JYP1_AUD" or "JYP1_LONG" or "JYP1_SHORT" or "JYP1_FIXED" or "JYP1_CASH" or
             "YRC1_JOINT" or "YRC1_NZD_ONLY" or "YRC1_CAD_ONLY" or "YRC1_LONG" or "YRC1_SHORT" or "YRC1_FIXED" or "YRC1_CASH" or
-            "MSE1_JOINT" or "MSE1_INDEX" or "MSE1_OIL" or "MSE1_COFFEE" or "MSE1_LONG" or "MSE1_SHORT" or "MSE1_FIXED" or "MSE1_CASH" or
+            "MSE1_JOINT" or "MSE1_INDEX" or "MSE1_OIL" or "MSE1_COFFEE" or "MSE1_LONG" or "MSE1_SHORT" or "MSE1_FIXED" or "MSE1_CASH" or "MSE1_EXCEPT_INDEX" or "MSE1_EXCEPT_OIL" or "MSE1_EXCEPT_COFFEE" or
             "FCE1_JOINT" or "FCE1_FX" or "FCE1_COMMODITY" or "FCE1_LONG" or "FCE1_SHORT" or "FCE1_MINIMUM" or
             "PRR1_JOINT" or "PRR1_INDEX" or "PRR1_CRUDE" or "PRR1_LONG" or "PRR1_SHORT" or
             "BMR1_JOINT" or "BMR1_FX" or "BMR1_GOLD" or "BMR1_LONG" or "BMR1_SHORT" or
@@ -646,7 +646,10 @@ public sealed class NativeProductResearchLoop
                    market.Symbol is not ("US2000" or "SpotCrude" or "Coffee"))continue;
                 if((researchMode=="MSE1_INDEX" && market.Symbol!="US2000") ||
                    (researchMode=="MSE1_OIL" && market.Symbol!="SpotCrude") ||
-                   (researchMode=="MSE1_COFFEE" && market.Symbol!="Coffee"))continue;
+                   (researchMode=="MSE1_COFFEE" && market.Symbol!="Coffee") ||
+                   (researchMode=="MSE1_EXCEPT_INDEX" && market.Symbol=="US2000") ||
+                   (researchMode=="MSE1_EXCEPT_OIL" && market.Symbol=="SpotCrude") ||
+                   (researchMode=="MSE1_EXCEPT_COFFEE" && market.Symbol=="Coffee"))continue;
                 var forecast=NativeMultiSessionEconomicsResearch.Forecast(market,byName,at);
                 if(forecast.Side==0)continue;
                 side=researchMode=="MSE1_LONG"?1:
