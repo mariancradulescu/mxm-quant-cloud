@@ -154,6 +154,7 @@ def metrics(rows):
 def summarize_target(rows):
     events, weekly, past_strengths = Counter(), [], []
     all_paired = []
+    all_quality_high, all_quality_low = [], []
     for w in range(WEEKS):
         week = [x for x in rows if x["week"] == w]
         counts = Counter(x["state"] for x in week)
@@ -164,6 +165,8 @@ def summarize_target(rows):
         threshold = median(past_strengths) if w >= 4 and past_strengths else None
         high = [x for x in paired if threshold is not None and x["strength"] > threshold]
         low = [x for x in paired if threshold is not None and x["strength"] <= threshold]
+        all_quality_high.extend(high)
+        all_quality_low.extend(low)
         weekly.append({
             "start": (START + timedelta(weeks=w)).isoformat(),
             "counts": dict(counts),
@@ -188,7 +191,8 @@ def summarize_target(rows):
         "segments": [metrics([x for x in all_paired if x["week"] < 4]),
                      metrics([x for x in all_paired if x["week"] >= 4])],
         "qualityCohortsPastOnlyWeeks5to8": {
-            "high": metrics([x for w in weekly[4:] for x in []]),  # aggregation below
+            "high": metrics(all_quality_high),
+            "low": metrics(all_quality_low),
             "weekly": [{"start": w["start"], "pastMedianStrength": w["qualityThresholdFromOnlyPastWeeks"],
                         "high": w["qualityHigh"], "low": w["qualityLow"]} for w in weekly[4:]],
         },
