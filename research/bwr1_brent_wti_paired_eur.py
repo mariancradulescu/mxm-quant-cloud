@@ -111,7 +111,7 @@ def monetary(c,entry,final,fx_in,fx_out,side,slip,day,exit_key):
 
 def book(day,rec,terms,margin):
     sig=first_signal(day,rec["bars"])
-    if sig["state"]!="CAUSAL_REJECTED_BASIS_SWEEP":
+    if sig["state"]!="CAUSAL_REJECTED_BASIS":
         return {"state":sig["state"]}
     exit_=exit_policy(day,rec["bars"],sig)
     if exit_["state"]!="EXIT_MONITORED":
