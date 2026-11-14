@@ -139,15 +139,20 @@ def main():
     assets={}
     roster={}
 
-    def req(q,klass):
+    def req(q,klass,allow_empty_ticks=False):
         nonlocal count
         need(count<LIMIT,"SFV1_READONLY_REQUEST_CEILING")
         require_read_only_request(q)
         resp=t.request(q)
         count+=1
-        need(type(resp) is klass and resp.IsInitialized() and
+        need(resp.IsInitialized() and
              int(resp.ctidTraderAccountId)==int(q.ctidTraderAccountId)==int(account),
-             "SFV1_ORIGINAL_RESPONSE_TYPE_ACCOUNT")
+             "SFV1_ORIGINAL_RESPONSE_ACCOUNT")
+        if (allow_empty_ticks and type(q) is m.ProtoOAGetTickDataReq and
+            type(resp) is m.ProtoOAErrorRes and resp.errorCode=="NO_QUOTES"):
+            raw.append(_raw_record(q,resp))
+            return None
+        need(type(resp) is klass,"SFV1_ORIGINAL_RESPONSE_TYPE")
         raw.append(_raw_record(q,resp))
         return resp
 
@@ -226,8 +231,8 @@ def main():
                     q=req(m.ProtoOAGetTickDataReq(ctidTraderAccountId=account,
                            symbolId=sid,type=side,
                            fromTimestamp=clock-60000,toTimestamp=clock),
-                           m.ProtoOAGetTickDataRes)
-                    if q.HasField("hasMore") and not q.hasMore:
+                           m.ProtoOAGetTickDataRes,allow_empty_ticks=True)
+                    if q is not None and q.HasField("hasMore") and not q.hasMore:
                         sides[side]=decode_side(q.tickData,clock-60000,clock)
                     else:
                         sides[side]=[]
