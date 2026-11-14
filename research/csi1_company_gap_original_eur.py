@@ -121,10 +121,12 @@ def exit_decision(day,records,side):
         rows=rec["bars"].get(name)
         if rows is None:return None
         initial=bar_at(rows,stamp(day,9,30))
-        monitor=bar_at(rows,stamp(day,10,10))
-        if initial is None or monitor is None or min(initial[5],monitor[5])<=0:
+        path=[bar_at(rows,stamp(day,9,35)+i*M5) for i in range(8)]
+        if initial is None or any(x is None for x in path):
             return None
-        vals[name]=log(monitor[5]/initial[5])
+        if min(initial[5],*(x[5] for x in path))<=0:
+            return None
+        vals[name]=log(path[-1][5]/initial[5])
     bad=any(side*(vals["AMD.US"]-vals[peer])<0 for peer in ("INTC.US","NAS100"))
     return "10:20" if bad else "11:00"
 
