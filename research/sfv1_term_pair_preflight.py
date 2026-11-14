@@ -59,6 +59,14 @@ def classify_pair(spot, future):
         return {"state":"UNKNOWN_MISSING_SYMBOL"}
     if not spot["enabledCurrent"] or not future["enabledCurrent"]:
         return {"state":"UNKNOWN_NOT_ENABLED"}
+    if spot["tradingMode"] is None or future["tradingMode"] is None:
+        return {"state":"UNKNOWN_TRADING_MODE_WIRE"}
+    if spot["tradingMode"]!=0 or future["tradingMode"]!=0:
+        return {"state":"NOT_CURRENTLY_OPENABLE_TRADING_MODE"}
+    if spot["shortSellingAllowed"] is None or future["shortSellingAllowed"] is None:
+        return {"state":"UNKNOWN_SHORT_SELLING_CONTRACT"}
+    if not spot["shortSellingAllowed"] and not future["shortSellingAllowed"]:
+        return {"state":"NO_TWO_LEG_LONG_SHORT_ORIENTATION"}
     if spot["marginBuyEur"] is None or future["marginBuyEur"] is None or (
        spot["marginSellEur"] is None or future["marginSellEur"] is None):
         return {"state":"UNKNOWN_ORIGINAL_MARGIN"}
@@ -75,6 +83,8 @@ def classify_pair(spot, future):
         "simplePairSumBelow300Eur":total<D(300),
         "simplePairSumBelow210Eur":total<D(210),
     }
+    result["oneLegShortAllowedSpot"]=spot["shortSellingAllowed"]
+    result["oneLegShortAllowedFuture"]=future["shortSellingAllowed"]
     result["state"] = ("NECESSARY_CAPITAL_SCREEN_FAILED" if
         sm>=300 or fm>=300 or total>=300 else
         "ONLY_PRELIMINARY_MARGIN_FEASIBLE_TERM_CONVENTION_UNKNOWN")
