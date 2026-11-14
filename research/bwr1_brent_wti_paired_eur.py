@@ -63,11 +63,13 @@ def basis(bars,at):
 
 def first_signal(day,bars):
     """Only original M5 completed marks available at 10:00 ET."""
-    ref=[basis(bars,stamp(day,8,30)+i*M5) for i in range(13)]
-    at945=basis(bars,stamp(day,9,45))
-    at1000=basis(bars,stamp(day,10,0))
-    if any(x is None for x in ref) or at945 is None or at1000 is None:
+    # Do not rely on endpoints alone. All M5 clocks between the
+    # preceding physical basis window and the decision must be complete.
+    full=[basis(bars,stamp(day,8,30)+i*M5) for i in range(19)]
+    if any(x is None for x in full):
         return {"state":"INCOMPLETE_CAUSAL_M5_BASIS_SOURCE"}
+    ref=full[:13]
+    at945,at1000=full[15],full[18]
     hi,lo=max(ref),min(ref)
     if not lo<=at1000<=hi:
         return {"state":"NO_REJECTED_BASIS_SWEEP"}
