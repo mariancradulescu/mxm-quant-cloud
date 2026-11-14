@@ -22,12 +22,18 @@ def make_records(day):
             "INTC.US":[row(prior,15,50,100,100)],
             "NAS100":[row(prior,15,50,100,100)]}}
         records[current.isoformat()]={"bars":{
-            "AMD.US":[row(current,9,30,100+move,101+move),
-                      row(current,10,10,101+move,102+move)],
-            "INTC.US":[row(current,9,30,100,100.1),
-                       row(current,10,10,100.1,100.2)],
-            "NAS100":[row(current,9,30,100,100.1),
-                      row(current,10,10,100.1,100.2)]}}
+            "AMD.US":[row(current,9,30,100+move,101+move)]
+                     +[row(current,9,35+i*5,101+move,102+move)
+                       if 35+i*5<60 else row(current,10,(35+i*5)-60,101+move,102+move)
+                       for i in range(8)],
+            "INTC.US":[row(current,9,30,100,100.1)]
+                      +[row(current,9,35+i*5,100.1,100.2)
+                        if 35+i*5<60 else row(current,10,(35+i*5)-60,100.1,100.2)
+                        for i in range(8)],
+            "NAS100":[row(current,9,30,100,100.1)]
+                     +[row(current,9,35+i*5,100.1,100.2)
+                       if 35+i*5<60 else row(current,10,(35+i*5)-60,100.1,100.2)
+                       for i in range(8)]}}
     return records
 
 
@@ -53,8 +59,13 @@ class Csi1Tests(unittest.TestCase):
 
     def test_invalidation_only_when_relative_repricing_opposes(self):
         day=date(2026,1,5);rows=make_records(day)
-        rows[day.isoformat()]["bars"]["AMD.US"][1]=row(day,10,10,110,100)
+        rows[day.isoformat()]["bars"]["AMD.US"][8]=row(day,10,10,110,100)
         self.assertEqual(exit_decision(day,rows,1),"10:20")
+
+    def test_missing_middle_monitor_candle_is_unknown(self):
+        day=date(2026,1,5);rows=make_records(day)
+        rows[day.isoformat()]["bars"]["INTC.US"].pop(4)
+        self.assertIsNone(exit_decision(day,rows,1))
 
     def test_unknown_reference_not_disguised_as_zero(self):
         day=date(2026,1,5);rows=make_records(day)
