@@ -11,11 +11,9 @@ from research.mve1_event_interaction import (
     label_after_original_intent,peer_past12
 )
 from research.mve1_multitarget_model import (
-    fit_all_multitarget,predict_all,admitted_research_opportunity
+    fit_all_multitarget,admitted_research_opportunity
 )
-from research.mve1_authentic_eur import (
-    selection_performance,conditional_policy,weekly_paired_lower
-)
+from research.mve1_authentic_eur import weekly_paired_lower
 
 
 def mock_price(t0,n=120,start=120000,delta=2):
@@ -97,7 +95,6 @@ class Mve1InvariantTests(unittest.TestCase):
         self.assertEqual(len(fit["variants"]),4)
         self.assertEqual(fit["trainCount"],len(known))
         self.assertEqual(fit["variants"]["FULL_INTERACTIONS"]["beta"].shape[1],4)
-        pred=predict_all(known[:10],fit) if False else None
         self.assertTrue(np.all(np.isfinite(fit["variants"]["FULL_INTERACTIONS"]["beta"])))
 
     def test_no_cost_or_no_predictive_certainty_is_not_an_order(self):
