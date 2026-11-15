@@ -192,6 +192,26 @@ def paired_weekly(rows,fit,scope,phase,side):
         independentConfirmation=False)
 
 
+
+def current_term_roundtrip_friction_bps(cost,side,open_at,close_at):
+    """Strict pre-source current-term scenario; NEVER an observed historic fill."""
+    if not cost or not cost.get("fundingKnown") or close_at<=open_at:
+        return None
+    minute=cost.get("swapMinute")
+    daily=cost.get("longDailyDebitBps" if side>0 else "shortDailyDebitBps")
+    fee=cost.get("adverseBps")
+    if (not isinstance(minute,int) or not 0<=minute<1440 or
+        daily is None or fee is None or
+        not isfinite(float(daily)) or not isfinite(float(fee))):
+        return None
+    next_swap=(open_at//86400000)*86400000+minute*60000
+    if next_swap<=open_at:next_swap+=86400000
+    crossings=0
+    while next_swap<=close_at:
+        crossings+=1;next_swap+=86400000
+    return float(fee)+3.*crossings*max(0.,float(daily))
+
+
 def mandatory_economic_gate(train_intents,symbol,side,scope,cost):
     """No alpha => no economic entry, even with beautiful tail forecasts."""
     if (not cost or cost.get("minimumNotionalEur",0)<=0 or
@@ -207,7 +227,9 @@ def mandatory_economic_gate(train_intents,symbol,side,scope,cost):
         if r["entryClock"]<last_end:continue
         last_end=r["entryClock"]+24*M5
         if not r["known"]:continue
-        value=(side*r["returnBps"]-cost["adverseBps"])*cost["minimumNotionalEur"]/10000
+        friction=current_term_roundtrip_friction_bps(cost,side,r["entryClock"],r["entryClock"]+24*M5)
+        if friction is None:return dict(admitted=False,reason="FINANCING_OR_TARIFF_UNKNOWN")
+        value=(side*r["returnBps"]-friction)*cost["minimumNotionalEur"]/10000
         week=(r["t"]-scope["calendarStart"])//WEEK
         if 0<=week<26:
             sample.append((week,value));week_n.add(week)
