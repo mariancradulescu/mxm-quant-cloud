@@ -1,0 +1,109 @@
+{
+  "schema": "MXM_SPDE1_PROSPECTIVE_SYSTEMATIC_OHLCV_CATEGORICAL_PREDICTION_V1",
+  "id": "SPDE1",
+  "status": "PRE-SOURCE_FROZEN_BEFORE_ORIGINAL_RESULTS",
+  "authority": "docs/OWNER_SPEC.md OWNER v2.0 and OWNER 2026-11-15 after PR #306-307",
+  "source": [
+    {
+      "name": "BDP1",
+      "run": 41724643418,
+      "sha256": "e47ba7204ca7e07e7bb523ede8a8171f49b216cad09914142ed548839660a370",
+      "protocol": "research/portfolio_discovery_protocol.json",
+      "schema": "mxm-bdp1-source-v1",
+      "artifactName": "sealed-source"
+    },
+    {
+      "name": "AIP1",
+      "run": 41735441128,
+      "sha256": "fa684ca1de58c6d1e8bdee410834855d05389af0c0ae4523b095367dce0e5331",
+      "protocol": "research/auction_inventory_protocol.json",
+      "schema": "mxm-aip1-source-v1",
+      "artifactName": "sealed-source"
+    }
+  ],
+  "universe": [
+    "EURUSD",
+    "GBPUSD",
+    "USDJPY",
+    "AUDUSD",
+    "USDCAD",
+    "XAUUSD",
+    "US500",
+    "NAS100",
+    "GER40",
+    "UK100",
+    "AUS200",
+    "JPN225"
+  ],
+  "calendar": {
+    "start": 1762128000000,
+    "trainEnd": 1777852800000,
+    "selectionEnd": 1785715200000,
+    "end": 1793577600000,
+    "weeks": [
+      26,
+      13,
+      13
+    ],
+    "decisionUtcHours": [
+      8,
+      12,
+      16
+    ],
+    "globalExposure": true,
+    "independentConfirmation": false
+  },
+  "feature": {
+    "nativeFromCompletedM5": true,
+    "requiredContiguous5mBars": 49,
+    "referenceWindow5mBars": 48,
+    "timeframesMinutes": [
+      5,
+      15,
+      60,
+      240
+    ],
+    "families": [
+      "CANDLE_GEOMETRY",
+      "IMPULSE_PERSISTENCE",
+      "VOLATILITY_TRANSITION",
+      "CONSOLIDATION_BREAKOUT",
+      "PULLBACK_CONTINUATION",
+      "CLOSED_BAR_INDICATOR",
+      "SYNCHRONIZED_PEER_CONTEXT"
+    ],
+    "stateSpace": [
+      -1,
+      0,
+      1
+    ],
+    "missingIsUnknown": true,
+    "formulaLocation": "research/spde1_systematic_ohlcv.py:feature_states",
+    "fixedNoRetune": true
+  },
+  "horizonsMinutes": [
+    60,
+    240
+  ],
+  "priceTarget": "After fixed completed decision bar ending t, M5 close proxy at t+5m entry, M5 close proxy at t+5m+h exit; missing future labels tracked separately, not a selection condition; no broker fills",
+  "predictor": "Nonlinear conditional categorical empirical-Bayes mean + up-probability per symbol/family/feature state/horizon, training only weeks 1-26; prior zero mean and Beta(1,1) up probability, fixed 16 pseudo-observations for conditional mean; class uncertainty and correct-sign classification. No WIDE_REGIME ridge or IPF1 online SGD, no closed study calls.",
+  "selection": "Predecision posterior mean and two-sided 95% normal interval; directional opportunity only when posterior lower bound excludes zero and estimated adverse current-contract cost; otherwise ABSTAIN. Instrument and family ranking compares conservative expected EUR; no trade from indicators alone.",
+  "validation": "Train first26 only with fully matured horizons; freeze all parameters for weeks27-39 selection; predeclare one (family,horizon) global policy only if selection weekly adverse NET EUR lower confidence bound > cash and positive vs prior 4h price-only benchmark using familywise Bonferroni for 7x2x2 comparisons. Remaining last13 globally exposed descriptive; never recombine favorable cells. 12 instruments always disclosed; no instrument cherry-pick.",
+  "costs": "Extract original BDP1/AIP1 synchronized current-contract original bid/ask/commission EUR cost contexts ONLY with observation At < trainEnd; dynamic current min-notional and worst current min-margin, central/adverse modeled bps downstream of predictive score, swap/funding missing blocks admission. Conditionally modeled minimum-volume EUR payoff = current original source min-notional EUR * (signed M5 bid-like future log-return - original source current-term modeled scenario cost)/10000. Not historical executable bid/ask or native funded NET.",
+  "risk": {
+    "initialCapitalEur": 300,
+    "noTopupOrReset": true,
+    "maxFloatingDrawdownFraction": 0.3,
+    "hard21Systemic": 21,
+    "sharedNativeLedgerOnly": true,
+    "fundedOrActualClaim": false,
+    "portfolioNativeAllocatorNotInvokedForUnqualifiedForecasts": true
+  },
+  "safety": {
+    "newBrokerRequests": 0,
+    "closedStudiesReexecuted": false,
+    "brokerOrders": 0,
+    "cloudActivation": false,
+    "newServices": false
+  }
+}
