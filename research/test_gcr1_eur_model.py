@@ -9,6 +9,8 @@ from research.gcr1_macro_signal import scheduled_clocks, STEP_MS, ENTRY_AFTER_MS
 from research.gcr1_eur_model import (
     intents, asof_pair, price_all, summary, POLICIES,
 )
+from research.gcr1_reused_source_readback import original_bdp_close_maps
+
 
 
 def panel(t, c_first=100000, c_last=101000,
@@ -103,6 +105,24 @@ class GCR1A1Tests(unittest.TestCase):
             return due_exit_settled and remaining >= new_minimum
         self.assertFalse(can_admit(settled))
         self.assertTrue(can_admit(True))
+
+    def test_reused_original_bdp1_m5_exact_end_time_not_future(self):
+        day=datetime.fromtimestamp(self.t/1000, timezone.utc).date().isoformat()
+        # Reused source must retain the historical M5 close end stamps.
+        rows=[]
+        for i in range(49):
+            end=self.t-(48-i)*STEP_MS
+            rows.append([end-STEP_MS,end,1,2,1,2,5])
+        old={"bars":{"AUDUSD":rows,"XAUUSD":rows}}
+        tape={day:{"bars":{"Copper":{}},"quotes":{}}}
+        originals,counts=original_bdp_close_maps(old,tape)
+        self.assertEqual(counts,{"XAUUSD":49,"AUDUSD":49})
+        self.assertIn(str(self.t),originals[day]["AUDUSD"])
+        self.assertNotIn(str(self.t+STEP_MS),originals[day]["AUDUSD"])
+        with self.assertRaises(ValueError):
+            original_bdp_close_maps(
+                {"bars":{"AUDUSD":rows+[rows[-1]],"XAUUSD":rows}},tape
+            )
 
     def test_summary_denominator_does_not_turn_unknown_into_cash(self):
         priced = {
