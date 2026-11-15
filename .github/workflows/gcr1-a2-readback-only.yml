@@ -10,6 +10,8 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/gcr1-a2-readback-only.yml'
+      - 'research/gcr1_reused_source_readback.py'
+      - 'docs/GCR1_A2_READBACK_TECHNICAL_F2_20261115.md'
 
 permissions:
   contents: read
