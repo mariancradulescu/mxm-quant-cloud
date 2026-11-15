@@ -9,7 +9,7 @@ from collections import Counter
 from math import sqrt, erf
 import numpy as np
 from .mve1_event_interaction import (
-    COLUMNS, INTERACTION_IDX, PEER_IDX, SIMPLE_IDX
+    COLUMNS, INTERACTION_IDX, PEER_IDX, SIMPLE_IDX, M5
 )
 
 LAMBDA=32.0
@@ -114,6 +114,35 @@ def predict_all(row,fit):
     return ans
 
 
+def current_term_friction_bps(row,side,current_cost,scenario):
+    """Original-date current-term BID/ASK fees + conservative swap model.
+
+    No historical event fill, historical swap or broker P&L is asserted.
+    """
+    if side==0:
+        return 0.
+    if (current_cost is None or not current_cost.get("fundingKnown",False)
+            or not isinstance(current_cost.get("swapMinute"),int)):
+        return None
+    minute=current_cost["swapMinute"]
+    if not 0<=minute<1440:
+        return None
+    opening=row["entryClock"]
+    ending=opening+row["h"]*M5
+    boundary=(opening//86400000)*86400000+minute*60000
+    if boundary<=opening:
+        boundary+=86400000
+    crossings=0
+    while boundary<=ending:
+        crossings+=1
+        boundary+=86400000
+    daily_key="longDailyDebitBps" if side>0 else "shortDailyDebitBps"
+    funding=current_cost.get(daily_key)
+    if funding is None:
+        return None
+    return float(current_cost[scenario+"Bps"])+3.*crossings*max(0.,float(funding))
+
+
 def admitted_research_opportunity(row,forecast,current_cost):
     """Evaluate predictive confidence first, cost admissibility second.
 
@@ -128,15 +157,18 @@ def admitted_research_opportunity(row,forecast,current_cost):
                 "probUp":forecast["probUp"]}
     if current_cost is None or (
         current_cost.get("minimumNotionalEur",0)<=0 or
-        current_cost.get("minimumMarginEur",1e8)>=300 or
-        not current_cost.get("fundingKnown",False)
+        current_cost.get("minimumMarginEur",1e8)>=300
     ):
         return {"state":"FINANCIAL_UNKNOWN_OR_UNFUNDED","side":None,
                 "direction":direction,"probUp":forecast["probUp"]}
     scale=row["vol5"]*sqrt(row["h"])*10000
     expected=abs(float(x[0]))*scale
     se_bps=float(sig[0])*scale
-    conservative=expected-FIXED_Z*se_bps-current_cost["adverseBps"]
+    friction=current_term_friction_bps(row,direction,current_cost,"adverse")
+    if friction is None:
+        return {"state":"FINANCIAL_UNKNOWN_OR_UNFUNDED","side":None,
+                "direction":direction,"probUp":forecast["probUp"]}
+    conservative=expected-FIXED_Z*se_bps-friction
     if conservative<=0:
         return {"state":"COST_ABSTAIN","side":0,
                 "direction":direction,"probUp":forecast["probUp"],
@@ -159,5 +191,8 @@ def diagnostic_eur(row,direction,cost,scenario):
         return None
     if direction==0:
         return 0.
+    friction=current_term_friction_bps(row,direction,cost,scenario)
+    if friction is None:
+        return None
     return cost["minimumNotionalEur"]*(
-        direction*row["returnBps"]-cost[scenario+"Bps"])/10000.
+        direction*row["returnBps"]-friction)/10000.
