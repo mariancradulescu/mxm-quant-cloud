@@ -3,7 +3,8 @@ import math
 import unittest
 from research.rde1_risk_distribution import (
     causal_clocks,realized_labels,fit_training,forecast,
-    paired_weekly,mandatory_economic_gate,validated,TAU
+    paired_weekly,mandatory_economic_gate,validated,TAU,
+    current_term_roundtrip_friction_bps
 )
 
 SCOPE=dict(calendarStart=1762128000000,trainEnd=1777852800000,
@@ -72,6 +73,19 @@ class Rde1SafetyTests(unittest.TestCase):
         p=paired_weekly(rows,fit2,SCOPE,"selection",1)
         self.assertEqual(p["n"],1)
         self.assertFalse(p["acceptedRiskInformation"])
+
+    def test_swap_crossing_and_unknown_cost_fail_closed(self):
+        c=dict(fundingKnown=True,swapMinute=0,adverseBps=8.,
+               longDailyDebitBps=2.,shortDailyDebitBps=5.)
+        day=86400000
+        self.assertAlmostEqual(current_term_roundtrip_friction_bps(
+            c,1,day-3600000,day+3600000),14.)
+        self.assertAlmostEqual(current_term_roundtrip_friction_bps(
+            c,1,day-7200000,day-3600000),8.)
+        self.assertAlmostEqual(current_term_roundtrip_friction_bps(
+            c,-1,day-3600000,day+3600000),23.)
+        self.assertIsNone(current_term_roundtrip_friction_bps(
+            {**c,"fundingKnown":False},1,day-3600000,day+3600000))
 
     def test_no_financial_evidence_means_no_trade(self):
         self.assertFalse(mandatory_economic_gate(
