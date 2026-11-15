@@ -1888,6 +1888,35 @@
       "independentConfirmation": false,
       "ordersSubmitted": 0,
       "cloudActivated": false
+    },
+    {
+      "id": "RDE1",
+      "status": "PREDECLARED_UNSCORED_NATIVE_ECONOMICS_NOT_READY",
+      "protocolFile": "research/rde1_protocol.json",
+      "protocolCommit": "dd8f9cbda06494575c1fbf274cc38e3f6cfe990a",
+      "researchBranch": "owner-rde1-risk-decisions-20261115",
+      "originalSources": [
+        "BDP1",
+        "AIP1"
+      ],
+      "sourceRuns": [
+        41724643418,
+        41735441128
+      ],
+      "calendar": "2025-11-03/2026-11-02_ALL_GLOBALLY_EXPOSED",
+      "trainWeeks": 26,
+      "selectionWeeks": 13,
+      "exposedWeeks": 13,
+      "universeCount": 12,
+      "initialModelCapitalEur": 300,
+      "priorMve1ResultReusedForEntry": false,
+      "originalOutcomeReadbackExecuted": false,
+      "conditionalRiskScoreNotTradingAlpha": true,
+      "nativeCommonCapitalReplayExecuted": false,
+      "independentConfirmation": false,
+      "portfolioAdmission": false,
+      "ordersSubmitted": 0,
+      "cloudActivated": false
     }
   ],
   "schema": "mxm-project-data-exposure-v1",
