@@ -27,10 +27,40 @@ from .portfolio_discovery_source import audit as bdp_audit
 BDP_RUN = "41724643418"
 BDP_SHA = "e47ba7204ca7e07e7bb523ede8a8171f49b216cad09914142ed548839660a370"
 BDP_SOURCE = Path("bdp1-original-sealed/source.envelope.json")
+GCR_SOURCE_RUN = "43723906148"
 GCR_SOURCE = Path("gcr1-a2-source/gcr1-original-protected.v2.enc")
 GCR_PUBLIC = Path("gcr1-a2-public/gcr1-original-source-public.json")
 COMPOSITE = Path("gcr1-a2-composite-source.v2.enc")
 OUTPUT = Path("gcr1-original-public-eur.json")
+
+
+def source_public_receipt(path):
+    """Accept ONLY known exact malformed original trailing backslash-n bytes.
+
+    Keep the immutable ORIGINAL public receipt bytes and return a
+    repaired parser view. Every other transformation fails closed.
+    """
+    original = path.read_bytes()
+    try:
+        return json.loads(original), {
+            "originalPublicMetadataSha256": sha256(original).hexdigest(),
+            "formatRecovery": "NONE",
+        }
+    except json.JSONDecodeError:
+        if not original.endswith(b"}\\n"):
+            raise ValueError("GCR1_UNKNOWN_SOURCE_PUBLIC_FORMAT_DEFECT") from None
+        recovered = original[:-2] + b"\n"
+        try:
+            report = json.loads(recovered)
+        except json.JSONDecodeError:
+            raise ValueError("GCR1_SOURCE_PUBLIC_NOT_CANONICALLY_RECOVERABLE") from None
+        expected = json.dumps(report, indent=2, allow_nan=False).encode("utf-8") + b"\\n"
+        if expected != original:
+            raise ValueError("GCR1_SOURCE_PUBLIC_FORMAT_DIFFERENT_FROM_ORIGINAL_F1") from None
+        return report, {
+            "originalPublicMetadataSha256": sha256(original).hexdigest(),
+            "formatRecovery": "EXACT_TRAILING_BACKSLASH_N_ONLY_ORIGINAL_PRESERVED",
+        }
 
 
 def digest_equal(path, expected, name):
@@ -108,8 +138,8 @@ def readback():
             or not old.get("pilotPassed")):
         raise ValueError("GCR1_CANNOT_REUSE_UNAUDITED_BDP1_M5")
 
-    original_source_receipt=json.loads(GCR_PUBLIC.read_text())
-    if (original_source_receipt.get("originalRunId")!=int(run)
+    original_source_receipt, format_audit=source_public_receipt(GCR_PUBLIC)
+    if (original_source_receipt.get("originalRunId")!=int(GCR_SOURCE_RUN)
             or original_source_receipt.get("schema") !=
                "MXM_GCR1_A2_SOURCE_ONLY_NO_FINANCIAL_SCORING"
             or original_source_receipt.get("conditionalNetEur") is not None
@@ -118,12 +148,12 @@ def readback():
     new_cipher=digest_equal(GCR_SOURCE,
                             original_source_receipt["originalCiphertextSha256"],
                             "GCR1")
-    new_plain=unseal_new(new_cipher,private,run)
+    new_plain=unseal_new(new_cipher,private,GCR_SOURCE_RUN)
     if sha256(new_plain).hexdigest()!=original_source_receipt["originalPlaintextSha256"]:
         raise ValueError("GCR1_NEW_SOURCE_PLAINTEXT_DIGEST_MISMATCH")
     new=json.loads(new_plain)
     if (new.get("schema")!="MXM_GCR1_A2_ORIGINAL_COPPER_AND_QUOTES_SOURCE_ONLY"
-            or new.get("originalRunId")!=run
+            or new.get("originalRunId")!=GCR_SOURCE_RUN
             or not new.get("originalPepperstoneEurAccountVerified")
             or new.get("authenticatedRequestsAfterAccountAuth")>4600):
         raise ValueError("GCR1_NEW_READONLY_SOURCE_INVALID")
@@ -172,7 +202,7 @@ def readback():
     joint={
         "schema":"MXM_GCR1_A2_BDP1_REUSED_PLUS_GCR1_NEW_SOURCE_PRE_EUR",
         "originalReadOnlyBdp1SourceRun":int(BDP_RUN),
-        "originalReadOnlyGcr1SourceRun":int(run),
+        "originalReadOnlyGcr1SourceRun":int(GCR_SOURCE_RUN),
         "bdp1OriginalSourceSha256":BDP_SHA,
         "gcr1NewOriginalSourceSha256":sha256(new_cipher).hexdigest(),
         "gcr1NewOriginalReadOnlyRequests":new["authenticatedRequestsAfterAccountAuth"],
@@ -205,7 +235,9 @@ def readback():
     )
     out={
         "schema":"MXM_GCR1_A2_BDP1_REUSED_ORIGINAL_READONLY_EUR_FINANCIAL",
-        "originalGcr1RunId":int(run),
+        "originalGcr1RunId":int(GCR_SOURCE_RUN),
+        "readbackRecoveryRunId":int(run),
+        "originalPublicMetadataFormatAudit":format_audit,
         "originalBdp1SourceRunId":int(BDP_RUN),
         "bdp1SourceOriginalCiphertextSha256":BDP_SHA,
         "gcr1NewSourceOriginalCiphertextSha256":sha256(new_cipher).hexdigest(),
