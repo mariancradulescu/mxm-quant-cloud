@@ -289,6 +289,7 @@ def study(rows,models,prior,cost,p):
                 counts=Counter()
                 quality={"brier":[],"brierPrior":[],"directionCorrect":[]}
                 sample_by_symbol=Counter()
+                regime_replay=defaultdict(lambda:{"selectedIntents":0,"priced":0,"adverseNetEur":0.0,"positiveNet":0,"negativeNet":0})
                 for t in phase_times:
                     market=groups[(phase,h,t)]
                     need(len(market)==len(p["universe"]),"MISSING_GLOBAL_MARKET_SLOTS")
@@ -315,6 +316,10 @@ def study(rows,models,prior,cost,p):
                     week=(t-p["calendar"]["start"])//WEEK
                     if winner:
                         _,_,r,q=winner
+                        regime_key=("expanding" if r["f"]["state"]["VOLATILITY_TRANSITION"]>0
+                                    else "compressing" if r["f"]["state"]["VOLATILITY_TRANSITION"]<0
+                                    else "unchanged")
+                        regime_replay[regime_key]["selectedIntents"]+=1
                         counts["selectedBySymbol:"+r["s"]]+=1
                         if not r["labelKnown"]:
                             counts["selectedOutcomeUNKNOWN"]+=1
@@ -328,6 +333,10 @@ def study(rows,models,prior,cost,p):
                                 counts[scenario+"Negative"]+=int(net<0)
                                 counts[scenario+"NetTotal10000"]+=round(net*SCALE)
                         adv=economic_candidate(r,q["side"],cost[r["s"]],"adverse")
+                        regime_replay[regime_key]["priced"]+=1
+                        regime_replay[regime_key]["adverseNetEur"]+=adv
+                        regime_replay[regime_key]["positiveNet"]+=int(adv>0)
+                        regime_replay[regime_key]["negativeNet"]+=int(adv<0)
                         own_side=sign(r["f"]["r48"])
                         own=economic_candidate(r,own_side,cost[r["s"]],"adverse")
                         weekly[week]["net"].append(adv)
@@ -359,6 +368,7 @@ def study(rows,models,prior,cost,p):
                     "weeklyLowerIncrementalAdverseEur":weekly_bound(incr),
                     "selectedIntentsNotFundedNativeRoundTrips":True,
                     "sampledSymbolSignalCounts":dict(sample_by_symbol),
+                    "exAnteVolatilityRegimeDescriptiveOnly":{k:{**v,"adverseNetEur":round(v["adverseNetEur"],6)} for k,v in sorted(regime_replay.items())},
                 }
                 ans["selectionGate"]=(
                     phase=="selection" and
