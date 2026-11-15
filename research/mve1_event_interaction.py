@@ -164,7 +164,7 @@ def build_events(bars,p):
     for symbol in p["scope"]["universe"]:
         a=parsed[symbol];run=runs[symbol]
         source_bars[symbol]=len(a)
-        peers=[peer_context[q] for q in PEERS if q!=symbol]
+        peers=[peer_context[q] for q in PEERS if q!=symbol and q in peer_context]
         for i,row in enumerate(a):
             t=int(row[1])
             if not p["scope"]["calendarStart"]<=t<p["scope"]["end"]:
