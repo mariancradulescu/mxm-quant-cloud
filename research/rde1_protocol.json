@@ -1,0 +1,132 @@
+{
+  "schema": "MXM_RDE1_EXANTE_RISK_DISTRIBUTION_ECONOMIC_DECISIONS_V1",
+  "id": "RDE1",
+  "name": "Risk Distribution to Funded Economic Decisions",
+  "status": "FROZEN_UNSCORED",
+  "authority": "docs/OWNER_SPEC.md OWNER v2.0 with OWNER decision after MVE1 PR311-312 dated 2026-11-15",
+  "frozenAfter": "MVE1 original verdict; no MVE1 forecasts, features, event tags, outcomes, or model coefficients feed RDE1",
+  "immutability": "Original RDE1 protocol must be committed before first RDE1 outcome; subsequent bugfix only as separately documented prospective A1 or corrective diagnostic, never revised candidate selection.",
+  "sources": [
+    {
+      "study": "BDP1",
+      "originalRun": 41724643418,
+      "sourceSha256": "e47ba7204ca7e07e7bb523ede8a8171f49b216cad09914142ed548839660a370",
+      "schema": "mxm-bdp1-source-v1",
+      "protocol": "research/portfolio_discovery_protocol.json"
+    },
+    {
+      "study": "AIP1",
+      "originalRun": 41735441128,
+      "sourceSha256": "fa684ca1de58c6d1e8bdee410834855d05389af0c0ae4523b095367dce0e5331",
+      "schema": "mxm-aip1-source-v1",
+      "protocol": "research/auction_inventory_protocol.json"
+    }
+  ],
+  "scope": {
+    "calendarStart": 1762128000000,
+    "trainEnd": 1777852800000,
+    "selectionEnd": 1785715200000,
+    "end": 1793577600000,
+    "trainWeeks": 26,
+    "selectionWeeks": 13,
+    "alreadyExposedWeeks": 13,
+    "originalM5Count": 836087,
+    "universe": [
+      "EURUSD",
+      "GBPUSD",
+      "USDJPY",
+      "AUDUSD",
+      "USDCAD",
+      "XAUUSD",
+      "US500",
+      "NAS100",
+      "GER40",
+      "UK100",
+      "AUS200",
+      "JPN225"
+    ],
+    "all52WeeksGloballyExposed": true,
+    "independentConfirmation": false,
+    "capitalEur": 300,
+    "horizonM5": 24,
+    "maxHoldingMinutes": 120
+  },
+  "observations": {
+    "clock": "each UTC hourly completed M5 close with exact prior 97 contiguous completed M5 candles",
+    "nextEntryProxy": "close of next fully completed M5 bar; never assume a broker fill",
+    "forwardOutcome": "from entry to fixed 24 M5 completed bars (120 minutes); require every forward M5 bar and phase-contained maturity",
+    "sampleCensoring": "record all predecision intents, later unknown forward path never suppresses original candidate",
+    "directionStream": "simple 48-M5 drift sign only if absolute 48-bar log return exceeds 0.75 times last48 return RMS times sqrt(48), last24-bar log return agrees in sign, else ABSTAIN; not an MVE1 event or trained MVE1 direction",
+    "riskPredictorInputs": [
+      "past24 M5 realized RMS return",
+      "past48 M5 realized RMS return",
+      "past24/48 volatility ratio",
+      "last24 sign persistence",
+      "time-of-day sin/cos"
+    ],
+    "futureAdverseTargets": [
+      "max entry-to-low drop for LONG",
+      "max high-to-entry rise for SHORT",
+      "max absolute future return"
+    ],
+    "OHLCBounds": "future high/low are path extremes, not executable stops or known intrabar sequence",
+    "temporalLeakage": "features available at t only; entry/exit realized prices labeled after decisions and maturity"
+  },
+  "distribution": {
+    "target": "0.90-quantile of adverse price excursion bps conditional on entry at t+5m and hold 120m",
+    "simpleComparator": "TRAIN-only global direction-specific empirical 90th quantile in units of causal past24 RMS * sqrt(24); no regime bins",
+    "conditionalModel": "TRAIN-only quantile grouped by 3 volatility-terciles x 2 persistence states x direction; pooled shrinkage of 50 pseudo observations from the training global empirical CDF; train-only terciles, no symbol-specific optimization",
+    "forecasting": "fixed estimated tail distribution, not confidence interval for conditional mean",
+    "evaluation": [
+      "0.90 pinball loss on matched clocks",
+      "empirical future-tail exceedance coverage and calibration by time blocks",
+      "MAE of signed adverse excursion",
+      "weekly paired quantile-score change vs simple predictor"
+    ],
+    "statistics": "13 contiguous calendar-week paired means, 12 instruments averaged within each week; dependence on overlapping horizons is clustered by week, not bars; report raw mean and familywise Bonferroni 95%-lower bound for risk score and net; report no independent confirmation; zero-outcome weeks retained",
+    "multiplicity": "two sides x three risk policies x 12 instruments (all published); no choosing favorable symbol/regime/time slice after results"
+  },
+  "economic": {
+    "alphaPremise": "Independent fixed 48-M5 24-M5 agreed drift signal only; risk forecast never creates or flips direction",
+    "alphaGate": "TRAIN26 only: require at least 16 causally non-overlapping completed reference round trips and at least 10 calendar weeks in each admitted instrument+direction, adverse-cost EUR 26-week block-mean lower bound >0 with Bonferroni 24; otherwise that instrument+direction abstains in all arms",
+    "candidateClock": "no signal and no train alpha => no entry, including no pseudo-trades for risk testing",
+    "policies": [
+      "CASH_NO_TRADE",
+      "FIXED_SIGNAL_WITHOUT_RISK_OVERLAY",
+      "SIMPLE_REALIZED_VOLATILITY_TAIL_RESERVE",
+      "CONDITIONAL_DISTRIBUTION_TAIL_RESERVE"
+    ],
+    "simpleRisk": "reserve min legal units based on TRAIN-only simple 90%-tail estimate and a fixed per-position adverse-loss budget EUR15",
+    "conditionalRisk": "same EUR15 budget, same funding/cost terms and legal volume grid, substituting only trained conditional 90%-tail forecast",
+    "fairComparator": "same predecision directional intent, same EUR300 common capital, common concurrent marks, native ordering; all intent counts reported even when abstained",
+    "preentryDecision": "cost and potential adverse tail reserve in EUR and concurrent cash/free margin constrain native allocation, margin minimum+step preserved; do not round subminimum exposure up",
+    "closeRule": "fixed 120m or earlier mandated system 30%-DD protective invalidation; any earlier adverse risk intervention is accounted in all arms identically",
+    "costs": "reuse original synchronized train-dated native C# quote/commission/minmargin/FX context, with central/adverse/slippage and 3x directional current-term swap debit if crossing; missing execution, conversion, tariff or historical marks => UNKNOWN not zero",
+    "accounting": "existing native C# orchestrator and EUR300 ledger only; no Python second ledger or summing overlapping intents as PnL",
+    "counterfactuals": "matched full native portfolios, never claim isolated minimum-unit EUR sums are realizable",
+    "riskCheck": "max sampled adverse floating drawdown <=0.30, no unknown portfolio equity path allowed for qualification, no reset/cash injection, systemic HARD21 reported not forced",
+    "nativeOnlyIfFinancialReady": true
+  },
+  "acceptance": {
+    "riskInformation": "13-week paired 0.90 quantile score strictly improves simple risk comparator with Bonferroni-adjusted lower bound >0, acceptable calibration and no uncovered cost/data gaps",
+    "economicInformation": "conditional policy adverse NET EUR improves simple-risk policy and CASH and DOES NOT worsen maximum adverse floating DD, with fully financed native EUR300 book; report all three no-trade comparators and exact trade counts",
+    "eligibility": "selection pass alone preliminary; exposed periods only development and not independent, need truly new independent chronological material to qualify",
+    "notEquivalentToDirectionAlpha": true,
+    "noLiveDemo": true,
+    "noCloudTrading": true,
+    "noPromotionWithoutIndependentConfirmation": true,
+    "minimum12MonthsRelevant": true,
+    "systemicHard21": 21,
+    "maxFloatingDrawdown": 0.3
+  },
+  "prohibited": [
+    "no MVE1 rerun or retune",
+    "no MVE1 60-minute rescue",
+    "no holdout reclassification",
+    "no broker orders",
+    "no parallel allocator or ledger",
+    "no fabrication of signals/trades",
+    "no new permanent service"
+  ],
+  "implementationBoundary": "Research-only; final cBot native C# cTrader Cloud on Android; read-only existing source if needed."
+}
