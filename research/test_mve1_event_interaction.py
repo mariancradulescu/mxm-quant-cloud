@@ -11,7 +11,7 @@ from research.mve1_event_interaction import (
     label_after_original_intent,peer_past12
 )
 from research.mve1_multitarget_model import (
-    fit_all_multitarget,admitted_research_opportunity
+    fit_all_multitarget,admitted_research_opportunity,current_term_friction_bps,diagnostic_eur
 )
 from research.mve1_authentic_eur import weekly_paired_lower
 
@@ -109,6 +109,24 @@ class Mve1InvariantTests(unittest.TestCase):
         pred["meanSE"][0]=.01
         outcome=admitted_research_opportunity(features,pred,None)
         self.assertEqual(outcome["state"],"FINANCIAL_UNKNOWN_OR_UNFUNDED")
+
+    def test_eur_cost_includes_conservative_directional_swap_only_if_crossed(self):
+        # Proven current original fee/spread costs, modeled (not true fills).
+        c={"fundingKnown":True,"swapMinute":120,
+           "centralBps":2.0,"adverseBps":5.0,
+           "longDailyDebitBps":3.0,"shortDailyDebitBps":6.0,
+           "minimumNotionalEur":200.0,"minimumMarginEur":50.0}
+        day=86400000
+        row={"entryClock":2*day+119*60000,"h":12,
+             "known":True,"returnBps":18.0}
+        self.assertEqual(current_term_friction_bps(row,1,c,"adverse"),14.0)
+        self.assertEqual(current_term_friction_bps(row,-1,c,"adverse"),23.0)
+        self.assertAlmostEqual(diagnostic_eur(row,1,c,"adverse"),.08)
+        # Shift to after the daily rollover: never charge an extra day.
+        row2={**row,"entryClock":2*day+121*60000}
+        self.assertEqual(current_term_friction_bps(row2,1,c,"adverse"),5.0)
+        c["fundingKnown"]=False
+        self.assertIsNone(current_term_friction_bps(row2,1,c,"adverse"))
 
     def test_weekwise_multiplicity_no_fabricated_independence(self):
         self.assertIsNone(weekly_paired_lower({},26))
