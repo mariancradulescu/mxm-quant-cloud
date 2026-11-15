@@ -1,0 +1,183 @@
+{
+  "schema": "MXM_MVE1_FROZEN_BEFORE_SOURCE_ORIGINAL_EVENT_MULTI_TARGET_V1",
+  "id": "MVE1",
+  "name": "Multivariate Observable-Event Discovery",
+  "status": "FROZEN_UNSCORED",
+  "authority": "docs/OWNER_SPEC.md OWNER v2.0 and 2026-11-15 OWNER post-SPDE1",
+  "originalSources": [
+    {
+      "study": "BDP1",
+      "run": 41724643418,
+      "sha256": "e47ba7204ca7e07e7bb523ede8a8171f49b216cad09914142ed548839660a370",
+      "originalSchema": "mxm-bdp1-source-v1",
+      "protocol": "research/portfolio_discovery_protocol.json"
+    },
+    {
+      "study": "AIP1",
+      "run": 41735441128,
+      "sha256": "fa684ca1de58c6d1e8bdee410834855d05389af0c0ae4523b095367dce0e5331",
+      "originalSchema": "mxm-aip1-source-v1",
+      "protocol": "research/auction_inventory_protocol.json"
+    }
+  ],
+  "scope": {
+    "sourceResolutionMinutes": 5,
+    "universe": [
+      "EURUSD",
+      "GBPUSD",
+      "USDJPY",
+      "AUDUSD",
+      "USDCAD",
+      "XAUUSD",
+      "US500",
+      "NAS100",
+      "GER40",
+      "UK100",
+      "AUS200",
+      "JPN225"
+    ],
+    "initialEur": 300,
+    "calendarStart": 1762128000000,
+    "trainEnd": 1777852800000,
+    "selectionEnd": 1785715200000,
+    "end": 1793577600000,
+    "trainWeeks": 26,
+    "selectionWeeks": 13,
+    "exposedTestWeeks": 13,
+    "globalPriorExposure": true,
+    "independentConfirmation": false
+  },
+  "population": {
+    "everyCompletedM5Candle": true,
+    "lookbackBars": 49,
+    "excludeMissingOrNoncontiguousLookback": true,
+    "allScheduledObservablePriceEventsNotThreeClocksPerDay": true,
+    "events": [
+      "BREAKOUT_12",
+      "WICK_REJECTION",
+      "VOLATILITY_TRANSITION",
+      "PULLBACK_REJOIN",
+      "COMPRESSION_BREAK",
+      "IMPULSE_CONTINUATION"
+    ],
+    "multiTagEventsRetainedAsOneObservation": true,
+    "eventRules": "research/mve1_event_interaction.py:extract_events_and_features",
+    "dedupPolicy": "one per symbol/end timestamp, no frequency cap or retrospective event type elimination",
+    "unknownFutureNeverChangesEvent": true,
+    "sessionGapsNotImputed": true
+  },
+  "continuousFeatures": {
+    "columns": [
+      "intercept",
+      "bodyByRange",
+      "upperWickByRange",
+      "lowerWickByRange",
+      "r3Norm",
+      "r12Norm",
+      "r24Norm",
+      "r48Norm",
+      "signedEfficiency24",
+      "vol6Over24",
+      "vol24Over48",
+      "prevRange12Over24",
+      "breakoutDistanceNorm",
+      "rsi14Centered",
+      "ema12Minus26Norm",
+      "logVolume6Over24",
+      "peer12Norm",
+      "peerObservedFraction",
+      "timeSin",
+      "timeCos",
+      "bodyTimesR24",
+      "volRatioTimesR12",
+      "breakoutTimesCompression",
+      "wickImbalanceTimesR24",
+      "peerTimesImpulse",
+      "volumeTimesVol",
+      "eventBreakout",
+      "eventRejection",
+      "eventVolTransition",
+      "eventPullback",
+      "eventCompression",
+      "eventContinuation"
+    ],
+    "featureClip": 5,
+    "trainingOnlyCenterAndScale": true,
+    "missingPeerNumeratorZeroWithExplicitCoverageFeature": true,
+    "nonSyntheticTickVolume": true,
+    "continuousNotCategoricalRidgeInteraction": true,
+    "cBotReplicableFromCompletedBars": true
+  },
+  "targets": {
+    "horizonsM5": [
+      12,
+      48
+    ],
+    "entry": "at next fully completed M5 bar CLOSE end t+5m, historical bid-like bar proxy, not a fill",
+    "exit": "close of bar t+(h+1)*5m",
+    "forwardRequireContiguousBars": true,
+    "targets": [
+      "signedNextHorizonLogReturnNormalizedByPastVol",
+      "futureHighExcursionNormalized",
+      "futureLowExcursionNormalized",
+      "futureVolRegimeExpansion01"
+    ],
+    "mfeMaeRelativeToBidLikeEntry": true,
+    "noFutureLabelSelection": true,
+    "trainingTargetsMatureStrictlyBeforeTrainEnd": true,
+    "selectionTargetsMatureStrictlyBeforeSelectionEnd": true
+  },
+  "models": {
+    "kind": "TRAIN_ONLY_MULTIVARIATE_INTERACTION_MULTI_TARGET_RIDGE",
+    "lambda": 32,
+    "trainingSamplePolicy": "all detected event clocks; inverse per-instrument training event count capped weight max4 only for instrument balance, no return-dependent selection",
+    "variants": [
+      "FULL_INTERACTIONS",
+      "NO_PEER_COMPONENT",
+      "NO_INTERACTION_TERMS",
+      "SIMPLE_OWN_PRICE"
+    ],
+    "comparison": [
+      "ZERO_DRIFT",
+      "FIXED_PRIOR_12_M5_MOMENTUM",
+      "SIMPLE_OWN_PRICE"
+    ],
+    "trainOnlyResidualVariance": true,
+    "selectionDoesNotRefit": true,
+    "noIterativeHyperparamSearch": true,
+    "allEventsDisclosed": true
+  },
+  "predictiveDecision": {
+    "selection": "first13w after training: frozen 2 horizons, all event tags, all 12 instruments. Record weekly paired MSE improvement vs zero, prior momentum and simple own-price, directional Brier vs train-only base rate, high/low excursion MAE and volatility-transition Brier. Do not elect a model from failed selection.",
+    "multiplicity": "two horizons x three nontrivial variants; Bonferroni 6 for prospective one-sided weekly paired test on MSE-vs-simple and MSE-vs-momentum (12 familywise); no hindsight selection by symbol/event.",
+    "confidence": "train-only posterior ridge mean standard error from XTX ridge inverse; normal 95% two-sided interval; compare predicted net to adverse current-term cost",
+    "trainingFitRequired": true,
+    "exposed13wDescriptiveOnly": true
+  },
+  "economic": {
+    "originalSourceCosts": "BDP1/AIP1 original native C# verified paired BID/ASK and terms in first26 training weeks only",
+    "costsAreHistoricalAtEvent": false,
+    "currentMarginOnly": true,
+    "policy": "For selection/test report prospective conditional opportunities with positive adverse expected NET EUR lower95 and known valid minimum volume and swap. Choose maximum conservative EUR per exact event clock; skip overlap/unresolved same-symbol; no forced frequency. No event picked on future label availability.",
+    "matchedComparator": "cash and fixed prior momentum on identical selected clocks",
+    "returnEur": "original minimum notional EUR times bid-like M5 signed logreturn minus train original observed current-term adverse scenario cost bps, not actual fills",
+    "actualBrokerFills": false,
+    "sharedCapitalCSharpFundingCertified": false
+  },
+  "acceptance": {
+    "criterion": "robust positive weekly adjusted paired prediction vs both simple baselines in selection and exposed descriptive, calibration high/low not worse, then only if adverse economic EUR positive after valid portfolio; no promotion from exposed study",
+    "unexposedIndependentConfirmationRequired": true,
+    "ddMaxFraction": 0.3,
+    "hard21Systemic": 21,
+    "orders": 0,
+    "cloudTradingActivation": false
+  },
+  "restrictions": {
+    "originalClosedModelsNeverCalled": true,
+    "noRetuningAfterOriginalResults": true,
+    "noBrokerReadOnlyRequestsNeededForThisStudy": true,
+    "noLiveOrDemo": true,
+    "noExternalPermanentService": true,
+    "noPythonRuntimeInFinalBot": true
+  }
+}
