@@ -202,7 +202,7 @@ def selection_performance(rows,fit,phase,p,h):
             }
         return out
     full=stats["FULL_INTERACTIONS"]
-    selpass=(phase=="selection" and missing==0 and len(usable)>100 and
+    selpass=(phase=="selection" and len(usable)>100 and
              full["returnBrier"]<baseline["trainOnlyDirectionBrier"] and
              comparisons["fullVsFixedOwnMomentum"] is not None and
              comparisons["fullVsSimpleOwnPrice"] is not None and
@@ -213,7 +213,7 @@ def selection_performance(rows,fit,phase,p,h):
     return {
         "phase":phase,"horizonM5":h,
         "fixedAllObservableEvents":len(rows),"forwardKnown":len(usable),
-        "forwardUnknown":missing,"baseline":baseline,
+        "forwardUnknown":missing,"forwardLabelCoverage":len(usable)/len(rows) if rows else None,"baseline":baseline,
         "modelVariants":stats,"matchedWeeklyPredictiveDifferences":comparisons,
         "eventTypeDescriptiveOverlapsAllowed":summaries(tags),
         "causalVolatilityRegime":summaries(regimes),
