@@ -152,7 +152,7 @@ def build_tape(bars,p):
                               "f":None})
                 continue
             peers=[cache[x]["r48"] for x in PEERS
-                   if x!=s and cache[x] is not None]
+                   if x!=s and x in cache and cache[x] is not None]
             state=dict(f["state"])
             state["SYNCHRONIZED_PEER_CONTEXT"]=(
                 sign(sum(peers)) if len(peers)>=2 else None
