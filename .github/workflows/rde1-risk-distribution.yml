@@ -4,6 +4,7 @@ on:
     paths:
       - 'research/rde1_protocol.json'
       - 'research/rde1_risk_distribution.py'
+      - 'research/rde1_original_risk_eur_gate.py'
       - 'research/test_rde1_risk_distribution.py'
       - '.github/workflows/rde1-risk-distribution.yml'
   push:
@@ -27,6 +28,6 @@ jobs:
         with:
           python-version: '3.12'
       - name: Compile RDE1 without accessing original source
-        run: python -m py_compile research/rde1_risk_distribution.py research/test_rde1_risk_distribution.py
+        run: python -m py_compile research/rde1_risk_distribution.py research/rde1_original_risk_eur_gate.py research/test_rde1_risk_distribution.py
       - name: Verify future blindness, chronology, no-trade and forecast leakage
         run: python -m unittest research.test_rde1_risk_distribution -v
