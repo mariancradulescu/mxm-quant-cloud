@@ -57,7 +57,8 @@ def intents(day_bars, clock):
     g, _ = _log_return(gold, clock)
     a, _ = _log_return(aud, clock)
     sides = {
-        "combined": original.side,
+        "combined": (0 if original.state == "ABSTAIN_MACRO_AMBIGUOUS"
+                     else original.side),
         "copperOnly": sign(c) if c is not None else None,
         "inverseGoldOnly": -sign(g) if g is not None else None,
         "audOwnMomentum": sign(a) if a is not None else None,
