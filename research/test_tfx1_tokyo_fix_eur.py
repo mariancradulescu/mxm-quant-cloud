@@ -2,7 +2,7 @@
 import unittest
 from datetime import date
 from decimal import Decimal as D
-from .ctrader_proto import OpenApiMessages_pb2 as m
+from .ctrader_proto import OpenApiModelMessages_pb2 as e
 from .tfx1_tokyo_fix_eur import (
     event,stamp,M5,partition,exit_at,own_reversal,
     paired,jpy_to_eur,net_eur,report_group,scheduled
@@ -13,7 +13,7 @@ def bar(day,minute,op,hi,lo,cl):
     return [at,at+M5,op,hi,lo,cl]
 
 def contract():
-    return m.ProtoOASymbol(
+    return e.ProtoOASymbol(
         symbolId=7,digits=3,pipPosition=2,
         minVolume=100000,stepVolume=100000,maxVolume=100000000,
         lotSize=10000000,preciseTradingCommissionRate=300000000,
@@ -36,8 +36,7 @@ class TokyoFixTests(unittest.TestCase):
     def test_predecision_and_monitoring_separate(self):
         day=date(2026,1,5)
         pre=[bar(day,25+i*5,100,101,99,100) for i in range(6)]
-        post=[bar(day,55+i*5,100,100,99,100) if 55+i*5<60
-              else bar(day,60+i*5,100,100,99,100) for i in range(3)]
+        post=[bar(day,55+i*5,100,100,99,100) for i in range(3)]
         # post clock list 00:55,01:00,01:05.
         p=partition(day,pre+post)
         self.assertIsNotNone(p["pre"])
