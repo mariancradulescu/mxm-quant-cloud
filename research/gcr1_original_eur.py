@@ -22,17 +22,16 @@ from .guard import require_read_only_request
 from .owner_readonly_auth import authenticate
 from .custody import seal_new
 from .custody_new import checked_public
-from .gcr1_macro_signal import scheduled_clocks, STEP_MS, ENTRY_AFTER_MS
-from .gcr1_eur_model import intents, evaluate
+from .gcr1_macro_signal import scheduled_clocks, STEP_MS
 
 SYMBOLS = ("Copper", "XAUUSD", "AUDUSD", "EURUSD")
-BAR_SYMBOLS = ("Copper", "XAUUSD", "AUDUSD")
+BAR_SYMBOLS = ("Copper",)
 FX_SYMBOLS = ("AUDUSD", "EURUSD")
 M5 = STEP_MS
-MAX_CALLS = 5200
+MAX_CALLS = 4600
 MAX_QUOTE_AGE_MS = 20000
 ORIGINAL = Path("gcr1-original-protected.v2.enc")
-PUBLIC = Path("gcr1-original-public-eur.json")
+PUBLIC = Path("gcr1-original-source-public.json")
 
 
 def ms(day, hour, minute=0):
@@ -171,6 +170,7 @@ def main():
                     "sell": str(D(z.margin[0].sellMargin) / div),
                 }
         metadata["targetMinimumMarginEur"] = margin
+        metadata["targetCurrentContractBase64"] = (base64.b64encode(target.SerializeToString()).decode("ascii") if target else None)
         clock_list = scheduled_clocks()
         assert len(clock_list) == 780
         days = [date(2025, 11, 3) + timedelta(days=i)
@@ -186,7 +186,7 @@ def main():
                     day_bars[name] = {}
                     continue
                 st = ms(day, 3, 50)
-                en = ms(day, 20, 10) if name == "AUDUSD" else ms(day, 16, 10)
+                en = ms(day, 16, 10)
                 z = req(m.ProtoOAGetTrendbarsReq(
                     ctidTraderAccountId=account, symbolId=ids[name],
                     period=e.M5, fromTimestamp=st, toTimestamp=en
@@ -200,18 +200,17 @@ def main():
                     decoded = decode_bars(z.trendbar, st-2*M5, en+2*M5, 5)
                     day_bars[name] = {str(row[1]): int(row[5]) for row in decoded
                                       if row[1] <= en}
-            events = {}
-            for hr in (8, 12, 16):
-                at = ms(day, hr)
-                events[str(at)] = intents(day_bars, at)
-            # source and *prequote* immutable intents now exist on all dates.
-            # Quote reads below target every fixed timestamp irrespective of
-            # event state, morning signal, future completeness or return.
+            # Only original Copper source is newly acquired: BDP1 owns
+            # original XAUUSD/AUDUSD M5. No GCR1 outcome or direction is
+            # computed in this job. In the protected custody readback the
+            # verified BDP1 closes are joined with this immutable Copper
+            # tape before ANY financial label can be scored.
+            # Every future quote clock is requested independent of signals.
             quotes = {name: {} for name in FX_SYMBOLS}
             for name in FX_SYMBOLS:
                 for clock in quote_clocks(day):
                     quotes[name][str(clock)] = observed_quote(name, clock, ids)
-            source[key] = {"bars": day_bars, "intents": events, "quotes": quotes}
+            source[key] = {"bars": day_bars, "quotes": quotes}
             if d_index % 30 == 29:
                 print("GCR1_ORIGINAL_SOURCE_ONLY_DAYS", d_index+1, "OF", len(days),
                       "READONLY_REQUESTS", calls, flush=True)
@@ -219,11 +218,12 @@ def main():
         t.close()
 
     packed = {
-        "schema": "MXM_GCR1_A1_ORIGINAL_EXPOSED_DEVELOPMENT_SOURCE",
+        "schema": "MXM_GCR1_A2_ORIGINAL_COPPER_AND_QUOTES_SOURCE_ONLY",
         "originalRunId": run,
         "originalPepperstoneEurAccountVerified": True,
         "fixed780CalendarSlots": True,
-        "futureAvailabilityExcludedFromIntentSelection": True,
+        "originalNewSourceCollectedIndependentOfFutureIntentOrReturn": True,
+        "reusedBDP1BarInputIsSeparateProtectedCustodyJob": True,
         "originalRawProtobuf": raw_protobuf,
         "originalDecodedDayPanels": source,
         "originalAsObservedCurrentContract": metadata,
@@ -233,67 +233,37 @@ def main():
                            separators=(",", ":"), allow_nan=False).encode("utf-8")
     cipher = seal_new(plaintext, recipient, run)
     ORIGINAL.write_bytes(cipher)
-    # ENCRYPTED RAW SOURCE CUSTODY FIRST; only now compute EUR path returns.
-    min_margin = (max(D(v) for v in margin.values()) if margin else None)
-    if not market_currencies_ok:
-        min_margin = None
-    scored = evaluate(source, target, min_margin)
-    first = scored["first26Weeks"]
-    last = scored["last26Weeks"]
-    def half_pass(x):
-        if not x["commonPricedClocks"]:
-            return False
-        d = x["adverseMatchedNetEur"]
-        return (d["combined"] > 0 and
-                all(d["combined"] > d[p] for p in
-                    ("copperOnly", "inverseGoldOnly", "audOwnMomentum",
-                     "long", "short", "cash")))
-    all_complete = scored["overall"]["commonPricedClocks"] == 780
-    if all_complete and half_pass(first) and half_pass(last):
-        verdict = "POSSIBLE_DEVELOPMENT_EDGE_ONLY_REQUIRES_NATIVE_INDEPENDENT"
-    elif not all_complete:
-        verdict = "INCONCLUSIVE_FULL_CALENDAR_SOURCE_INCOMPLETE_REPORT_CONDITIONAL_NET"
-    else:
-        verdict = "REJECT_EXACT_GCR1_NO_ROBUST_ADVERSE_INCREMENTAL_NET"
+    # CURRENT sealed source is now frozen. No EUR return, result,
+    # selected signal or complete-priced event is computed in this job.
     published = {
-        "schema": "MXM_GCR1_A1_ORIGINAL_FOUR_MARKET_EXPOSED_EUR",
+        "schema": "MXM_GCR1_A2_SOURCE_ONLY_NO_FINANCIAL_SCORING",
         "originalRunId": int(run),
-        "initialProtocolSha256": sha256(
+        "originalProtocolSha256": sha256(
             Path("research/GCR1_COPPER_GOLD_AUD_MACRO_DIFFUSION.md").read_bytes()).hexdigest(),
         "a1ProtocolSha256": sha256(
             Path("research/GCR1_OWNER_PRESOURCE_ADDENDUM_A1.md").read_bytes()).hexdigest(),
+        "a2SourceReuseProtocolSha256": sha256(
+            Path("research/GCR1_OWNER_PRESOURCE_SOURCE_REUSE_A2.md").read_bytes()).hexdigest(),
         "originalCiphertextSha256": sha256(cipher).hexdigest(),
         "originalPlaintextSha256": sha256(plaintext).hexdigest(),
         "readOnlyRequestsAfterAuth": calls,
-        "originalSourceEncryptedBeforeOutcomeScoring": True,
-        "fixed780ScheduledClocks": True,
         "fixed260Weekdays": True,
-        "all52WeeksGloballyExposedDevelopmentOnly": True,
-        "marketSources": {
-            "enabledSymbolNames": metadata["enabledSymbols"],
-            "nonSecretSourceStates": metadata["sourceStates"],
-            "targetMinimumMarginEur": margin,
-        },
-        "results": scored,
-        "verdict": verdict,
+        "fixed780ClockGrid": True,
+        "sourceEncryptedBeforeAllGCR1OutcomeScoring": True,
+        "reusedSourceRequired": "BDP1_41724643418_SEALED_GOLD_AUD_M5",
+        "newBarTargets": ["Copper"],
+        "newQuoteTargets": ["AUDUSD", "EURUSD"],
         "brokerActualFills": None,
-        "historicalTrueTariffCertified": False,
-        "independentConfirmation": False,
-        "nativeFundedPortfolioNetEur": None,
-        "continuousFloatingDrawdownCertified": False,
-        "hard21Proven": False,
+        "conditionalNetEur": None,
         "ordersSubmitted": 0,
         "cloudActivated": False,
-        "oauthRefreshed": False,
     }
-    PUBLIC.write_text(json.dumps(published, indent=2, allow_nan=False) + "\n")
-    print("GCR1_ORIGINAL_CONDITIONAL_EUR", json.dumps({
-        "requests": calls,
-        "scheduled": 780,
-        "commonPriced": scored["overall"]["commonPricedClocks"],
-        "firstAdverse": first["adverseMatchedNetEur"],
-        "lastAdverse": last["adverseMatchedNetEur"],
-        "verdict": verdict,
+    PUBLIC.write_text(json.dumps(published, indent=2, allow_nan=False) + "\\n")
+    print("GCR1_A2_ORIGINAL_SOURCE_ONLY", json.dumps({
+        "requests": calls, "days": 260, "fixedClocks": 780,
+        "encryptedFirst": True, "originalAccount": True,
+        "sourceStates": metadata["sourceStates"],
+        "financialScoring": False
     }, sort_keys=True), flush=True)
 
 
