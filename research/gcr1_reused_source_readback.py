@@ -121,6 +121,31 @@ def original_bdp_close_maps(old, tape):
     return maps, original_counts
 
 
+def join_original_bdp1_and_freeze_all_intents(tape, old_maps, all_clock):
+    """Validate original Copper-only once/day, attach audited BDP1 once/day.
+
+    The source provenance guard intentionally checks before attaching ANY
+    reused bars. Re-checking the mutated mapping at later same-day clocks
+    would falsely report the auditor's own join as new GCR1 source.
+    """
+    days = [datetime.fromtimestamp(t/1000, timezone.utc).date().isoformat()
+            for t in all_clock]
+    if len(all_clock) != 780 or len(set(days)) != 260 or set(tape) != set(days):
+        raise ValueError("GCR1_ORIGINAL_780_CLOCK_260_DAY_CALENDAR_MISMATCH")
+    for day in sorted(set(days)):
+        panel = tape[day]
+        if set(panel["bars"]) != {"Copper"}:
+            raise ValueError("GCR1_A2_DUPLICATE_GOLD_OR_AUD_NEW_SOURCE")
+        for name in ("XAUUSD", "AUDUSD"):
+            panel["bars"][name] = old_maps[day][name]
+        panel["intents"] = {}
+    for clock, day in zip(all_clock, days):
+        panel = tape[day]
+        panel["intents"][str(clock)] = intents(panel["bars"], clock)
+    if sum(len(panel["intents"]) for panel in tape.values()) != len(all_clock):
+        raise ValueError("GCR1_ORIGINAL_INTENT_CALENDAR_MISMATCH")
+
+
 def readback():
     run = os.environ["GITHUB_RUN_ID"]
     private = os.environ.pop("R3_CUSTODY_PRIVATE_KEY_PEM").encode()
@@ -163,18 +188,7 @@ def readback():
         raise ValueError("GCR1_NEW_SOURCE_FIXED_CALENDAR_CHANGED")
     old_maps, old_counts=original_bdp_close_maps(old,tape)
     all_clock=scheduled_clocks()
-    for clock in all_clock:
-        day=datetime.fromtimestamp(clock/1000,timezone.utc).date().isoformat()
-        if day not in tape:
-            raise ValueError("GCR1_MISSING_SCHEDULED_DAY")
-        panel=tape[day]
-        if list(panel["bars"])!=["Copper"]:
-            raise ValueError("GCR1_A2_DUPLICATE_GOLD_OR_AUD_NEW_SOURCE")
-        for name in ("XAUUSD","AUDUSD"):
-            panel["bars"][name]=old_maps[day][name]
-        panel.setdefault("intents",{})[str(clock)]=intents(panel["bars"],clock)
-    if sum(len(p["intents"]) for p in tape.values()) != 780:
-        raise ValueError("GCR1_ORIGINAL_INTENT_CALENDAR_MISMATCH")
+    join_original_bdp1_and_freeze_all_intents(tape, old_maps, all_clock)
 
     # Bind GCR1 original account current symbol terms to the GCR1 raw response
     current_b64=new["originalAsObservedCurrentContract"].get("targetCurrentContractBase64")
