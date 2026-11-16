@@ -146,24 +146,8 @@ def run(output):
 
 if __name__ == "__main__":
     try:
-        # Independently authorized SOURCE-ONLY operation, not RDE1.
-        # Inherit original OWNER/main/one-file/exact-message gate from
-        # verify.yml; never let a generic workflow_dispatch alter scope.
-        request_marker = "HXC1_HISTORICAL_SOURCE_REQUEST_V1"
-        owner_source_commit = (
-            os.environ.get("GITHUB_EVENT_NAME") == "push"
-            and os.environ.get("GITHUB_REF") == "refs/heads/main"
-            and os.environ.get("GITHUB_ACTOR") == "mariancradulescu"
-            and subprocess.check_output(
-                ["git", "log", "-1", "--format=%s"], text=True
-            ).strip() == "MXM_READ_ONLY_SOURCE_ADMISSION"
-        )
-        if owner_source_commit and request_marker in Path("ops/collect-request.txt").read_text():
-            from .hxc1_historical_source import collect as collect_hxc1
-            collect_hxc1()
-        else:
-            run(Path("sealed-output"))
-            print("READ_ONLY_SOURCE_CSHARP_RECEIPT_SEALED; NOT_ECONOMIC_QUALIFICATION")
+        run(Path("sealed-output"))
+        print("READ_ONLY_SOURCE_CSHARP_RECEIPT_SEALED; NOT_ECONOMIC_QUALIFICATION")
     except Exception as exc:
         # Only our allowlisted constant codes; never broker payloads/tracebacks.
         from .guard import CaptureContractError
