@@ -335,6 +335,44 @@ def main():
                 -q["matchedObservedSubsetNative"]["netEur"],6)
                 if same and p["matchedObservedSubsetNative"]
                     and q["matchedObservedSubsetNative"] else None)
+    # Every baseline is now also financed on the SAME strictly shared set of
+    # causal predecision clocks and originally complete future price sources.
+    # The shared subset is explicitly a post-endpoint COVERAGE diagnostic,
+    # not an independent or complete-calendar admissions evaluation.
+    matched_rows=[]
+    matched_exclusions=Counter()
+    for row in rows:
+        if sides(row["pre"]) is None:
+            matched_exclusions["missingPredecisionSource"]+=1
+            continue
+        try:
+            valid_interval(c,trader,row["marks"][0]["at"],row["marks"][-1]["at"])
+            need(all(D(0)<x<D(300) for x in margins),
+                 "WCR1_SHARED_CURRENT_MIN_MARGIN_NOT_FUNDED")
+            for mark in row["marks"]:
+                quote(mark,c,max(margins),SCENARIOS["adverse"])
+        except Exception as problem:
+            matched_exclusions[str(problem)[:90]]+=1
+            continue
+        matched_rows.append(row)
+    strict_matched={}
+    for scenario,slip in SCENARIOS.items():
+        native={}
+        for pol in POLICIES:
+            if pol=="cash":
+                native[pol]=dict(netEur=0.0,finalCashEur=300.0,
+                                 roundTrips=0,sampledDrawdownFraction=0.0)
+            else:
+                e,m,_,weekly=events_for(matched_rows,c,margins,trader,pol,slip)
+                need(not m,"WCR1_MATCHED_WEEK_PRICE_SCOPE_DIFFERENT")
+                native[pol]=native_replay(e)
+            need(native[pol] is not None,"WCR1_MATCHED_NATIVE_UNKNOWN")
+        diff={name:round(native["wcr1"]["netEur"]-native[name]["netEur"],6)
+              for name in ("ownMomentum","long","short","cash")}
+        strict_matched[scenario]=dict(sharedOriginalSourceWeeks=len(matched_rows),
+             allPoliciesSameCausalOpportunityCalendar=True,
+             nativeModelledFinanced= native,
+             wcr1MinusComparatorNetEur=diff)
     result=dict(schema="MXM_WCR1_AUTHENTIC_ORIGINAL_US500_REOPEN_NATIVE_EUR300_V1",
        frozenProtocolSha256=sha256(PROTO.read_bytes()).hexdigest(),
        originalPepperstoneRunId=receipt["originalRunId"],
@@ -348,6 +386,9 @@ def main():
        featureCounts=dict(state),currentMinimumUnits=c.minVolume/100,
        currentMarginBuySellEur=[float(x) for x in margins],
        nativeEUR300ConditionalOutcomes=outcome,
+       strictlySharedSourceMatchedWeekCount=len(matched_rows),
+       strictlySharedSourceExclusions=dict(matched_exclusions),
+       sourceCoverageMatchedNativeEUR300Controls=strict_matched,
        historicalTariffContinuityCertified=False,
        brokerExecutionFills=False,
        continuousFloatingDrawdown30Certified=False,
