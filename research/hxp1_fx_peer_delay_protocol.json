@@ -22,12 +22,13 @@
     "startUtc": "2025-11-16T00:00:00Z",
     "trainEndUtc": "2026-05-17T00:00:00Z",
     "selectionEndUtc": "2026-08-16T00:00:00Z",
-    "exposedEndUtc": "2026-11-16T00:00:00Z",
+    "exposedEndUtc": "2026-11-15T00:00:00Z",
     "maturity": "entry and exit proxy must remain inside the phase",
     "independentConfirmation": false,
-    "allHistoricalHXC1PeriodsPreviouslyExposed": false,
+    "allHistoricalHXC1PeriodsPreviouslyExposed": true,
     "sourceOriginallyCollectedAfterOlderStudies": true,
-    "requireNewChronologicalIndependentPeriodForPromotion": true
+    "requireNewChronologicalIndependentPeriodForPromotion": true,
+    "unusedSourceTail": "The final calendar day after 52 full weeks is not scored; all 52 weeks overlap globally exposed price-history research, so nothing here is independent confirmation."
   },
   "causality": {
     "time": "decision at completion of original H1 candle t",
