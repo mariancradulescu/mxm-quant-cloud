@@ -35,7 +35,7 @@ MAX_CALLS=507
 def clock(d,h,m):
     return int(datetime.combine(d,time(h,m),timezone.utc).timestamp()*1000)
 
-def calendar(start=START,days=65):
+def calendar(start=START,days=91):
     for day_offset in range(days):
         d=start+timedelta(days=day_offset)
         if d.weekday()>=5:continue
