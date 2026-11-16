@@ -99,7 +99,8 @@
     "meanShrinkage": "Fixed 32 pseudo-examples at unconditional past-only matured-label mean",
     "probUpPrior": "Beta(1,1) on recency-weighted neighbor signs; no data from current endpoint outcome",
     "futureDispersion": "weighted 10th and 90th percentiles of neighbor normalized returns, model residual SE and realized favorable/adverse historical excursion",
-    "onePrimaryHorizon": 4
+    "onePrimaryHorizon": 4,
+    "labelTreatment": "All matured y used in their observed magnitude (no filtering or hindsight winner pruning); analog weights and prior strength fixed pre-score."
   },
   "controls": [
     "unconditional last13week mature-label mean at same endpoint",
@@ -122,7 +123,8 @@
     "selectionCriticalT": "2.5 for paired 13-week score differences as conservative multiple comparator control",
     "selectionPolicy": "Only full model; choose direction from current conditional expected EUR payoff, min60% calibrated neighbor direction probability, estimated commission-only EUR mean minus 2.0*SE greater than current observed tariff commission floor; abstain otherwise; no funded execution",
     "exposedPeriodNeverIndependent": true,
-    "oneTestFamilyNoGridSearch": true
+    "oneTestFamilyNoGridSearch": true,
+    "shadowRiskBudgetEur": 3
   },
   "economics": {
     "capitalEur": 300,
@@ -145,5 +147,10 @@
     "noRde1": true,
     "noPublicRawOriginalTape": true,
     "allOutcomesAndUnknownsReported": true
+  },
+  "marketStateAtEndpoint": {
+    "state": "2 binary flags describing completed-H1 historical state, highVolatility from log(sigma8/sigma24) > ln(1.25), strongTrend from abs(normalized own 12-observation price trend) >1.25; 4 labels 0..3. These states are causal descriptive context; never separately optimized or selected as a 48-cell grid.",
+    "source": "already frozen continuous own feature vector; no extra market query",
+    "noPostOutcomeRegimeReassignment": true
   }
 }
