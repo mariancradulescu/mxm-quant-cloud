@@ -13,8 +13,8 @@ from hashlib import sha256
 from pathlib import Path
 
 from .bti1_temporal_burstiness import authenticated_tape,pair,mid
-from .lqr1_original_presignal_support import decide_predecision,clocks,PROTO,TARGETS
-from .lqr1_original_financial_source import FX_MAX_AGE_MS,fresh_pair,MAX_REQUESTS
+from .lqr1_original_presignal_support import decide_predecision, PROTOCOL as PROTO, TARGETS
+from .lqr1_original_financial_source import FX_MAX_AGE_MS,fresh_pair,MAX_REQUESTS,clocks
 from .ctrader_proto import OpenApiMessages_pb2 as m,OpenApiModelMessages_pb2 as e
 from .guard import require_read_only_request
 from .decode import need,decode_side
