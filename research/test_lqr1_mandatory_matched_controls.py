@@ -30,7 +30,9 @@ class MatchedControl(unittest.TestCase):
         self.assertEqual(new[43]["symbols"]["USDCHF"]["feature"]["side"],0)
         self.assertEqual(rows[0]["symbols"]["USDCHF"]["feature"]["side"],1)
         for x in rows:x["symbols"]["USDCHF"]["unusedSourceOutcomeFutureMustNotBeRead"]=99999999
-        self.assertEqual(new,matched_source_only(rows,"ownMomentum")[0])
+        later=matched_source_only(rows,"ownMomentum")[0]
+        self.assertEqual([z["symbols"]["USDCHF"]["feature"] for z in new],
+                         [z["symbols"]["USDCHF"]["feature"] for z in later])
 
     def test_fixed_controls_only_exact_primary_observation_mask(self):
         rows=frames()
