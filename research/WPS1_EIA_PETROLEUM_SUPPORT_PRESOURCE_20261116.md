@@ -1,0 +1,48 @@
+# WPS1 — PRE-OUTCOME SOURCE, SUPPORT AND CAPITAL PREFLIGHT (2026-11-16)
+
+Authority: docs/OWNER_SPEC.md OWNER v2.0 and OWNER 2026-11-16 post-BTI1 mechanism-first directive. This is a ONE-HYPOTHESIS preregistration, **NOT** a predictive/economic outcome, a new money engine or a closed-study rerun.
+
+## Economic cause, distinct observation, competing explanations
+
+The U.S. EIA weekly **Weekly Petroleum Status Report** (WPSR) publishes U.S. petroleum inventory and supply data at a predetermined time. A domestic supply surprise can reprice U.S.-linked WTI SpotCrude ahead of internationally priced SpotBrent. If global oil fundamentals are partially shared and information propagation is incomplete, the **initial extra WTI movement, in the same direction as Brent's smaller initial move, may predict Brent's subsequent partial catch-up**. The countervailing explanations are (i) the WTI-Brent difference reflects legitimate, persistent localized supply news rather than lag, (ii) dealer quotes fully incorporate the news before a trade can execute, (iii) option hedging and overlapping macro news dominate, or (iv) observed spread/fees/slippage exceed the remaining Brent move. We do NOT observe analyst consensus, released EIA values or a realized inventory surprise: original market M5 reaction is an information-absorption proxy, not observation of EIA surprise.
+
+Unlike RNE1's natural-gas inventory release and NatGas/EQT transmission, WPS1 specifically tests a U.S.-grade versus global-grade petroleum channel. Unlike closed BWR1, WPS1 is NOT a pre-open Brent/WTI basis-sweep rejection, does NOT predict basis mean reversion and does NOT propose simultaneous two-grade hedge trades. Unlike earlier general Brent→Crude lag, the causal impulse originates at a **separately verified official petroleum data publication** and hypothesizes WTI→Brent transmission. None of their signals, model results, thresholds, exits or financial scorer is invoked/recalibrated.
+
+Official publication day/time: https://www.eia.gov/petroleum/supply/weekly/schedule.php ; standard Wednesday 10:30 America/New_York. Complete prespecified ORIGINAL source window: 2026-01-07 through 2026-10-28 inclusive (43 Wednesdays). Five **pre-registered official off-Wednesday** exceptions: 2026-01-21, 2026-02-18, 2026-05-27, 2026-09-09, 2026-10-14 (EIA published the corresponding WPSR on the following Thursday at noon ET; these five calendar weeks are NOT event samples at Wednesday 10:30, nor substituted). Exact 38 normal scheduled WPSR release events; exact 38 same-week Tuesday 10:30 ET placebo clocks. Never relabel holiday-adjusted times or select by price.
+
+## Data with immutable custody, zero new broker requests for preflight
+
+Reuse ONLY the BWR1 **source** from owner-verified original Pepperstone EUR-account read-only Actions #43576022822, artifact #14105644555 (encrypted `bwr1-original-encrypted-source.v2.enc`). Required original ciphertext SHA256 `a019aaf2131173832630863d83bfa2127fb3a3d8ed6a6c22002fc42dc2b280e7`; original run-bound decrypted plaintext SHA256 `df5f7f39e24921112bf89adde9aa47dccbee00f14d2b843a97860b2eb693e042`. Original source has 979 broker read-only request/response protobufs and genuine 260 daily M5 windows (08:25..11:40 NY) for SpotBrent and SpotCrude, with additional sparse QPI-unrelated BWR1 quotes only on its historical 25 basis events. Preserve source and hashes unchanged. Protected readback with current installed custody secret, strict schema, original-account identity, request whitelist, symbol binding and matching original M5 decoded bar data. DO NOT rerun BWR1's first_signal, financial, monetary or any closed study.
+
+This first WPS1 operation is **strictly predecision** and outcome-blind: it may inspect/retain ONLY completed M5 candles ending by 10:45 NY for each of the 38 release and 38 Tuesday control clocks, plus prior authenticated cost/margin *public metadata*. It MUST NOT read, score, compare or publish prices after 10:45, nor future relative Brent returns, nor WPS1 trade outcomes. The original plaintext contains later data; code must explicitly isolate causal prefixes and emit only aggregate availability/feature support, no profitable-day choice, no dates with price/return values. Entire history is already globally research-exposed.
+
+## Exactly fixed predecision state and evidence-quality gates
+
+At 10:45 America/New_York, require all 10 contiguous M5 closing bars at 10:00,10:05,..10:45 NY for BOTH original symbols, positive coherent prices. Convert original integer bar CLOSE using 1e5 scale. Initial 15-minute release change:
+- W = ln(WTI_close_10:45 / WTI_close_10:30) * 10,000 bps;
+- B = ln(Brent_close_10:45 / Brent_close_10:30) * 10,000 bps.
+
+Categorical **WTI_LEADS** iff W and B are both nonzero same sign and |W|>|B|. All other complete states are OTHER (including opposite signed, ties, WTI weaker or zero). Predecision residual advantage-scale proxy is |W|-|B| bps for WTI_LEADS only; it is NOT a prediction or realized payoff. Predecision gross capacity proxy for *hypothetical HALF* of residual is 0.5*(|W|-|B|), used solely as a necessary cost-size diagnostic. No thresholds selected from WPS1 outcomes.
+
+Mandatory support gate, all fixed BEFORE original readback:
+- source complete for >=34/38 WPSR clocks AND >=34/38 Tuesday placebo clocks;
+- >=10 WTI_LEADS and >=10 OTHER on WPSR dates; WTI_LEADS occurs in >=8 distinct ISO weeks (one event per week) and at least >=4 positive and >=4 negative WTI-leading signals;
+- WTI_LEADS occurs >=4 times in each chronological 19-release half;
+- ≥8 WPSR WTI-leading clocks have exante half-residual strictly above the **cost feasibility hurdle**, defined below, and ≥3 each half.
+- Report source and state counts for ALL 76 scheduled clocks, with no future-price-conditioned drop. A placebo need not underperform at this support stage: that is a future falsification, not a feature support gate.
+
+## Cost, minimum volume, EUR300 and Cloud preflight — necessary, not sufficient
+
+Prior original financial screen `docs/OWNER_EXECUTED_MULTI_ASSET_COST_CAPITAL_SCREEN_20261108.json` reports SpotBrent genuine original minimum 1 unit and standalone current margin EUR8.67, with 18 independent observed prior quote-pair contexts and spread 3.552736 bps; SpotCrude signal-only current minimum margin EUR7.81, EURUSD conversion-only. BWR1 original contracts previously showed zero CURRENT commission on paired Brent/Crude sampled conditional scenarios, NOT continuous historical zero commission. **Historical quote crossing at 10:50 and 11:35, historical tariff continuity, FX and actual fills are missing for this new event study.** Quote sample 3.552736 bps is not a confidence upper bound. Use a deliberately necessary cost hurdle of **3.552736 bps + 2.0 bps assumed adverse round-trip slippage = 5.552736 bps**; this EXCLUDES any unknown higher spread, financing, fills and conversion friction and cannot certify profit. If historical current commission metadata no longer verifies explicit zero for SpotBrent, cost gate is UNKNOWN. The cost-scale support requirement is 0.5*residual > 5.552736 bps at >=8 supported release events, >=3 per half. Cost cannot be improved post-score to make an event pass.
+
+SpotBrent minimum current margin must remain <EUR210 (70% of initial 300) to preserve at least EUR90 illustrative DD reserve, with no assertion that this suffices for dynamic portfolio or that historical margin was identical. Current minimum unit must be enabled for both sides; no assumption of volume liquidity/available fill. One traded symbol only; SpotCrude provides a **signal**, not simultaneous exposure, so no two-leg BWR1 capital assumption. Future trade only on a WTI_LEADS decision, with long/short side W sign, never forced. The actual post-entry risk and optionality would be handled by the *existing* C# selector, ledger and risk circuit if and only if signal and genuine EUR NET justify further work.
+
+Cloud native C#: MarketData.GetBars(TimeFrame.Minute5,"SpotCrude") and ...("SpotBrent") on completed bars, fixed America/New_York schedule with DST verified; read-only existing cBot tools, no HTTP in Cloud. Clock reconstruction after restart requires valid 10 consecutive completed M5 bars; otherwise ABSTAIN_WARMUP_OR_SOURCE_UNKNOWN. No inference from an unfinished bar or fabricated data. Exact native C# bar parity and restart/account financial reconciliation remain UNVERIFIED until separate tested promotion stage.
+
+## Decision after preflight
+
+If ANY support gate fails, close **WPS1_PREFLIGHT_STOP_NO_FUTURE_SCORING** with original receipt and no WPS1 price-outcome scoring, no threshold adjustment, no new quotes, no Cloud code or orders.
+
+Only if ALL gates pass, fix a separate economic outcome protocol BEFORE evaluating any next-45-minute Brent return. Prospective candidate: entry original ≤20s stale paired BID/ASK at 10:50 NY, exit 11:35 NY; predecision side = sign(W); controls same-clock Brent own momentum, WTI-only sign without lead condition, matched long, short and CASH. Tuesday placebo and all 38 scheduled WPSR clocks retained. Require authentic signed EURUSD conversion, current contract/swap cost, min unit, quote synchronization and stress, joint capital and matched reallocation/ablation. Use one common EUR300 native ledger only if financially verifiable; otherwise report proxy and not NET. No hidden alternative selection from preflight. WPS1 has at most one event trade/week and **cannot individually satisfy HARD21**, but system-wide objective is untouched.
+
+No LIVE/DEMO orders, Cloud activation, password/secret publication, external service or closed-study rerun. No independence from 2026 exposed history.
