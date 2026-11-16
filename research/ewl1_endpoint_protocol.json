@@ -1,0 +1,156 @@
+{
+  "schema": "MXM_EWL1_CAUSAL_ENDPOINT_DISTRIBUTION_LEARNING_FROZEN_V1",
+  "id": "EWL1",
+  "status": "PRE_ORIGINAL_SCORE_FROZEN",
+  "authority": "docs/OWNER_SPEC.md OWNER v2.0 and OWNER endpoint/warmup/hygiene amendment 2026-11-16",
+  "economicHypothesis": "Volatility clustering and state-dependent continuation/reversion imply that the local conditional distribution of subsequent four fully observed H1 bars can contain incremental information beyond constant-drift, unconditional recent historical distribution and simple own-price momentum. Neighbor similarity on completed-bar impulse/volatility/location plus as-of cross-market USD pressure will predict a useful next-4h amplitude and risk distribution only if compared at matching endpoint clocks. This is to be falsified; no prior claim of alpha.",
+  "novelty": "One predeclared rolling analog distribution learner per instrument, with continuous features and as-of endpoint-specific matured training labels. Not the closed HSD1 48 static family gates, SPDE1 categorical cells, MVE1 linear ridge, HXP1 deterministic lagged-peer signal or RDE1 risk workflow.",
+  "source": {
+    "workflowRunId": 43817213663,
+    "artifactId": 14202544956,
+    "readbackReceiptArtifactId": 14202818396,
+    "sourceSchema": "MXM_HXC1_BROKER_ORIGINAL_HISTORICAL_BARS_SOURCE_V1",
+    "originalProtocolSha256": "b741165d32f02fa01f0bbeb690acfc52d494c90dd4622c9544cf2fb57317be74",
+    "rawOriginalProtobufVerification": true
+  },
+  "universe": [
+    "EURUSD",
+    "GBPUSD",
+    "AUDUSD",
+    "USDJPY",
+    "USDCAD",
+    "XAUUSD",
+    "US500",
+    "NAS100",
+    "GER40",
+    "UK100",
+    "AUS200",
+    "JPN225"
+  ],
+  "economicalSymbols": [
+    "EURUSD",
+    "GBPUSD",
+    "AUDUSD",
+    "USDJPY"
+  ],
+  "timeline": {
+    "startUtc": "2025-11-16T00:00:00Z",
+    "trainEndUtc": "2026-05-17T00:00:00Z",
+    "selectionEndUtc": "2026-08-16T00:00:00Z",
+    "exposedEndUtc": "2026-11-15T00:00:00Z",
+    "splitsWeeks": [
+      26,
+      13,
+      13
+    ],
+    "alreadyGloballyExposed": true,
+    "independentConfirmation": false,
+    "withinSelectionPrequentialUpdate": "Allowed ONLY labels that mature strictly BEFORE current endpoint minus one completed H1; no refitting hyperparameters to selection scores."
+  },
+  "endpoint": {
+    "resolution": "All completed source H1 bars at each UTC timestamp, including within exchange sessions; no hard-coded 3 or 6 daily decision hours",
+    "lookbackObservedH1Bars": 41,
+    "minTrueAdjacentHourlyReturnsInLast40": 24,
+    "latestTrueAdjacentForImpulse": 4,
+    "featureOnlyKnownAtOrBeforeDecision": true,
+    "peerObservation": "Other EURUSD/GBPUSD/AUDUSD completed at exact UTC T; if absent use peerMissing indicator; never forward-fill peer price",
+    "labelHorizonHours": 4,
+    "label": "entry proxy next H1 OPEN at T; exit proxy fourth consecutive H1 CLOSE T+4h; future high/low observed only for scoring and distribution training after full maturity",
+    "maturityEmbargoHours": 1,
+    "strictNoFutureLabelAtDecision": true,
+    "missingFutureNotSilentlyDropped": true
+  },
+  "warmup": {
+    "feature": "41 observed completed H1 bars incl T; >=24 genuine adjacent within-session 1h returns in previous40; latest4 contiguous impulse",
+    "modelCalendarWeeks": 13,
+    "minMatureAnalogLabelsPerSymbol": 64,
+    "analogsRollingCalendarWeeks": 13,
+    "modelUpdates": "Pure replay from matured prior historical neighbor examples; no batch fitting to future and no forward-leaked global scaling",
+    "labelMaturity": "Four-hour outcome plus one completed H1 embargo; label never visible to model on or before maturity.",
+    "evaluation": "Keep 26/13/13 training/selection/exposed partitions; no outcome crossing phase may certify selection, exact ISO-week block uncertainty"
+  },
+  "hygiene": {
+    "preserveOriginalProtobufAndSourceHash": true,
+    "noSyntheticBars": true,
+    "noImputationOfHistoricalGaps": true,
+    "noFutureSourceAvailability": true,
+    "instrumentRosterOriginalBinding": true,
+    "recordMissingFeatureAndLabelAndPeerCoverage": true,
+    "periodicInformationHygiene": "Rolling 13-week time window expires past analogs mechanically, irrespective of their profit or loss; exponential half-life 4 weeks fixed before scoring; no regime-adaptive ex-post sample pruning",
+    "dateProvenance": "Every feature carries own completed-H1 source clock; every label carries later maturity clock; training candidate included only after strictly matured"
+  },
+  "features": [
+    "OWN_FOUR_CONTIGUOUS_H1_IMPULSE_NORMALIZED_BY_PAST_HOURLY_RMS",
+    "OWN_TWELVE_OBSERVED_H1_CHANGE_NORMALIZED_BY_ELAPSED_WALL_CLOCK_AND_PAST_HOURLY_RMS",
+    "LOG_PAST8_OVER_PAST24_OBSERVED_HOURLY_VOLATILITY",
+    "LAST_CLOSE_POSITION_IN_PAST8_OBSERVED_H1_PRICE_CHANNEL",
+    "AS_OF_CROSSMARKET_ANCHOR_PEER_4H_PRESSURE_IN_NATIVE_QUOTE_ORIENTATION",
+    "PEER_COVERAGE_MISSING_INDICATOR"
+  ],
+  "fullDistance": "L2 distance with frozen weights (1.0,0.75,0.75,0.5,0.5,1.0), normalized feature clipped +-5, missing peer encoded as zero plus explicit missing flag; no look-ahead scaling",
+  "ownOnlyDistance": "L2 of only own impulse, trend, volatility and channel, same analog universe and k",
+  "model": {
+    "method": "Past-only same-symbol nearest historic endpoint analog distribution",
+    "rollingDays": 91,
+    "minSamples": 64,
+    "maxAnalogs": 64,
+    "recencyHalfLifeDays": 28,
+    "kernel": "inverse distance 1/(1+d2), multiplied by exp(-calendarAgeDays*ln2/28)",
+    "meanShrinkage": "Fixed 32 pseudo-examples at unconditional past-only matured-label mean",
+    "probUpPrior": "Beta(1,1) on recency-weighted neighbor signs; no data from current endpoint outcome",
+    "futureDispersion": "weighted 10th and 90th percentiles of neighbor normalized returns, model residual SE and realized favorable/adverse historical excursion",
+    "onePrimaryHorizon": 4,
+    "labelTreatment": "All matured y used in their observed magnitude (no filtering or hindsight winner pruning); analog weights and prior strength fixed pre-score."
+  },
+  "controls": [
+    "unconditional last13week mature-label mean at same endpoint",
+    "zero-drift always-cash",
+    "simple prior4h continuation scaled by 0.25 fixed",
+    "full-model own-only ablation"
+  ],
+  "validation": {
+    "forecastMetrics": [
+      "MSE of volatility-normalized next4h log-return",
+      "directional Brier probability score",
+      "10-90 interval coverage",
+      "full versus own-only incremental MSE",
+      "full versus unconditional incremental MSE",
+      "future price adverse range coverage"
+    ],
+    "weeklyBlock": "ISO-week, include zero or missing observations explicitly",
+    "matchedComparisons": "Identical feature-eligible and future-labelled endpoint clocks; no instrument cherry-pick",
+    "trainOnlySelectionRules": "All hyperparameters frozen pre-source; do not select trained variants by retrospective outcome. Primary full model must beat own-only and unconditional on selection weekly paired lower 95% difference and improvement versus fixed momentum.",
+    "selectionCriticalT": "2.5 for paired 13-week score differences as conservative multiple comparator control",
+    "selectionPolicy": "Only full model; choose direction from current conditional expected EUR payoff, min60% calibrated neighbor direction probability, estimated commission-only EUR mean minus 2.0*SE greater than current observed tariff commission floor; abstain otherwise; no funded execution",
+    "exposedPeriodNeverIndependent": true,
+    "oneTestFamilyNoGridSearch": true,
+    "shadowRiskBudgetEur": 3
+  },
+  "economics": {
+    "capitalEur": 300,
+    "minimumFxUnits": 1000,
+    "commissionUsdPer1000RoundTrip": 0.06,
+    "commissionSource": "docs/CMA1_AUTHENTIC_CONTRACT_TERMS_20261108.json (observed 2026-11-04, NOT known at older endpoint)",
+    "conversion": "For economics of realized H1 price proxy convert USD quote proceeds at contemporaneous H1 EURUSD CLOSE at exit (and USDJPY at exit for JPY quote); estimated ex-ante signal uses EURUSD and USDJPY completed closes AS-OF T only",
+    "currentTariffLookaheadWarning": "2026-11-04 current tariff is an EX-POST HYPOTHETICAL COST SCENARIO for old endpoints, not a historically available cost input. Therefore even simulated gating is not fully as-of-causal historical trading policy until contemporaneous tariff data exist.",
+    "historicalBidAskKnown": false,
+    "brokerExcutableNetEUR": null,
+    "nativeFundedCsharp300EurNet": null,
+    "noFloatingDrawdownCertificate": true,
+    "noHard21Certificate": true,
+    "zeroOrders": true,
+    "cloudActivation": false
+  },
+  "stopRules": {
+    "noRetuningAfterOriginalScore": true,
+    "noClosedStudyRerun": true,
+    "noRde1": true,
+    "noPublicRawOriginalTape": true,
+    "allOutcomesAndUnknownsReported": true
+  },
+  "marketStateAtEndpoint": {
+    "state": "2 binary flags describing completed-H1 historical state, highVolatility from log(sigma8/sigma24) > ln(1.25), strongTrend from abs(normalized own 12-observation price trend) >1.25; 4 labels 0..3. These states are causal descriptive context; never separately optimized or selected as a 48-cell grid.",
+    "source": "already frozen continuous own feature vector; no extra market query",
+    "noPostOutcomeRegimeReassignment": true
+  }
+}
