@@ -23,7 +23,7 @@ def main():
         from .hxc1_historical_readback import validate
         public=validate(bundle, receipt, run_id)
         Path("readback.public.json").write_text(
-            json.dumps(public,sort_keys=True,indent=2)+"\\n")
+            json.dumps(public,sort_keys=True,indent=2)+"\n")
         return
     original=bundle.pop("csharpReceipt")
     with tempfile.TemporaryDirectory(prefix="mxm-readback-") as folder:
