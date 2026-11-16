@@ -24,7 +24,7 @@ def main():
         public=validate(bundle, receipt, run_id)
         Path("readback.public.json").write_text(
             json.dumps(public,sort_keys=True,indent=2)+"\n")
-        return
+        return "HXC1"
     original=bundle.pop("csharpReceipt")
     with tempfile.TemporaryDirectory(prefix="mxm-readback-") as folder:
         source=Path(folder)/"source.json"; source.write_text(json.dumps(bundle,sort_keys=True)); source.chmod(0o600)
@@ -37,8 +37,11 @@ def main():
 
 if __name__ == "__main__":
     try:
-        main()
-        print("CUSTODY_AND_CSHARP_READBACK_VERIFIED; NOT_ECONOMIC_QUALIFICATION")
+        receipt_kind=main()
+        if receipt_kind == "HXC1":
+            print("HXC1_ORIGINAL_BROKER_PRICE_SOURCE_READBACK_VERIFIED; NOT_ECONOMIC_QUALIFICATION")
+        else:
+            print("CUSTODY_AND_CSHARP_READBACK_VERIFIED; NOT_ECONOMIC_QUALIFICATION")
     except Exception:
         print("CUSTODY_READBACK_FAILED_DETAIL_WITHHELD")
         sys.exit(1)
