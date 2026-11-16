@@ -94,6 +94,7 @@ def collect() -> None:
     recipient = checked_public(Path("new-source-recipient"), run)
     transport = StdlibCTraderTransport()
     raw = []
+    original_roster = []
     bars: dict[str, list[list[int]]] = {}
     windows = []
     provenance = hashlib.sha256(plan_bytes).hexdigest()
@@ -107,23 +108,26 @@ def collect() -> None:
 
     try:
         account = authenticate(transport)
-        trader = observe(m.ProtoOATraderReq(ctidTraderAccountId=account),
-                         m.ProtoOATraderRes)
+        trader_request = m.ProtoOATraderReq(ctidTraderAccountId=account)
+        trader = observe(trader_request, m.ProtoOATraderRes)
+        original_roster.append((trader_request, trader))
         need(trader.ctidTraderAccountId == account and
              "pepperstone" in trader.trader.brokerName.casefold(),
              "HXC1_BROKER_IDENTITY")
-        roster = observe(m.ProtoOASymbolsListReq(
-            ctidTraderAccountId=account, includeArchivedSymbols=False),
-            m.ProtoOASymbolsListRes)
+        roster_request = m.ProtoOASymbolsListReq(
+            ctidTraderAccountId=account, includeArchivedSymbols=False)
+        roster = observe(roster_request, m.ProtoOASymbolsListRes)
+        original_roster.append((roster_request, roster))
         need(roster.ctidTraderAccountId == account, "HXC1_ROSTER_IDENTITY")
         available = {row.symbolName: row.symbolId
                      for row in roster.symbol if row.enabled}
         desired = {name for name, _, _, _ in requests}
         need(desired.issubset(available), "HXC1_BROKER_SYMBOL_MISSING")
-        for name in desired:
-            detail = observe(m.ProtoOASymbolByIdReq(
-                ctidTraderAccountId=account, symbolId=[available[name]]),
-                m.ProtoOASymbolByIdRes)
+        for name in sorted(desired):
+            detail_request = m.ProtoOASymbolByIdReq(
+                ctidTraderAccountId=account, symbolId=[available[name]])
+            detail = observe(detail_request, m.ProtoOASymbolByIdRes)
+            original_roster.append((detail_request, detail))
             need(detail.ctidTraderAccountId == account and len(detail.symbol) == 1
                  and detail.symbol[0].symbolId == available[name],
                  "HXC1_CONTRACT_BINDING")
@@ -178,6 +182,13 @@ def collect() -> None:
             "sourceRunId": run,
             "protocolSha256": provenance,
             "raw": raw,
+            "identityRaw": [
+                {"requestType": type(req).__name__,
+                 "requestProtobuf": base64.b64encode(req.SerializeToString()).decode("ascii"),
+                 "responseType": type(res).__name__,
+                 "responseProtobuf": base64.b64encode(res.SerializeToString()).decode("ascii")}
+                for req, res in original_roster
+            ],
             "windows": windows,
             "bars": bars,
             "decodedRows": summary,
