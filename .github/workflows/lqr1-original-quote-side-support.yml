@@ -1,0 +1,82 @@
+name: LQR1 original asynchronous quote-side causal source only
+on:
+  pull_request:
+    paths:
+      - 'research/LQR1_ASYNC_BIDASK_REFRESH_PRESOURCE_20261116.md'
+      - 'research/lqr1_original_presignal_support.py'
+      - 'research/test_lqr1_original_presignal_support.py'
+      - '.github/workflows/lqr1-original-quote-side-support.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ops/lqr1-once-intent.txt'
+      - '.github/workflows/lqr1-original-quote-side-support.yml'
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  verify-source-only-causality:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    outputs:
+      authorized: ${{ steps.owner.outputs.authorized }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - run: python -m py_compile research/lqr1_original_presignal_support.py research/test_lqr1_original_presignal_support.py
+      - run: python -m unittest research.test_lqr1_original_presignal_support -v
+      - name: Exact first-attempt OWNER/main-only original-source readback intent
+        id: owner
+        shell: bash
+        run: |
+          echo 'authorized=false' >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_EVENT_NAME" == "push" &&
+                "$GITHUB_REF" == "refs/heads/main" &&
+                "$GITHUB_ACTOR" == "mariancradulescu" &&
+                "$GITHUB_RUN_ATTEMPT" == "1" &&
+                "$(git log -1 --format=%s)" == "OWNER_LQR1_ORIGINAL_PASTONLY_SOURCE_VERIFY_ONCE" &&
+                "$(git diff-tree --no-commit-id --name-only -r HEAD)" == "ops/lqr1-once-intent.txt" &&
+                "$(cat ops/lqr1-once-intent.txt)" == "OWNER_LQR1_QPI1_AUTHENTIC_SOURCE_ONLY_NO_OLD_SCORE" ]]; then
+             echo 'authorized=true' >> "$GITHUB_OUTPUT"
+          fi
+
+  protected-original-pastonly-source-support:
+    needs: verify-source-only-causality
+    if: needs.verify-source-only-causality.outputs.authorized == 'true'
+    environment: mxm-r3-custody-v1
+    concurrency:
+      group: mxm-lqr1-qpi1-original-source-only-once
+      cancel-in-progress: false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: qpi1-original-encrypted-source
+          run-id: 43458050084
+          github-token: ${{ github.token }}
+          path: bti1-source
+      - name: Verify all 645 original protobuf packets and score NEW presignal feature support only
+        run: python -m research.lqr1_original_presignal_support
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: lqr1-authentic-quote-side-novel-information-support
+          path: lqr1-original-past-only-source-support.public.json
+          retention-days: 90
+          if-no-files-found: error
