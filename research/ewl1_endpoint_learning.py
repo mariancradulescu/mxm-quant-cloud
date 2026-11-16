@@ -218,7 +218,12 @@ def prepare(tape,p):
             mae_l=max(0,math.log(entry/low))/(r["sigma"]*2)
             mae_s=max(0,math.log(high/entry))/(r["sigma"]*2)
             r["_outcome"]=(y,entry,close,mae_l,mae_s)
-    return records,anchored,bars
+    source_feature_support={
+        s:{"sourceCompletedH1":len(bars[s]),
+           "featureAvailableH1":len(records[s]),
+           "featureWarmupOrUnavailable":len(bars[s])-len(records[s])}
+        for s in p["universe"]}
+    return records,anchored,bars,source_feature_support
 
 
 def feature_distance(a,b,with_peer):
@@ -260,6 +265,11 @@ def analog_prediction(pool,f,unconditional,with_peer,t):
             "riskLongQ90":quantile([x["_outcome"][3] for x in chosen],w,0.9),
             "riskShortQ90":quantile([x["_outcome"][4] for x in chosen],w,0.9),
             "effectiveSupport":eff}
+
+
+def label_ready(prior_endpoint_ms, current_endpoint_ms):
+    # Four fully completed future H1 bars + one whole H1 embargo.
+    return prior_endpoint_ms+5*HOUR<=current_endpoint_ms
 
 
 def phase_at(t,finish,b):
@@ -351,7 +361,7 @@ def summarize(items):
 
 
 def evaluate(tape,p,bounds,commission):
-    records,anchored,sourcebars=prepare(tape,p)
+    records,anchored,sourcebars,feature_support=prepare(tape,p)
     original_prices={s:{row[1]:row for row in sourcebars[s]}
                      for s in ("EURUSD","USDJPY")}
     support={phase:Counter() for phase in ("TRAIN","SELECTION","EXPOSED")}
@@ -373,7 +383,7 @@ def evaluate(tape,p,bounds,commission):
             if r["peerMissing"]:counters["crossMarketPeerUnavailable"]+=1
             # Release formerly UNKNOWN future only when the original
             # label's four H1 bars have finished plus one whole H1 embargo.
-            while ptr<idx and chain[ptr]["t"]+5*HOUR<=t:
+            while ptr<idx and label_ready(chain[ptr]["t"],t):
                 previous=chain[ptr]
                 if previous["_outcome"] is not None:
                     pool.append(previous)
@@ -484,14 +494,14 @@ def evaluate(tape,p,bounds,commission):
                 sel["pairedWeeklyFullMSEvsUnconditional"]["lowerPairedWeekly95"]>0
                 and sel["pairedWeeklyFullMSEvsOwnOnly"]["lowerPairedWeekly95"]>0
                 and sel["pairedWeeklyFullMSEvsMomentum"]["lowerPairedWeekly95"]>0)
-    return phases,predictive,{s:len(sourcebars[s]) for s in p["universe"]}
+    return phases,predictive,{s:len(sourcebars[s]) for s in p["universe"]},feature_support
 
 
 def run():
     p,protocol_sha,bounds=frozen()
     source,receipt,verified=authenticated_source(p)
     commission=fee_terms(p)
-    phases,predictive,sourcecounts=evaluate(source,p,bounds,commission)
+    phases,predictive,sourcecounts,features=evaluate(source,p,bounds,commission)
     result={
         "schema":"MXM_EWL1_AUTHENTIC_ENDPOINT_PREQUENTIAL_DISTRIBUTION_V1",
         "protocolSha256":protocol_sha,
@@ -499,6 +509,7 @@ def run():
         "originalHxc1ProtocolSha256":receipt["protocolSha256"],
         "originalBrokerProtobufRequestsIndependentlyVerified":verified["rawRequestsRebuilt"],
         "originalH1SourceBars":sourcecounts,
+        "featureWarmupHygieneBySymbol":features,
         "sourceEvidenceClass":"AUTHENTIC_PEPPERSTONE_COMPLETED_H1_PRICE_ONLY_NOT_EXECUTION",
         "endpointDecision":"historical completed H1 T; pre-T features; pool only label matured T-1h or earlier",
         "featureWarmup":"41 observed completed H1 candles, >=24 true adjacent within-session H1 returns, own 4H valid",
