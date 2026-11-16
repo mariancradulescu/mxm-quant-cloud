@@ -1,0 +1,88 @@
+{
+  "schema": "MXM_HXP1_HISTORICAL_FX_PEER_SHOCK_DELAY_PREDICTIVE_V1",
+  "id": "HXP1",
+  "status": "PRE_EVALUATION_FROZEN",
+  "authority": "docs/OWNER_SPEC.md OWNER v2.0 and 2026-11-16 OWNER historical-only B-E continuation",
+  "distinctEconomicMechanism": "USD-quoted FX peers may transmit broad dollar shocks with incomplete one-to-two-hour adjustment across concurrently open liquid markets; test whether historically lagging cross catches up after closed H1 signals. Falsifiable; not an assumption of tradable latency or profit.",
+  "originalAuthenticatedSource": {
+    "study": "HXC1",
+    "workflowRunId": 43817213663,
+    "artifact": "hxc1-original-historical-encrypted-source",
+    "verifiedReceiptArtifactId": 14202818396,
+    "sourceSchema": "MXM_HXC1_BROKER_ORIGINAL_HISTORICAL_BARS_SOURCE_V1",
+    "originalProtocolSha256": "b741165d32f02fa01f0bbeb690acfc52d494c90dd4622c9544cf2fb57317be74"
+  },
+  "universe": [
+    "EURUSD",
+    "GBPUSD",
+    "AUDUSD"
+  ],
+  "sourceResolution": "H1 original completed-bar OpenAPI OHLCV",
+  "chronology": {
+    "startUtc": "2025-11-16T00:00:00Z",
+    "trainEndUtc": "2026-05-17T00:00:00Z",
+    "selectionEndUtc": "2026-08-16T00:00:00Z",
+    "exposedEndUtc": "2026-11-16T00:00:00Z",
+    "maturity": "entry and exit proxy must remain inside the phase",
+    "independentConfirmation": false,
+    "allHistoricalHXC1PeriodsPreviouslyExposed": false,
+    "sourceOriginallyCollectedAfterOlderStudies": true,
+    "requireNewChronologicalIndependentPeriodForPromotion": true
+  },
+  "causality": {
+    "time": "decision at completion of original H1 candle t",
+    "features": "only completed H1 closes at t and prior; 24 contiguous H1 hourly returns for target, at least two contiguous preceding H1 peer returns; never fill missing hours",
+    "priceScale": "Original Open API ProtoOA GetTrendbars low and deltas are price units multiplied by 100000; original integer prices preserved and no invented BID/ASK",
+    "entry": "next original H1 OPEN at t+1h, proxy no executable fill",
+    "exit": "H1 CLOSE of t+2h, 2h price-only holding; all clock intervals must be contiguous",
+    "censoring": "missing features, gaps, maturity or settlement conversion recorded; no unknown future may select a signal"
+  },
+  "hypothesis": {
+    "peerGrouping": "two other USD-quoted FX majors; all price changes have comparable USD-quote orientation",
+    "peer2h": "median of peers individual last 2h log returns",
+    "targetSigma": "RMS of target last 24 hourly log returns; no information after decision",
+    "consensus": "both peers same nonzero 2h return sign",
+    "eventPeerStrength": "absolute median peer2h return > 1.5 * sqrt(2) * target past24 hourly RMS",
+    "targetLag": "absolute target last2h log return < 0.5 * absolute peer2h median",
+    "lastHourOpposition": "no strong target last-hour opposing shock: signed target last1h return >= -0.5*target RMS",
+    "direction": "sign of median peer2h log return",
+    "otherTimeframeFeatures": false
+  },
+  "selection": {
+    "policy": "one globally pooled signal family over all three predeclared instruments; no per-symbol rescue",
+    "training": "train phase only freezes direction policy admission if commission-only 1000-unit EUR mean positive and above matched target-momentum comparator, both weekly lower 95% (t fixed 2.179 for 12df when 13 weeks; train uses 26week t=2.060 for 25df), at least 8 weeks with signals; otherwise selection action ABSTAIN. Independently report all counterfactual signal outcomes regardless admission; no modification after scoring",
+    "outcome": "signed EUR close proxy and sign accuracy, gross and commission-only; compare matched target momentum, always long, and cash",
+    "positiveClaim": "NO full-net claim without historical spread/commission/swap/slippage/FX bid-ask; commission-only is optimistic bound, not funded EUR NET",
+    "noModelRetune": true
+  },
+  "finance": {
+    "capitalEur": 300,
+    "minimumUnits": 1000,
+    "lotSize": 100000,
+    "commissionUsdPerLotPerSide": 3,
+    "currentOriginalAccountContractSource": "docs/CMA1_AUTHENTIC_CONTRACT_TERMS_20261108.json; terms dated 2026-11-04 only",
+    "symbolMinimumMarginEur": {
+      "EURUSD": 33.33,
+      "GBPUSD": 39.91,
+      "AUDUSD": 30.97
+    },
+    "settlement": "model USD price P&L converted by actual completed contemporaneous H1 EURUSD-close price proxy; not broker FX execution quote",
+    "costLimitations": "historical BID/ASK, possible financing, minimum all-in spread, FX conversion execution and slippage absent; full NET null, not a financed or executable 300EUR portfolio",
+    "openTradeCapitalReserved": false,
+    "drawdownInclusiveFloatingProven": false,
+    "hard21SystemicProven": false
+  },
+  "inference": {
+    "weeklyBlocks": "calendar ISO weeks, no bar-level independence claim; report all 26/13/13 weeks including zero-signal weeks",
+    "selectionThreshold": "weekly mean incremental commission-only EUR over matched momentum and cash >0 with 95% lower CI, ex-post exposed purely descriptive and not promotion",
+    "multipleTesting": "one predeclared global policy, no selective instrument ranking, all three reported"
+  },
+  "safety": {
+    "ordersSubmitted": 0,
+    "cloudActivation": false,
+    "noExternalServices": true,
+    "retainOriginalCiphertext": true,
+    "prohibitRDE1Execution": true,
+    "closedStudiesUnchanged": true
+  }
+}
