@@ -17,6 +17,14 @@ def main():
     # key; same-run AEAD prevents swapping recipient/source artifacts.
     run_id=os.environ.get("GITHUB_RUN_ID","")
     bundle=json.loads(unseal_new(cipher,private.encode(),run_id))
+    # HXC1 is a NEW read-only source-custody verification, not a backtest,
+    # protected-workflow rewrite or reopening of any closed predictor.
+    if bundle.get("schema") == "MXM_HXC1_BROKER_ORIGINAL_HISTORICAL_BARS_SOURCE_V1":
+        from .hxc1_historical_readback import validate
+        public=validate(bundle, receipt, run_id)
+        Path("readback.public.json").write_text(
+            json.dumps(public,sort_keys=True,indent=2)+"\\n")
+        return
     original=bundle.pop("csharpReceipt")
     with tempfile.TemporaryDirectory(prefix="mxm-readback-") as folder:
         source=Path(folder)/"source.json"; source.write_text(json.dumps(bundle,sort_keys=True)); source.chmod(0o600)
