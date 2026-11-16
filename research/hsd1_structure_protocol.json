@@ -107,5 +107,28 @@
     "closedStudiesNeverInvoked": true,
     "distinctHsd1": true,
     "noRetune": true
+  },
+  "additionalHistoricalPath": {
+    "scopes": [
+      {
+        "period": "M15",
+        "symbols": "all12",
+        "evaluation": "exposed 13 weeks only"
+      },
+      {
+        "period": "M1",
+        "symbols": [
+          "EURUSD",
+          "XAUUSD",
+          "US500",
+          "NAS100"
+        ],
+        "evaluation": "last 4 weeks of exposed phase only"
+      }
+    ],
+    "decisionUse": "NEVER_USED_FOR_SIGNAL_FORMATION_OR_TRAINING",
+    "riskOutput": "original future contiguous lower/high excursion relative to subsequent H1 open price proxy; report adverse/favorable bps for labelled signal and coverage; never funded DD, no stop fitting",
+    "missing": "A missing quarter-hour/minute in original history makes excursion path UNKNOWN. No fill or interpolation.",
+    "qualification": "risk descriptive only, historically exposed, does not provide spread-inclusive NET, funded risk or independent confirmation"
   }
 }
