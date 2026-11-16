@@ -1,0 +1,111 @@
+{
+  "schema": "MXM_HSD1_FROZEN_SYSTEMATIC_HISTORICAL_STRUCTURE_SELECTION_V1",
+  "id": "HSD1",
+  "status": "PRE_SCORE_FROZEN_UNSCORED",
+  "authority": "docs/OWNER_SPEC.md OWNER v2.0 + OWNER 2026-11-16 post-HXC1/HXP1",
+  "rationale": "Search systematically for conditional continuation/reversal of market-structure events, not a single fixed signal: six independently interpretable mechanisms and four observable trend-volatility regimes on native closed H1 bars, across original full 12-asset HXC1 universe. Training-only selection and explicit abstinence; no exact closed-study rerun.",
+  "originalHxc1": {
+    "runId": 43817213663,
+    "artifactName": "hxc1-original-historical-encrypted-source",
+    "readbackArtifactId": 14202818396,
+    "sourceProtocolSha256": "b741165d32f02fa01f0bbeb690acfc52d494c90dd4622c9544cf2fb57317be74",
+    "sourceSchema": "MXM_HXC1_BROKER_ORIGINAL_HISTORICAL_BARS_SOURCE_V1"
+  },
+  "universe": [
+    "EURUSD",
+    "GBPUSD",
+    "AUDUSD",
+    "USDJPY",
+    "USDCAD",
+    "XAUUSD",
+    "US500",
+    "NAS100",
+    "GER40",
+    "UK100",
+    "AUS200",
+    "JPN225"
+  ],
+  "financeEligible": [
+    "EURUSD",
+    "GBPUSD",
+    "AUDUSD",
+    "USDJPY"
+  ],
+  "economicSource": "docs/CMA1_AUTHENTIC_CONTRACT_TERMS_20261108.json",
+  "chronologicalSplit": {
+    "startUtc": "2025-11-16T00:00:00Z",
+    "trainEndUtc": "2026-05-17T00:00:00Z",
+    "selectionEndUtc": "2026-08-16T00:00:00Z",
+    "exposedEndUtc": "2026-11-15T00:00:00Z",
+    "weeks": [
+      26,
+      13,
+      13
+    ],
+    "noIndependentConfirmation": true,
+    "allHxc1CalendarGloballyExposed": true,
+    "labelsCrossingPhaseDiscarded": true
+  },
+  "dataHandling": {
+    "barSource": "original H1, all times UTC, timestamp equals END of fully completed H1 candle",
+    "clockSafety": "signal t only completed bars <=t; entry proxy next H1 bar opening t; exit close at t+h hours (h 1 or 4), all holding H1 bars contiguous or label unknown",
+    "featureLookback": "last 49 observed H1 bars, with at least 24 strictly contiguous 1h returns for realized sigma; gaps not filled",
+    "M15": "shorter 13-week coverage inspected only for optional intrahour path validation, never trained into year-long H1 policy",
+    "M1": "last four weeks not used for tuning or confirmation",
+    "rawPriceScale": 100000,
+    "noSyntheticBars": true
+  },
+  "horizonsH": [
+    1,
+    4
+  ],
+  "mechanisms": [
+    "CHANNEL_BREAKOUT_BODY",
+    "FAILED_EXTREME_WICK",
+    "TREND_DIP_REJOIN",
+    "VOLUMELESS_VOL_SHOCK_REVERSAL",
+    "COMPRESSION_ESCAPE",
+    "THREE_BAR_IMPULSE"
+  ],
+  "mechanismsFrozen": "research/hsd1_structure_research.py:causal_events",
+  "regime": "4 states from ex-ante 8/32 bar true-range ratio >1.3 and abs(last12 log return)>1.25*sqrt(12)*sigma24; all native cBot OHLCV available",
+  "counterfactualPopulation": "Every valid candidate family/regime/horizon/symbol event before future label; known and unknown labels disclosed; fixed directional family sign never retrospectively inverted",
+  "selection": {
+    "method": "Train 26w only: globally pooled across four FX symbols, per family-regime-horizon mean optimistic EUR commission-floor and matched 4-bar momentum increment; positive in both train halves; n>=60 and >=8 distinct train weeks; lower z3.30 SE >0 versus cash and momentum (48 familywise conditional tests). No per-symbol tuning. On selection and exposed audit report every candidate subgroup shadow, but only train-qualified groups can produce shadow admission. At same clock and symbol choose one pre-registered highest train conservative EUR lower-bound, deterministic tie break, no trade orders.",
+    "minTrainCandidates": 60,
+    "minTrainWeeks": 8,
+    "trainHalfPositive": true,
+    "uncertaintyZ": 3.3,
+    "comparisonCount": 48,
+    "trainRankingOnly": true,
+    "selectionRequiresWeeklyLower95AboveCashAndMomentum": true,
+    "selectionWeeklyT": 2.179
+  },
+  "benchmark": [
+    "cash abstain",
+    "matched prior-four-closed-bar momentum direction and equal holding",
+    "matched always-long"
+  ],
+  "finance": {
+    "initialCapitalEur": 300,
+    "minimumUnits": 1000,
+    "lotSizeUnits": 100000,
+    "currentObservedFxRoundtripCommissionUsd": 0.06,
+    "commissionTermsAsOf": "2026-11-04",
+    "conversion": "USD-quoted FX 1000 units*(exit-entry)USD converted at same-time original closed H1 EURUSD; USDJPY JPY quote divided by USDJPY and EURUSD at exit proxy",
+    "missingExecution": "historical entry/exit BID-ASK, slippage, financing and real conversion unobserved; commission-only optimistic EUR proxy, no full NET or funded cBot claim",
+    "fullNetEur": null,
+    "commonFundedCsharpNet": null,
+    "drawdownIncludingFloatingCertified": false,
+    "hard21Certified": false
+  },
+  "constraints": {
+    "strictNoOrderRequests": true,
+    "cloudActivation": false,
+    "sourceAccessOnlyOriginalEncryptedHxc1InProtectedCustody": true,
+    "rde1NeverInvoked": true,
+    "closedStudiesNeverInvoked": true,
+    "distinctHsd1": true,
+    "noRetune": true
+  }
+}
