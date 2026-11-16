@@ -138,8 +138,9 @@ def feature(rows,i):
     lo=min(x[4] for x in w[-8:])
     channel=(2*(c-lo)/(hi-lo)-1) if hi>lo else 0
     base=(clip(impulse),clip(trend),clip(volratio),clip(channel))
+    state=2*int(volratio>math.log(1.25))+int(abs(trend)>1.25)
     return {"base":base,"sigma":sig,"clock":w[-1][1],
-            "currentCloseRaw":c}
+            "regime":state,"currentCloseRaw":c}
 
 
 def mature_outcome(records,i):
@@ -176,6 +177,7 @@ def prepare(tape,p):
                 continue
             event={"symbol":symbol,"t":row[1],"_index":i,"_bars":bars[symbol],
                    "base":f["base"],"sigma":f["sigma"],
+                   "regime":f["regime"],
                    "currentCloseRaw":f["currentCloseRaw"]}
             out.append(event)
             anchored[(symbol,row[1])]=event
@@ -192,7 +194,7 @@ def prepare(tape,p):
             pressure=clip(median(peers)) if not missing else 0.0
             r["feature"]=r["base"]+(pressure,float(missing))
             r["peerMissing"]=bool(missing)
-            r["_outcome"]=mature_outcome(records[symbol],r["_index"]) if False else None
+            r["_outcome"]=None
     # For each original completed H1 decision record, future label is
     # assembled from the same symbol source. It is NOT made available to
     # the learner until (decision + horizon + one-hour embargo) <= T.
@@ -350,6 +352,8 @@ def summarize(items):
 
 def evaluate(tape,p,bounds,commission):
     records,anchored,sourcebars=prepare(tape,p)
+    original_prices={s:{row[1]:row for row in sourcebars[s]}
+                     for s in ("EURUSD","USDJPY")}
     support={phase:Counter() for phase in ("TRAIN","SELECTION","EXPOSED")}
     quality={phase:[] for phase in support}
     by_market=defaultdict(list)
@@ -380,6 +384,7 @@ def evaluate(tape,p,bounds,commission):
                 counters["warmupOrInsufficientMatureLabels"]+=1
                 continue
             counters["causalForecastIssued"]+=1
+            counters["observedRegime"+str(r["regime"])]+=1
             nums=[x["_outcome"][0] for x in pool]
             uncond=mean(nums)
             base_p=(1+sum(y>0 for y in nums))/(2+len(nums))
@@ -417,23 +422,23 @@ def evaluate(tape,p,bounds,commission):
             quality[phase].append(row)
             by_market[(phase,symbol)].append(row)
             if hypothetical:
-                e=anchored.get(("EURUSD",t+4*HOUR))
-                j=anchored.get(("USDJPY",t+4*HOUR))
+                e=original_prices["EURUSD"].get(t+4*HOUR)
+                j=original_prices["USDJPY"].get(t+4*HOUR)
                 if e is None or (symbol=="USDJPY" and j is None):
                     counters["shadowEconomicConversionMissing"]+=1
                     continue
                 eg,net=economic_pair(symbol,side,opening,closing,
-                                  e["currentCloseRaw"],
-                                  j["currentCloseRaw"] if j else 1,
+                                  e[5],
+                                  j[5] if j else 1,
                                   commission)
                 momentum=1 if r["base"][0]>0 else -1 if r["base"][0]<0 else 0
                 mg,mc=economic_pair(symbol,momentum,opening,closing,
-                                    e["currentCloseRaw"],
-                                    j["currentCloseRaw"] if j else 1,
+                                    e[5],
+                                    j[5] if j else 1,
                                     commission)
                 _,longcost=economic_pair(symbol,1,opening,closing,
-                                        e["currentCloseRaw"],
-                                        j["currentCloseRaw"] if j else 1,
+                                        e[5],
+                                        j[5] if j else 1,
                                         commission)
                 shadow[phase].append({"week":row["week"],"symbol":symbol,
                                       "grossEur":eg,"commissionOnlyEur":net,
@@ -457,7 +462,7 @@ def evaluate(tape,p,bounds,commission):
             "pairedWeeklyFullMSEvsMomentum":
                 week_summary(rows,bounds,name,"seMomentum","seFull"),
             "fourFxShadowNotFundedRoundTrips":{
-                "predecisionIntents":sum(1 for x in shadows),
+                "predecisionIntents":support[name]["modelShadowPreDecisionIntents"],
                 "knownOutcomeCount":len(shadows),
                 "grossEurPriceOnly":round(sum(x["grossEur"] for x in shadows),6),
                 "commissionOnlyEurCurrentTariff":round(sum(x["commissionOnlyEur"] for x in shadows),6),
