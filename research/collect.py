@@ -163,7 +163,7 @@ if __name__ == "__main__":
             collect_hxc1()
         else:
             run(Path("sealed-output"))
-        print("READ_ONLY_SOURCE_CSHARP_RECEIPT_SEALED; NOT_ECONOMIC_QUALIFICATION")
+            print("READ_ONLY_SOURCE_CSHARP_RECEIPT_SEALED; NOT_ECONOMIC_QUALIFICATION")
     except Exception as exc:
         # Only our allowlisted constant codes; never broker payloads/tracebacks.
         from .guard import CaptureContractError
