@@ -1,0 +1,107 @@
+name: LQR1 mandatory exact 42 original signal-clock Csharp EUR300 controls only
+on:
+  pull_request:
+    paths:
+      - 'research/lqr1_mandatory_matched_controls.py'
+      - 'research/test_lqr1_mandatory_matched_controls.py'
+      - '.github/workflows/lqr1-mandatory-paired-controls.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ops/lqr1-matched-once-intent.txt'
+      - '.github/workflows/lqr1-mandatory-paired-controls.yml'
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  verify-exact-no-rescore:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    outputs:
+      authorized: ${{ steps.owner.outputs.authorized }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - run: python -m py_compile research/lqr1_mandatory_matched_controls.py research/test_lqr1_mandatory_matched_controls.py
+      - run: python -m unittest research.test_lqr1_mandatory_matched_controls -v
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - run: dotnet build src/Mxm.Replay -c Release
+      - name: Only one exact OWNER main source-readback original matched control intent
+        id: owner
+        shell: bash
+        run: |
+          echo 'authorized=false' >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_EVENT_NAME" == "push" &&
+                "$GITHUB_REF" == "refs/heads/main" &&
+                "$GITHUB_ACTOR" == "mariancradulescu" &&
+                "$GITHUB_RUN_ATTEMPT" == "1" &&
+                "$(git log -1 --format=%s)" == "OWNER_LQR1_PAIRED_ORIGINAL_42_FINANCE_RECEIPT_ONCE" &&
+                "$(git diff-tree --no-commit-id --name-only -r HEAD)" == "ops/lqr1-matched-once-intent.txt" &&
+                "$(cat ops/lqr1-matched-once-intent.txt)" == "OWNER_LQR1_42_PREDECISION_NATIVE_CONTROL_NO_PRIMARY_RESCORE" ]]; then
+            echo 'authorized=true' >> "$GITHUB_OUTPUT"
+          fi
+
+  original-only-fixed-matched-native-controls:
+    needs: verify-exact-no-rescore
+    if: needs.verify-exact-no-rescore.outputs.authorized == 'true'
+    environment: mxm-r3-custody-v1
+    concurrency:
+      group: mxm-lqr1-original-mandatory-42-paired-only-once
+      cancel-in-progress: false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - run: python -m pip install -r research/requirements.txt
+      - run: dotnet build src/Mxm.Replay -c Release
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: qpi1-original-encrypted-source
+          run-id: 43458050084
+          github-token: ${{ github.token }}
+          path: bti1-source
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: lqr1-original-sealed-eurusd-source
+          run-id: 43900286858
+          github-token: ${{ github.token }}
+          path: lqr1-new-source
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: lqr1-original-fx-source-coverage
+          run-id: 43900286858
+          github-token: ${{ github.token }}
+          path: lqr1-new-public
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: lqr1-original-genuine-eur300-native-money
+          run-id: 43900286858
+          github-token: ${{ github.token }}
+          path: lqr1-immutable-money
+      - name: Authentic source only; Csharp matched benchmarks; NO primary LQR1 policy rescore
+        run: python -m research.lqr1_mandatory_matched_controls
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: lqr1-original-42clock-paired-eur300-native-controls
+          path: lqr1-mandatory-exact-matched-42-controls.public.json
+          retention-days: 90
+          if-no-files-found: error
