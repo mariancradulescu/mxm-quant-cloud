@@ -37,7 +37,6 @@ class TestSpl1(unittest.TestCase):
         self.assertEqual(feature(day,t,gbp,eur),f)
     def test_missing_source_remains_unknown(self):
         day=date(2026,6,1);t,eur,gbp=self.sample(day)
-        eur.pop(t-1000000+100000) if t-900000 in eur else None
         eur.pop(t-900000)
         f=feature(day,t,gbp,eur)
         self.assertEqual(f["state"],"SOURCE_UNKNOWN")
