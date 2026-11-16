@@ -1,0 +1,80 @@
+name: WPS1 EIA petroleum strictly pre-outcome authentic support gate
+on:
+  pull_request:
+    paths:
+      - 'research/wps1_petroleum_preflight.py'
+      - 'research/test_wps1_petroleum_preflight.py'
+      - '.github/workflows/wps1-source-support-only.yml'
+      - 'research/WPS1_EIA_PETROLEUM_SUPPORT_PRESOURCE_20261116.md'
+  push:
+    branches: [main]
+    paths:
+      - 'ops/wps1-source-preflight-intent.txt'
+      - '.github/workflows/wps1-source-support-only.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify-wps1-presource:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    outputs:
+      authorized: ${{ steps.owner.outputs.authorized }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - run: python -m py_compile research/wps1_petroleum_preflight.py
+      - run: python -m unittest research.test_wps1_petroleum_preflight -v
+      - name: Exact owner/main one-time support-only intent
+        id: owner
+        shell: bash
+        run: |
+          echo 'authorized=false' >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_EVENT_NAME" == "push" &&
+                "$GITHUB_REF" == "refs/heads/main" &&
+                "$GITHUB_ACTOR" == "mariancradulescu" &&
+                "$GITHUB_RUN_ATTEMPT" == "1" &&
+                "$(git log -1 --format=%s)" == "OWNER_WPS1_PRESOURCE_SUPPORT_ONLY_ONCE" &&
+                "$(git diff-tree --no-commit-id --name-only -r HEAD)" == "ops/wps1-source-preflight-intent.txt" &&
+                "$(cat ops/wps1-source-preflight-intent.txt)" == "OWNER_WPS1_NO_FUTURE_LABELS_ORIGINAL_BWR1_ONLY" ]]; then
+            echo 'authorized=true' >> "$GITHUB_OUTPUT"
+          fi
+  original-bwr1-source-preoutcome-support:
+    needs: verify-wps1-presource
+    if: needs.verify-wps1-presource.outputs.authorized == 'true'
+    environment: mxm-r3-custody-v1
+    concurrency:
+      group: mxm-wps1-preoutcome-original-source-once
+      cancel-in-progress: false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: bwr1-original-encrypted-source
+          run-id: 43576022822
+          github-token: ${{ github.token }}
+          path: wps1-source
+      - name: Verify original 979 read-only protobuf records and count ONLY <=10:45 NY WPSR features
+        run: python -m research.wps1_petroleum_preflight
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: wps1-original-bwr1-preoutcome-source-support
+          path: wps1-original-event-support-cost-preflight-public.json
+          retention-days: 90
+          if-no-files-found: error
