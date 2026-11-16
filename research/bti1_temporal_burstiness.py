@@ -145,11 +145,11 @@ def authenticated_tape():
                                     truncated = True
                                     ticks = []
                                 else:
-                                    ticks = decode_side(res.tickData, left, right)
+                                    ticks = [list(x) for x in decode_side(res.tickData, left, right)]
                             sides.append(ticks)
                         rebuilt.append(sides)
                     need(truncated == obs["truncated"] and
-                         rebuilt == obs["before"], "BTI1_ORIGINAL_BEFORE_TICKS")
+                         rebuilt[0] == obs["before"], "BTI1_ORIGINAL_BEFORE_TICKS")
                     # The after window is verified separately; no post-t
                     # information ever reaches the presignal feature function.
                     need(rebuilt[1] == obs["after"], "BTI1_ORIGINAL_AFTER_TICKS")
