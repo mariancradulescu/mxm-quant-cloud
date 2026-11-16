@@ -1,0 +1,81 @@
+{
+  "schema": "MXM_HXC1_AUTHENTIC_HISTORICAL_OHLCV_SOURCE_ONLY_V1",
+  "id": "HXC1",
+  "status": "SOURCE_PLAN_FROZEN_UNEXECUTED",
+  "authority": "docs/OWNER_SPEC.md OWNER v2.0 and OWNER 2026-11-16 historical research clarification",
+  "scope": "INDEPENDENT_HISTORICAL_READ_ONLY_SOURCE_CAPTURE_NOT_RDE1_NOT_RESTART_OF_CLOSED_STUDIES",
+  "source": "original bound Pepperstone EUR account through research.owner_readonly_auth and cTrader ProtoOAGetTrendbarsReq",
+  "ranges": [
+    {
+      "period": "H1",
+      "symbolGroup": "full",
+      "fromUtc": "2025-11-16T00:00:00Z",
+      "toUtc": "2026-11-16T00:00:00Z",
+      "chunkHours": 240
+    },
+    {
+      "period": "M15",
+      "symbolGroup": "full",
+      "fromUtc": "2026-08-17T00:00:00Z",
+      "toUtc": "2026-11-16T00:00:00Z",
+      "chunkHours": 48
+    },
+    {
+      "period": "M1",
+      "symbolGroup": "focused",
+      "fromUtc": "2026-10-19T00:00:00Z",
+      "toUtc": "2026-11-16T00:00:00Z",
+      "chunkHours": 6
+    }
+  ],
+  "symbolGroups": {
+    "full": [
+      "EURUSD",
+      "GBPUSD",
+      "USDJPY",
+      "AUDUSD",
+      "USDCAD",
+      "XAUUSD",
+      "US500",
+      "NAS100",
+      "GER40",
+      "UK100",
+      "AUS200",
+      "JPN225"
+    ],
+    "focused": [
+      "EURUSD",
+      "XAUUSD",
+      "US500",
+      "NAS100"
+    ]
+  },
+  "selectionRationale": "H1 year-scale cross-market structure on existing authentic roster; M15 recent 13-week cross-resolution confirmation; M1 recent four-week four-market microstructure pilot. New price evidence only, no forecasts from earlier studies; source scope does not cap later distinct research.",
+  "maximumMarketDataRequests": 1700,
+  "minimumBarsToAcceptPerPeriod": {
+    "H1": 100,
+    "M15": 100,
+    "M1": 100
+  },
+  "completeness": "all exact chunks requested; hasMore must be present and false; no interpolation/forward-fill; missing session bars and empty windows retained as missing evidence",
+  "price": "unaltered broker integer OHLC in protobuf scale; preserve original UTC open/close and tickVolume; never infer historical BID/ASK from bar close",
+  "provenance": "raw request/response protobuf encrypted together with decoded normalized bars; public aggregate only",
+  "custody": "existing new-source-recipient v2 run-bound public key derived from installed protected custody secret; no key export",
+  "research": "NO_PREDICTOR_OR_RESULT_IS_EVALUATED_DURING_SOURCE_CAPTURE",
+  "otherOriginals": "BDP1/AIP1 preserved, no exact closed-study replay, no separate study validation claim",
+  "safety": {
+    "brokerOrderRequests": 0,
+    "cloudActivation": false,
+    "noTokenRefresh": true,
+    "noSecretOrAccountIdDisclosure": true,
+    "fullPriceTapePublic": false
+  },
+  "economics": {
+    "initialCapitalEur": 300,
+    "maximumFloatingDrawdownFraction": 0.3,
+    "hard21Systemic": 21,
+    "independentConfirmation": false,
+    "netEur": null,
+    "qualification": false
+  }
+}
