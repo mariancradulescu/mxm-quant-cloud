@@ -238,6 +238,7 @@ def collect_events(series,p,bounds,commission):
                     data={"phase":phase,"week":int(week),"symbol":symbol,
                           "family":name,"regime":regime,"h":h,"at":t,
                           "side":side,"momentum":momentum,
+                          "entryPriceRaw":entry,
                           "bps":price_bps,
                           "correct":int(side*(close-entry)>0),
                           "eurgross":None,"eurcommission":None,
@@ -372,6 +373,56 @@ def qualified_shadow(candidates,trained,p):
     return out
 
 
+def exposed_multiresolution_paths(bundle, candidates, p):
+    """Risk-only M15/M1 favorable/adverse raw path after an EX-ANTE H1 decision.
+
+    No future excursion influences event formation, training, risk caps or
+    candidate selection; all figures are historical price-only proxies.
+    """
+    output={}
+    for period,minutes,universe in (
+        ("M15",15,p["universe"]),
+        ("M1",1,["EURUSD","XAUUSD","US500","NAS100"])):
+        step=minutes*60000
+        streams={}
+        for symbol in universe:
+            raw=bundle["bars"].get(symbol+"/"+period,[])
+            streams[symbol]={r[0]:r for r in raw}
+        report=[]
+        for family in p["mechanisms"]:
+            for h in p["horizonsH"]:
+                rows=[r for r in candidates if
+                      r["phase"]=="EXPOSED" and r["symbol"] in universe
+                      and r["family"]==family and r["h"]==h]
+                adverse=[]
+                favorable=[]
+                for r in rows:
+                    entry=r["entryPriceRaw"]
+                    t=r["at"]
+                    path=[streams[r["symbol"]].get(t+i*step)
+                          for i in range(h*60//minutes)]
+                    if any(v is None or v[1]!=t+(i+1)*step
+                           for i,v in enumerate(path)):
+                        continue
+                    lo=min(v[4] for v in path)
+                    hi=max(v[3] for v in path)
+                    worst=(entry-lo)/entry if r["side"]==1 else (hi-entry)/entry
+                    best=(hi-entry)/entry if r["side"]==1 else (entry-lo)/entry
+                    adverse.append(10000*max(0,worst))
+                    favorable.append(10000*max(0,best))
+                report.append({
+                    "family":family,"horizonHours":h,
+                    "exposedSignalsWithForwardH1Label":len(rows),
+                    "forwardMicroPathsComplete":len(adverse),
+                    "meanMaxAdverseBps":round(mean(adverse),6) if adverse else None,
+                    "medianMaxAdverseBps":round(median(adverse),6) if adverse else None,
+                    "maximumObservedAdverseBps":round(max(adverse),6) if adverse else None,
+                    "meanMaxFavorableBps":round(mean(favorable),6) if favorable else None
+                })
+        output[period]=report
+    return output
+
+
 def research():
     p,protocol_sha,bounds=frozen_plan()
     source,receipt,verified=authentic_history(p)
@@ -418,6 +469,8 @@ def research():
                  "globallyExposed":True,"independentConfirmation":False},
         "population":dict(support),
         "allCandidateFamilyHorizonOutcomes":all_family,
+        "exposedMultiResolutionForwardPathRiskProxies":
+            exposed_multiresolution_paths(source,rows,p),
         "all48FamilyRegimeHorizonEconomicCells":regimes,
         "trainQualifiedCellCount":sum(x["trainQualified"] for x in regimes),
         "selectionAdmissionShadow":selected,
