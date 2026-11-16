@@ -1,0 +1,159 @@
+name: LQR1 original signed EUR300 quote-side financial research
+on:
+  pull_request:
+    paths:
+      - 'research/lqr1_original_financial_source.py'
+      - 'research/lqr1_eur_native_readback.py'
+      - 'research/test_lqr1_eur_native_readback.py'
+      - '.github/workflows/lqr1-original-eur300-finance.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ops/lqr1-finance-once-intent.txt'
+      - '.github/workflows/lqr1-original-eur300-finance.yml'
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  verify-frozen-source-and-finance:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    outputs:
+      authorized: ${{ steps.owner.outputs.authorized }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - run: python -m py_compile research/lqr1_original_financial_source.py research/lqr1_eur_native_readback.py research/test_lqr1_eur_native_readback.py
+      - run: python -m unittest research.test_lqr1_eur_native_readback research.test_lqr1_original_presignal_support -v
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - run: dotnet build src/Mxm.Replay -c Release
+      - name: OWNER main first-attempt exact financial research intent only
+        id: owner
+        shell: bash
+        run: |
+          echo 'authorized=false' >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_EVENT_NAME" == "push" &&
+                "$GITHUB_REF" == "refs/heads/main" &&
+                "$GITHUB_ACTOR" == "mariancradulescu" &&
+                "$GITHUB_RUN_ATTEMPT" == "1" &&
+                "$(git log -1 --format=%s)" == "OWNER_LQR1_GENUINE_EUR300_PAIRED_FINANCE_ONCE" &&
+                "$(git diff-tree --no-commit-id --name-only -r HEAD)" == "ops/lqr1-finance-once-intent.txt" &&
+                "$(cat ops/lqr1-finance-once-intent.txt)" == "OWNER_LQR1_80_CLOCKS_EURUSD_BIDASK_READONLY_FINANCE" ]]; then
+             echo 'authorized=true' >> "$GITHUB_OUTPUT"
+          fi
+
+  lqr1-public-recipient:
+    needs: verify-frozen-source-and-finance
+    if: needs.verify-frozen-source-and-finance.outputs.authorized == 'true'
+    environment: mxm-r3-custody-v1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - run: python -m research.custody_new
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: lqr1-original-public-recipient
+          path: new-recipient-output/
+          retention-days: 5
+          if-no-files-found: error
+
+  lqr1-original-eurusd-bidask:
+    needs: [verify-frozen-source-and-finance, lqr1-public-recipient]
+    if: needs.verify-frozen-source-and-finance.outputs.authorized == 'true'
+    environment: mxm-r3-pepperstone-v1
+    concurrency:
+      group: mxm-lqr1-original-eurusd-80clocks-once
+      cancel-in-progress: false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: lqr1-original-public-recipient
+          path: new-recipient-output
+      - name: Read only 80 fixed entry and exit original EURUSD BIDASK quotes and current minimum costs, SEAL BEFORE scoring
+        run: python -m research.lqr1_original_financial_source
+        env:
+          R3_CTRADER_CLIENT_ID: ${{ secrets.R3_CTRADER_CLIENT_ID }}
+          R3_CTRADER_CLIENT_SECRET: ${{ secrets.R3_CTRADER_CLIENT_SECRET }}
+          R3_CTRADER_ACCESS_TOKEN: ${{ secrets.R3_CTRADER_ACCESS_TOKEN }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: lqr1-original-sealed-eurusd-source
+          path: lqr1-original-financial-source.v2.enc
+          retention-days: 90
+          if-no-files-found: error
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: lqr1-original-fx-source-coverage
+          path: lqr1-original-fx-source-coverage.public.json
+          retention-days: 90
+          if-no-files-found: error
+
+  lqr1-protected-signed-eur300-native:
+    needs: [verify-frozen-source-and-finance, lqr1-original-eurusd-bidask]
+    if: needs.verify-frozen-source-and-finance.outputs.authorized == 'true'
+    environment: mxm-r3-custody-v1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - run: python -m pip install -r research/requirements.txt
+      - run: dotnet build src/Mxm.Replay -c Release
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: qpi1-original-encrypted-source
+          run-id: 43458050084
+          github-token: ${{ github.token }}
+          path: bti1-source
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: lqr1-original-sealed-eurusd-source
+          path: lqr1-new-source
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: lqr1-original-fx-source-coverage
+          path: lqr1-new-public
+      - name: Verify all original raw protobuf, then score NEW signed EUR300 native funded paired policies once
+        run: python -m research.lqr1_eur_native_readback
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: lqr1-original-genuine-eur300-native-money
+          path: lqr1-original-authentic-eur300-native-financial.public.json
+          retention-days: 90
+          if-no-files-found: error
