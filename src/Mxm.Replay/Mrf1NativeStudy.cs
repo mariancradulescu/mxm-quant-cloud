@@ -23,6 +23,7 @@ internal static class Mrf1NativeStudy
         decimal RiskEur,decimal EntrySlippage,decimal InitialMargin,
         long OpenedAt);
     sealed record Check(double[] Features,int[] Columns,double[] Coefficients,double Expected);
+    sealed record FeatureCheck(double[] Closes,double[] TickVolumes,double[] Expected);
     static readonly JsonSerializerOptions Json=new(){PropertyNameCaseInsensitive=true,
         NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString};
     static string Hash(string x)=>Convert.ToHexString(SHA256.HashData(
@@ -30,6 +31,25 @@ internal static class Mrf1NativeStudy
     static string Iso(long t){var d=DateTimeOffset.FromUnixTimeMilliseconds(t).UtcDateTime;
         return System.Globalization.ISOWeek.GetYear(d)+"-W"+
             System.Globalization.ISOWeek.GetWeekOfYear(d).ToString("00");}
+    public static int FeatureParity(string input,string output)
+    {
+        var rows=JsonSerializer.Deserialize<FeatureCheck[]>(File.ReadAllBytes(input),Json)
+            ??throw new ArgumentException("MRF1_FEATURE_PARITY_INPUT");
+        if(rows.Length<4)throw new ArgumentException("MRF1_FEATURE_PARITY_EMPTY");
+        double worst=0;
+        foreach(var row in rows)
+        {
+            var observed=NativeMrf1M1FeatureMath.Compute(row.Closes,row.TickVolumes);
+            if(row.Expected.Length!=4)
+                throw new ArgumentException("MRF1_FEATURE_PARITY_FOUR_PRIMITIVES");
+            for(int j=0;j<4;j++)
+                worst=Math.Max(worst,Math.Abs(observed[j]-row.Expected[j]));
+        }
+        if(worst>1e-10)throw new InvalidOperationException("MRF1_NATIVE_M1_REAL_FEATURE_PARITY_FAILED");
+        File.WriteAllText(output,JsonSerializer.Serialize(new{
+            Cases=rows.Length,MaximumAbsoluteDifference=worst,Passed=true}));
+        return 0;
+    }
     public static int Parity(string input,string output)
     {
         var rows=JsonSerializer.Deserialize<Check[]>(File.ReadAllBytes(input),Json)
