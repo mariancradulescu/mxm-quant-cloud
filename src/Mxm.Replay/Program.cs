@@ -5,6 +5,8 @@ if(args.Length==3 && args[2]=="--native-mrf1")
     return Mrf1NativeStudy.Run(args[0],args[1]);
 if(args.Length==3 && args[2]=="--mrf1-parity")
     return Mrf1NativeStudy.Parity(args[0],args[1]);
+if(args.Length==3 && args[2]=="--mrf1-feature-parity")
+    return Mrf1NativeStudy.FeatureParity(args[0],args[1]);
 
 if(args.Length==3 && args[2]=="--native-pve3")
     return Pve3NativeActionResearch.Run(args[0],args[1]);
