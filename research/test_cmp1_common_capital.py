@@ -30,7 +30,7 @@ class Cmp1Checks(unittest.TestCase):
         p2, reason2 = causal_prediction(altered, context, "JOINT")
         self.assertEqual(reason1, "OFFER")
         self.assertEqual(reason2, "OFFER")
-        self.assertEqual(p1, p2)
+        self.assertEqual((p1.side, p1.predicted, p1.rank, p1.threshold), (p2.side, p2.predicted, p2.rank, p2.threshold))
 
     def test_matured_labels_only(self):
         a = rows()
