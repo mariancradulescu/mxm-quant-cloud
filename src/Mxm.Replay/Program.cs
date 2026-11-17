@@ -1,6 +1,11 @@
 using System.Text.Json;
 using System.Security.Cryptography;
 
+if(args.Length==3 && args[2]=="--native-mrf1")
+    return Mrf1NativeStudy.Run(args[0],args[1]);
+if(args.Length==3 && args[2]=="--mrf1-parity")
+    return Mrf1NativeStudy.Parity(args[0],args[1]);
+
 if(args.Length==3 && args[2]=="--native-pve3")
     return Pve3NativeActionResearch.Run(args[0],args[1]);
 if(args.Length==3 && args[2]=="--pve3-parity")
