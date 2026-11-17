@@ -414,7 +414,6 @@ internal static class Jra1JointRiskResearch
     }
     public static int SyntheticChecks()
     {
-        if(!Decision(1782975601500L)) { /* clock fixture below will be checked by UTC construction */ }
         long t=new DateTimeOffset(2026,8,3,8,30,1,500,TimeSpan.Zero).ToUnixTimeMilliseconds();
         if(!Decision(t) || Decision(t+M5) || Decision(t+1000))throw new Exception("JRA1_CAUSAL_SCHEDULE_TEST");
         // Pure ledger contract sanity: same original native book enforces one
@@ -425,7 +424,8 @@ internal static class Jra1JointRiskResearch
            zero.OrdersEnabled || zero.GlobalDrawdownCertified)
             throw new Exception("JRA1_NATIVE_FOUNDING_CONTRACT");
         var cases=new[]{5m,15m,60m};
-        if(cases.Sum()+80m>=90m || cases.Sum()+80m<=90m)
+        decimal headroom=90m;
+        if(cases.Sum()+80m<=headroom || cases.Sum()!=80m)
             throw new Exception("JRA1_JOINT_LOSS_NOT_SUMMED");
         Console.WriteLine("JRA1_SYNTHETIC_NATIVE_CHECKS_PASS");
         return 0;
