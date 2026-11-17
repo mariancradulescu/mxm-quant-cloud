@@ -485,6 +485,21 @@ def main():
     dll="src/Mxm.Replay/bin/Release/net8.0/Mxm.Replay.dll"
     with tempfile.TemporaryDirectory(prefix="mrf1-private-") as td:
         a=Path(td)/"in.json";z=Path(td)/"out.json"
+        featureSamples=[]
+        for row in rows[:24]:
+            authenticM1=exact_prefix(streams[row["s"]]["M1"],row["t"],61,M)
+            need(authenticM1 is not None,"NATIVE_FEATURE_SAMPLE_NOT_AUTHENTIC_M1")
+            featureSamples.append(dict(closes=[r[5] for r in authenticM1],
+                tickVolumes=[r[6] for r in authenticM1],
+                expected=row["features"][:4]))
+        need(len(featureSamples)==24,"NATIVE_FEATURE_PARITY_SUPPORT")
+        # The raw M1 closes/volumes are protected TEMP ONLY and never enter
+        # any public artifact, log, repository or ChatGPT response.
+        a.write_text(json.dumps(featureSamples,allow_nan=False))
+        checked=subprocess.run([dotnet,dll,str(a),str(z),"--mrf1-feature-parity"],
+                               capture_output=True,text=True,timeout=180)
+        need(checked.returncode==0,"NATIVE_REAL_M1_FEATURE_PARITY_FAILED")
+        populated["nativeM1FeatureParity"]=json.loads(z.read_text())
         a.write_text(json.dumps(report["nativeModelParityInputs"],allow_nan=False))
         test=subprocess.run([dotnet,dll,str(a),str(z),"--mrf1-parity"],
                             capture_output=True,text=True,timeout=180)
