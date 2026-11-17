@@ -143,15 +143,20 @@ def features_from_original_m5(bars,t):
 def quote_event(row,contract,margin,trader):
     t=row["t"];a=t+DECISION_DELAY;z=a+EXIT_DELAY
     no_swap(contract,trader,a,z)
+    # A genuine PRE-DECISION entry quote must remain usable even when the
+    # FUTURE exit quote is missing. Never filter signals based on a future
+    # exit quote; an unclosed position must remain explicitly UNKNOWN.
+    def bind(kind,at):
+        if any(row["marks"][kind][s] is None for s in ("ETHUSD","EURUSD")):
+            return None
+        return quote_one(row["marks"][kind],at,contract,margin)
     try:
-        if any(row["marks"][k][s] is None for k in ("entry","exit")
-               for s in ("ETHUSD","EURUSD")):
-            return dict(entry=None,exit=None,reason="ORIGINAL_BIDASK_OR_EURUSD_UNKNOWN")
-        q0=quote_one(row["marks"]["entry"],a,contract,margin)
-        qz=quote_one(row["marks"]["exit"],z,contract,margin)
-        return dict(entry=q0,exit=qz,reason=None)
-    except Exception as exc:
-        # Never turn an invalid future quote/cost into a profitable label.
+        q0=bind("entry",a)
+        qz=bind("exit",z)
+        return dict(entry=q0,exit=qz,
+                    reason=None if q0 is not None and qz is not None else
+                        "ORIGINAL_ENTRY_OR_FUTURE_EXIT_QUOTE_UNKNOWN")
+    except (ValueError,ArithmeticError):
         return dict(entry=None,exit=None,reason="CONVERSION_ORIGINAL_CONTRACT_UNPRICED")
 
 def payoff(row,side,scenario,units):
