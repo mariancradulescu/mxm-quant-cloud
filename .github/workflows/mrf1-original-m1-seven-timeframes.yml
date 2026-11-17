@@ -1,0 +1,130 @@
+name: MRF1 ORIGINAL genuine M1 M5 M15 M30 H1 H4 D1 price and EUR300 finance
+on:
+  pull_request:
+    paths:
+      - 'research/MRF1_FROZEN_AUTHENTIC_M1_MULTIRESOLUTION_PROTOCOL_20261117.md'
+      - 'research/mrf1_authentic_m1_multiresolution.py'
+      - 'research/test_mrf1_authentic_m1_multiresolution.py'
+      - 'src/Mxm.Replay/Mrf1NativeStudy.cs'
+      - 'src/Mxm.Replay/Program.cs'
+      - '.github/workflows/mrf1-original-m1-seven-timeframes.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ops/mrf1-original-once.txt'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    outputs:
+      owner_once: ${{ steps.owner.outputs.owner_once }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - run: python -m pip install -r research/requirements.txt numpy==2.3.5
+      - name: Verify original MRF1 protocol SHA from SEPARATE earlier commit
+        run: |
+          git merge-base --is-ancestor 9af7fe229afc3f3e7339659ed45930591a855690 HEAD
+          git show 9af7fe229afc3f3e7339659ed45930591a855690:research/MRF1_FROZEN_AUTHENTIC_M1_MULTIRESOLUTION_PROTOCOL_20261117.md > /tmp/mrf1-frozen-before-model.md
+          cmp /tmp/mrf1-frozen-before-model.md research/MRF1_FROZEN_AUTHENTIC_M1_MULTIRESOLUTION_PROTOCOL_20261117.md
+      - run: python -m unittest research.test_mrf1_authentic_m1_multiresolution -v
+      - run: dotnet build src/Mxm.Replay -c Release
+      - run: python -m unittest research.test_mrf1_native_synthetic -v
+        env:
+          MRF1_DOTNET: dotnet
+      - run: dotnet run --project tests/Mxm.Checks -c Release
+      - run: python -m research.verify_owner_policy
+      - name: Exact first ONLY main OWNER original source-reuse research intent
+        id: owner
+        shell: bash
+        run: |
+          echo 'owner_once=false' >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_EVENT_NAME" == "push" &&
+                "$GITHUB_REF" == "refs/heads/main" &&
+                "$GITHUB_ACTOR" == "mariancradulescu" &&
+                "$GITHUB_RUN_ATTEMPT" == "1" &&
+                "$(git log -1 --format=%s)" == "OWNER_MRF1_ORIGINAL_GENUINE_M1_MTF_ONCE" &&
+                "$(git diff-tree --no-commit-id --name-only -r HEAD)" == "ops/mrf1-original-once.txt" &&
+                "$(cat ops/mrf1-original-once.txt)" == "OWNER_MRF1_M1_M5_M15_M30_H1_H4_D1_THREE_HORIZONS_NATIVE_EUR300_ONCE" ]]; then
+            echo 'owner_once=true' >> "$GITHUB_OUTPUT"
+          fi
+  original-protected:
+    needs: verify
+    if: ${{ needs.verify.outputs.owner_once == 'true' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    environment: mxm-r3-custody-v1
+    concurrency:
+      group: mxm-mrf1-exact-original-only
+      cancel-in-progress: false
+    env:
+      OMP_NUM_THREADS: '2'
+      OPENBLAS_NUM_THREADS: '2'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - run: python -m pip install -r research/requirements.txt numpy==2.3.5
+      - run: dotnet build src/Mxm.Replay -c Release
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: hxc1-original-historical-encrypted-source
+          run-id: 43817213663
+          github-token: ${{ github.token }}
+          path: hxc1-source
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: cxl1-original-275-earlier-sealed-source
+          run-id: 43947388854
+          github-token: ${{ github.token }}
+          path: cxl1-new-encrypted
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: cxl1-original-275-earlier-source-coverage
+          run-id: 43947388854
+          github-token: ${{ github.token }}
+          path: cxl1-new-public
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: cxl1-original-50clock-source-encrypted
+          run-id: 43945139889
+          github-token: ${{ github.token }}
+          path: cxl1-pilot-encrypted
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: cxl1-original-50clock-pilot-public
+          run-id: 43945139889
+          github-token: ${{ github.token }}
+          path: cxl1-pilot-public
+      - name: Cryptographically verify original HXC1 M1 and CXL1 original EURUSD quotes, execute NEW MRF1
+        run: python -m research.mrf1_authentic_m1_multiresolution
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+          MRF1_DOTNET: dotnet
+      - name: Conserve first-only authentic public price and native results even upon error
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: mrf1-original-genuine-m1-mtf-predictive-and-native-eur
+          path: mrf1-original-*.json
+          if-no-files-found: warn
+          retention-days: 90
+      - if: success()
+        run: sha256sum research/MRF1_FROZEN_AUTHENTIC_M1_MULTIRESOLUTION_PROTOCOL_20261117.md research/mrf1_authentic_m1_multiresolution.py src/Mxm.Replay/Mrf1NativeStudy.cs mrf1-original-*.json
