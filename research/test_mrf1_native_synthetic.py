@@ -6,6 +6,34 @@ from pathlib import Path
 from . import mrf1_authentic_m1_multiresolution as m
 
 class MRF1NativeSynthetic(unittest.TestCase):
+    def test_native_pure_m1_closes_and_volume_parity(self):
+        if not os.environ.get("MRF1_DOTNET"):
+            self.skipTest("C# pre-built binary not provided")
+        import math
+        import numpy as np
+        closes=[1.1+.00001*i+.000004*math.sin(i/4) for i in range(61)]
+        tick=[90+3*i for i in range(61)]
+        rets=[math.log(closes[i]/closes[i-1]) for i in range(1,61)]
+        last=rets[-5:];prior=rets[:-5]
+        rms=lambda x:math.sqrt(sum(z*z for z in x)/len(x))
+        sg=lambda x:1 if x>0 else -1 if x<0 else 0
+        eff=sum(last)/max(1e-12,sum(abs(v) for v in last))
+        accel=rms(last)/max(.0001,rms(prior))-1
+        flip=sum(sg(last[i])!=sg(last[i-1]) for i in range(1,5))/4
+        old=rets[-55:-5]
+        oldflip=sum(sg(old[i])!=sg(old[i-1]) for i in range(1,len(old)))/(len(old)-1)
+        activity=sum(tick[-5:])/(sum(tick[:-5])/56*5)-1
+        expected=[m.clamp(eff),m.clamp(accel),m.clamp(flip-oldflip),m.clamp(activity)]
+        payload=[dict(closes=closes,tickVolumes=tick,expected=expected)]*4
+        with tempfile.TemporaryDirectory() as td:
+            a=Path(td)/"feature.json";b=Path(td)/"out.json"
+            a.write_text(json.dumps(payload))
+            proc=subprocess.run([os.environ["MRF1_DOTNET"],
+                "src/Mxm.Replay/bin/Release/net8.0/Mxm.Replay.dll",
+                str(a),str(b),"--mrf1-feature-parity"],
+                capture_output=True,text=True)
+            self.assertEqual(proc.returncode,0,proc.stderr[-1000:])
+            self.assertTrue(json.loads(b.read_text())["Passed"])
     def test_one_positive_minimum_volume_roundtrip_and_cash_nulls(self):
         if not os.environ.get("MRF1_DOTNET"):
             self.skipTest("C# pre-built binary not provided")
