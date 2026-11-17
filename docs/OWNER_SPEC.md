@@ -1,5 +1,31 @@
 # Active OWNER specification v2.0 — updated 2026-11-05 (single normative authority)
 
+## OWNER complete-policy discovery — 2026-11-17 after LPM1
+
+Accept LPM1 PR367–368 and original44090751371, closed exactly without promotion
+or retuning. Study entry, economic/structural invalidation, SL/TP, contextual R:R,
+continuation, protection/reduction/exit and competing capital jointly. Compare
+falsifiable alternatives before implementation and freeze before evaluation.
+Entry must be compatible with its own management both at decision and causal
+fill. Use authentic multi-instrument M1/M5/M15/M30/H1/H4/D1, reproducible native
+indicators, structure/regimes and activity only with measured incremental value.
+Collect fresh read-only history whenever needed. Do not restrict research to
+EURUSD or complete existing BID/ASK archives. Reuse NativeCausalExitResearch,
+allocator, ledger and scorecard; do not rebuild infrastructure. No OHLC-invented
+SL/TP fills, no universal R:R, no horizon-only main research. Time exits may be
+safety limits/comparators. Report original executed opportunity/rejection counts,
+NET central/adverse, R distributions, expectancy, win rate, profit factor, payoff,
+MFE/MAE, costs/barrier probabilities, tails/ES, floating DD/margin/concurrency,
+completed trips/week and systemic HARD21 on ONE EUR300 book. Zero trades means
+trade metrics N/A. Protocols/indicators/PRs are not economic progress. Explain
+failures and distinct next alternatives without selecting favorable exposed
+outcomes. Native autonomous multi-asset/timeframe/family C# Cloud/Android remains
+the final target: robust positive NET, HARD21, floating DD<=30%, independent
+confirmation over >=12 relevant months. Continue already-authorized work without
+repeated technical approvals. No LIVE/DEMO orders, Cloud activation or permanent
+external services. Director executes; auditor verifies independently.
+
+
 ## OWNER lifecycle-economic priority — 2026-11-17 after MRF1-F1 / ENE1
 
 The exact MRF1-F1 and ENE1 configurations are accepted closed without promotion,

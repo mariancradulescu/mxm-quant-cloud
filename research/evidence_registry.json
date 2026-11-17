@@ -3275,5 +3275,19 @@
     },
     "result": "docs/LPM1_ORIGINAL_LIFECYCLE_RESULT.md",
     "publicArithmeticAuditPassed": true
+  },
+  "cvp1ContextContinuationResearch": {
+    "protocol": "research/CVP1_FROZEN_CONTEXT_CONTINUATION_20261117.md",
+    "protocolCommit": "dc958c847533fc49fbe55520dfd2948a6e7c946b",
+    "status": "FROZEN_BEFORE_ORIGINAL_SCORING",
+    "calendar": [
+      "2026-05-04",
+      "2026-07-27"
+    ],
+    "source": "NEW_ORIGINAL_PEPPERSTONE_3_ASSET_7_TIMEFRAME_TICK_READONLY",
+    "independentConfirmation": false,
+    "qualified": false,
+    "closedStudyPoliciesCalled": false,
+    "counterfactualBooksMustNotBeSummed": true
   }
 }

@@ -11,6 +11,30 @@ public sealed record NativeExitVerdict(bool RequestClose, string Reason,
 
 public static class NativeCausalExitResearch
 {
+    // CVP1 prospective protection only. Continuation values are supplied by
+    // a separately frozen causal learner; legacy policies stay unchanged.
+    public static NativeExitVerdict AssessValueProtection(int side, decimal entry,
+        decimal initialStop, decimal target, decimal atr, decimal priorExtreme,
+        LedgerQuote quote, decimal remainingCostQuote, bool sessionEnd)
+    {
+        if(side is not (1 or -1) || entry<=0 || atr<=0 ||
+           side*(entry-initialStop)<=0 || quote.Bid<=0 || quote.Ask<quote.Bid)
+            throw new ArgumentException("CVP1_INVALID_PROTECTION_STATE");
+        decimal p=side>0?quote.Bid:quote.Ask;
+        decimal extreme=side>0?Math.Max(priorExtreme,p):Math.Min(priorExtreme,p);
+        decimal stop=initialStop;
+        if(side*(extreme-entry)>=side*(entry-initialStop))
+        {
+            decimal lockPrice=entry+side*remainingCostQuote;
+            decimal trail=extreme-side*2m*atr;
+            stop=side>0?Math.Max(stop,Math.Max(lockPrice,trail)):
+                Math.Min(stop,Math.Min(lockPrice,trail));
+        }
+        if(side*(p-stop)<=0)return new(true,"STRUCTURAL_OR_PROFIT_PROTECTION",extreme);
+        if(target>0 && side*(p-target)>=0)return new(true,"OBSERVED_EQUILIBRIUM_TARGET",extreme);
+        return new(sessionEnd,sessionEnd?"SESSION_SAFETY":"HOLD_COMPATIBLE",extreme);
+    }
+
     // LPM1 only: observed tick path. Frozen legacy Assess remains unchanged.
     public static NativeExitVerdict AssessLifecycle(string mode, int side,
         decimal entry, NativeExitSeed seed, decimal initialStop,
