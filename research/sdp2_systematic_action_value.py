@@ -116,7 +116,8 @@ def payoff(row,prices,costs,terms):
         for side in (1,-1):
             ep=ps[a]*(1+spread/10000) if side>0 else ps[a]
             xp=ps[z] if side>0 else ps[z]*(1+spread/10000)
-            gross=side*n*(xp-ep)*ez
+            grossQuote=side*n*(xp-ep)
+            gross=grossQuote*ez*(1-c['conversionRate']/2 if grossQuote>=0 else 1+c['conversionRate']/2)
             charge=n*(ps[a]*ea+ps[z]*ez)*feeRate
             swap=c['longDailyDebitBps'] if side>0 else c['shortDailyDebitBps']
             funding=0.
@@ -124,7 +125,7 @@ def payoff(row,prices,costs,terms):
                 if crossings(stamp-M5,stamp,c['swapMinute']):
                     fx=conversion(s,stamp,prices,terms)
                     if fx is None:return None
-                    funding+=3*swap*n*ps[stamp]*fx/10000
+                    funding+=3*swap*n*ps[stamp]*fx*(1+c['conversionRate']/2)/10000
             y.append((gross-charge-funding)/scale)
     return np.asarray(y),scale
 
@@ -206,7 +207,7 @@ def evaluate(rows,prices,costs,terms):
                 for i in idx[valid]:
                     r=rows[i];c=costs[r['s']]
                     cycles=crossings(r['t']+M5,r['due'],c['swapMinute'])
-                    zero.append([-(c[scenario+'Bps']+3*cycles*c[side+'DailyDebitBps'])/10000/r['scaleReturn']
+                    zero.append([-(c[scenario+'Bps']+(.5*c['conversionRate']*(c['observedSpreadP90Bps'] if scenario=='adverse' else c['spreadMeanBps']))+3*cycles*c[side+'DailyDebitBps']*(1+c['conversionRate']/2))/10000/r['scaleReturn']
                         for scenario in ('central','adverse') for side in ('long','short')])
                 record['knownCostZeroMoveNormalizedMse']=np.mean((np.asarray(zero)-iy)**2,axis=0).tolist()
                 record['knownCostZeroMoveEurMae']=np.mean(np.abs(np.asarray(zero)-iy)*sc[:,None],axis=0).tolist()
@@ -256,7 +257,7 @@ def native_input(bars,prices,costs,terms,offers,scenario):
             if t<FIRST or t>END:continue
             fx=conversion(s,t,prices,terms)
             if fx is None:continue
-            quotes.append(dict(Symbol=s,At=t,Bid=bid,Ask=bid*(1+spread/10000),EurCredit=fx,EurDebit=fx,
+            quotes.append(dict(Symbol=s,At=t,Bid=bid,Ask=bid*(1+spread/10000),EurCredit=fx*(1-c['conversionRate']/2),EurDebit=fx*(1+c['conversionRate']/2),
               ExitFeePerUnit=bid*fx*max(0,c[scenario+'Bps']-spread)/20000,ExitFeeFloor=0,
               MarginPerUnit=c['minimumMarginEur']/u))
     contracts=[dict(Symbol=s,MinimumUnits=v['units'],StepUnits=v['step'],
@@ -277,7 +278,11 @@ def main():
             if s in b['bars']:terms[s]=dict(quoteAsset=v['quoteAsset'],units=float(v['contract']['minVolume'])/100,step=float(v['contract']['stepVolume'])/100)
         samples,_=extract_costs(b,decoded);costsamples.extend(x for x in samples if int(x['At'])<FIRST)
     costs=cost_context(costsamples)
-    for s,c in costs.items():c['spreadMeanBps']=float(np.mean([float(x['SpreadBps']) for x in costsamples if x['Symbol']==s]))
+    for s,c in costs.items():
+        samples=[x for x in costsamples if x['Symbol']==s]
+        c['spreadMeanBps']=float(np.mean([float(x['SpreadBps']) for x in samples]))
+        c['conversionRate']=max(float(x['ProfitConversionRate']) for x in samples)
+        need(0<=c['conversionRate']<2,'CONVERSION_ENVELOPE')
     rows,prices,census=panel(bars)
     report,offers,parity=evaluate(rows,prices,costs,terms)
     report.update(study='SDP2',sourceAudit=audits,protocolSha256=sha256(PROTOCOL.read_bytes()).hexdigest(),sourceBars=sum(map(len,bars.values())),sourceCensus=census,universe=sorted(bars),independentConfirmation=False,qualified=False,orders=0,executionRunId=os.environ.get('GITHUB_RUN_ID'))

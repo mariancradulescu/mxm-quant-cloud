@@ -24,7 +24,7 @@ class Checks(unittest.TestCase):
         ps={'EURUSD':{t:1.1 for t in range(0,2*s.H+s.M5,s.M5)}}
         terms={'EURUSD':dict(units=1000,quoteAsset='USD')}
         c={'EURUSD':dict(swapMinute=1320,fundingKnown=True,observedSpreadP90Bps=2,
-          spreadMeanBps=1,centralBps=3,adverseBps=5,longDailyDebitBps=1,shortDailyDebitBps=1)}
+          spreadMeanBps=1,conversionRate=.001,centralBps=3,adverseBps=5,longDailyDebitBps=1,shortDailyDebitBps=1)}
         r=dict(t=0,s='EURUSD',due=s.H+s.M5,scaleReturn=.001)
         y=s.payoff(r,ps,c,terms)
         self.assertTrue(np.all(y[0]<0))
@@ -67,12 +67,19 @@ class Checks(unittest.TestCase):
           Contracts=[dict(Symbol='TEST',MinimumUnits=10,StepUnits=1,SwapMinute=1320,FundingKnown=True,LongDailyDebitBps=0,ShortDailyDebitBps=0)],
           Offers=[dict(At=start+1,Symbol='TEST',HorizonHours=1,Variant='FULL',CalibratedThrough=start-5*s.H,
             Means=[1,-1,1,-1],Scenarios=[[1+i*.001 for i in range(16)],[-1]*16,[1+i*.001 for i in range(16)],[-1]*16],Risk=[1,1,1,1])])
+        prices={'TEST':{q['At']:q['Bid'] for q in payload['Quotes']}}
+        terms={'TEST':dict(units=10,step=1,quoteAsset='EUR')}
+        costs={'TEST':dict(spreadMeanBps=1,observedSpreadP90Bps=2,centralBps=3,adverseBps=5,
+           conversionRate=.001,minimumMarginEur=1,swapMinute=1320,fundingKnown=True,longDailyDebitBps=0,shortDailyDebitBps=0)}
+        payload=s.native_input({},prices,costs,terms,payload['Offers'],'adverse')
+        label=s.payoff(dict(t=start,s='TEST',due=start+s.M5+s.H,scaleReturn=.001),prices,costs,terms)
         with tempfile.TemporaryDirectory() as td:
             a=Path(td)/'in.json';b=Path(td)/'out.json';a.write_text(json.dumps(payload))
             subprocess.run([executable,'src/Mxm.Replay/bin/Release/net8.0/Mxm.Replay.dll',str(a),str(b),'--sdp2-native'],check=True)
             report=json.loads(b.read_text());full=report['FULL']
             self.assertEqual(full['Final']['CompleteRoundTrips'],1)
             self.assertGreater(full['Final']['ClosedNetEur'],0)
+            self.assertAlmostEqual(full['Final']['ClosedNetEur'],float(label[0][2]*label[1]),places=10)
             self.assertEqual(report['CASH']['Final']['CashEur'],300)
             self.assertFalse(full['Qualified']);self.assertEqual(full['Final']['OpenPositions'],0)
             self.assertEqual(sum(full['WeeklyCompletions'].values()),1)
