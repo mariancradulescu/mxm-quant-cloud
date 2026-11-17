@@ -1,6 +1,9 @@
 using System.Text.Json;
 using System.Security.Cryptography;
 
+if(args.Length==3 && args[2]=="--native-lpm1")
+    return Lpm1NativeStudy.Run(args[0],args[1]);
+
 if(args.Length==3 && args[2]=="--native-ene1")
     return Ene1NativeStudy.Run(args[0],args[1]);
 if(args.Length==3 && args[2]=="--ene1-parity")

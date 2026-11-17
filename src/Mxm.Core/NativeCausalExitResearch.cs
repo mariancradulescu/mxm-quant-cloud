@@ -11,6 +11,40 @@ public sealed record NativeExitVerdict(bool RequestClose, string Reason,
 
 public static class NativeCausalExitResearch
 {
+    // LPM1 only: observed tick path. Frozen legacy Assess remains unchanged.
+    public static NativeExitVerdict AssessLifecycle(string mode, int side,
+        decimal entry, NativeExitSeed seed, decimal initialStop,
+        decimal priorExtreme, LedgerQuote quote, decimal closedM15Direction,
+        bool sessionEnd)
+    {
+        if(mode is not ("VOL" or "STRUCT" or "ADAPT") || side is not (1 or -1)
+            || seed.AtrQuote<=0 || entry<=0 || priorExtreme<=0 || quote.Bid<=0
+            || quote.Ask<quote.Bid || side*(entry-initialStop)<=0)
+            throw new ArgumentException("LPM1_PATH_STATE_INVALID");
+        decimal price=side>0?quote.Bid:quote.Ask;
+        decimal extreme=side>0?Math.Max(priorExtreme,price):Math.Min(priorExtreme,price);
+        decimal stop=initialStop;
+        if(mode=="ADAPT")
+        {
+            decimal trail=extreme-side*2m*seed.AtrQuote;
+            stop=side>0?Math.Max(stop,trail):Math.Min(stop,trail);
+            if(side*(extreme-entry)>=1.25m*seed.AtrQuote)
+            {
+                decimal locked=entry+side*.35m*seed.AtrQuote;
+                stop=side>0?Math.Max(stop,locked):Math.Min(stop,locked);
+            }
+        }
+        if(side*(price-stop)<=0)return new(true,"OBSERVED_PATH_STOP_"+mode,extreme);
+        if(mode=="VOL" && side*(price-entry)>=2m*seed.AtrQuote)
+            return new(true,"OBSERVED_PATH_ATR_TARGET",extreme);
+        if(mode=="STRUCT" && side*(seed.EquilibriumQuote-entry)>0
+            && side*(price-seed.EquilibriumQuote)>=0)
+            return new(true,"OBSERVED_PATH_EQUILIBRIUM",extreme);
+        if(mode!="VOL" && side*closedM15Direction<0)
+            return new(true,"CLOSED_BAR_REGIME_INVALIDATION",extreme);
+        return new(sessionEnd,sessionEnd?"SESSION_SAFETY_CLOSE":"HOLD_PATH",extreme);
+    }
+
     public const string FrozenFixed = "FROZEN_LEGACY_FIXED";
     public const string PredictionInvalidation = "M15_PREDICTION_INVALIDATION";
     public const string Chandelier = "M5_ATR_CHANDELIER";

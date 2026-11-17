@@ -1,5 +1,26 @@
 # Active OWNER specification v2.0 — updated 2026-11-05 (single normative authority)
 
+## OWNER lifecycle-economic priority — 2026-11-17 after MRF1-F1 / ENE1
+
+The exact MRF1-F1 and ENE1 configurations are accepted closed without promotion,
+retuning, inversion or relaunch. Their zero entries and zero incremental NET do
+not demonstrate active portfolio performance. Main research must now study the
+complete entry/position lifecycle rather than serial fixed5/30/60/120-minute
+prediction horizons. Investigate causal entry, SL/TP, mechanism-specific R:R,
+ATR, structure, trailing, profit protection, regimes and adaptive exits using
+NativeCausalExitResearch and existing native selection/risk/ledger components.
+Prioritize authentic M1/tick and intraposition paths; no OHLC-invented barrier fills.
+New read-only data may be collected whenever necessary, without an archive-
+exhaustion condition. Freeze hypothesis, comparable alternatives, selection and
+metrics before scoring. Report original executed NET/R distributions, expectancy,
+win rate, profit factor, extremes, margin, floating DD, completed trips/week and
+incremental contribution to the one EUR300 book. Protocol/code/scorecards alone
+are not demonstrated economic progress. Continue authorized work autonomously.
+The final native C# Cloud/Android, robust positive NET, systemic HARD21, maximum
+30% including floating DD and independent-confirmation goals remain unchanged.
+No LIVE/DEMO orders, Cloud activation or new permanent external services.
+
+
 ## OWNER methodological clarification — 2026-11-11 (active, prospective)
 
 This is the explicit OWNER decision after PR #201–#202. The prohibition on
