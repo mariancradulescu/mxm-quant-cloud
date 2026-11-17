@@ -1,6 +1,7 @@
 using Mxm.Core;
 var passed = 0;
 MonetaryRecoveryChecks.Run(Check);
+NativePerformanceScorecardChecks.Run(Check);
 FundedDecisionCycleChecks.Run(Check);
 NativeContractCostChecks.Run(Check);
 SfxNativeChecks.Run(Check);

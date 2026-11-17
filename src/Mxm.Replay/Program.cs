@@ -1,6 +1,11 @@
 using System.Text.Json;
 using System.Security.Cryptography;
 
+if(args.Length==3 && args[2]=="--native-pve3")
+    return Pve3NativeActionResearch.Run(args[0],args[1]);
+if(args.Length==3 && args[2]=="--pve3-parity")
+    return Pve3NativeActionResearch.Parity(args[0],args[1]);
+
 if(args.Length==1 && args[0]=="--jra1-synthetic-check")
     return Jra1JointRiskResearch.SyntheticChecks();
 

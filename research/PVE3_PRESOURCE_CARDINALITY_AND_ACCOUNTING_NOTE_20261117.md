@@ -1,0 +1,9 @@
+# PVE3 — pre-original source feature cardinality and native accounting clarification
+
+**2026-11-17, before ANY PVE3 original protected source readback or outcome score.** Original economic protocol commit `7161003f71f34dc4d28fb9aeb56f2ea83ed2f78a` is immutable.
+
+The protocol prose says "twelve core primitive features" but explicitly enumerates: M15 impulse, H1 last return, H1 trend, H4 slope, H1 efficiency, H1 log RMS, H1 volatility acceleration, H1 activity anomaly, H4 compression, peer breadth, peer coverage, hour sine, hour cosine. This is **THIRTEEN**, not twelve. The implementation therefore preserves precisely those 13 *explicitly defined* components and FOUR fixed interactions (17 C#-parity features). This is a mechanical count clarification, **not a change of variables, model complexity, training period, ablations, targets, acceptance gate or threshold**. No outcome has been opened to drive the correction.
+
+Bar-only sources cannot certify actual historical BID/ASK, fills or exact archived tariff continuity. All native EUR results are expressly conditional bar-price/current-term model scenarios, not actual-executable broker profit. The initial ex-ante risk used in scorecard must be preserved per admitted intent and is not a guaranteed stop-loss bound. When fewer than 20 financed complete trades occur, risk-trade aggregates (expectancy, win rate, mean win/loss, profit factor, payoff ratio, R multiples, worst empirical loss and 5% ES) are N/A and emitted as `null`. Zero-trade books still legitimately retain exact cash identity 300 EUR / NET 0 EUR and do **not** prove portfolio performance or true maximum continuous 30% DD.
+
+Existing select/risk/ledger must be used, and no new market source is selected by historical returns. The entire 52-week calendar is already globally exposed development. Do not claim independent holdout, retrain after original F1, or promote a recovered regression/portfolio result.
