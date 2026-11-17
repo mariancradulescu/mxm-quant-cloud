@@ -81,7 +81,7 @@ class Mrf1RecoveryTests(unittest.TestCase):
         fake=dict(predictive=dict(models=models,nativeModelParityInputs=samples))
         with patch.object(a,"FIRST_PREDICTION_COMMITMENT",digest.hexdigest()):
             forecast,proven=a.reproduce_locked_forecast_commitment(rows,fake)
-        self.assertEqual(len(forecast),2040)
+        self.assertEqual(len(forecast),4080)
         self.assertEqual(proven["modelsRefitted"],0)
         self.assertEqual(proven["priceLabelsRescored"],0)
         self.assertEqual(proven["originalFirstPredictionHash"],digest.hexdigest())
