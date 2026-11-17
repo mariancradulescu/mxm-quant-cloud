@@ -99,5 +99,13 @@ jobs:
           path: sdp2-original-*.json
           if-no-files-found: warn
           retention-days: 90
+      - name: Preserve encrypted original native inputs for technical recovery only
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: sdp2-encrypted-original-native-inputs
+          path: sdp2-native-input-*.enc
+          if-no-files-found: warn
+          retention-days: 90
       - if: success()
         run: sha256sum research/SDP2_SYSTEMATIC_ACTION_VALUE_PROTOCOL_20261117.md research/sdp2_systematic_action_value.py src/Mxm.Replay/Sdp2ActionValueResearch.cs sdp2-original-*.json

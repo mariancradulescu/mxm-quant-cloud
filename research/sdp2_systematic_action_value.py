@@ -202,6 +202,19 @@ def evaluate(rows,prices,costs,terms):
                 choice=np.argmax(np.column_stack((np.zeros(len(pred)),pred[:,2:])),axis=1)
                 chosen=choice[valid];pay=np.where(chosen==0,0,iy[np.arange(len(iy)),np.maximum(0,chosen-1)+2]*sc)
                 record.update(chosenCounterfactualNetEur=float(pay.sum()),chosenNonCash=int((choice>0).sum()),chosenFutureUnknown=int(((choice>0)&~valid).sum()))
+                zero=[]
+                for i in idx[valid]:
+                    r=rows[i];c=costs[r['s']]
+                    cycles=crossings(r['t']+M5,r['due'],c['swapMinute'])
+                    zero.append([-(c[scenario+'Bps']+3*cycles*c[side+'DailyDebitBps'])/10000/r['scaleReturn']
+                        for scenario in ('central','adverse') for side in ('long','short')])
+                record['knownCostZeroMoveNormalizedMse']=np.mean((np.asarray(zero)-iy)**2,axis=0).tolist()
+                record['knownCostZeroMoveEurMae']=np.mean(np.abs(np.asarray(zero)-iy)*sc[:,None],axis=0).tolist()
+                record['meanForecastPositiveProbability']=np.mean(probability,axis=0).tolist()
+                record['probabilityCalibrationBins']=[[
+                    dict(lower=k/5,upper=(k+1)/5,count=int(((probability[:,a]>=k/5)&((probability[:,a]<(k+1)/5) if k<4 else (probability[:,a]<=1))).sum()),
+                      observedPositiveRate=float(np.mean((iy[:,a]>0)[(probability[:,a]>=k/5)&((probability[:,a]<(k+1)/5) if k<4 else (probability[:,a]<=1))])) if np.any((probability[:,a]>=k/5)&((probability[:,a]<(k+1)/5) if k<4 else (probability[:,a]<=1))) else None)
+                    for k in range(5)] for a in range(4)]
                 metrics.append(record)
                 for j,i in enumerate(idx):
                     r=rows[i];c=costs.get(r['s']);fx=conversion(r['s'],r['t'],prices,terms)
@@ -277,6 +290,11 @@ def main():
         report['nativeModelParity']=json.loads(z.read_text())
         for scenario in ('central','adverse'):
             a.write_text(json.dumps(native_input(bars,prices,costs,terms,offers,scenario),allow_nan=False))
+            from .custody import seal_new
+            sealed=seal_new(a.read_bytes(),Path('research/custody_public.pem').read_bytes(),os.environ['GITHUB_RUN_ID'])
+            Path('sdp2-native-input-'+scenario+'.enc').write_bytes(sealed)
+            report['nativeInput'+scenario+'Sha256']=sha256(a.read_bytes()).hexdigest()
+            report['nativeInput'+scenario+'CipherSha256']=sha256(sealed).hexdigest()
             subprocess.run([executable,dll,str(a),str(z),'--sdp2-native'],check=True,timeout=1800)
             report['native_'+scenario]=json.loads(z.read_text())
             Path('sdp2-original-native-'+scenario+'.json').write_text(z.read_text())
@@ -285,7 +303,9 @@ def main():
       originalCostSamples=len(costsamples),costModel=costs,executionRunId=os.environ.get('GITHUB_RUN_ID'),
       independentConfirmation=False,qualified=False,orders=0,cloudActivated=False,
       economicDomain='CONDITIONAL_BAR_PRICE_CURRENT_TERM_COST_FX_PROXY_NOT_BROKER_EXECUTION',
-      continuousFloatingDrawdownCertified=False,otherArchiveCoverageNotYetIntegrated=True)
+      continuousFloatingDrawdownCertified=False,otherArchiveCoverageNotYetIntegrated=True,
+      codeSha256=sha256(Path(__file__).read_bytes()).hexdigest(),nativeCodeSha256=sha256(Path('src/Mxm.Replay/Sdp2ActionValueResearch.cs').read_bytes()).hexdigest(),
+      preregisteredA1Sha256=sha256(Path('research/SDP2_A1_PRESOURCE_KNOWN_COST_BENCHMARK_20261117.md').read_bytes()).hexdigest())
     Path('sdp2-original-public.json').write_text(json.dumps(report,sort_keys=True,indent=2,allow_nan=False)+'\n')
     print('SDP2_COMPLETE',json.dumps(dict(sourceBars=report['sourceBars'],forecastsSha256=report['forecastsSha256'],paired=report['paired'])),flush=True)
 
