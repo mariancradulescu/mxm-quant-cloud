@@ -1919,6 +1919,26 @@
       "cloudActivated": false,
       "report": "docs/SDP2_F1_SYSTEMATIC_PREDICTIVE_RESULT_20261117.md",
       "verdict": "NO_INCREMENTAL_VALUE_VS_KNOWN_COST_ZERO_PRICE_MOVE_BASELINE"
+    },
+    {
+      "id": "DVI1",
+      "status": "PRESOURCE_INFORMATION_TRIAGE_UNSCORED",
+      "protocolFile": "research/DVI1_PRESOURCE_DECISION_VALUE_AND_SOURCE_GATE_20261117.md",
+      "sourceInventoryPending": true,
+      "exactEconomicScoringProtocolFrozen": false,
+      "sourceUniverseSelected": false,
+      "modelTrained": false,
+      "economicScoringPerformed": false,
+      "nativeFinancialReplayPerformed": false,
+      "brokerReadOnlyRequests": 0,
+      "initialModelCapitalEur": 300,
+      "independentConfirmation": false,
+      "independent": false,
+      "qualification": false,
+      "qualified": false,
+      "ordersSubmitted": 0,
+      "cloudActivated": false,
+      "closedStudiesRerun": false
     }
   ],
   "schema": "mxm-project-data-exposure-v1",
