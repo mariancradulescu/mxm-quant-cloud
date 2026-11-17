@@ -1907,6 +1907,8 @@
       ],
       "globalCalendarExposed": true,
       "independentConfirmation": false,
+      "independent": false,
+      "qualification": false,
       "initialModelCapitalEur": 300,
       "fundedModeledRoundTrips": 0,
       "centralNetEur": 0,
