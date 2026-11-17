@@ -4,6 +4,16 @@ import numpy as np
 from . import sdp2_systematic_action_value as s
 
 class Checks(unittest.TestCase):
+    def test_raw_price_units_and_all_currency_routes(self):
+        raw={k:[[0,s.M5,v,v,v,v,1]] for k,v in {'EURUSD':110000,'USDJPY':15000000,'USDCAD':135000,'GBPUSD':125000,'AUDUSD':65000,'YEN_ASSET':15000000,'CAD_ASSET':135000,'GBP_ASSET':100000,'AUD_ASSET':100000}.items()}
+        converted=s.bar_price_units(raw)
+        prices={k:{s.M5:v[0][5]} for k,v in converted.items()}
+        terms={k:dict(quoteAsset=c) for k,c in [('EURUSD','USD'),('YEN_ASSET','JPY'),('CAD_ASSET','CAD'),('GBP_ASSET','GBP'),('AUD_ASSET','AUD')]}
+        expected={'EURUSD':1/1.1,'YEN_ASSET':1/(1.1*150),'CAD_ASSET':1/(1.1*1.35),'GBP_ASSET':1.25/1.1,'AUD_ASSET':.65/1.1}
+        for k,v in expected.items():self.assertAlmostEqual(s.conversion(k,s.M5,prices,terms),v)
+        self.assertEqual(raw['EURUSD'][0][5],110000)
+        self.assertEqual(converted['EURUSD'][0][5],1.1)
+
     def test_complete_buckets_only(self):
         rows=[[i*s.M5,(i+1)*s.M5,1,2,.5,1.1,3] for i in range(12)]
         self.assertEqual(len(s.aggregate(rows,15)),4)

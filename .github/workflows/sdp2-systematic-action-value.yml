@@ -11,7 +11,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'ops/sdp2-original-once.txt'
+      - 'ops/sdp2-f1-original-once.txt'
 permissions:
   contents: read
   actions: read
@@ -48,7 +48,7 @@ jobs:
         shell: bash
         run: |
           echo 'owner_once=false' >> "$GITHUB_OUTPUT"
-          if [[ "$GITHUB_EVENT_NAME" == 'push' && "$GITHUB_REF" == 'refs/heads/main' && "$GITHUB_ACTOR" == 'mariancradulescu' && "$GITHUB_RUN_ATTEMPT" == '1' && "$(git log -1 --format=%s)" == 'OWNER_SDP2_ORIGINAL_SYSTEMATIC_ACTION_VALUE_ONCE' && "$(git diff-tree --no-commit-id --name-only -r HEAD)" == 'ops/sdp2-original-once.txt' && "$(cat ops/sdp2-original-once.txt)" == 'OWNER_SDP2_REUSE_ORIGINAL_BDP1_AIP1_SYSTEMATIC_ACTION_VALUE_ONCE' ]]; then
+          if [[ "$GITHUB_EVENT_NAME" == 'push' && "$GITHUB_REF" == 'refs/heads/main' && "$GITHUB_ACTOR" == 'mariancradulescu' && "$GITHUB_RUN_ATTEMPT" == '1' && "$(git log -1 --format=%s)" == 'OWNER_SDP2_F1_SOURCE_PRICE_UNITS_ONCE' && "$(git diff-tree --no-commit-id --name-only -r HEAD)" == 'ops/sdp2-f1-original-once.txt' && "$(cat ops/sdp2-f1-original-once.txt)" == 'OWNER_SDP2_F1_CORRECT_100000_SOURCE_UNITS_NO_MODEL_RETUNE_ONCE' ]]; then
             echo 'owner_once=true' >> "$GITHUB_OUTPUT"
           fi
   original:

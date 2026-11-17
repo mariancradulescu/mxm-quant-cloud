@@ -24,6 +24,12 @@ FEATURES=[f'{tf}_{f}' for tf in ('M15','H1','H4') for f in
 def need(x,why):
     if not x: raise ValueError('SDP2_'+why)
 def digest(x):return sha256(json.dumps(x,sort_keys=True,separators=(',',':'),allow_nan=False).encode()).hexdigest()
+def bar_price_units(raw):
+    # decode_bars preserves Spotware integer prices at 1e5. Custody verification
+    # must precede this source-to-financial-unit conversion; raw input is untouched.
+    return {symbol:[[r[0],r[1],*[float(v)/100000 for v in r[2:6]],r[6]] for r in rows]
+            for symbol,rows in raw.items()}
+
 def aggregate(rows,minutes):
     span=minutes*60000; groups=defaultdict(list); out=[]
     for r in rows:groups[((r[1]-1)//span+1)*span].append(r)
@@ -273,7 +279,7 @@ def main():
     bars={};terms={};costsamples=[];audits=[]
     for spec,folder in zip(p['source'],('bdp-source','aip-source')):
         b,decoded,audit=recover(Path(folder),spec['run'],spec['sha256'],spec['schema'],spec['protocol'])
-        need(set(b['bars']).isdisjoint(bars),'SOURCE_SYMBOL_COLLISION');bars.update(b['bars']);audits.append(audit)
+        need(set(b['bars']).isdisjoint(bars),'SOURCE_SYMBOL_COLLISION');bars.update(bar_price_units(b['bars']));audits.append(audit)
         for s,v in b['symbols'].items():
             if s in b['bars']:terms[s]=dict(quoteAsset=v['quoteAsset'],units=float(v['contract']['minVolume'])/100,step=float(v['contract']['stepVolume'])/100)
         samples,_=extract_costs(b,decoded);costsamples.extend(x for x in samples if int(x['At'])<FIRST)
@@ -305,7 +311,7 @@ def main():
             Path('sdp2-original-native-'+scenario+'.json').write_text(z.read_text())
     report.update(study='SDP2',protocolSha256=sha256(PROTOCOL.read_bytes()).hexdigest(),sourceAudit=audits,
       sourceBars=sum(map(len,bars.values())),universe=sorted(bars),featureColumns=FEATURES,sourceCensus=census,
-      originalCostSamples=len(costsamples),costModel=costs,executionRunId=os.environ.get('GITHUB_RUN_ID'),
+      originalCostSamples=len(costsamples),costModel=costs,spotwareIntegerPriceDivisor=100000,technicalCorrection='SDP2_F1_SOURCE_PRICE_UNITS',supersededUnusableEuroRun=44037808869,executionRunId=os.environ.get('GITHUB_RUN_ID'),
       independentConfirmation=False,qualified=False,orders=0,cloudActivated=False,
       economicDomain='CONDITIONAL_BAR_PRICE_CURRENT_TERM_COST_FX_PROXY_NOT_BROKER_EXECUTION',
       continuousFloatingDrawdownCertified=False,otherArchiveCoverageNotYetIntegrated=True,
