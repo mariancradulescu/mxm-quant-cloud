@@ -1,11 +1,11 @@
+using System.Text.Json;
+using System.Security.Cryptography;
+
 if(args.Length==1 && args[0]=="--jra1-synthetic-check")
     return Jra1JointRiskResearch.SyntheticChecks();
 
 if(args.Length==3 && args[2]=="--native-jra1")
     return Jra1JointRiskResearch.Run(args[0],args[1]);
-
-using System.Text.Json;
-using System.Security.Cryptography;
 
 if(args.Length==3 && args[2]=="--native-etp1")
     return NativeTechPairExperiment.Run(args[0],args[1]);
