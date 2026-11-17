@@ -101,6 +101,17 @@ internal static class Mrf1NativeStudy
             if(byTime.GetValueOrDefault(t+1,Array.Empty<Offer>()).All(o=>o.Variant!=variant)
                && held is null)continue;
             Apply(Fact(t,"MARK",quotes:new[]{q}));
+            // Authentic quote at exit is a legally sampled floating-equity
+            // mark BEFORE close. Sparse two-endpoint sampling is NOT proof
+            // of continuous/gap intraholding drawdown control.
+            if(held is not null)
+            {
+                var floating=session.Ledger.Summary(t);
+                marks.Add(new NativeEconomicMark(t,floating.LiquidationEquityEur,
+                    floating.UsedMarginEur,floating.FreeMarginEur,floating.OpenPositions,
+                    !floating.HistoryEvidenceIncomplete &&
+                    floating.LiquidationEquityEur.HasValue));
+            }
             if(held is not null && t>=held.ExitAt)
             {
                 var pos=held;
@@ -189,6 +200,12 @@ internal static class Mrf1NativeStudy
                     held=null;refusedFinancing++;
                     continue;
                 }
+                var afterFill=session.Ledger.Summary(t+3);
+                marks.Add(new NativeEconomicMark(t+3,
+                    afterFill.LiquidationEquityEur,afterFill.UsedMarginEur,
+                    afterFill.FreeMarginEur,afterFill.OpenPositions,
+                    !afterFill.HistoryEvidenceIncomplete &&
+                    afterFill.LiquidationEquityEur.HasValue));
                 risk.Add(new NativeEntryRisk(a.Id,stressed,t,Hash(a.Id+"RISK_AT_ENTRY")));
                 offersUsed.Add(new{At=t+1,Side=side,a.Units,ModelExAnteRisk=stressed,
                     ModelScore=model.ActionScore[side>0?0:1]});
