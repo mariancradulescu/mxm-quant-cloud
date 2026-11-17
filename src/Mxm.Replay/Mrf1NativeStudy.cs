@@ -86,7 +86,7 @@ internal static class Mrf1NativeStudy
                 var pos=held;
                 if(t!=held.ExitAt)
                 {unknownHeld++;Count("ORIGINAL_EXIT_MARK_MISSING_OR_LATE");continue;}
-                Apply(Fact(t+1,"REQUEST_CLOSE",pos,margin=q.MarginPerUnit));
+                Apply(Fact(t+1,"REQUEST_CLOSE",pos,margin:q.MarginPerUnit));
                 decimal fill=pos.Side>0?q.Bid-pos.EntrySlippage:q.Ask+pos.EntrySlippage;
                 decimal fee=Math.Max(q.ExitFeePerUnit*pos.Units,q.ExitFeeFloor);
                 Apply(Fact(t+2,"CLOSE_FILL",pos,execution:fill,fee:fee,
