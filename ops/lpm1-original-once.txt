@@ -1,0 +1,2 @@
+OWNER_LPM1_EURUSD_M1_M5_COMPLETE_TICK_LIFECYCLE_EUR300_ORIGINAL_ONCE
+Protocol 64c2f7a90cbe82521a73d333a643eb20aec29285; implementation PR367; no closed-study policy calls; no orders.
