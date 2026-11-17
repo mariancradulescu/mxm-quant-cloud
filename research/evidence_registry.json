@@ -2121,7 +2121,11 @@
       "unfundedAlwaysShortCentralEur": -1.4559921115552068,
       "unfundedAlwaysShortAdverseEur": -7.4562058007671945,
       "allThreeRunsImmutable": true,
-      "conservationReport": "docs/MRF1_F1_FIRST_ORIGINAL_AND_RECOVERED_NATIVE_ECONOMIC_CLOSURE_20261117.md"
+      "conservationReport": "docs/MRF1_F1_FIRST_ORIGINAL_AND_RECOVERED_NATIVE_ECONOMIC_CLOSURE_20261117.md",
+      "independent": false,
+      "qualification": false,
+      "costClass": "CONDITIONAL_COST_MODEL",
+      "fundedNetEur": null
     }
   ],
   "schema": "mxm-project-data-exposure-v1",
