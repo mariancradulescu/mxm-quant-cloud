@@ -1,0 +1,5 @@
+CVP1 original read-only collection and native complete-policy scoring.
+OWNER authorized after LPM1. PR369 verified and merged.
+Frozen protocol commit dc958c847533fc49fbe55520dfd2948a6e7c946b.
+Implementation 718c02d1d2993d3c0e9ece0ff1bdcde82203dad8; merge 2df2a8c13f2cc8b1f5da012864fd5cfe17147b2c.
+No closed-policy execution, orders, Cloud activation or permanent services.
