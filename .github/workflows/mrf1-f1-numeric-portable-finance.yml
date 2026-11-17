@@ -31,7 +31,7 @@ jobs:
         with:
           dotnet-version: '8.0.x'
       - run: python -m pip install -r research/requirements.txt numpy==2.3.5
-      - name: Fixed recovery protocol separately frozen BEFORE this technical adapter
+      - name: Fixed numerical portability boundary frozen BEFORE this technical adapter
         run: |
           git merge-base --is-ancestor 5e00ecbdeaf421ea19ba4cf64144b280a13f1952 HEAD
           git show 5e00ecbdeaf421ea19ba4cf64144b280a13f1952:research/MRF1_F1_NUMERIC_PORTABILITY_RECOVERY_BOUNDARY_20261117.md >/tmp/mrf1-recovery-first-protocol.md
@@ -44,10 +44,10 @@ jobs:
           cmp /tmp/mrf1-original-model.py research/mrf1_authentic_m1_multiresolution.py
           git show 19d90c3601d56ac4c87389dec24118ba2b8454c3:src/Mxm.Replay/Mrf1NativeStudy.cs >/tmp/mrf1-native-original.cs
           cmp /tmp/mrf1-native-original.cs src/Mxm.Replay/Mrf1NativeStudy.cs
-      - run: python -m unittest research.test_mrf1_f1_financial_only_recovery -v
+      - run: python -m unittest research.test_mrf1_f1_numeric_portable_finance -v
       - run: dotnet build src/Mxm.Replay -c Release
       - run: python -m research.verify_owner_policy
-      - name: Exact OWNER ONE-TIME technical financial recovery on main ONLY
+      - name: Exact OWNER ONE-TIME second numerical finance-only recovery on main ONLY
         id: owner
         shell: bash
         run: |
@@ -123,12 +123,12 @@ jobs:
           run-id: 43945139889
           github-token: ${{ github.token }}
           path: cxl1-pilot-public
-      - name: Apply EXACT first original model hash to causal bars and evaluate PREVIOUSLY UNRUN C# finance only
-        run: python -m research.mrf1_f1_financial_only_recovery
+      - name: Validate FIRST original model, fixed numerical parity, then evaluate previously unrun C# finance only
+        run: python -m research.mrf1_f1_numeric_portable_finance
         env:
           R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
           MRF1_DOTNET: dotnet
-      - name: Preserve finance recovery receipts including technical error stage
+      - name: Preserve second numeric recovery receipts including technical error stage
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
