@@ -1685,6 +1685,12 @@ if(args.Length==3 && args[2]=="--mcs1-native-h1-signs")
 // Research-only bridge to EXACT existing Mxm.Core finance implementation.
 // The original broker contract fields come from CMA1/CMA2; example market
 // prices and FX rates MUST be labeled illustrative, never actual broker fills.
+if (args.Length == 3 && args[2] == "--sdp2-feature-parity")
+    return Sdp2ActionValueResearch.FeatureParity(args[0],args[1]);
+if (args.Length == 3 && args[2] == "--sdp2-native")
+    return Sdp2ActionValueResearch.Run(args[0],args[1]);
+if (args.Length == 3 && args[2] == "--sdp2-parity")
+    return Sdp2ActionValueResearch.Parity(args[0],args[1]);
 if (args.Length==3 && args[2]=="--prospective-native-contract-ledger-parity")
 {
     try
