@@ -169,6 +169,25 @@ internal static class Pve3NativeActionResearch
             MaxActive=maxActive,Completed=closed.Count(v=>v.CompletesRoundTrip),
             EventChainHash=last.EventChainHash,NoOrders=true,Qualified=false,IndependentConfirmation=false};
     }
+    public static int Parity(string source,string output)
+    {
+        using var doc=JsonDocument.Parse(File.ReadAllBytes(source));
+        int count=0;double diff=0;
+        foreach(var row in doc.RootElement.EnumerateArray())
+        {
+            double[] Beta(string field)=>row.GetProperty(field).EnumerateArray().Select(x=>x.GetDouble()).ToArray();
+            var beta=Beta("beta");var features=Beta("features");
+            var cols=row.GetProperty("columns").EnumerateArray().Select(x=>x.GetInt32()).ToArray();
+            var expected=row.GetProperty("expected").GetDouble();
+            var expanded=NativePve3FeatureMath.Expand(features.Take(13).ToArray());
+            for(int i=0;i<17;i++)diff=Math.Max(diff,Math.Abs(expanded[i]-features[i]));
+            diff=Math.Max(diff,Math.Abs(NativePve3FeatureMath.Predict(beta,features,cols)-expected));
+            count++;
+        }
+        if(count==0 || diff>1e-10)throw new InvalidOperationException("PVE3_NATIVE_PREDICTION_PARITY_FAILED");
+        File.WriteAllText(output,JsonSerializer.Serialize(new{Cases=count,MaximumAbsoluteDifference=diff,Passed=true}));
+        return 0;
+    }
     public static int Run(string source,string output)
     {
         var x=JsonSerializer.Deserialize<Input>(File.ReadAllBytes(source),Options)
