@@ -95,8 +95,8 @@ def validate_original_sources():
     genuine={}
     for row in preceding+latest:
         t=row["t"]
-        if START<=t<END and
-           datetime.fromtimestamp(t/1000,timezone.utc).hour in (8,10,12,14):
+        if (START<=t<END and
+            datetime.fromtimestamp(t/1000,timezone.utc).hour in (8,10,12,14)):
             genuine[t]=row["marks"]
     need(len(genuine)==80,"ORIGINAL_PREDECLARED_EURUSD_80_CLOCKS")
     return original["bars"],genuine,c,dict(
