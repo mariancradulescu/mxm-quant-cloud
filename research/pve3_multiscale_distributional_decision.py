@@ -178,7 +178,8 @@ def positive_probability(forecast,quantiles,cost,scale,side):
     return float(np.mean(scenarios>0))
 
 def offer_for(r,forecast,quantiles,prices,terms,costs,variant,calibrated):
-    s=r["s"];c=costs[s];t=r["t"];p=prices[s][t]
+    s=r["s"];c=costs.get(s);t=r["t"];p=prices[s].get(t)
+    if c is None or p is None:return None
     fx=conversion(s,t,prices,terms)
     if fx is None:return None
     u=terms[s]["units"];scale=p*u*fx*r["sig"]
@@ -255,7 +256,7 @@ def model_evaluation(rows,labels,prices,terms,costs):
             if len(parity)<24:
                 for k in range(min(2,len(test))):
                     idx=test[k]
-                    parity.append(dict(beta=beta.tolist(),x=X[idx][cols].tolist(),
+                    parity.append(dict(beta=beta.tolist(),features=X[idx].tolist(),columns=cols,
                             expected=float(preds[k]),week=w+1,variant=variant))
             for j,i in enumerate(test):
                 r=rows[i];forecast=float(preds[j])
@@ -366,6 +367,11 @@ def main():
     dll="src/Mxm.Replay/bin/Release/net8.0/Mxm.Replay.dll"
     with tempfile.TemporaryDirectory(prefix="pve3-private-") as folder:
         a=Path(folder)/"input.json";z=Path(folder)/"result.json"
+        a.write_text(json.dumps(report["parity"],allow_nan=False,separators=(",",":")))
+        parityProc=subprocess.run([dotnet,dll,str(a),str(z),"--pve3-parity"],
+            capture_output=True,text=True,timeout=180)
+        need(parityProc.returncode==0,"EXPORTED_CSHARP_MODEL_PARITY_FAILED")
+        pub["nativePredictiveParity"]=json.loads(z.read_text())
         for scenario in ("central","adverse"):
             inp=build_native_input(prices,terms,costs,offers,scenario)
             a.write_text(json.dumps(inp,allow_nan=False,separators=(",",":")))
