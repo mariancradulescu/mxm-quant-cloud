@@ -25,7 +25,7 @@ from .rne1_source_financial_preflight import fee_usd
 P=Path("research/MRF1_FROZEN_AUTHENTIC_M1_MULTIRESOLUTION_PROTOCOL_20261117.md")
 HXC_RUN=43817213663; CXL_275_RUN=43947388854
 SYMS=("EURUSD","XAUUSD","US500","NAS100")
-M=60000; H=3600000;W=7*24*H
+M=60000; H=3600000; DAY=24*H; W=7*DAY
 START=int(datetime(2026,10,19,tzinfo=timezone.utc).timestamp()*1000)
 END=int(datetime(2026,11,16,tzinfo=timezone.utc).timestamp()*1000)
 SCENARIOS={"central":D(".5"),"adverse":D("2")}
@@ -268,8 +268,6 @@ def original_finance_points(quote_source,contract):
     return out
 
 def fit_and_evaluate(rows):
-    import scipy  # only to ensure no local custom mathematical engine dependence? (not needed)
-    del scipy
     X=np.asarray([row["features"] for row in rows],float)
     syms=np.asarray([row["s"] for row in rows])
     weeks=np.asarray([row["week"] for row in rows])
