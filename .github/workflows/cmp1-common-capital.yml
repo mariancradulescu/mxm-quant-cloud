@@ -1,0 +1,51 @@
+name: CMP1 frozen common-capital conditional economic research
+on:
+  pull_request:
+    paths:
+      - 'research/CMP1_COMMON_CAPITAL_PROTOCOL_20261117.md'
+      - 'research/cmp1_common_capital.py'
+      - 'research/test_cmp1_common_capital.py'
+      - '.github/workflows/cmp1-common-capital.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  score-exposed-source-after-freeze:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Confirm protocol freeze commit precedes code and this outcome
+        shell: bash
+        run: |
+          test "$(git show 667e3bd001b6c3932cfa5e5775adc24dba90eb09:research/CMP1_COMMON_CAPITAL_PROTOCOL_20261117.md | sha256sum | cut -d' ' -f1)" = "$(sha256sum research/CMP1_COMMON_CAPITAL_PROTOCOL_20261117.md | cut -d' ' -f1)"
+          git merge-base --is-ancestor 667e3bd001b6c3932cfa5e5775adc24dba90eb09 HEAD
+          git log -5 --oneline
+      - name: Compile and test causal time / margin / unknown invariants
+        run: |
+          python -m py_compile research/cmp1_common_capital.py research/test_cmp1_common_capital.py
+          python -m unittest research.test_cmp1_common_capital -v
+      - name: Execute exact new CMP1 conditional source replay, no secrets or orders
+        run: python -m research.cmp1_common_capital --out cmp1-common-capital.public.json
+      - name: Print verifiable original receipt hashes and unqualified economics
+        run: |
+          sha256sum research/CMP1_COMMON_CAPITAL_PROTOCOL_20261117.md docs/AIP1_AUTHENTIC_RESULT.json research/cmp1_common_capital.py cmp1-common-capital.public.json
+          python - <<'PY'
+          import json
+          x=json.load(open('cmp1-common-capital.public.json'))
+          for name,p in x['policies'].items():
+            print('CMP1_POLICY',name,'conditionalCashEur',p['conditionalTerminalCashEur'],'conditionalCompleted',p['completeConditionalRoundTrips'],'drawdownClosedOnly',p['conditionalClosedOnlyDrawdown'],'maxMinMarginEur',p['maximumReservedMarginEur'])
+          print('CMP1_CLAIM_LIMIT nativeFundedNetEur=',x['nativeFundedNetEur'],'adverseExecutableNetEur=',x['adverseExecutableNetEur'])
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cmp1-exposed-new-common-capital-conditional-original
+          path: cmp1-common-capital.public.json
+          retention-days: 90
+          if-no-files-found: error
