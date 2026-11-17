@@ -1,0 +1,573 @@
+{
+  "cashAndRoundTripIdentityVerified": true,
+  "closedModelsRerun": false,
+  "codeSha256": "82058be8d9c85c9c63a605b5ff5c9b1886f15ce3f5574c46288055595a4b8406",
+  "denominators": [
+    {
+      "featureKnown": 57570,
+      "featureUnknown": 17310,
+      "futureUnknown": 7017,
+      "labelKnown": 50553,
+      "scheduled": 74880,
+      "weeks": [
+        1,
+        26
+      ]
+    },
+    {
+      "featureKnown": 59588,
+      "featureUnknown": 15292,
+      "futureUnknown": 8018,
+      "labelKnown": 51570,
+      "scheduled": 74880,
+      "weeks": [
+        27,
+        52
+      ]
+    }
+  ],
+  "financial": [
+    {
+      "cashEur": "300",
+      "completeRoundTrips": 0,
+      "eventChainSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "hard21EveryWeek": false,
+      "maxSampledDd": "0",
+      "nativeCalls": 0,
+      "netEur": "0",
+      "scenario": "central",
+      "variant": "CASH"
+    },
+    {
+      "cashEur": "300",
+      "completeRoundTrips": 0,
+      "eventChainSha256": "53e4e2a942b002be1aa80e1d9a5dbeddd8945c0c1e46c411df34d0ff5d9aff82",
+      "hard21EveryWeek": false,
+      "maxSampledDd": "0",
+      "nativeCalls": 2941,
+      "netEur": "0",
+      "scenario": "central",
+      "variant": "FULL"
+    },
+    {
+      "cashEur": "300",
+      "completeRoundTrips": 0,
+      "eventChainSha256": "acfaec016263146d5aa87a5fa9fa46994b144ed68a8f4b96f71226a59d28de43",
+      "hard21EveryWeek": false,
+      "maxSampledDd": "0",
+      "nativeCalls": 2941,
+      "netEur": "0",
+      "scenario": "central",
+      "variant": "NO_ACTIVITY"
+    },
+    {
+      "cashEur": "300",
+      "completeRoundTrips": 0,
+      "eventChainSha256": "e4af8eb35d7be9ba2b3d16a181a007d466b605383673eecc687954f35a4faf0b",
+      "hard21EveryWeek": false,
+      "maxSampledDd": "0",
+      "nativeCalls": 2941,
+      "netEur": "0",
+      "scenario": "central",
+      "variant": "NO_PEERS"
+    },
+    {
+      "cashEur": "300",
+      "completeRoundTrips": 0,
+      "eventChainSha256": "97b4073c9b533fb6634fa15a4ce433fdf75059b8f33adc9aada2a5af1160e6bf",
+      "hard21EveryWeek": false,
+      "maxSampledDd": "0",
+      "nativeCalls": 2941,
+      "netEur": "0",
+      "scenario": "central",
+      "variant": "OWN_PRICE"
+    },
+    {
+      "cashEur": "300",
+      "completeRoundTrips": 0,
+      "eventChainSha256": "ec7aedda604b9ac1bbb1f41785015353c7ac9a0436f1f048e99152d17d55474a",
+      "hard21EveryWeek": false,
+      "maxSampledDd": "0",
+      "nativeCalls": 2941,
+      "netEur": "0",
+      "scenario": "central",
+      "variant": "PRIOR"
+    },
+    {
+      "cashEur": "300",
+      "completeRoundTrips": 0,
+      "eventChainSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "hard21EveryWeek": false,
+      "maxSampledDd": "0",
+      "nativeCalls": 0,
+      "netEur": "0",
+      "scenario": "adverse",
+      "variant": "CASH"
+    },
+    {
+      "cashEur": "300",
+      "completeRoundTrips": 0,
+      "eventChainSha256": "8d483771c900424f8432df3401e6fa8727e85e1d8498c2d03e71b72058bd2a90",
+      "hard21EveryWeek": false,
+      "maxSampledDd": "0",
+      "nativeCalls": 2941,
+      "netEur": "0",
+      "scenario": "adverse",
+      "variant": "FULL"
+    },
+    {
+      "cashEur": "300",
+      "completeRoundTrips": 0,
+      "eventChainSha256": "366c67eb8cc25c3426d23be5cbb6b29ebc213302b27e36bd2e90c1596ebd113c",
+      "hard21EveryWeek": false,
+      "maxSampledDd": "0",
+      "nativeCalls": 2941,
+      "netEur": "0",
+      "scenario": "adverse",
+      "variant": "NO_ACTIVITY"
+    },
+    {
+      "cashEur": "300",
+      "completeRoundTrips": 0,
+      "eventChainSha256": "98214e229171ad218c45c4663ae29cd337ba32c0b66c51b796c8b50071e1ada9",
+      "hard21EveryWeek": false,
+      "maxSampledDd": "0",
+      "nativeCalls": 2941,
+      "netEur": "0",
+      "scenario": "adverse",
+      "variant": "NO_PEERS"
+    },
+    {
+      "cashEur": "300",
+      "completeRoundTrips": 0,
+      "eventChainSha256": "8ddef96ac9114c34c7c9dc9c3d6415fbcd5f9f6bc6fba883dcb948b8d3821180",
+      "hard21EveryWeek": false,
+      "maxSampledDd": "0",
+      "nativeCalls": 2941,
+      "netEur": "0",
+      "scenario": "adverse",
+      "variant": "OWN_PRICE"
+    },
+    {
+      "cashEur": "300",
+      "completeRoundTrips": 0,
+      "eventChainSha256": "58674b335c7b6a8351563f8c464558be46889536933b56496b2625a51d3a97e7",
+      "hard21EveryWeek": false,
+      "maxSampledDd": "0",
+      "nativeCalls": 2941,
+      "netEur": "0",
+      "scenario": "adverse",
+      "variant": "PRIOR"
+    }
+  ],
+  "fittedFullUpperBounds": [
+    {
+      "upperBoundNormalizedAdverseLong": -0.10028051705830689,
+      "upperBoundNormalizedAdverseShort": -0.11880219467946562,
+      "week": 27
+    },
+    {
+      "upperBoundNormalizedAdverseLong": -0.08197860283692711,
+      "upperBoundNormalizedAdverseShort": -0.127500030181572,
+      "week": 28
+    },
+    {
+      "upperBoundNormalizedAdverseLong": -0.06684443603990824,
+      "upperBoundNormalizedAdverseShort": -0.17103131157618584,
+      "week": 29
+    },
+    {
+      "upperBoundNormalizedAdverseLong": -0.0766186575177263,
+      "upperBoundNormalizedAdverseShort": -0.1676454527142774,
+      "week": 30
+    },
+    {
+      "upperBoundNormalizedAdverseLong": -0.06466730955090373,
+      "upperBoundNormalizedAdverseShort": -0.1611920686678651,
+      "week": 31
+    },
+    {
+      "upperBoundNormalizedAdverseLong": -0.06733624578355017,
+      "upperBoundNormalizedAdverseShort": -0.15728460214397227,
+      "week": 32
+    },
+    {
+      "upperBoundNormalizedAdverseLong": -0.05651376291857507,
+      "upperBoundNormalizedAdverseShort": -0.17352614728737054,
+      "week": 33
+    },
+    {
+      "upperBoundNormalizedAdverseLong": -0.06044551848829116,
+      "upperBoundNormalizedAdverseShort": -0.18176050430242394,
+      "week": 34
+    },
+    {
+      "upperBoundNormalizedAdverseLong": -0.06724307137087594,
+      "upperBoundNormalizedAdverseShort": -0.16971787238126615,
+      "week": 35
+    },
+    {
+      "upperBoundNormalizedAdverseLong": -0.08517446399747639,
+      "upperBoundNormalizedAdverseShort": -0.13840548795594404,
+      "week": 36
+    },
+    {
+      "upperBoundNormalizedAdverseLong": -0.07422426864883153,
+      "upperBoundNormalizedAdverseShort": -0.16498780556524817,
+      "week": 37
+    },
+    {
+      "upperBoundNormalizedAdverseLong": -0.06263030721031984,
+      "upperBoundNormalizedAdverseShort": -0.15722453715454726,
+      "week": 38
+    },
+    {
+      "upperBoundNormalizedAdverseLong": -0.08733931018218738,
+      "upperBoundNormalizedAdverseShort": -0.15878888659838425,
+      "week": 39
+    },
+    {
+      "upperBoundNormalizedAdverseLong": -0.09272548766524955,
+      "upperBoundNormalizedAdverseShort": -0.16353433310354779,
+      "week": 40
+    },
+    {
+      "upperBoundNormalizedAdverseLong": -0.09442271453994486,
+      "upperBoundNormalizedAdverseShort": -0.16921216317667254,
+      "week": 41
+    },
+    {
+      "upperBoundNormalizedAdverseLong": -0.09957179491286076,
+      "upperBoundNormalizedAdverseShort": -0.16872539540314505,
+      "week": 42
+    },
+    {
+      "upperBoundNormalizedAdverseLong": -0.09603470905510103,
+      "upperBoundNormalizedAdverseShort": -0.16744528986213308,
+      "week": 43
+    },
+    {
+      "upperBoundNormalizedAdverseLong": -0.10293941277126517,
+      "upperBoundNormalizedAdverseShort": -0.17498756702963444,
+      "week": 44
+    },
+    {
+      "upperBoundNormalizedAdverseLong": -0.10032275587268738,
+      "upperBoundNormalizedAdverseShort": -0.17513861208476325,
+      "week": 45
+    },
+    {
+      "upperBoundNormalizedAdverseLong": -0.10987779747123719,
+      "upperBoundNormalizedAdverseShort": -0.18154507533275166,
+      "week": 46
+    },
+    {
+      "upperBoundNormalizedAdverseLong": -0.11803013748697193,
+      "upperBoundNormalizedAdverseShort": -0.16522204278290642,
+      "week": 47
+    },
+    {
+      "upperBoundNormalizedAdverseLong": -0.12059418779648876,
+      "upperBoundNormalizedAdverseShort": -0.14403056078007598,
+      "week": 48
+    },
+    {
+      "upperBoundNormalizedAdverseLong": -0.12271345200554792,
+      "upperBoundNormalizedAdverseShort": -0.14822648405107314,
+      "week": 49
+    },
+    {
+      "upperBoundNormalizedAdverseLong": -0.12965847289730592,
+      "upperBoundNormalizedAdverseShort": -0.14060428322290996,
+      "week": 50
+    },
+    {
+      "upperBoundNormalizedAdverseLong": -0.12945367227166396,
+      "upperBoundNormalizedAdverseShort": -0.15776107608006884,
+      "week": 51
+    },
+    {
+      "upperBoundNormalizedAdverseLong": -0.13799440024937293,
+      "upperBoundNormalizedAdverseShort": -0.1456566934796091,
+      "week": 52
+    }
+  ],
+  "fullAndNoPeerExecutableTreesIdenticalEveryWeek": true,
+  "fullTreeFeatureUse": {
+    "H1_LOG_RMS": 451,
+    "H1_RETURN4": 1,
+    "H1_RETURN8": 10,
+    "H1_UPPER_WICK": 2,
+    "H4_BODY": 2,
+    "H4_EFFICIENCY": 56,
+    "H4_GAP_FRACTION": 27,
+    "H4_LOG_ACTIVITY": 2,
+    "H4_LOG_RMS": 56,
+    "H4_LOWER_WICK": 61,
+    "H4_POSITION": 18,
+    "H4_RANGE_RATIO": 23,
+    "H4_RETURN1": 8,
+    "H4_RETURN4": 1,
+    "H4_RETURN8": 38,
+    "H4_UPPER_WICK": 45,
+    "HORIZON": 393,
+    "M15_EFFICIENCY": 1,
+    "M15_LOG_ACTIVITY": 4,
+    "M15_LOG_RMS": 32,
+    "M15_POSITION": 16,
+    "M15_RETURN1": 1
+  },
+  "fullVsKnownCostZeroMove": [
+    {
+      "first13": -0.046724835105805385,
+      "horizonHours": 1,
+      "last13": -0.040560805001193585,
+      "meanBenefit": -0.04364282005349948,
+      "positiveWeeks": 0,
+      "weekBenefits": [
+        -0.025526943951809322,
+        -0.03283286533568397,
+        -0.013725790105340696,
+        -0.11600216718284795,
+        -0.0934299760320978,
+        -0.047001453747697486,
+        -0.03894594084707781,
+        -0.05156826693482586,
+        -0.0538204956207311,
+        -0.027613170253084185,
+        -0.02696907325785558,
+        -0.05466284356752027,
+        -0.02532386953889798,
+        -0.04631254773720084,
+        -0.09944424541597696,
+        -0.04248347365473748,
+        -0.050840586154572875,
+        -0.04236031083938441,
+        -0.03487286497429398,
+        -0.03215691067436177,
+        -0.0369466786930448,
+        -0.02223305926253971,
+        -0.025175133185106002,
+        -0.03380279985792045,
+        -0.035864017203041776,
+        -0.024797837363335518
+      ]
+    },
+    {
+      "first13": -0.016212718729186486,
+      "horizonHours": 4,
+      "last13": -0.011822531772721105,
+      "meanBenefit": -0.014017625250953795,
+      "positiveWeeks": 1,
+      "weekBenefits": [
+        -0.011636089670430394,
+        -0.016515225726286165,
+        0.005096316737921658,
+        -0.03999499209960211,
+        -0.03176517356036834,
+        -0.012103303201383753,
+        -0.020463255525366097,
+        -0.02780544061283763,
+        -0.010502244322546872,
+        -0.018200976219791443,
+        -0.006555613653961956,
+        -0.009354588353887472,
+        -0.010964757270883752,
+        -0.004179361005072657,
+        -0.01598777750422009,
+        -0.00351390091084669,
+        -0.009022724214481581,
+        -0.016990999898955472,
+        -0.017080749358663105,
+        -0.011137509572018534,
+        -0.010018737305889314,
+        -0.01652244882494558,
+        -0.010051279954732983,
+        -0.014078929762622039,
+        -0.014341504029413032,
+        -0.01076699070351328
+      ]
+    }
+  ],
+  "independentConfirmation": false,
+  "jsonSha256": "f48a81fc6be4052d8273b2fc336d5512bcd1636c791a14ef45e8341c2700d931",
+  "kind": "DIRECTOR_READ_ONLY_ORIGINAL_RECEIPT_RECONCILIATION_NOT_INDEPENDENT_AUDIT",
+  "matchedDenominatorsVerified": true,
+  "nativeCodeSha256": "cc51dd4f9e4d4202c846d57588c5efd0c59386b0cfbe69cfede15fbb474b8165",
+  "originalArtifact": 14308483122,
+  "originalCostSamples": 166,
+  "originalRun": 44038569445,
+  "originalSources": [
+    {
+      "ciphertextSha256": "e47ba7204ca7e07e7bb523ede8a8171f49b216cad09914142ed548839660a370",
+      "closedModelsCalled": 0,
+      "newBrokerRequests": 0,
+      "rawAccountAndBarsReconstructed": true,
+      "rawBars": {
+        "AUDUSD": 74177,
+        "EURUSD": 74195,
+        "GBPUSD": 74126,
+        "USDCAD": 74161,
+        "USDJPY": 74031,
+        "XAUUSD": 70550
+      },
+      "sourceRunId": 41724643418
+    },
+    {
+      "ciphertextSha256": "fa684ca1de58c6d1e8bdee410834855d05389af0c0ae4523b095367dce0e5331",
+      "closedModelsCalled": 0,
+      "newBrokerRequests": 0,
+      "rawAccountAndBarsReconstructed": true,
+      "rawBars": {
+        "AUS200": 62310,
+        "GER40": 60903,
+        "JPN225": 70463,
+        "NAS100": 70495,
+        "UK100": 60186,
+        "US500": 70490
+      },
+      "sourceRunId": 41735441128
+    }
+  ],
+  "predictive": [
+    {
+      "actualPositiveRateLong": 0.34935525934511735,
+      "actualPositiveRateShort": 0.3386337293538105,
+      "brier": 0.224798971312663,
+      "eurMae": 2.438224457320898,
+      "futureUnknown": 2186,
+      "horizonHours": 1,
+      "labelKnown": 27608,
+      "mse": 2.130180253785268,
+      "variant": "FULL",
+      "zeroMoveCostMse": 2.086486733999364
+    },
+    {
+      "actualPositiveRateLong": 0.34935525934511735,
+      "actualPositiveRateShort": 0.3386337293538105,
+      "brier": 0.224798971312663,
+      "eurMae": 2.438224457320898,
+      "futureUnknown": 2186,
+      "horizonHours": 1,
+      "labelKnown": 27608,
+      "mse": 2.130180253785268,
+      "variant": "NO_PEERS",
+      "zeroMoveCostMse": 2.086486733999364
+    },
+    {
+      "actualPositiveRateLong": 0.34935525934511735,
+      "actualPositiveRateShort": 0.3386337293538105,
+      "brier": 0.22588349051905246,
+      "eurMae": 2.4681868953273853,
+      "futureUnknown": 2186,
+      "horizonHours": 1,
+      "labelKnown": 27608,
+      "mse": 2.1631977615873033,
+      "variant": "NO_ACTIVITY",
+      "zeroMoveCostMse": 2.086486733999364
+    },
+    {
+      "actualPositiveRateLong": 0.34935525934511735,
+      "actualPositiveRateShort": 0.3386337293538105,
+      "brier": 0.22624379425800492,
+      "eurMae": 2.4738959807160428,
+      "futureUnknown": 2186,
+      "horizonHours": 1,
+      "labelKnown": 27608,
+      "mse": 2.162989788222858,
+      "variant": "OWN_PRICE",
+      "zeroMoveCostMse": 2.086486733999364
+    },
+    {
+      "actualPositiveRateLong": 0.34935525934511735,
+      "actualPositiveRateShort": 0.3386337293538105,
+      "brier": 0.22607980759652999,
+      "eurMae": 2.453911574693906,
+      "futureUnknown": 2186,
+      "horizonHours": 1,
+      "labelKnown": 27608,
+      "mse": 2.180126211129514,
+      "variant": "PRIOR",
+      "zeroMoveCostMse": 2.086486733999364
+    },
+    {
+      "actualPositiveRateLong": 0.4242968032718471,
+      "actualPositiveRateShort": 0.40568399966613805,
+      "brier": 0.2430594861134296,
+      "eurMae": 4.864240820689074,
+      "futureUnknown": 5832,
+      "horizonHours": 4,
+      "labelKnown": 23962,
+      "mse": 2.6363752571916677,
+      "variant": "FULL",
+      "zeroMoveCostMse": 2.622371542592549
+    },
+    {
+      "actualPositiveRateLong": 0.4242968032718471,
+      "actualPositiveRateShort": 0.40568399966613805,
+      "brier": 0.2430594861134296,
+      "eurMae": 4.864240820689074,
+      "futureUnknown": 5832,
+      "horizonHours": 4,
+      "labelKnown": 23962,
+      "mse": 2.6363752571916677,
+      "variant": "NO_PEERS",
+      "zeroMoveCostMse": 2.622371542592549
+    },
+    {
+      "actualPositiveRateLong": 0.4242968032718471,
+      "actualPositiveRateShort": 0.40568399966613805,
+      "brier": 0.24377986499457474,
+      "eurMae": 4.889885519770278,
+      "futureUnknown": 5832,
+      "horizonHours": 4,
+      "labelKnown": 23962,
+      "mse": 2.644676416688183,
+      "variant": "NO_ACTIVITY",
+      "zeroMoveCostMse": 2.622371542592549
+    },
+    {
+      "actualPositiveRateLong": 0.4242968032718471,
+      "actualPositiveRateShort": 0.40568399966613805,
+      "brier": 0.24383463922043236,
+      "eurMae": 4.884122339799847,
+      "futureUnknown": 5832,
+      "horizonHours": 4,
+      "labelKnown": 23962,
+      "mse": 2.6460973838789625,
+      "variant": "OWN_PRICE",
+      "zeroMoveCostMse": 2.622371542592549
+    },
+    {
+      "actualPositiveRateLong": 0.4242968032718471,
+      "actualPositiveRateShort": 0.40568399966613805,
+      "brier": 0.24346083773266006,
+      "eurMae": 4.948548560929971,
+      "futureUnknown": 5832,
+      "horizonHours": 4,
+      "labelKnown": 23962,
+      "mse": 2.6492859697677997,
+      "variant": "PRIOR",
+      "zeroMoveCostMse": 2.622371542592549
+    }
+  ],
+  "protocolSha256": "cefbda37bfa7936675ad18ce8396d3e96a8a2f393071000894769f8e08156945",
+  "qualified": false,
+  "sourceBars": 836087,
+  "universe": [
+    "AUDUSD",
+    "AUS200",
+    "EURUSD",
+    "GBPUSD",
+    "GER40",
+    "JPN225",
+    "NAS100",
+    "UK100",
+    "US500",
+    "USDCAD",
+    "USDJPY",
+    "XAUUSD"
+  ],
+  "verdict": "SDP2_F1_EXPOSED_ACTION_VALUE_NO_VALUE_VS_KNOWN_COST_BASELINE_NO_PROMOTION",
+  "zipSha256": "309e0feb37dd048c2c934eb643726fbe8daf63f025b67d4a939230d2a239bfa5"
+}

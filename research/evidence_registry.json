@@ -1888,6 +1888,37 @@
       "independentConfirmation": false,
       "ordersSubmitted": 0,
       "cloudActivated": false
+    },
+    {
+      "id": "SDP2",
+      "status": "CLOSED_EXACT_NO_PROMOTION",
+      "protocolFile": "research/SDP2_SYSTEMATIC_ACTION_VALUE_PROTOCOL_20261117.md",
+      "protocolCommit": "c7891655084de2f87dbf9af41f841cf6f1d0a41a",
+      "originalInvalidUnitRunId": 44037808869,
+      "originalInvalidPublicArtifactId": 14308411761,
+      "technicalCorrection": "SDP2_F1_SOURCE_PRICE_UNITS",
+      "correctedOriginalRunId": 44038569445,
+      "correctedPublicArtifactId": 14308483122,
+      "correctedZipSha256": "309e0feb37dd048c2c934eb643726fbe8daf63f025b67d4a939230d2a239bfa5",
+      "correctedOriginalJsonSha256": "f48a81fc6be4052d8273b2fc336d5512bcd1636c791a14ef45e8341c2700d931",
+      "sourceRuns": [
+        41724643418,
+        41735441128
+      ],
+      "globalCalendarExposed": true,
+      "independentConfirmation": false,
+      "independent": false,
+      "qualification": false,
+      "initialModelCapitalEur": 300,
+      "fundedModeledRoundTrips": 0,
+      "centralNetEur": 0,
+      "adverseNetEur": 0,
+      "hard21Achieved": false,
+      "qualified": false,
+      "ordersSubmitted": 0,
+      "cloudActivated": false,
+      "report": "docs/SDP2_F1_SYSTEMATIC_PREDICTIVE_RESULT_20261117.md",
+      "verdict": "NO_INCREMENTAL_VALUE_VS_KNOWN_COST_ZERO_PRICE_MOVE_BASELINE"
     }
   ],
   "schema": "mxm-project-data-exposure-v1",
