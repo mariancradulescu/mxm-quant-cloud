@@ -1,0 +1,127 @@
+name: ENE1 original ETH genuine quote-side direct NET economic information
+on:
+  pull_request:
+    paths:
+      - 'research/ENE1_FROZEN_AUTHENTIC_ETH_NET_REGIME_20261117.md'
+      - 'research/ene1_eth_original_source_and_features.py'
+      - 'research/ene1_direct_net_eth_original.py'
+      - 'research/test_ene1_eth_direct_net.py'
+      - 'research/test_ene1_native_synthetic.py'
+      - 'src/Mxm.Replay/Ene1NativeStudy.cs'
+      - 'src/Mxm.Replay/Program.cs'
+      - '.github/workflows/ene1-original-direct-eur.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ops/ene1-original-once.txt'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    outputs:
+      owner_once: ${{ steps.owner.outputs.owner_once }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - run: python -m pip install -r research/requirements.txt numpy==2.3.5
+      - name: ENE1 scientific economic protocol FROZEN before actual code
+        run: |
+          git merge-base --is-ancestor 3775154b8d5e4fabe0ff0618760a5e726a278bd7 HEAD
+          git show 3775154b8d5e4fabe0ff0618760a5e726a278bd7:research/ENE1_FROZEN_AUTHENTIC_ETH_NET_REGIME_20261117.md >/tmp/ene1-frozen.md
+          cmp /tmp/ene1-frozen.md research/ENE1_FROZEN_AUTHENTIC_ETH_NET_REGIME_20261117.md
+      - run: python -m unittest research.test_ene1_eth_direct_net -v
+      - run: dotnet build src/Mxm.Replay -c Release
+      - name: Original native direct-net ETH route and synthetic funded portfolio
+        run: python -m unittest research.test_ene1_native_synthetic -v
+        env:
+          ENE1_DOTNET: dotnet
+      - run: dotnet run --project tests/Mxm.Checks -c Release
+      - run: python -m research.verify_owner_policy
+      - name: Only exact OWNER first original financial-source-reuse study main marker
+        id: owner
+        shell: bash
+        run: |
+          echo 'owner_once=false' >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_EVENT_NAME" == "push" &&
+                "$GITHUB_REF" == "refs/heads/main" &&
+                "$GITHUB_ACTOR" == "mariancradulescu" &&
+                "$GITHUB_RUN_ATTEMPT" == "1" &&
+                "$(git log -1 --format=%s)" == "OWNER_ENE1_DIRECT_ETH_NET_ORIGINAL_ONCE" &&
+                "$(git diff-tree --no-commit-id --name-only -r HEAD)" == "ops/ene1-original-once.txt" &&
+                "$(cat ops/ene1-original-once.txt)" == "OWNER_ENE1_325_CXL1_SOURCE_ETH_M5_MULTIRES_DIRECT_EUR300_ONCE" ]]; then
+            echo 'owner_once=true' >> "$GITHUB_OUTPUT"
+          fi
+  protected-original-new-economics:
+    needs: verify
+    if: ${{ needs.verify.outputs.owner_once == 'true' }}
+    environment: mxm-r3-custody-v1
+    concurrency:
+      group: mxm-ene1-first-original-direct-net-only
+      cancel-in-progress: false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 100
+    env:
+      OMP_NUM_THREADS: '2'
+      OPENBLAS_NUM_THREADS: '2'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - run: python -m pip install -r research/requirements.txt numpy==2.3.5
+      - run: dotnet build src/Mxm.Replay -c Release
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: cxl1-original-275-earlier-sealed-source
+          run-id: 43947388854
+          github-token: ${{ github.token }}
+          path: cxl1-new-encrypted
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: cxl1-original-275-earlier-source-coverage
+          run-id: 43947388854
+          github-token: ${{ github.token }}
+          path: cxl1-new-public
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: cxl1-original-50clock-source-encrypted
+          run-id: 43945139889
+          github-token: ${{ github.token }}
+          path: cxl1-pilot-encrypted
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: cxl1-original-50clock-pilot-public
+          run-id: 43945139889
+          github-token: ${{ github.token }}
+          path: cxl1-pilot-public
+      - name: Authenticate ORIGINAL immutable source and run NEW ENE1 direct adverse EUR models and native common capital
+        run: python -m research.ene1_direct_net_eth_original
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+          ENE1_DOTNET: dotnet
+      - name: Preserve original predictive and financial receipts even if original fails
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ene1-first-original-eth-direct-eur-economic-result
+          path: ene1-*.json
+          if-no-files-found: warn
+          retention-days: 90
+      - if: success()
+        run: sha256sum research/ENE1_FROZEN_AUTHENTIC_ETH_NET_REGIME_20261117.md research/ene1_eth_original_source_and_features.py research/ene1_direct_net_eth_original.py src/Mxm.Replay/Ene1NativeStudy.cs ene1-*.json
