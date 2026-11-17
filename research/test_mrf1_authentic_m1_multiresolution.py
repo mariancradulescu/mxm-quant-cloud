@@ -25,8 +25,13 @@ class MRF1Checks(unittest.TestCase):
             m.strict_aggregate(five,5,1)
         fine[30][0]+=m.M
         self.assertLess(len(m.strict_aggregate(fine,1,5)),36)
-        self.assertEqual(len(m.strict_aggregate(self.fake(t,48,60),60,240)),12)
-        self.assertEqual(len(m.strict_aggregate(self.fake(t,48,30),30,1440)),1)
+        # At an intentionally misaligned 09:00 UTC end, preserve partial
+        # higher-timeframe buckets as UNKNOWN rather than inventing candles.
+        self.assertEqual(len(m.strict_aggregate(self.fake(t,48,60),60,240)),11)
+        self.assertEqual(len(m.strict_aggregate(self.fake(t,48,30),30,1440)),0)
+        aligned=m.START+4*24*m.H
+        self.assertEqual(len(m.strict_aggregate(self.fake(aligned,48,60),60,240)),12)
+        self.assertEqual(len(m.strict_aggregate(self.fake(aligned,48,30),30,1440)),1)
 
     def test_61_m1_and_seven_timeframes_never_future(self):
         t=m.START+3*24*m.H+9*m.H
