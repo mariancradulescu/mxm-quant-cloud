@@ -276,6 +276,10 @@ def run_policy(rows,variant,scenario,u):
         known.append(x)
     events=native_events(selection,u,scenario,variant)
     try:
+        # A proposed action with an unavailable postentry quote has UNKNOWN net,
+        # never a silent dropped loss or a retrospective CASH decision.
+        need(reasons["PROPOSED_BUT_ORIGINAL_ENTRY_OR_EXIT_UNPRICED"]==0,
+             "DVI1_POSTENTRY_UNPRICED_POLICY_NET_UNKNOWN")
         native=run_native(events)
         modeledNet=sum((x["labels"][scenario][side]["net"] for x,side in selection),D(0))
         need(abs(D(str(native["netEur"]))-modeledNet)<D("0.01") and
