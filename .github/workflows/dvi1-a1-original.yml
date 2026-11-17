@@ -1,0 +1,114 @@
+name: DVI1 A1 ORIGINAL source-only reuse and NEW chronological action value EUR300
+on:
+  pull_request:
+    paths:
+      - 'research/DVI1_A1_FROZEN_ACTION_VALUE_PROTOCOL_20261117.md'
+      - 'research/dvi1_action_value.py'
+      - 'research/test_dvi1_action_value.py'
+      - '.github/workflows/dvi1-a1-original.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ops/dvi1-a1-original-once.txt'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  validate-protocol-and-native:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    outputs:
+      allowed: ${{ steps.owner.outputs.allowed }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - run: python -m pip install -r research/requirements.txt
+      - name: Protocol separately frozen before code or protected scoring
+        run: |
+          git merge-base --is-ancestor ffd7284fcdd1a11310c7ddf25242e1468ea4a9f6 HEAD
+          git show ffd7284fcdd1a11310c7ddf25242e1468ea4a9f6:research/DVI1_A1_FROZEN_ACTION_VALUE_PROTOCOL_20261117.md > /tmp/dvi1-original-frozen.md
+          cmp /tmp/dvi1-original-frozen.md research/DVI1_A1_FROZEN_ACTION_VALUE_PROTOCOL_20261117.md
+      - run: python -m unittest research.test_dvi1_action_value -v
+      - run: dotnet build src/Mxm.Replay -c Release
+      - run: python -m research.verify_owner_policy
+      - name: OWNER exact original first-only once, no closed policy replay
+        id: owner
+        shell: bash
+        run: |
+          echo 'allowed=false' >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_EVENT_NAME" == "push" &&
+                "$GITHUB_REF" == "refs/heads/main" &&
+                "$GITHUB_ACTOR" == "mariancradulescu" &&
+                "$GITHUB_RUN_ATTEMPT" == "1" &&
+                "$(git log -1 --format=%s)" == "OWNER_DVI1_A1_ORIGINAL_READBACK_ONCE" &&
+                "$(git diff-tree --no-commit-id --name-only -r HEAD)" == "ops/dvi1-a1-original-once.txt" &&
+                "$(cat ops/dvi1-a1-original-once.txt)" == "OWNER_DVI1_A1_AUTHENTIC_PRIOR_SOURCE_NATIVE_EUR300_ONCE" ]]; then
+            echo 'allowed=true' >> "$GITHUB_OUTPUT"
+          fi
+  original-protected-new-financial-evaluation:
+    needs: validate-protocol-and-native
+    if: ${{ needs.validate-protocol-and-native.outputs.allowed == 'true' }}
+    environment: mxm-r3-custody-v1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    concurrency:
+      group: mxm-dvi1-a1-new-original-once
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - run: python -m pip install -r research/requirements.txt
+      - run: dotnet build src/Mxm.Replay -c Release
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: cxl1-original-275-earlier-sealed-source
+          run-id: 43947388854
+          github-token: ${{ github.token }}
+          path: cxl1-new-encrypted
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: cxl1-original-275-earlier-source-coverage
+          run-id: 43947388854
+          github-token: ${{ github.token }}
+          path: cxl1-new-public
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: cxl1-original-50clock-source-encrypted
+          run-id: 43945139889
+          github-token: ${{ github.token }}
+          path: cxl1-pilot-encrypted
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: cxl1-original-50clock-pilot-public
+          run-id: 43945139889
+          github-token: ${{ github.token }}
+          path: cxl1-pilot-public
+      - name: Independently reconstruct original raw protobuf and score NEW DVI1 A1 policy only
+        run: python -m research.dvi1_action_value
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - name: Conserve original NEW source-bound financial public receipt even after diagnostic failure
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: dvi1-a1-original-new-action-value-native-eur300
+          path: dvi1-a1-original-new-action-value-native-eur300.public.json
+          if-no-files-found: warn
+          retention-days: 90
+      - if: success()
+        run: sha256sum research/DVI1_A1_FROZEN_ACTION_VALUE_PROTOCOL_20261117.md research/dvi1_action_value.py dvi1-a1-original-new-action-value-native-eur300.public.json
