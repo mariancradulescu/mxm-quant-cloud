@@ -3242,7 +3242,7 @@
   "lpm1LifecycleResearch": {
     "protocol": "research/LPM1_FROZEN_LIFECYCLE_20261117.md",
     "protocolCommit": "64c2f7a90cbe82521a73d333a643eb20aec29285",
-    "status": "FROZEN_BEFORE_ORIGINAL_EXECUTION",
+    "status": "LPM1_CLOSED_EXACT_NO_POSITIVE_INCREMENTAL_NET",
     "calendar": [
       "2026-08-17",
       "2026-11-09"
@@ -3251,6 +3251,29 @@
     "independentConfirmation": false,
     "qualified": false,
     "closedStudyPoliciesCalled": false,
-    "counterfactualBooksMustNotBeSummed": true
+    "counterfactualBooksMustNotBeSummed": true,
+    "originalRun": 44090751371,
+    "originalCommit": "835b56cce3794d9eec276d773b0f5de7e9a3a9f2",
+    "publicArtifact": 14332790979,
+    "encryptedArtifact": 14332631701,
+    "publicZipSha256": "cfb7398418351a797657d373ad5d27c416fa4fb63ef56a5d5cee2af9798cdd04",
+    "sourceNativeSha256": "c91f5162b44bb1c565f41689ced6d4516042463a0789d328d8c0b940c680dbe3",
+    "requests": 1781,
+    "bidTicks": 1126172,
+    "askTicks": 1125641,
+    "m1Bars": 87379,
+    "m5Bars": 17537,
+    "contextualNetEur": 0,
+    "contextualCompletedTrades": 0,
+    "activeControlAdverseNet": {
+      "VOL_LONG_adverse": -8.496945751930888,
+      "VOL_SHORT_adverse": -0.15125507964148494,
+      "STRUCT_LONG_adverse": -10.660921129172031,
+      "STRUCT_SHORT_adverse": -8.660701733221734,
+      "ADAPT_LONG_adverse": -13.48858335798029,
+      "ADAPT_SHORT_adverse": -7.694444626196745
+    },
+    "result": "docs/LPM1_ORIGINAL_LIFECYCLE_RESULT.md",
+    "publicArithmeticAuditPassed": true
   }
 }

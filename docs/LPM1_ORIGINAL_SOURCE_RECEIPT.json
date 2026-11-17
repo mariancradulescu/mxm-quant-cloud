@@ -1,0 +1,398 @@
+{
+  "Study": "LPM1",
+  "OriginalRun": "44090751371",
+  "ProtocolSha256": "6f041a7ff915bda6b16ac8fbecc920ed6d9d28c1b58f25ec14c2825610686d09",
+  "OrdersSubmitted": 0,
+  "CloudActivated": false,
+  "IndependentConfirmation": false,
+  "Qualified": false,
+  "CostClass": "CONDITIONAL_COST_MODEL",
+  "Requests": 1781,
+  "SourceChunks": [
+    {
+      "Name": "contract",
+      "PlainSha256": "0893f5710a03d55787874619de70cba3f2ea834f59ebee16fb6b87f44a04cc78",
+      "CipherSha256": "7e2055bf9209b2c550f71c13820ce97e5ab7cb47c0bba5dddd7a3275cb1904b6",
+      "Responses": 5
+    },
+    {
+      "Name": "m1",
+      "PlainSha256": "adf7d77a9ddacae52f5115ade23a174d64e1c4415787b3b2a82f2c26f63d67e0",
+      "CipherSha256": "1996f632ca98b7ae2615191e89c20304379616ae53c2e85f142260bba2a06633",
+      "Responses": 348
+    },
+    {
+      "Name": "m5",
+      "PlainSha256": "e2cb4457b2c0473a787a26086384203a74b6b665df7ccc74bf140ff48bdf6182",
+      "CipherSha256": "c98598059d77a1ad2d7c742ec7c4752bd2a689d4ba0ce6cba93807cdb5eb279d",
+      "Responses": 348
+    },
+    {
+      "Name": "ticks-1786924800000",
+      "PlainSha256": "2f73fb65d731c5fb74220bbaaa889ba91e3575606633edbab2c7e6ba81e0f89a",
+      "CipherSha256": "02fb2134e13d522730025f963fdd88cd17a35ae9c660607c84442418ebcfe02f",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1787011200000",
+      "PlainSha256": "18ff00ba7cbe6611f6c8780cdd80820526da307cc626fd755dddb1bc475dca15",
+      "CipherSha256": "40fb8b0bf834edeea5a76a13f19d82c1ee211c800aeaacacaed8cf5d2bcdc95f",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1787097600000",
+      "PlainSha256": "8747f2861ff7fbac591b0e128cb6dc3ddc37364bc7907a32361d687101c52eb2",
+      "CipherSha256": "4e31cf7769768091349ea59a3364533aeddfa9fed14b5719f962dbbe894f0449",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1787184000000",
+      "PlainSha256": "6b3859beefc53ccf6e15a5854762e3dc87a3476e93774b8e0685b0894c16a174",
+      "CipherSha256": "ed94423272141699f6347d6188b21430bbf31b71e5a13e41b0159a111a924543",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1787270400000",
+      "PlainSha256": "295062601968ef0f4d6fe74193d17d4d00042db7bb9e9a76cdb334111786ccfd",
+      "CipherSha256": "9adb04a048bdd73142aabb8c5a95c4f21688bf52ce58772dde59682f26bf5117",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1787529600000",
+      "PlainSha256": "115632a6bcc3f537472ca8b0a167ccfd5342ab719d697e11fbaccc917e6ebf20",
+      "CipherSha256": "afd35802316e3fe1a0ba8751062502d535d650dc7cb082539772fd98de7d8ae5",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1787616000000",
+      "PlainSha256": "7018a960022d4abb3d395fa3eeea2ec6f9ae65814d700508c0d1ac57f07ec7de",
+      "CipherSha256": "ea99cd71ad8987f1d992c46fb50664ece03535b10a89e9798c398e6c80cb63da",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1787702400000",
+      "PlainSha256": "4b6146021dc51a89d27ece83fb3014462d86b563a0b5d57407f902e0ec0e3edd",
+      "CipherSha256": "885a6d84687c12c62ab9472e2d9cab682b36c579e61fa6843a22b8c3dff7deef",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1787788800000",
+      "PlainSha256": "5d6dd8a849f2ffae3c4ed968201c4f6e1b0a709d6803574de3c35ad58f735a0a",
+      "CipherSha256": "8ce98b1ee46728fe52317d1e09d0910ef71f1f6221a854cd87f1523ca427bbc3",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1787875200000",
+      "PlainSha256": "8552ac641aa0dc4021b54ccd5e1d249727ecd9483e31879dcc0a34f727b8e366",
+      "CipherSha256": "8b3888ba543172293643d3932dc24f23590b55d69fc4c1dc92a777364c89d25f",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1788134400000",
+      "PlainSha256": "09d3b09fed799681ddedd4c479456e3f9eb9f52e4a70b5ef9dd54a7bc052e916",
+      "CipherSha256": "2116cd6607066ab9eee2e4be99e9602af45cfc0058f3c1dffe994abaa9db4f4f",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1788220800000",
+      "PlainSha256": "de9929e09a1f49a38d955a2a60f3b7aae675b53f4ff4e4946a19d65b123c2fa7",
+      "CipherSha256": "d77ae813ba76f6a163f87ae16796437b7607141ff3aba939a104857a54b0235a",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1788307200000",
+      "PlainSha256": "618cce96e8027bacfe98fd627fb860ef3744d5ece0a316a3a0890a73b030a15a",
+      "CipherSha256": "b5e019ebfd5f96e64a539cc16382554e17a9a65d8ffb9996c1b4a08e4ce696ac",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1788393600000",
+      "PlainSha256": "4bfd24113f522db24404e4605c5436eda3c383ce60e1f6705a9c9d726e920562",
+      "CipherSha256": "b13100700a23b5d05e1d2411b8c1121e42290ab40a78130060e3088f9479cbdf",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1788480000000",
+      "PlainSha256": "e2e480ec09ac910c55e367a3d2e815e6e3ec2788c1b1b5714d08deffecfdd4f1",
+      "CipherSha256": "003a97b932e3c1052968881700dbec4a84dadba37090f12cb9861bb077f55c54",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1788739200000",
+      "PlainSha256": "e0e4ff55fb421b2c9d96cf7412cf9481e5df2b6451b47f03bfee21726818cb00",
+      "CipherSha256": "d0293fa65f82624922b1d06499e897c96902a3a3e38b74a001f88deb0172893e",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1788825600000",
+      "PlainSha256": "a024ad9bfe0bc28c0a38893f0298d634718f87f5287535daf45543e6d1fcb087",
+      "CipherSha256": "02002f289ceecac06a3c217bca2fb99699937c967b4f7d1fb58e3c3d2f7fb333",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1788912000000",
+      "PlainSha256": "274198dd4192440edf2ca007587a530be81bfb1b1b68a3854fd3d647c4ae83d9",
+      "CipherSha256": "49856b3f5cd960a6a635531771206f583daafe544fa497ae35923023056b3bd6",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1788998400000",
+      "PlainSha256": "7adc6f17d1e99386bc439153e138717adb68f37bb77879322875770091670407",
+      "CipherSha256": "79d50fb9f82c912a5346305b65c71c9595b8a96925e3b4748d8bc5452e64e989",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1789084800000",
+      "PlainSha256": "51c150988b9efc52d015bc1d6aa194c8d94d466668ecbac5fff8e62d00dfbca0",
+      "CipherSha256": "3bf53040e5bbde10b64376bfd1cbdbb70070a1cf48cb4d83a06c8a8b95487bb0",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1789344000000",
+      "PlainSha256": "a8a6a0369841e3e739ca98dd296d94247ecdf36cbb00617d802d744bcb5fa637",
+      "CipherSha256": "6d36e8dadacf50bf2451b6d3dea2b008a80538388de8a2dd5bbdf1f5f73f047a",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1789430400000",
+      "PlainSha256": "68166ac241fac7be823c949b84feebf46236097c014c0ac108626f03fa10621c",
+      "CipherSha256": "2acb4a1698adb30d15c6567e6bcaaf2887661d311860f9adb4179a352ff53014",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1789516800000",
+      "PlainSha256": "0fb2131fbef5da7ebddaa7962a6ceeea28dd087ff5d131f2a749cec6f033451c",
+      "CipherSha256": "c4598bc1b41b5cbee716bb0cd98eff40d13af469a2a9f3dcc733d6b07631ff6a",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1789603200000",
+      "PlainSha256": "4de75b06d63e33a4191e5155accce9c7d4e73fd572f022b745995caee5014a6f",
+      "CipherSha256": "252cc6de60ad0d3fc8caf1ac6e456c2c76ee1ab6374e08e2b9a8bf4e3b476185",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1789689600000",
+      "PlainSha256": "898a1715b66009e024632b8b2abf67e50f2e1b15f995a32748775413bfdfceeb",
+      "CipherSha256": "8efcbd84beba0ee11d43a786c91657fb714d4e2c4fbba4ba423006ec004a1ae0",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1789948800000",
+      "PlainSha256": "84721e2d57238c6257871042fe8afba688faa804eab9988db32f6b9f1ec61b51",
+      "CipherSha256": "4c97357297aa42ea45ba78b8d2453115ad5b0923da09851afb6b5a5ac137a371",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1790035200000",
+      "PlainSha256": "b8e8d6e064af371bde15b03a58a80f4d2aadc465acb0a1a5754e5cafe049355a",
+      "CipherSha256": "703a074b6b0398ac9b890ac631f437b484a8186c6b72c52e3f343f6d65c56a1e",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1790121600000",
+      "PlainSha256": "dddf5d83090e7b733c3aafed9a98e51f73a2a2f40d65ca28abb798cb2097e3de",
+      "CipherSha256": "95ca6cd6c328c33e2f5a628ac5bfe8509ce6f33b961d0f33d4c73798c93e0934",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1790208000000",
+      "PlainSha256": "9745a28c706d340ec50d974d9f29d5c746d8c624ce2feb681eab3c98ffbae9b5",
+      "CipherSha256": "1b2ea4a043b884711f6cc293e02ea111725d0a4248ce2f3b5f61e62553aadab2",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1790294400000",
+      "PlainSha256": "13d64f7e42a2994c6ad2ac84ad1eb3d139af02cc7bc563ee79d6631ce705a5bd",
+      "CipherSha256": "8fbca7c3fd712da3098c6b22549927d0a43c7cc2b9df4c4931c77e1cf0b1f996",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1790553600000",
+      "PlainSha256": "bb1247297074f403cb29a6379c71935227143fd4c96b0ae9d4473bb449397b5f",
+      "CipherSha256": "9f682a51d635f6911deb84e4477dbbcc7c7446ae7d583fba8908b15bfd748307",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1790640000000",
+      "PlainSha256": "68cdbcd4e1a6f138a2ba133d1cde07ea434e8430a6f2c6c18f45253a3c37a90f",
+      "CipherSha256": "285f1b0a5a4b7d6d4a59fdbdf53c434d805ba28634a03a8c7a0c8eece9177355",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1790726400000",
+      "PlainSha256": "7665f0627bd5a345eda1848e9a27af0ab622cb76e43a740ecf7a85cde30a5dfa",
+      "CipherSha256": "f4f830e69a873e261a177f62389c94edd39ba6eb5b6b9434e3b88e41d80b8ef4",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1790812800000",
+      "PlainSha256": "41893aa511dade249203d067c98474b1d1a7d472e3c89c14baf66665d04c735c",
+      "CipherSha256": "e3d9cbc69f1e46950bde427ec28c7786d1e39c03cd498449a5c370b0c31d4a70",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1790899200000",
+      "PlainSha256": "0c34a875a7fd2b038943e0d5fa1ce13323ffde476861a521bb44e6eea049497f",
+      "CipherSha256": "7f74f0d5c5264d8b9366d41528a897d213fb5bf277a2aecf67b813642241e841",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1791158400000",
+      "PlainSha256": "c4f1c7d9cc7e0ddd28648fd2d3330563848069d4da5160877b0d36425de865a3",
+      "CipherSha256": "dc4111942453944df3bdd517c7afb4807d40eeb9934ad18b58b8116811aba6ba",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1791244800000",
+      "PlainSha256": "8e21da9d8e1a871fe8f856609a74ebcb9ab266235783d6d9f15398b293d1a5c7",
+      "CipherSha256": "e3bab77e67f9459542ef6c885f462c809dffc738fd88a2d0deebf853705a90de",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1791331200000",
+      "PlainSha256": "9039409bd340169a44d7bf69245f8e1fd8173f43357d790cc3fefc72feabcbd2",
+      "CipherSha256": "ca2d34b8928dbf2e7c91d095ac66cb67cab0c8e14003fa8469bf827621c8c8c8",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1791417600000",
+      "PlainSha256": "bb274704c35bd9bd836322451a4f21610898cb9c831138fb732232226863813a",
+      "CipherSha256": "bc872fd5f84f159a17b1bd6f86bcfc384ab2d50cb4a3ad4b3ac2ae0065aa5a35",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1791504000000",
+      "PlainSha256": "dee9c855e04d54c7de53815c31b68be140f998b6715ff4624f0bc99cbbe43b81",
+      "CipherSha256": "e4acdbaf04e03e23f52c0b2c0b848f83b8f5fa67222e555caadf20835471137c",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1791763200000",
+      "PlainSha256": "5bef723dd9438f51697fd2c1fd2df861d2b6dc450bc3989660194706f4062fc2",
+      "CipherSha256": "90386fca2e6c222b1f69ff84616ea06c33fe59724b9c63cd3c1857e85d7059dd",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1791849600000",
+      "PlainSha256": "5aa6bd8dcc14282995da07b1279f5065165b466e8f511df62908d3e6536e4948",
+      "CipherSha256": "ce6b390958f5549d3b007f3104c93af47822d5b051402d6f2c21881862fe0b6a",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1791936000000",
+      "PlainSha256": "6c435e6d0b575fd5e26d4a776a1488e2727907972944440d1ecf40a0ce632eb6",
+      "CipherSha256": "ca177fd2db18dd381de463909290b2b9b3eb2b9c72dad84f668fceeecfbeaca5",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1792022400000",
+      "PlainSha256": "e4dcfc42cc65da043ac48abbd9373a7c24dbe3fdc942d1b402d1cd6e4d68b5a6",
+      "CipherSha256": "2ea9fbf9b293357c78df6344c417d2f5b114c12f27972018a06ed8daddc1f6fd",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1792108800000",
+      "PlainSha256": "3b3a16837bb9d674fb0e014c9905fbfc5919ea6698f8ac9e7b0f5f3a9c1deac2",
+      "CipherSha256": "6f5835e44ae2316b3d847584ff4af6367f6bb02334dbecb6fc8ba80075523cb1",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1792368000000",
+      "PlainSha256": "ca882f051bad04927cafe5b3d38b514a2864108308ce857d44836cb0f8aff1bc",
+      "CipherSha256": "f7a8dd4342cffed9d463549baa0b9d1064c928c4a00f82d2e7f142162277752a",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1792454400000",
+      "PlainSha256": "5ac82282a715b92424714cedbd84a3fe91e847c82fb488913bb1584d703356a2",
+      "CipherSha256": "b7c7643b10293b882b734be26a91d38043174292b29d417ca16529649b8de078",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1792540800000",
+      "PlainSha256": "3c636631871a7154a3015d9ffa1b27f718413e8970ea1c03fa4c0577d90ded58",
+      "CipherSha256": "f44a606f38cf803285030736913718d8661f983d8a4065b55373f531a94b2fb2",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1792627200000",
+      "PlainSha256": "ffdf718d00b1e325259a153e408de904acb11301aa8a8571bd541bc3cdc4646b",
+      "CipherSha256": "27a3a3ae2abbea0a21789f8e4e0d707d6a113d2a0aa33af1a10a3e9b125c68d5",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1792713600000",
+      "PlainSha256": "a3770bc6cdeb4d9e69e054a13e6929c1043a75a764ed1cd2426eb46281ba3eb2",
+      "CipherSha256": "1ac98336eb68e18f1a51d04a4c147dec41f88136b8256d94189dda206cfbd98d",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1792972800000",
+      "PlainSha256": "312a3cc467d417bc04fe9d45f3faa5d32a7ec41a3998a770c2cce1abe56f4553",
+      "CipherSha256": "c4e52c22372eab965eb7a2de210f7c3931f480f110b353e9e407ff58abde5110",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1793059200000",
+      "PlainSha256": "0d64057cda570d74040b0e829dfe05e583c5eef3ee3d916408f8ae81281d85a4",
+      "CipherSha256": "9bee00d774a542af62f4cc35a8f7efec39a645e59c9cc66e1cc8e230b9136ae8",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1793145600000",
+      "PlainSha256": "9c0f4af32e18c3ee249630d85c650f917ef8d7fa2d497b33bdbdd1f9cac60392",
+      "CipherSha256": "c6e56fa5cba155e248e6bdf51418a9773e968f571dcd126665081b2ef7740585",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1793232000000",
+      "PlainSha256": "afc8b1c012bef4be533172d213cd283127e469dea3bb8aaa984c182265998123",
+      "CipherSha256": "fc3d7e808b62ab2d9c1dc14c005420cff6e914928c2b609e7e012d68620823e8",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1793318400000",
+      "PlainSha256": "49b7b2abcbc3a715839cca42b11b05254e861028e50cc796aad8a70ac25ea0ff",
+      "CipherSha256": "233080950842b92ab0a086dd12f53e94afdfa4ddb88e647a671a371dfab13812",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1793577600000",
+      "PlainSha256": "7ab798542e60638e2be85445bdc01b487344b89f5fef853dab3e20e489e2ee4c",
+      "CipherSha256": "e3948fe5537192cc290ede7b64e4fea5159474b228802e21d2306bdfd340cdb9",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1793664000000",
+      "PlainSha256": "ee6d292e38e9cc96ddf1e409d63bcca8b25dfafcc427bd6ec2c3d0f49a9e90eb",
+      "CipherSha256": "ab4a27403652ba7e6635c756427ce304d75b25d742c5696e5acf07fff69236d3",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1793750400000",
+      "PlainSha256": "9e9ee06696f4dd21457f680e26c2d37f68408554b85fce3c3122a237b6661070",
+      "CipherSha256": "6d44db493e76fead14a63008dfbd12453f72eb54913c35e381b405a8f5853db6",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1793836800000",
+      "PlainSha256": "86718778e222d063d5be2e7d96fd38077c4672a2b08e81368859888e3e29f09f",
+      "CipherSha256": "45eedaeb4646adf29251dfad8bd22d651f8c6145caf1f2d336974331bc80e3ab",
+      "Responses": 18
+    },
+    {
+      "Name": "ticks-1793923200000",
+      "PlainSha256": "a08284e7e0693b4e1a7b93dc7d72b992b7a9738ca9ac8460c82e98ab3eee3d26",
+      "CipherSha256": "263aeab2f077304ba824f058edbc66ccb73900b97e07bd829145e6f94635e6af",
+      "Responses": 18
+    }
+  ],
+  "M1Count": 87379,
+  "M5Count": 17537,
+  "NativeTapeSha256": "c91f5162b44bb1c565f41689ced6d4516042463a0789d328d8c0b940c680dbe3",
+  "NativeCipherSha256": "fed4da4a6cba379a13a0c8c93ef72d38b2d3f3cf93fd8cb7f557e58bc0320560",
+  "BidTicks": 1126172,
+  "AskTicks": 1125641,
+  "Completed": true
+}

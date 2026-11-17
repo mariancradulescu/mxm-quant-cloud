@@ -1,0 +1,524 @@
+{
+  "OriginalPublicReceiptSha256": "fe6bb4daa21a0fb89f3635c022c1b24168eb9810f575fbe399e92dd94ce0a033",
+  "ArithmeticChecksPassed": true,
+  "ReexecutedResearch": false,
+  "Books": {
+    "CONTEXT_central": {
+      "Trades": 0,
+      "NetEur": "0",
+      "ClosedNetEur": "0",
+      "FinalCash": 300,
+      "WeeklyTrips": {
+        "2026-W43": 0,
+        "2026-W44": 0,
+        "2026-W45": 0
+      },
+      "WeeklyNet": {
+        "2026-W43": "0",
+        "2026-W44": "0",
+        "2026-W45": "0"
+      },
+      "WeeklyMeanMinus2SE": "0",
+      "WinRate": null,
+      "Expectancy": null,
+      "ProfitFactor": null,
+      "WorstTrade": null,
+      "MeanR": null,
+      "SampledDd": 0,
+      "PeakMargin": 0,
+      "UncertainTrades": 0,
+      "UnknownLifecycles": 0,
+      "FullSettlementKnown": true,
+      "Hard21": false
+    },
+    "POOLED_central": {
+      "Trades": 0,
+      "NetEur": "0",
+      "ClosedNetEur": "0",
+      "FinalCash": 300,
+      "WeeklyTrips": {
+        "2026-W43": 0,
+        "2026-W44": 0,
+        "2026-W45": 0
+      },
+      "WeeklyNet": {
+        "2026-W43": "0",
+        "2026-W44": "0",
+        "2026-W45": "0"
+      },
+      "WeeklyMeanMinus2SE": "0",
+      "WinRate": null,
+      "Expectancy": null,
+      "ProfitFactor": null,
+      "WorstTrade": null,
+      "MeanR": null,
+      "SampledDd": 0,
+      "PeakMargin": 0,
+      "UncertainTrades": 0,
+      "UnknownLifecycles": 0,
+      "FullSettlementKnown": true,
+      "Hard21": false
+    },
+    "CASH_central": {
+      "Trades": 0,
+      "NetEur": "0",
+      "ClosedNetEur": "0",
+      "FinalCash": 300,
+      "WeeklyTrips": {
+        "2026-W43": 0,
+        "2026-W44": 0,
+        "2026-W45": 0
+      },
+      "WeeklyNet": {
+        "2026-W43": "0",
+        "2026-W44": "0",
+        "2026-W45": "0"
+      },
+      "WeeklyMeanMinus2SE": "0",
+      "WinRate": null,
+      "Expectancy": null,
+      "ProfitFactor": null,
+      "WorstTrade": null,
+      "MeanR": null,
+      "SampledDd": 0,
+      "PeakMargin": 0,
+      "UncertainTrades": 0,
+      "UnknownLifecycles": 0,
+      "FullSettlementKnown": true,
+      "Hard21": false
+    },
+    "VOL_LONG_central": {
+      "Trades": 63,
+      "NetEur": "-8.496945751930888311660776328",
+      "ClosedNetEur": "-8.496945751930888311660776328",
+      "FinalCash": "291.50305424806911168833922368",
+      "WeeklyTrips": {
+        "2026-W43": 23,
+        "2026-W44": 21,
+        "2026-W45": 19
+      },
+      "WeeklyNet": {
+        "2026-W43": "-1.509740963801956252182657970",
+        "2026-W44": "-1.789080308939875057319565217",
+        "2026-W45": "-5.198124479189057002158553144"
+      },
+      "WeeklyMeanMinus2SE": "-5.203615202663914215411690059",
+      "WinRate": "0.3492063492063492063492063492",
+      "Expectancy": "-0.1348721547925537827247742274",
+      "ProfitFactor": "0.6571967678341721166911701055",
+      "WorstTrade": "-0.9155656084833305809592531190",
+      "MeanR": "-0.2229179383382335081773734040",
+      "SampledDd": "0.0384225660228924832233188876",
+      "PeakMargin": "33.33000",
+      "UncertainTrades": 0,
+      "UnknownLifecycles": 0,
+      "FullSettlementKnown": true,
+      "Hard21": false
+    },
+    "VOL_SHORT_central": {
+      "Trades": 62,
+      "NetEur": "-0.1423239564634340629188230917",
+      "ClosedNetEur": "-0.1423239564634340629188230917",
+      "FinalCash": "299.85767604353656593708117687",
+      "WeeklyTrips": {
+        "2026-W43": 23,
+        "2026-W44": 19,
+        "2026-W45": 20
+      },
+      "WeeklyNet": {
+        "2026-W43": "0.2087412760713121643990311453",
+        "2026-W44": "-1.115671272182398248227985411",
+        "2026-W45": "0.7646060396476520209101311733"
+      },
+      "WeeklyMeanMinus2SE": "-1.162838308710146506395807341",
+      "WinRate": "0.4838709677419354838709677419",
+      "Expectancy": "-0.002295547684894097789013275673",
+      "ProfitFactor": "0.9932197144991182228680449847",
+      "WorstTrade": "-0.9410242016475210041092834654",
+      "MeanR": "0.006086198014189492859612854132",
+      "SampledDd": "0.0198014223740962720702555113",
+      "PeakMargin": "33.33000",
+      "UncertainTrades": 0,
+      "UnknownLifecycles": 0,
+      "FullSettlementKnown": true,
+      "Hard21": false
+    },
+    "STRUCT_LONG_central": {
+      "Trades": 145,
+      "NetEur": "-10.59861857619040965287848246",
+      "ClosedNetEur": "-10.59861857619040965287848246",
+      "FinalCash": "289.40138142380959034712151754",
+      "WeeklyTrips": {
+        "2026-W43": 50,
+        "2026-W44": 46,
+        "2026-W45": 49
+      },
+      "WeeklyNet": {
+        "2026-W43": "-3.708977532722464668145379308",
+        "2026-W44": "-3.548156328615107023110795456",
+        "2026-W45": "-3.341484714852837961622307694"
+      },
+      "WeeklyMeanMinus2SE": "-3.745594683766914746302278325",
+      "WinRate": "0.1172413793103448275862068966",
+      "Expectancy": "-0.07309392121510627346812746524",
+      "ProfitFactor": "0.4404357849255763961177052166",
+      "WorstTrade": "-0.7406236878548543578419397542",
+      "MeanR": "-0.1847184455231093094486188188",
+      "SampledDd": "0.0410099104841679563840845715",
+      "PeakMargin": "33.33000",
+      "UncertainTrades": 0,
+      "UnknownLifecycles": 0,
+      "FullSettlementKnown": true,
+      "Hard21": true
+    },
+    "STRUCT_SHORT_central": {
+      "Trades": 144,
+      "NetEur": "-8.571647311097082145654492216",
+      "ClosedNetEur": "-8.571647311097082145654492216",
+      "FinalCash": "291.42835268890291785434550775",
+      "WeeklyTrips": {
+        "2026-W43": 45,
+        "2026-W44": 53,
+        "2026-W45": 46
+      },
+      "WeeklyNet": {
+        "2026-W43": "-3.401281299080725105865024554",
+        "2026-W44": "-2.421869295367941274874750796",
+        "2026-W45": "-2.748496716648415764914716868"
+      },
+      "WeeklyMeanMinus2SE": "-3.433036162195250397319912254",
+      "WinRate": "0.1805555555555555555555555556",
+      "Expectancy": "-0.05952532854928529267815619594",
+      "ProfitFactor": "0.5686468199210478564698438478",
+      "WorstTrade": "-1.2586003290538772436739874118",
+      "MeanR": "-0.1287173848453730153655159130",
+      "SampledDd": "0.0289706680218567733612375488",
+      "PeakMargin": "33.33000",
+      "UncertainTrades": 0,
+      "UnknownLifecycles": 0,
+      "FullSettlementKnown": true,
+      "Hard21": true
+    },
+    "ADAPT_LONG_central": {
+      "Trades": 148,
+      "NetEur": "-13.43521153322216019866607513",
+      "ClosedNetEur": "-13.43521153322216019866607513",
+      "FinalCash": "286.56478846677783980133392485",
+      "WeeklyTrips": {
+        "2026-W43": 50,
+        "2026-W44": 47,
+        "2026-W45": 51
+      },
+      "WeeklyNet": {
+        "2026-W43": "-3.556634699744198841581531773",
+        "2026-W44": "-4.486429982981366925839626954",
+        "2026-W45": "-5.392146850496594431244916419"
+      },
+      "WeeklyMeanMinus2SE": "-5.538167672226414090707177365",
+      "WinRate": "0.1351351351351351351351351351",
+      "Expectancy": "-0.09077845630555513647747348061",
+      "ProfitFactor": "0.3328353024953478457922858934",
+      "WorstTrade": "-0.7335265771920212960798326733",
+      "MeanR": "-0.1469015177100710835628939208",
+      "SampledDd": "0.0511996522865751096435909155",
+      "PeakMargin": "33.33000",
+      "UncertainTrades": 0,
+      "UnknownLifecycles": 0,
+      "FullSettlementKnown": true,
+      "Hard21": true
+    },
+    "ADAPT_SHORT_central": {
+      "Trades": 141,
+      "NetEur": "-7.605351457794009592814663064",
+      "ClosedNetEur": "-7.605351457794009592814663064",
+      "FinalCash": "292.39464854220599040718533693",
+      "WeeklyTrips": {
+        "2026-W43": 45,
+        "2026-W44": 51,
+        "2026-W45": 45
+      },
+      "WeeklyNet": {
+        "2026-W43": "-1.977045336783481579065363816",
+        "2026-W44": "-3.525999519312948210110140181",
+        "2026-W45": "-2.102306601697579803639159066"
+      },
+      "WeeklyMeanMinus2SE": "-3.528635140773978499228931146",
+      "WinRate": "0.1773049645390070921985815603",
+      "Expectancy": "-0.05393866282123411058733803591",
+      "ProfitFactor": "0.6077477803289128158503752868",
+      "WorstTrade": "-0.8483334585670698331720764016",
+      "MeanR": "-0.08442212903779511208826262007",
+      "SampledDd": "0.0261584678399654924544791997",
+      "PeakMargin": "33.33000",
+      "UncertainTrades": 0,
+      "UnknownLifecycles": 0,
+      "FullSettlementKnown": true,
+      "Hard21": true
+    },
+    "CONTEXT_adverse": {
+      "Trades": 0,
+      "NetEur": "0",
+      "ClosedNetEur": "0",
+      "FinalCash": 300,
+      "WeeklyTrips": {
+        "2026-W43": 0,
+        "2026-W44": 0,
+        "2026-W45": 0
+      },
+      "WeeklyNet": {
+        "2026-W43": "0",
+        "2026-W44": "0",
+        "2026-W45": "0"
+      },
+      "WeeklyMeanMinus2SE": "0",
+      "WinRate": null,
+      "Expectancy": null,
+      "ProfitFactor": null,
+      "WorstTrade": null,
+      "MeanR": null,
+      "SampledDd": 0,
+      "PeakMargin": 0,
+      "UncertainTrades": 0,
+      "UnknownLifecycles": 0,
+      "FullSettlementKnown": true,
+      "Hard21": false
+    },
+    "POOLED_adverse": {
+      "Trades": 0,
+      "NetEur": "0",
+      "ClosedNetEur": "0",
+      "FinalCash": 300,
+      "WeeklyTrips": {
+        "2026-W43": 0,
+        "2026-W44": 0,
+        "2026-W45": 0
+      },
+      "WeeklyNet": {
+        "2026-W43": "0",
+        "2026-W44": "0",
+        "2026-W45": "0"
+      },
+      "WeeklyMeanMinus2SE": "0",
+      "WinRate": null,
+      "Expectancy": null,
+      "ProfitFactor": null,
+      "WorstTrade": null,
+      "MeanR": null,
+      "SampledDd": 0,
+      "PeakMargin": 0,
+      "UncertainTrades": 0,
+      "UnknownLifecycles": 0,
+      "FullSettlementKnown": true,
+      "Hard21": false
+    },
+    "CASH_adverse": {
+      "Trades": 0,
+      "NetEur": "0",
+      "ClosedNetEur": "0",
+      "FinalCash": 300,
+      "WeeklyTrips": {
+        "2026-W43": 0,
+        "2026-W44": 0,
+        "2026-W45": 0
+      },
+      "WeeklyNet": {
+        "2026-W43": "0",
+        "2026-W44": "0",
+        "2026-W45": "0"
+      },
+      "WeeklyMeanMinus2SE": "0",
+      "WinRate": null,
+      "Expectancy": null,
+      "ProfitFactor": null,
+      "WorstTrade": null,
+      "MeanR": null,
+      "SampledDd": 0,
+      "PeakMargin": 0,
+      "UncertainTrades": 0,
+      "UnknownLifecycles": 0,
+      "FullSettlementKnown": true,
+      "Hard21": false
+    },
+    "VOL_LONG_adverse": {
+      "Trades": 63,
+      "NetEur": "-8.496945751930888311660776328",
+      "ClosedNetEur": "-8.496945751930888311660776328",
+      "FinalCash": "291.50305424806911168833922368",
+      "WeeklyTrips": {
+        "2026-W43": 23,
+        "2026-W44": 21,
+        "2026-W45": 19
+      },
+      "WeeklyNet": {
+        "2026-W43": "-1.509740963801956252182657970",
+        "2026-W44": "-1.789080308939875057319565217",
+        "2026-W45": "-5.198124479189057002158553144"
+      },
+      "WeeklyMeanMinus2SE": "-5.203615202663914215411690059",
+      "WinRate": "0.3492063492063492063492063492",
+      "Expectancy": "-0.1348721547925537827247742274",
+      "ProfitFactor": "0.6571967678341721166911701055",
+      "WorstTrade": "-0.9155656084833305809592531190",
+      "MeanR": "-0.2229179383382335081773734040",
+      "SampledDd": "0.0384225660228924832233188876",
+      "PeakMargin": "33.33000",
+      "UncertainTrades": 0,
+      "UnknownLifecycles": 0,
+      "FullSettlementKnown": true,
+      "Hard21": false
+    },
+    "VOL_SHORT_adverse": {
+      "Trades": 62,
+      "NetEur": "-0.1512550796414849345964452697",
+      "ClosedNetEur": "-0.1512550796414849345964452697",
+      "FinalCash": "299.84874492035851506540355470",
+      "WeeklyTrips": {
+        "2026-W43": 23,
+        "2026-W44": 19,
+        "2026-W45": 20
+      },
+      "WeeklyNet": {
+        "2026-W43": "0.2087412760713121643990311453",
+        "2026-W44": "-1.124602395360449119905607588",
+        "2026-W45": "0.7646060396476520209101311733"
+      },
+      "WeeklyMeanMinus2SE": "-1.171518959235994139557523627",
+      "WinRate": "0.4838709677419354838709677419",
+      "Expectancy": "-0.002439598058733627977362020479",
+      "ProfitFactor": "0.9927973021165171139328832328",
+      "WorstTrade": "-0.9410242016475210041092834654",
+      "MeanR": "0.005869626632002717331174619261",
+      "SampledDd": "0.0198309505089118204518808672",
+      "PeakMargin": "33.33000",
+      "UncertainTrades": 0,
+      "UnknownLifecycles": 0,
+      "FullSettlementKnown": true,
+      "Hard21": false
+    },
+    "STRUCT_LONG_adverse": {
+      "Trades": 145,
+      "NetEur": "-10.66092112917203138915865368",
+      "ClosedNetEur": "-10.66092112917203138915865368",
+      "FinalCash": "289.33907887082796861084134631",
+      "WeeklyTrips": {
+        "2026-W43": 50,
+        "2026-W44": 46,
+        "2026-W45": 49
+      },
+      "WeeklyNet": {
+        "2026-W43": "-3.708977532722464668145379308",
+        "2026-W44": "-3.566021290814174063914355713",
+        "2026-W45": "-3.385922305635392657098918662"
+      },
+      "WeeklyMeanMinus2SE": "-3.740566868961210969911486863",
+      "WinRate": "0.1172413793103448275862068966",
+      "Expectancy": "-0.07352359399428987164937002538",
+      "ProfitFactor": "0.4387280872090981094716980901",
+      "WorstTrade": "-0.7406236878548543578419397542",
+      "MeanR": "-0.184894294080390817953211806",
+      "SampledDd": "0.041216452069927317551785119",
+      "PeakMargin": "33.33000",
+      "UncertainTrades": 0,
+      "UnknownLifecycles": 0,
+      "FullSettlementKnown": true,
+      "Hard21": true
+    },
+    "STRUCT_SHORT_adverse": {
+      "Trades": 144,
+      "NetEur": "-8.660701733221733718510873188",
+      "ClosedNetEur": "-8.660701733221733718510873188",
+      "FinalCash": "291.33929826677826628148912678",
+      "WeeklyTrips": {
+        "2026-W43": 45,
+        "2026-W44": 53,
+        "2026-W45": 46
+      },
+      "WeeklyNet": {
+        "2026-W43": "-3.410204373258240743552520650",
+        "2026-W44": "-2.457598415823058824176470175",
+        "2026-W45": "-2.792898944140434150781882364"
+      },
+      "WeeklyMeanMinus2SE": "-3.444863250177688359948974682",
+      "WinRate": "0.1805555555555555555555555556",
+      "Expectancy": "-0.06014376203626203971188106381",
+      "ProfitFactor": "0.5661097942050859220567080187",
+      "WorstTrade": "-1.2586003290538772436739874118",
+      "MeanR": "-0.1285574903051382192852708726",
+      "SampledDd": "0.0292675160956056119374254853",
+      "PeakMargin": "33.33000",
+      "UncertainTrades": 0,
+      "UnknownLifecycles": 0,
+      "FullSettlementKnown": true,
+      "Hard21": true
+    },
+    "ADAPT_LONG_adverse": {
+      "Trades": 148,
+      "NetEur": "-13.48858335798028859949347025",
+      "ClosedNetEur": "-13.48858335798028859949347025",
+      "FinalCash": "286.51141664201971140050652971",
+      "WeeklyTrips": {
+        "2026-W43": 50,
+        "2026-W44": 47,
+        "2026-W45": 51
+      },
+      "WeeklyNet": {
+        "2026-W43": "-3.556634699744198841581531773",
+        "2026-W44": "-4.495364216956940631190411105",
+        "2026-W45": "-5.436584441279149126721527387"
+      },
+      "WeeklyMeanMinus2SE": "-5.581584259530005152104541629",
+      "WinRate": "0.1351351351351351351351351351",
+      "Expectancy": "-0.09113907674311005810468560980",
+      "ProfitFactor": "0.3319554778859711528156452106",
+      "WorstTrade": "-0.7335265771920212960798326733",
+      "MeanR": "-0.1472749384842745353239440910",
+      "SampledDd": "0.0513764408099672009982194172",
+      "PeakMargin": "33.33000",
+      "UncertainTrades": 0,
+      "UnknownLifecycles": 0,
+      "FullSettlementKnown": true,
+      "Hard21": true
+    },
+    "ADAPT_SHORT_adverse": {
+      "Trades": 141,
+      "NetEur": "-7.694444626196745329395066436",
+      "ClosedNetEur": "-7.694444626196745329395066436",
+      "FinalCash": "292.30555537380325467060493355",
+      "WeeklyTrips": {
+        "2026-W43": 45,
+        "2026-W44": 51,
+        "2026-W45": 45
+      },
+      "WeeklyNet": {
+        "2026-W43": "-1.985968410960997216752859912",
+        "2026-W44": "-3.561728639768065759411859559",
+        "2026-W45": "-2.146747575467682353230346964"
+      },
+      "WeeklyMeanMinus2SE": "-3.566040973824487013432757417",
+      "WinRate": "0.1773049645390070921985815603",
+      "Expectancy": "-0.05457052926380670446379479742",
+      "ProfitFactor": "0.6044262778070597368937992859",
+      "WorstTrade": "-0.8483334585670698331720764016",
+      "MeanR": "-0.08528719397403623411011831113",
+      "SampledDd": "0.0265440798636833814315981208",
+      "PeakMargin": "33.33000",
+      "UncertainTrades": 0,
+      "UnknownLifecycles": 0,
+      "FullSettlementKnown": true,
+      "Hard21": true
+    }
+  },
+  "IncrementalComparisons": {
+    "central": {
+      "ContextMinusPooled": "0",
+      "ContextMinusCash": "0"
+    },
+    "adverse": {
+      "ContextMinusPooled": "0",
+      "ContextMinusCash": "0"
+    }
+  },
+  "IndependentConfirmation": false,
+  "Qualified": false,
+  "Limit": "Public arithmetic only; original encrypted tick source is required to audit fills, features and floating marks."
+}
