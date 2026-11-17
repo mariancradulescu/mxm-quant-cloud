@@ -40,6 +40,9 @@ jobs:
           cmp /tmp/mrf1-frozen-before-model.md research/MRF1_FROZEN_AUTHENTIC_M1_MULTIRESOLUTION_PROTOCOL_20261117.md
       - run: python -m unittest research.test_mrf1_authentic_m1_multiresolution -v
       - run: dotnet build src/Mxm.Replay -c Release
+      - run: python -m unittest research.test_mrf1_native_synthetic -v
+        env:
+          MRF1_DOTNET: dotnet
       - run: dotnet run --project tests/Mxm.Checks -c Release
       - run: python -m research.verify_owner_policy
       - name: Exact first ONLY main OWNER original source-reuse research intent
