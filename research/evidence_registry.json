@@ -3238,5 +3238,19 @@
     "independentConfirmation": false,
     "ordersSubmitted": 0,
     "cloudActivated": false
+  },
+  "lpm1LifecycleResearch": {
+    "protocol": "research/LPM1_FROZEN_LIFECYCLE_20261117.md",
+    "protocolCommit": "64c2f7a90cbe82521a73d333a643eb20aec29285",
+    "status": "FROZEN_BEFORE_ORIGINAL_EXECUTION",
+    "calendar": [
+      "2026-08-17",
+      "2026-11-09"
+    ],
+    "source": "NEW_ORIGINAL_PEPPERSTONE_M1_M5_BID_ASK_TICK_READONLY",
+    "independentConfirmation": false,
+    "qualified": false,
+    "closedStudyPoliciesCalled": false,
+    "counterfactualBooksMustNotBeSummed": true
   }
 }

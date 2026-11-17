@@ -6,6 +6,20 @@ public static class NativeCausalExitResearchChecks
 {
     public static void Run(Action<bool,string> check)
     {
+        // Observed tick trigger is not a fill. Profit locks cannot loosen the seed stop.
+        var pathSeed=new NativeExitSeed(.001m,1.102m);
+        LedgerQuote PathQuote(decimal bid)=>new("EURUSD",1000,bid,bid+.0001m,1,1,0,0,.01m);
+        var lockVerdict=NativeCausalExitResearch.AssessLifecycle("ADAPT",1,1.1m,pathSeed,
+            1.0985m,1.1015m,PathQuote(1.1003m),0,false);
+        check(lockVerdict.RequestClose && lockVerdict.Reason=="OBSERVED_PATH_STOP_ADAPT",
+            "LPM1 observed retracement triggers profit protection without assuming a fill");
+        var holdVerdict=NativeCausalExitResearch.AssessLifecycle("VOL",1,1.1m,pathSeed,
+            1.0985m,1.1m,PathQuote(1.101m),-.001m,false);
+        check(!holdVerdict.RequestClose,"LPM1 VOL does not borrow adaptive regime rule");
+        var structural=NativeCausalExitResearch.AssessLifecycle("STRUCT",-1,1.1m,pathSeed,
+            1.102m,1.1m,PathQuote(1.099m),.001m,false);
+        check(structural.RequestClose && structural.Reason=="CLOSED_BAR_REGIME_INVALIDATION",
+            "LPM1 short exits on observed opposing completed-bar regime");
         const long m5=300000L, m15=900000L;
         long closed=DateTimeOffset.Parse("2026-11-09T09:00:00Z")
             .ToUnixTimeMilliseconds();
