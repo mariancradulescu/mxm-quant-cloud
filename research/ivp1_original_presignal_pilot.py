@@ -19,6 +19,7 @@ from .custody import seal_new
 from .rne1_source_financial_preflight import fee_usd,Unpriced
 
 PROTO=Path("research/IVP1_VIX_US500_TEMPORAL_OPTIONS_RISK_PRESOURCE_20261117.md")
+A1=Path("research/IVP1_PRESOURCE_A1_ALIGNED_TARGET_PRICE_HISTORY_20261117.md")
 PILOT_START=date(2026,11,2)
 FULL_START=date(2026,8,17)
 CLOCK_HOURS=(14,15,16,17,18)
@@ -56,7 +57,7 @@ def expected_bar_ends(sym,t):
     if sym=="VIX":
         return [t-j*MIN for j in (35,30,25,20,15)]
     if sym=="US500":
-        return [t-j*MIN for j in (15,10,5,0)]
+        return [t-j*MIN for j in (35,30,25,20,15,10,5,0)]
     raise ValueError("IVP1_FIXED_SOURCE_ONLY")
 
 def validate_current(c):
@@ -76,6 +77,8 @@ def validate_current(c):
         raise ValueError("IVP1_ORIGINAL_TARGET_COST_UNKNOWN") from exc
 
 def main():
+    need(A1.is_file() and "BEFORE first original" in A1.read_text(),
+         "IVP1_PRESOURCE_A1_TARGET_HISTORY_NOT_FROZEN")
     need(PROTO.is_file() and "PRESOURCE" in PROTO.read_text(),
          "IVP1_FROZEN_PROTOCOL_NOT_MERGED")
     run=os.environ["GITHUB_RUN_ID"]
@@ -102,7 +105,8 @@ def main():
         return response,len(raw)-1
     counts=Counter()
     rows=[]
-    goodbar=[0,0];goodquotes=[0,0];validdir=[0,0];different=[0,0]
+    goodbar=[0,0];goodquotes=[0,0];validdir=[0,0]
+    different_latest=[0,0];different_earlier=[0,0]
     spreads=[];pastmoves=[];fees=[]
     try:
         acct=authenticate(transport)
@@ -167,15 +171,18 @@ def main():
             if feature_known:
                 goodbar[half]+=1
                 v=sign(past["VIX"][-1],past["VIX"][0])
-                own=sign(past["US500"][-1],past["US500"][0])
+                own=sign(past["US500"][-1],past["US500"][-4])
+                own_earlier=sign(past["US500"][-4],past["US500"][0])
                 lead=-v
                 rec["vixDirection"]=lead
                 rec["ownDirection"]=own
-                if lead and own:
+                rec["ownEarlierDirection"]=own_earlier
+                if lead and own and own_earlier:
                     validdir[half]+=1
-                    if lead!=own:different[half]+=1
+                    if lead!=own:different_latest[half]+=1
+                    if lead!=own_earlier:different_earlier[half]+=1
                 pastmoves.append(10000*abs(
-                    D(past["US500"][-1]-past["US500"][0])/D(past["US500"][0])))
+                    D(past["US500"][-1]-past["US500"][-4])/D(past["US500"][-4])))
             allgood=True
             for tag,at in (("entry",t+90000),
                            ("middle",t+16*MIN+30000),
@@ -229,7 +236,8 @@ def main():
         originalVixAndTargetContractAndMargins=feasible,
         causalStrictlyPriorBars=sum(goodbar)>=45 and min(goodbar)>=21,
         originalUs500EurAllThreeQuotes=sum(goodquotes)>=45 and min(goodquotes)>=21,
-        nondegenerateVixVersusOwn=sum(validdir)>=40 and sum(different)>=10,
+        nondegenerateVixVersusBothTargetOwnPeriods=(sum(validdir)>=40
+            and sum(different_latest)>=10 and sum(different_earlier)>=8),
         pastPriceAmplitudeAboveIndicativeCost=bool(cost and cost["passes"])
     )
     verdict=("IVP1_PILOT_ALL_SOURCE_GATES_PASS_NO_PAYOFF"
@@ -250,7 +258,10 @@ def main():
       originalScopeViewRequests=len(raw),scheduledDecisionClocks=50,
       predecisionBarsComplete=sum(goodbar),predecisionByFiveDayHalf=goodbar,
       fullyPricedEntryMidExitClocks=sum(goodquotes),fullQuotesByFiveDayHalf=goodquotes,
-      twoNonzeroPredictors=sum(validdir),discordantVixOwnDirections=sum(different),
+      threeNonzeroPredictors=sum(validdir),
+      discordantVixOwnLatestDirections=sum(different_latest),
+      discordantVixOwnEarlierDirections=sum(different_earlier),
+      alignedSourceA1Sha256=sha256(A1.read_bytes()).hexdigest(),
       currentOriginalMinimumVolumeRaw=c.minVolume,
       currentOriginalBuySellMarginEur=[float(q) for q in margins],
       priceAvailability=dict(counts),costScale=cost,sourceGates=gates,
@@ -261,7 +272,8 @@ def main():
        json.dumps(receipt,sort_keys=True,indent=2)+"\n")
     print("IVP1_AUTHENTIC_ORIGINAL_PRESOURCE_ONLY",
       json.dumps(dict(verdict=verdict,gates=gates,coverage=goodbar,
-      quotes=goodquotes,different=different,cost=cost)),flush=True)
+      quotes=goodquotes,differentLatest=different_latest,
+      differentEarlier=different_earlier,cost=cost)),flush=True)
 
 if __name__=="__main__":
     main()
