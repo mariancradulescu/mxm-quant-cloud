@@ -1,0 +1,95 @@
+name: JRA1 ORIGINAL joint EUR300 risk-underwritten native research
+on:
+  pull_request:
+    paths:
+      - 'research/JRA1_JOINT_RISK_PROTOCOL_20261117.md'
+      - 'research/jra1_original_native_readback.py'
+      - 'src/Mxm.Replay/Jra1JointRiskResearch.cs'
+      - 'src/Mxm.Replay/Program.cs'
+      - '.github/workflows/jra1-original-joint-risk.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ops/jra1-original-once.txt'
+      - '.github/workflows/jra1-original-joint-risk.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  validate-native-and-frozen-protocol:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    outputs:
+      owner_once: ${{ steps.owner.outputs.owner_once }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - name: Verify unchanged pre-outcome frozen JRA1 protocol
+        run: |
+          test "$(git show 20e7bdea18676451bc94edcb7aa66c567ccd256f:research/JRA1_JOINT_RISK_PROTOCOL_20261117.md | sha256sum | cut -d' ' -f1)" = "$(sha256sum research/JRA1_JOINT_RISK_PROTOCOL_20261117.md | cut -d' ' -f1)"
+          git merge-base --is-ancestor 20e7bdea18676451bc94edcb7aa66c567ccd256f HEAD
+      - run: python -m py_compile research/jra1_original_native_readback.py
+      - run: dotnet build src/Mxm.Replay -c Release
+      - run: dotnet run --project src/Mxm.Replay -c Release -- --jra1-synthetic-check
+      - run: dotnet run --project tests/Mxm.Checks -c Release
+      - name: Verify exact OWNER one-time main-only source intent
+        id: owner
+        shell: bash
+        run: |
+          echo 'owner_once=false' >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_EVENT_NAME" == "push" &&
+                "$GITHUB_REF" == "refs/heads/main" &&
+                "$GITHUB_ACTOR" == "mariancradulescu" &&
+                "$GITHUB_RUN_ATTEMPT" == "1" &&
+                "$(git log -1 --format=%s)" == "OWNER_JRA1_ORIGINAL_NATIVE_JOINT_RISK_ONCE" &&
+                "$(git diff-tree --no-commit-id --name-only -r HEAD)" == "ops/jra1-original-once.txt" &&
+                "$(cat ops/jra1-original-once.txt)" == "OWNER_JRA1_REUSE_ORIGINAL_IPC2_SEALED_SOURCE_NATIVE_EUR300_ONCE" ]]; then
+            echo 'owner_once=true' >> "$GITHUB_OUTPUT"
+          fi
+  protected-original-source-to-new-native-research:
+    needs: validate-native-and-frozen-protocol
+    if: ${{ needs.validate-native-and-frozen-protocol.outputs.owner_once == 'true' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    environment: mxm-r3-custody-v1
+    concurrency:
+      group: mxm-jra1-original-research-source-once
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - run: python -m pip install -r research/requirements.txt
+      - run: dotnet build src/Mxm.Replay -c Release
+      - name: Restore only original IPC2 encrypted market-source data, never closed models
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: ipc2-original-pepperstone-encrypted-source
+          run-id: 43176793567
+          github-token: ${{ github.token }}
+          path: original-source
+      - name: Verify raw custody and execute new native JRA1 research once
+        run: python -m research.jra1_original_native_readback
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: jra1-original-common-risk-native-eur300-financial
+          path: jra1-native-original.public.json
+          retention-days: 90
+          if-no-files-found: error
+      - run: sha256sum research/JRA1_JOINT_RISK_PROTOCOL_20261117.md src/Mxm.Replay/Jra1JointRiskResearch.cs jra1-native-original.public.json
