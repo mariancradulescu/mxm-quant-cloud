@@ -266,3 +266,267 @@ def original_finance_points(quote_source,contract):
         z=to_euro_quote(marks["exit"]["EURUSD"],exit,contract,D(1000),D("33.33")) if marks["exit"]["EURUSD"] is not None else None
         out[t]=dict(entry=a,exit=z,originalEntryAt=entry,originalExitAt=exit)
     return out
+
+def fit_and_evaluate(rows):
+    import scipy  # only to ensure no local custom mathematical engine dependence? (not needed)
+    del scipy
+    X=np.asarray([row["features"] for row in rows],float)
+    syms=np.asarray([row["s"] for row in rows])
+    weeks=np.asarray([row["week"] for row in rows])
+    due={h:np.asarray([row["labels"][h]["exitAt"] if row["labels"][h] is not None else 0
+                       for row in rows]) for h in HORIZONS}
+    stats=[];predictions={};parity=[];modelDigest=sha256();models=[];population=Counter()
+    for week in (2,3):  # only original evaluation weeks, fixed
+        boundary=START+week*W
+        for minutes in HORIZONS:
+            label=np.asarray([row["labels"][minutes]["y"]
+                    if row["labels"][minutes] is not None else 0.
+                    for row in rows],float)
+            known=np.asarray([row["labels"][minutes] is not None for row in rows])
+            train=known&(weeks<week-1)&(due[minutes]<boundary-W-120*M)
+            cal=known&(weeks==week-1)&(due[minutes]<boundary-120*M)
+            idx=np.flatnonzero(weeks==week)
+            need(train.sum()>=60 and cal.sum()>=60 and len(idx)>50,
+                 "TRAINING_CALIBRATION_EVAL_MINIMUM_H"+str(minutes)+"_W"+str(week))
+            for variant,cols in (("FULL",FULL_COLS),("BASE",BASE_COLS)):
+                beta=fit_ridge(X[train],label[train],syms[train],cols)
+                cal_pred=np.column_stack((np.ones(cal.sum()),X[cal][:,cols]))@beta
+                quantiles=np.quantile(label[cal]-cal_pred,(np.arange(16)+.5)/16)
+                pred=np.column_stack((np.ones(len(idx)),X[idx][:,cols]))@beta
+                good=known[idx];y=label[idx][good]
+                actual=pred[good]
+                probs=np.mean(actual[:,None]+quantiles[None,:]>0,axis=1)
+                stat=dict(week=week+1,horizonMinutes=minutes,variant=variant,
+                    featureComplete=len(idx),labelKnown=int(good.sum()),
+                    labelUnknown=int((~good).sum()),trainingMatured=int(train.sum()),
+                    calibrationMatured=int(cal.sum()),
+                    normalizedPriceMse=float(np.mean((actual-y)**2)),
+                    zeroMovementMse=float(np.mean(y*y)),
+                    normalizedPriceMae=float(np.mean(np.abs(actual-y))),
+                    brierDirectional=float(np.mean((probs-(y>0))**2)),
+                    meanPositiveForecastProbability=float(np.mean(probs)),
+                    observedPositiveMoveFraction=float(np.mean(y>0)),
+                    calibratedThrough=int(max(due[minutes][cal])),
+                    predictionSignAccuracy=float(np.mean((actual>0)==(y>0))))
+                stats.append(stat)
+                models.append(dict(week=week+1,horizonMinutes=minutes,
+                    variant=variant,columns=cols,coefficients=beta.tolist(),
+                    residualQuantiles=quantiles.tolist(),
+                    calibrationMaturedThrough=stat["calibratedThrough"]))
+                for j,i in enumerate(idx):
+                    key=(int(rows[i]["t"]),rows[i]["s"],minutes,variant)
+                    predictions[key]=dict(mean=float(pred[j]),
+                        quantile=[float(v) for v in quantiles],due=int(rows[i]["t"]+minutes*M),
+                        calibrationThrough=stat["calibratedThrough"])
+                    modelDigest.update(json.dumps(dict(key=key,mean=float(pred[j])),
+                        sort_keys=True,separators=(",",":")).encode())
+                    if len(parity)<24:
+                        parity.append(dict(features=rows[i]["features"],
+                            columns=cols,coefficients=beta.tolist(),
+                            expected=float(pred[j])))
+                    population[(variant,minutes,"predictions")]+=1
+                    if rows[i]["labels"][minutes] is not None:
+                        population[(variant,minutes,"priced")]+=1
+            print("MRF1_CHRONOLOGICAL_WEEK_HORIZON",week+1,minutes,flush=True)
+    paired=[]
+    for week in (3,4):
+        for minutes in HORIZONS:
+            a=next(x for x in stats if x["week"]==week and x["horizonMinutes"]==minutes and x["variant"]=="FULL")
+            b=next(x for x in stats if x["week"]==week and x["horizonMinutes"]==minutes and x["variant"]=="BASE")
+            need(a["labelKnown"]==b["labelKnown"] and
+                 a["featureComplete"]==b["featureComplete"],"PAIR_UNMATCHED")
+            paired.append(dict(week=week,horizonMinutes=minutes,
+                fullMinusBaseMseBenefit=b["normalizedPriceMse"]-a["normalizedPriceMse"],
+                fullMinusZeroMseBenefit=a["zeroMovementMse"]-a["normalizedPriceMse"],
+                labelKnown=a["labelKnown"],priceMse=a["normalizedPriceMse"],
+                baselineMse=b["normalizedPriceMse"],zeroMovementMse=a["zeroMovementMse"]))
+    return dict(metrics=stats,models=models,
+                predictionHashSha256=modelDigest.hexdigest(),
+                nativeModelParityInputs=parity,paired=paired,
+                scoredByVariantAndHorizon={str(k):v for k,v in population.items()},
+                multipleComparisonsSix=True,
+                inferentialConfidence="UNKNOWN_TWO_EXPOSED_EVALUATION_WEEKS_NOT_INDEPENDENT"),predictions
+
+def commission_one_leg(contract,units,mid,eur_debit):
+    value=fee_usd(contract,units,mid)
+    need(value>=0,"EURUSD_COMMISSION_NEGATIVE")
+    return value*eur_debit
+
+def actual_original_eur_payoff(entry,exit,side,units,scenario):
+    e={k:dec(entry[k]) for k in ("Bid","Ask","EurCredit","EurDebit","ExitFeePerUnit")}
+    z={k:dec(exit[k]) for k in ("Bid","Ask","EurCredit","EurDebit","ExitFeePerUnit")}
+    slip=SCENARIOS[scenario]
+    emid=(e["Ask"]+e["Bid"])/2
+    zmid=(z["Ask"]+z["Bid"])/2
+    s0=emid*slip/D(20000)
+    s1=zmid*slip/D(20000)
+    opening=e["Ask"]+s0 if side>0 else e["Bid"]-s0
+    closing=z["Bid"]-s1 if side>0 else z["Ask"]+s1
+    usd=D(side)*units*(closing-opening)
+    gross=D(side)*units*(zmid-emid)*(z["EurCredit"]+z["EurDebit"])/2
+    transfer=usd*(z["EurCredit"] if usd>=0 else z["EurDebit"])
+    fees=(e["ExitFeePerUnit"]+z["ExitFeePerUnit"])*units
+    return dict(netEur=float(transfer-fees),grossMidpointEur=float(gross),
+                frictionEur=float(gross-transfer+fees),commissionEur=float(fees))
+
+def calibrated_quote_cost_prior(source,t):
+    # Only fully observed prior ORIGINAL entry/exit quotes mature before T.
+    # Future historical quotes exist in archive but are forbidden as prior.
+    spreads=[]
+    for when,x in source.items():
+        if when+EXIT_DELAY>=t-120*M:continue
+        if x["entry"] is None or x["exit"] is None:continue
+        for key in ("entry","exit"):
+            z=x[key];spreads.append(dec(z["Ask"])-dec(z["Bid"]))
+    return None if len(spreads)<20 else float(np.median(np.asarray(spreads,float)))
+
+def money_offer(row,forecast,quote,spreadPrior,policy,contract,t,scenario):
+    entry=quote["entry"]
+    if entry is None:return None
+    if forecast["calibrationThrough"]>=t-120*M:
+        raise ValueError("MRF1_FINANCIAL_FORECAST_EMBARGO")
+    units=D(1000);mid=(dec(entry["Ask"])+dec(entry["Bid"]))/2
+    eurRate=dec(entry["EurDebit"])
+    sigma=D(str(max(.0001,row["sig"]*math.sqrt(30))))
+    moveScale=units*mid*sigma*eurRate
+    entryHalfSpread=(dec(entry["Ask"])-dec(entry["Bid"]))/2
+    # Exit spread is estimated only from earlier original source; NEVER
+    # supplied by the current future 'exit' mark in the prediction.
+    priorExitHalfSpread=dec(spreadPrior)/2
+    slip=SCENARIOS[scenario]
+    slipPerSide=mid*slip/D(20000)
+    estimatedFees=dec(entry["ExitFeePerUnit"])*units*2
+    modeledCost=(entryHalfSpread+priorExitHalfSpread+2*slipPerSide)*units*eurRate+estimatedFees
+    q=np.asarray(forecast["quantile"],float)
+    actual=[]
+    risks=[];scores=[];means=[]
+    for side in (1,-1):
+        scenarios=[float(D(side)*moveScale*D(str(forecast["mean"]+res))-modeledCost)
+                   for res in q]
+        scenarios=sorted(scenarios) # conservative comonotonic joint loss
+        worst=max(0.,-mean(scenarios[:4]))
+        base=float(D(side)*moveScale*D(str(forecast["mean"]))-modeledCost)
+        score=base-.5*worst
+        actual.append(scenarios);risks.append(max(.01,3*worst));scores.append(score)
+        means.append(base)
+    return dict(At=t+DECISION_DELAY+1,ExitAt=t+DECISION_DELAY+EXIT_DELAY,
+        Symbol="EURUSD",Variant=policy,CalibratedThrough=forecast["calibrationThrough"],
+        MinUnits="1000",MinMarginEur="33.33",
+        MeanAdverseEur=means,RiskEur=risks,ActionScore=scores,
+        ScenarioNetEur=actual)
+
+def financial_input(rows,predictions,quote_source,scenario):
+    by_t={(r["t"],r["s"]):r for r in rows}
+    offers=[];quotes=[];diag=Counter();observed=[]
+    for t,source in sorted(quote_source.items()):
+        week=(t-START)//W
+        if week<2:continue
+        diag["evaluationScheduled"]+=1
+        row=by_t.get((t,"EURUSD"))
+        if row is None:
+            diag["predecisionFeatureUnknown"]+=1;continue
+        if source["entry"] is None or source["exit"] is None:
+            diag["genuineQuotePairMissing"]+=1
+        else:
+            diag["genuineQuotePairKnown"]+=1
+            for action in (1,-1):
+                for scen in SCENARIOS:
+                    d=actual_original_eur_payoff(source["entry"],source["exit"],
+                                                action,D(1000),scen)
+                    observed.append(dict(week=week+1,scenario=scen,side=action,
+                                         knownModelUnfundedCounterfactual=d))
+        prior=calibrated_quote_cost_prior(quote_source,t)
+        if prior is None:
+            diag["sourceBasedPriorSpreadInsufficient"]+=1;continue
+        if source["entry"] is None:
+            continue
+        # The real future exit quote is not read or passed to the offer builder.
+        for variant in ("FULL","BASE"):
+            forecast=predictions.get((t,"EURUSD",30,variant))
+            if forecast is None:
+                diag["forecastUnknown_"+variant]+=1;continue
+            signal=money_offer(row,forecast,source,prior,variant,None,t,scenario)
+            if signal is None:continue
+            offers.append(signal)
+            diag["positive_"+variant]+=int(max(signal["ActionScore"])>0)
+        # Original entry and exit marks are used in chronological native
+        # ledger replay ONLY; never as a future input to a decision at T.
+        if source["entry"] is not None:
+            quotes.append(source["entry"])
+        if source["exit"] is not None:
+            quotes.append(source["exit"])
+    need(diag["evaluationScheduled"]==40,"EURUSD_EVALUATION_40_CLOCKS")
+    # Two distinct 40-clock policy books share one identical quote event tape.
+    unique={(q["At"],q["Symbol"]):q for q in quotes}
+    return dict(Start=START+2*W,End=END,Scenario=scenario,
+        Quotes=sorted(unique.values(),key=lambda z:z["At"]),
+        Offers=offers),dict(diag),observed
+
+def main():
+    need(P.exists() and "FROZEN" in P.read_text(),"EXACT_PRESOURCE_PROTOCOL_MISSING")
+    original,quotesource,contract,sourceMeta=validate_original_sources()
+    streams,sourceTfCounts=prepare(original)
+    rows,census=calendar_rows(streams)
+    report,forecasts=fit_and_evaluate(rows)
+    populated=dict(schema="MXM_MRF1_NEW_ORIGINAL_M1_INFORMATION_7TF_THREE_HORIZON_V1",
+        sourceAuthenticity=sourceMeta,originalSourceTfCounts=sourceTfCounts,
+        sourceCalendar=dict(scheduled=1360,featureKnown=len(rows),
+            missingReasons=census),
+        frozenProtocolSha256=sha256(P.read_bytes()).hexdigest(),
+        implementationSha256=sha256(Path(__file__).read_bytes()).hexdigest(),
+        originalRunId=os.environ.get("GITHUB_RUN_ID"),
+        predictive=report,
+        economicDomain="ORIGINAL_EURUSD_BIDASK_PLUS_CURRENT_ORIGINAL_BROKER_TARIFF_CONDITIONAL_MODELED_FILL",
+        originalCxl1PoliciesOrScorersCalled=False,
+        otherClosedModelsCalled=False,newBrokerRequests=0,ordersSubmitted=0,
+        cloudActivated=False,qualified=False,independentConfirmation=False,
+        continuousFloatingDrawdownCertified=False,historicalTariffContinuityCertified=False)
+    Path("mrf1-original-predictive.json").write_text(json.dumps(
+        populated,sort_keys=True,indent=2,allow_nan=False)+"\n")
+    dotnet=os.environ.get("MRF1_DOTNET","dotnet")
+    dll="src/Mxm.Replay/bin/Release/net8.0/Mxm.Replay.dll"
+    with tempfile.TemporaryDirectory(prefix="mrf1-private-") as td:
+        a=Path(td)/"in.json";z=Path(td)/"out.json"
+        a.write_text(json.dumps(report["nativeModelParityInputs"],allow_nan=False))
+        test=subprocess.run([dotnet,dll,str(a),str(z),"--mrf1-parity"],
+                            capture_output=True,text=True,timeout=180)
+        need(test.returncode==0 and z.exists(),"CSHARP_PREDICTIVE_PARITY_FAILURE")
+        populated["nativePredictorParity"]=json.loads(z.read_text())
+        for scenario in SCENARIOS:
+            facts,census,originalCounterfactuals=financial_input(rows,forecasts,quotesource,scenario)
+            a.write_text(json.dumps(facts,allow_nan=False,separators=(",",":")))
+            # Seal original native inputs in protected workflow memory; the
+            # financial source quotes are never copied into public JSON.
+            populated["nativeInput"+scenario+"Sha256"]=sha256(a.read_bytes()).hexdigest()
+            response=subprocess.run([dotnet,dll,str(a),str(z),"--native-mrf1"],
+                                    capture_output=True,text=True,timeout=1800)
+            if response.returncode!=0 or not z.exists():
+                populated["native_"+scenario]=dict(status="UNKNOWN_NATIVE_FAILURE",
+                        stderr=response.stderr[-300:],returnCode=response.returncode)
+                Path("mrf1-original-public.json").write_text(json.dumps(populated,
+                    sort_keys=True,indent=2,allow_nan=False)+"\n")
+                raise RuntimeError("MRF1_NATIVE_"+scenario+"_FAILED")
+            populated["native_"+scenario]=json.loads(z.read_text())
+            populated["financialCensus_"+scenario]=census
+            populated["unfundedQuoteSideDescriptive_"+scenario]=dict(
+                completeCounterfactualSideLabels=len(originalCounterfactuals),
+                longSumNetEur=sum(q["knownModelUnfundedCounterfactual"]["netEur"]
+                    for q in originalCounterfactuals if q["scenario"]==scenario and q["side"]==1),
+                shortSumNetEur=sum(q["knownModelUnfundedCounterfactual"]["netEur"]
+                    for q in originalCounterfactuals if q["scenario"]==scenario and q["side"]==-1),
+                disclaimer="NOT_SIMULTANEOUS_FINANCED_BOOK_OR_BROKER_FILLS")
+            Path("mrf1-original-native-"+scenario+".json").write_text(z.read_text())
+    Path("mrf1-original-public.json").write_text(json.dumps(populated,
+        sort_keys=True,indent=2,allow_nan=False)+"\n")
+    print("MRF1_AUTHENTIC_NEW_MULTIRES_PRICE_COMPLETE",json.dumps(dict(
+        originalM1={k:v["M1"] for k,v in sourceTfCounts.items()},
+        known=len(rows),paired=report["paired"])),flush=True)
+    for scenario in SCENARIOS:
+        for name in ("FULL","BASE","CASH"):
+            x=populated["native_"+scenario][name]
+            print("MRF1_NATIVE_EUR300",scenario,name,
+                  "NET",x["Scorecard"]["NetEur"],
+                  "TRIPS",x["Scorecard"]["CompletedRoundTrips"],
+                  "HARD21",x["Scorecard"]["Hard21AllEligibleWeeks"],flush=True)
+
+if __name__=="__main__":main()
