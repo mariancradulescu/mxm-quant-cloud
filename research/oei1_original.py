@@ -186,7 +186,7 @@ def main():
         from .oei1_integrated import run
         result = run(tape)
         result["SourceSha256"] = summary["SourceSha256"]
-        result["OriginalRun"] = run_id = int(run_number) if False else int(os.environ["GITHUB_RUN_ID"])
+        result["OriginalRun"] = int(os.environ["GITHUB_RUN_ID"])
         result["OriginalProtocolSha256"] = summary["ProtocolSha256"]
         result["SourceCounts"] = summary["Counts"]
         result["SourceExclusions"] = summary["Exclusions"]
