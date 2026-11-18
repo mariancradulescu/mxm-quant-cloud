@@ -66,6 +66,27 @@ def verify() -> None:
                       "MaximumSystemDrawdown=.30m",
                       "MinimumSystemRoundTripsPerEligibleWeek=21"):
         require(invariant in owner, "OWNER_INVARIANT_" + invariant.split("=")[0])
+    # Prospective entry points must reuse the single C# Core engine; a Python
+    # research-only receipt auditor is allowed but is never a second scorer.
+    core_study = (ROOT / "src/Mxm.Core/NativeBayesianCommonEpisode.cs").read_text()
+    replay_study = (ROOT / "src/Mxm.Replay/OwnerNativeBayesParity.cs").read_text()
+    cloud_adapter = (ROOT / "src/Mxm.Cloud/NativeCloudResearchParityAdapter.cs").read_text()
+    replay_project = (ROOT / "src/Mxm.Replay/Mxm.Replay.csproj").read_text()
+    require("class NativeBayesianCommonEpisode" in core_study and
+            "NativeFundedLedger" in core_study and
+            "ledger.Apply(e)" in core_study, "NEW_STUDY_MONEY_IN_COMMON_CORE")
+    require("new NativeBayesianCommonEpisode()" in replay_study and
+            "new NativeCloudResearchParityAdapter()" in replay_study and
+            "Same(a,b)" in replay_study, "REPLAY_SAME_EVENT_NATIVE_PARITY")
+    require("engine.Advance(eventAtClose,index)" in cloud_adapter and
+            "NativeBayesianCommonEpisode engine=new();" in cloud_adapter,
+            "CLOUD_ADAPTER_NATIVE_DECISIONS_AND_MONEY")
+    require('Compile Include="../Mxm.Cloud/NativeCloudResearchParityAdapter.cs"' in
+            replay_project, "SOURCE_IDENTICAL_CLOUD_ADAPTER_IN_REPLAY")
+    require("--owner-native-bayes-parity" in
+            (ROOT / "src/Mxm.Replay/Program.cs").read_text() and
+            "audit_owner_native_bayes_parity" in ci,
+            "NEW_NATIVE_ENTRYPOINT_CI")
     print("STRUCTURAL_NATIVE_CSHARP_AUTHORITY_PASSED;"
           " NO_NUMERIC_OR_ECONOMIC_PARITY_CERTIFICATE")
 

@@ -1,0 +1,562 @@
+[
+  {
+    "At": 1794960000000,
+    "Quote": {
+      "Symbol": "SYNTH_BAYES",
+      "At": 1794960000000,
+      "Bid": 10,
+      "Ask": 10.04,
+      "EurCredit": 1,
+      "EurDebit": 1,
+      "ExitFeePerUnit": 0,
+      "ExitFeeFloor": 0.05,
+      "MarginPerUnit": 30
+    },
+    "CompletedObservation": true,
+    "SignedFinancingEur": 0
+  },
+  {
+    "At": 1794960060000,
+    "Quote": {
+      "Symbol": "SYNTH_BAYES",
+      "At": 1794960060000,
+      "Bid": 10.25,
+      "Ask": 10.29,
+      "EurCredit": 1,
+      "EurDebit": 1,
+      "ExitFeePerUnit": 0,
+      "ExitFeeFloor": 0.05,
+      "MarginPerUnit": 30
+    },
+    "CompletedObservation": true,
+    "SignedFinancingEur": 0
+  },
+  {
+    "At": 1794960120000,
+    "Quote": {
+      "Symbol": "SYNTH_BAYES",
+      "At": 1794960120000,
+      "Bid": 10.5,
+      "Ask": 10.54,
+      "EurCredit": 1,
+      "EurDebit": 1,
+      "ExitFeePerUnit": 0,
+      "ExitFeeFloor": 0.05,
+      "MarginPerUnit": 30
+    },
+    "CompletedObservation": true,
+    "SignedFinancingEur": 0
+  },
+  {
+    "At": 1794960180000,
+    "Quote": {
+      "Symbol": "SYNTH_BAYES",
+      "At": 1794960180000,
+      "Bid": 10.75,
+      "Ask": 10.79,
+      "EurCredit": 1,
+      "EurDebit": 1,
+      "ExitFeePerUnit": 0,
+      "ExitFeeFloor": 0.05,
+      "MarginPerUnit": 30
+    },
+    "CompletedObservation": true,
+    "SignedFinancingEur": 0
+  },
+  {
+    "At": 1794960240000,
+    "Quote": {
+      "Symbol": "SYNTH_BAYES",
+      "At": 1794960240000,
+      "Bid": 11,
+      "Ask": 11.04,
+      "EurCredit": 1,
+      "EurDebit": 1,
+      "ExitFeePerUnit": 0,
+      "ExitFeeFloor": 0.05,
+      "MarginPerUnit": 30
+    },
+    "CompletedObservation": true,
+    "SignedFinancingEur": 0
+  },
+  {
+    "At": 1794960300000,
+    "Quote": {
+      "Symbol": "SYNTH_BAYES",
+      "At": 1794960300000,
+      "Bid": 11.25,
+      "Ask": 11.29,
+      "EurCredit": 1,
+      "EurDebit": 1,
+      "ExitFeePerUnit": 0,
+      "ExitFeeFloor": 0.05,
+      "MarginPerUnit": 30
+    },
+    "CompletedObservation": true,
+    "SignedFinancingEur": 0
+  },
+  {
+    "At": 1794960360000,
+    "Quote": {
+      "Symbol": "SYNTH_BAYES",
+      "At": 1794960360000,
+      "Bid": 11.5,
+      "Ask": 11.54,
+      "EurCredit": 1,
+      "EurDebit": 1,
+      "ExitFeePerUnit": 0,
+      "ExitFeeFloor": 0.05,
+      "MarginPerUnit": 30
+    },
+    "CompletedObservation": true,
+    "SignedFinancingEur": 0
+  },
+  {
+    "At": 1794960420000,
+    "Quote": {
+      "Symbol": "SYNTH_BAYES",
+      "At": 1794960420000,
+      "Bid": 11.75,
+      "Ask": 11.79,
+      "EurCredit": 1,
+      "EurDebit": 1,
+      "ExitFeePerUnit": 0,
+      "ExitFeeFloor": 0.05,
+      "MarginPerUnit": 30
+    },
+    "CompletedObservation": true,
+    "SignedFinancingEur": -0.02
+  },
+  {
+    "At": 1794960480000,
+    "Quote": {
+      "Symbol": "SYNTH_BAYES",
+      "At": 1794960480000,
+      "Bid": 12.3,
+      "Ask": 12.34,
+      "EurCredit": 1,
+      "EurDebit": 1,
+      "ExitFeePerUnit": 0,
+      "ExitFeeFloor": 0.05,
+      "MarginPerUnit": 30
+    },
+    "CompletedObservation": true,
+    "SignedFinancingEur": 0
+  },
+  {
+    "At": 1794960540000,
+    "Quote": {
+      "Symbol": "SYNTH_BAYES",
+      "At": 1794960540000,
+      "Bid": 12.6,
+      "Ask": 12.64,
+      "EurCredit": 1,
+      "EurDebit": 1,
+      "ExitFeePerUnit": 0,
+      "ExitFeeFloor": 0.05,
+      "MarginPerUnit": 30
+    },
+    "CompletedObservation": true,
+    "SignedFinancingEur": 0
+  },
+  {
+    "At": 1794960600000,
+    "Quote": {
+      "Symbol": "SYNTH_BAYES",
+      "At": 1794960600000,
+      "Bid": 12.9,
+      "Ask": 12.94,
+      "EurCredit": 1,
+      "EurDebit": 1,
+      "ExitFeePerUnit": 0,
+      "ExitFeeFloor": 0.05,
+      "MarginPerUnit": 30
+    },
+    "CompletedObservation": true,
+    "SignedFinancingEur": 0
+  },
+  {
+    "At": 1794960660000,
+    "Quote": {
+      "Symbol": "SYNTH_BAYES",
+      "At": 1794960660000,
+      "Bid": 12.2,
+      "Ask": 12.24,
+      "EurCredit": 1,
+      "EurDebit": 1,
+      "ExitFeePerUnit": 0,
+      "ExitFeeFloor": 0.05,
+      "MarginPerUnit": 30
+    },
+    "CompletedObservation": true,
+    "SignedFinancingEur": 0
+  },
+  {
+    "At": 1794960720000,
+    "Quote": {
+      "Symbol": "SYNTH_BAYES",
+      "At": 1794960720000,
+      "Bid": 11.9,
+      "Ask": 11.94,
+      "EurCredit": 1,
+      "EurDebit": 1,
+      "ExitFeePerUnit": 0,
+      "ExitFeeFloor": 0.05,
+      "MarginPerUnit": 30
+    },
+    "CompletedObservation": true,
+    "SignedFinancingEur": 0
+  },
+  {
+    "At": 1794960780000,
+    "Quote": {
+      "Symbol": "SYNTH_BAYES",
+      "At": 1794960780000,
+      "Bid": 11.55,
+      "Ask": 11.59,
+      "EurCredit": 1,
+      "EurDebit": 1,
+      "ExitFeePerUnit": 0,
+      "ExitFeeFloor": 0.05,
+      "MarginPerUnit": 30
+    },
+    "CompletedObservation": true,
+    "SignedFinancingEur": 0
+  },
+  {
+    "At": 1794960840000,
+    "Quote": {
+      "Symbol": "SYNTH_BAYES",
+      "At": 1794960840000,
+      "Bid": 11.1,
+      "Ask": 11.14,
+      "EurCredit": 1,
+      "EurDebit": 1,
+      "ExitFeePerUnit": 0,
+      "ExitFeeFloor": 0.05,
+      "MarginPerUnit": 30
+    },
+    "CompletedObservation": true,
+    "SignedFinancingEur": 0
+  },
+  {
+    "At": 1794960900000,
+    "Quote": {
+      "Symbol": "SYNTH_BAYES",
+      "At": 1794960900000,
+      "Bid": 10.8,
+      "Ask": 10.84,
+      "EurCredit": 1,
+      "EurDebit": 1,
+      "ExitFeePerUnit": 0,
+      "ExitFeeFloor": 0.05,
+      "MarginPerUnit": 30
+    },
+    "CompletedObservation": true,
+    "SignedFinancingEur": 0
+  },
+  {
+    "At": 1794960960000,
+    "Quote": {
+      "Symbol": "SYNTH_BAYES",
+      "At": 1794960960000,
+      "Bid": 10.5,
+      "Ask": 10.54,
+      "EurCredit": 1,
+      "EurDebit": 1,
+      "ExitFeePerUnit": 0,
+      "ExitFeeFloor": 0.05,
+      "MarginPerUnit": 30
+    },
+    "CompletedObservation": true,
+    "SignedFinancingEur": 0
+  },
+  {
+    "At": 1794961020000,
+    "Quote": {
+      "Symbol": "SYNTH_BAYES",
+      "At": 1794961020000,
+      "Bid": 10.2,
+      "Ask": 10.24,
+      "EurCredit": 1,
+      "EurDebit": 1,
+      "ExitFeePerUnit": 0,
+      "ExitFeeFloor": 0.05,
+      "MarginPerUnit": 30
+    },
+    "CompletedObservation": true,
+    "SignedFinancingEur": 0
+  },
+  {
+    "At": 1794961080000,
+    "Quote": {
+      "Symbol": "SYNTH_BAYES",
+      "At": 1794961080000,
+      "Bid": 9.85,
+      "Ask": 9.89,
+      "EurCredit": 1,
+      "EurDebit": 1,
+      "ExitFeePerUnit": 0,
+      "ExitFeeFloor": 0.05,
+      "MarginPerUnit": 30
+    },
+    "CompletedObservation": true,
+    "SignedFinancingEur": 0
+  },
+  {
+    "At": 1794961140000,
+    "Quote": {
+      "Symbol": "SYNTH_BAYES",
+      "At": 1794961140000,
+      "Bid": 9.5,
+      "Ask": 9.54,
+      "EurCredit": 1,
+      "EurDebit": 1,
+      "ExitFeePerUnit": 0,
+      "ExitFeeFloor": 0.05,
+      "MarginPerUnit": 30
+    },
+    "CompletedObservation": true,
+    "SignedFinancingEur": 0
+  },
+  {
+    "At": 1794961200000,
+    "Quote": {
+      "Symbol": "SYNTH_BAYES",
+      "At": 1794961200000,
+      "Bid": 9.15,
+      "Ask": 9.19,
+      "EurCredit": 1,
+      "EurDebit": 1,
+      "ExitFeePerUnit": 0,
+      "ExitFeeFloor": 0.05,
+      "MarginPerUnit": 30
+    },
+    "CompletedObservation": true,
+    "SignedFinancingEur": 0
+  },
+  {
+    "At": 1794961260000,
+    "Quote": {
+      "Symbol": "SYNTH_BAYES",
+      "At": 1794961260000,
+      "Bid": 8.8,
+      "Ask": 8.84,
+      "EurCredit": 1,
+      "EurDebit": 1,
+      "ExitFeePerUnit": 0,
+      "ExitFeeFloor": 0.05,
+      "MarginPerUnit": 30
+    },
+    "CompletedObservation": true,
+    "SignedFinancingEur": 0
+  },
+  {
+    "At": 1794961320000,
+    "Quote": {
+      "Symbol": "SYNTH_BAYES",
+      "At": 1794961320000,
+      "Bid": 8.45,
+      "Ask": 8.49,
+      "EurCredit": 1,
+      "EurDebit": 1,
+      "ExitFeePerUnit": 0,
+      "ExitFeeFloor": 0.05,
+      "MarginPerUnit": 30
+    },
+    "CompletedObservation": true,
+    "SignedFinancingEur": 0
+  },
+  {
+    "At": 1794961380000,
+    "Quote": {
+      "Symbol": "SYNTH_BAYES",
+      "At": 1794961380000,
+      "Bid": 8.1,
+      "Ask": 8.14,
+      "EurCredit": 1,
+      "EurDebit": 1,
+      "ExitFeePerUnit": 0,
+      "ExitFeeFloor": 0.05,
+      "MarginPerUnit": 30
+    },
+    "CompletedObservation": true,
+    "SignedFinancingEur": 0
+  },
+  {
+    "At": 1794961440000,
+    "Quote": {
+      "Symbol": "SYNTH_BAYES",
+      "At": 1794961440000,
+      "Bid": 7.8,
+      "Ask": 7.84,
+      "EurCredit": 1,
+      "EurDebit": 1,
+      "ExitFeePerUnit": 0,
+      "ExitFeeFloor": 0.05,
+      "MarginPerUnit": 30
+    },
+    "CompletedObservation": true,
+    "SignedFinancingEur": 0
+  },
+  {
+    "At": 1794961500000,
+    "Quote": {
+      "Symbol": "SYNTH_BAYES",
+      "At": 1794961500000,
+      "Bid": 7.5,
+      "Ask": 7.54,
+      "EurCredit": 1,
+      "EurDebit": 1,
+      "ExitFeePerUnit": 0,
+      "ExitFeeFloor": 0.05,
+      "MarginPerUnit": 30
+    },
+    "CompletedObservation": true,
+    "SignedFinancingEur": 0
+  },
+  {
+    "At": 1794961560000,
+    "Quote": {
+      "Symbol": "SYNTH_BAYES",
+      "At": 1794961560000,
+      "Bid": 7.2,
+      "Ask": 7.24,
+      "EurCredit": 1,
+      "EurDebit": 1,
+      "ExitFeePerUnit": 0,
+      "ExitFeeFloor": 0.05,
+      "MarginPerUnit": 30
+    },
+    "CompletedObservation": true,
+    "SignedFinancingEur": 0
+  },
+  {
+    "At": 1794961620000,
+    "Quote": {
+      "Symbol": "SYNTH_BAYES",
+      "At": 1794961620000,
+      "Bid": 7,
+      "Ask": 7.04,
+      "EurCredit": 1,
+      "EurDebit": 1,
+      "ExitFeePerUnit": 0,
+      "ExitFeeFloor": 0.05,
+      "MarginPerUnit": 30
+    },
+    "CompletedObservation": true,
+    "SignedFinancingEur": 0
+  },
+  {
+    "At": 1794961680000,
+    "Quote": {
+      "Symbol": "SYNTH_BAYES",
+      "At": 1794961680000,
+      "Bid": 6.75,
+      "Ask": 6.79,
+      "EurCredit": 1,
+      "EurDebit": 1,
+      "ExitFeePerUnit": 0,
+      "ExitFeeFloor": 0.05,
+      "MarginPerUnit": 30
+    },
+    "CompletedObservation": true,
+    "SignedFinancingEur": 0
+  },
+  {
+    "At": 1794961740000,
+    "Quote": {
+      "Symbol": "SYNTH_BAYES",
+      "At": 1794961740000,
+      "Bid": 6.5,
+      "Ask": 6.54,
+      "EurCredit": 1,
+      "EurDebit": 1,
+      "ExitFeePerUnit": 0,
+      "ExitFeeFloor": 0.05,
+      "MarginPerUnit": 30
+    },
+    "CompletedObservation": true,
+    "SignedFinancingEur": 0
+  },
+  {
+    "At": 1794961800000,
+    "Quote": {
+      "Symbol": "SYNTH_BAYES",
+      "At": 1794961800000,
+      "Bid": 6.3,
+      "Ask": 6.34,
+      "EurCredit": 1,
+      "EurDebit": 1,
+      "ExitFeePerUnit": 0,
+      "ExitFeeFloor": 0.05,
+      "MarginPerUnit": 30
+    },
+    "CompletedObservation": true,
+    "SignedFinancingEur": 0
+  },
+  {
+    "At": 1794961860000,
+    "Quote": {
+      "Symbol": "SYNTH_BAYES",
+      "At": 1794961860000,
+      "Bid": 6.1,
+      "Ask": 6.14,
+      "EurCredit": 1,
+      "EurDebit": 1,
+      "ExitFeePerUnit": 0,
+      "ExitFeeFloor": 0.05,
+      "MarginPerUnit": 30
+    },
+    "CompletedObservation": true,
+    "SignedFinancingEur": 0
+  },
+  {
+    "At": 1794961920000,
+    "Quote": {
+      "Symbol": "SYNTH_BAYES",
+      "At": 1794961920000,
+      "Bid": 6.7,
+      "Ask": 6.74,
+      "EurCredit": 1,
+      "EurDebit": 1,
+      "ExitFeePerUnit": 0,
+      "ExitFeeFloor": 0.05,
+      "MarginPerUnit": 30
+    },
+    "CompletedObservation": true,
+    "SignedFinancingEur": 0
+  },
+  {
+    "At": 1794961980000,
+    "Quote": {
+      "Symbol": "SYNTH_BAYES",
+      "At": 1794961980000,
+      "Bid": 7.3,
+      "Ask": 7.34,
+      "EurCredit": 1,
+      "EurDebit": 1,
+      "ExitFeePerUnit": 0,
+      "ExitFeeFloor": 0.05,
+      "MarginPerUnit": 30
+    },
+    "CompletedObservation": true,
+    "SignedFinancingEur": 0
+  },
+  {
+    "At": 1794962040000,
+    "Quote": {
+      "Symbol": "SYNTH_BAYES",
+      "At": 1794962040000,
+      "Bid": 7.9,
+      "Ask": 7.94,
+      "EurCredit": 1,
+      "EurDebit": 1,
+      "ExitFeePerUnit": 0,
+      "ExitFeeFloor": 0.05,
+      "MarginPerUnit": 30
+    },
+    "CompletedObservation": true,
+    "SignedFinancingEur": 0
+  }
+]
