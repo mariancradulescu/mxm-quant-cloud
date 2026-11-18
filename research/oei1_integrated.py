@@ -225,8 +225,10 @@ class Tree:
                 left=[x for x in rows if x["x"][feature]<=cut]
                 right=[x for x in rows if x["x"][feature]>cut]
                 if min(len(left),len(right))<40:continue
-                err=sum((x["y"]-mean([z["y"] for z in left]))**2 for x in left)
-                err+=sum((x["y"]-mean([z["y"] for z in right]))**2 for x in right)
+                lm=sum(x["y"] for x in left)/len(left)
+                rm=sum(x["y"] for x in right)/len(right)
+                err=sum((x["y"]-lm)**2 for x in left)
+                err+=sum((x["y"]-rm)**2 for x in right)
                 key=(err,feature,cut)
                 if best is None or key<best[0]:best=(key,feature,cut,left,right)
         if best is None:return base
@@ -509,8 +511,18 @@ def run(tape):
     train=[s for s in adverse if s["week"]<6]
     calib=[s for s in adverse if 6<=s["week"]<8]
     evals=[s for s in adverse if 8<=s["week"]<12]
-    require(len(train)>=120 and len(calib)>=20 and len(evals)>=20,
-            "INSUFFICIENT_CAUSAL_CHRONOLOGY")
+    if len(train)<120 or len(calib)<20 or len(evals)<20:
+        return dict(Study="OEI1_INTEGRATED_3PHASE",
+            Status="PREDICTIVE_SAMPLE_CHRONOLOGY_STOP_NO_OUTCOME_PROMOTION",
+            Phase1=phase1,
+            Phase2=dict(Status="INSUFFICIENT_CAUSAL_CHRONOLOGY",
+                        TrainCount=len(train),CalibrationCount=len(calib),
+                        EvaluationCount=len(evals)),
+            Phase3=dict(Status="NOT_SCORED_PREDICTIVE_EVIDENCE_UNAVAILABLE"),
+            Source="ORIGINAL_PEPPERSTONE_READ_ONLY",
+            ScopeIsNotFullMarket=True,GlobalCalendarExposed=True,
+            NotIndependentConfirmation=True,HistoricalTariffContinuityCertified=False,
+            FinalCloudCbotQualified=False)
     models={"BAYES":Bayes(train),"MARKOV":Markov(train),
             "TREE":Tree(train),"PLACEBO":Placebo(train)}
     calibrations={}
