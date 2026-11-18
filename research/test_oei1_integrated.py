@@ -52,7 +52,7 @@ class Oei1Synthetic(unittest.TestCase):
                 Days=days,M1Count=0))
         result=run(dict(Start=START,End=START+84*DAY,Symbols=markets))
         self.assertEqual(result["Study"],"OEI1_INTEGRATED_3PHASE")
-        self.assertGreater(result["Phase1"]["CorpusDecisionSides"],120)
+        self.assertGreater(result["Phase1"]["CorpusCausalOfferedSides"],120)
         self.assertFalse(result["Phase1"]["OracleAdverse"]["IsCausalPolicy"])
         self.assertFalse(result["FinalCloudCbotQualified"])
         self.assertEqual(len(result["Phase1"]["ScopeClasses"]),4)
