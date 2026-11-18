@@ -149,21 +149,25 @@ public static class Ahr1NativeResearch
             double volRatio=range4/range24,volumeRatio=vol24>0?vol4/vol24:1;
             int currentState=range4>=range24?1:0,prevState=oldRange4>=range24?1:0;
             double barrier=Math.Max(1.0,0.75*range24);
-            bool missing=false,ambiguous=false;int label=2;
+            // A resolved early barrier MUST NOT hide a later missing hour:
+            // protocol requires the complete predeclared six-hour source window.
+            bool missing=false;
             for(int j=i+1;j<=i+6;j++)
-            {
                 if(j>=data.Length||data[j].Start!=data[j-1].End)
                 {missing=true;break;}
+            if(missing){Count("future_path_gap");continue;}
+            if(data[i+6].End>EndOfSplit(b.End))
+            {Count("six_hour_embargo_or_source_end");continue;}
+            bool ambiguous=false;int label=2;
+            for(int j=i+1;j<=i+6;j++)
+            {
                 var q=data[j];
                 bool up=q.High>=b.Close+barrier,down=q.Low<=b.Close-barrier;
                 if(up&&down){ambiguous=true;break;}
                 if(up){label=0;break;}
                 if(down){label=1;break;}
             }
-            if(missing){Count("future_path_gap");continue;}
             if(ambiguous){Count("same_hour_barrier_order_unknown");continue;}
-            if(i+6>=data.Length||data[i+6].End>EndOfSplit(b.End))
-            {Count("six_hour_embargo_or_source_end");continue;}
             if(b.End<T0||b.End>=T3)continue;
             rows.Add(new Example(sym.Symbol,b.End,label,momentum,volRatio,
                 volumeRatio,prevState,currentState,barrier));
