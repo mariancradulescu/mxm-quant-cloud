@@ -562,6 +562,17 @@ jobs:
             6.0.x
       - run: dotnet run --project tests/Mxm.Checks -c Release
       - run: dotnet build src/Mxm.Replay -c Release
+      - name: Native Bayesian policy same synthetic events in Replay and Cloud-linked adapter
+        run: |
+          dotnet run --project src/Mxm.Replay -c Release -- research/fixtures/owner_native_bayes_synthetic_v1.json owner-native-bayes-parity.json --owner-native-bayes-parity
+          python3 -m research.audit_owner_native_bayes_parity research/fixtures/owner_native_bayes_synthetic_v1.json owner-native-bayes-parity.json
+      - name: Preserve synthetic native event-parity trace
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: owner-native-bayes-synthetic-parity
+          path: owner-native-bayes-parity.json
+          if-no-files-found: error
+          retention-days: 30
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.12'
