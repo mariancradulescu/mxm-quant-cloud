@@ -43,7 +43,7 @@ jobs:
           import pathlib,subprocess
           before=subprocess.check_output(['git','show','260af2ac16e8a0f52b3420bc4d2cd3fb315fccd1:src/Mxm.Core/Cdh1NativeResearch.cs'])
           now=pathlib.Path('src/Mxm.Core/Cdh1NativeResearch.cs').read_bytes()
-          assert before.endswith(b'}\\n') and now.startswith(before[:-2]) and now.endswith(b'}\\n')
+          assert before.endswith(b'}\n') and now.startswith(before[:-2]) and now.endswith(b'}\n')
           assert b'public static object RunCumulativeMce1(' in now[len(before)-2:]
           PY
       - name: Compile authoritative Core+Replay
