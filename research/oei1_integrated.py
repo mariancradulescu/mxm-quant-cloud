@@ -450,6 +450,9 @@ def replay(samples,forecast,scenario,marketdays):
                  DrawdownThresholdBreachObservations=breaches,
                  Rejections=dict(rejections),
                  CompletedTripsPerWeek={w:scoreweeks[w] for w in weeks},
+                 TradesByMarket=dict(collections.Counter(v["market"] for v in closed)),
+                 ClosedNetEurByMarket={name:sum(v["net"] for v in closed if v["market"]==name)
+                                       for name in sorted({v["market"] for v in closed})},
                  SystemHard21AllFourWeeks=all(scoreweeks[w]>=21 for w in weeks),
                  FullContinuousFloatingDDCertified=False,
                  HistoricalTariffsAndFillsCertified=False,
@@ -535,7 +538,38 @@ def run(tape):
     adverse_complete=[s for s in adverse if s.get("complete")]
     central_complete=[s for s in central if s.get("complete")]
     source_by_class=collections.Counter(s["Class"] for s in adverse_complete)
-    phase1=dict(ScorableOriginalSidesPerClass=dict(source_by_class),
+    def market_census(name):
+        all_rows=[v for v in adverse if v["market"]==name]
+        valid=[v for v in all_rows if v.get("complete")]
+        feasible=[v for v in valid if v["risk"]<=90 and v["margin"]+
+                  v["entry_fee_budget"]<=300]
+        winners=[v for v in feasible if v["net"]>0]
+        grosspositives=[v for v in feasible if v["gross"]>0]
+        weeks={iso(START+i*WEEK):sum(iso(v["exit_at"])==iso(START+i*WEEK)
+              for v in winners) for i in range(WEEKS)}
+        cost_keys=("spread","slippage","commissions","conversion","financing")
+        costs={key:sum(v[key] for v in feasible) for key in cost_keys}
+        grossplus=sum(v["gross"] for v in grosspositives)
+        return dict(Class=markets[name]["Class"],
+             CausalOfferSides=len(all_rows),FutureCompleteSides=len(valid),
+             FutureCensoredSides=len(all_rows)-len(valid),
+             FundingRiskFeasibleSides=len(feasible),
+             PositiveGrossAfterFeasibility=len(grosspositives),
+             PositiveNetAfterFeasibility=len(winners),
+             FeasibleMeanGrossEur=mean([v["gross"] for v in feasible]) if feasible else None,
+             FeasibleMeanNetAdverseEur=mean([v["net"] for v in feasible]) if feasible else None,
+             FeasibleRecordedCostTotalEur=sum(costs.values()),
+             FeasibleCostAttributionEur=costs,
+             RelaxedPositiveNetEur=sum(v["net"] for v in winners),
+             GrossPositiveGroupCostToGrossRatio=(
+                sum(sum(v[k] for k in cost_keys) for v in grosspositives)/grossplus
+                if grossplus>0 else None),
+             RiskInitialMaxEur=max((v["risk"] for v in feasible),default=None),
+             OriginalCurrentMinimumMarginEur=markets[name]["Margin"],
+             EligiblePositiveRecordedTripsPerIsoWeek=weeks,
+             NotIndependentOrExecutableHindsight=True)
+    phase1=dict(ByMarket={name:market_census(name) for name in markets},
+                ScorableOriginalSidesPerClass=dict(source_by_class),
                 DeclaredClassCount=len(markets),
                 ScorableClassCount=sum(n>=40 for n in source_by_class.values()),ScopeClasses=[markets[x]["Class"] for x in markets],
                 ScopeSymbols=list(markets),OriginalWeeks=12,
