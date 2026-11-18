@@ -500,7 +500,10 @@ def run(tape):
     adverse=[s for s in sample if s["scenario"]=="adverse"]
     central=[s for s in sample if s["scenario"]=="central"]
     require(len(adverse)==len(central),"SCENARIO_SAMPLE_CARDINALITY")
-    phase1=dict(ScopeClasses=[markets[x]["Class"] for x in markets],
+    source_by_class=collections.Counter(s["Class"] for s in adverse)
+    phase1=dict(ScorableOriginalSidesPerClass=dict(source_by_class),
+                DeclaredClassCount=len(markets),
+                ScorableClassCount=sum(n>=40 for n in source_by_class.values()),ScopeClasses=[markets[x]["Class"] for x in markets],
                 ScopeSymbols=list(markets),OriginalWeeks=12,
                 OriginalSessionUtc="13:30-15:30",DecisionClocks="13:50-15:10 every five minutes",
                 CorpusDecisionSides=len(adverse),ProposedSides=dict(census),
@@ -508,6 +511,16 @@ def run(tape):
                 OracleCentral=interval_oracle(central),
                 OracleAdverse=interval_oracle(adverse),
                 HistoricalTariffsCertified=False,ExecutablePolicyFalseForOracle=True)
+    if sum(n>=40 for n in source_by_class.values())<3:
+        return dict(Study="OEI1_INTEGRATED_3PHASE",
+            Status="PRESOURCE_STOP_INSUFFICIENT_THREE_CLASS_PATH_COVERAGE",
+            Phase1=phase1,
+            Phase2=dict(Status="NOT_SCORED_THREE_ORIGINAL_CLASSES_REQUIRED"),
+            Phase3=dict(Status="NOT_SCORED_ORIGINAL_CLASS_GATE"),
+            Source="ORIGINAL_PEPPERSTONE_READ_ONLY",
+            ScopeIsNotFullMarket=True,GlobalCalendarExposed=True,
+            NotIndependentConfirmation=True,HistoricalTariffContinuityCertified=False,
+            FinalCloudCbotQualified=False)
     train=[s for s in adverse if s["week"]<6]
     calib=[s for s in adverse if 6<=s["week"]<8]
     evals=[s for s in adverse if 8<=s["week"]<12]
