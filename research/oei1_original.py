@@ -195,7 +195,10 @@ def main():
         result["IndependentConfirmation"] = False
         result["Qualified"] = False
         (public/"economic.json").write_text(json.dumps(result,indent=2)+"\n")
-        summary["Status"]="COMPLETED_INTEGRATED_3PHASE_RESEARCH"
+        summary["Status"]=result["Status"]
+        summary["Phase1Evaluated"]=bool(result.get("Phase1"))
+        summary["Phase2Evaluated"]=bool(result.get("Phase2",{}).get("Evaluation"))
+        summary["Phase3Evaluated"]=bool(result.get("Phase3",{}).get("adverse"))
         summary["Completed"]=True
         write()
     except Exception as exc:
