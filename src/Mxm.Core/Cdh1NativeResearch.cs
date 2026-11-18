@@ -846,4 +846,39 @@ public static class Cdh1NativeResearch
             OrdersSubmitted=0,CloudActivated=false,EconomicQualification=false
         };
     }
+
+    public static object SelfTestMde1()
+    {
+        // Synthetic ONLY. No historical market source or closed study execution.
+        long clock=U(2026,10,1);
+        double[] basis={1.0,0.0,1.0,1.0,3.0,0.0,.5};
+        var rows=new List<Decision>{
+            new(clock,0,new[]{1},basis,0,1),
+            new(clock+15*M,1,new[]{2},basis,0,-1),
+            new(clock+30*M,2,new[]{0,0,0},basis,0,0),
+            new(clock+45*M,3,new[]{3},basis,0,1),
+            new(clock+60*M,4,Array.Empty<int>(),basis,0,1)
+        };
+        double[] baseline={.5,.25,.25};
+        var context=new Dictionary<int,Counts>();
+        var fit=FitSoftmax(rows);
+        var sign=Mde1SignedConditional(rows,0,baseline,context,fit);
+        // Type inference is anonymous and strong-typed inside this method.
+        if(sign.ExAnteClocksAllOutcomes!=5||
+           sign.ResolvedFirstTouchDirectionalOutcomeCount!=2||
+           sign.Censored!=1||sign.Ambiguous!=1||sign.NoTouch!=1||
+           Math.Abs(sign.MeanConditionalDirectionalBrierModel!.Value-.25)>1e-9||
+           Math.Abs(sign.IncrementalConditionalDirectionalBrierGainVsPrior!.Value)>1e-9)
+            throw new InvalidOperationException(
+                "MDE1_SYNTHETIC_EVENT_VS_CONDITIONAL_SIGN_DENOMINATOR_FAIL");
+        return new {
+            Source="SYNTHETIC_ONLY",
+            CausalClocks=sign.ExAnteClocksAllOutcomes,
+            ResolvedConditionalBrierClocks=sign.ResolvedFirstTouchDirectionalOutcomeCount,
+            AmbiguousAndCensoredStillCounted=true,
+            EventLikelihoodNotClaimedSignedEdge=true,
+            NativeCoreOnly=true,OriginalBrokerTrades=0,
+            FundedNetEur=(decimal?)null,CloudActivated=false
+        };
+    }
 }
