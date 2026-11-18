@@ -1,0 +1,39 @@
+name: ORX1 frozen CVP1 public recorded-opportunity diagnostic
+on:
+  pull_request:
+    paths:
+      - 'research/ORX1_FROZEN_RECORDED_OPPORTUNITY_DIAGNOSTIC_20261118.md'
+      - 'research/orx1_recorded_oracle.py'
+      - 'research/test_orx1_recorded_oracle.py'
+      - '.github/workflows/orx1-restricted-oracle.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'research/ORX1_FROZEN_RECORDED_OPPORTUNITY_DIAGNOSTIC_20261118.md'
+      - 'research/orx1_recorded_oracle.py'
+      - 'research/test_orx1_recorded_oracle.py'
+      - '.github/workflows/orx1-restricted-oracle.yml'
+permissions:
+  contents: read
+jobs:
+  original-public-only:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Verify deterministic pure weighted-interval algorithms
+        run: python -m unittest research.test_orx1_recorded_oracle -v
+      - name: Verify immutable source and compute strictly restricted hindsight bound
+        run: python -m research.orx1_recorded_oracle /tmp/orx1-restricted-result.json
+      - name: Publish new diagnosis, not original CVP1 rescore
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: orx1-public-restricted-recorded-opportunity-diagnostic
+          path: /tmp/orx1-restricted-result.json
+          if-no-files-found: error
+          retention-days: 90
