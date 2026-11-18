@@ -1,5 +1,42 @@
 # Active OWNER specification v2.0 — updated 2026-11-05 (single normative authority)
 
+## OWNER prospective single C# authority — 2026-11-18 (active correction)
+
+The final product is the **same single autonomous native C# cBot**, and for
+all NEW economically qualifying research, **Mxm.Core C# is the single
+authoritative implementation** of causal features, fitted models, decisions,
+entry/exit/partial-position lifecycle, conditional simulated execution,
+instrument-specific costs and conversions, common capital, margin, closed NET,
+floating risk and systemic HARD21. Mxm.Replay must call those shared Core
+implementations; Mxm.Cloud must link the same Core code. Merely reproducing
+their names in another language or compiling both assemblies does not prove
+same-input, same-clock or same-result parity.
+
+Python remains allowed for OWNER-authorized read-only collection, decoding,
+custody/hashes, workflow automation and **independent comparison**; it must not
+become another authoritative prospective prediction, selection, trade execution
+or accounting engine. Historical exact Python or C# studies and all original
+receipts retain their original evidence class, result, hashes and verdict.
+Do not retrospectively reclassify, retune, reverse or rerun closed experiments.
+
+Prospective admission requires eventwise feature/model/decision/conditional
+fill/fees/FX/margin/one-EUR300-capital/NET/risk parity, checked in CI with
+independently inspectable original receipts and chronological evidence. Missing
+authentic input and broker recovery remain UNKNOWN; neither independent Python
+recalculation nor CI/compilation is economic qualification. Observe full
+intra-position drawdown (30% maximum), legally financed *completed* systemic
+HARD21 for every ex-ante eligible week, robust adverse incremental NET and
+>=12 months truly independent confirmation before any promotion. Do not alter
+these goals or call them mathematically impossible without a demonstrated
+instrument/path/account constraint.
+
+Reuse valid Core, Replay, Cloud, source and test components. Make only
+demonstrated minimal corrections, then continue mathematically distinct,
+prospectively frozen discovery on one C# evaluator and common EUR300 book.
+No LIVE/DEMO orders, Cloud activation, repository changes beyond the existing
+one, permanent external services or retrospective study restarts.
+DIRECTOR executes, AUDITOR independently verifies, OWNER decides.
+
 ## OWNER integrated opportunity-first research — 2026-11-18 (active)
 
 This is a new prospective OWNER methodological decision after CVP1, with
