@@ -526,4 +526,143 @@ public static class Cdh1NativeResearch
             SoftmaxTrulyLearned=true,Orders=0,CloudActivated=false,NetEur=(decimal?)null
         };
     }
+
+    // MCE1 NEW: additive adapter to reuse the EXACT existing CDH1 private causal
+    // Build/Prior/Context/FitSoftmax/Score methods with new prespecified chronology.
+    // Every existing CDH1 original method and byte of its body remains unchanged.
+    // This new method does NOT relaunch or amend the closed CDH1 Run() experiment.
+    public static object RunCumulativeMce1(Cdh1Input input)
+    {
+        const string frozenNewRun = "44352570167";
+        if(input is null||input.Streams is null||
+           input.SourceRunId!=frozenNewRun||
+           input.ProtocolSha256?.Length!=64||input.CiphertextSha256?.Length!=64||
+           input.Streams.Length!=12||input.Streams.Any(s=>s.Period!="M15")||
+           input.Streams.Select(s=>s.Symbol).Distinct(StringComparer.Ordinal).Count()!=12||
+           !input.Streams.Select(s=>s.Symbol).OrderBy(s=>s,StringComparer.Ordinal)
+                .SequenceEqual(Symbols.OrderBy(s=>s,StringComparer.Ordinal),
+                    StringComparer.Ordinal))
+            throw new ArgumentException("MCE1_NEW_274DAY_ORIGINAL_SOURCE_REQUIRED");
+        var rule=new Rule(U(2025,11,16),U(2026,4,20),U(2026,6,15),
+            U(2026,8,17),15*M,500,400,500);
+        (string Id,string Symbol,int ModelIndex)[] frozen={
+            ("H1_AUDUSD_SOFTMAX","AUDUSD",2),
+            ("H2_EURUSD_BAYES","EURUSD",1),
+            ("H3_GBPUSD_SOFTMAX","GBPUSD",2),
+            ("H4_JPN225_SOFTMAX","JPN225",2)};
+        var reports=new List<object>();
+        foreach(var hypothesis in frozen)
+        {
+            var stream=input.Streams.Single(s=>s.Symbol==hypothesis.Symbol);
+            var (decisions,sourceStats)=Build(stream,rule);
+            var train=decisions.Where(d=>d.At<rule.TrainEnd).ToList();
+            var cal=decisions.Where(d=>d.At>=rule.TrainEnd&&d.At<rule.CalEnd).ToList();
+            var eval=decisions.Where(d=>d.At>=rule.CalEnd).ToList();
+            int evalWeeks=eval.Select(d=>Week(d.At)).Distinct().Count();
+            bool admitted=train.Count>=rule.MinTrain&&cal.Count>=rule.MinCal&&
+                eval.Count>=rule.MinEval&&evalWeeks>=8;
+            if(!admitted)
+            {
+                reports.Add(new{
+                    hypothesis.Id,hypothesis.Symbol,
+                    FrozenSelectedModel=Names[hypothesis.ModelIndex],
+                    Source=sourceStats,
+                    Train=train.Count,Calibration=cal.Count,
+                    HistoricalTransportEval=eval.Count,EvalWeeks=evalWeeks,
+                    Status="MCE1_EXANTE_PRESCORE_SOURCE_SUPPORT_FAIL_NO_ECONOMIC_INFERENCE",
+                    TrainedModel=(object?)null,Score=(object?)null,
+                    DirectionalGate=(object?)null});
+                continue;
+            }
+            // EXACT reused CDH1 estimators: unchanged strength, feature
+            // standardisation and softmax training iterations from the old
+            // shared Core. Only TRAIN contributes to fit.
+            var prior=Prior(train);
+            var context=Context(train,prior,out int trainingAmbiguous);
+            var softmax=FitSoftmax(train);
+            int selected=hypothesis.ModelIndex;
+            var trainPrior=Score(train,0,prior,context,softmax);
+            var trainSelected=Score(train,selected,prior,context,softmax);
+            var calPrior=Score(cal,0,prior,context,softmax);
+            var calSelected=Score(cal,selected,prior,context,softmax);
+            var evalPrior=Score(eval,0,prior,context,softmax);
+            var evalSelected=Score(eval,selected,prior,context,softmax);
+            int signed=evalSelected.Wins-evalSelected.OppositeFirst;
+            int worstSigned=signed-evalSelected.ProposalAmbiguous-
+                evalSelected.ProposalCensored;
+            int matchedMomSigned=evalSelected.MatchedMomentumWins-
+                evalSelected.MatchedContrarianWins;
+            int matchedContraSigned=-matchedMomSigned;
+            bool calStable=calSelected.IncrementalObservedLogLikelihoodPerDecision
+                is double calInc&&calInc>=0;
+            bool evalIncrement=evalSelected.WeeklyNormalReference95Low
+                is double low&&low>0;
+            bool sufficientlyDifferent=evalSelected.MaterialDifferenceFraction
+                is double f&&f>.02;
+            bool signedBetter=evalSelected.Proposals>0&&
+                worstSigned>Math.Max(0,Math.Max(matchedMomSigned,matchedContraSigned));
+            bool repeatFrequency=evalSelected.ProposalWeeksWith21>=
+                (int)Math.Ceiling(.75*evalWeeks);
+            bool historicalDiagnostic=calStable&&evalIncrement&&
+                sufficientlyDifferent&&signedBetter&&repeatFrequency;
+            reports.Add(new{
+                hypothesis.Id,hypothesis.Symbol,
+                FrozenSelectedModel=Names[selected],
+                Source=sourceStats,Train=train.Count,Calibration=cal.Count,
+                HistoricalTransportEval=eval.Count,EvalWeeks=evalWeeks,
+                Status="MCE1_EXPOSED_HISTORICAL_TRANSPORT_DIAGNOSTIC_NOT_INDEPENDENT",
+                TrainedModel=(object)new{
+                    TrainOnlyPriorNoneUpDown=prior,
+                    BayesianSupportedCells=context.Count,
+                    TrainAmbiguousEvidence=trainingAmbiguous,
+                    SoftmaxTrainObservedSteps=softmax.TrainedRiskSteps,
+                    SoftmaxActuallyLearned=softmax.CoefficientNorm()>1e-6,
+                    SoftmaxTrainCoefficientNorm=softmax.CoefficientNorm(),
+                    NewFitNotOriginalCDH1Coefficients=true,
+                    OriginalCDH1ExistingMethodBodiesUnmodified=true},
+                Score=(object)new{
+                    TrainPrior=trainPrior,TrainFrozenMechanismNewFit=trainSelected,
+                    CalibrationPrior=calPrior,CalibrationFrozenMechanismNewFit=calSelected,
+                    HistoricalTransportEvalPrior=evalPrior,
+                    HistoricalTransportEvalFrozenMechanismNewFit=evalSelected},
+                DirectionalGate=(object)new{
+                    SignedFirstTouchWinMinusOpposite=signed,
+                    WorstCaseSignedIncludingAmbiguousAndCensor=worstSigned,
+                    SignedFirstTouchPerProposal=evalSelected.Proposals>0?
+                        (double?)signed/evalSelected.Proposals:null,
+                    ConservativeSignedLowerBoundPerProposal=evalSelected.Proposals>0?
+                        (double?)worstSigned/evalSelected.Proposals:null,
+                    MatchedMomentumSignedTouch=matchedMomSigned,
+                    MatchedContrarianSignedTouch=matchedContraSigned,
+                    CashNoTradeComparatorIsZeroExposure=true,
+                    CalibrationNotWorseThanPrior=calStable,
+                    DescriptiveHistoricalEvalReferenceIntervalAboveZero=evalIncrement,
+                    MateriallyDifferentPrediction=sufficientlyDifferent,
+                    SignedIncrementBeatsSimpleControlsConservatively=signedBetter,
+                    AtLeast21NonfundedProposalsIn75PctWeeks=repeatFrequency,
+                    HistoricallyRecurringDiagnosticOnly=historicalDiagnostic,
+                    FundedQualification=false}
+            });
+        }
+        return new{
+            Protocol="MCE1_CUMULATIVE_CDH1_EXACT_MECHANISMS_NEW_HISTORICAL_M15_V1",
+            SourceClass="NEW_AUTHENTIC_XMH2_ORIGINAL_PEPPERSTONE_M15_274D",
+            input.SourceRunId,input.ProtocolSha256,input.CiphertextSha256,
+            EarlierSourceStartUtc="2025-11-16",TrainEndUtc="2026-04-20",
+            CalibrationEndUtc="2026-06-15",HistoricalTransportEvalEndUtc="2026-08-17",
+            FrozenFourPostselectedHistoricalHypothesesOnly=true,
+            PreviouslyExposedCDH1OriginalUnmodified=true,
+            ExistingCausalCSharpBuildBayesSoftmaxScoreReusedExactly=true,
+            DateDirection="HISTORICALLY_EARLIER_THAN_EXPOSED_CDH1_SEP_NOV",
+            TrueIndependentFutureConfirmation=false,
+            AllSourceCounts=input.Streams.ToDictionary(s=>s.Symbol,s=>s.Bars.Length),
+            Hypotheses=reports,
+            AllReportedWinsAreNONFUNDEDPriceFirstTouches=true,
+            HistoricalBrokerFillsAvailable=false,
+            OneSharedCapitalEur=300,
+            NetEur=(decimal?)null,AdverseNetEur=(decimal?)null,
+            FundedHard21Certified=false,FloatingDd30Certified=false,
+            OrdersSubmitted=0,CloudActivated=false,EconomicQualification=false
+        };
+    }
 }
