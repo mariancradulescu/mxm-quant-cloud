@@ -80,7 +80,12 @@ public static class NativeAuthorityBoundary
         bool nativeAuditReady = sharedCore &&
             SameInputFeatureModelDecisionFillAndMoneyParityAttested &&
             closedBook && !book.HistoryEvidenceIncomplete;
+        // Declarations and arithmetic can only open an independent audit;
+        // they cannot themselves certify broker fills, trace provenance or
+        // twelve months of unexposed confirmation. Owner activation is separate.
+        if (!blockers.Contains("INDEPENDENT_ARTIFACT_AND_TRACE_AUDIT_REQUIRED"))
+            blockers.Add("INDEPENDENT_ARTIFACT_AND_TRACE_AUDIT_REQUIRED");
         return new NativeAuthorityFinding(sharedCore, closedBook, nativeAuditReady,
-            blockers.Count == 0, false, blockers.ToArray());
+            false, false, blockers.ToArray());
     }
 }
