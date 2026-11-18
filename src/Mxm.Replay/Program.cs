@@ -1,6 +1,11 @@
 using System.Text.Json;
 using System.Security.Cryptography;
 
+if(args.Length==3 && args[2]=="--shd1-authentic-h1-m15")
+    return Shd1NativeStudy.Run(args[0],args[1]);
+if(args.Length==3 && args[2]=="--shd1-selftest")
+    return Shd1NativeStudy.SelfTest(args[1]);
+
 if(args.Length==3 && args[2]=="--ahr1-authentic-h1")
     return Ahr1NativeStudy.Run(args[0],args[1]);
 
