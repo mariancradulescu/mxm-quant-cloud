@@ -50,7 +50,7 @@ jobs:
                 "$GITHUB_RUN_ATTEMPT" == "1" &&
                 "$(git log -1 --format=%s)" == "OWNER_XMH1_NEW_EARLIER_M15_READONLY_PROBE_ONCE" &&
                 "$(git diff-tree --no-commit-id --name-only -r HEAD)" == "ops/xmh1-m15-probe-once.txt" &&
-                "$(cat ops/hxc1-source-intent.txt)" == "OWNER_XMH1_M15_PROBE_36_OFFICIAL_READ_ONLY_REQUESTS_ONCE" ]]; then
+                "$(cat ops/xmh1-m15-probe-once.txt)" == "OWNER_XMH1_M15_PROBE_36_OFFICIAL_READ_ONLY_REQUESTS_ONCE" ]]; then
              echo 'authorized=true' >> "$GITHUB_OUTPUT"
           fi
 
