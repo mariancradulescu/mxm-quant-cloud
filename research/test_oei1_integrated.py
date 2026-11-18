@@ -5,6 +5,19 @@ from .ctrader_proto import OpenApiModelMessages_pb2 as e
 from .oei1_integrated import run,START,DAY
 
 class Oei1Synthetic(unittest.TestCase):
+    def test_future_censored_offer_not_silently_removed(self):
+        from .oei1_integrated import replay, START, WEEK, MIN
+        t=START+8*WEEK+850*MIN
+        offer=dict(t=t,scenario="adverse",week=8,market="ETHUSD",Class="crypto",
+                   x=(1.,1.,0.,1.),side=1,complete=False,
+                   risk=1.,margin=30.,entry_fee_budget=.1,
+                   commissions=1000000.,CensoredReason="UNKNOWN_FUTURE_PATH")
+        result=replay([offer],"MOMENTUM","adverse",{})
+        self.assertEqual(result["SelectedUnknownFuturePaths"],1)
+        self.assertFalse(result["FullSettlementKnown"])
+        self.assertEqual(result["CompletedTrades"],0)
+        self.assertEqual(result["ClosedNetEur"],0)
+
     def test_full_phase_source_shape_and_no_promotion(self):
         markets=[]
         for symbol_id,(market,base,amp,spread,vol) in enumerate((
