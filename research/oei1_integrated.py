@@ -66,7 +66,32 @@ def nextquote(rows,times,t):
     j=bisect.bisect_left(times,t)
     return rows[j] if j<len(rows) else None
 
-def future_path(day, fxday, market, past, clock, side, scenario):
+def causal_terms(day,fxday,market,past,clock,scenario):
+    """Only information available as-of clock. Never use exit fees or outcome."""
+    q=asof(*day,clock)
+    fx=asof(*fxday,clock)
+    if q is None or q[3] or fx is None or fx[3]:
+        return None,"DECISION_QUOTE_OR_FX_MISSING"
+    spread=q[2]-q[1]
+    tick=market["TickSize"]
+    units=market["Units"]
+    dist=max(10*tick,statistics.median(past["steps"]))
+    slip=max(tick,spread*(1 if scenario=="adverse" else .25))
+    try:
+        fee=fee_at_current_contract(market["Contract"],"USD",str(units),q[2],
+                                    {"USD":1/fx[1],"EUR":1})
+        one_fee=float(Decimal(fee["oneSideContractCommissionEur"]))
+    except (IncompleteCostEvidence,ArithmeticError,ValueError):
+        return None,"DECISION_CURRENT_COMMISSION_UNKNOWN"
+    known_round_trip=2*one_fee
+    quote_risk=dist+spread+2*slip
+    pnl_fee_allowance=quote_risk*units/fx[1]*int(market["Contract"].pnlConversionFeeRate)/10000
+    risk=quote_risk*units/fx[1]+known_round_trip+pnl_fee_allowance
+    if not math.isfinite(risk) or risk<=0:
+        return None,"DECISION_RISK_INVALID"
+    return dict(risk=risk,entry_fee_budget=known_round_trip+pnl_fee_allowance),None
+
+def future_path(day, fxday, market, past, clock, side, scenario, terms):
     """Barrier exit from genuine timestamped quotes with >=100ms request delay."""
     quotes,times=day
     eurqt,eurts=fxday
@@ -141,7 +166,7 @@ def future_path(day, fxday, market, past, clock, side, scenario):
         return None,"CURRENT_COMMISSION_OR_FX_UNKNOWN"
     conversion=abs(gross-spread-slippage)*int(c.pnlConversionFeeRate)/10000.
     net=gross-spread-slippage-commissions-conversion
-    risk=(distance+spread0+2*slip0)*units*(1/fx0[1])+commissions+conversion
+    risk=terms["risk"]
     observed_worst=(min_mae-spread0-2*slip0)*units*(1/fx0[1])-commissions
     peaktrough=worstdd*units*(1/fx0[1])
     if not math.isfinite(net) or not math.isfinite(risk) or risk<=0:
@@ -150,7 +175,7 @@ def future_path(day, fxday, market, past, clock, side, scenario):
                 entry_exec=entry_exec,exit_exec=exit_exec,
                 net=net,gross=gross,spread=spread,slippage=slippage,
                 commissions=commissions,conversion=conversion,financing=0.,
-                risk=risk,margin=market["Margin"],units=units,stop=stop,
+                risk=risk,entry_fee_budget=terms["entry_fee_budget"],margin=market["Margin"],units=units,stop=stop,
                 target=target,cause=cause,mfe=max_mfe*units/fx0[1],
                 mae=min_mae*units/fx0[1],worst_float=observed_worst,
                 intrapath_peak_to_trough=peaktrough),None
@@ -273,7 +298,7 @@ def evaluate_predictive(model,samples,bias=0.):
 
 def interval_oracle(candidates):
     # Best of both directional outcomes when mutually exclusive as overlapping intervals.
-    rows=sorted([s for s in candidates if s["net"]>0 and s["risk"]<=MAX_RISK
+    rows=sorted([s for s in candidates if s.get("complete") and s["net"]>0 and s["risk"]<=MAX_RISK
                  and s["margin"]+s["commissions"]<=300 and
                  s["intrapath_peak_to_trough"]<=90 and s["worst_float"]>=-90],
                 key=lambda s:(s["exit_at"],s["entry_at"],s["market"],s["side"]))
@@ -317,7 +342,7 @@ def replay(samples,forecast,scenario,marketdays):
     positions=[];closed=[]
     cash=300.;peak=300.;maxdd=0.;max_margin=0.;max_concurrent=0
     rejections=collections.Counter();unknown_marks=0;breaches=0
-    suspended=False;scoreweeks=collections.Counter()
+    suspended=False;scoreweeks=collections.Counter();unknown_selected=0
     days=[START+d*DAY for d in range(84) if datetime.fromtimestamp((START+d*DAY)/1000,timezone.utc).weekday()<5 and d//7>=8]
     for day in days:
         for minute in range(810,931):
@@ -381,10 +406,15 @@ def replay(samples,forecast,scenario,marketdays):
                 if any(p["market"]==s["market"] for p in positions):continue
                 margin=sum(p["margin"] for p in positions)
                 reserved=sum(p["risk"] for p in positions)
-                if (eq-margin < s["margin"]+s["commissions"] or
+                if (eq-margin < s["margin"]+s["entry_fee_budget"] or
                     reserved+s["risk"]>min(90.,.3*peak) or
-                    eq-margin-s["margin"]-s["commissions"]<=0):
+                    eq-margin-s["margin"]-s["entry_fee_budget"]<=0):
                     rejections["JOINT_MARGIN_OR_RISK"]+=1;continue
+                if not s.get("complete"):
+                    unknown_selected+=1
+                    rejections["SELECTED_FUTURE_PATH_UNKNOWN"]+=1
+                    suspended=True
+                    break
                 positions.append(s)
                 max_concurrent=max(max_concurrent,len(positions))
                 max_margin=max(max_margin,margin+s["margin"])
@@ -400,8 +430,9 @@ def replay(samples,forecast,scenario,marketdays):
     r=[s["net"]/s["risk"] for s in closed]
     summary=dict(Policy=(forecast if isinstance(forecast,str) else forecast["name"]),
                  Scenario=scenario,InitialCashEur=300,TerminalCashEur=cash,
-                 ClosedNetEur=cash-300,CompletedTrades=n,FullSettlementKnown=len(positions)==0,
-                 OpenPositions=len(positions),
+                 ClosedNetEur=cash-300,CompletedTrades=n,
+                 FullSettlementKnown=len(positions)==0 and unknown_selected==0,
+                 OpenPositions=len(positions),SelectedUnknownFuturePaths=unknown_selected,
                  GrossEur=sum(s["gross"] for s in closed),
                  SpreadEur=sum(s["spread"] for s in closed),
                  SlippageEur=sum(s["slippage"] for s in closed),
@@ -479,37 +510,43 @@ def run(tape):
                        clip((abs(changes[-1])+abs(changes[-2]))/max(1e-12,sum(steps))*4-2,-3,3),
                        float(shock))
                     past=dict(steps=steps)
-                    byscenario={}
                     for scenario in ("central","adverse"):
-                        path,reason=future_path(dayquotes,eurday,market,past,clock,side,scenario)
+                        terms,causal_reason=causal_terms(dayquotes,eurday,market,past,clock,scenario)
+                        if causal_reason:
+                            unknown[scenario+"_"+causal_reason]+=1
+                            continue
+                        offer=dict(market=name,Class=market["Class"],t=clock,side=side,
+                                   x=x,state=regime,week=(day-START)//WEEK,
+                                   scenario=scenario,tick=market["TickSize"],
+                                   risk=terms["risk"],entry_fee_budget=terms["entry_fee_budget"],
+                                   margin=market["Margin"],units=market["Units"],complete=False)
+                        path,reason=future_path(dayquotes,eurday,market,past,clock,side,scenario,terms)
                         if reason:
                             unknown[scenario+"_"+reason]+=1
+                            offer["CensoredReason"]=reason
                         else:
-                            path.update(market=name,Class=market["Class"],side=side,
-                                        x=x,state=regime,week=(day-START)//WEEK,
-                                        scenario=scenario,tick=market["TickSize"])
-                            byscenario[scenario]=path
-                    if len(byscenario)==2:
-                        require(abs(byscenario["central"]["t"]-byscenario["adverse"]["t"])==0,
-                                "CENTRAL_ADVERSE_CLOCK_PARITY")
-                        for s in byscenario.values():
-                            s["y"]=s["net"]/s["risk"]
-                            sample.append(s)
-                    else:
-                        unknown["PAIRED_CONDITIONAL_OUTCOME_UNAVAILABLE"]+=1
+                            offer.update(path)
+                            offer["complete"]=True
+                            offer["y"]=offer["net"]/offer["risk"]
+                        sample.append(offer)
     adverse=[s for s in sample if s["scenario"]=="adverse"]
     central=[s for s in sample if s["scenario"]=="central"]
     require(len(adverse)==len(central),"SCENARIO_SAMPLE_CARDINALITY")
-    source_by_class=collections.Counter(s["Class"] for s in adverse)
+    adverse_complete=[s for s in adverse if s.get("complete")]
+    central_complete=[s for s in central if s.get("complete")]
+    source_by_class=collections.Counter(s["Class"] for s in adverse_complete)
     phase1=dict(ScorableOriginalSidesPerClass=dict(source_by_class),
                 DeclaredClassCount=len(markets),
                 ScorableClassCount=sum(n>=40 for n in source_by_class.values()),ScopeClasses=[markets[x]["Class"] for x in markets],
                 ScopeSymbols=list(markets),OriginalWeeks=12,
                 OriginalSessionUtc="13:30-15:30",DecisionClocks="13:50-15:10 every five minutes",
-                CorpusDecisionSides=len(adverse),ProposedSides=dict(census),
+                CorpusCausalOfferedSides=len(adverse),
+                CorpusFutureCompleteSides=len(adverse_complete),
+                CorpusFutureCensoredSides=len(adverse)-len(adverse_complete),
+                ProposedSides=dict(census),
                 MissingOrUnscorableReasons=dict(unknown),
-                OracleCentral=interval_oracle(central),
-                OracleAdverse=interval_oracle(adverse),
+                OracleCentral=interval_oracle(central_complete),
+                OracleAdverse=interval_oracle(adverse_complete),
                 HistoricalTariffsCertified=False,ExecutablePolicyFalseForOracle=True)
     if sum(n>=40 for n in source_by_class.values())<3:
         return dict(Study="OEI1_INTEGRATED_3PHASE",
@@ -521,9 +558,9 @@ def run(tape):
             ScopeIsNotFullMarket=True,GlobalCalendarExposed=True,
             NotIndependentConfirmation=True,HistoricalTariffContinuityCertified=False,
             FinalCloudCbotQualified=False)
-    train=[s for s in adverse if s["week"]<6]
-    calib=[s for s in adverse if 6<=s["week"]<8]
-    evals=[s for s in adverse if 8<=s["week"]<12]
+    train=[s for s in adverse_complete if s["week"]<6]
+    calib=[s for s in adverse_complete if 6<=s["week"]<8]
+    evals=[s for s in adverse_complete if 8<=s["week"]<12]
     if len(train)<120 or len(calib)<20 or len(evals)<20:
         return dict(Study="OEI1_INTEGRATED_3PHASE",
             Status="PREDICTIVE_SAMPLE_CHRONOLOGY_STOP_NO_OUTCOME_PROMOTION",
@@ -554,6 +591,9 @@ def run(tape):
         return dict(Constant=baseline,Models=modelscores)
     phase2=dict(TrainSampleCount=len(train),CalibrationSampleCount=len(calib),
                 EvaluationSampleCount=len(evals),
+                CensoredOutcomesByPhase={"train":sum(s["week"]<6 and not s.get("complete") for s in adverse),
+                                         "calibration":sum(6<=s["week"]<8 and not s.get("complete") for s in adverse),
+                                         "evaluation":sum(s["week"]>=8 and not s.get("complete") for s in adverse)},
                 TrainingWeeks=[iso(START+x*WEEK) for x in range(6)],
                 CalibrationWeeks=[iso(START+x*WEEK) for x in range(6,8)],
                 EvaluationWeeks=[iso(START+x*WEEK) for x in range(8,12)],
@@ -573,6 +613,8 @@ def run(tape):
         for name in ("MOMENTUM","REVERSION","EVENT","CASH"):
             phase3[scenario][name]=replay(sample,name,scenario,days)
     phase3["FundedNativeCSharpLedger"] = False
+    phase3["CausalAdmissionOnlyUsesKnownDecisionRisk"] = True
+    phase3["FutureCensoredOffersRetainedAndFailClosedIfSelected"] = True
     phase3["Reason"] = "Research-only conditional EUR300 book, C# NativeFundedLedger parity not executed"
     phase3["NoBrokerOrderOrFill"] = True
     return dict(Study="OEI1_INTEGRATED_3PHASE",Status="ORIGINAL_3PHASE_CONDITIONAL_RESEARCH",
