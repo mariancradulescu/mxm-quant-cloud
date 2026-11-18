@@ -11,6 +11,10 @@ on:
     branches: [main]
     paths:
       - 'ops/oei1-a1-recover-once.txt'
+  workflow_run:
+    workflows: ['OEI1 integrated opportunity prediction portfolio research']
+    types: [completed]
+    branches: [main]
 permissions:
   contents: read
   actions: read
@@ -36,11 +40,18 @@ jobs:
   protected-original-source-score-only:
     needs: verify
     if: >-
-      github.event_name == 'push' &&
-      github.ref == 'refs/heads/main' &&
-      github.actor == 'mariancradulescu' &&
-      github.run_attempt == '1' &&
-      github.event.head_commit.message == 'OWNER_OEI1_A1_REUSE_ORIGINAL_SOURCE_ONCE'
+      (github.event_name == 'push' &&
+       github.ref == 'refs/heads/main' &&
+       github.actor == 'mariancradulescu' &&
+       github.run_attempt == '1' &&
+       github.event.head_commit.message == 'OWNER_OEI1_A1_REUSE_ORIGINAL_SOURCE_ONCE') ||
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.id == 44247979857 &&
+       github.event.workflow_run.head_sha == 'c3bd18651e3a5495a0cf782802e60699083ceb04' &&
+       github.event.workflow_run.head_branch == 'main' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.actor.login == 'mariancradulescu' &&
+       github.event.workflow_run.run_attempt == 1)
     environment: mxm-r3-custody-v1
     runs-on: ubuntu-24.04
     timeout-minutes: 90
