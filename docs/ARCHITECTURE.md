@@ -1,5 +1,7 @@
 # Architecture status under OWNER specification v2.0
 
+> **OWNER 2026-11-18 prospective authority correction:** [Native C# authority audit and operational contract](NATIVE_CSHARP_AUTHORITY_AUDIT_20261118.md). For all NEW economically qualifying studies, the single authoritative feature/model/decision/conditional-execution/money/risk implementation is shared `Mxm.Core` C#. Existing Python economic-replay rows below are *historical diagnostics*, not an alternative prospective product engine. Structural assembly sharing does not certify same-input parity, profitability or an authorized Cloud trading product. `OWNER_SPEC.md` remains controlling.
+
 Controlling requirements and methodology: [OWNER_SPEC.md](OWNER_SPEC.md).
 Status below describes implementation, not economic or activation acceptance.
 

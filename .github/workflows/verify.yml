@@ -566,6 +566,8 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m research.verify_owner_policy
+      - name: Prospectively enforce native C# shared authority structure (no research rerun)
+        run: python -m research.verify_native_csharp_authority
       - name: Audit frozen multiscale cost and economic receipts without model replay
         run: python -m research.audit_multiscale_receipt
       - name: Reproduce system economic constraints from frozen public receipts only
