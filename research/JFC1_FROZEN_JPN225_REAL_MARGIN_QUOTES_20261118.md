@@ -1,0 +1,29 @@
+# JFC1 — exact JPN225 current Pepperstone EUR minimum margin and genuine historical paired BID/ASK source probe
+
+FROZEN 2026-11-18 after the MDE1 genuine JPN225 *existing contract source readback* but BEFORE any JFC1 new broker collection, source decoding, cost scoring, implementation or model activity. OWNER_SPEC.md OWNER v2.0 and amendments. Source-only financial feasibility evidence, no predictor, no proprietary account exposure, no trading. No original MCE1/CDH1/MDE1 rerun, no retuning and no new model.
+
+## Why necessary
+XMH2 and HXC1 original raw ProtoOASymbolByIdRes (authentic historical account/symbol metadata from two official source captures) prove exact JPN225 broker minimum volume **10 units**, step 10, lot size 100, commission precise-rate wire 0 and swaps wire long -3.73, short -1.27. But these original 3,088 raw historical price source requests never asked ProtoOAExpectedMarginReq and lack matched historical BID/ASK. Do not substitute JPN225-F. Thus exact JPN225 as-of broker expected margin and paired quote spread remain UNKNOWN. Target only this one unmeasured instrument, without recollecting the other three FX contract source terms already present in CMA1. Funding depends on authentic EUR300 capital feasibility irrespective of current model alpha.
+
+## Exact prespecified new read-only original account source
+Official Spotware cTrader encrypted TLS Open API original Pepperstone LIVE EUR *account used for VIEW-style source only*, same historically bound public fingerprint and verified original trader deposit asset EUR. Transactions and order endpoints NEVER used, account LIVE used for authenticated **read-only** source access only; no LIVE/DEMO strategy execution/activation.
+
+Exactly **11 source requests** after existing OAuth authentication messages:
+1. ProtoOATraderReq original account identity and broker name.
+2. ProtoOAAssetListReq to confirm asset lookup and EUR deposit.
+3. ProtoOASymbolsListReq (enabled, non-archived).
+4. ProtoOASymbolByIdReq for exactly JPN225 provider ID, its contract and fee/swap/schedule parameters.
+5. ProtoOAExpectedMarginReq for precisely the returned broker minimum volume for JPN225 (both BUY and SELL expected margin values in actual original EUR account moneyDigits); **only** this is true current snapshot margin, NOT historical margin availability.
+6–11. Exactly six ProtoOAGetTickDataReq for JPN225 only, BID+ASK in three *past* one-minute windows closing at 2026-11-17T01:00:00Z, 2026-11-17T14:00:00Z, 2026-11-18T14:00:00Z. Maximum quote side age <=10,000ms at/before clock and bid-ask time skew <=5,000ms. Reject zero/nonpositive, crossed, stale and any complete-flag mismatch; a hasMore response produces PAGINATION_UNRESOLVED, NEVER a fabricated spread or claimed availability limit. No tick interpolation or lookahead.
+Allowlisted official requests only, authentic raw request/response protobuf identity and read-only capture. Frozen request count 11; no retry budget expansion, no new quotes beyond three fixed times; if API unavailable, precise FAIL + uncertainty, not historical unavailability proof. No orders, no funding, no account modifications, no token refresh.
+Same market data historical pacing <=5/sec via existing verified transport. Broker/contract source date = actual original workflow execution date; frozen clock date separately stamped. These snapshots cannot estimate spread distribution for all 279,491 prior M15 bars, and must not be applied as fictitious historical fill prices.
+
+## Public original custodial evidence
+Reuse owner_readonly_auth.authenticate and original account fingerprint binding, StdlibCTraderTransport, guard.require_read_only_request, current CMA2 asof_spread/official decode_side mathematics (ONLY source-price matching, not any strategy model), installed mxm-r3-pepperstone-v1 read-only and mxm-r3-custody-v1 RSA recipient. A new exact one-time OWNER main-branch push action after synthetic PR CI; job 1 derives public recipient bound to current new run (no private key to collector), job 2 source read-only seals raw 11 authenticated requests/responses, job 3 protected independent custody validation and reconstruction of exact source numbers. Original signed public artifact: run, immutable protocol hash, ciphertext SHA, requested/source count, broker original account identity status (no ID printed), exact JPN225 contract (min and step, current commission/swap raw fields), actual EUR expected min BUY/SELL margin, if available genuine paired spread bps with quote age/skew status for each of three past clocks, raw tick sequence NEVER public. No private account IDs, credentials, source tape or direct broker orders in artifact.
+
+## Falsifiable finance questions and stop
+- Exact source-date minimum expected BUY and SELL JPN225 volume 10 EUR margins <=300 EUR individually? Source-only comparative constraint, NOT funded position execution, common portfolio available margin or floating DD guarantee.
+- At least one historical fixed clock shows pair BID/ASK causally observed? Report raw paired availability honestly; sparse observations cannot establish executable universal spreads.
+- Source contract commission wire 0 alone does NOT imply all-in cost 0; exact EUR turnover, swaps, FX conversion, simultaneous margin and trajectory require separate original matched execution evidence.
+- If no source or no quote, DO NOT invent fees, returns or funding; publish failure stage with no claim of the provider's absolute retention policy.
+- No USD/EUR conversion inferred without original time-aligned quotes. Original 300EUR single capital, HARD21 funded trips, NET central/adverse EUR and maximum floating DD30 remain UNKNOWN, independent 12 months missing. This is a bounded gap-closure read-only study, NO model success/failure or policy promotion. AUDITOR independently verifies GitHub original source and hashes; OWNER final.
