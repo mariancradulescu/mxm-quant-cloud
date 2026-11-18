@@ -79,7 +79,7 @@ def verify() -> None:
             "new NativeCloudResearchParityAdapter()" in replay_study and
             "Same(a,b)" in replay_study, "REPLAY_SAME_EVENT_NATIVE_PARITY")
     require("engine.Advance(eventAtClose,index)" in cloud_adapter and
-            "new NativeBayesianCommonEpisode()" in cloud_adapter,
+            "NativeBayesianCommonEpisode engine=new();" in cloud_adapter,
             "CLOUD_ADAPTER_NATIVE_DECISIONS_AND_MONEY")
     require('Compile Include="../Mxm.Cloud/NativeCloudResearchParityAdapter.cs"' in
             replay_project, "SOURCE_IDENTICAL_CLOUD_ADAPTER_IN_REPLAY")
