@@ -619,7 +619,7 @@ public static class Cdh1NativeResearch
                     SoftmaxActuallyLearned=softmax.CoefficientNorm()>1e-6,
                     SoftmaxTrainCoefficientNorm=softmax.CoefficientNorm(),
                     NewFitNotOriginalCDH1Coefficients=true,
-                    OriginalCDH1ModelCodeModified=false},
+                    OriginalCDH1ExistingMethodBodiesUnmodified=true},
                 Score=(object)new{
                     TrainPrior=trainPrior,TrainFrozenMechanismNewFit=trainSelected,
                     CalibrationPrior=calPrior,CalibrationFrozenMechanismNewFit=calSelected,
