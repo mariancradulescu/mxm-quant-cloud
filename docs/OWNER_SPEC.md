@@ -1,5 +1,63 @@
 # Active OWNER specification v2.0 — updated 2026-11-05 (single normative authority)
 
+## OWNER integrated opportunity-first research — 2026-11-18 (active)
+
+This is a new prospective OWNER methodological decision after CVP1, with
+unchanged OWNER v2.0 authority and all earlier invariants. Five months of
+negative authentic trials do not justify another linear predictor/threshold
+cycle, but also do not prove all markets are economically unexploitable.
+Do not restart, retune, invert or relaunch closed exact studies.
+
+The DIRECTOR must implement an integrated three-phase program rather than an
+unbounded series of small PRs: (1) original market-source feasible opportunity
+census and **strictly diagnostic retrospective perfect-foresight oracle**,
+with gross/net and full price-path, genuine legal minimum, shared EUR300,
+margin, concurrent positions, cost, floating-DD, risk and systemic HARD21
+constraints separately disclosed alongside causal simple executable controls;
+(2) only then prospectively freeze and compare a small set of *distinct*
+Bayesian uncertainty, regime/state transition, nonlinear regularized learning,
+event, survival/competing-exit or structure-discovery mechanisms on equivalent
+causal inputs, chronological splits, placebo/permutation/multiplicity and
+regime-stability checks; (3) if warranted, evaluate complete funded
+entry/SL/TP/sizing/adaptive-exit policies and portfolio-level NET against CASH
+and matched simple funded benchmarks. Do not make Phase 2/3 contingent on
+prior proof of edge, but let Phase 1 diagnose basic constraints and choose
+comparisons rationally. A retrospective oracle has no predictive legitimacy.
+
+Coverage is not confined to EURUSD or a handful of FX instruments, familiar
+OHLCV/indicators, historical BID/ASK or prior archives. Evaluate eligible
+Pepperstone/cTrader classes and official source capabilities. Fresh read-only
+collection is always allowed when needed; do not invent missing history, fees,
+quotes, order fills or historic depth. The complete verified EUR300 capital
+book, original-account funding, legal volume, currency conversion, execution
+costs, common risk, intraposition floating equity and HARD21 must not be
+replaced by a partial trade-sample or independent asset pockets.
+
+Separate exploration, modeling, frozen selection, verification and truly
+independent confirmation. Exposed chronological dates never become blind by
+switching model family. Prespecify tests and multiplicity control; audit
+cross-market calendar reuse and avoid outcome-favorable retrospective
+choices. Diagnose any failure separately as (a) absent funded opportunity,
+(b) no causal identifying information, (c) unstable learning, (d) cost
+friction, (e) capital/DD/HARD21 incompatibility, or the demonstrated mixture.
+Reports must distinguish mathematical upper bound, hindsight feasible
+subset, predictive forecast, realized modeled funded NET, and original broker
+fills. Do not promote methods merely for mathematical novelty or promise profit.
+
+OWNER does not choose algorithms/instruments or repeat technical approvals.
+DIRECTOR executes, AUDITOR independently verifies, OWNER decides. Continue
+existing infrastructure, original source custody and immutable receipts.
+Final product remains ONE native autonomous cTrader Cloud/Android C# cBot,
+ONE initial EUR300, robust positive NET, system HARD21, maximum 30% DD
+including floating, and >=12 months genuinely independent confirmation.
+No LIVE/DEMO orders, Cloud activation or new permanent external services.
+
+ORX1, frozen before its separate implementation, is explicitly only a
+**restricted secondary diagnosis on existing CVP1 public SIMPLE fills**:
+it is not the required full-market path oracle, independent evidence,
+risk-certified funded replay or a trading model. Its result cannot
+replace authentic multi-class Phase 1 or promote an exposed configuration.
+
 ## OWNER complete-policy discovery — 2026-11-17 after LPM1
 
 Accept LPM1 PR367–368 and original44090751371, closed exactly without promotion
