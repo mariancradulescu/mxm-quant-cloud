@@ -1,0 +1,50 @@
+{
+  "schema": "MXM_HXC1_AUTHENTIC_HISTORICAL_OHLCV_SOURCE_ONLY_V1",
+  "id": "XMH2_COMPLETE_EARLIER_M15_NEW_AUTHENTIC_SOURCE",
+  "status": "SOURCE_PLAN_FROZEN_UNEXECUTED",
+  "authority": "docs/OWNER_SPEC.md OWNER v2.0 and amendments; XMH1 XMH source pilot 44350839112",
+  "scope": "NEW_274DAY_SOURCE_ONLY_NOT_CLOSED_HXC1_CDH1_XMH1_RESCORING",
+  "source": "original bound Pepperstone live account via read-only cTrader Open API",
+  "ranges": [
+    {
+      "period": "M15",
+      "symbolGroup": "all",
+      "fromUtc": "2025-11-16T00:00:00Z",
+      "toUtc": "2026-08-17T00:00:00Z",
+      "chunkHours": 48
+    }
+  ],
+  "symbolGroups": {
+    "all": [
+      "EURUSD",
+      "GBPUSD",
+      "USDJPY",
+      "AUDUSD",
+      "USDCAD",
+      "XAUUSD",
+      "US500",
+      "NAS100",
+      "GER40",
+      "UK100",
+      "AUS200",
+      "JPN225"
+    ]
+  },
+  "maximumMarketDataRequests": 1644,
+  "minimumBarsToAcceptPerPeriod": {
+    "M15": 1
+  },
+  "completeness": "exactly 1644 unique 48h requests; reject hasMore true/unknown and verify all original protobuf and chronological bars",
+  "research": "NO_PREDICTOR_OR_RESULT_IS_EVALUATED_DURING_SOURCE_CAPTURE",
+  "safety": {
+    "brokerOrders": 0,
+    "cloudActivation": false,
+    "authRefresh": false,
+    "closedStudyRescoring": false,
+    "fullTapePublic": false
+  },
+  "economics": {
+    "netEur": null,
+    "economicQualification": false
+  }
+}
