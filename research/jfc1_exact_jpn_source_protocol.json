@@ -1,0 +1,39 @@
+{
+  "schema": "MXM_JFC1_EXACT_JPN225_READONLY_COST_SOURCE_V1",
+  "id": "JFC1",
+  "status": "FROZEN_PRESOURCE_UNEXECUTED",
+  "source": "official Pepperstone cTrader Open API original bound EUR account, read-only",
+  "universe": [
+    "JPN225"
+  ],
+  "quoteClocksUtcMillis": [
+    1794877200000,
+    1794924000000,
+    1795010400000
+  ],
+  "quoteClocksUtc": [
+    "2026-11-17T01:00:00Z",
+    "2026-11-17T14:00:00Z",
+    "2026-11-18T14:00:00Z"
+  ],
+  "tickWindowBeforeClockMs": 60000,
+  "maximumQuoteAgeAtClockMs": 10000,
+  "maximumBidAskTimeSkewMs": 5000,
+  "expectedReadOnlySourceRequests": 11,
+  "maximumSourceRequests": 11,
+  "sourceRequestFamily": [
+    "ProtoOATraderReq",
+    "ProtoOAAssetListReq",
+    "ProtoOASymbolsListReq",
+    "ProtoOASymbolByIdReq",
+    "ProtoOAExpectedMarginReq",
+    "ProtoOAGetTickDataReq"
+  ],
+  "originalPepperstoneBrokerOrders": 0,
+  "netEur": null,
+  "cloudActivated": false,
+  "noClosedStudyReruns": true,
+  "noModelScoring": true,
+  "marginMeaning": "original source-date minimum-volume expected BUY and SELL EUR margin, NOT funded fills or historic margin",
+  "quoteMeaning": "three prespecified historical past clocks, no spread distribution or executable exit claim"
+}
