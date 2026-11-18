@@ -1,0 +1,125 @@
+name: MDE1 ORIGINAL all12 reused M15 causal direction-vs-event CSharp and JPN contract
+on:
+  pull_request:
+    paths:
+      - 'research/MDE1_FROZEN_CUMULATIVE_ALL12_DIRECTION_EVENT_20261118.md'
+      - 'research/mde1_cumulative_original_native.py'
+      - 'src/Mxm.Core/Cdh1NativeResearch.cs'
+      - 'src/Mxm.Replay/Mde1NativeStudy.cs'
+      - 'src/Mxm.Replay/Program.cs'
+      - '.github/workflows/mde1-cumulative-direction-original.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ops/mde1-cumulative-original-once.txt'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    outputs:
+      original_once: ${{ steps.owner.outputs.original_once }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Ensure CDH1 protocol was frozen in a separate earlier ancestor
+        run: |
+          git merge-base --is-ancestor a79e093c434c108d630e6651e3db94b5f94fc952 HEAD
+          git show a79e093c434c108d630e6651e3db94b5f94fc952:research/MDE1_FROZEN_CUMULATIVE_ALL12_DIRECTION_EVENT_20261118.md >/tmp/mde1-protocol
+          cmp /tmp/mde1-protocol research/MDE1_FROZEN_CUMULATIVE_ALL12_DIRECTION_EVENT_20261118.md
+      - name: Original closed CDH1 and MCE1 CSharp methods remain byte-identical prefix
+        run: |
+          python3 - <<'PY'
+          import pathlib,subprocess
+          before=subprocess.check_output(['git','show','082b82b2e038936b36c118f8320f2c84ffdc0a7c:src/Mxm.Core/Cdh1NativeResearch.cs'])
+          now=pathlib.Path('src/Mxm.Core/Cdh1NativeResearch.cs').read_bytes()
+          assert before.endswith(b'}\n') and now.startswith(before[:-2]) and now.endswith(b'}\n')
+          assert b'public static object RunCumulativeMde1(' in now[len(before)-2:]
+          PY
+      - name: Compile authoritative Core+Replay
+        run: dotnet build src/Mxm.Replay -c Release
+      - name: Compile Cloud link to same Core WITHOUT activation
+        run: dotnet build src/Mxm.Cloud -c Release
+      - name: Ex-ante admission, censorship and ambiguous competing hazard SYNTHETIC controls
+        run: |
+          dotnet run --no-build --project src/Mxm.Replay -c Release -- ignored /tmp/cdh1-selftest.json --cdh1-selftest
+          python3 -c 'import json; x=json.load(open("/tmp/cdh1-selftest.json")); assert x["Source"]=="SYNTHETIC_CONTROLS_ONLY" and x["OriginalBrokerMarketScores"] == 0 and x["FutureCensorStillInPopulation"] and x["AmbiguousDualTouchRemainsUnknown"] and x["SoftmaxTrulyLearned"] and x["Orders"]==0 and x["NetEur"] is None'
+      - name: MDE1 exact CSharp separate signed conditional evidence SYNTHETIC ONLY
+        run: |
+          dotnet run --no-build --project src/Mxm.Replay -c Release -- ignored /tmp/mde1-selftest.json --mde1-selftest
+          python3 -c 'import json; d=json.load(open("/tmp/mde1-selftest.json")); assert d["Source"]=="SYNTHETIC_ONLY" and d["CausalClocks"]==5 and d["ResolvedConditionalBrierClocks"]==2 and d["AmbiguousAndCensoredStillCounted"] and d["OriginalBrokerTrades"]==0 and d["FundedNetEur"] is None'
+      - name: Python custody syntax and CSharp authority boundary
+        run: |
+          python3 -m py_compile research/mde1_cumulative_original_native.py
+          python3 -m research.verify_native_csharp_authority
+      - name: Admit one exact OWNER main intent; PR cannot read original source secrets
+        id: owner
+        shell: bash
+        run: |
+          echo 'original_once=false' >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_EVENT_NAME" == "push" &&
+                "$GITHUB_REF" == "refs/heads/main" &&
+                "$GITHUB_ACTOR" == "mariancradulescu" &&
+                "$GITHUB_RUN_ATTEMPT" == "1" &&
+                "$(git log -1 --format=%s)" == "OWNER_MDE1_CUMULATIVE_ALL12_DIRECTION_AND_JPN_SOURCE_ONCE" &&
+                "$(git diff-tree --no-commit-id --name-only -r HEAD)" == "ops/mde1-cumulative-original-once.txt" &&
+                "$(cat ops/mde1-cumulative-original-once.txt)" == "OWNER_MDE1_CSHARP_ALL12_DIRECTION_DECOMPOSITION_DUAL_SOURCE_ONCE" ]]; then
+            echo 'original_once=true' >> "$GITHUB_OUTPUT"
+          fi
+  original-protected-custody-native:
+    needs: verify
+    if: ${{ needs.verify.outputs.original_once == 'true' }}
+    environment: mxm-r3-custody-v1
+    concurrency:
+      group: mxm-mde1-original-existing-dual-source-custody-once
+      cancel-in-progress: false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 80
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - run: dotnet build src/Mxm.Replay -c Release
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: xmh2-complete-274day-m15-encrypted-source
+          run-id: 44352570167
+          github-token: ${{ github.token }}
+          path: mde1-xmh2-source
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: hxc1-original-historical-encrypted-source
+          run-id: 43817213663
+          github-token: ${{ github.token }}
+          path: mde1-hxc1-source
+      - name: ONE new cumulative SOURCE REUSE all 12 original M15 CSharp diagnostic and JPN225 source contract
+        run: python -m research.mde1_cumulative_original_native
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: mde1-all12-m15-original-public
+          path: mde1-public/
+          retention-days: 90
+          if-no-files-found: warn
+      - name: Print ONLY SHA256 of PUBLIC aggregate original evidence
+        if: success()
+        run: sha256sum mde1-public/*.json
