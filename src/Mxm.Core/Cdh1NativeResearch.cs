@@ -665,4 +665,239 @@ public static class Cdh1NativeResearch
             OrdersSubmitted=0,CloudActivated=false,EconomicQualification=false
         };
     }
+
+    // MDE1 additive C# diagnostic. ALL original closed CDH1 and MCE1
+    // method bodies remain byte-for-byte unchanged above this point.
+    // Evaluate exactly the same causal risk sets and original estimator math
+    // on all twelve original markets, without selecting a historical winner.
+    private sealed class Mde1SignScore
+    {
+        public int ExAnteClocksAllOutcomes {get;init;}
+        public int ResolvedFirstTouchDirectionalOutcomeCount {get;init;}
+        public int Up {get;init;}
+        public int Down {get;init;}
+        public int NoTouch {get;init;}
+        public int Ambiguous {get;init;}
+        public int Censored {get;init;}
+        public double? MeanConditionalDirectionalBrierModel {get;init;}
+        public double? MeanConditionalDirectionalBrierPrior {get;init;}
+        public double? MeanConditionalDirectionalBrierFairCoin {get;init;}
+        public double? IncrementalConditionalDirectionalBrierGainVsPrior {get;init;}
+        public bool ConditionalOnResolvedFirstTouchOnly {get;init;}
+        public bool InformativeAmbiguityAndCensoringStillPossible {get;init;}
+        public Dictionary<string,double> BrierImprovementByObservedUtcWeek {get;init;}=new();
+        public bool GenuineFinancedProfit {get;init;}
+    }
+
+    static Mde1SignScore Mde1SignedConditional(List<Decision> decisions,int variant,
+        double[] prior,Dictionary<int,Counts> context,Softmax softmax)
+    {
+        int resolved=0,up=0,down=0,censored=0,ambiguous=0,untouched=0;
+        double modelBrier=0,priorBrier=0,halfBrier=0;
+        var weeks=new SortedDictionary<string,(double delta,int n)>(StringComparer.Ordinal);
+        foreach(var d in decisions)
+        {
+            if(d.Outcome==4){censored++;continue;}
+            if(d.Outcome==3){ambiguous++;continue;}
+            if(d.Outcome==2){untouched++;continue;}
+            bool isUp=d.Outcome==0;
+            resolved++;if(isUp)up++;else down++;
+            var p=Predict(variant,d,prior,context,softmax);
+            double den=p[1]+p[2], baseDen=prior[1]+prior[2];
+            double q=den>0?p[1]/den:.5;
+            double qb=baseDen>0?prior[1]/baseDen:.5;
+            double y=isUp?1:0;
+            double bm=(q-y)*(q-y);
+            double bb=(qb-y)*(qb-y);
+            modelBrier+=bm;priorBrier+=bb;halfBrier+=.25;
+            string week=Week(d.At);
+            var previous=weeks.GetValueOrDefault(week,(0.0,0));
+            weeks[week]=(previous.Item1+bb-bm,previous.Item2+1);
+        }
+        int total=decisions.Count;
+        return new Mde1SignScore {
+            ExAnteClocksAllOutcomes=total,
+            ResolvedFirstTouchDirectionalOutcomeCount=resolved,
+            Up=up,Down=down,NoTouch=untouched,Ambiguous=ambiguous,Censored=censored,
+            MeanConditionalDirectionalBrierModel=resolved>0?(double?)modelBrier/resolved:null,
+            MeanConditionalDirectionalBrierPrior=resolved>0?(double?)priorBrier/resolved:null,
+            MeanConditionalDirectionalBrierFairCoin=resolved>0?(double?)halfBrier/resolved:null,
+            IncrementalConditionalDirectionalBrierGainVsPrior=
+                resolved>0?(double?)(priorBrier-modelBrier)/resolved:null,
+            ConditionalOnResolvedFirstTouchOnly=true,
+            InformativeAmbiguityAndCensoringStillPossible=true,
+            BrierImprovementByObservedUtcWeek=weeks.ToDictionary(
+                x=>x.Key,x=>x.Value.delta/x.Value.n),
+            GenuineFinancedProfit=false
+        };
+    }
+
+    public static object RunCumulativeMde1(Cdh1Input input)
+    {
+        const string sourceId="MDE1_XMH2_44352570167_HXC1_43817213663";
+        if(input is null||input.Streams is null||
+           input.SourceRunId!=sourceId||
+           input.ProtocolSha256?.Length!=64||input.CiphertextSha256?.Length!=64||
+           input.Streams.Length!=12||input.Streams.Any(s=>s.Period!="M15")||
+           input.Streams.Select(s=>s.Symbol).Distinct(StringComparer.Ordinal).Count()!=12||
+           !input.Streams.Select(s=>s.Symbol).OrderBy(s=>s,StringComparer.Ordinal)
+             .SequenceEqual(Symbols.OrderBy(s=>s,StringComparer.Ordinal),
+                 StringComparer.Ordinal)||
+           input.Streams.Sum(s=>s.Bars.Length)!=279491)
+            throw new ArgumentException("MDE1_IMMUTABLE_ORIGINAL_DUAL_SOURCE_UNBOUND");
+        var spec=new Rule(U(2025,11,16),U(2026,7,13),U(2026,9,14),
+            U(2026,11,16),15*M,500,400,500);
+        var reports=new List<object>();
+        int allAdmitted=0,allPassGates=0;
+        foreach(string symbol in Symbols.OrderBy(x=>x,StringComparer.Ordinal))
+        {
+            var original=input.Streams.Single(s=>s.Symbol==symbol);
+            var (all,sourceStats)=Build(original,spec);
+            var train=all.Where(d=>d.At<spec.TrainEnd).ToList();
+            var cal=all.Where(d=>d.At>=spec.TrainEnd&&d.At<spec.CalEnd).ToList();
+            var eval=all.Where(d=>d.At>=spec.CalEnd).ToList();
+            int weeks=eval.Select(d=>Week(d.At)).Distinct().Count();
+            bool sufficient=train.Count>=spec.MinTrain&&cal.Count>=spec.MinCal&&
+                eval.Count>=spec.MinEval&&weeks>=8;
+            if(!sufficient)
+            {
+                reports.Add(new {
+                    Symbol=symbol,Source=sourceStats,Train=train.Count,
+                    Calibration=cal.Count,ExposedEval=eval.Count,
+                    EvalWeeks=weeks,Status="MDE1_EXANTE_PRESCORE_SUPPORT_STOP",
+                    Models=(object?)null});
+                continue;
+            }
+            allAdmitted++;
+            var prior=Prior(train);
+            var context=Context(train,prior,out int ambiguousInTraining);
+            var softmax=FitSoftmax(train);
+            var priorEval=Score(eval,0,prior,context,softmax);
+            var alternatives=new List<object>();
+            foreach(int k in new[]{1,2})
+            {
+                var trainScore=Score(train,k,prior,context,softmax);
+                var calScore=Score(cal,k,prior,context,softmax);
+                var evalScore=Score(eval,k,prior,context,softmax);
+                var calDirection=Mde1SignedConditional(cal,k,prior,context,softmax);
+                var evalDirection=Mde1SignedConditional(eval,k,prior,context,softmax);
+                // Reuse CDH1's exact diagnostics, not a new fitted algorithm.
+                int signed=evalScore.Wins-evalScore.OppositeFirst;
+                int worst=signed-evalScore.ProposalAmbiguous-evalScore.ProposalCensored;
+                int momentum=evalScore.MatchedMomentumWins-
+                    evalScore.MatchedContrarianWins;
+                int contrarian=-momentum;
+                bool calGain=calDirection.IncrementalConditionalDirectionalBrierGainVsPrior
+                    is double calG&&calG>0;
+                bool evalGain=evalDirection.IncrementalConditionalDirectionalBrierGainVsPrior
+                    is double evalG&&evalG>0;
+                bool causalUtility=worst>Math.Max(0,Math.Max(momentum,contrarian));
+                bool frequent=evalScore.ProposalWeeksWith21>=
+                    (int)Math.Ceiling(.75*weeks);
+                bool allDescriptive=calGain&&evalGain&&causalUtility&&frequent;
+                if(allDescriptive)allPassGates++;
+                alternatives.Add(new{
+                    Model=Names[k],
+                    TrainObservedHazardScore=trainScore,
+                    CalObservedHazardScore=calScore,
+                    EvalObservedHazardScore=evalScore,
+                    CalConditionalSignedBrier=calDirection,
+                    EvalConditionalSignedBrier=evalDirection,
+                    SignedPriceFirstTouchWinMinusLoss=signed,
+                    ConservativeSignedMinusAmbiguousCensor=worst,
+                    MatchedMomentumSigned=momentum,
+                    MatchedContrarianSigned=contrarian,
+                    CashSigned=0,
+                    AtLeast21UnfundedProposalsIn75PctExposedWeeks=frequent,
+                    ConditionalDirectionImprovesVsPriorBothCalEval=calGain&&evalGain,
+                    ConservativeSignedProxyBeatsSimpleSameClocks=causalUtility,
+                    ExploratoryDirectionalUtilityGateOnly=allDescriptive,
+                    FinancialOrIndependentQualification=false
+                });
+            }
+            reports.Add(new{
+                Symbol=symbol,Source=sourceStats,Train=train.Count,
+                Calibration=cal.Count,ExposedEval=eval.Count,EvalWeeks=weeks,
+                Status="MDE1_AUTHENTIC_EXPOSED_HISTORICAL_DIAGNOSTIC_ONLY",
+                TrainPriorHazardNoneUpDown=prior,
+                BayesianContextCells=context.Count,
+                TrainingAmbiguousEvidence=ambiguousInTraining,
+                SoftmaxTrainOnlyRiskSteps=softmax.TrainedRiskSteps,
+                SoftmaxTrueCoefficientNorm=softmax.CoefficientNorm(),
+                SoftmaxLearned=softmax.CoefficientNorm()>1e-6,
+                EvalPriorObservedHazard=priorEval,
+                Models=(object)alternatives
+            });
+        }
+        return new{
+            Protocol="MDE1_CUMULATIVE_ALL12_EXPOSED_M15_SIGN_VS_TOUCH_V1",
+            SourceClass="EXISTING_XMH2_HXC1_ORIGINAL_AUTHENTIC_PEPPERSTONE_M15_UNION",
+            input.SourceRunId,input.ProtocolSha256,input.CiphertextSha256,
+            FullSourceBarCount=279491,
+            OriginalPepperstoneSourceRuns=new[]{"44352570167","43817213663"},
+            AllTwelveMarketsPrespecified=true,
+            OriginalCdh1AndMce1MethodBodiesUnchanged=true,
+            ExistingBuildPriorContextFitSoftmaxScoreReusedExactly=true,
+            Timeline=new{
+                Start="2025-11-16",TrainEnd="2026-07-13",
+                CalibrationEnd="2026-09-14",ExposedEvalEnd="2026-11-16"},
+            HistoricalEvalAlreadyExposedByCdh1Mce1=true,
+            NotGenuineNewChronologicalIndependentConfirmation=true,
+            CausalSourceSupportedSymbols=allAdmitted,
+            AllModelsTestedIfSupported=24,
+            ExploratoryDirectionalUtilityDescriptiveGatePasses=allPassGates,
+            AllOriginalPriceFirstTouchesAreNotFinancedTrades=true,
+            SourceBarCounts=input.Streams.ToDictionary(s=>s.Symbol,s=>s.Bars.Length),
+            Reports=reports,
+            Limitations=new[]{
+                "SAME_HISTORICAL_DATES_ALREADY_EXPOSED_NO_MODEL_PROMOTION",
+                "CONDITIONAL_BINARY_BRIER_CONDITIONS_ON_OBSERVABLE_RESOLVED_TOUCH",
+                "NONE_AMBIGUOUS_CENSORED_RETAINED_IN_EXANTE_DENOMINATOR",
+                "OVERLAPPING_OUTCOME_HORIZONS_WEAKEN_WEEKLY_UNCERTAINTY",
+                "TWENTY_FOUR_COMPARISONS_NOT_MULTIPLICITY_CONTROLLED",
+                "NO_BROKER_REAL_BIDASK_ORDER_FILL_FEES_MARGIN_FX_OR_ROLLOVER",
+                "NO_COMMON_EUR300_LEDGER_ADVERSARIAL_NET_HARD21_FLOATING_DD",
+                "NO_INDEPENDENT_FUTURE_TWELVE_MONTH_CONFIRMATION"
+            },
+            FundedNetEur=(decimal?)null,AdversarialNetEur=(decimal?)null,
+            FundedHard21Certified=false,FloatingDd30Certified=false,
+            IndependentTwelveMonthsCertified=false,
+            OrdersSubmitted=0,CloudActivated=false,EconomicQualification=false
+        };
+    }
+
+    public static object SelfTestMde1()
+    {
+        // Synthetic ONLY. No historical market source or closed study execution.
+        long clock=U(2026,10,1);
+        double[] basis={1.0,0.0,1.0,1.0,3.0,0.0,.5};
+        var rows=new List<Decision>{
+            new(clock,0,new[]{1},basis,0,1),
+            new(clock+15*M,1,new[]{2},basis,0,-1),
+            new(clock+30*M,2,new[]{0,0,0},basis,0,0),
+            new(clock+45*M,3,new[]{3},basis,0,1),
+            new(clock+60*M,4,Array.Empty<int>(),basis,0,1)
+        };
+        double[] baseline={.5,.25,.25};
+        var context=new Dictionary<int,Counts>();
+        var fit=FitSoftmax(rows);
+        var sign=Mde1SignedConditional(rows,0,baseline,context,fit);
+        // Type inference is anonymous and strong-typed inside this method.
+        if(sign.ExAnteClocksAllOutcomes!=5||
+           sign.ResolvedFirstTouchDirectionalOutcomeCount!=2||
+           sign.Censored!=1||sign.Ambiguous!=1||sign.NoTouch!=1||
+           Math.Abs(sign.MeanConditionalDirectionalBrierModel!.Value-.25)>1e-9||
+           Math.Abs(sign.IncrementalConditionalDirectionalBrierGainVsPrior!.Value)>1e-9)
+            throw new InvalidOperationException(
+                "MDE1_SYNTHETIC_EVENT_VS_CONDITIONAL_SIGN_DENOMINATOR_FAIL");
+        return new {
+            Source="SYNTHETIC_ONLY",
+            CausalClocks=sign.ExAnteClocksAllOutcomes,
+            ResolvedConditionalBrierClocks=sign.ResolvedFirstTouchDirectionalOutcomeCount,
+            AmbiguousAndCensoredStillCounted=true,
+            EventLikelihoodNotClaimedSignedEdge=true,
+            NativeCoreOnly=true,OriginalBrokerTrades=0,
+            FundedNetEur=(decimal?)null,CloudActivated=false
+        };
+    }
 }

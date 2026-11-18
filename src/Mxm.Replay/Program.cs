@@ -1,6 +1,12 @@
 using System.Text.Json;
 using System.Security.Cryptography;
 
+if(args.Length==3 && args[2]=="--mde1-selftest")
+    return Mde1NativeStudy.SelfTest(args[1]);
+
+if(args.Length==3 && args[2]=="--mde1-cumulative-all12-direction-vs-event")
+    return Mde1NativeStudy.Run(args[0],args[1]);
+
 if(args.Length==3 && args[2]=="--mce1-cumulative-cdh1-native")
     return Mce1NativeStudy.Run(args[0],args[1]);
 
