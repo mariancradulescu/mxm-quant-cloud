@@ -670,7 +670,26 @@ public static class Cdh1NativeResearch
     // method bodies remain byte-for-byte unchanged above this point.
     // Evaluate exactly the same causal risk sets and original estimator math
     // on all twelve original markets, without selecting a historical winner.
-    static object Mde1SignedConditional(List<Decision> decisions,int variant,
+    private sealed class Mde1SignScore
+    {
+        public int ExAnteClocksAllOutcomes {get;init;}
+        public int ResolvedFirstTouchDirectionalOutcomeCount {get;init;}
+        public int Up {get;init;}
+        public int Down {get;init;}
+        public int NoTouch {get;init;}
+        public int Ambiguous {get;init;}
+        public int Censored {get;init;}
+        public double? MeanConditionalDirectionalBrierModel {get;init;}
+        public double? MeanConditionalDirectionalBrierPrior {get;init;}
+        public double? MeanConditionalDirectionalBrierFairCoin {get;init;}
+        public double? IncrementalConditionalDirectionalBrierGainVsPrior {get;init;}
+        public bool ConditionalOnResolvedFirstTouchOnly {get;init;}
+        public bool InformativeAmbiguityAndCensoringStillPossible {get;init;}
+        public Dictionary<string,double> BrierImprovementByObservedUtcWeek {get;init;}=new();
+        public bool GenuineFinancedProfit {get;init;}
+    }
+
+    static Mde1SignScore Mde1SignedConditional(List<Decision> decisions,int variant,
         double[] prior,Dictionary<int,Counts> context,Softmax softmax)
     {
         int resolved=0,up=0,down=0,censored=0,ambiguous=0,untouched=0;
@@ -693,10 +712,10 @@ public static class Cdh1NativeResearch
             modelBrier+=bm;priorBrier+=bb;halfBrier+=.25;
             string week=Week(d.At);
             var previous=weeks.GetValueOrDefault(week,(0.0,0));
-            weeks[week]=(previous.delta+bb-bm,previous.n+1);
+            weeks[week]=(previous.Item1+bb-bm,previous.Item2+1);
         }
         int total=decisions.Count;
-        return new {
+        return new Mde1SignScore {
             ExAnteClocksAllOutcomes=total,
             ResolvedFirstTouchDirectionalOutcomeCount=resolved,
             Up=up,Down=down,NoTouch=untouched,Ambiguous=ambiguous,Censored=censored,
