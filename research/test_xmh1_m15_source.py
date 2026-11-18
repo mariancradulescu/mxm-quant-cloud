@@ -2,6 +2,7 @@
 import json
 import unittest
 from pathlib import Path
+from datetime import datetime,timezone
 from .hxc1_historical_source import planned_requests
 
 P=Path("research/xmh1_m15_probe_source_protocol.json")
@@ -17,7 +18,7 @@ class SourceFrozenProbeTests(unittest.TestCase):
         self.assertEqual(len({(s,p) for s,p,_,_ in requests}),12)
         self.assertTrue(all(p=="M15" and end-first==48*3600*1000
             for _,p,first,end in requests))
-        self.assertTrue(all(end<1748736000000 or first>0
+        self.assertTrue(all(end<=int(datetime(2026,8,17,tzinfo=timezone.utc).timestamp()*1000)
             for _,_,first,end in requests))
         self.assertFalse(any("2026-08-17" in x["fromUtc"]
             for x in plan["ranges"]))
