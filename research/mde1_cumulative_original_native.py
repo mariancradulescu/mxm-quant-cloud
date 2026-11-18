@@ -136,9 +136,9 @@ def execute():
     count_by_market={}
     for symbol in SYMBOLS:
         before,after=old[symbol],newer[symbol]
-        need(all(b[1]<=1755475200000 for b in before),
+        need(all(b[1]<=1786924800000 for b in before),
              "MDE1_EARLIER_M15_SOURCE_CROSSED_CHRONOLOGY")
-        need(all(b[0]>=1755475200000 for b in after),
+        need(all(b[0]>=1786924800000 for b in after),
              "MDE1_LATER_M15_SOURCE_CROSSED_CHRONOLOGY")
         rows=before+after
         need(all(rows[i][0]>=rows[i-1][1] for i in range(1,len(rows))),
