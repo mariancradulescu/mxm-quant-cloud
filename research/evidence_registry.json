@@ -3306,5 +3306,36 @@
     "result": "docs/CVP1_ORIGINAL_CONTEXT_VALUE_RESULT.md",
     "ordersSubmitted": 0,
     "cloudActivated": false
+  },
+  "orx1RestrictedRecordedOpportunityDiagnosis": {
+    "protocol": "research/ORX1_FROZEN_RECORDED_OPPORTUNITY_DIAGNOSTIC_20261118.md",
+    "protocolCommit": "d5f4e45ff0ba2f50d2543d56dfbe26129962a26f",
+    "status": "RESTRICTED_SECONDARY_DIAGNOSTIC_NO_PROMOTION_FULL_PHASE1_PENDING",
+    "closedStudyOriginal": "CVP1_CLOSED_UNCHANGED",
+    "sourceOriginalRun": 44162043538,
+    "sourceOriginalPublicSha256": "a5125582a1cf4690871ad4d7640090c376ea8e85196228bf235d4a25ee7bc569",
+    "diagnosticRun": 44242632512,
+    "diagnosticArtifact": 14399952166,
+    "diagnosticArtifactSha256": "fb0bc0359e1c1ef19864b5d9ab9355c1a8ee340b1eed32f42186272a048fa133",
+    "diagnosticReportSha256": "6e8cd8cbe525e70e7234a960aef3d0b5a2cfc624983a15187828055e05764879",
+    "diagnosticProtocolFrozenBeforeImplementation": true,
+    "globalCalendarExposed": true,
+    "independentConfirmation": false,
+    "marketPathOracle": false,
+    "noSourceRecollection": true,
+    "noClosedPolicyReplay": true,
+    "ordersSubmitted": 0,
+    "cloudActivated": false,
+    "adverseSimpleOriginalNetEur": -19.759613512606983,
+    "adverseOneSlotRecordedSubsetHindsightNetEur": 11.932650593211104,
+    "adverseRecordedSubsetWeeklyMaxPositiveCount": [
+      17,
+      16,
+      13
+    ],
+    "adverseOneSlotRecordedSubsetHard21": false,
+    "continuousFloatingDrawdownCertified": false,
+    "promotion": false,
+    "result": "docs/ORX1_RESTRICTED_RECORDED_OPPORTUNITY_RESULT_20261118.md"
   }
 }
