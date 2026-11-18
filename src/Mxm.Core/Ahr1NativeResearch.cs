@@ -156,7 +156,7 @@ public static class Ahr1NativeResearch
                 if(j>=data.Length||data[j].Start!=data[j-1].End)
                 {missing=true;break;}
             if(missing){Count("future_path_gap");continue;}
-            if(data[i+6].End>EndOfSplit(b.End))
+            if(data[i+6].End>=EndOfSplit(b.End))
             {Count("six_hour_embargo_or_source_end");continue;}
             bool ambiguous=false;int label=2;
             for(int j=i+1;j<=i+6;j++)
