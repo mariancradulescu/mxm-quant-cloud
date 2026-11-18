@@ -1,0 +1,64 @@
+{
+  "schema": "MXM_HXC1_AUTHENTIC_HISTORICAL_OHLCV_SOURCE_ONLY_V1",
+  "id": "XMH1_CUMULATIVE_M15_OLD_SOURCE_PROBE",
+  "status": "SOURCE_PLAN_FROZEN_UNEXECUTED",
+  "authority": "docs/OWNER_SPEC.md OWNER v2.0 and OWNER 2026-11-18 cumulative research directive",
+  "scope": "NEW_M15_EARLIER_HISTORICAL_ONLY_HYPOTHESIS_NOT_HXC1_RERUN_NOT_CDH1_RESCORING",
+  "source": "original bound Pepperstone live account through research.owner_readonly_auth read-only official cTrader Open API",
+  "ranges": [
+    {
+      "period": "M15",
+      "symbolGroup": "full",
+      "fromUtc": "2025-12-01T00:00:00Z",
+      "toUtc": "2025-12-03T00:00:00Z",
+      "chunkHours": 48
+    },
+    {
+      "period": "M15",
+      "symbolGroup": "full",
+      "fromUtc": "2026-03-02T00:00:00Z",
+      "toUtc": "2026-03-04T00:00:00Z",
+      "chunkHours": 48
+    },
+    {
+      "period": "M15",
+      "symbolGroup": "full",
+      "fromUtc": "2026-06-01T00:00:00Z",
+      "toUtc": "2026-06-03T00:00:00Z",
+      "chunkHours": 48
+    }
+  ],
+  "symbolGroups": {
+    "full": [
+      "EURUSD",
+      "GBPUSD",
+      "USDJPY",
+      "AUDUSD",
+      "USDCAD",
+      "XAUUSD",
+      "US500",
+      "NAS100",
+      "GER40",
+      "UK100",
+      "AUS200",
+      "JPN225"
+    ]
+  },
+  "maximumMarketDataRequests": 36,
+  "minimumBarsToAcceptPerPeriod": {
+    "M15": 0
+  },
+  "completeness": "For each of 36 fixed requests, hasMore must be present and false; unknown fails closed, never claim missing history; no future filling and no model scoring",
+  "research": "NO_PREDICTOR_OR_RESULT_IS_EVALUATED_DURING_SOURCE_CAPTURE",
+  "safety": {
+    "brokerOrders": 0,
+    "cloudActivation": false,
+    "authRefresh": false,
+    "originalStudiesRerun": false,
+    "fullTapePublic": false
+  },
+  "economics": {
+    "netEur": null,
+    "qualification": false
+  }
+}
