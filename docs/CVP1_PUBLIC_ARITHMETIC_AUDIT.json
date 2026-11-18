@@ -1,0 +1,6108 @@
+{
+  "Study": "CVP1_PUBLIC_ARITHMETIC_AUDIT",
+  "OriginalZipSha256": "a5125582a1cf4690871ad4d7640090c376ea8e85196228bf235d4a25ee7bc569",
+  "Passed": true,
+  "NoPolicyReplay": true,
+  "IndependentMarketConfirmation": false,
+  "MetricsClass": "DESCRIPTIVE_EMPIRICAL_SMALL_SAMPLES_NOT_QUALIFICATION",
+  "Books": {
+    "FULL_central": {
+      "Trades": 11,
+      "NetEur": -0.9444224174435263,
+      "CostTotals": {
+        "GrossEur": -0.11388871637236779,
+        "SpreadEur": 0.06116118581999143,
+        "SlippageEur": 0.19234446408231404,
+        "ConversionEur": 6.713357754351467e-06,
+        "CommissionsEur": 0.5770213378110988,
+        "FinancingEur": 0
+      },
+      "ExpectancyEur": -0.08585658340395694,
+      "WinRate": 0.36363636363636365,
+      "ProfitFactor": 0.40034813292062965,
+      "Payoff": 0.700609232611102,
+      "MeanR": -0.4677641826534173,
+      "NetQuantiles": [
+        -0.5524444367218503,
+        -0.5524444367218503,
+        -0.20934941414623895,
+        -0.16572419685990503,
+        0.01752982799536895,
+        0.06978347675058137,
+        0.516956336249154
+      ],
+      "RQuantiles": [
+        -1.0419116918461693,
+        -1.0419116918461693,
+        -1.0104001570663623,
+        -0.8911248676009488,
+        0.01670054821664867,
+        0.21630803148776828,
+        0.4742787022112526
+      ],
+      "Worst": -0.5524444367218503,
+      "ES5": -0.5524444367218503,
+      "WeeksNet": {
+        "2026-W28": -0.01795827247732729,
+        "2026-W29": -0.6371054877523459,
+        "2026-W30": -0.28935865721385307
+      },
+      "WeeksTrades": {
+        "2026-W28": 3,
+        "2026-W29": 7,
+        "2026-W30": 1
+      },
+      "WeeklyMeanMinus2SE": -0.6731770214006956,
+      "Under60Seconds": 0,
+      "DurationSecondsQuantiles": [
+        103.274,
+        103.274,
+        166.062,
+        253.645,
+        689.601,
+        4020.751,
+        4619.677
+      ],
+      "Reasons": {
+        "STRUCTURAL_OR_PROFIT_PROTECTION": 7,
+        "LEARNED_CONTINUATION_NONPOSITIVE": 2,
+        "OBSERVED_EQUILIBRIUM_TARGET": 2
+      },
+      "ReasonProbabilities": {
+        "STRUCTURAL_OR_PROFIT_PROTECTION": 0.6363636363636364,
+        "LEARNED_CONTINUATION_NONPOSITIVE": 0.18181818181818182,
+        "OBSERVED_EQUILIBRIUM_TARGET": 0.18181818181818182
+      },
+      "MfeQuoteMean": 0.00019999999999999998,
+      "MaeQuoteMean": 0.00027545454545454547,
+      "InitialTargetRRQuantiles": [
+        0.3903744678869642,
+        0.3903744678869642,
+        0.5429000320289437,
+        1.0597241539139068,
+        1.5278993461107393,
+        2.0538142650449935,
+        5.171534088703824
+      ],
+      "StatisticallySufficient": false,
+      "Families": {
+        "FLOW": {
+          "Trades": 0,
+          "NetEur": 0,
+          "CostTotals": {
+            "GrossEur": 0,
+            "SpreadEur": 0,
+            "SlippageEur": 0,
+            "ConversionEur": 0,
+            "CommissionsEur": 0,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": null,
+          "WinRate": null,
+          "ProfitFactor": null,
+          "Payoff": null,
+          "MeanR": null,
+          "NetQuantiles": null,
+          "RQuantiles": null,
+          "Worst": null,
+          "ES5": null,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": 0.0,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 0,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": 0.0,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": null,
+          "Reasons": {},
+          "ReasonProbabilities": {},
+          "MfeQuoteMean": null,
+          "MaeQuoteMean": null,
+          "InitialTargetRRQuantiles": null,
+          "StatisticallySufficient": false
+        },
+        "RETURN": {
+          "Trades": 11,
+          "NetEur": -0.9444224174435263,
+          "CostTotals": {
+            "GrossEur": -0.11388871637236779,
+            "SpreadEur": 0.06116118581999143,
+            "SlippageEur": 0.19234446408231404,
+            "ConversionEur": 6.713357754351467e-06,
+            "CommissionsEur": 0.5770213378110988,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": -0.08585658340395694,
+          "WinRate": 0.36363636363636365,
+          "ProfitFactor": 0.40034813292062965,
+          "Payoff": 0.700609232611102,
+          "MeanR": -0.4677641826534173,
+          "NetQuantiles": [
+            -0.5524444367218503,
+            -0.5524444367218503,
+            -0.20934941414623895,
+            -0.16572419685990503,
+            0.01752982799536895,
+            0.06978347675058137,
+            0.516956336249154
+          ],
+          "RQuantiles": [
+            -1.0419116918461693,
+            -1.0419116918461693,
+            -1.0104001570663623,
+            -0.8911248676009488,
+            0.01670054821664867,
+            0.21630803148776828,
+            0.4742787022112526
+          ],
+          "Worst": -0.5524444367218503,
+          "ES5": -0.5524444367218503,
+          "WeeksNet": {
+            "2026-W28": -0.01795827247732729,
+            "2026-W29": -0.6371054877523459,
+            "2026-W30": -0.28935865721385307
+          },
+          "WeeksTrades": {
+            "2026-W28": 3,
+            "2026-W29": 7,
+            "2026-W30": 1
+          },
+          "WeeklyMeanMinus2SE": -0.6731770214006956,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": [
+            103.274,
+            103.274,
+            166.062,
+            253.645,
+            689.601,
+            4020.751,
+            4619.677
+          ],
+          "Reasons": {
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 7,
+            "LEARNED_CONTINUATION_NONPOSITIVE": 2,
+            "OBSERVED_EQUILIBRIUM_TARGET": 2
+          },
+          "ReasonProbabilities": {
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 0.6363636363636364,
+            "LEARNED_CONTINUATION_NONPOSITIVE": 0.18181818181818182,
+            "OBSERVED_EQUILIBRIUM_TARGET": 0.18181818181818182
+          },
+          "MfeQuoteMean": 0.00019999999999999998,
+          "MaeQuoteMean": 0.00027545454545454547,
+          "InitialTargetRRQuantiles": [
+            0.3903744678869642,
+            0.3903744678869642,
+            0.5429000320289437,
+            1.0597241539139068,
+            1.5278993461107393,
+            2.0538142650449935,
+            5.171534088703824
+          ],
+          "StatisticallySufficient": false
+        }
+      },
+      "Symbols": {
+        "EURUSD": {
+          "Trades": 5,
+          "NetEur": -0.48220886902634913,
+          "CostTotals": {
+            "GrossEur": -0.11869418847027163,
+            "SpreadEur": 0.013146613974861214,
+            "SlippageEur": 0.0875925517851319,
+            "ConversionEur": 6.028577524835403e-06,
+            "CommissionsEur": 0.26276948621855967,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": -0.09644177380526983,
+          "WinRate": 0.4,
+          "ProfitFactor": 0.5297469983922954,
+          "Payoff": 0.7946204975884431,
+          "MeanR": -0.4728408623711899,
+          "NetQuantiles": [
+            -0.5524444367218503,
+            -0.5524444367218503,
+            -0.28935865721385307,
+            -0.18362123589902324,
+            0.026259124559223402,
+            0.026259124559223402,
+            0.516956336249154
+          ],
+          "RQuantiles": [
+            -1.0419116918461693,
+            -1.0419116918461693,
+            -1.0104001570663623,
+            -0.8911248676009488,
+            0.10495370244627836,
+            0.10495370244627836,
+            0.4742787022112526
+          ],
+          "Worst": -0.5524444367218503,
+          "ES5": -0.5524444367218503,
+          "WeeksNet": {
+            "2026-W28": -0.03548810047269624,
+            "2026-W29": -0.15736211133979983,
+            "2026-W30": -0.28935865721385307
+          },
+          "WeeksTrades": {
+            "2026-W28": 2,
+            "2026-W29": 2,
+            "2026-W30": 1
+          },
+          "WeeklyMeanMinus2SE": -0.30734735658195034,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": [
+            103.274,
+            103.274,
+            166.062,
+            253.645,
+            312.943,
+            312.943,
+            4619.677
+          ],
+          "Reasons": {
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 3,
+            "LEARNED_CONTINUATION_NONPOSITIVE": 1,
+            "OBSERVED_EQUILIBRIUM_TARGET": 1
+          },
+          "ReasonProbabilities": {
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 0.6,
+            "LEARNED_CONTINUATION_NONPOSITIVE": 0.2,
+            "OBSERVED_EQUILIBRIUM_TARGET": 0.2
+          },
+          "MfeQuoteMean": 0.000222,
+          "MaeQuoteMean": 0.0003,
+          "InitialTargetRRQuantiles": [
+            0.3903744678869642,
+            0.3903744678869642,
+            0.5429000320289437,
+            1.0597241539139068,
+            1.5278993461107393,
+            1.5278993461107393,
+            5.171534088703824
+          ],
+          "StatisticallySufficient": false
+        },
+        "GBPUSD": {
+          "Trades": 0,
+          "NetEur": 0,
+          "CostTotals": {
+            "GrossEur": 0,
+            "SpreadEur": 0,
+            "SlippageEur": 0,
+            "ConversionEur": 0,
+            "CommissionsEur": 0,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": null,
+          "WinRate": null,
+          "ProfitFactor": null,
+          "Payoff": null,
+          "MeanR": null,
+          "NetQuantiles": null,
+          "RQuantiles": null,
+          "Worst": null,
+          "ES5": null,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": 0.0,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 0,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": 0.0,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": null,
+          "Reasons": {},
+          "ReasonProbabilities": {},
+          "MfeQuoteMean": null,
+          "MaeQuoteMean": null,
+          "InitialTargetRRQuantiles": null,
+          "StatisticallySufficient": false
+        },
+        "AUDUSD": {
+          "Trades": 6,
+          "NetEur": -0.46221354841717716,
+          "CostTotals": {
+            "GrossEur": 0.004805472097903843,
+            "SpreadEur": 0.048014571845130215,
+            "SlippageEur": 0.10475191229718214,
+            "ConversionEur": 6.847802295160639e-07,
+            "CommissionsEur": 0.3142518515925391,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": -0.07703559140286285,
+          "WinRate": 0.3333333333333333,
+          "ProfitFactor": 0.15888814940228463,
+          "Payoff": 0.31777629880456926,
+          "MeanR": -0.4635336162219401,
+          "NetQuantiles": [
+            -0.20934941414623895,
+            -0.20934941414623895,
+            -0.16572822908820306,
+            -0.16572419685990503,
+            -0.008725013068780431,
+            0.01752982799536895,
+            0.06978347675058137
+          ],
+          "RQuantiles": [
+            -1.0173279627775904,
+            -1.0173279627775904,
+            -0.9841509201100351,
+            -0.9823886534665537,
+            -0.03034274068187838,
+            0.01670054821664867,
+            0.21630803148776828
+          ],
+          "Worst": -0.20934941414623895,
+          "ES5": -0.20934941414623895,
+          "WeeksNet": {
+            "2026-W28": 0.01752982799536895,
+            "2026-W29": -0.4797433764125461,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 1,
+            "2026-W29": 5,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": -0.47990060031105275,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": [
+            136.0,
+            136.0,
+            186.961,
+            236.334,
+            689.601,
+            2427.153,
+            4020.751
+          ],
+          "Reasons": {
+            "LEARNED_CONTINUATION_NONPOSITIVE": 1,
+            "OBSERVED_EQUILIBRIUM_TARGET": 1,
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 4
+          },
+          "ReasonProbabilities": {
+            "LEARNED_CONTINUATION_NONPOSITIVE": 0.16666666666666666,
+            "OBSERVED_EQUILIBRIUM_TARGET": 0.16666666666666666,
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 0.6666666666666666
+          },
+          "MfeQuoteMean": 0.00018166666666666667,
+          "MaeQuoteMean": 0.000255,
+          "InitialTargetRRQuantiles": [
+            0.4278179612857143,
+            0.4278179612857143,
+            0.8187274883360658,
+            1.0430325606224635,
+            1.3074587593516824,
+            1.8133605354907003,
+            2.0538142650449935
+          ],
+          "StatisticallySufficient": false
+        }
+      },
+      "KnownMarkFloatingDD": 0.00581760026143994,
+      "KnownMarkMargin": 63.91,
+      "KnownMarkMinFreeMargin": 234.34471992156801,
+      "Concurrency": 2,
+      "Hard21": false,
+      "UnknownMarks": 0,
+      "UncertainTrades": 0,
+      "IncrementalVsAlternatives": {
+        "CASH": -0.9444224174435263,
+        "SIMPLE": 18.364357342620597,
+        "NO_PEER": -2.3520223227923074,
+        "NO_ACTIVITY": -0.24678507376715442,
+        "PROTECT_ONLY": 0.5783167103391982,
+        "FLOW_ONLY": -0.9444224174435263,
+        "RETURN_ONLY": 0.0
+      }
+    },
+    "NO_PEER_central": {
+      "Trades": 4,
+      "NetEur": 1.4075999053487809,
+      "CostTotals": {
+        "GrossEur": 1.709869980804639,
+        "SpreadEur": 0.02188700487935707,
+        "SlippageEur": 0.07010914410064108,
+        "ConversionEur": 1.0379888629257135e-06,
+        "CommissionsEur": 0.21027288848699716,
+        "FinancingEur": 0
+      },
+      "ExpectancyEur": 0.3518999763371952,
+      "WinRate": 0.5,
+      "ProfitFactor": 2.6721248894058984,
+      "Payoff": 2.6721248894058984,
+      "MeanR": -0.024355635212244466,
+      "NetQuantiles": [
+        -0.5524444367218503,
+        -0.5524444367218503,
+        -0.5524444367218503,
+        -0.28935865721385307,
+        0.16653772508651368,
+        0.16653772508651368,
+        2.0828652741979705
+      ],
+      "RQuantiles": [
+        -1.0419116918461693,
+        -1.0419116918461693,
+        -1.0419116918461693,
+        -0.8911248676009488,
+        0.15278910535526943,
+        0.15278910535526943,
+        1.6828249132428708
+      ],
+      "Worst": -0.5524444367218503,
+      "ES5": -0.5524444367218503,
+      "WeeksNet": {
+        "2026-W28": -0.38590671163533663,
+        "2026-W29": 2.0828652741979705,
+        "2026-W30": -0.28935865721385307
+      },
+      "WeeksTrades": {
+        "2026-W28": 2,
+        "2026-W29": 1,
+        "2026-W30": 1
+      },
+      "WeeklyMeanMinus2SE": -1.1454278197976528,
+      "Under60Seconds": 0,
+      "DurationSecondsQuantiles": [
+        253.645,
+        253.645,
+        253.645,
+        312.943,
+        4918.946,
+        4918.946,
+        10798.768
+      ],
+      "Reasons": {
+        "STRUCTURAL_OR_PROFIT_PROTECTION": 2,
+        "LEARNED_CONTINUATION_NONPOSITIVE": 1,
+        "SESSION_SAFETY": 1
+      },
+      "ReasonProbabilities": {
+        "STRUCTURAL_OR_PROFIT_PROTECTION": 0.5,
+        "LEARNED_CONTINUATION_NONPOSITIVE": 0.25,
+        "SESSION_SAFETY": 0.25
+      },
+      "MfeQuoteMean": 0.001,
+      "MaeQuoteMean": 0.00046750000000000003,
+      "InitialTargetRRQuantiles": [
+        0.5429000320289437,
+        0.5429000320289437,
+        0.5429000320289437,
+        1.0597241539139068,
+        1.0597241539139068,
+        1.0597241539139068,
+        1.5278993461107393
+      ],
+      "StatisticallySufficient": false,
+      "Families": {
+        "FLOW": {
+          "Trades": 1,
+          "NetEur": 2.0828652741979705,
+          "CostTotals": {
+            "GrossEur": 2.170336402142332,
+            "SpreadEur": 0.017502712920502678,
+            "SlippageEur": 0.017502712920502678,
+            "ConversionEur": 0,
+            "CommissionsEur": 0.052465702103356306,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": 2.0828652741979705,
+          "WinRate": 1.0,
+          "ProfitFactor": null,
+          "Payoff": null,
+          "MeanR": 1.6828249132428708,
+          "NetQuantiles": [
+            2.0828652741979705,
+            2.0828652741979705,
+            2.0828652741979705,
+            2.0828652741979705,
+            2.0828652741979705,
+            2.0828652741979705,
+            2.0828652741979705
+          ],
+          "RQuantiles": [
+            1.6828249132428708,
+            1.6828249132428708,
+            1.6828249132428708,
+            1.6828249132428708,
+            1.6828249132428708,
+            1.6828249132428708,
+            1.6828249132428708
+          ],
+          "Worst": 2.0828652741979705,
+          "ES5": 2.0828652741979705,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": 2.0828652741979705,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 1,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": -0.6942884247326571,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": [
+            10798.768,
+            10798.768,
+            10798.768,
+            10798.768,
+            10798.768,
+            10798.768,
+            10798.768
+          ],
+          "Reasons": {
+            "SESSION_SAFETY": 1
+          },
+          "ReasonProbabilities": {
+            "SESSION_SAFETY": 1.0
+          },
+          "MfeQuoteMean": 0.00305,
+          "MaeQuoteMean": 0.00055,
+          "InitialTargetRRQuantiles": null,
+          "StatisticallySufficient": false
+        },
+        "RETURN": {
+          "Trades": 3,
+          "NetEur": -0.6752653688491896,
+          "CostTotals": {
+            "GrossEur": -0.4604664213376931,
+            "SpreadEur": 0.004384291958854394,
+            "SlippageEur": 0.0526064311801384,
+            "ConversionEur": 1.0379888629257135e-06,
+            "CommissionsEur": 0.15780718638364083,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": -0.22508845628306323,
+          "WinRate": 0.3333333333333333,
+          "ProfitFactor": 0.1978345367060789,
+          "Payoff": 0.3956690734121578,
+          "MeanR": -0.5934158180306162,
+          "NetQuantiles": [
+            -0.5524444367218503,
+            -0.5524444367218503,
+            -0.5524444367218503,
+            -0.28935865721385307,
+            -0.28935865721385307,
+            -0.28935865721385307,
+            0.16653772508651368
+          ],
+          "RQuantiles": [
+            -1.0419116918461693,
+            -1.0419116918461693,
+            -1.0419116918461693,
+            -0.8911248676009488,
+            -0.8911248676009488,
+            -0.8911248676009488,
+            0.15278910535526943
+          ],
+          "Worst": -0.5524444367218503,
+          "ES5": -0.5524444367218503,
+          "WeeksNet": {
+            "2026-W28": -0.38590671163533663,
+            "2026-W29": 0.0,
+            "2026-W30": -0.28935865721385307
+          },
+          "WeeksTrades": {
+            "2026-W28": 2,
+            "2026-W29": 0,
+            "2026-W30": 1
+          },
+          "WeeklyMeanMinus2SE": -0.4569763359923825,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": [
+            253.645,
+            253.645,
+            253.645,
+            312.943,
+            312.943,
+            312.943,
+            4918.946
+          ],
+          "Reasons": {
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 2,
+            "LEARNED_CONTINUATION_NONPOSITIVE": 1
+          },
+          "ReasonProbabilities": {
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 0.6666666666666666,
+            "LEARNED_CONTINUATION_NONPOSITIVE": 0.3333333333333333
+          },
+          "MfeQuoteMean": 0.00031666666666666665,
+          "MaeQuoteMean": 0.00044,
+          "InitialTargetRRQuantiles": [
+            0.5429000320289437,
+            0.5429000320289437,
+            0.5429000320289437,
+            1.0597241539139068,
+            1.0597241539139068,
+            1.0597241539139068,
+            1.5278993461107393
+          ],
+          "StatisticallySufficient": false
+        }
+      },
+      "Symbols": {
+        "EURUSD": {
+          "Trades": 3,
+          "NetEur": -0.6752653688491896,
+          "CostTotals": {
+            "GrossEur": -0.4604664213376931,
+            "SpreadEur": 0.004384291958854394,
+            "SlippageEur": 0.0526064311801384,
+            "ConversionEur": 1.0379888629257135e-06,
+            "CommissionsEur": 0.15780718638364083,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": -0.22508845628306323,
+          "WinRate": 0.3333333333333333,
+          "ProfitFactor": 0.1978345367060789,
+          "Payoff": 0.3956690734121578,
+          "MeanR": -0.5934158180306162,
+          "NetQuantiles": [
+            -0.5524444367218503,
+            -0.5524444367218503,
+            -0.5524444367218503,
+            -0.28935865721385307,
+            -0.28935865721385307,
+            -0.28935865721385307,
+            0.16653772508651368
+          ],
+          "RQuantiles": [
+            -1.0419116918461693,
+            -1.0419116918461693,
+            -1.0419116918461693,
+            -0.8911248676009488,
+            -0.8911248676009488,
+            -0.8911248676009488,
+            0.15278910535526943
+          ],
+          "Worst": -0.5524444367218503,
+          "ES5": -0.5524444367218503,
+          "WeeksNet": {
+            "2026-W28": -0.38590671163533663,
+            "2026-W29": 0.0,
+            "2026-W30": -0.28935865721385307
+          },
+          "WeeksTrades": {
+            "2026-W28": 2,
+            "2026-W29": 0,
+            "2026-W30": 1
+          },
+          "WeeklyMeanMinus2SE": -0.4569763359923825,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": [
+            253.645,
+            253.645,
+            253.645,
+            312.943,
+            312.943,
+            312.943,
+            4918.946
+          ],
+          "Reasons": {
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 2,
+            "LEARNED_CONTINUATION_NONPOSITIVE": 1
+          },
+          "ReasonProbabilities": {
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 0.6666666666666666,
+            "LEARNED_CONTINUATION_NONPOSITIVE": 0.3333333333333333
+          },
+          "MfeQuoteMean": 0.00031666666666666665,
+          "MaeQuoteMean": 0.00044,
+          "InitialTargetRRQuantiles": [
+            0.5429000320289437,
+            0.5429000320289437,
+            0.5429000320289437,
+            1.0597241539139068,
+            1.0597241539139068,
+            1.0597241539139068,
+            1.5278993461107393
+          ],
+          "StatisticallySufficient": false
+        },
+        "GBPUSD": {
+          "Trades": 1,
+          "NetEur": 2.0828652741979705,
+          "CostTotals": {
+            "GrossEur": 2.170336402142332,
+            "SpreadEur": 0.017502712920502678,
+            "SlippageEur": 0.017502712920502678,
+            "ConversionEur": 0,
+            "CommissionsEur": 0.052465702103356306,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": 2.0828652741979705,
+          "WinRate": 1.0,
+          "ProfitFactor": null,
+          "Payoff": null,
+          "MeanR": 1.6828249132428708,
+          "NetQuantiles": [
+            2.0828652741979705,
+            2.0828652741979705,
+            2.0828652741979705,
+            2.0828652741979705,
+            2.0828652741979705,
+            2.0828652741979705,
+            2.0828652741979705
+          ],
+          "RQuantiles": [
+            1.6828249132428708,
+            1.6828249132428708,
+            1.6828249132428708,
+            1.6828249132428708,
+            1.6828249132428708,
+            1.6828249132428708,
+            1.6828249132428708
+          ],
+          "Worst": 2.0828652741979705,
+          "ES5": 2.0828652741979705,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": 2.0828652741979705,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 1,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": -0.6942884247326571,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": [
+            10798.768,
+            10798.768,
+            10798.768,
+            10798.768,
+            10798.768,
+            10798.768,
+            10798.768
+          ],
+          "Reasons": {
+            "SESSION_SAFETY": 1
+          },
+          "ReasonProbabilities": {
+            "SESSION_SAFETY": 1.0
+          },
+          "MfeQuoteMean": 0.00305,
+          "MaeQuoteMean": 0.00055,
+          "InitialTargetRRQuantiles": null,
+          "StatisticallySufficient": false
+        },
+        "AUDUSD": {
+          "Trades": 0,
+          "NetEur": 0,
+          "CostTotals": {
+            "GrossEur": 0,
+            "SpreadEur": 0,
+            "SlippageEur": 0,
+            "ConversionEur": 0,
+            "CommissionsEur": 0,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": null,
+          "WinRate": null,
+          "ProfitFactor": null,
+          "Payoff": null,
+          "MeanR": null,
+          "NetQuantiles": null,
+          "RQuantiles": null,
+          "Worst": null,
+          "ES5": null,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": 0.0,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 0,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": 0.0,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": null,
+          "Reasons": {},
+          "ReasonProbabilities": {},
+          "MfeQuoteMean": null,
+          "MaeQuoteMean": null,
+          "InitialTargetRRQuantiles": null,
+          "StatisticallySufficient": false
+        }
+      },
+      "KnownMarkFloatingDD": 0.00364268668255618,
+      "KnownMarkMargin": 40.02,
+      "KnownMarkMinFreeMargin": 259.0524897831098,
+      "Concurrency": 1,
+      "Hard21": false,
+      "UnknownMarks": 0,
+      "UncertainTrades": 0
+    },
+    "NO_ACTIVITY_central": {
+      "Trades": 6,
+      "NetEur": -0.6976373436763719,
+      "CostTotals": {
+        "GrossEur": -0.23950186152330377,
+        "SpreadEur": 0.03924797073494283,
+        "SlippageEur": 0.10472310805679984,
+        "ConversionEur": 6.847802295160639e-07,
+        "CommissionsEur": 0.31416371858109593,
+        "FinancingEur": 0
+      },
+      "ExpectancyEur": -0.11627289061272865,
+      "WinRate": 0.3333333333333333,
+      "ProfitFactor": 0.12100923289863084,
+      "Payoff": 0.2420184657972617,
+      "MeanR": -0.6180376108724591,
+      "NetQuantiles": [
+        -0.2528781048918296,
+        -0.2528781048918296,
+        -0.20934941414623895,
+        -0.16572822908820306,
+        -0.16572419685990503,
+        0.026259124559223402,
+        0.06978347675058137
+      ],
+      "RQuantiles": [
+        -1.045619862814622,
+        -1.045619862814622,
+        -1.0173279627775904,
+        -0.9841509201100351,
+        -0.9823886534665537,
+        0.10495370244627836,
+        0.21630803148776828
+      ],
+      "Worst": -0.2528781048918296,
+      "ES5": -0.2528781048918296,
+      "WeeksNet": {
+        "2026-W28": 0.0,
+        "2026-W29": -0.6976373436763719,
+        "2026-W30": 0.0
+      },
+      "WeeksTrades": {
+        "2026-W28": 0,
+        "2026-W29": 6,
+        "2026-W30": 0
+      },
+      "WeeklyMeanMinus2SE": -0.6976373436763719,
+      "Under60Seconds": 0,
+      "DurationSecondsQuantiles": [
+        103.274,
+        103.274,
+        136.0,
+        186.961,
+        236.334,
+        298.895,
+        689.601
+      ],
+      "Reasons": {
+        "OBSERVED_EQUILIBRIUM_TARGET": 2,
+        "STRUCTURAL_OR_PROFIT_PROTECTION": 4
+      },
+      "ReasonProbabilities": {
+        "OBSERVED_EQUILIBRIUM_TARGET": 0.3333333333333333,
+        "STRUCTURAL_OR_PROFIT_PROTECTION": 0.6666666666666666
+      },
+      "MfeQuoteMean": 4.9999999999999996e-05,
+      "MaeQuoteMean": 0.00016166666666666668,
+      "InitialTargetRRQuantiles": [
+        0.3903744678869642,
+        0.3903744678869642,
+        0.4278179612857143,
+        0.5917984742601208,
+        0.8187274883360658,
+        1.3074587593516824,
+        2.0538142650449935
+      ],
+      "StatisticallySufficient": false,
+      "Families": {
+        "FLOW": {
+          "Trades": 0,
+          "NetEur": 0,
+          "CostTotals": {
+            "GrossEur": 0,
+            "SpreadEur": 0,
+            "SlippageEur": 0,
+            "ConversionEur": 0,
+            "CommissionsEur": 0,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": null,
+          "WinRate": null,
+          "ProfitFactor": null,
+          "Payoff": null,
+          "MeanR": null,
+          "NetQuantiles": null,
+          "RQuantiles": null,
+          "Worst": null,
+          "ES5": null,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": 0.0,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 0,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": 0.0,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": null,
+          "Reasons": {},
+          "ReasonProbabilities": {},
+          "MfeQuoteMean": null,
+          "MaeQuoteMean": null,
+          "InitialTargetRRQuantiles": null,
+          "StatisticallySufficient": false
+        },
+        "RETURN": {
+          "Trades": 6,
+          "NetEur": -0.6976373436763719,
+          "CostTotals": {
+            "GrossEur": -0.23950186152330377,
+            "SpreadEur": 0.03924797073494283,
+            "SlippageEur": 0.10472310805679984,
+            "ConversionEur": 6.847802295160639e-07,
+            "CommissionsEur": 0.31416371858109593,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": -0.11627289061272865,
+          "WinRate": 0.3333333333333333,
+          "ProfitFactor": 0.12100923289863084,
+          "Payoff": 0.2420184657972617,
+          "MeanR": -0.6180376108724591,
+          "NetQuantiles": [
+            -0.2528781048918296,
+            -0.2528781048918296,
+            -0.20934941414623895,
+            -0.16572822908820306,
+            -0.16572419685990503,
+            0.026259124559223402,
+            0.06978347675058137
+          ],
+          "RQuantiles": [
+            -1.045619862814622,
+            -1.045619862814622,
+            -1.0173279627775904,
+            -0.9841509201100351,
+            -0.9823886534665537,
+            0.10495370244627836,
+            0.21630803148776828
+          ],
+          "Worst": -0.2528781048918296,
+          "ES5": -0.2528781048918296,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": -0.6976373436763719,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 6,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": -0.6976373436763719,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": [
+            103.274,
+            103.274,
+            136.0,
+            186.961,
+            236.334,
+            298.895,
+            689.601
+          ],
+          "Reasons": {
+            "OBSERVED_EQUILIBRIUM_TARGET": 2,
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 4
+          },
+          "ReasonProbabilities": {
+            "OBSERVED_EQUILIBRIUM_TARGET": 0.3333333333333333,
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 0.6666666666666666
+          },
+          "MfeQuoteMean": 4.9999999999999996e-05,
+          "MaeQuoteMean": 0.00016166666666666668,
+          "InitialTargetRRQuantiles": [
+            0.3903744678869642,
+            0.3903744678869642,
+            0.4278179612857143,
+            0.5917984742601208,
+            0.8187274883360658,
+            1.3074587593516824,
+            2.0538142650449935
+          ],
+          "StatisticallySufficient": false
+        }
+      },
+      "Symbols": {
+        "EURUSD": {
+          "Trades": 1,
+          "NetEur": 0.026259124559223402,
+          "CostTotals": {
+            "GrossEur": 0.0962741888899586,
+            "SpreadEur": 0,
+            "SlippageEur": 0.017504397979992474,
+            "ConversionEur": 0,
+            "CommissionsEur": 0.052510666350742724,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": 0.026259124559223402,
+          "WinRate": 1.0,
+          "ProfitFactor": null,
+          "Payoff": null,
+          "MeanR": 0.10495370244627836,
+          "NetQuantiles": [
+            0.026259124559223402,
+            0.026259124559223402,
+            0.026259124559223402,
+            0.026259124559223402,
+            0.026259124559223402,
+            0.026259124559223402,
+            0.026259124559223402
+          ],
+          "RQuantiles": [
+            0.10495370244627836,
+            0.10495370244627836,
+            0.10495370244627836,
+            0.10495370244627836,
+            0.10495370244627836,
+            0.10495370244627836,
+            0.10495370244627836
+          ],
+          "Worst": 0.026259124559223402,
+          "ES5": 0.026259124559223402,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": 0.026259124559223402,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 1,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": -0.008753041519741133,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": [
+            103.274,
+            103.274,
+            103.274,
+            103.274,
+            103.274,
+            103.274,
+            103.274
+          ],
+          "Reasons": {
+            "OBSERVED_EQUILIBRIUM_TARGET": 1
+          },
+          "ReasonProbabilities": {
+            "OBSERVED_EQUILIBRIUM_TARGET": 1.0
+          },
+          "MfeQuoteMean": 0.0001,
+          "MaeQuoteMean": 4e-05,
+          "InitialTargetRRQuantiles": [
+            0.3903744678869642,
+            0.3903744678869642,
+            0.3903744678869642,
+            0.3903744678869642,
+            0.3903744678869642,
+            0.3903744678869642,
+            0.3903744678869642
+          ],
+          "StatisticallySufficient": false
+        },
+        "GBPUSD": {
+          "Trades": 0,
+          "NetEur": 0,
+          "CostTotals": {
+            "GrossEur": 0,
+            "SpreadEur": 0,
+            "SlippageEur": 0,
+            "ConversionEur": 0,
+            "CommissionsEur": 0,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": null,
+          "WinRate": null,
+          "ProfitFactor": null,
+          "Payoff": null,
+          "MeanR": null,
+          "NetQuantiles": null,
+          "RQuantiles": null,
+          "Worst": null,
+          "ES5": null,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": 0.0,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 0,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": 0.0,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": null,
+          "Reasons": {},
+          "ReasonProbabilities": {},
+          "MfeQuoteMean": null,
+          "MaeQuoteMean": null,
+          "InitialTargetRRQuantiles": null,
+          "StatisticallySufficient": false
+        },
+        "AUDUSD": {
+          "Trades": 5,
+          "NetEur": -0.7238964682355953,
+          "CostTotals": {
+            "GrossEur": -0.33577605041326236,
+            "SpreadEur": 0.03924797073494283,
+            "SlippageEur": 0.08721871007680737,
+            "ConversionEur": 6.847802295160639e-07,
+            "CommissionsEur": 0.26165305223035323,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": -0.14477929364711906,
+          "WinRate": 0.2,
+          "ProfitFactor": 0.08792395119898963,
+          "Payoff": 0.3516958047959585,
+          "MeanR": -0.7626358735362067,
+          "NetQuantiles": [
+            -0.2528781048918296,
+            -0.2528781048918296,
+            -0.20934941414623895,
+            -0.16572822908820306,
+            -0.16572419685990503,
+            -0.16572419685990503,
+            0.06978347675058137
+          ],
+          "RQuantiles": [
+            -1.045619862814622,
+            -1.045619862814622,
+            -1.0173279627775904,
+            -0.9841509201100351,
+            -0.9823886534665537,
+            -0.9823886534665537,
+            0.21630803148776828
+          ],
+          "Worst": -0.2528781048918296,
+          "ES5": -0.2528781048918296,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": -0.7238964682355953,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 5,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": -0.7238964682355953,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": [
+            136.0,
+            136.0,
+            186.961,
+            236.334,
+            298.895,
+            298.895,
+            689.601
+          ],
+          "Reasons": {
+            "OBSERVED_EQUILIBRIUM_TARGET": 1,
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 4
+          },
+          "ReasonProbabilities": {
+            "OBSERVED_EQUILIBRIUM_TARGET": 0.2,
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 0.8
+          },
+          "MfeQuoteMean": 3.9999999999999996e-05,
+          "MaeQuoteMean": 0.000186,
+          "InitialTargetRRQuantiles": [
+            0.4278179612857143,
+            0.4278179612857143,
+            0.5917984742601208,
+            0.8187274883360658,
+            1.3074587593516824,
+            1.3074587593516824,
+            2.0538142650449935
+          ],
+          "StatisticallySufficient": false
+        }
+      },
+      "KnownMarkFloatingDD": 0.002644753120055681,
+      "KnownMarkMargin": 33.33,
+      "KnownMarkMinFreeMargin": 266.57373641916996,
+      "Concurrency": 1,
+      "Hard21": false,
+      "UnknownMarks": 0,
+      "UncertainTrades": 0
+    },
+    "PROTECT_ONLY_central": {
+      "Trades": 11,
+      "NetEur": -1.5227391277827245,
+      "CostTotals": {
+        "GrossEur": -0.6834156801538909,
+        "SpreadEur": 0.06993145771784183,
+        "SlippageEur": 0.192353681589016,
+        "ConversionEur": 3.1442508241269237e-06,
+        "CommissionsEur": 0.5770351640711517,
+        "FinancingEur": 0
+      },
+      "ExpectancyEur": -0.1384308297984295,
+      "WinRate": 0.2727272727272727,
+      "ProfitFactor": 0.13432816709473425,
+      "Payoff": 0.35820844558595794,
+      "MeanR": -0.5166441600829539,
+      "NetQuantiles": [
+        -0.5524444367218503,
+        -0.5524444367218503,
+        -0.20934941414623895,
+        -0.16572822908820306,
+        -0.008725013068780431,
+        0.06978347675058137,
+        0.14024411638552786
+      ],
+      "RQuantiles": [
+        -1.0419116918461693,
+        -1.0419116918461693,
+        -1.0104001570663623,
+        -0.8911248676009488,
+        -0.03034274068187838,
+        0.12866618096742763,
+        0.21630803148776828
+      ],
+      "Worst": -0.5524444367218503,
+      "ES5": -0.5524444367218503,
+      "WeeksNet": {
+        "2026-W28": -0.5962749828165256,
+        "2026-W29": -0.6371054877523459,
+        "2026-W30": -0.28935865721385307
+      },
+      "WeeksTrades": {
+        "2026-W28": 3,
+        "2026-W29": 7,
+        "2026-W30": 1
+      },
+      "WeeklyMeanMinus2SE": -0.7270703414094388,
+      "Under60Seconds": 0,
+      "DurationSecondsQuantiles": [
+        103.274,
+        103.274,
+        166.062,
+        253.645,
+        689.601,
+        4198.672,
+        5396.954
+      ],
+      "Reasons": {
+        "STRUCTURAL_OR_PROFIT_PROTECTION": 7,
+        "SESSION_SAFETY": 2,
+        "OBSERVED_EQUILIBRIUM_TARGET": 2
+      },
+      "ReasonProbabilities": {
+        "STRUCTURAL_OR_PROFIT_PROTECTION": 0.6363636363636364,
+        "SESSION_SAFETY": 0.18181818181818182,
+        "OBSERVED_EQUILIBRIUM_TARGET": 0.18181818181818182
+      },
+      "MfeQuoteMean": 0.00019999999999999998,
+      "MaeQuoteMean": 0.00027545454545454547,
+      "InitialTargetRRQuantiles": [
+        0.3903744678869642,
+        0.3903744678869642,
+        0.5429000320289437,
+        1.0597241539139068,
+        1.5278993461107393,
+        2.0538142650449935,
+        5.171534088703824
+      ],
+      "StatisticallySufficient": false,
+      "Families": {
+        "FLOW": {
+          "Trades": 0,
+          "NetEur": 0,
+          "CostTotals": {
+            "GrossEur": 0,
+            "SpreadEur": 0,
+            "SlippageEur": 0,
+            "ConversionEur": 0,
+            "CommissionsEur": 0,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": null,
+          "WinRate": null,
+          "ProfitFactor": null,
+          "Payoff": null,
+          "MeanR": null,
+          "NetQuantiles": null,
+          "RQuantiles": null,
+          "Worst": null,
+          "ES5": null,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": 0.0,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 0,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": 0.0,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": null,
+          "Reasons": {},
+          "ReasonProbabilities": {},
+          "MfeQuoteMean": null,
+          "MaeQuoteMean": null,
+          "InitialTargetRRQuantiles": null,
+          "StatisticallySufficient": false
+        },
+        "RETURN": {
+          "Trades": 11,
+          "NetEur": -1.5227391277827245,
+          "CostTotals": {
+            "GrossEur": -0.6834156801538909,
+            "SpreadEur": 0.06993145771784183,
+            "SlippageEur": 0.192353681589016,
+            "ConversionEur": 3.1442508241269237e-06,
+            "CommissionsEur": 0.5770351640711517,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": -0.1384308297984295,
+          "WinRate": 0.2727272727272727,
+          "ProfitFactor": 0.13432816709473425,
+          "Payoff": 0.35820844558595794,
+          "MeanR": -0.5166441600829539,
+          "NetQuantiles": [
+            -0.5524444367218503,
+            -0.5524444367218503,
+            -0.20934941414623895,
+            -0.16572822908820306,
+            -0.008725013068780431,
+            0.06978347675058137,
+            0.14024411638552786
+          ],
+          "RQuantiles": [
+            -1.0419116918461693,
+            -1.0419116918461693,
+            -1.0104001570663623,
+            -0.8911248676009488,
+            -0.03034274068187838,
+            0.12866618096742763,
+            0.21630803148776828
+          ],
+          "Worst": -0.5524444367218503,
+          "ES5": -0.5524444367218503,
+          "WeeksNet": {
+            "2026-W28": -0.5962749828165256,
+            "2026-W29": -0.6371054877523459,
+            "2026-W30": -0.28935865721385307
+          },
+          "WeeksTrades": {
+            "2026-W28": 3,
+            "2026-W29": 7,
+            "2026-W30": 1
+          },
+          "WeeklyMeanMinus2SE": -0.7270703414094388,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": [
+            103.274,
+            103.274,
+            166.062,
+            253.645,
+            689.601,
+            4198.672,
+            5396.954
+          ],
+          "Reasons": {
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 7,
+            "SESSION_SAFETY": 2,
+            "OBSERVED_EQUILIBRIUM_TARGET": 2
+          },
+          "ReasonProbabilities": {
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 0.6363636363636364,
+            "SESSION_SAFETY": 0.18181818181818182,
+            "OBSERVED_EQUILIBRIUM_TARGET": 0.18181818181818182
+          },
+          "MfeQuoteMean": 0.00019999999999999998,
+          "MaeQuoteMean": 0.00027545454545454547,
+          "InitialTargetRRQuantiles": [
+            0.3903744678869642,
+            0.3903744678869642,
+            0.5429000320289437,
+            1.0597241539139068,
+            1.5278993461107393,
+            2.0538142650449935,
+            5.171534088703824
+          ],
+          "StatisticallySufficient": false
+        }
+      },
+      "Symbols": {
+        "EURUSD": {
+          "Trades": 5,
+          "NetEur": -0.8589210888899753,
+          "CostTotals": {
+            "GrossEur": -0.4997733385184998,
+            "SpreadEur": 0.008767123531104096,
+            "SlippageEur": 0.08759923404211706,
+            "ConversionEur": 1.8831942169006656e-06,
+            "CommissionsEur": 0.26277950960403745,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": -0.17178421777799507,
+          "WinRate": 0.4,
+          "ProfitFactor": 0.16237496624601014,
+          "Payoff": 0.2435624493690152,
+          "MeanR": -0.5419633666199549,
+          "NetQuantiles": [
+            -0.5524444367218503,
+            -0.5524444367218503,
+            -0.28935865721385307,
+            -0.18362123589902324,
+            0.026259124559223402,
+            0.026259124559223402,
+            0.14024411638552786
+          ],
+          "RQuantiles": [
+            -1.0419116918461693,
+            -1.0419116918461693,
+            -1.0104001570663623,
+            -0.8911248676009488,
+            0.10495370244627836,
+            0.10495370244627836,
+            0.12866618096742763
+          ],
+          "Worst": -0.5524444367218503,
+          "ES5": -0.5524444367218503,
+          "WeeksNet": {
+            "2026-W28": -0.4122003203363224,
+            "2026-W29": -0.15736211133979983,
+            "2026-W30": -0.28935865721385307
+          },
+          "WeeksTrades": {
+            "2026-W28": 2,
+            "2026-W29": 2,
+            "2026-W30": 1
+          },
+          "WeeklyMeanMinus2SE": -0.43346958154372545,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": [
+            103.274,
+            103.274,
+            166.062,
+            253.645,
+            312.943,
+            312.943,
+            5396.954
+          ],
+          "Reasons": {
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 3,
+            "SESSION_SAFETY": 1,
+            "OBSERVED_EQUILIBRIUM_TARGET": 1
+          },
+          "ReasonProbabilities": {
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 0.6,
+            "SESSION_SAFETY": 0.2,
+            "OBSERVED_EQUILIBRIUM_TARGET": 0.2
+          },
+          "MfeQuoteMean": 0.000222,
+          "MaeQuoteMean": 0.0003,
+          "InitialTargetRRQuantiles": [
+            0.3903744678869642,
+            0.3903744678869642,
+            0.5429000320289437,
+            1.0597241539139068,
+            1.5278993461107393,
+            1.5278993461107393,
+            5.171534088703824
+          ],
+          "StatisticallySufficient": false
+        },
+        "GBPUSD": {
+          "Trades": 0,
+          "NetEur": 0,
+          "CostTotals": {
+            "GrossEur": 0,
+            "SpreadEur": 0,
+            "SlippageEur": 0,
+            "ConversionEur": 0,
+            "CommissionsEur": 0,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": null,
+          "WinRate": null,
+          "ProfitFactor": null,
+          "Payoff": null,
+          "MeanR": null,
+          "NetQuantiles": null,
+          "RQuantiles": null,
+          "Worst": null,
+          "ES5": null,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": 0.0,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 0,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": 0.0,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": null,
+          "Reasons": {},
+          "ReasonProbabilities": {},
+          "MfeQuoteMean": null,
+          "MaeQuoteMean": null,
+          "InitialTargetRRQuantiles": null,
+          "StatisticallySufficient": false
+        },
+        "AUDUSD": {
+          "Trades": 6,
+          "NetEur": -0.6638180388927493,
+          "CostTotals": {
+            "GrossEur": -0.18364234163539106,
+            "SpreadEur": 0.06116433418673772,
+            "SlippageEur": 0.10475444754689893,
+            "ConversionEur": 1.2610566072262585e-06,
+            "CommissionsEur": 0.3142556544671143,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": -0.11063633981545822,
+          "WinRate": 0.16666666666666666,
+          "ProfitFactor": 0.09512449914908486,
+          "Payoff": 0.4756224957454243,
+          "MeanR": -0.49554482130211974,
+          "NetQuantiles": [
+            -0.20934941414623895,
+            -0.20934941414623895,
+            -0.18407466248020316,
+            -0.16572822908820306,
+            -0.16572419685990503,
+            -0.008725013068780431,
+            0.06978347675058137
+          ],
+          "RQuantiles": [
+            -1.0173279627775904,
+            -1.0173279627775904,
+            -0.9841509201100351,
+            -0.9823886534665537,
+            -0.17536668226442922,
+            -0.03034274068187838,
+            0.21630803148776828
+          ],
+          "Worst": -0.20934941414623895,
+          "ES5": -0.20934941414623895,
+          "WeeksNet": {
+            "2026-W28": -0.18407466248020316,
+            "2026-W29": -0.4797433764125461,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 1,
+            "2026-W29": 5,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": -0.5007393053375436,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": [
+            136.0,
+            136.0,
+            186.961,
+            236.334,
+            689.601,
+            2427.153,
+            4198.672
+          ],
+          "Reasons": {
+            "SESSION_SAFETY": 1,
+            "OBSERVED_EQUILIBRIUM_TARGET": 1,
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 4
+          },
+          "ReasonProbabilities": {
+            "SESSION_SAFETY": 0.16666666666666666,
+            "OBSERVED_EQUILIBRIUM_TARGET": 0.16666666666666666,
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 0.6666666666666666
+          },
+          "MfeQuoteMean": 0.00018166666666666667,
+          "MaeQuoteMean": 0.000255,
+          "InitialTargetRRQuantiles": [
+            0.4278179612857143,
+            0.4278179612857143,
+            0.8187274883360658,
+            1.0430325606224635,
+            1.3074587593516824,
+            1.8133605354907003,
+            2.0538142650449935
+          ],
+          "StatisticallySufficient": false
+        }
+      },
+      "KnownMarkFloatingDD": 0.006698321273484057,
+      "KnownMarkMargin": 63.91,
+      "KnownMarkMinFreeMargin": 234.34471992156801,
+      "Concurrency": 2,
+      "Hard21": false,
+      "UnknownMarks": 0,
+      "UncertainTrades": 0
+    },
+    "SIMPLE_central": {
+      "Trades": 171,
+      "NetEur": -19.308779760064123,
+      "CostTotals": {
+        "GrossEur": -5.938767363387276,
+        "SpreadEur": 1.3878509701284445,
+        "SlippageEur": 2.9989661636521765,
+        "ConversionEur": 9.453614458650171e-05,
+        "CommissionsEur": 8.983100726751637,
+        "FinancingEur": 0
+      },
+      "ExpectancyEur": -0.11291684070212937,
+      "WinRate": 0.3508771929824561,
+      "ProfitFactor": 0.48891035056186954,
+      "Payoff": 0.9044841485394586,
+      "MeanR": -0.2552432065961105,
+      "NetQuantiles": [
+        -1.7441923432232553,
+        -0.9107705886166788,
+        -0.3587279387310988,
+        -0.04368689429641911,
+        0.07004375744252916,
+        0.5159479478364809,
+        2.0828652741979705
+      ],
+      "RQuantiles": [
+        -1.2291695717251887,
+        -1.0646285571291794,
+        -0.9741570142078,
+        -0.1112820062185235,
+        0.21630803148776828,
+        1.0290731140933846,
+        2.987743128744073
+      ],
+      "Worst": -1.7441923432232553,
+      "ES5": -1.1705664905469222,
+      "WeeksNet": {
+        "2026-W28": -17.868141833568316,
+        "2026-W29": 4.171718532706265,
+        "2026-W30": -5.6123564592020765
+      },
+      "WeeksTrades": {
+        "2026-W28": 65,
+        "2026-W29": 46,
+        "2026-W30": 60
+      },
+      "WeeklyMeanMinus2SE": -19.187624496713177,
+      "Under60Seconds": 13,
+      "DurationSecondsQuantiles": [
+        3.975,
+        33.82,
+        213.576,
+        680.71,
+        1904.614,
+        7335.409,
+        10798.768
+      ],
+      "Reasons": {
+        "OBSERVED_EQUILIBRIUM_TARGET": 57,
+        "STRUCTURAL_OR_PROFIT_PROTECTION": 102,
+        "SESSION_SAFETY": 12
+      },
+      "ReasonProbabilities": {
+        "OBSERVED_EQUILIBRIUM_TARGET": 0.3333333333333333,
+        "STRUCTURAL_OR_PROFIT_PROTECTION": 0.5964912280701754,
+        "SESSION_SAFETY": 0.07017543859649122
+      },
+      "MfeQuoteMean": 0.00030350877192982455,
+      "MaeQuoteMean": 0.00031128654970760233,
+      "InitialTargetRRQuantiles": [
+        0.026672600584885825,
+        0.06610462854371586,
+        0.5156384234080336,
+        0.84906045986242,
+        1.674656881549987,
+        4.612785585740958,
+        9.261722188634343
+      ],
+      "StatisticallySufficient": true,
+      "Families": {
+        "FLOW": {
+          "Trades": 42,
+          "NetEur": -9.198346559285227,
+          "CostTotals": {
+            "GrossEur": -5.888672329558521,
+            "SpreadEur": 0.36778556182915106,
+            "SlippageEur": 0.7355112922483744,
+            "ConversionEur": 4.1037228238605126e-05,
+            "CommissionsEur": 2.2063363384209427,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": -0.21900825141155303,
+          "WinRate": 0.2619047619047619,
+          "ProfitFactor": 0.44633748607172863,
+          "Payoff": 1.2578601880203262,
+          "MeanR": -0.3726935411207821,
+          "NetQuantiles": [
+            -1.7441923432232553,
+            -1.1467181241904543,
+            -0.5514896717608264,
+            -0.3408632530873673,
+            -0.017490044994136776,
+            1.0490476700299631,
+            2.0828652741979705
+          ],
+          "RQuantiles": [
+            -1.0940767006916485,
+            -1.0272254752107481,
+            -0.9899913214066791,
+            -0.9353905455375576,
+            -0.057871167757492264,
+            1.214232040428935,
+            2.4142666307951868
+          ],
+          "Worst": -1.7441923432232553,
+          "ES5": -1.4427503551579517,
+          "WeeksNet": {
+            "2026-W28": -11.366808417759593,
+            "2026-W29": 3.350130641181788,
+            "2026-W30": -1.181668782707423
+          },
+          "WeeksTrades": {
+            "2026-W28": 20,
+            "2026-W29": 8,
+            "2026-W30": 14
+          },
+          "WeeklyMeanMinus2SE": -11.769404434093275,
+          "Under60Seconds": 2,
+          "DurationSecondsQuantiles": [
+            10.979,
+            421.409,
+            1080.14,
+            3017.508,
+            5753.671,
+            9898.023,
+            10798.768
+          ],
+          "Reasons": {
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 34,
+            "SESSION_SAFETY": 8
+          },
+          "ReasonProbabilities": {
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 0.8095238095238095,
+            "SESSION_SAFETY": 0.19047619047619047
+          },
+          "MfeQuoteMean": 0.0004864285714285714,
+          "MaeQuoteMean": 0.0005471428571428572,
+          "InitialTargetRRQuantiles": null,
+          "StatisticallySufficient": true
+        },
+        "RETURN": {
+          "Trades": 129,
+          "NetEur": -10.110433200778894,
+          "CostTotals": {
+            "GrossEur": -0.05009503382875564,
+            "SpreadEur": 1.0200654082992935,
+            "SlippageEur": 2.2634548714038023,
+            "ConversionEur": 5.3498916347896585e-05,
+            "CommissionsEur": 6.776764388330695,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": -0.07837545116882863,
+          "WinRate": 0.3798449612403101,
+          "ProfitFactor": 0.5223266797908173,
+          "Payoff": 0.8527782527197016,
+          "MeanR": -0.21700356279738017,
+          "NetQuantiles": [
+            -1.1925831647921052,
+            -0.6038259120136158,
+            -0.2887624071342889,
+            -0.03499080434536321,
+            0.10467094057078877,
+            0.35026441729394303,
+            1.250652635942232
+          ],
+          "RQuantiles": [
+            -1.2291695717251887,
+            -1.0646285571291794,
+            -0.9558424655028694,
+            -0.08433897057917206,
+            0.3067171254649564,
+            0.8084668835050943,
+            2.987743128744073
+          ],
+          "Worst": -1.1925831647921052,
+          "ES5": -0.8830281790240672,
+          "WeeksNet": {
+            "2026-W28": -6.501333415808716,
+            "2026-W29": 0.821587891524477,
+            "2026-W30": -4.430687676494654
+          },
+          "WeeksTrades": {
+            "2026-W28": 45,
+            "2026-W29": 38,
+            "2026-W30": 46
+          },
+          "WeeklyMeanMinus2SE": -7.729021648500529,
+          "Under60Seconds": 11,
+          "DurationSecondsQuantiles": [
+            3.975,
+            33.82,
+            156.099,
+            468.546,
+            1306.33,
+            3898.171,
+            9598.792
+          ],
+          "Reasons": {
+            "OBSERVED_EQUILIBRIUM_TARGET": 57,
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 68,
+            "SESSION_SAFETY": 4
+          },
+          "ReasonProbabilities": {
+            "OBSERVED_EQUILIBRIUM_TARGET": 0.4418604651162791,
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 0.5271317829457365,
+            "SESSION_SAFETY": 0.031007751937984496
+          },
+          "MfeQuoteMean": 0.00024395348837209302,
+          "MaeQuoteMean": 0.00023449612403100777,
+          "InitialTargetRRQuantiles": [
+            0.026672600584885825,
+            0.06610462854371586,
+            0.5156384234080336,
+            0.84906045986242,
+            1.674656881549987,
+            4.612785585740958,
+            9.261722188634343
+          ],
+          "StatisticallySufficient": true
+        }
+      },
+      "Symbols": {
+        "EURUSD": {
+          "Trades": 61,
+          "NetEur": -4.133200548774894,
+          "CostTotals": {
+            "GrossEur": 0.3629952445629518,
+            "SpreadEur": 0.22328094779980526,
+            "SlippageEur": 1.0682650934551234,
+            "ConversionEur": 4.224121307282671e-05,
+            "CommissionsEur": 3.2046075108698444,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": -0.06775738604549007,
+          "WinRate": 0.4098360655737705,
+          "ProfitFactor": 0.6036739410958908,
+          "Payoff": 0.8692904751780828,
+          "MeanR": -0.19544745705339028,
+          "NetQuantiles": [
+            -1.130802961499811,
+            -0.5871560564189297,
+            -0.3325067119535991,
+            -0.03502845515227672,
+            0.1487799895917632,
+            0.44646557625129496,
+            1.0851413990099368
+          ],
+          "RQuantiles": [
+            -1.2291695717251887,
+            -1.0733720338573636,
+            -0.9654939523284509,
+            -0.08433897057917206,
+            0.3697500447891685,
+            0.9844991781488641,
+            1.4279025544877182
+          ],
+          "Worst": -1.130802961499811,
+          "ES5": -0.8216874951989402,
+          "WeeksNet": {
+            "2026-W28": -2.3569183880558273,
+            "2026-W29": 0.8582517337895323,
+            "2026-W30": -2.6345338945086003
+          },
+          "WeeksTrades": {
+            "2026-W28": 18,
+            "2026-W29": 15,
+            "2026-W30": 28
+          },
+          "WeeklyMeanMinus2SE": -3.61945610426344,
+          "Under60Seconds": 6,
+          "DurationSecondsQuantiles": [
+            10.979,
+            35.325,
+            323.499,
+            677.88,
+            1649.363,
+            7335.409,
+            9898.216
+          ],
+          "Reasons": {
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 33,
+            "OBSERVED_EQUILIBRIUM_TARGET": 23,
+            "SESSION_SAFETY": 5
+          },
+          "ReasonProbabilities": {
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 0.5409836065573771,
+            "OBSERVED_EQUILIBRIUM_TARGET": 0.3770491803278688,
+            "SESSION_SAFETY": 0.08196721311475409
+          },
+          "MfeQuoteMean": 0.0002740983606557377,
+          "MaeQuoteMean": 0.000259344262295082,
+          "InitialTargetRRQuantiles": [
+            0.048234763846464655,
+            0.06610462854371586,
+            0.4167888404064839,
+            0.726338565097155,
+            1.3287148214848092,
+            3.112350695711278,
+            9.261722188634343
+          ],
+          "StatisticallySufficient": true
+        },
+        "GBPUSD": {
+          "Trades": 55,
+          "NetEur": -7.186532490477234,
+          "CostTotals": {
+            "GrossEur": -2.650632214632033,
+            "SpreadEur": 0.6786538433135971,
+            "SlippageEur": 0.9676548898229318,
+            "ConversionEur": 3.385286857520706e-05,
+            "CommissionsEur": 2.889557689840097,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": -0.13066422709958606,
+          "WinRate": 0.34545454545454546,
+          "ProfitFactor": 0.5614188353380272,
+          "Payoff": 1.0637409511667881,
+          "MeanR": -0.23115443422409732,
+          "NetQuantiles": [
+            -1.7441923432232553,
+            -1.0608745350439421,
+            -0.4548414300990368,
+            -0.05707916779686402,
+            0.1141810113293517,
+            0.8834162375520372,
+            2.0828652741979705
+          ],
+          "RQuantiles": [
+            -1.1191994102607252,
+            -1.0646285571291794,
+            -0.9860064697470104,
+            -0.1112820062185235,
+            0.22665194118118576,
+            1.214232040428935,
+            2.987743128744073
+          ],
+          "Worst": -1.7441923432232553,
+          "ES5": -1.317261667485884,
+          "WeeksNet": {
+            "2026-W28": -9.85322582133588,
+            "2026-W29": 2.858043577291423,
+            "2026-W30": -0.19135024643277815
+          },
+          "WeeksTrades": {
+            "2026-W28": 25,
+            "2026-W29": 14,
+            "2026-W30": 16
+          },
+          "WeeklyMeanMinus2SE": -10.058220128247601,
+          "Under60Seconds": 4,
+          "DurationSecondsQuantiles": [
+            19.134,
+            33.82,
+            193.101,
+            629.876,
+            1588.265,
+            6899.034,
+            10798.768
+          ],
+          "Reasons": {
+            "OBSERVED_EQUILIBRIUM_TARGET": 18,
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 33,
+            "SESSION_SAFETY": 4
+          },
+          "ReasonProbabilities": {
+            "OBSERVED_EQUILIBRIUM_TARGET": 0.32727272727272727,
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 0.6,
+            "SESSION_SAFETY": 0.07272727272727272
+          },
+          "MfeQuoteMean": 0.0004152727272727273,
+          "MaeQuoteMean": 0.00041345454545454547,
+          "InitialTargetRRQuantiles": [
+            0.047396091447559505,
+            0.12879719361001424,
+            0.419086106335565,
+            0.9893684987080483,
+            1.674656881549987,
+            4.039604357710951,
+            5.21881704328934
+          ],
+          "StatisticallySufficient": true
+        },
+        "AUDUSD": {
+          "Trades": 55,
+          "NetEur": -7.989046720811994,
+          "CostTotals": {
+            "GrossEur": -3.6511303933181956,
+            "SpreadEur": 0.4859161790150421,
+            "SlippageEur": 0.9630461803741215,
+            "ConversionEur": 1.844206293846795e-05,
+            "CommissionsEur": 2.8889355260416965,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": -0.14525539492385445,
+          "WinRate": 0.2909090909090909,
+          "ProfitFactor": 0.2714033591675673,
+          "Payoff": 0.6615456879709453,
+          "MeanR": -0.3456509011882315,
+          "NetQuantiles": [
+            -1.4373405980601455,
+            -0.6560853308664178,
+            -0.2810472468188899,
+            -0.061186252440409025,
+            0.043781610309762055,
+            0.16640084968219707,
+            1.0490476700299631
+          ],
+          "RQuantiles": [
+            -1.1794731416913171,
+            -1.0298682390718903,
+            -0.967249233619215,
+            -0.15447295628200705,
+            0.09586701218629606,
+            0.46754961321794486,
+            2.4142666307951868
+          ],
+          "Worst": -1.4373405980601455,
+          "ES5": -1.0953363645728895,
+          "WeeksNet": {
+            "2026-W28": -5.657997624176606,
+            "2026-W29": 0.4554232216253101,
+            "2026-W30": -2.786472318260698
+          },
+          "WeeksTrades": {
+            "2026-W28": 22,
+            "2026-W29": 17,
+            "2026-W30": 16
+          },
+          "WeeklyMeanMinus2SE": -6.194759200638153,
+          "Under60Seconds": 3,
+          "DurationSecondsQuantiles": [
+            3.975,
+            31.243,
+            222.117,
+            866.027,
+            2402.154,
+            6298.628,
+            10798.241
+          ],
+          "Reasons": {
+            "OBSERVED_EQUILIBRIUM_TARGET": 16,
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 36,
+            "SESSION_SAFETY": 3
+          },
+          "ReasonProbabilities": {
+            "OBSERVED_EQUILIBRIUM_TARGET": 0.2909090909090909,
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 0.6545454545454545,
+            "SESSION_SAFETY": 0.05454545454545454
+          },
+          "MfeQuoteMean": 0.00022436363636363637,
+          "MaeQuoteMean": 0.00026672727272727275,
+          "InitialTargetRRQuantiles": [
+            0.026672600584885825,
+            0.04903018723375627,
+            0.5487767943830317,
+            0.9114003341585761,
+            2.0538142650449935,
+            5.803029501060466,
+            8.755358910275383
+          ],
+          "StatisticallySufficient": true
+        }
+      },
+      "KnownMarkFloatingDD": 0.06800149292905756,
+      "KnownMarkMargin": 103.93,
+      "KnownMarkMinFreeMargin": 176.74378986356518,
+      "Concurrency": 3,
+      "Hard21": true,
+      "UnknownMarks": 13,
+      "UncertainTrades": 3
+    },
+    "FLOW_ONLY_central": {
+      "Trades": 0,
+      "NetEur": 0,
+      "CostTotals": {
+        "GrossEur": 0,
+        "SpreadEur": 0,
+        "SlippageEur": 0,
+        "ConversionEur": 0,
+        "CommissionsEur": 0,
+        "FinancingEur": 0
+      },
+      "ExpectancyEur": null,
+      "WinRate": null,
+      "ProfitFactor": null,
+      "Payoff": null,
+      "MeanR": null,
+      "NetQuantiles": null,
+      "RQuantiles": null,
+      "Worst": null,
+      "ES5": null,
+      "WeeksNet": {
+        "2026-W28": 0.0,
+        "2026-W29": 0.0,
+        "2026-W30": 0.0
+      },
+      "WeeksTrades": {
+        "2026-W28": 0,
+        "2026-W29": 0,
+        "2026-W30": 0
+      },
+      "WeeklyMeanMinus2SE": 0.0,
+      "Under60Seconds": 0,
+      "DurationSecondsQuantiles": null,
+      "Reasons": {},
+      "ReasonProbabilities": {},
+      "MfeQuoteMean": null,
+      "MaeQuoteMean": null,
+      "InitialTargetRRQuantiles": null,
+      "StatisticallySufficient": false,
+      "Families": {
+        "FLOW": {
+          "Trades": 0,
+          "NetEur": 0,
+          "CostTotals": {
+            "GrossEur": 0,
+            "SpreadEur": 0,
+            "SlippageEur": 0,
+            "ConversionEur": 0,
+            "CommissionsEur": 0,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": null,
+          "WinRate": null,
+          "ProfitFactor": null,
+          "Payoff": null,
+          "MeanR": null,
+          "NetQuantiles": null,
+          "RQuantiles": null,
+          "Worst": null,
+          "ES5": null,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": 0.0,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 0,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": 0.0,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": null,
+          "Reasons": {},
+          "ReasonProbabilities": {},
+          "MfeQuoteMean": null,
+          "MaeQuoteMean": null,
+          "InitialTargetRRQuantiles": null,
+          "StatisticallySufficient": false
+        },
+        "RETURN": {
+          "Trades": 0,
+          "NetEur": 0,
+          "CostTotals": {
+            "GrossEur": 0,
+            "SpreadEur": 0,
+            "SlippageEur": 0,
+            "ConversionEur": 0,
+            "CommissionsEur": 0,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": null,
+          "WinRate": null,
+          "ProfitFactor": null,
+          "Payoff": null,
+          "MeanR": null,
+          "NetQuantiles": null,
+          "RQuantiles": null,
+          "Worst": null,
+          "ES5": null,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": 0.0,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 0,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": 0.0,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": null,
+          "Reasons": {},
+          "ReasonProbabilities": {},
+          "MfeQuoteMean": null,
+          "MaeQuoteMean": null,
+          "InitialTargetRRQuantiles": null,
+          "StatisticallySufficient": false
+        }
+      },
+      "Symbols": {
+        "EURUSD": {
+          "Trades": 0,
+          "NetEur": 0,
+          "CostTotals": {
+            "GrossEur": 0,
+            "SpreadEur": 0,
+            "SlippageEur": 0,
+            "ConversionEur": 0,
+            "CommissionsEur": 0,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": null,
+          "WinRate": null,
+          "ProfitFactor": null,
+          "Payoff": null,
+          "MeanR": null,
+          "NetQuantiles": null,
+          "RQuantiles": null,
+          "Worst": null,
+          "ES5": null,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": 0.0,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 0,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": 0.0,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": null,
+          "Reasons": {},
+          "ReasonProbabilities": {},
+          "MfeQuoteMean": null,
+          "MaeQuoteMean": null,
+          "InitialTargetRRQuantiles": null,
+          "StatisticallySufficient": false
+        },
+        "GBPUSD": {
+          "Trades": 0,
+          "NetEur": 0,
+          "CostTotals": {
+            "GrossEur": 0,
+            "SpreadEur": 0,
+            "SlippageEur": 0,
+            "ConversionEur": 0,
+            "CommissionsEur": 0,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": null,
+          "WinRate": null,
+          "ProfitFactor": null,
+          "Payoff": null,
+          "MeanR": null,
+          "NetQuantiles": null,
+          "RQuantiles": null,
+          "Worst": null,
+          "ES5": null,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": 0.0,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 0,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": 0.0,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": null,
+          "Reasons": {},
+          "ReasonProbabilities": {},
+          "MfeQuoteMean": null,
+          "MaeQuoteMean": null,
+          "InitialTargetRRQuantiles": null,
+          "StatisticallySufficient": false
+        },
+        "AUDUSD": {
+          "Trades": 0,
+          "NetEur": 0,
+          "CostTotals": {
+            "GrossEur": 0,
+            "SpreadEur": 0,
+            "SlippageEur": 0,
+            "ConversionEur": 0,
+            "CommissionsEur": 0,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": null,
+          "WinRate": null,
+          "ProfitFactor": null,
+          "Payoff": null,
+          "MeanR": null,
+          "NetQuantiles": null,
+          "RQuantiles": null,
+          "Worst": null,
+          "ES5": null,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": 0.0,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 0,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": 0.0,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": null,
+          "Reasons": {},
+          "ReasonProbabilities": {},
+          "MfeQuoteMean": null,
+          "MaeQuoteMean": null,
+          "InitialTargetRRQuantiles": null,
+          "StatisticallySufficient": false
+        }
+      },
+      "KnownMarkFloatingDD": 0,
+      "KnownMarkMargin": 0,
+      "KnownMarkMinFreeMargin": 300,
+      "Concurrency": 0,
+      "Hard21": false,
+      "UnknownMarks": 0,
+      "UncertainTrades": 0
+    },
+    "RETURN_ONLY_central": {
+      "Trades": 11,
+      "NetEur": -0.9444224174435263,
+      "CostTotals": {
+        "GrossEur": -0.11388871637236779,
+        "SpreadEur": 0.06116118581999143,
+        "SlippageEur": 0.19234446408231404,
+        "ConversionEur": 6.713357754351467e-06,
+        "CommissionsEur": 0.5770213378110988,
+        "FinancingEur": 0
+      },
+      "ExpectancyEur": -0.08585658340395694,
+      "WinRate": 0.36363636363636365,
+      "ProfitFactor": 0.40034813292062965,
+      "Payoff": 0.700609232611102,
+      "MeanR": -0.4677641826534173,
+      "NetQuantiles": [
+        -0.5524444367218503,
+        -0.5524444367218503,
+        -0.20934941414623895,
+        -0.16572419685990503,
+        0.01752982799536895,
+        0.06978347675058137,
+        0.516956336249154
+      ],
+      "RQuantiles": [
+        -1.0419116918461693,
+        -1.0419116918461693,
+        -1.0104001570663623,
+        -0.8911248676009488,
+        0.01670054821664867,
+        0.21630803148776828,
+        0.4742787022112526
+      ],
+      "Worst": -0.5524444367218503,
+      "ES5": -0.5524444367218503,
+      "WeeksNet": {
+        "2026-W28": -0.01795827247732729,
+        "2026-W29": -0.6371054877523459,
+        "2026-W30": -0.28935865721385307
+      },
+      "WeeksTrades": {
+        "2026-W28": 3,
+        "2026-W29": 7,
+        "2026-W30": 1
+      },
+      "WeeklyMeanMinus2SE": -0.6731770214006956,
+      "Under60Seconds": 0,
+      "DurationSecondsQuantiles": [
+        103.274,
+        103.274,
+        166.062,
+        253.645,
+        689.601,
+        4020.751,
+        4619.677
+      ],
+      "Reasons": {
+        "STRUCTURAL_OR_PROFIT_PROTECTION": 7,
+        "LEARNED_CONTINUATION_NONPOSITIVE": 2,
+        "OBSERVED_EQUILIBRIUM_TARGET": 2
+      },
+      "ReasonProbabilities": {
+        "STRUCTURAL_OR_PROFIT_PROTECTION": 0.6363636363636364,
+        "LEARNED_CONTINUATION_NONPOSITIVE": 0.18181818181818182,
+        "OBSERVED_EQUILIBRIUM_TARGET": 0.18181818181818182
+      },
+      "MfeQuoteMean": 0.00019999999999999998,
+      "MaeQuoteMean": 0.00027545454545454547,
+      "InitialTargetRRQuantiles": [
+        0.3903744678869642,
+        0.3903744678869642,
+        0.5429000320289437,
+        1.0597241539139068,
+        1.5278993461107393,
+        2.0538142650449935,
+        5.171534088703824
+      ],
+      "StatisticallySufficient": false,
+      "Families": {
+        "FLOW": {
+          "Trades": 0,
+          "NetEur": 0,
+          "CostTotals": {
+            "GrossEur": 0,
+            "SpreadEur": 0,
+            "SlippageEur": 0,
+            "ConversionEur": 0,
+            "CommissionsEur": 0,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": null,
+          "WinRate": null,
+          "ProfitFactor": null,
+          "Payoff": null,
+          "MeanR": null,
+          "NetQuantiles": null,
+          "RQuantiles": null,
+          "Worst": null,
+          "ES5": null,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": 0.0,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 0,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": 0.0,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": null,
+          "Reasons": {},
+          "ReasonProbabilities": {},
+          "MfeQuoteMean": null,
+          "MaeQuoteMean": null,
+          "InitialTargetRRQuantiles": null,
+          "StatisticallySufficient": false
+        },
+        "RETURN": {
+          "Trades": 11,
+          "NetEur": -0.9444224174435263,
+          "CostTotals": {
+            "GrossEur": -0.11388871637236779,
+            "SpreadEur": 0.06116118581999143,
+            "SlippageEur": 0.19234446408231404,
+            "ConversionEur": 6.713357754351467e-06,
+            "CommissionsEur": 0.5770213378110988,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": -0.08585658340395694,
+          "WinRate": 0.36363636363636365,
+          "ProfitFactor": 0.40034813292062965,
+          "Payoff": 0.700609232611102,
+          "MeanR": -0.4677641826534173,
+          "NetQuantiles": [
+            -0.5524444367218503,
+            -0.5524444367218503,
+            -0.20934941414623895,
+            -0.16572419685990503,
+            0.01752982799536895,
+            0.06978347675058137,
+            0.516956336249154
+          ],
+          "RQuantiles": [
+            -1.0419116918461693,
+            -1.0419116918461693,
+            -1.0104001570663623,
+            -0.8911248676009488,
+            0.01670054821664867,
+            0.21630803148776828,
+            0.4742787022112526
+          ],
+          "Worst": -0.5524444367218503,
+          "ES5": -0.5524444367218503,
+          "WeeksNet": {
+            "2026-W28": -0.01795827247732729,
+            "2026-W29": -0.6371054877523459,
+            "2026-W30": -0.28935865721385307
+          },
+          "WeeksTrades": {
+            "2026-W28": 3,
+            "2026-W29": 7,
+            "2026-W30": 1
+          },
+          "WeeklyMeanMinus2SE": -0.6731770214006956,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": [
+            103.274,
+            103.274,
+            166.062,
+            253.645,
+            689.601,
+            4020.751,
+            4619.677
+          ],
+          "Reasons": {
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 7,
+            "LEARNED_CONTINUATION_NONPOSITIVE": 2,
+            "OBSERVED_EQUILIBRIUM_TARGET": 2
+          },
+          "ReasonProbabilities": {
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 0.6363636363636364,
+            "LEARNED_CONTINUATION_NONPOSITIVE": 0.18181818181818182,
+            "OBSERVED_EQUILIBRIUM_TARGET": 0.18181818181818182
+          },
+          "MfeQuoteMean": 0.00019999999999999998,
+          "MaeQuoteMean": 0.00027545454545454547,
+          "InitialTargetRRQuantiles": [
+            0.3903744678869642,
+            0.3903744678869642,
+            0.5429000320289437,
+            1.0597241539139068,
+            1.5278993461107393,
+            2.0538142650449935,
+            5.171534088703824
+          ],
+          "StatisticallySufficient": false
+        }
+      },
+      "Symbols": {
+        "EURUSD": {
+          "Trades": 5,
+          "NetEur": -0.48220886902634913,
+          "CostTotals": {
+            "GrossEur": -0.11869418847027163,
+            "SpreadEur": 0.013146613974861214,
+            "SlippageEur": 0.0875925517851319,
+            "ConversionEur": 6.028577524835403e-06,
+            "CommissionsEur": 0.26276948621855967,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": -0.09644177380526983,
+          "WinRate": 0.4,
+          "ProfitFactor": 0.5297469983922954,
+          "Payoff": 0.7946204975884431,
+          "MeanR": -0.4728408623711899,
+          "NetQuantiles": [
+            -0.5524444367218503,
+            -0.5524444367218503,
+            -0.28935865721385307,
+            -0.18362123589902324,
+            0.026259124559223402,
+            0.026259124559223402,
+            0.516956336249154
+          ],
+          "RQuantiles": [
+            -1.0419116918461693,
+            -1.0419116918461693,
+            -1.0104001570663623,
+            -0.8911248676009488,
+            0.10495370244627836,
+            0.10495370244627836,
+            0.4742787022112526
+          ],
+          "Worst": -0.5524444367218503,
+          "ES5": -0.5524444367218503,
+          "WeeksNet": {
+            "2026-W28": -0.03548810047269624,
+            "2026-W29": -0.15736211133979983,
+            "2026-W30": -0.28935865721385307
+          },
+          "WeeksTrades": {
+            "2026-W28": 2,
+            "2026-W29": 2,
+            "2026-W30": 1
+          },
+          "WeeklyMeanMinus2SE": -0.30734735658195034,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": [
+            103.274,
+            103.274,
+            166.062,
+            253.645,
+            312.943,
+            312.943,
+            4619.677
+          ],
+          "Reasons": {
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 3,
+            "LEARNED_CONTINUATION_NONPOSITIVE": 1,
+            "OBSERVED_EQUILIBRIUM_TARGET": 1
+          },
+          "ReasonProbabilities": {
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 0.6,
+            "LEARNED_CONTINUATION_NONPOSITIVE": 0.2,
+            "OBSERVED_EQUILIBRIUM_TARGET": 0.2
+          },
+          "MfeQuoteMean": 0.000222,
+          "MaeQuoteMean": 0.0003,
+          "InitialTargetRRQuantiles": [
+            0.3903744678869642,
+            0.3903744678869642,
+            0.5429000320289437,
+            1.0597241539139068,
+            1.5278993461107393,
+            1.5278993461107393,
+            5.171534088703824
+          ],
+          "StatisticallySufficient": false
+        },
+        "GBPUSD": {
+          "Trades": 0,
+          "NetEur": 0,
+          "CostTotals": {
+            "GrossEur": 0,
+            "SpreadEur": 0,
+            "SlippageEur": 0,
+            "ConversionEur": 0,
+            "CommissionsEur": 0,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": null,
+          "WinRate": null,
+          "ProfitFactor": null,
+          "Payoff": null,
+          "MeanR": null,
+          "NetQuantiles": null,
+          "RQuantiles": null,
+          "Worst": null,
+          "ES5": null,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": 0.0,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 0,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": 0.0,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": null,
+          "Reasons": {},
+          "ReasonProbabilities": {},
+          "MfeQuoteMean": null,
+          "MaeQuoteMean": null,
+          "InitialTargetRRQuantiles": null,
+          "StatisticallySufficient": false
+        },
+        "AUDUSD": {
+          "Trades": 6,
+          "NetEur": -0.46221354841717716,
+          "CostTotals": {
+            "GrossEur": 0.004805472097903843,
+            "SpreadEur": 0.048014571845130215,
+            "SlippageEur": 0.10475191229718214,
+            "ConversionEur": 6.847802295160639e-07,
+            "CommissionsEur": 0.3142518515925391,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": -0.07703559140286285,
+          "WinRate": 0.3333333333333333,
+          "ProfitFactor": 0.15888814940228463,
+          "Payoff": 0.31777629880456926,
+          "MeanR": -0.4635336162219401,
+          "NetQuantiles": [
+            -0.20934941414623895,
+            -0.20934941414623895,
+            -0.16572822908820306,
+            -0.16572419685990503,
+            -0.008725013068780431,
+            0.01752982799536895,
+            0.06978347675058137
+          ],
+          "RQuantiles": [
+            -1.0173279627775904,
+            -1.0173279627775904,
+            -0.9841509201100351,
+            -0.9823886534665537,
+            -0.03034274068187838,
+            0.01670054821664867,
+            0.21630803148776828
+          ],
+          "Worst": -0.20934941414623895,
+          "ES5": -0.20934941414623895,
+          "WeeksNet": {
+            "2026-W28": 0.01752982799536895,
+            "2026-W29": -0.4797433764125461,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 1,
+            "2026-W29": 5,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": -0.47990060031105275,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": [
+            136.0,
+            136.0,
+            186.961,
+            236.334,
+            689.601,
+            2427.153,
+            4020.751
+          ],
+          "Reasons": {
+            "LEARNED_CONTINUATION_NONPOSITIVE": 1,
+            "OBSERVED_EQUILIBRIUM_TARGET": 1,
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 4
+          },
+          "ReasonProbabilities": {
+            "LEARNED_CONTINUATION_NONPOSITIVE": 0.16666666666666666,
+            "OBSERVED_EQUILIBRIUM_TARGET": 0.16666666666666666,
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 0.6666666666666666
+          },
+          "MfeQuoteMean": 0.00018166666666666667,
+          "MaeQuoteMean": 0.000255,
+          "InitialTargetRRQuantiles": [
+            0.4278179612857143,
+            0.4278179612857143,
+            0.8187274883360658,
+            1.0430325606224635,
+            1.3074587593516824,
+            1.8133605354907003,
+            2.0538142650449935
+          ],
+          "StatisticallySufficient": false
+        }
+      },
+      "KnownMarkFloatingDD": 0.00581760026143994,
+      "KnownMarkMargin": 63.91,
+      "KnownMarkMinFreeMargin": 234.34471992156801,
+      "Concurrency": 2,
+      "Hard21": false,
+      "UnknownMarks": 0,
+      "UncertainTrades": 0
+    },
+    "CASH_central": {
+      "Trades": 0,
+      "NetEur": 0,
+      "CostTotals": {
+        "GrossEur": 0,
+        "SpreadEur": 0,
+        "SlippageEur": 0,
+        "ConversionEur": 0,
+        "CommissionsEur": 0,
+        "FinancingEur": 0
+      },
+      "ExpectancyEur": null,
+      "WinRate": null,
+      "ProfitFactor": null,
+      "Payoff": null,
+      "MeanR": null,
+      "NetQuantiles": null,
+      "RQuantiles": null,
+      "Worst": null,
+      "ES5": null,
+      "WeeksNet": {
+        "2026-W28": 0.0,
+        "2026-W29": 0.0,
+        "2026-W30": 0.0
+      },
+      "WeeksTrades": {
+        "2026-W28": 0,
+        "2026-W29": 0,
+        "2026-W30": 0
+      },
+      "WeeklyMeanMinus2SE": 0.0,
+      "Under60Seconds": 0,
+      "DurationSecondsQuantiles": null,
+      "Reasons": {},
+      "ReasonProbabilities": {},
+      "MfeQuoteMean": null,
+      "MaeQuoteMean": null,
+      "InitialTargetRRQuantiles": null,
+      "StatisticallySufficient": false,
+      "Families": {
+        "FLOW": {
+          "Trades": 0,
+          "NetEur": 0,
+          "CostTotals": {
+            "GrossEur": 0,
+            "SpreadEur": 0,
+            "SlippageEur": 0,
+            "ConversionEur": 0,
+            "CommissionsEur": 0,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": null,
+          "WinRate": null,
+          "ProfitFactor": null,
+          "Payoff": null,
+          "MeanR": null,
+          "NetQuantiles": null,
+          "RQuantiles": null,
+          "Worst": null,
+          "ES5": null,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": 0.0,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 0,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": 0.0,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": null,
+          "Reasons": {},
+          "ReasonProbabilities": {},
+          "MfeQuoteMean": null,
+          "MaeQuoteMean": null,
+          "InitialTargetRRQuantiles": null,
+          "StatisticallySufficient": false
+        },
+        "RETURN": {
+          "Trades": 0,
+          "NetEur": 0,
+          "CostTotals": {
+            "GrossEur": 0,
+            "SpreadEur": 0,
+            "SlippageEur": 0,
+            "ConversionEur": 0,
+            "CommissionsEur": 0,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": null,
+          "WinRate": null,
+          "ProfitFactor": null,
+          "Payoff": null,
+          "MeanR": null,
+          "NetQuantiles": null,
+          "RQuantiles": null,
+          "Worst": null,
+          "ES5": null,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": 0.0,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 0,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": 0.0,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": null,
+          "Reasons": {},
+          "ReasonProbabilities": {},
+          "MfeQuoteMean": null,
+          "MaeQuoteMean": null,
+          "InitialTargetRRQuantiles": null,
+          "StatisticallySufficient": false
+        }
+      },
+      "Symbols": {
+        "EURUSD": {
+          "Trades": 0,
+          "NetEur": 0,
+          "CostTotals": {
+            "GrossEur": 0,
+            "SpreadEur": 0,
+            "SlippageEur": 0,
+            "ConversionEur": 0,
+            "CommissionsEur": 0,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": null,
+          "WinRate": null,
+          "ProfitFactor": null,
+          "Payoff": null,
+          "MeanR": null,
+          "NetQuantiles": null,
+          "RQuantiles": null,
+          "Worst": null,
+          "ES5": null,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": 0.0,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 0,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": 0.0,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": null,
+          "Reasons": {},
+          "ReasonProbabilities": {},
+          "MfeQuoteMean": null,
+          "MaeQuoteMean": null,
+          "InitialTargetRRQuantiles": null,
+          "StatisticallySufficient": false
+        },
+        "GBPUSD": {
+          "Trades": 0,
+          "NetEur": 0,
+          "CostTotals": {
+            "GrossEur": 0,
+            "SpreadEur": 0,
+            "SlippageEur": 0,
+            "ConversionEur": 0,
+            "CommissionsEur": 0,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": null,
+          "WinRate": null,
+          "ProfitFactor": null,
+          "Payoff": null,
+          "MeanR": null,
+          "NetQuantiles": null,
+          "RQuantiles": null,
+          "Worst": null,
+          "ES5": null,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": 0.0,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 0,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": 0.0,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": null,
+          "Reasons": {},
+          "ReasonProbabilities": {},
+          "MfeQuoteMean": null,
+          "MaeQuoteMean": null,
+          "InitialTargetRRQuantiles": null,
+          "StatisticallySufficient": false
+        },
+        "AUDUSD": {
+          "Trades": 0,
+          "NetEur": 0,
+          "CostTotals": {
+            "GrossEur": 0,
+            "SpreadEur": 0,
+            "SlippageEur": 0,
+            "ConversionEur": 0,
+            "CommissionsEur": 0,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": null,
+          "WinRate": null,
+          "ProfitFactor": null,
+          "Payoff": null,
+          "MeanR": null,
+          "NetQuantiles": null,
+          "RQuantiles": null,
+          "Worst": null,
+          "ES5": null,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": 0.0,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 0,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": 0.0,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": null,
+          "Reasons": {},
+          "ReasonProbabilities": {},
+          "MfeQuoteMean": null,
+          "MaeQuoteMean": null,
+          "InitialTargetRRQuantiles": null,
+          "StatisticallySufficient": false
+        }
+      },
+      "KnownMarkFloatingDD": 0,
+      "KnownMarkMargin": 0,
+      "KnownMarkMinFreeMargin": 300,
+      "Concurrency": 0,
+      "Hard21": false,
+      "UnknownMarks": 0,
+      "UncertainTrades": 0
+    },
+    "FULL_adverse": {
+      "Trades": 11,
+      "NetEur": -0.9357405709951001,
+      "CostTotals": {
+        "GrossEur": -0.10080564760775837,
+        "SpreadEur": 0.05680016289845496,
+        "SlippageEur": 0.20110678609832083,
+        "ConversionEur": 6.636579467245164e-06,
+        "CommissionsEur": 0.5770213378110988,
+        "FinancingEur": 0
+      },
+      "ExpectancyEur": -0.08506732463591819,
+      "WinRate": 0.45454545454545453,
+      "ProfitFactor": 0.4025508007968766,
+      "Payoff": 0.4830609609562519,
+      "MeanR": -0.46298000353078717,
+      "NetQuantiles": [
+        -0.5524444367218503,
+        -0.5524444367218503,
+        -0.20934941414623895,
+        -0.16572419685990503,
+        0.01752982799536895,
+        0.06978347675058137,
+        0.5081940910114343
+      ],
+      "RQuantiles": [
+        -1.0419116918461693,
+        -1.0419116918461693,
+        -1.0104001570663623,
+        -0.8911248676009488,
+        0.03032210260157365,
+        0.21630803148776828,
+        0.4662398292767317
+      ],
+      "Worst": -0.5524444367218503,
+      "ES5": -0.5524444367218503,
+      "WeeksNet": {
+        "2026-W28": -0.026720517715047024,
+        "2026-W29": -0.6196613960662001,
+        "2026-W30": -0.28935865721385307
+      },
+      "WeeksTrades": {
+        "2026-W28": 3,
+        "2026-W29": 7,
+        "2026-W30": 1
+      },
+      "WeeklyMeanMinus2SE": -0.6549903135249366,
+      "Under60Seconds": 0,
+      "DurationSecondsQuantiles": [
+        103.274,
+        103.274,
+        166.062,
+        253.645,
+        689.601,
+        4020.751,
+        4619.677
+      ],
+      "Reasons": {
+        "STRUCTURAL_OR_PROFIT_PROTECTION": 7,
+        "LEARNED_CONTINUATION_NONPOSITIVE": 2,
+        "OBSERVED_EQUILIBRIUM_TARGET": 2
+      },
+      "ReasonProbabilities": {
+        "STRUCTURAL_OR_PROFIT_PROTECTION": 0.6363636363636364,
+        "LEARNED_CONTINUATION_NONPOSITIVE": 0.18181818181818182,
+        "OBSERVED_EQUILIBRIUM_TARGET": 0.18181818181818182
+      },
+      "MfeQuoteMean": 0.00019999999999999998,
+      "MaeQuoteMean": 0.00027545454545454547,
+      "InitialTargetRRQuantiles": [
+        0.3903744678869642,
+        0.3903744678869642,
+        0.5429000320289437,
+        1.0597241539139068,
+        1.5278993461107393,
+        2.0538142650449935,
+        5.171534088703824
+      ],
+      "StatisticallySufficient": false,
+      "Families": {
+        "FLOW": {
+          "Trades": 0,
+          "NetEur": 0,
+          "CostTotals": {
+            "GrossEur": 0,
+            "SpreadEur": 0,
+            "SlippageEur": 0,
+            "ConversionEur": 0,
+            "CommissionsEur": 0,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": null,
+          "WinRate": null,
+          "ProfitFactor": null,
+          "Payoff": null,
+          "MeanR": null,
+          "NetQuantiles": null,
+          "RQuantiles": null,
+          "Worst": null,
+          "ES5": null,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": 0.0,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 0,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": 0.0,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": null,
+          "Reasons": {},
+          "ReasonProbabilities": {},
+          "MfeQuoteMean": null,
+          "MaeQuoteMean": null,
+          "InitialTargetRRQuantiles": null,
+          "StatisticallySufficient": false
+        },
+        "RETURN": {
+          "Trades": 11,
+          "NetEur": -0.9357405709951001,
+          "CostTotals": {
+            "GrossEur": -0.10080564760775837,
+            "SpreadEur": 0.05680016289845496,
+            "SlippageEur": 0.20110678609832083,
+            "ConversionEur": 6.636579467245164e-06,
+            "CommissionsEur": 0.5770213378110988,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": -0.08506732463591819,
+          "WinRate": 0.45454545454545453,
+          "ProfitFactor": 0.4025508007968766,
+          "Payoff": 0.4830609609562519,
+          "MeanR": -0.46298000353078717,
+          "NetQuantiles": [
+            -0.5524444367218503,
+            -0.5524444367218503,
+            -0.20934941414623895,
+            -0.16572419685990503,
+            0.01752982799536895,
+            0.06978347675058137,
+            0.5081940910114343
+          ],
+          "RQuantiles": [
+            -1.0419116918461693,
+            -1.0419116918461693,
+            -1.0104001570663623,
+            -0.8911248676009488,
+            0.03032210260157365,
+            0.21630803148776828,
+            0.4662398292767317
+          ],
+          "Worst": -0.5524444367218503,
+          "ES5": -0.5524444367218503,
+          "WeeksNet": {
+            "2026-W28": -0.026720517715047024,
+            "2026-W29": -0.6196613960662001,
+            "2026-W30": -0.28935865721385307
+          },
+          "WeeksTrades": {
+            "2026-W28": 3,
+            "2026-W29": 7,
+            "2026-W30": 1
+          },
+          "WeeklyMeanMinus2SE": -0.6549903135249366,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": [
+            103.274,
+            103.274,
+            166.062,
+            253.645,
+            689.601,
+            4020.751,
+            4619.677
+          ],
+          "Reasons": {
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 7,
+            "LEARNED_CONTINUATION_NONPOSITIVE": 2,
+            "OBSERVED_EQUILIBRIUM_TARGET": 2
+          },
+          "ReasonProbabilities": {
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 0.6363636363636364,
+            "LEARNED_CONTINUATION_NONPOSITIVE": 0.18181818181818182,
+            "OBSERVED_EQUILIBRIUM_TARGET": 0.18181818181818182
+          },
+          "MfeQuoteMean": 0.00019999999999999998,
+          "MaeQuoteMean": 0.00027545454545454547,
+          "InitialTargetRRQuantiles": [
+            0.3903744678869642,
+            0.3903744678869642,
+            0.5429000320289437,
+            1.0597241539139068,
+            1.5278993461107393,
+            2.0538142650449935,
+            5.171534088703824
+          ],
+          "StatisticallySufficient": false
+        }
+      },
+      "Symbols": {
+        "EURUSD": {
+          "Trades": 5,
+          "NetEur": -0.49097111426406886,
+          "CostTotals": {
+            "GrossEur": -0.11869418847027163,
+            "SpreadEur": 0.013146613974861214,
+            "SlippageEur": 0.0963548738011387,
+            "ConversionEur": 5.9517992377291e-06,
+            "CommissionsEur": 0.26276948621855967,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": -0.09819422285281378,
+          "WinRate": 0.4,
+          "ProfitFactor": 0.5212020039126618,
+          "Payoff": 0.7818030058689927,
+          "MeanR": -0.4744486369580941,
+          "NetQuantiles": [
+            -0.5524444367218503,
+            -0.5524444367218503,
+            -0.28935865721385307,
+            -0.18362123589902324,
+            0.026259124559223402,
+            0.026259124559223402,
+            0.5081940910114343
+          ],
+          "RQuantiles": [
+            -1.0419116918461693,
+            -1.0419116918461693,
+            -1.0104001570663623,
+            -0.8911248676009488,
+            0.10495370244627836,
+            0.10495370244627836,
+            0.4662398292767317
+          ],
+          "Worst": -0.5524444367218503,
+          "ES5": -0.5524444367218503,
+          "WeeksNet": {
+            "2026-W28": -0.04425034571041597,
+            "2026-W29": -0.15736211133979983,
+            "2026-W30": -0.28935865721385307
+          },
+          "WeeksTrades": {
+            "2026-W28": 2,
+            "2026-W29": 2,
+            "2026-W30": 1
+          },
+          "WeeklyMeanMinus2SE": -0.3053103268795443,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": [
+            103.274,
+            103.274,
+            166.062,
+            253.645,
+            312.943,
+            312.943,
+            4619.677
+          ],
+          "Reasons": {
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 3,
+            "LEARNED_CONTINUATION_NONPOSITIVE": 1,
+            "OBSERVED_EQUILIBRIUM_TARGET": 1
+          },
+          "ReasonProbabilities": {
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 0.6,
+            "LEARNED_CONTINUATION_NONPOSITIVE": 0.2,
+            "OBSERVED_EQUILIBRIUM_TARGET": 0.2
+          },
+          "MfeQuoteMean": 0.000222,
+          "MaeQuoteMean": 0.0003,
+          "InitialTargetRRQuantiles": [
+            0.3903744678869642,
+            0.3903744678869642,
+            0.5429000320289437,
+            1.0597241539139068,
+            1.5278993461107393,
+            1.5278993461107393,
+            5.171534088703824
+          ],
+          "StatisticallySufficient": false
+        },
+        "GBPUSD": {
+          "Trades": 0,
+          "NetEur": 0,
+          "CostTotals": {
+            "GrossEur": 0,
+            "SpreadEur": 0,
+            "SlippageEur": 0,
+            "ConversionEur": 0,
+            "CommissionsEur": 0,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": null,
+          "WinRate": null,
+          "ProfitFactor": null,
+          "Payoff": null,
+          "MeanR": null,
+          "NetQuantiles": null,
+          "RQuantiles": null,
+          "Worst": null,
+          "ES5": null,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": 0.0,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 0,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": 0.0,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": null,
+          "Reasons": {},
+          "ReasonProbabilities": {},
+          "MfeQuoteMean": null,
+          "MaeQuoteMean": null,
+          "InitialTargetRRQuantiles": null,
+          "StatisticallySufficient": false
+        },
+        "AUDUSD": {
+          "Trades": 6,
+          "NetEur": -0.44476945673103124,
+          "CostTotals": {
+            "GrossEur": 0.017888540862513264,
+            "SpreadEur": 0.043653548923593744,
+            "SlippageEur": 0.10475191229718214,
+            "ConversionEur": 6.847802295160639e-07,
+            "CommissionsEur": 0.3142518515925391,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": -0.0741282427885052,
+          "WinRate": 0.5,
+          "ProfitFactor": 0.1775740691758042,
+          "Payoff": 0.17757406917580423,
+          "MeanR": -0.45342280900803145,
+          "NetQuantiles": [
+            -0.20934941414623895,
+            -0.20934941414623895,
+            -0.16572822908820306,
+            -0.16572419685990503,
+            0.008719078617365471,
+            0.01752982799536895,
+            0.06978347675058137
+          ],
+          "RQuantiles": [
+            -1.0173279627775904,
+            -1.0173279627775904,
+            -0.9841509201100351,
+            -0.9823886534665537,
+            0.01670054821664867,
+            0.03032210260157365,
+            0.21630803148776828
+          ],
+          "Worst": -0.20934941414623895,
+          "ES5": -0.20934941414623895,
+          "WeeksNet": {
+            "2026-W28": 0.01752982799536895,
+            "2026-W29": -0.4622992847264002,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 1,
+            "2026-W29": 5,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": -0.4624623278536403,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": [
+            136.0,
+            136.0,
+            186.961,
+            236.334,
+            689.601,
+            2418.164,
+            4020.751
+          ],
+          "Reasons": {
+            "LEARNED_CONTINUATION_NONPOSITIVE": 1,
+            "OBSERVED_EQUILIBRIUM_TARGET": 1,
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 4
+          },
+          "ReasonProbabilities": {
+            "LEARNED_CONTINUATION_NONPOSITIVE": 0.16666666666666666,
+            "OBSERVED_EQUILIBRIUM_TARGET": 0.16666666666666666,
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 0.6666666666666666
+          },
+          "MfeQuoteMean": 0.00018166666666666667,
+          "MaeQuoteMean": 0.000255,
+          "InitialTargetRRQuantiles": [
+            0.4278179612857143,
+            0.4278179612857143,
+            0.8187274883360658,
+            1.0430325606224635,
+            1.3074587593516824,
+            1.8133605354907003,
+            2.0538142650449935
+          ],
+          "StatisticallySufficient": false
+        }
+      },
+      "KnownMarkFloatingDD": 0.00581760026143994,
+      "KnownMarkMargin": 63.91,
+      "KnownMarkMinFreeMargin": 234.34471992156801,
+      "Concurrency": 2,
+      "Hard21": false,
+      "UnknownMarks": 0,
+      "UncertainTrades": 0,
+      "IncrementalVsAlternatives": {
+        "CASH": -0.9357405709951001,
+        "SIMPLE": 18.82387294161188,
+        "NO_PEER": -2.325837763423378,
+        "NO_ACTIVITY": -0.23810322731872824,
+        "PROTECT_ONLY": 0.5958515697902524,
+        "FLOW_ONLY": -0.9357405709951001,
+        "RETURN_ONLY": 0.0
+      }
+    },
+    "NO_PEER_adverse": {
+      "Trades": 4,
+      "NetEur": 1.390097192428278,
+      "CostTotals": {
+        "GrossEur": 1.709869980804639,
+        "SpreadEur": 0.02188700487935707,
+        "SlippageEur": 0.08761185702114375,
+        "ConversionEur": 1.0379888629257135e-06,
+        "CommissionsEur": 0.21027288848699716,
+        "FinancingEur": 0
+      },
+      "ExpectancyEur": 0.3475242981070695,
+      "WinRate": 0.5,
+      "ProfitFactor": 2.651332957127921,
+      "Payoff": 2.651332957127921,
+      "MeanR": -0.027890909638875562,
+      "NetQuantiles": [
+        -0.5524444367218503,
+        -0.5524444367218503,
+        -0.5524444367218503,
+        -0.28935865721385307,
+        0.16653772508651368,
+        0.16653772508651368,
+        2.0653625612774675
+      ],
+      "RQuantiles": [
+        -1.0419116918461693,
+        -1.0419116918461693,
+        -1.0419116918461693,
+        -0.8911248676009488,
+        0.15278910535526943,
+        0.15278910535526943,
+        1.6686838155363464
+      ],
+      "Worst": -0.5524444367218503,
+      "ES5": -0.5524444367218503,
+      "WeeksNet": {
+        "2026-W28": -0.38590671163533663,
+        "2026-W29": 2.0653625612774675,
+        "2026-W30": -0.28935865721385307
+      },
+      "WeeksTrades": {
+        "2026-W28": 2,
+        "2026-W29": 1,
+        "2026-W30": 1
+      },
+      "WeeklyMeanMinus2SE": -1.1396005883731832,
+      "Under60Seconds": 0,
+      "DurationSecondsQuantiles": [
+        253.645,
+        253.645,
+        253.645,
+        312.943,
+        4918.946,
+        4918.946,
+        10798.768
+      ],
+      "Reasons": {
+        "STRUCTURAL_OR_PROFIT_PROTECTION": 2,
+        "LEARNED_CONTINUATION_NONPOSITIVE": 1,
+        "SESSION_SAFETY": 1
+      },
+      "ReasonProbabilities": {
+        "STRUCTURAL_OR_PROFIT_PROTECTION": 0.5,
+        "LEARNED_CONTINUATION_NONPOSITIVE": 0.25,
+        "SESSION_SAFETY": 0.25
+      },
+      "MfeQuoteMean": 0.000995,
+      "MaeQuoteMean": 0.0004725,
+      "InitialTargetRRQuantiles": [
+        0.5429000320289437,
+        0.5429000320289437,
+        0.5429000320289437,
+        1.0597241539139068,
+        1.0597241539139068,
+        1.0597241539139068,
+        1.5278993461107393
+      ],
+      "StatisticallySufficient": false,
+      "Families": {
+        "FLOW": {
+          "Trades": 1,
+          "NetEur": 2.0653625612774675,
+          "CostTotals": {
+            "GrossEur": 2.170336402142332,
+            "SpreadEur": 0.017502712920502678,
+            "SlippageEur": 0.035005425841005355,
+            "ConversionEur": 0,
+            "CommissionsEur": 0.052465702103356306,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": 2.0653625612774675,
+          "WinRate": 1.0,
+          "ProfitFactor": null,
+          "Payoff": null,
+          "MeanR": 1.6686838155363464,
+          "NetQuantiles": [
+            2.0653625612774675,
+            2.0653625612774675,
+            2.0653625612774675,
+            2.0653625612774675,
+            2.0653625612774675,
+            2.0653625612774675,
+            2.0653625612774675
+          ],
+          "RQuantiles": [
+            1.6686838155363464,
+            1.6686838155363464,
+            1.6686838155363464,
+            1.6686838155363464,
+            1.6686838155363464,
+            1.6686838155363464,
+            1.6686838155363464
+          ],
+          "Worst": 2.0653625612774675,
+          "ES5": 2.0653625612774675,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": 2.0653625612774675,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 1,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": -0.6884541870924894,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": [
+            10798.768,
+            10798.768,
+            10798.768,
+            10798.768,
+            10798.768,
+            10798.768,
+            10798.768
+          ],
+          "Reasons": {
+            "SESSION_SAFETY": 1
+          },
+          "ReasonProbabilities": {
+            "SESSION_SAFETY": 1.0
+          },
+          "MfeQuoteMean": 0.00303,
+          "MaeQuoteMean": 0.00057,
+          "InitialTargetRRQuantiles": null,
+          "StatisticallySufficient": false
+        },
+        "RETURN": {
+          "Trades": 3,
+          "NetEur": -0.6752653688491896,
+          "CostTotals": {
+            "GrossEur": -0.4604664213376931,
+            "SpreadEur": 0.004384291958854394,
+            "SlippageEur": 0.0526064311801384,
+            "ConversionEur": 1.0379888629257135e-06,
+            "CommissionsEur": 0.15780718638364083,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": -0.22508845628306323,
+          "WinRate": 0.3333333333333333,
+          "ProfitFactor": 0.1978345367060789,
+          "Payoff": 0.3956690734121578,
+          "MeanR": -0.5934158180306162,
+          "NetQuantiles": [
+            -0.5524444367218503,
+            -0.5524444367218503,
+            -0.5524444367218503,
+            -0.28935865721385307,
+            -0.28935865721385307,
+            -0.28935865721385307,
+            0.16653772508651368
+          ],
+          "RQuantiles": [
+            -1.0419116918461693,
+            -1.0419116918461693,
+            -1.0419116918461693,
+            -0.8911248676009488,
+            -0.8911248676009488,
+            -0.8911248676009488,
+            0.15278910535526943
+          ],
+          "Worst": -0.5524444367218503,
+          "ES5": -0.5524444367218503,
+          "WeeksNet": {
+            "2026-W28": -0.38590671163533663,
+            "2026-W29": 0.0,
+            "2026-W30": -0.28935865721385307
+          },
+          "WeeksTrades": {
+            "2026-W28": 2,
+            "2026-W29": 0,
+            "2026-W30": 1
+          },
+          "WeeklyMeanMinus2SE": -0.4569763359923825,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": [
+            253.645,
+            253.645,
+            253.645,
+            312.943,
+            312.943,
+            312.943,
+            4918.946
+          ],
+          "Reasons": {
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 2,
+            "LEARNED_CONTINUATION_NONPOSITIVE": 1
+          },
+          "ReasonProbabilities": {
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 0.6666666666666666,
+            "LEARNED_CONTINUATION_NONPOSITIVE": 0.3333333333333333
+          },
+          "MfeQuoteMean": 0.00031666666666666665,
+          "MaeQuoteMean": 0.00044,
+          "InitialTargetRRQuantiles": [
+            0.5429000320289437,
+            0.5429000320289437,
+            0.5429000320289437,
+            1.0597241539139068,
+            1.0597241539139068,
+            1.0597241539139068,
+            1.5278993461107393
+          ],
+          "StatisticallySufficient": false
+        }
+      },
+      "Symbols": {
+        "EURUSD": {
+          "Trades": 3,
+          "NetEur": -0.6752653688491896,
+          "CostTotals": {
+            "GrossEur": -0.4604664213376931,
+            "SpreadEur": 0.004384291958854394,
+            "SlippageEur": 0.0526064311801384,
+            "ConversionEur": 1.0379888629257135e-06,
+            "CommissionsEur": 0.15780718638364083,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": -0.22508845628306323,
+          "WinRate": 0.3333333333333333,
+          "ProfitFactor": 0.1978345367060789,
+          "Payoff": 0.3956690734121578,
+          "MeanR": -0.5934158180306162,
+          "NetQuantiles": [
+            -0.5524444367218503,
+            -0.5524444367218503,
+            -0.5524444367218503,
+            -0.28935865721385307,
+            -0.28935865721385307,
+            -0.28935865721385307,
+            0.16653772508651368
+          ],
+          "RQuantiles": [
+            -1.0419116918461693,
+            -1.0419116918461693,
+            -1.0419116918461693,
+            -0.8911248676009488,
+            -0.8911248676009488,
+            -0.8911248676009488,
+            0.15278910535526943
+          ],
+          "Worst": -0.5524444367218503,
+          "ES5": -0.5524444367218503,
+          "WeeksNet": {
+            "2026-W28": -0.38590671163533663,
+            "2026-W29": 0.0,
+            "2026-W30": -0.28935865721385307
+          },
+          "WeeksTrades": {
+            "2026-W28": 2,
+            "2026-W29": 0,
+            "2026-W30": 1
+          },
+          "WeeklyMeanMinus2SE": -0.4569763359923825,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": [
+            253.645,
+            253.645,
+            253.645,
+            312.943,
+            312.943,
+            312.943,
+            4918.946
+          ],
+          "Reasons": {
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 2,
+            "LEARNED_CONTINUATION_NONPOSITIVE": 1
+          },
+          "ReasonProbabilities": {
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 0.6666666666666666,
+            "LEARNED_CONTINUATION_NONPOSITIVE": 0.3333333333333333
+          },
+          "MfeQuoteMean": 0.00031666666666666665,
+          "MaeQuoteMean": 0.00044,
+          "InitialTargetRRQuantiles": [
+            0.5429000320289437,
+            0.5429000320289437,
+            0.5429000320289437,
+            1.0597241539139068,
+            1.0597241539139068,
+            1.0597241539139068,
+            1.5278993461107393
+          ],
+          "StatisticallySufficient": false
+        },
+        "GBPUSD": {
+          "Trades": 1,
+          "NetEur": 2.0653625612774675,
+          "CostTotals": {
+            "GrossEur": 2.170336402142332,
+            "SpreadEur": 0.017502712920502678,
+            "SlippageEur": 0.035005425841005355,
+            "ConversionEur": 0,
+            "CommissionsEur": 0.052465702103356306,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": 2.0653625612774675,
+          "WinRate": 1.0,
+          "ProfitFactor": null,
+          "Payoff": null,
+          "MeanR": 1.6686838155363464,
+          "NetQuantiles": [
+            2.0653625612774675,
+            2.0653625612774675,
+            2.0653625612774675,
+            2.0653625612774675,
+            2.0653625612774675,
+            2.0653625612774675,
+            2.0653625612774675
+          ],
+          "RQuantiles": [
+            1.6686838155363464,
+            1.6686838155363464,
+            1.6686838155363464,
+            1.6686838155363464,
+            1.6686838155363464,
+            1.6686838155363464,
+            1.6686838155363464
+          ],
+          "Worst": 2.0653625612774675,
+          "ES5": 2.0653625612774675,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": 2.0653625612774675,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 1,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": -0.6884541870924894,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": [
+            10798.768,
+            10798.768,
+            10798.768,
+            10798.768,
+            10798.768,
+            10798.768,
+            10798.768
+          ],
+          "Reasons": {
+            "SESSION_SAFETY": 1
+          },
+          "ReasonProbabilities": {
+            "SESSION_SAFETY": 1.0
+          },
+          "MfeQuoteMean": 0.00303,
+          "MaeQuoteMean": 0.00057,
+          "InitialTargetRRQuantiles": null,
+          "StatisticallySufficient": false
+        },
+        "AUDUSD": {
+          "Trades": 0,
+          "NetEur": 0,
+          "CostTotals": {
+            "GrossEur": 0,
+            "SpreadEur": 0,
+            "SlippageEur": 0,
+            "ConversionEur": 0,
+            "CommissionsEur": 0,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": null,
+          "WinRate": null,
+          "ProfitFactor": null,
+          "Payoff": null,
+          "MeanR": null,
+          "NetQuantiles": null,
+          "RQuantiles": null,
+          "Worst": null,
+          "ES5": null,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": 0.0,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 0,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": 0.0,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": null,
+          "Reasons": {},
+          "ReasonProbabilities": {},
+          "MfeQuoteMean": null,
+          "MaeQuoteMean": null,
+          "InitialTargetRRQuantiles": null,
+          "StatisticallySufficient": false
+        }
+      },
+      "KnownMarkFloatingDD": 0.00375909504824258,
+      "KnownMarkMargin": 40.02,
+      "KnownMarkMinFreeMargin": 259.0175479612432,
+      "Concurrency": 1,
+      "Hard21": false,
+      "UnknownMarks": 0,
+      "UncertainTrades": 0
+    },
+    "NO_ACTIVITY_adverse": {
+      "Trades": 6,
+      "NetEur": -0.6976373436763719,
+      "CostTotals": {
+        "GrossEur": -0.23950186152330377,
+        "SpreadEur": 0.03924797073494283,
+        "SlippageEur": 0.10472310805679984,
+        "ConversionEur": 6.847802295160639e-07,
+        "CommissionsEur": 0.31416371858109593,
+        "FinancingEur": 0
+      },
+      "ExpectancyEur": -0.11627289061272865,
+      "WinRate": 0.3333333333333333,
+      "ProfitFactor": 0.12100923289863084,
+      "Payoff": 0.2420184657972617,
+      "MeanR": -0.6180376108724591,
+      "NetQuantiles": [
+        -0.2528781048918296,
+        -0.2528781048918296,
+        -0.20934941414623895,
+        -0.16572822908820306,
+        -0.16572419685990503,
+        0.026259124559223402,
+        0.06978347675058137
+      ],
+      "RQuantiles": [
+        -1.045619862814622,
+        -1.045619862814622,
+        -1.0173279627775904,
+        -0.9841509201100351,
+        -0.9823886534665537,
+        0.10495370244627836,
+        0.21630803148776828
+      ],
+      "Worst": -0.2528781048918296,
+      "ES5": -0.2528781048918296,
+      "WeeksNet": {
+        "2026-W28": 0.0,
+        "2026-W29": -0.6976373436763719,
+        "2026-W30": 0.0
+      },
+      "WeeksTrades": {
+        "2026-W28": 0,
+        "2026-W29": 6,
+        "2026-W30": 0
+      },
+      "WeeklyMeanMinus2SE": -0.6976373436763719,
+      "Under60Seconds": 0,
+      "DurationSecondsQuantiles": [
+        103.274,
+        103.274,
+        136.0,
+        186.961,
+        236.334,
+        298.895,
+        689.601
+      ],
+      "Reasons": {
+        "OBSERVED_EQUILIBRIUM_TARGET": 2,
+        "STRUCTURAL_OR_PROFIT_PROTECTION": 4
+      },
+      "ReasonProbabilities": {
+        "OBSERVED_EQUILIBRIUM_TARGET": 0.3333333333333333,
+        "STRUCTURAL_OR_PROFIT_PROTECTION": 0.6666666666666666
+      },
+      "MfeQuoteMean": 4.9999999999999996e-05,
+      "MaeQuoteMean": 0.00016166666666666668,
+      "InitialTargetRRQuantiles": [
+        0.3903744678869642,
+        0.3903744678869642,
+        0.4278179612857143,
+        0.5917984742601208,
+        0.8187274883360658,
+        1.3074587593516824,
+        2.0538142650449935
+      ],
+      "StatisticallySufficient": false,
+      "Families": {
+        "FLOW": {
+          "Trades": 0,
+          "NetEur": 0,
+          "CostTotals": {
+            "GrossEur": 0,
+            "SpreadEur": 0,
+            "SlippageEur": 0,
+            "ConversionEur": 0,
+            "CommissionsEur": 0,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": null,
+          "WinRate": null,
+          "ProfitFactor": null,
+          "Payoff": null,
+          "MeanR": null,
+          "NetQuantiles": null,
+          "RQuantiles": null,
+          "Worst": null,
+          "ES5": null,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": 0.0,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 0,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": 0.0,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": null,
+          "Reasons": {},
+          "ReasonProbabilities": {},
+          "MfeQuoteMean": null,
+          "MaeQuoteMean": null,
+          "InitialTargetRRQuantiles": null,
+          "StatisticallySufficient": false
+        },
+        "RETURN": {
+          "Trades": 6,
+          "NetEur": -0.6976373436763719,
+          "CostTotals": {
+            "GrossEur": -0.23950186152330377,
+            "SpreadEur": 0.03924797073494283,
+            "SlippageEur": 0.10472310805679984,
+            "ConversionEur": 6.847802295160639e-07,
+            "CommissionsEur": 0.31416371858109593,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": -0.11627289061272865,
+          "WinRate": 0.3333333333333333,
+          "ProfitFactor": 0.12100923289863084,
+          "Payoff": 0.2420184657972617,
+          "MeanR": -0.6180376108724591,
+          "NetQuantiles": [
+            -0.2528781048918296,
+            -0.2528781048918296,
+            -0.20934941414623895,
+            -0.16572822908820306,
+            -0.16572419685990503,
+            0.026259124559223402,
+            0.06978347675058137
+          ],
+          "RQuantiles": [
+            -1.045619862814622,
+            -1.045619862814622,
+            -1.0173279627775904,
+            -0.9841509201100351,
+            -0.9823886534665537,
+            0.10495370244627836,
+            0.21630803148776828
+          ],
+          "Worst": -0.2528781048918296,
+          "ES5": -0.2528781048918296,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": -0.6976373436763719,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 6,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": -0.6976373436763719,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": [
+            103.274,
+            103.274,
+            136.0,
+            186.961,
+            236.334,
+            298.895,
+            689.601
+          ],
+          "Reasons": {
+            "OBSERVED_EQUILIBRIUM_TARGET": 2,
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 4
+          },
+          "ReasonProbabilities": {
+            "OBSERVED_EQUILIBRIUM_TARGET": 0.3333333333333333,
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 0.6666666666666666
+          },
+          "MfeQuoteMean": 4.9999999999999996e-05,
+          "MaeQuoteMean": 0.00016166666666666668,
+          "InitialTargetRRQuantiles": [
+            0.3903744678869642,
+            0.3903744678869642,
+            0.4278179612857143,
+            0.5917984742601208,
+            0.8187274883360658,
+            1.3074587593516824,
+            2.0538142650449935
+          ],
+          "StatisticallySufficient": false
+        }
+      },
+      "Symbols": {
+        "EURUSD": {
+          "Trades": 1,
+          "NetEur": 0.026259124559223402,
+          "CostTotals": {
+            "GrossEur": 0.0962741888899586,
+            "SpreadEur": 0,
+            "SlippageEur": 0.017504397979992474,
+            "ConversionEur": 0,
+            "CommissionsEur": 0.052510666350742724,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": 0.026259124559223402,
+          "WinRate": 1.0,
+          "ProfitFactor": null,
+          "Payoff": null,
+          "MeanR": 0.10495370244627836,
+          "NetQuantiles": [
+            0.026259124559223402,
+            0.026259124559223402,
+            0.026259124559223402,
+            0.026259124559223402,
+            0.026259124559223402,
+            0.026259124559223402,
+            0.026259124559223402
+          ],
+          "RQuantiles": [
+            0.10495370244627836,
+            0.10495370244627836,
+            0.10495370244627836,
+            0.10495370244627836,
+            0.10495370244627836,
+            0.10495370244627836,
+            0.10495370244627836
+          ],
+          "Worst": 0.026259124559223402,
+          "ES5": 0.026259124559223402,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": 0.026259124559223402,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 1,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": -0.008753041519741133,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": [
+            103.274,
+            103.274,
+            103.274,
+            103.274,
+            103.274,
+            103.274,
+            103.274
+          ],
+          "Reasons": {
+            "OBSERVED_EQUILIBRIUM_TARGET": 1
+          },
+          "ReasonProbabilities": {
+            "OBSERVED_EQUILIBRIUM_TARGET": 1.0
+          },
+          "MfeQuoteMean": 0.0001,
+          "MaeQuoteMean": 4e-05,
+          "InitialTargetRRQuantiles": [
+            0.3903744678869642,
+            0.3903744678869642,
+            0.3903744678869642,
+            0.3903744678869642,
+            0.3903744678869642,
+            0.3903744678869642,
+            0.3903744678869642
+          ],
+          "StatisticallySufficient": false
+        },
+        "GBPUSD": {
+          "Trades": 0,
+          "NetEur": 0,
+          "CostTotals": {
+            "GrossEur": 0,
+            "SpreadEur": 0,
+            "SlippageEur": 0,
+            "ConversionEur": 0,
+            "CommissionsEur": 0,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": null,
+          "WinRate": null,
+          "ProfitFactor": null,
+          "Payoff": null,
+          "MeanR": null,
+          "NetQuantiles": null,
+          "RQuantiles": null,
+          "Worst": null,
+          "ES5": null,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": 0.0,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 0,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": 0.0,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": null,
+          "Reasons": {},
+          "ReasonProbabilities": {},
+          "MfeQuoteMean": null,
+          "MaeQuoteMean": null,
+          "InitialTargetRRQuantiles": null,
+          "StatisticallySufficient": false
+        },
+        "AUDUSD": {
+          "Trades": 5,
+          "NetEur": -0.7238964682355953,
+          "CostTotals": {
+            "GrossEur": -0.33577605041326236,
+            "SpreadEur": 0.03924797073494283,
+            "SlippageEur": 0.08721871007680737,
+            "ConversionEur": 6.847802295160639e-07,
+            "CommissionsEur": 0.26165305223035323,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": -0.14477929364711906,
+          "WinRate": 0.2,
+          "ProfitFactor": 0.08792395119898963,
+          "Payoff": 0.3516958047959585,
+          "MeanR": -0.7626358735362067,
+          "NetQuantiles": [
+            -0.2528781048918296,
+            -0.2528781048918296,
+            -0.20934941414623895,
+            -0.16572822908820306,
+            -0.16572419685990503,
+            -0.16572419685990503,
+            0.06978347675058137
+          ],
+          "RQuantiles": [
+            -1.045619862814622,
+            -1.045619862814622,
+            -1.0173279627775904,
+            -0.9841509201100351,
+            -0.9823886534665537,
+            -0.9823886534665537,
+            0.21630803148776828
+          ],
+          "Worst": -0.2528781048918296,
+          "ES5": -0.2528781048918296,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": -0.7238964682355953,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 5,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": -0.7238964682355953,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": [
+            136.0,
+            136.0,
+            186.961,
+            236.334,
+            298.895,
+            298.895,
+            689.601
+          ],
+          "Reasons": {
+            "OBSERVED_EQUILIBRIUM_TARGET": 1,
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 4
+          },
+          "ReasonProbabilities": {
+            "OBSERVED_EQUILIBRIUM_TARGET": 0.2,
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 0.8
+          },
+          "MfeQuoteMean": 3.9999999999999996e-05,
+          "MaeQuoteMean": 0.000186,
+          "InitialTargetRRQuantiles": [
+            0.4278179612857143,
+            0.4278179612857143,
+            0.5917984742601208,
+            0.8187274883360658,
+            1.3074587593516824,
+            1.3074587593516824,
+            2.0538142650449935
+          ],
+          "StatisticallySufficient": false
+        }
+      },
+      "KnownMarkFloatingDD": 0.0026447725034324174,
+      "KnownMarkMargin": 33.33,
+      "KnownMarkMinFreeMargin": 266.57373641916996,
+      "Concurrency": 1,
+      "Hard21": false,
+      "UnknownMarks": 0,
+      "UncertainTrades": 0
+    },
+    "PROTECT_ONLY_adverse": {
+      "Trades": 11,
+      "NetEur": -1.5315921407853526,
+      "CostTotals": {
+        "GrossEur": -0.6703326113892815,
+        "SpreadEur": 0.06557043479630535,
+        "SlippageEur": 0.21865067102251423,
+        "ConversionEur": 3.259506099668963e-06,
+        "CommissionsEur": 0.5770351640711517,
+        "FinancingEur": 0
+      },
+      "ExpectancyEur": -0.13923564916230477,
+      "WinRate": 0.36363636363636365,
+      "ProfitFactor": 0.13790728402673827,
+      "Payoff": 0.24133774704679192,
+      "MeanR": -0.5134067264434726,
+      "NetQuantiles": [
+        -0.5524444367218503,
+        -0.5524444367218503,
+        -0.21037176716897693,
+        -0.16572822908820306,
+        0.008719078617365471,
+        0.06978347675058137,
+        0.14024411638552786
+      ],
+      "RQuantiles": [
+        -1.0419116918461693,
+        -1.0419116918461693,
+        -1.0104001570663623,
+        -0.8911248676009488,
+        0.03032210260157365,
+        0.12866618096742763,
+        0.21630803148776828
+      ],
+      "Worst": -0.5524444367218503,
+      "ES5": -0.5524444367218503,
+      "WeeksNet": {
+        "2026-W28": -0.6225720875052994,
+        "2026-W29": -0.6196613960662001,
+        "2026-W30": -0.28935865721385307
+      },
+      "WeeksTrades": {
+        "2026-W28": 3,
+        "2026-W29": 7,
+        "2026-W30": 1
+      },
+      "WeeklyMeanMinus2SE": -0.7317091541481434,
+      "Under60Seconds": 0,
+      "DurationSecondsQuantiles": [
+        103.274,
+        103.274,
+        166.062,
+        253.645,
+        689.601,
+        4198.672,
+        5396.954
+      ],
+      "Reasons": {
+        "STRUCTURAL_OR_PROFIT_PROTECTION": 7,
+        "SESSION_SAFETY": 2,
+        "OBSERVED_EQUILIBRIUM_TARGET": 2
+      },
+      "ReasonProbabilities": {
+        "STRUCTURAL_OR_PROFIT_PROTECTION": 0.6363636363636364,
+        "SESSION_SAFETY": 0.18181818181818182,
+        "OBSERVED_EQUILIBRIUM_TARGET": 0.18181818181818182
+      },
+      "MfeQuoteMean": 0.00019999999999999998,
+      "MaeQuoteMean": 0.00027545454545454547,
+      "InitialTargetRRQuantiles": [
+        0.3903744678869642,
+        0.3903744678869642,
+        0.5429000320289437,
+        1.0597241539139068,
+        1.5278993461107393,
+        2.0538142650449935,
+        5.171534088703824
+      ],
+      "StatisticallySufficient": false,
+      "Families": {
+        "FLOW": {
+          "Trades": 0,
+          "NetEur": 0,
+          "CostTotals": {
+            "GrossEur": 0,
+            "SpreadEur": 0,
+            "SlippageEur": 0,
+            "ConversionEur": 0,
+            "CommissionsEur": 0,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": null,
+          "WinRate": null,
+          "ProfitFactor": null,
+          "Payoff": null,
+          "MeanR": null,
+          "NetQuantiles": null,
+          "RQuantiles": null,
+          "Worst": null,
+          "ES5": null,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": 0.0,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 0,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": 0.0,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": null,
+          "Reasons": {},
+          "ReasonProbabilities": {},
+          "MfeQuoteMean": null,
+          "MaeQuoteMean": null,
+          "InitialTargetRRQuantiles": null,
+          "StatisticallySufficient": false
+        },
+        "RETURN": {
+          "Trades": 11,
+          "NetEur": -1.5315921407853526,
+          "CostTotals": {
+            "GrossEur": -0.6703326113892815,
+            "SpreadEur": 0.06557043479630535,
+            "SlippageEur": 0.21865067102251423,
+            "ConversionEur": 3.259506099668963e-06,
+            "CommissionsEur": 0.5770351640711517,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": -0.13923564916230477,
+          "WinRate": 0.36363636363636365,
+          "ProfitFactor": 0.13790728402673827,
+          "Payoff": 0.24133774704679192,
+          "MeanR": -0.5134067264434726,
+          "NetQuantiles": [
+            -0.5524444367218503,
+            -0.5524444367218503,
+            -0.21037176716897693,
+            -0.16572822908820306,
+            0.008719078617365471,
+            0.06978347675058137,
+            0.14024411638552786
+          ],
+          "RQuantiles": [
+            -1.0419116918461693,
+            -1.0419116918461693,
+            -1.0104001570663623,
+            -0.8911248676009488,
+            0.03032210260157365,
+            0.12866618096742763,
+            0.21630803148776828
+          ],
+          "Worst": -0.5524444367218503,
+          "ES5": -0.5524444367218503,
+          "WeeksNet": {
+            "2026-W28": -0.6225720875052994,
+            "2026-W29": -0.6196613960662001,
+            "2026-W30": -0.28935865721385307
+          },
+          "WeeksTrades": {
+            "2026-W28": 3,
+            "2026-W29": 7,
+            "2026-W30": 1
+          },
+          "WeeklyMeanMinus2SE": -0.7317091541481434,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": [
+            103.274,
+            103.274,
+            166.062,
+            253.645,
+            689.601,
+            4198.672,
+            5396.954
+          ],
+          "Reasons": {
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 7,
+            "SESSION_SAFETY": 2,
+            "OBSERVED_EQUILIBRIUM_TARGET": 2
+          },
+          "ReasonProbabilities": {
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 0.6363636363636364,
+            "SESSION_SAFETY": 0.18181818181818182,
+            "OBSERVED_EQUILIBRIUM_TARGET": 0.18181818181818182
+          },
+          "MfeQuoteMean": 0.00019999999999999998,
+          "MaeQuoteMean": 0.00027545454545454547,
+          "InitialTargetRRQuantiles": [
+            0.3903744678869642,
+            0.3903744678869642,
+            0.5429000320289437,
+            1.0597241539139068,
+            1.5278993461107393,
+            2.0538142650449935,
+            5.171534088703824
+          ],
+          "StatisticallySufficient": false
+        }
+      },
+      "Symbols": {
+        "EURUSD": {
+          "Trades": 5,
+          "NetEur": -0.8589210888899753,
+          "CostTotals": {
+            "GrossEur": -0.4997733385184998,
+            "SpreadEur": 0.008767123531104096,
+            "SlippageEur": 0.08759923404211706,
+            "ConversionEur": 1.8831942169006656e-06,
+            "CommissionsEur": 0.26277950960403745,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": -0.17178421777799507,
+          "WinRate": 0.4,
+          "ProfitFactor": 0.16237496624601014,
+          "Payoff": 0.2435624493690152,
+          "MeanR": -0.5419633666199549,
+          "NetQuantiles": [
+            -0.5524444367218503,
+            -0.5524444367218503,
+            -0.28935865721385307,
+            -0.18362123589902324,
+            0.026259124559223402,
+            0.026259124559223402,
+            0.14024411638552786
+          ],
+          "RQuantiles": [
+            -1.0419116918461693,
+            -1.0419116918461693,
+            -1.0104001570663623,
+            -0.8911248676009488,
+            0.10495370244627836,
+            0.10495370244627836,
+            0.12866618096742763
+          ],
+          "Worst": -0.5524444367218503,
+          "ES5": -0.5524444367218503,
+          "WeeksNet": {
+            "2026-W28": -0.4122003203363224,
+            "2026-W29": -0.15736211133979983,
+            "2026-W30": -0.28935865721385307
+          },
+          "WeeksTrades": {
+            "2026-W28": 2,
+            "2026-W29": 2,
+            "2026-W30": 1
+          },
+          "WeeklyMeanMinus2SE": -0.43346958154372545,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": [
+            103.274,
+            103.274,
+            166.062,
+            253.645,
+            312.943,
+            312.943,
+            5396.954
+          ],
+          "Reasons": {
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 3,
+            "SESSION_SAFETY": 1,
+            "OBSERVED_EQUILIBRIUM_TARGET": 1
+          },
+          "ReasonProbabilities": {
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 0.6,
+            "SESSION_SAFETY": 0.2,
+            "OBSERVED_EQUILIBRIUM_TARGET": 0.2
+          },
+          "MfeQuoteMean": 0.000222,
+          "MaeQuoteMean": 0.0003,
+          "InitialTargetRRQuantiles": [
+            0.3903744678869642,
+            0.3903744678869642,
+            0.5429000320289437,
+            1.0597241539139068,
+            1.5278993461107393,
+            1.5278993461107393,
+            5.171534088703824
+          ],
+          "StatisticallySufficient": false
+        },
+        "GBPUSD": {
+          "Trades": 0,
+          "NetEur": 0,
+          "CostTotals": {
+            "GrossEur": 0,
+            "SpreadEur": 0,
+            "SlippageEur": 0,
+            "ConversionEur": 0,
+            "CommissionsEur": 0,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": null,
+          "WinRate": null,
+          "ProfitFactor": null,
+          "Payoff": null,
+          "MeanR": null,
+          "NetQuantiles": null,
+          "RQuantiles": null,
+          "Worst": null,
+          "ES5": null,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": 0.0,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 0,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": 0.0,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": null,
+          "Reasons": {},
+          "ReasonProbabilities": {},
+          "MfeQuoteMean": null,
+          "MaeQuoteMean": null,
+          "InitialTargetRRQuantiles": null,
+          "StatisticallySufficient": false
+        },
+        "AUDUSD": {
+          "Trades": 6,
+          "NetEur": -0.6726710518953771,
+          "CostTotals": {
+            "GrossEur": -0.17055927287078163,
+            "SpreadEur": 0.05680331126520125,
+            "SlippageEur": 0.13105143698039717,
+            "ConversionEur": 1.3763118827682974e-06,
+            "CommissionsEur": 0.3142556544671143,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": -0.11211184198256285,
+          "WinRate": 0.3333333333333333,
+          "ProfitFactor": 0.10450654097652258,
+          "Payoff": 0.20901308195304516,
+          "MeanR": -0.48960952629640414,
+          "NetQuantiles": [
+            -0.21037176716897693,
+            -0.21037176716897693,
+            -0.20934941414623895,
+            -0.16572822908820306,
+            -0.16572419685990503,
+            0.008719078617365471,
+            0.06978347675058137
+          ],
+          "RQuantiles": [
+            -1.0173279627775904,
+            -1.0173279627775904,
+            -0.9841509201100351,
+            -0.9823886534665537,
+            -0.20041975551358754,
+            0.03032210260157365,
+            0.21630803148776828
+          ],
+          "Worst": -0.21037176716897693,
+          "ES5": -0.21037176716897693,
+          "WeeksNet": {
+            "2026-W28": -0.21037176716897693,
+            "2026-W29": -0.4622992847264002,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 1,
+            "2026-W29": 5,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": -0.49149149937089903,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": [
+            136.0,
+            136.0,
+            186.961,
+            236.334,
+            689.601,
+            2418.164,
+            4198.672
+          ],
+          "Reasons": {
+            "SESSION_SAFETY": 1,
+            "OBSERVED_EQUILIBRIUM_TARGET": 1,
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 4
+          },
+          "ReasonProbabilities": {
+            "SESSION_SAFETY": 0.16666666666666666,
+            "OBSERVED_EQUILIBRIUM_TARGET": 0.16666666666666666,
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 0.6666666666666666
+          },
+          "MfeQuoteMean": 0.00018166666666666667,
+          "MaeQuoteMean": 0.000255,
+          "InitialTargetRRQuantiles": [
+            0.4278179612857143,
+            0.4278179612857143,
+            0.8187274883360658,
+            1.0430325606224635,
+            1.3074587593516824,
+            1.8133605354907003,
+            2.0538142650449935
+          ],
+          "StatisticallySufficient": false
+        }
+      },
+      "KnownMarkFloatingDD": 0.0067277831917943514,
+      "KnownMarkMargin": 63.91,
+      "KnownMarkMinFreeMargin": 234.34471992156801,
+      "Concurrency": 2,
+      "Hard21": false,
+      "UnknownMarks": 0,
+      "UncertainTrades": 0
+    },
+    "SIMPLE_adverse": {
+      "Trades": 170,
+      "NetEur": -19.759613512606983,
+      "CostTotals": {
+        "GrossEur": -5.719790791071652,
+        "SpreadEur": 1.387850312325679,
+        "SlippageEur": 3.721323973143885,
+        "ConversionEur": 9.672065525827266e-05,
+        "CommissionsEur": 8.930551715410507,
+        "FinancingEur": 0
+      },
+      "ExpectancyEur": -0.11623302066239401,
+      "WinRate": 0.3764705882352941,
+      "ProfitFactor": 0.4802903223031983,
+      "Payoff": 0.7954808463146722,
+      "MeanR": -0.25551805646830217,
+      "NetQuantiles": [
+        -1.7617217488011123,
+        -0.9107705886166788,
+        -0.3679122918474311,
+        -0.04368689429641911,
+        0.07001490925916626,
+        0.5159479478364809,
+        2.0653625612774675
+      ],
+      "RQuantiles": [
+        -1.2291695717251887,
+        -1.0720252404148007,
+        -0.9802070924758178,
+        -0.1101653825628281,
+        0.21408245114804242,
+        1.0290731140933846,
+        2.898111752624593
+      ],
+      "Worst": -1.7617217488011123,
+      "ES5": -1.1783555910955794,
+      "WeeksNet": {
+        "2026-W28": -18.051899179968906,
+        "2026-W29": 4.075432562598657,
+        "2026-W30": -5.783146895236732
+      },
+      "WeeksTrades": {
+        "2026-W28": 64,
+        "2026-W29": 46,
+        "2026-W30": 60
+      },
+      "WeeklyMeanMinus2SE": -19.38699513488956,
+      "Under60Seconds": 13,
+      "DurationSecondsQuantiles": [
+        3.975,
+        33.82,
+        222.117,
+        680.71,
+        1838.336,
+        7335.409,
+        10798.768
+      ],
+      "Reasons": {
+        "OBSERVED_EQUILIBRIUM_TARGET": 57,
+        "STRUCTURAL_OR_PROFIT_PROTECTION": 101,
+        "SESSION_SAFETY": 12
+      },
+      "ReasonProbabilities": {
+        "OBSERVED_EQUILIBRIUM_TARGET": 0.3352941176470588,
+        "STRUCTURAL_OR_PROFIT_PROTECTION": 0.5941176470588235,
+        "SESSION_SAFETY": 0.07058823529411765
+      },
+      "MfeQuoteMean": 0.000302,
+      "MaeQuoteMean": 0.00031576470588235296,
+      "InitialTargetRRQuantiles": [
+        0.026672600584885825,
+        0.06610462854371586,
+        0.4309320843752493,
+        0.84906045986242,
+        1.674656881549987,
+        4.373762017070626,
+        9.261722188634343
+      ],
+      "StatisticallySufficient": true,
+      "Families": {
+        "FLOW": {
+          "Trades": 42,
+          "NetEur": -9.373382988116118,
+          "CostTotals": {
+            "GrossEur": -5.844839379333857,
+            "SpreadEur": 0.3765297809712951,
+            "SlippageEur": 0.945657230566508,
+            "ConversionEur": 4.27603588862857e-05,
+            "CommissionsEur": 2.206313836885572,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": -0.22317578543133618,
+          "WinRate": 0.2857142857142857,
+          "ProfitFactor": 0.44051803060209643,
+          "Payoff": 1.1012950765052412,
+          "MeanR": -0.3775872704659171,
+          "NetQuantiles": [
+            -1.7617217488011123,
+            -1.1642255867463687,
+            -0.5514896717608264,
+            -0.3411704974626502,
+            0.026297211122720984,
+            1.0490476700299631,
+            2.0653625612774675
+          ],
+          "RQuantiles": [
+            -1.164791108635659,
+            -1.0362094714226382,
+            -0.9909852979994213,
+            -0.9535262082222716,
+            0.057918579342966105,
+            1.187398251323264,
+            2.4142666307951868
+          ],
+          "Worst": -1.7617217488011123,
+          "ES5": -1.4602720879237512,
+          "WeeksNet": {
+            "2026-W28": -11.445527231848068,
+            "2026-W29": 3.3326279282612856,
+            "2026-W30": -1.2604836845293348
+          },
+          "WeeksTrades": {
+            "2026-W28": 20,
+            "2026-W29": 8,
+            "2026-W30": 14
+          },
+          "WeeklyMeanMinus2SE": -11.857866291983921,
+          "Under60Seconds": 2,
+          "DurationSecondsQuantiles": [
+            10.979,
+            421.409,
+            1080.14,
+            3257.239,
+            6109.134,
+            9898.023,
+            10798.768
+          ],
+          "Reasons": {
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 34,
+            "SESSION_SAFETY": 8
+          },
+          "ReasonProbabilities": {
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 0.8095238095238095,
+            "SESSION_SAFETY": 0.19047619047619047
+          },
+          "MfeQuoteMean": 0.00048261904761904764,
+          "MaeQuoteMean": 0.0005509523809523809,
+          "InitialTargetRRQuantiles": null,
+          "StatisticallySufficient": true
+        },
+        "RETURN": {
+          "Trades": 128,
+          "NetEur": -10.386230524490863,
+          "CostTotals": {
+            "GrossEur": 0.1250485882622054,
+            "SpreadEur": 1.0113205313543838,
+            "SlippageEur": 2.775666742577377,
+            "ConversionEur": 5.396029637198697e-05,
+            "CommissionsEur": 6.724237878524935,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": -0.08114242597258486,
+          "WinRate": 0.40625,
+          "ProfitFactor": 0.5116223638778847,
+          "Payoff": 0.7477557625907548,
+          "MeanR": -0.21546409562533478,
+          "NetQuantiles": [
+            -1.2013522485105477,
+            -0.6300786024453312,
+            -0.28935865721385307,
+            -0.017514323378493853,
+            0.10467094057078877,
+            0.35026441729394303,
+            1.233161250449587
+          ],
+          "RQuantiles": [
+            -1.2291695717251887,
+            -1.0720252404148007,
+            -0.9768972565960197,
+            -0.08064530267880143,
+            0.2978757433678246,
+            0.8084668835050943,
+            2.898111752624593
+          ],
+          "Worst": -1.2013522485105477,
+          "ES5": -0.8892838071772431,
+          "WeeksNet": {
+            "2026-W28": -6.606371948120838,
+            "2026-W29": 0.7428046343373724,
+            "2026-W30": -4.522663210707397
+          },
+          "WeeksTrades": {
+            "2026-W28": 44,
+            "2026-W29": 38,
+            "2026-W30": 46
+          },
+          "WeeklyMeanMinus2SE": -7.835669063756102,
+          "Under60Seconds": 11,
+          "DurationSecondsQuantiles": [
+            3.975,
+            33.82,
+            154.236,
+            468.546,
+            1306.33,
+            3898.171,
+            9598.792
+          ],
+          "Reasons": {
+            "OBSERVED_EQUILIBRIUM_TARGET": 57,
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 67,
+            "SESSION_SAFETY": 4
+          },
+          "ReasonProbabilities": {
+            "OBSERVED_EQUILIBRIUM_TARGET": 0.4453125,
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 0.5234375,
+            "SESSION_SAFETY": 0.03125
+          },
+          "MfeQuoteMean": 0.000242734375,
+          "MaeQuoteMean": 0.00023859375,
+          "InitialTargetRRQuantiles": [
+            0.026672600584885825,
+            0.06610462854371586,
+            0.4309320843752493,
+            0.84906045986242,
+            1.674656881549987,
+            4.373762017070626,
+            9.261722188634343
+          ],
+          "StatisticallySufficient": true
+        }
+      },
+      "Symbols": {
+        "EURUSD": {
+          "Trades": 61,
+          "NetEur": -4.133210487723021,
+          "CostTotals": {
+            "GrossEur": 0.38487567907575504,
+            "SpreadEur": 0.2276626271223065,
+            "SlippageEur": 1.0857728677490752,
+            "ConversionEur": 4.235624274964014e-05,
+            "CommissionsEur": 3.204608315684644,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": -0.06775754897906591,
+          "WinRate": 0.4098360655737705,
+          "ProfitFactor": 0.6033402452123722,
+          "Payoff": 0.8688099531058158,
+          "MeanR": -0.19539202370974,
+          "NetQuantiles": [
+            -1.130802961499811,
+            -0.5871560564189297,
+            -0.3325067119535991,
+            -0.03502845515227672,
+            0.1487799895917632,
+            0.44646557625129496,
+            1.0851413990099368
+          ],
+          "RQuantiles": [
+            -1.2291695717251887,
+            -1.0745015074118611,
+            -0.9654939523284509,
+            -0.08433897057917206,
+            0.3697500447891685,
+            0.9844991781488641,
+            1.4279025544877182
+          ],
+          "Worst": -1.130802961499811,
+          "ES5": -0.8216874951989402,
+          "WeeksNet": {
+            "2026-W28": -2.3656766427108398,
+            "2026-W29": 0.849502750858798,
+            "2026-W30": -2.61703659587098
+          },
+          "WeeksTrades": {
+            "2026-W28": 18,
+            "2026-W29": 15,
+            "2026-W30": 28
+          },
+          "WeeklyMeanMinus2SE": -3.6096993638386152,
+          "Under60Seconds": 6,
+          "DurationSecondsQuantiles": [
+            10.979,
+            35.325,
+            323.499,
+            677.88,
+            1649.363,
+            7335.409,
+            9898.216
+          ],
+          "Reasons": {
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 33,
+            "OBSERVED_EQUILIBRIUM_TARGET": 23,
+            "SESSION_SAFETY": 5
+          },
+          "ReasonProbabilities": {
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 0.5409836065573771,
+            "OBSERVED_EQUILIBRIUM_TARGET": 0.3770491803278688,
+            "SESSION_SAFETY": 0.08196721311475409
+          },
+          "MfeQuoteMean": 0.0002740983606557377,
+          "MaeQuoteMean": 0.000259344262295082,
+          "InitialTargetRRQuantiles": [
+            0.048234763846464655,
+            0.06610462854371586,
+            0.4167888404064839,
+            0.726338565097155,
+            1.3287148214848092,
+            3.112350695711278,
+            9.261722188634343
+          ],
+          "StatisticallySufficient": true
+        },
+        "GBPUSD": {
+          "Trades": 55,
+          "NetEur": -7.759915980055841,
+          "CostTotals": {
+            "GrossEur": -2.681176977871852,
+            "SpreadEur": 0.6742764426654733,
+            "SlippageEur": 1.514881921765789,
+            "ConversionEur": 3.408394387552531e-05,
+            "CommissionsEur": 2.8895465538088505,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": -0.14108938145556074,
+          "WinRate": 0.41818181818181815,
+          "ProfitFactor": 0.5374264726270714,
+          "Payoff": 0.747723788002882,
+          "MeanR": -0.24016168297102722,
+          "NetQuantiles": [
+            -1.7617217488011123,
+            -1.0696421579660156,
+            -0.4912212222417654,
+            -0.0965958350489628,
+            0.1141810113293517,
+            0.8571766349945507,
+            2.0653625612774675
+          ],
+          "RQuantiles": [
+            -1.100682036913954,
+            -1.06570081627217,
+            -0.9874881832498161,
+            -0.18832401962932488,
+            0.16189958762702955,
+            1.187398251323264,
+            2.898111752624593
+          ],
+          "Worst": -1.7617217488011123,
+          "ES5": -1.331863164504499,
+          "WeeksNet": {
+            "2026-W28": -10.1070243588106,
+            "2026-W29": 2.7005089269782534,
+            "2026-W30": -0.3534005482234931
+          },
+          "WeeksTrades": {
+            "2026-W28": 25,
+            "2026-W29": 14,
+            "2026-W30": 16
+          },
+          "WeeklyMeanMinus2SE": -10.310950199103335,
+          "Under60Seconds": 4,
+          "DurationSecondsQuantiles": [
+            19.134,
+            33.82,
+            208.547,
+            653.541,
+            1580.238,
+            6899.034,
+            10798.768
+          ],
+          "Reasons": {
+            "OBSERVED_EQUILIBRIUM_TARGET": 18,
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 33,
+            "SESSION_SAFETY": 4
+          },
+          "ReasonProbabilities": {
+            "OBSERVED_EQUILIBRIUM_TARGET": 0.32727272727272727,
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 0.6,
+            "SESSION_SAFETY": 0.07272727272727272
+          },
+          "MfeQuoteMean": 0.000408,
+          "MaeQuoteMean": 0.00042327272727272727,
+          "InitialTargetRRQuantiles": [
+            0.047396091447559505,
+            0.07104238059753301,
+            0.3934768109274704,
+            0.8868803331812309,
+            1.674656881549987,
+            3.730832099470456,
+            5.21881704328934
+          ],
+          "StatisticallySufficient": true
+        },
+        "AUDUSD": {
+          "Trades": 54,
+          "NetEur": -7.86648704482812,
+          "CostTotals": {
+            "GrossEur": -3.4234894922755545,
+            "SpreadEur": 0.485911242537899,
+            "SlippageEur": 1.1206691836290208,
+            "ConversionEur": 2.0280468633107213e-05,
+            "CommissionsEur": 2.836396845917012,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": -0.14567568601533556,
+          "WinRate": 0.2962962962962963,
+          "ProfitFactor": 0.27329798667164196,
+          "Payoff": 0.6490827183451496,
+          "MeanR": -0.3390789553687173,
+          "NetQuantiles": [
+            -1.4548689282237726,
+            -0.6648329362094552,
+            -0.2810472468188899,
+            -0.05250882811206569,
+            0.04375299157090209,
+            0.16640084968219707,
+            1.0490476700299631
+          ],
+          "RQuantiles": [
+            -1.1881458271932532,
+            -1.0362094714226382,
+            -0.9811692563033043,
+            -0.1341695101054598,
+            0.09586701218629606,
+            0.4605372162663447,
+            2.4142666307951868
+          ],
+          "Worst": -1.4548689282237726,
+          "ES5": -1.107018037647925,
+          "WeeksNet": {
+            "2026-W28": -5.5791981784474665,
+            "2026-W29": 0.5254208847616055,
+            "2026-W30": -2.8127097511422594
+          },
+          "WeeksTrades": {
+            "2026-W28": 21,
+            "2026-W29": 17,
+            "2026-W30": 16
+          },
+          "WeeklyMeanMinus2SE": -6.151812890237798,
+          "Under60Seconds": 3,
+          "DurationSecondsQuantiles": [
+            3.975,
+            31.243,
+            222.117,
+            711.148,
+            2952.682,
+            6503.364,
+            10798.241
+          ],
+          "Reasons": {
+            "OBSERVED_EQUILIBRIUM_TARGET": 16,
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 35,
+            "SESSION_SAFETY": 3
+          },
+          "ReasonProbabilities": {
+            "OBSERVED_EQUILIBRIUM_TARGET": 0.2962962962962963,
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 0.6481481481481481,
+            "SESSION_SAFETY": 0.05555555555555555
+          },
+          "MfeQuoteMean": 0.00022555555555555556,
+          "MaeQuoteMean": 0.00027,
+          "InitialTargetRRQuantiles": [
+            0.026672600584885825,
+            0.04903018723375627,
+            0.5602779700566094,
+            0.9114003341585761,
+            2.0538142650449935,
+            5.566963344288091,
+            8.256909914859852
+          ],
+          "StatisticallySufficient": true
+        }
+      },
+      "KnownMarkFloatingDD": 0.06953207569601973,
+      "KnownMarkMargin": 103.93,
+      "KnownMarkMinFreeMargin": 176.29295888845837,
+      "Concurrency": 3,
+      "Hard21": true,
+      "UnknownMarks": 13,
+      "UncertainTrades": 3
+    },
+    "FLOW_ONLY_adverse": {
+      "Trades": 0,
+      "NetEur": 0,
+      "CostTotals": {
+        "GrossEur": 0,
+        "SpreadEur": 0,
+        "SlippageEur": 0,
+        "ConversionEur": 0,
+        "CommissionsEur": 0,
+        "FinancingEur": 0
+      },
+      "ExpectancyEur": null,
+      "WinRate": null,
+      "ProfitFactor": null,
+      "Payoff": null,
+      "MeanR": null,
+      "NetQuantiles": null,
+      "RQuantiles": null,
+      "Worst": null,
+      "ES5": null,
+      "WeeksNet": {
+        "2026-W28": 0.0,
+        "2026-W29": 0.0,
+        "2026-W30": 0.0
+      },
+      "WeeksTrades": {
+        "2026-W28": 0,
+        "2026-W29": 0,
+        "2026-W30": 0
+      },
+      "WeeklyMeanMinus2SE": 0.0,
+      "Under60Seconds": 0,
+      "DurationSecondsQuantiles": null,
+      "Reasons": {},
+      "ReasonProbabilities": {},
+      "MfeQuoteMean": null,
+      "MaeQuoteMean": null,
+      "InitialTargetRRQuantiles": null,
+      "StatisticallySufficient": false,
+      "Families": {
+        "FLOW": {
+          "Trades": 0,
+          "NetEur": 0,
+          "CostTotals": {
+            "GrossEur": 0,
+            "SpreadEur": 0,
+            "SlippageEur": 0,
+            "ConversionEur": 0,
+            "CommissionsEur": 0,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": null,
+          "WinRate": null,
+          "ProfitFactor": null,
+          "Payoff": null,
+          "MeanR": null,
+          "NetQuantiles": null,
+          "RQuantiles": null,
+          "Worst": null,
+          "ES5": null,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": 0.0,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 0,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": 0.0,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": null,
+          "Reasons": {},
+          "ReasonProbabilities": {},
+          "MfeQuoteMean": null,
+          "MaeQuoteMean": null,
+          "InitialTargetRRQuantiles": null,
+          "StatisticallySufficient": false
+        },
+        "RETURN": {
+          "Trades": 0,
+          "NetEur": 0,
+          "CostTotals": {
+            "GrossEur": 0,
+            "SpreadEur": 0,
+            "SlippageEur": 0,
+            "ConversionEur": 0,
+            "CommissionsEur": 0,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": null,
+          "WinRate": null,
+          "ProfitFactor": null,
+          "Payoff": null,
+          "MeanR": null,
+          "NetQuantiles": null,
+          "RQuantiles": null,
+          "Worst": null,
+          "ES5": null,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": 0.0,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 0,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": 0.0,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": null,
+          "Reasons": {},
+          "ReasonProbabilities": {},
+          "MfeQuoteMean": null,
+          "MaeQuoteMean": null,
+          "InitialTargetRRQuantiles": null,
+          "StatisticallySufficient": false
+        }
+      },
+      "Symbols": {
+        "EURUSD": {
+          "Trades": 0,
+          "NetEur": 0,
+          "CostTotals": {
+            "GrossEur": 0,
+            "SpreadEur": 0,
+            "SlippageEur": 0,
+            "ConversionEur": 0,
+            "CommissionsEur": 0,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": null,
+          "WinRate": null,
+          "ProfitFactor": null,
+          "Payoff": null,
+          "MeanR": null,
+          "NetQuantiles": null,
+          "RQuantiles": null,
+          "Worst": null,
+          "ES5": null,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": 0.0,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 0,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": 0.0,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": null,
+          "Reasons": {},
+          "ReasonProbabilities": {},
+          "MfeQuoteMean": null,
+          "MaeQuoteMean": null,
+          "InitialTargetRRQuantiles": null,
+          "StatisticallySufficient": false
+        },
+        "GBPUSD": {
+          "Trades": 0,
+          "NetEur": 0,
+          "CostTotals": {
+            "GrossEur": 0,
+            "SpreadEur": 0,
+            "SlippageEur": 0,
+            "ConversionEur": 0,
+            "CommissionsEur": 0,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": null,
+          "WinRate": null,
+          "ProfitFactor": null,
+          "Payoff": null,
+          "MeanR": null,
+          "NetQuantiles": null,
+          "RQuantiles": null,
+          "Worst": null,
+          "ES5": null,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": 0.0,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 0,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": 0.0,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": null,
+          "Reasons": {},
+          "ReasonProbabilities": {},
+          "MfeQuoteMean": null,
+          "MaeQuoteMean": null,
+          "InitialTargetRRQuantiles": null,
+          "StatisticallySufficient": false
+        },
+        "AUDUSD": {
+          "Trades": 0,
+          "NetEur": 0,
+          "CostTotals": {
+            "GrossEur": 0,
+            "SpreadEur": 0,
+            "SlippageEur": 0,
+            "ConversionEur": 0,
+            "CommissionsEur": 0,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": null,
+          "WinRate": null,
+          "ProfitFactor": null,
+          "Payoff": null,
+          "MeanR": null,
+          "NetQuantiles": null,
+          "RQuantiles": null,
+          "Worst": null,
+          "ES5": null,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": 0.0,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 0,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": 0.0,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": null,
+          "Reasons": {},
+          "ReasonProbabilities": {},
+          "MfeQuoteMean": null,
+          "MaeQuoteMean": null,
+          "InitialTargetRRQuantiles": null,
+          "StatisticallySufficient": false
+        }
+      },
+      "KnownMarkFloatingDD": 0,
+      "KnownMarkMargin": 0,
+      "KnownMarkMinFreeMargin": 300,
+      "Concurrency": 0,
+      "Hard21": false,
+      "UnknownMarks": 0,
+      "UncertainTrades": 0
+    },
+    "RETURN_ONLY_adverse": {
+      "Trades": 11,
+      "NetEur": -0.9357405709951001,
+      "CostTotals": {
+        "GrossEur": -0.10080564760775837,
+        "SpreadEur": 0.05680016289845496,
+        "SlippageEur": 0.20110678609832083,
+        "ConversionEur": 6.636579467245164e-06,
+        "CommissionsEur": 0.5770213378110988,
+        "FinancingEur": 0
+      },
+      "ExpectancyEur": -0.08506732463591819,
+      "WinRate": 0.45454545454545453,
+      "ProfitFactor": 0.4025508007968766,
+      "Payoff": 0.4830609609562519,
+      "MeanR": -0.46298000353078717,
+      "NetQuantiles": [
+        -0.5524444367218503,
+        -0.5524444367218503,
+        -0.20934941414623895,
+        -0.16572419685990503,
+        0.01752982799536895,
+        0.06978347675058137,
+        0.5081940910114343
+      ],
+      "RQuantiles": [
+        -1.0419116918461693,
+        -1.0419116918461693,
+        -1.0104001570663623,
+        -0.8911248676009488,
+        0.03032210260157365,
+        0.21630803148776828,
+        0.4662398292767317
+      ],
+      "Worst": -0.5524444367218503,
+      "ES5": -0.5524444367218503,
+      "WeeksNet": {
+        "2026-W28": -0.026720517715047024,
+        "2026-W29": -0.6196613960662001,
+        "2026-W30": -0.28935865721385307
+      },
+      "WeeksTrades": {
+        "2026-W28": 3,
+        "2026-W29": 7,
+        "2026-W30": 1
+      },
+      "WeeklyMeanMinus2SE": -0.6549903135249366,
+      "Under60Seconds": 0,
+      "DurationSecondsQuantiles": [
+        103.274,
+        103.274,
+        166.062,
+        253.645,
+        689.601,
+        4020.751,
+        4619.677
+      ],
+      "Reasons": {
+        "STRUCTURAL_OR_PROFIT_PROTECTION": 7,
+        "LEARNED_CONTINUATION_NONPOSITIVE": 2,
+        "OBSERVED_EQUILIBRIUM_TARGET": 2
+      },
+      "ReasonProbabilities": {
+        "STRUCTURAL_OR_PROFIT_PROTECTION": 0.6363636363636364,
+        "LEARNED_CONTINUATION_NONPOSITIVE": 0.18181818181818182,
+        "OBSERVED_EQUILIBRIUM_TARGET": 0.18181818181818182
+      },
+      "MfeQuoteMean": 0.00019999999999999998,
+      "MaeQuoteMean": 0.00027545454545454547,
+      "InitialTargetRRQuantiles": [
+        0.3903744678869642,
+        0.3903744678869642,
+        0.5429000320289437,
+        1.0597241539139068,
+        1.5278993461107393,
+        2.0538142650449935,
+        5.171534088703824
+      ],
+      "StatisticallySufficient": false,
+      "Families": {
+        "FLOW": {
+          "Trades": 0,
+          "NetEur": 0,
+          "CostTotals": {
+            "GrossEur": 0,
+            "SpreadEur": 0,
+            "SlippageEur": 0,
+            "ConversionEur": 0,
+            "CommissionsEur": 0,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": null,
+          "WinRate": null,
+          "ProfitFactor": null,
+          "Payoff": null,
+          "MeanR": null,
+          "NetQuantiles": null,
+          "RQuantiles": null,
+          "Worst": null,
+          "ES5": null,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": 0.0,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 0,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": 0.0,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": null,
+          "Reasons": {},
+          "ReasonProbabilities": {},
+          "MfeQuoteMean": null,
+          "MaeQuoteMean": null,
+          "InitialTargetRRQuantiles": null,
+          "StatisticallySufficient": false
+        },
+        "RETURN": {
+          "Trades": 11,
+          "NetEur": -0.9357405709951001,
+          "CostTotals": {
+            "GrossEur": -0.10080564760775837,
+            "SpreadEur": 0.05680016289845496,
+            "SlippageEur": 0.20110678609832083,
+            "ConversionEur": 6.636579467245164e-06,
+            "CommissionsEur": 0.5770213378110988,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": -0.08506732463591819,
+          "WinRate": 0.45454545454545453,
+          "ProfitFactor": 0.4025508007968766,
+          "Payoff": 0.4830609609562519,
+          "MeanR": -0.46298000353078717,
+          "NetQuantiles": [
+            -0.5524444367218503,
+            -0.5524444367218503,
+            -0.20934941414623895,
+            -0.16572419685990503,
+            0.01752982799536895,
+            0.06978347675058137,
+            0.5081940910114343
+          ],
+          "RQuantiles": [
+            -1.0419116918461693,
+            -1.0419116918461693,
+            -1.0104001570663623,
+            -0.8911248676009488,
+            0.03032210260157365,
+            0.21630803148776828,
+            0.4662398292767317
+          ],
+          "Worst": -0.5524444367218503,
+          "ES5": -0.5524444367218503,
+          "WeeksNet": {
+            "2026-W28": -0.026720517715047024,
+            "2026-W29": -0.6196613960662001,
+            "2026-W30": -0.28935865721385307
+          },
+          "WeeksTrades": {
+            "2026-W28": 3,
+            "2026-W29": 7,
+            "2026-W30": 1
+          },
+          "WeeklyMeanMinus2SE": -0.6549903135249366,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": [
+            103.274,
+            103.274,
+            166.062,
+            253.645,
+            689.601,
+            4020.751,
+            4619.677
+          ],
+          "Reasons": {
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 7,
+            "LEARNED_CONTINUATION_NONPOSITIVE": 2,
+            "OBSERVED_EQUILIBRIUM_TARGET": 2
+          },
+          "ReasonProbabilities": {
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 0.6363636363636364,
+            "LEARNED_CONTINUATION_NONPOSITIVE": 0.18181818181818182,
+            "OBSERVED_EQUILIBRIUM_TARGET": 0.18181818181818182
+          },
+          "MfeQuoteMean": 0.00019999999999999998,
+          "MaeQuoteMean": 0.00027545454545454547,
+          "InitialTargetRRQuantiles": [
+            0.3903744678869642,
+            0.3903744678869642,
+            0.5429000320289437,
+            1.0597241539139068,
+            1.5278993461107393,
+            2.0538142650449935,
+            5.171534088703824
+          ],
+          "StatisticallySufficient": false
+        }
+      },
+      "Symbols": {
+        "EURUSD": {
+          "Trades": 5,
+          "NetEur": -0.49097111426406886,
+          "CostTotals": {
+            "GrossEur": -0.11869418847027163,
+            "SpreadEur": 0.013146613974861214,
+            "SlippageEur": 0.0963548738011387,
+            "ConversionEur": 5.9517992377291e-06,
+            "CommissionsEur": 0.26276948621855967,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": -0.09819422285281378,
+          "WinRate": 0.4,
+          "ProfitFactor": 0.5212020039126618,
+          "Payoff": 0.7818030058689927,
+          "MeanR": -0.4744486369580941,
+          "NetQuantiles": [
+            -0.5524444367218503,
+            -0.5524444367218503,
+            -0.28935865721385307,
+            -0.18362123589902324,
+            0.026259124559223402,
+            0.026259124559223402,
+            0.5081940910114343
+          ],
+          "RQuantiles": [
+            -1.0419116918461693,
+            -1.0419116918461693,
+            -1.0104001570663623,
+            -0.8911248676009488,
+            0.10495370244627836,
+            0.10495370244627836,
+            0.4662398292767317
+          ],
+          "Worst": -0.5524444367218503,
+          "ES5": -0.5524444367218503,
+          "WeeksNet": {
+            "2026-W28": -0.04425034571041597,
+            "2026-W29": -0.15736211133979983,
+            "2026-W30": -0.28935865721385307
+          },
+          "WeeksTrades": {
+            "2026-W28": 2,
+            "2026-W29": 2,
+            "2026-W30": 1
+          },
+          "WeeklyMeanMinus2SE": -0.3053103268795443,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": [
+            103.274,
+            103.274,
+            166.062,
+            253.645,
+            312.943,
+            312.943,
+            4619.677
+          ],
+          "Reasons": {
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 3,
+            "LEARNED_CONTINUATION_NONPOSITIVE": 1,
+            "OBSERVED_EQUILIBRIUM_TARGET": 1
+          },
+          "ReasonProbabilities": {
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 0.6,
+            "LEARNED_CONTINUATION_NONPOSITIVE": 0.2,
+            "OBSERVED_EQUILIBRIUM_TARGET": 0.2
+          },
+          "MfeQuoteMean": 0.000222,
+          "MaeQuoteMean": 0.0003,
+          "InitialTargetRRQuantiles": [
+            0.3903744678869642,
+            0.3903744678869642,
+            0.5429000320289437,
+            1.0597241539139068,
+            1.5278993461107393,
+            1.5278993461107393,
+            5.171534088703824
+          ],
+          "StatisticallySufficient": false
+        },
+        "GBPUSD": {
+          "Trades": 0,
+          "NetEur": 0,
+          "CostTotals": {
+            "GrossEur": 0,
+            "SpreadEur": 0,
+            "SlippageEur": 0,
+            "ConversionEur": 0,
+            "CommissionsEur": 0,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": null,
+          "WinRate": null,
+          "ProfitFactor": null,
+          "Payoff": null,
+          "MeanR": null,
+          "NetQuantiles": null,
+          "RQuantiles": null,
+          "Worst": null,
+          "ES5": null,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": 0.0,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 0,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": 0.0,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": null,
+          "Reasons": {},
+          "ReasonProbabilities": {},
+          "MfeQuoteMean": null,
+          "MaeQuoteMean": null,
+          "InitialTargetRRQuantiles": null,
+          "StatisticallySufficient": false
+        },
+        "AUDUSD": {
+          "Trades": 6,
+          "NetEur": -0.44476945673103124,
+          "CostTotals": {
+            "GrossEur": 0.017888540862513264,
+            "SpreadEur": 0.043653548923593744,
+            "SlippageEur": 0.10475191229718214,
+            "ConversionEur": 6.847802295160639e-07,
+            "CommissionsEur": 0.3142518515925391,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": -0.0741282427885052,
+          "WinRate": 0.5,
+          "ProfitFactor": 0.1775740691758042,
+          "Payoff": 0.17757406917580423,
+          "MeanR": -0.45342280900803145,
+          "NetQuantiles": [
+            -0.20934941414623895,
+            -0.20934941414623895,
+            -0.16572822908820306,
+            -0.16572419685990503,
+            0.008719078617365471,
+            0.01752982799536895,
+            0.06978347675058137
+          ],
+          "RQuantiles": [
+            -1.0173279627775904,
+            -1.0173279627775904,
+            -0.9841509201100351,
+            -0.9823886534665537,
+            0.01670054821664867,
+            0.03032210260157365,
+            0.21630803148776828
+          ],
+          "Worst": -0.20934941414623895,
+          "ES5": -0.20934941414623895,
+          "WeeksNet": {
+            "2026-W28": 0.01752982799536895,
+            "2026-W29": -0.4622992847264002,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 1,
+            "2026-W29": 5,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": -0.4624623278536403,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": [
+            136.0,
+            136.0,
+            186.961,
+            236.334,
+            689.601,
+            2418.164,
+            4020.751
+          ],
+          "Reasons": {
+            "LEARNED_CONTINUATION_NONPOSITIVE": 1,
+            "OBSERVED_EQUILIBRIUM_TARGET": 1,
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 4
+          },
+          "ReasonProbabilities": {
+            "LEARNED_CONTINUATION_NONPOSITIVE": 0.16666666666666666,
+            "OBSERVED_EQUILIBRIUM_TARGET": 0.16666666666666666,
+            "STRUCTURAL_OR_PROFIT_PROTECTION": 0.6666666666666666
+          },
+          "MfeQuoteMean": 0.00018166666666666667,
+          "MaeQuoteMean": 0.000255,
+          "InitialTargetRRQuantiles": [
+            0.4278179612857143,
+            0.4278179612857143,
+            0.8187274883360658,
+            1.0430325606224635,
+            1.3074587593516824,
+            1.8133605354907003,
+            2.0538142650449935
+          ],
+          "StatisticallySufficient": false
+        }
+      },
+      "KnownMarkFloatingDD": 0.00581760026143994,
+      "KnownMarkMargin": 63.91,
+      "KnownMarkMinFreeMargin": 234.34471992156801,
+      "Concurrency": 2,
+      "Hard21": false,
+      "UnknownMarks": 0,
+      "UncertainTrades": 0
+    },
+    "CASH_adverse": {
+      "Trades": 0,
+      "NetEur": 0,
+      "CostTotals": {
+        "GrossEur": 0,
+        "SpreadEur": 0,
+        "SlippageEur": 0,
+        "ConversionEur": 0,
+        "CommissionsEur": 0,
+        "FinancingEur": 0
+      },
+      "ExpectancyEur": null,
+      "WinRate": null,
+      "ProfitFactor": null,
+      "Payoff": null,
+      "MeanR": null,
+      "NetQuantiles": null,
+      "RQuantiles": null,
+      "Worst": null,
+      "ES5": null,
+      "WeeksNet": {
+        "2026-W28": 0.0,
+        "2026-W29": 0.0,
+        "2026-W30": 0.0
+      },
+      "WeeksTrades": {
+        "2026-W28": 0,
+        "2026-W29": 0,
+        "2026-W30": 0
+      },
+      "WeeklyMeanMinus2SE": 0.0,
+      "Under60Seconds": 0,
+      "DurationSecondsQuantiles": null,
+      "Reasons": {},
+      "ReasonProbabilities": {},
+      "MfeQuoteMean": null,
+      "MaeQuoteMean": null,
+      "InitialTargetRRQuantiles": null,
+      "StatisticallySufficient": false,
+      "Families": {
+        "FLOW": {
+          "Trades": 0,
+          "NetEur": 0,
+          "CostTotals": {
+            "GrossEur": 0,
+            "SpreadEur": 0,
+            "SlippageEur": 0,
+            "ConversionEur": 0,
+            "CommissionsEur": 0,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": null,
+          "WinRate": null,
+          "ProfitFactor": null,
+          "Payoff": null,
+          "MeanR": null,
+          "NetQuantiles": null,
+          "RQuantiles": null,
+          "Worst": null,
+          "ES5": null,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": 0.0,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 0,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": 0.0,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": null,
+          "Reasons": {},
+          "ReasonProbabilities": {},
+          "MfeQuoteMean": null,
+          "MaeQuoteMean": null,
+          "InitialTargetRRQuantiles": null,
+          "StatisticallySufficient": false
+        },
+        "RETURN": {
+          "Trades": 0,
+          "NetEur": 0,
+          "CostTotals": {
+            "GrossEur": 0,
+            "SpreadEur": 0,
+            "SlippageEur": 0,
+            "ConversionEur": 0,
+            "CommissionsEur": 0,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": null,
+          "WinRate": null,
+          "ProfitFactor": null,
+          "Payoff": null,
+          "MeanR": null,
+          "NetQuantiles": null,
+          "RQuantiles": null,
+          "Worst": null,
+          "ES5": null,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": 0.0,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 0,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": 0.0,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": null,
+          "Reasons": {},
+          "ReasonProbabilities": {},
+          "MfeQuoteMean": null,
+          "MaeQuoteMean": null,
+          "InitialTargetRRQuantiles": null,
+          "StatisticallySufficient": false
+        }
+      },
+      "Symbols": {
+        "EURUSD": {
+          "Trades": 0,
+          "NetEur": 0,
+          "CostTotals": {
+            "GrossEur": 0,
+            "SpreadEur": 0,
+            "SlippageEur": 0,
+            "ConversionEur": 0,
+            "CommissionsEur": 0,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": null,
+          "WinRate": null,
+          "ProfitFactor": null,
+          "Payoff": null,
+          "MeanR": null,
+          "NetQuantiles": null,
+          "RQuantiles": null,
+          "Worst": null,
+          "ES5": null,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": 0.0,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 0,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": 0.0,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": null,
+          "Reasons": {},
+          "ReasonProbabilities": {},
+          "MfeQuoteMean": null,
+          "MaeQuoteMean": null,
+          "InitialTargetRRQuantiles": null,
+          "StatisticallySufficient": false
+        },
+        "GBPUSD": {
+          "Trades": 0,
+          "NetEur": 0,
+          "CostTotals": {
+            "GrossEur": 0,
+            "SpreadEur": 0,
+            "SlippageEur": 0,
+            "ConversionEur": 0,
+            "CommissionsEur": 0,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": null,
+          "WinRate": null,
+          "ProfitFactor": null,
+          "Payoff": null,
+          "MeanR": null,
+          "NetQuantiles": null,
+          "RQuantiles": null,
+          "Worst": null,
+          "ES5": null,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": 0.0,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 0,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": 0.0,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": null,
+          "Reasons": {},
+          "ReasonProbabilities": {},
+          "MfeQuoteMean": null,
+          "MaeQuoteMean": null,
+          "InitialTargetRRQuantiles": null,
+          "StatisticallySufficient": false
+        },
+        "AUDUSD": {
+          "Trades": 0,
+          "NetEur": 0,
+          "CostTotals": {
+            "GrossEur": 0,
+            "SpreadEur": 0,
+            "SlippageEur": 0,
+            "ConversionEur": 0,
+            "CommissionsEur": 0,
+            "FinancingEur": 0
+          },
+          "ExpectancyEur": null,
+          "WinRate": null,
+          "ProfitFactor": null,
+          "Payoff": null,
+          "MeanR": null,
+          "NetQuantiles": null,
+          "RQuantiles": null,
+          "Worst": null,
+          "ES5": null,
+          "WeeksNet": {
+            "2026-W28": 0.0,
+            "2026-W29": 0.0,
+            "2026-W30": 0.0
+          },
+          "WeeksTrades": {
+            "2026-W28": 0,
+            "2026-W29": 0,
+            "2026-W30": 0
+          },
+          "WeeklyMeanMinus2SE": 0.0,
+          "Under60Seconds": 0,
+          "DurationSecondsQuantiles": null,
+          "Reasons": {},
+          "ReasonProbabilities": {},
+          "MfeQuoteMean": null,
+          "MaeQuoteMean": null,
+          "InitialTargetRRQuantiles": null,
+          "StatisticallySufficient": false
+        }
+      },
+      "KnownMarkFloatingDD": 0,
+      "KnownMarkMargin": 0,
+      "KnownMarkMinFreeMargin": 300,
+      "Concurrency": 0,
+      "Hard21": false,
+      "UnknownMarks": 0,
+      "UncertainTrades": 0
+    }
+  }
+}

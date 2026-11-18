@@ -3279,7 +3279,7 @@
   "cvp1ContextContinuationResearch": {
     "protocol": "research/CVP1_FROZEN_CONTEXT_CONTINUATION_20261117.md",
     "protocolCommit": "dc958c847533fc49fbe55520dfd2948a6e7c946b",
-    "status": "FROZEN_BEFORE_ORIGINAL_SCORING",
+    "status": "CVP1_CLOSED_EXACT_NO_ROBUST_INCREMENTAL_NET",
     "calendar": [
       "2026-05-04",
       "2026-07-27"
@@ -3288,6 +3288,23 @@
     "independentConfirmation": false,
     "qualified": false,
     "closedStudyPoliciesCalled": false,
-    "counterfactualBooksMustNotBeSummed": true
+    "counterfactualBooksMustNotBeSummed": true,
+    "originalRun": 44162043538,
+    "originalCommit": "e69ed11a84460889bf701d91c4c85d324dc2a7dd",
+    "publicArtifact": 14365407940,
+    "encryptedArtifact": 14366230834,
+    "publicZipSha256": "a5125582a1cf4690871ad4d7640090c376ea8e85196228bf235d4a25ee7bc569",
+    "sourceNativeSha256": "ccd0cd7b4c659a24045023475c51680b2c8800d6879f6f74430ed429dcc2fee9",
+    "requests": 3540,
+    "bars": 350538,
+    "sideTicks": 5039797,
+    "fullAdverseNetEur": -0.9357405709951001,
+    "fullCompletedTrades": 11,
+    "fullHard21": false,
+    "allContinuationFitsConverged": false,
+    "publicArithmeticAuditPassed": true,
+    "result": "docs/CVP1_ORIGINAL_CONTEXT_VALUE_RESULT.md",
+    "ordersSubmitted": 0,
+    "cloudActivated": false
   }
 }
