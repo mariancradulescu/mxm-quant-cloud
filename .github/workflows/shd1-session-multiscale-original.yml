@@ -1,0 +1,106 @@
+name: SHD1 original session-aware H1 M15 native CSharp information study
+on:
+  pull_request:
+    paths:
+      - 'research/SHD1_FROZEN_SESSION_AWARE_MULTISCALE_20261118.md'
+      - 'research/shd1_original_native.py'
+      - 'src/Mxm.Core/Shd1NativeDiscovery.cs'
+      - 'src/Mxm.Replay/Shd1NativeStudy.cs'
+      - 'src/Mxm.Replay/Program.cs'
+      - '.github/workflows/shd1-session-multiscale-original.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ops/shd1-session-multiscale-once.txt'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    outputs:
+      original_once: ${{ steps.owner.outputs.original_once }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Verify SHD1 scientific specification frozen in separate ancestor commit
+        run: |
+          git merge-base --is-ancestor dcddc950cfd7f0211b5ac736d68d511216648504 HEAD
+          git show dcddc950cfd7f0211b5ac736d68d511216648504:research/SHD1_FROZEN_SESSION_AWARE_MULTISCALE_20261118.md > /tmp/shd1-frozen
+          cmp /tmp/shd1-frozen research/SHD1_FROZEN_SESSION_AWARE_MULTISCALE_20261118.md
+      - name: Compile authoritative common native CSharp Core and Replay
+        run: dotnet build src/Mxm.Replay -c Release
+      - name: Compile linked same Core into Cloud without running robot
+        run: dotnet build src/Mxm.Cloud -c Release
+      - name: Causal session gap and nonlinear tree learning synthetic CONTROL ONLY
+        run: |
+          dotnet run --no-build --project src/Mxm.Replay -c Release -- ignored /tmp/shd1-selftest.json --shd1-selftest
+          python3 -c 'import json; r=json.load(open("/tmp/shd1-selftest.json")); assert r["FixtureOnly"] and r["OriginalBrokerObservations"] == 0 and r["SessionGapDetected"] and r["SyntheticTreeLearned"] and not r["OriginalEconomicResult"] and r["CloudOrderActions"] == 0'
+      - name: Custody Python bridge syntax only
+        run: python -m py_compile research/shd1_original_native.py
+      - name: Enforce prior native prospective authority boundary
+        run: python -m research.verify_native_csharp_authority
+      - name: Admit exactly one OWNER main original run, NEVER PR secrets
+        id: owner
+        shell: bash
+        run: |
+          echo 'original_once=false' >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_EVENT_NAME" == "push" &&
+                "$GITHUB_REF" == "refs/heads/main" &&
+                "$GITHUB_ACTOR" == "mariancradulescu" &&
+                "$GITHUB_RUN_ATTEMPT" == "1" &&
+                "$(git log -1 --format=%s)" == "OWNER_SHD1_ORIGINAL_HXC1_SESSION_MTF_ONCE" &&
+                "$(git diff-tree --no-commit-id --name-only -r HEAD)" == "ops/shd1-session-multiscale-once.txt" &&
+                "$(cat ops/shd1-session-multiscale-once.txt)" == "OWNER_SHD1_HXC1_H1_M15_AUTHENTIC_NATIVE_12_SYMBOLS_ONCE" ]]; then
+            echo 'original_once=true' >> "$GITHUB_OUTPUT"
+          fi
+  original-protected-custody-native:
+    needs: verify
+    if: ${{ needs.verify.outputs.original_once == 'true' }}
+    environment: mxm-r3-custody-v1
+    concurrency:
+      group: mxm-shd1-original-hxc1-custody-native-once
+      cancel-in-progress: false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - run: dotnet build src/Mxm.Replay -c Release
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: hxc1-original-historical-encrypted-source
+          run-id: 43817213663
+          github-token: ${{ github.token }}
+          path: shd1-hxc1-source
+      - name: Verify original Pepperstone HXC1 and score only in native Core
+        run: python -m research.shd1_original_native
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: shd1-authentic-session-multiscale-native-original-public
+          path: shd1-public/
+          if-no-files-found: warn
+          retention-days: 90
+      - name: SHA256 on public aggregate receipts only
+        if: success()
+        run: sha256sum shd1-public/*.json
