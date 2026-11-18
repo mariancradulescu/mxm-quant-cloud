@@ -1,0 +1,143 @@
+name: XMH1 ORIGINAL historic M15 availability Pepperstone source-only no model
+on:
+  pull_request:
+    paths:
+      - 'research/XMH1_FROZEN_M15_EARLIER_SOURCE_PROBE_20261118.md'
+      - 'research/xmh1_m15_probe_source_protocol.json'
+      - 'research/xmh1_m15_source.py'
+      - 'research/xmh1_m15_readback.py'
+      - 'research/test_xmh1_m15_source.py'
+      - '.github/workflows/xmh1-m15-source-availability-only.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ops/xmh1-m15-probe-once.txt'
+      - '.github/workflows/xmh1-m15-source-availability-only.yml'
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  verify-source-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    outputs:
+      authorized: ${{ steps.owner.outputs.authorized }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - name: Freeze separate NEW source support protocol before collection
+        run: |
+          git merge-base --is-ancestor 9dab2a02c145cacc96af2802cdc425cd164c2ed8 HEAD
+          git show 9dab2a02c145cacc96af2802cdc425cd164c2ed8:research/XMH1_FROZEN_M15_EARLIER_SOURCE_PROBE_20261118.md >/tmp/xmh1-frozen
+          cmp /tmp/xmh1-frozen research/XMH1_FROZEN_M15_EARLIER_SOURCE_PROBE_20261118.md
+      - run: python -m py_compile research/xmh1_m15_source.py research/xmh1_m15_readback.py
+      - run: python -m unittest research.test_xmh1_m15_source -v
+      - name: One exact OWNER main source-only admission; never PR or generic dispatch
+        id: owner
+        shell: bash
+        run: |
+          echo 'authorized=false' >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_EVENT_NAME" == "push" &&
+                "$GITHUB_REF" == "refs/heads/main" &&
+                "$GITHUB_ACTOR" == "mariancradulescu" &&
+                "$GITHUB_RUN_ATTEMPT" == "1" &&
+                "$(git log -1 --format=%s)" == "OWNER_XMH1_NEW_EARLIER_M15_READONLY_PROBE_ONCE" &&
+                "$(git diff-tree --no-commit-id --name-only -r HEAD)" == "ops/xmh1-m15-probe-once.txt" &&
+                "$(cat ops/hxc1-source-intent.txt)" == "OWNER_XMH1_M15_PROBE_36_OFFICIAL_READ_ONLY_REQUESTS_ONCE" ]]; then
+             echo 'authorized=true' >> "$GITHUB_OUTPUT"
+          fi
+
+  original-recipient:
+    needs: [verify-source-contract]
+    if: needs.verify-source-contract.outputs.authorized == 'true'
+    environment: mxm-r3-custody-v1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - name: Derive run-bound public recipient from installed custody key, no secret export
+        run: python -m research.custody_new
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: xmh1-original-source-public-recipient
+          path: new-recipient-output/
+          retention-days: 5
+          if-no-files-found: error
+
+  original-historical-readonly-collection:
+    needs: [verify-source-contract, original-recipient]
+    if: needs.verify-source-contract.outputs.authorized == 'true'
+    environment: mxm-r3-pepperstone-v1
+    concurrency:
+      group: mxm-xmh1-new-earlier-m15-readonly-probe-once
+      cancel-in-progress: false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: xmh1-original-source-public-recipient
+          path: new-source-recipient
+      - name: Original-account historical M15 3 fixed older windows source-only through Open API; NO prediction, NO orders
+        run: python -m research.xmh1_m15_source
+        env:
+          R3_CTRADER_CLIENT_ID: ${{ secrets.R3_CTRADER_CLIENT_ID }}
+          R3_CTRADER_CLIENT_SECRET: ${{ secrets.R3_CTRADER_CLIENT_SECRET }}
+          R3_CTRADER_ACCESS_TOKEN: ${{ secrets.R3_CTRADER_ACCESS_TOKEN }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: xmh1-new-m15-earlier-encrypted-source
+          path: xmh1-sealed-output/
+          retention-days: 90
+          if-no-files-found: error
+
+  original-historical-source-readback:
+    needs: [verify-source-contract, original-historical-readonly-collection]
+    if: needs.verify-source-contract.outputs.authorized == 'true'
+    environment: mxm-r3-custody-v1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: xmh1-new-m15-earlier-encrypted-source
+          path: xmh1-sealed-output
+      - name: Cryptographic original-account and protobuf OHLCV readback, aggregate receipt only
+        run: python -m research.xmh1_m15_readback
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: xmh1-earlier-m15-original-public-receipt
+          path: xmh1-original-readback.public.json
+          retention-days: 90
+          if-no-files-found: error
