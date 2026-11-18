@@ -7,12 +7,13 @@ from .oei1_integrated import run,START,DAY
 class Oei1Synthetic(unittest.TestCase):
     def test_full_phase_source_shape_and_no_promotion(self):
         markets=[]
-        for market,base,amp,spread,vol in (
+        for symbol_id,(market,base,amp,spread,vol) in enumerate((
             ("EURUSD",1.08,.0005,.00004,1000),
             ("ETHUSD",3000.,12.,.35,1),
             ("SpotBrent",80.,.25,.02,1),
-            ("US500",5500.,10.,.7,1)):
+            ("US500",5500.,10.,.7,1)), 1):
             c=e.ProtoOASymbol()
+            c.symbolId=symbol_id;c.pipPosition=4
             c.minVolume=int(vol*100);c.stepVolume=int(vol*100)
             c.maxVolume=int(vol*1000);c.lotSize=10000000
             c.preciseTradingCommissionRate=300000000
