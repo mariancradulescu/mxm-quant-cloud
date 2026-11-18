@@ -1,3 +1,6 @@
+if(args.Length==3 && args[2]=="--mde1-cumulative-all12-direction-vs-event")
+    return Mde1NativeStudy.Run(args[0],args[1]);
+
 using System.Text.Json;
 using System.Security.Cryptography;
 
