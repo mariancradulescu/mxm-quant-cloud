@@ -1,0 +1,100 @@
+name: AHR1 original H1 Pepperstone native C# predictive study
+on:
+  pull_request:
+    paths:
+      - 'research/AHR1_AUTHENTIC_H1_EVENT_PREDICTIVE_FROZEN_20261118.md'
+      - 'research/ahr1_original_h1_native.py'
+      - 'src/Mxm.Core/Ahr1NativeResearch.cs'
+      - 'src/Mxm.Replay/Ahr1NativeStudy.cs'
+      - 'src/Mxm.Replay/Program.cs'
+      - '.github/workflows/ahr1-authentic-h1-native.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ops/ahr1-authentic-h1-once.txt'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    outputs:
+      owner_once: ${{ steps.owner.outputs.owner_once }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Enforce AHR1 frozen protocol ancestor and unchanged bytes
+        run: |
+          git merge-base --is-ancestor 841dab0e62d58f2f988cec7c8f2307fa413d54c8 HEAD
+          git show 841dab0e62d58f2f988cec7c8f2307fa413d54c8:research/AHR1_AUTHENTIC_H1_EVENT_PREDICTIVE_FROZEN_20261118.md > /tmp/ahr1-frozen-protocol
+          cmp /tmp/ahr1-frozen-protocol research/AHR1_AUTHENTIC_H1_EVENT_PREDICTIVE_FROZEN_20261118.md
+      - name: Native shared Core and Replay compile
+        run: dotnet build src/Mxm.Replay -c Release
+      - name: Cloud native linked Core compile without Cloud execution
+        run: dotnet build src/Mxm.Cloud -c Release
+      - name: Custody-only source bridge must remain Python syntax-valid
+        run: python -m py_compile research/ahr1_original_h1_native.py
+      - name: Admit exactly one OWNER main intent; never run secrets on a PR
+        id: owner
+        shell: bash
+        run: |
+          echo 'owner_once=false' >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_EVENT_NAME" == "push" &&
+                "$GITHUB_REF" == "refs/heads/main" &&
+                "$GITHUB_ACTOR" == "mariancradulescu" &&
+                "$GITHUB_RUN_ATTEMPT" == "1" &&
+                "$(git log -1 --format=%s)" == "OWNER_AHR1_AUTHENTIC_H1_NATIVE_ONCE" &&
+                "$(git diff-tree --no-commit-id --name-only -r HEAD)" == "ops/ahr1-authentic-h1-once.txt" &&
+                "$(cat ops/ahr1-authentic-h1-once.txt)" == "OWNER_AHR1_ORIGINAL_HXC1_REUSE_CSHARP_THREE_MODELS_ONCE" ]]; then
+            echo 'owner_once=true' >> "$GITHUB_OUTPUT"
+          fi
+  original-protected-custody-native:
+    needs: verify
+    if: ${{ needs.verify.outputs.owner_once == 'true' }}
+    environment: mxm-r3-custody-v1
+    concurrency:
+      group: mxm-ahr1-original-custody-native-once
+      cancel-in-progress: false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - run: dotnet build src/Mxm.Replay -c Release
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: hxc1-original-historical-encrypted-source
+          run-id: 43817213663
+          github-token: ${{ github.token }}
+          path: ahr1-hxc1-source
+      - name: Cryptographically rebuild HXC1 originals and score only in native C# Core
+        run: python -m research.ahr1_original_h1_native
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: ahr1-authentic-pepperstone-h1-native-aggregate-original
+          path: ahr1-public/
+          if-no-files-found: warn
+          retention-days: 90
+      - name: Verify and print only public receipt hashes
+        if: success()
+        run: sha256sum ahr1-public/*.json
