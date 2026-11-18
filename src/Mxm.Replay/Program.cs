@@ -1,6 +1,9 @@
 using System.Text.Json;
 using System.Security.Cryptography;
 
+if(args.Length==3 && args[2]=="--ahr1-authentic-h1")
+    return Ahr1NativeStudy.Run(args[0],args[1]);
+
 if(args.Length==3 && args[2]=="--owner-native-bayes-parity")
     return OwnerNativeBayesParity.Run(args[0],args[1]);
 
