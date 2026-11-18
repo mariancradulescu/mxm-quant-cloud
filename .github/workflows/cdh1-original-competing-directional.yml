@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     outputs:
-      original_once: ${{ steps.owner.outputs.original_once }
+      original_once: ${{ steps.owner.outputs.original_once }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -65,7 +65,7 @@ jobs:
           fi
   original-protected-custody-native:
     needs: verify
-    if: ${{ needs.verify.outputs.original_once == 'true' }
+    if: ${{ needs.verify.outputs.original_once == 'true' }}
     environment: mxm-r3-custody-v1
     concurrency:
       group: mxm-cdh1-original-custody-native-once
@@ -88,12 +88,12 @@ jobs:
         with:
           name: hxc1-original-historical-encrypted-source
           run-id: 43817213663
-          github-token: ${{ github.token }
+          github-token: ${{ github.token }}
           path: cdh1-hxc1-source
       - name: One ORIGINAL readback/score on genuine broker historical bars in CSharp Core
         run: python -m research.cdh1_original_native
         env:
-          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
