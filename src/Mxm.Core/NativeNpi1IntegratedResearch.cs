@@ -169,6 +169,13 @@ public static class NativeNpi1IntegratedResearch
             {
                 if(!quotes.TryGetValue(request.Symbol,out var q) ||
                    t<request.At+request.LatencyMs)continue;
+                // A missing possible market execution interval makes the historical
+                // order state UNKNOWN. Do not invent a next-day/post-gap fill.
+                if(t-request.At>2*Minute)
+                {
+                    book.Count("PENDING_EXECUTION_OUTCOME_UNKNOWN_DURING_OBSERVATION_GAP");
+                    continue;
+                }
                 var plan=book.Plans.GetValueOrDefault(request.PositionId);
                 if(plan is null)throw new InvalidOperationException("NPI1_PENDING_PLAN_ORIGIN_MISSING");
                 if(request.Kind=="REQUEST_OPEN")
