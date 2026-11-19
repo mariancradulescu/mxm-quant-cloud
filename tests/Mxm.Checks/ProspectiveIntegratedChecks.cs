@@ -125,6 +125,27 @@ internal static class ProspectiveIntegratedChecks
             "positive priced net is charged uncertainty but is not charged execution costs twice");
         Reject(FirstOnly("priced-net-missing-current-fee",x,priced with {EntryFeeEur=0}),
             "PROSPECTIVE_CURRENT_ENTRY_FEE_UNDERSTATED");
+        // UCP1-CAP1: even with TWO genuine positive same-clock allocator
+        // choices and enough EUR300 funding, one available portfolio slot
+        // permits only ONE new native model request. Ranking is unchanged
+        // and the other candidate has an explicit capacity declination.
+        var boundedSession=NativeFundedSession.Restore(snapshot,session.AccountBinding);
+        var bounded=boundedSession.DecideProspective(
+            Decision("cap1-two-positive",new[]{ex,ey}) with {
+                MaximumFundedOpenSlots=1
+            });
+        check(bounded.Selection.Allocations.Length==1 &&
+            bounded.Selection.Declined.Any(z=>
+                z.Reason=="NATIVE_PROSPECTIVE_FUNDED_POSITION_SLOT_CAP") &&
+            boundedSession.Ledger.Summary().PendingIntents==1 &&
+            boundedSession.Ledger.Summary().CashEur==300m &&
+            bounded.Selection.ReservedMarginEur>0 &&
+            !bounded.OrdersEnabled && !bounded.Qualified,
+            "UCP1_CAP1 joint positive same-clock allocations cannot exceed one precommitted vacant slot");
+        var boundedReplayed=NativeFundedSession.Restore(
+            boundedSession.Checkpoint(),session.AccountBinding);
+        check(boundedReplayed.Ledger.Summary()==boundedSession.Ledger.Summary(),
+            "UCP1_CAP1 strict capacity ledger and margin receipts survive native restore");
         var admitted=session.DecideProspective(Decision("accepted-synthetic",new[]{ex,ey}));
         check(admitted.Selection.Allocations.Length==2 &&
             admitted.Selection.Allocations.Single(z=>z.Id==x.Id).Units==2 &&
