@@ -85,6 +85,18 @@ internal static class Ucp1UnifiedProductChecks
               !afterReplay.OrdersSubmitted &&
               afterReplay.ModelBook.CashEur<=300m,
             "UCP1 official cTrader account type observed, broker status never becomes synthetic fill");
+        var oneHeldOneClosing=new LedgerSummary(299m,299m,1m,298m,
+            300m,0m,1,1,0,0m,false,new string('0',64));
+        var closingIntent=new LedgerEvent("UCP1_SYNTH_CLOSE",fresh,
+            "REQUEST_CLOSE","held-A","SYNTH",1,1m,0m,0m,
+            0m,0m,fresh-1,fresh-2,100,
+            "MODEL_UNTRANSMITTED_SYNTHETIC","aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            Array.Empty<LedgerQuote>());
+        check(NativeUnifiedPortfolioEngine.ModelSlotsPermitAdmission(
+                oneHeldOneClosing,new[]{closingIntent}) &&
+              !NativeUnifiedPortfolioEngine.ModelSlotsPermitAdmission(
+                oneHeldOneClosing,new[]{closingIntent with {Kind="REQUEST_OPEN"}}),
+            "UCP1 a modeled pending CLOSE does not double count already reserved held capacity, while new OPEN does");
         bool wrongBrokerProtected=false;
         var mismatch=new Ucp1Frame(fresh+60000L,new[]{M(fresh+60000L)},
             new Ucp1BrokerFrame(snap with {At=fresh+60000L,
