@@ -1,0 +1,99 @@
+name: SIR1 original OEI1 source native lifecycle witness once
+on:
+  pull_request:
+    paths:
+      - 'research/SIR1_SOURCE_WITNESS_FROZEN_20261119.md'
+      - 'research/sir1_original_source_bridge.py'
+      - 'src/Mxm.Core/NativeSir1OriginalSourceWitness.cs'
+      - 'src/Mxm.Replay/Sir1NativeOriginalWitnessRunner.cs'
+      - 'src/Mxm.Replay/Program.cs'
+      - '.github/workflows/sir1-original-source-witness.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ops/sir1-source-witness-once.txt'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    outputs:
+      original_once: ${{ steps.owner.outputs.original_once }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Independently frozen source protocol unchanged
+        run: |
+          git merge-base --is-ancestor 0c0de1b7f1d819f4180f549eeba34d9862818ea9 HEAD
+          git show 0c0de1b7f1d819f4180f549eeba34d9862818ea9:research/SIR1_SOURCE_WITNESS_FROZEN_20261119.md > /tmp/sir1-source-freeze
+          cmp /tmp/sir1-source-freeze research/SIR1_SOURCE_WITNESS_FROZEN_20261119.md
+      - run: dotnet build src/Mxm.Replay -c Release
+      - run: python -m py_compile research/sir1_original_source_bridge.py
+      - name: Verify original-source original-owner one-shot intent
+        id: owner
+        shell: bash
+        run: |
+          echo "original_once=false" >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_EVENT_NAME" == "push" &&
+                "$GITHUB_REF" == "refs/heads/main" &&
+                "$GITHUB_ACTOR" == "mariancradulescu" &&
+                "$GITHUB_RUN_ATTEMPT" == "1" &&
+                "$(git log -1 --format=%s)" == "OWNER_SIR1_SOURCE_LIFECYCLE_WITNESS_ONCE" &&
+                "$(git diff-tree --no-commit-id --name-only -r HEAD)" == "ops/sir1-source-witness-once.txt" &&
+                "$(cat ops/sir1-source-witness-once.txt)" == "SIR1_OEI1_ORIGINAL_SOURCE_FIXED_CLOCKS_NO_TRADING" ]]; then
+              echo "original_once=true" >> "$GITHUB_OUTPUT"
+          fi
+  protected-original-source-native-witness:
+    needs: verify
+    if: ${{ needs.verify.outputs.original_once == 'true' }}
+    environment: mxm-r3-custody-v1
+    concurrency:
+      group: sir1-original-source-model-lifecycle-once
+      cancel-in-progress: false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - run: dotnet build src/Mxm.Replay -c Release
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: oei1-original-pepperstone-encrypted-custody
+          run-id: 44247979857
+          github-token: ${{ github.token }}
+          path: sir1-original-source
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: oei1-original-integrated-3phase-public
+          run-id: 44247979857
+          github-token: ${{ github.token }}
+          path: sir1-original-public
+      - name: Verify original sealed source and model-only native event-chain
+        run: python -m research.sir1_original_source_bridge
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: sir1-original-quote-bound-model-intent-recovery-public
+          path: sir1-source-public/
+          retention-days: 90
+          if-no-files-found: warn

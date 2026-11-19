@@ -1,0 +1,40 @@
+name: SIR1 native model-only close lifecycle and Cloud parity
+on:
+  pull_request:
+    paths:
+      - 'research/SIR1_FROZEN_SIMULATED_INTENT_RECOVERY_20261119.md'
+      - 'src/Mxm.Core/NativeFundedLedger.cs'
+      - 'src/Mxm.Core/NativeSimulatedCloseLifecycle.cs'
+      - 'src/Mxm.Cloud/NativeCloudResearchParityAdapter.cs'
+      - 'src/Mxm.Replay/Sir1NativeStepRunner.cs'
+      - 'src/Mxm.Replay/Program.cs'
+      - 'tests/Mxm.Checks/NativeSimulatedCloseRecoveryChecks.cs'
+      - 'tests/Mxm.Checks/Mxm.Checks.csproj'
+      - 'tests/Mxm.Checks/Program.cs'
+      - '.github/workflows/sir1-native-close-recovery.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - name: Freeze unchanged and committed before source/model implementation
+        run: |
+          git merge-base --is-ancestor 988aeff88ca95cb9c06c9645fc5b28b8d5386cbd HEAD
+          git show 988aeff88ca95cb9c06c9645fc5b28b8d5386cbd:research/SIR1_FROZEN_SIMULATED_INTENT_RECOVERY_20261119.md > /tmp/sir1-frozen
+          cmp /tmp/sir1-frozen research/SIR1_FROZEN_SIMULATED_INTENT_RECOVERY_20261119.md
+      - run: dotnet build src/Mxm.Replay -c Release
+      - run: dotnet build src/Mxm.Cloud -c Release
+      - name: Exact same-input Core versus linked Cloud adapter synthetic lifecycle
+        run: dotnet run --project tests/Mxm.Checks -c Release
+      - name: Closed NPI1/MVO1/SPE1 readback and code unchanged
+        run: |
+          git diff --exit-code 02bd1a0eaddc9aa0fadce8a8647bcf851f7a4519 --             src/Mxm.Core/NativeNpi1IntegratedResearch.cs             src/Mxm.Core/NativeMarginalValueResearch.cs             src/Mxm.Core/NativeSignalEconomicResearch.cs             research/NPI1_ORIGINAL_NATIVE_FINANCIAL_RESULT_READBACK_20261119.md             research/MVO1_ORIGINAL_ECONOMIC_RESULT_READBACK_20261119.md

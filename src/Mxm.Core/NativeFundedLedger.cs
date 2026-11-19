@@ -158,6 +158,23 @@ public sealed partial class NativeFundedLedger
                 if(complete){state.Positions.Remove(closedPosition.Id);state.Pending.Remove(closedPosition.Id);}
                 else state.Positions[closedPosition.Id]=closedPosition with {Units=closedPosition.Units-e.Units,EntryFeeRemaining=closedPosition.EntryFeeRemaining-entryFee,FinancingRemaining=closedPosition.FinancingRemaining-finance};
                 break;
+            // SIR1: entirely local, NEVER TRANSMITTED model close intent.
+            // Unlike CONFIRMED_CANCEL, this never claims a broker acknowledgement,
+            // cannot cancel a real broker order, and NEVER removes the held position.
+            case "MODEL_CLOSE_INTENT_EXPIRED":
+                if(!state.Pending.TryGetValue(e.PositionId,out var staleClose) ||
+                   staleClose.Kind!="REQUEST_CLOSE" ||
+                   !staleClose.Reason.StartsWith("MODEL_UNTRANSMITTED_",StringComparison.Ordinal) ||
+                   !state.Positions.TryGetValue(e.PositionId,out var retained) ||
+                   e.At<=staleClose.At ||
+                   retained.Symbol!=e.Symbol || retained.Side!=e.Side ||
+                   retained.Units!=e.Units ||
+                   e.Reason!="MODEL_UNTRANSMITTED_CLOSE_RESPONSE_WINDOW_EXPIRED" ||
+                   e.Quotes.Length!=0 || e.ExecutionPrice!=0m ||
+                   e.FeeEur!=0m || e.MarginPerUnit!=0m ||
+                   e.SlippagePerSide!=0m)
+                    throw new ArgumentException("MODEL_CLOSE_INTENT_EXPIRY_NOT_PROVEN");
+                state.Pending.Remove(e.PositionId);break;
             case "CONFIRMED_CANCEL":
                 if(!state.Pending.ContainsKey(e.PositionId) || string.IsNullOrWhiteSpace(e.Reason))
                     throw new ArgumentException("NATIVE_LEDGER_CANCELLATION_EVIDENCE");

@@ -12,4 +12,10 @@ public sealed class NativeCloudResearchParityAdapter
         =>engine.Advance(eventAtClose,index);
     public LedgerSummary CommonBook=>engine.CurrentBook;
     public LedgerClosedFragment[] Closed=>engine.ClosedFragments();
+
+    // Shared C# shadow close reconciliation: no Robot API, no order calls,
+    // no broker acknowledgement. Replay invokes the same Core entrypoint.
+    public NativeModelCloseStep ObserveModelCloseOnly(NativeFundedSession model,
+        NativeModelCloseProtection state,NativeModelCloseObservation observation)
+        =>NativeSimulatedCloseLifecycle.Advance(model,state,observation);
 }
