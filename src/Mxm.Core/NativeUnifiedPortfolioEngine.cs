@@ -169,6 +169,8 @@ public sealed class NativeUnifiedPortfolioEngine
     public LedgerEvent[] OriginalModelEvents=>facts.ToArray();
     public LedgerSummary ModelSummary=>model.Ledger.Summary();
     public Scp1ChoiceReceipt[] Scp1ChoiceReceipts=>scoredChoices.ToArray();
+    public Ucp1Episode[] CompleteModelTrips=>trips.ToArray();
+    public Ucp1CurvePoint[] CommonBookEquityPath=>curve.ToArray();
     public string[] ActiveSymbols=>plans.Values.Where(p=>p.OpenAt>0)
         .Select(p=>p.Symbol).Distinct(StringComparer.Ordinal).ToArray();
     public string Checkpoint()=>JsonSerializer.Serialize(new Ucp1Checkpoint(
