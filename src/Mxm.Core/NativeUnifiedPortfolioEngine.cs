@@ -29,7 +29,7 @@ public sealed record Ucp1Episode(string PositionId,string Symbol,string Family,
 public sealed record Ucp1CurvePoint(long At,decimal CashEur,decimal? EquityEur,
     decimal? UsedMarginEur,int Held,int Pending,int Completed);
 public sealed record Ucp1Checkpoint(string Version,string Policy,string Session,
-    string BrokerSession,Dictionary<string,Ucp1Plan> Plans,
+    string BrokerSession,string BrokerBinding,Dictionary<string,Ucp1Plan> Plans,
     Dictionary<string,long> LastSignalBar,long LastAt,long Sequence,
     int Proposed,int Admitted,int OpenFills,int ExpiredOpens,
     int ExpiredCloses,int CloseRequests,int Rejections,
@@ -120,21 +120,22 @@ public sealed class NativeUnifiedPortfolioEngine
     int proposed,admitted,openFills,expiredOpens,expiredCloses,
         closeRequests,rejections,sourceUnknownClocks,gapExposures;
     string lastBrokerEvidence="NO_BROKER_FACT_REPLAY_ONLY";
-    public NativeUnifiedPortfolioEngine(string policy)
+    public NativeUnifiedPortfolioEngine(string policy,string brokerBinding="")
     {
         if(policy is not ("JOINT" or "TRANSITION_ONLY" or "REPAIR_ONLY" or
                           "LONG" or "SHORT" or "CASH"))
             throw new ArgumentException("UCP1_UNDECLARED_COMPLETE_POLICY");
         this.policy=policy;
         model=new NativeFundedSession("UCP1_MODEL_EUR300_"+policy);
-        broker=new NativeFundedSession("UCP1_BROKER_READ_ONLY_"+policy);
+        broker=new NativeFundedSession(string.IsNullOrWhiteSpace(brokerBinding)?
+            "UCP1_BROKER_READ_ONLY_"+policy:brokerBinding);
     }
     private NativeUnifiedPortfolioEngine(Ucp1Checkpoint s)
     {
         if(s.Version!=Version)throw new ArgumentException("UCP1_CHECKPOINT_VERSION");
         policy=s.Policy;
         model=NativeFundedSession.Restore(s.Session,"UCP1_MODEL_EUR300_"+policy);
-        broker=NativeFundedSession.Restore(s.BrokerSession,"UCP1_BROKER_READ_ONLY_"+policy);
+        broker=NativeFundedSession.Restore(s.BrokerSession,s.BrokerBinding);
         foreach(var p in s.Plans)plans.Add(p.Key,p.Value);
         foreach(var p in s.LastSignalBar)lastSignalBar.Add(p.Key,p.Value);
         foreach(var p in s.Reasons)reasons.Add(p.Key,p.Value);
@@ -149,8 +150,10 @@ public sealed class NativeUnifiedPortfolioEngine
     public static NativeUnifiedPortfolioEngine Restore(string checkpoint)
         =>new(JsonSerializer.Deserialize<Ucp1Checkpoint>(checkpoint)
              ??throw new ArgumentException("UCP1_MISSING_CHECKPOINT"));
+    public string[] ActiveSymbols=>plans.Values.Where(p=>p.OpenAt>0)
+        .Select(p=>p.Symbol).Distinct(StringComparer.Ordinal).ToArray();
     public string Checkpoint()=>JsonSerializer.Serialize(new Ucp1Checkpoint(
-        Version,policy,model.Checkpoint(),broker.Checkpoint(),
+        Version,policy,model.Checkpoint(),broker.Checkpoint(),broker.AccountBinding,
         new(plans,StringComparer.Ordinal),new(lastSignalBar,StringComparer.Ordinal),
         previousClock,seq,proposed,admitted,openFills,expiredOpens,
         expiredCloses,closeRequests,rejections,sourceUnknownClocks,
@@ -198,7 +201,7 @@ public sealed class NativeUnifiedPortfolioEngine
         }
         var report=broker.Observe(b.Identity,b.AccountCashEur);
         lastBrokerEvidence="BROKER_"+b.AccountType+"_"+
-            report.OverallMode+"_NO_MODEL_IMPORT";
+            report.Status+"_NO_MODEL_IMPORT";
     }
     public Ucp1FrameResult Advance(Ucp1Frame frame)
     {
