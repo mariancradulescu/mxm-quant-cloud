@@ -127,10 +127,10 @@ public static class NativeScp1EconomicScorer
         // Train conditional upside/downside on observed COMPLETE price-path
         // proxy labels. Empirical sizes shrink to train-wide prior, not a
         // guessed static EUR win/loss or ex-post UCP1 winner amplitude.
-        double win=(double)((cell?.PositiveSumR??0m)+
-            12m*(decimal)model.GlobalMeanWinR)/(w+12m);
-        double loss=(double)((cell?.NegativeSumR??0m)+
-            12m*(decimal)model.GlobalMeanLossR)/(Math.Max(0,n-w)+12m);
+        double win=(double)(((cell?.PositiveSumR??0m)+
+            12m*(decimal)model.GlobalMeanWinR)/(w+12m));
+        double loss=(double)(((cell?.NegativeSumR??0m)+
+            12m*(decimal)model.GlobalMeanLossR)/(Math.Max(0,n-w)+12m));
         double mean=p*win+(1-p)*loss;
         double magnitude=Math.Abs(win-loss);
         double width=1.645*uncertainty*magnitude+
