@@ -468,6 +468,9 @@ public sealed class NativeUnifiedPortfolioEngine
                     // selects a single proposal only for SCORE; MARGINAL and
                     // ABSTAIN present ALL alternatives to the common allocator.
                     if(policy=="SCP1_SCORE" &&
+                       scoreModel!.Method=="NO_SCORE")
+                        sourceOffers=Array.Empty<(Ucp1DecisionSignal Signal,Ucp1MarketFrame Frame)>();
+                    if(policy=="SCP1_SCORE" &&
                        scoreModel!.Method!="NO_SCORE")
                         sourceOffers=sourceOffers.Where(x=>
                             scpForecasts.ContainsKey(x.Frame.Symbol+"/"+
