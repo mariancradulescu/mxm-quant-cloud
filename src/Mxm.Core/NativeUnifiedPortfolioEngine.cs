@@ -133,10 +133,14 @@ public sealed class NativeUnifiedPortfolioEngine
                           "LONG" or "SHORT" or "CASH" or
                           "SCP1_FIRST" or "SCP1_SCORE" or
                           "SCP1_MARGINAL" or "SCP1_ABSTAIN" or
-                          "SCP1_LONG" or "SCP1_SHORT" or "SCP1_CASH"))
+                          "SCP1_LONG" or "SCP1_SHORT" or "SCP1_CASH" or
+                          "FCP1_FIRST" or "FCP1_SCORE" or "FCP1_RIDGE" or
+                          "FCP1_MARGINAL" or "FCP1_ABSTAIN" or
+                          "FCP1_LONG" or "FCP1_SHORT" or "FCP1_CASH"))
             throw new ArgumentException("UCP1_UNDECLARED_COMPLETE_POLICY");
         this.policy=policy;
-        if(policy.StartsWith("SCP1_",StringComparison.Ordinal) &&
+        if((policy.StartsWith("SCP1_",StringComparison.Ordinal) ||
+            policy.StartsWith("FCP1_",StringComparison.Ordinal)) &&
            (scoredModel is null || scoredModel.Version!=NativeScp1EconomicScorer.Version))
             throw new ArgumentException("SCP1_FROZEN_SCORE_SNAPSHOT_REQUIRED");
         scoreModel=scoredModel;
@@ -233,6 +237,62 @@ public sealed class NativeUnifiedPortfolioEngine
         int open=pendingFacts.Count(x=>x.Kind=="REQUEST_OPEN");
         return summary.OpenPositions+open<2;
     }
+    // FCP1 branch is separate from closed SCP1's existing allocator/receipts.
+    // It uses the SAME native ledger, later-quote conditional fill and native
+    // signal/structure/risk exit lifecycle, but never the positive-utility
+    // requirement that invalidated the original FIRST control.
+    Ucp1FrameResult AdvanceFcp1(long t,Ucp1Frame frame,
+        List<(Ucp1DecisionSignal Signal,Ucp1MarketFrame Frame)> options)
+    {
+        var ledger=model.Ledger;
+        var held=ledger.PositionSnapshot();
+        var pending=ledger.PendingSnapshot();
+        var activeIds=held.Select(x=>x.Id).Concat(pending.Where(x=>
+            x.Kind=="REQUEST_OPEN").Select(x=>x.PositionId))
+            .ToHashSet(StringComparer.Ordinal);
+        decimal riskCommitted=plans.Where(x=>activeIds.Contains(x.Key))
+            .Sum(x=>x.Value.RiskEur);
+        var result=NativeFcp1FinancedSelection.Choose(policy,t,scoreModel!,
+            options.Select(x=>new Fcp1Offer(x.Signal,x.Frame)).ToArray(),
+            ledger.Summary(t),held,pending,riskCommitted,
+            frame.IntermarketBreadth??0m);
+        foreach(var x in result.Examined)
+        {
+            bool selected=ReferenceEquals(x,result.Selected);
+            scoredChoices.Add(new Scp1ChoiceReceipt(t,x.Signal.Symbol,
+                x.Signal.Family,x.Signal.Side,x.CentralNetPerMinUnitEur,
+                x.LowerNetPerMinUnitEur,x.FavorableProbability,
+                "FCP1_EXPLORATORY_"+x.ScoreMethod,
+                selected?"FCP1_SELECTED_AFTER_FINANCE":x.Reason));
+            if(!x.Fundable){Count(x.Reason);rejections++;}
+        }
+        if(result.Selected is not null)
+        {
+            var x=result.Selected;var s=x.Signal;var m=x.Market;
+            string id="UCP1/"+policy+"/"+s.Symbol+"/"+s.Family+"/"+t;
+            // Model-only intent; neither Cloud nor Replay calls broker orders.
+            Apply(Event("REQUEST_OPEN",t,id,s.Symbol,s.Side,x.Units,
+                margin:m.Quote.MarginPerUnit,slip:m.SlippagePerSideQuote,
+                reason:"NATIVE_CONDITIONAL_SELECTION"));
+            plans[id]=new Ucp1Plan(id,s.Symbol,s.Family,s.Side,
+                s.Atr,s.Equilibrium,x.ReservedAdverseRiskEur,0m,0m,0L,
+                0m,0m,0m,0m,0L,false);
+            admitted++;
+        }
+        else if(result.Examined.Length>0)
+        {
+            Count(result.Status);rejections++;
+        }
+        previousClock=t;
+        var end=ledger.Summary(t);
+        curve.Add(new Ucp1CurvePoint(t,end.CashEur,end.LiquidationEquityEur,
+            end.UsedMarginEur,end.OpenPositions,end.PendingIntents,
+            end.CompleteRoundTrips));
+        return new(policy,t,end,proposed,admitted,openFills,trips.Count,
+            end.PendingIntents,end.OpenPositions,lastBrokerEvidence,
+            end.EventChainHash);
+    }
+
     public Ucp1FrameResult Advance(Ucp1Frame frame)
     {
         if(frame is null||frame.At<=previousClock||frame.At<=0||
@@ -362,12 +422,13 @@ public sealed class NativeUnifiedPortfolioEngine
         // Signal time is LAST COMPLETED M5 clock, not the still-forming bar.
         // Selection is conducted in one C# portfolio allocator, not per asset.
         bool scp1=policy.StartsWith("SCP1_",StringComparison.Ordinal);
-        if(policy!="CASH" && policy!="SCP1_CASH")
+        bool fcp1=policy.StartsWith("FCP1_",StringComparison.Ordinal);
+        if(policy!="CASH" && policy!="SCP1_CASH" && policy!="FCP1_CASH")
         {
             var options=new List<(Ucp1DecisionSignal Signal,Ucp1MarketFrame Frame)>();
             foreach(var m in frame.Markets.OrderBy(x=>x.Symbol,StringComparer.Ordinal))
             {
-                if(scp1)
+                if(scp1||fcp1)
                 {
                     // The training cohort was sampled immediately AFTER a
                     // genuine completed M15 bar. Never apply that learned
@@ -376,7 +437,8 @@ public sealed class NativeUnifiedPortfolioEngine
                     var completed15=m.M15.Where(x=>x.CloseAt<t).TakeLast(1).ToArray();
                     if(completed15.Length==0 ||
                        t-completed15[0].CloseAt>120000L)
-                    {Count("SCP1_COMPLETED_M15_DECISION_CLOCK_STALE");continue;}
+                    {Count(fcp1?"FCP1_COMPLETED_M15_DECISION_CLOCK_STALE":
+                        "SCP1_COMPLETED_M15_DECISION_CLOCK_STALE");continue;}
                 }
                 var signals=Ucp1CausalSignals.Describe(m,t);
                 if(signals.Length==0)continue;
@@ -386,16 +448,17 @@ public sealed class NativeUnifiedPortfolioEngine
                 var choices=policy switch {
                     "TRANSITION_ONLY"=>signals.Where(s=>s.Family=="RANGE_TRANSITION"),
                     "REPAIR_ONLY"=>signals.Where(s=>s.Family=="EQUILIBRIUM_REPAIR"),
-                    "LONG" or "SCP1_LONG"=>signals.Take(1).Select(s=>s with {Family="FUNDED_LONG_CONTROL",Side=1}),
-                    "SHORT" or "SCP1_SHORT"=>signals.Take(1).Select(s=>s with {Family="FUNDED_SHORT_CONTROL",Side=-1}),
+                    "LONG" or "SCP1_LONG" or "FCP1_LONG"=>signals.Take(1).Select(s=>s with {Family="FUNDED_LONG_CONTROL",Side=1}),
+                    "SHORT" or "SCP1_SHORT" or "FCP1_SHORT"=>signals.Take(1).Select(s=>s with {Family="FUNDED_SHORT_CONTROL",Side=-1}),
                     _=>signals.AsEnumerable()};
                 // SCP1 never removes an alternative of the same instrument
                 // before the learned economic selection. UCP1 exact closed
                 // model retains its original Take(1) unchanged.
-                foreach(var s in scp1?choices:choices.Take(1))
+                foreach(var s in scp1||fcp1?choices:choices.Take(1))
                     options.Add((s,m));
             }
             proposed+=options.Count;
+            if(fcp1)return AdvanceFcp1(t,frame,options);
             var ledger=model.Ledger;
             var summary=ledger.Summary(t);
             // Held position with REQUEST_CLOSE retains its booked exposure
