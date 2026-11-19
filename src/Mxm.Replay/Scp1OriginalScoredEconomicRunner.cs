@@ -116,6 +116,14 @@ internal static class Scp1OriginalScoredEconomicRunner
         foreach(var at in times)
         {
             long t=at.Key;
+            // CAUSAL ANTI-LEAKAGE: fit uses observations before Sep 28;
+            // estimator method selection uses CAL before Oct 19. No frozen
+            // fitted model is permitted to take hypothetical economic
+            // decisions in either period where its own fit was unavailable.
+            // All 7 money books start fresh EUR300 only in the EXPOSED
+            // post-calibration evaluation period.
+            if(t<NativeScp1EconomicScorer.EndCal ||
+               t>=NativeScp1EconomicScorer.EndEval)continue;
             var raw=at.ToDictionary(x=>x.Symbol,x=>x.Quote,StringComparer.Ordinal);
             raw.TryGetValue("EURUSD",out var fx);
             var mt=new List<Ucp1MarketFrame>();
@@ -207,6 +215,8 @@ internal static class Scp1OriginalScoredEconomicRunner
             Protocol=NativeScp1EconomicScorer.Version,
             Model=snapshot,
             SourceClass="GENUINE_ORIGINAL_PEPPERSTONE_HXC1_M5_M15_AND_OEI1_QUOTE",
+            FinancialDecisionWindow="ONLY_EVALUATION_2026_10_19_THROUGH_2026_11_09_POST_CAL",
+            NoInSampleFinancialDecisionLeakage=true,
             PriceOnlyTrainingLabelCount=training.Length,
             CompleteTrainingLabels=training.Count(x=>x.Complete),
             PriceOnlyTrainingSourceHash=Sha(string.Join("|",training.Select(x=>
