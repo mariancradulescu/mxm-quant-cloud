@@ -64,7 +64,6 @@ internal static class Scp1EconomicScoringChecks
             "SCP1_SYNTH_BROKER",model);
         var cloud=new NativeUnifiedCloudParityAdapter("SCP1_ABSTAIN",
             "SCP1_SYNTH_BROKER",model);
-        var names=new[]{"SYNTH","PEER"};
         var contract=new NativeObservedContractTerms("SYNTH","USD",at-1000,
             1m,1m,2m,100m,2,0,2,0,null,0,0,0m,0m,4,
             24,1320,3,false,0,true,false);
@@ -77,7 +76,9 @@ internal static class Scp1EconomicScoringChecks
         var a=core.Advance(input),b=cloud.Observe(input);
         check(JsonSerializer.Serialize(a)==JsonSerializer.Serialize(b) &&
             JsonSerializer.Serialize(core.Scp1ChoiceReceipts)==
-              JsonSerializer.Serialize(cloud.ModelFacts.Where(x=>x.Kind=="SCP1_RESERVED_NONEXISTENT").ToArray())==false &&
+              JsonSerializer.Serialize(cloud.Scp1Choices) &&
+            JsonSerializer.Serialize(core.OriginalModelEvents)==
+              JsonSerializer.Serialize(cloud.ModelFacts) &&
             a.OrdersSubmitted==false && b.OrdersSubmitted==false,
             "SCP1 full same Core scorer entry/exit/ledger as Cloud adapter, no broker order side effect");
         var recovered=NativeUnifiedPortfolioEngine.Restore(core.Checkpoint());
