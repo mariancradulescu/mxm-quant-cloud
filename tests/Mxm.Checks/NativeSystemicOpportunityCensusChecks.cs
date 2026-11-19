@@ -60,11 +60,11 @@ internal static class NativeSystemicOpportunityCensusChecks
             baseBook with {CompleteRoundTrips=1,ClosedNetEur=1m,
                 CashEur=301m,LiquidationEquityEur=301m,FreeMarginEur=301m},
             new[]{"2026-W47"}));
-        check(modeled.ModeledFundedCompleteTrips==1 &&
-            modeled.ModeledClosedNetEur==1m &&
-            modeled.Weeks[0].ModeledFundedCompleteTrips==1 &&
+        check(modeled.ModeledFundedCompleteTrips is null &&
+            modeled.ModeledClosedNetEur is null &&
+            modeled.Weeks[0].ModeledFundedCompleteTrips is null &&
             modeled.SystemHard21EvidenceState=="UNKNOWN",
-            "SYC1 two partial/final fills count ONE modeled trip, still never a certified HARD21");
+            "SYC2 externally supplied partial/final fragments cannot establish one modeled trip without native event trace");
         var broken=NativeSystemicOpportunityCensus.Assess(new(source,
             new[]{new NativeSystemicPositionLink("a","POS-A")},
             new[]{fragment1,fragment2},
@@ -72,7 +72,7 @@ internal static class NativeSystemicOpportunityCensusChecks
             new[]{"2026-W47"}));
         check(broken.ModeledFundedCompleteTrips is null &&
             broken.Weeks[0].ModeledFundedCompleteTrips is null &&
-            broken.MissingEvidence.Contains("COMMON_LEDGER_TRIP_MAPPING_CASH_IDENTITY_OR_FINAL_SETTLEMENT_UNKNOWN"),
+            broken.MissingEvidence.Contains("NATIVE_EVENT_TRACE_SYMBOL_SIDE_VOLUME_SETTLEMENT_OR_CASH_IDENTITY_UNVERIFIED"),
             "SYC1 ledger mismatch invalidates financial counts instead of treating missing proof as zero");
         const int n=21;
         var proposals=Enumerable.Range(0,n).Select(i=>P(
@@ -92,15 +92,17 @@ internal static class NativeSystemicOpportunityCensusChecks
                 weeks,proof));
         check(Run(21,false,new[]{"2026-W47"}).SystemHard21EvidenceState=="UNKNOWN",
             "SYC1 even 21 synthetic complete trips cannot certify continuous floating risk without a native certificate");
-        check(Run(20,true,new[]{"2026-W47"}).SystemHard21EvidenceState=="FAILED_THIS_EVALUATED_CALENDAR",
+        check(Run(20,true,new[]{"2026-W47"}).SystemHard21EvidenceState=="UNKNOWN",
             "SYC1 20 complete trips fail HARD21 when all required modeled proof flags are asserted");
-        check(Run(21,true,new[]{"2026-W47","2026-W48"}).SystemHard21EvidenceState=="FAILED_THIS_EVALUATED_CALENDAR",
+        check(Run(21,true,new[]{"2026-W47","2026-W48"}).SystemHard21EvidenceState=="UNKNOWN",
             "SYC1 empty predeclared eligible week is never discarded to manufacture frequency success");
         var syntheticCertificate=Run(21,true,new[]{"2026-W47"});
-        check(syntheticCertificate.SystemHard21EvidenceState=="CERTIFIED" &&
-            syntheticCertificate.Weeks[0].ModeledFundedCompleteTrips==21 &&
+        check(syntheticCertificate.SystemHard21EvidenceState=="UNKNOWN" &&
+            syntheticCertificate.Weeks[0].ModeledFundedCompleteTrips is null &&
+            syntheticCertificate.MissingEvidence.Contains(
+                "INDEPENDENT_ORIGINAL_BROKER_SOURCE_AND_CONTINUOUS_DD_VERIFIER_NOT_CONNECTED") &&
             !syntheticCertificate.EconomicallyQualified && !syntheticCertificate.OrdersEnabled,
-            "SYC1 synthetic arithmetic exercises systemic threshold only; no broker or alpha claim");
+            "SYC2 all-true source booleans cannot manufacture authentic HARD21");
         bool invalid=false;
         try{NativeSystemicOpportunityCensus.Assess(new(
             source,Array.Empty<NativeSystemicPositionLink>(),
