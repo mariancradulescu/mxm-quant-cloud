@@ -127,9 +127,9 @@ public static class NativeSignalEconomicResearch
                     continue;
                 }
                 decimal lbps=(f.Close/p.EntryClose-1m)*10000m;
-                decimal gross=p.Side*lbps;
+                decimal directionalBps=p.Side*lbps;
                 var row=new PriceOnlyTrade(book,stage.Name,f.Symbol,p.Family,p.Side,
-                    p.EnteredAt,f.At,gross,lbps,-lbps,verdict.Reason);
+                    p.EnteredAt,f.At,directionalBps,lbps,-lbps,verdict.Reason);
                 closed.Add(row);
                 exits[verdict.Reason]=exits.GetValueOrDefault(verdict.Reason)+1;
                 string week=Week(f.At);
