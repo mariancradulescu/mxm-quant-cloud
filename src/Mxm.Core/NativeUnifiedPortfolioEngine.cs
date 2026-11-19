@@ -18,7 +18,7 @@ public sealed record Ucp1MarketFrame(
 public sealed record Ucp1BrokerFrame(BrokerIdentitySnapshot Identity,
     decimal? AccountCashEur,string AccountType);
 public sealed record Ucp1Frame(long At,Ucp1MarketFrame[] Markets,
-    Ucp1BrokerFrame? Broker=null);
+    Ucp1BrokerFrame? Broker=null,decimal? IntermarketBreadth=null);
 public sealed record Ucp1DecisionSignal(string Symbol,string Family,int Side,
     decimal Atr,decimal Equilibrium,decimal ExpectedMove,long LastCompletedM5At);
 public sealed record Ucp1Episode(string PositionId,string Symbol,string Family,
@@ -36,7 +36,11 @@ public sealed record Ucp1Checkpoint(string Version,string Policy,string Session,
     int SourceUnknownClocks,int GapExposures,
     Dictionary<string,int> Reasons,LedgerEvent[] Events,
     Ucp1Episode[] Trips,Ucp1CurvePoint[] Curve,
-    string LastBrokerEvidence);
+    string LastBrokerEvidence,Scp1ScoreModel? Scp1Model=null,
+    Scp1ChoiceReceipt[]? Scp1Choices=null);
+public sealed record Scp1ChoiceReceipt(long At,string Symbol,string Family,int Side,
+    decimal? ConditionalExpectedNetEur,decimal? AdverseLowerNetEur,
+    double? FavorableProbability,string ModelMethod,string Decision);
 public sealed record Ucp1Plan(string Id,string Symbol,string Family,int Side,
     decimal Atr,decimal Equilibrium,decimal RiskEur,
     decimal Stop,decimal Extreme,long OpenAt,decimal Entry,
@@ -108,6 +112,8 @@ public sealed class NativeUnifiedPortfolioEngine
     const long ResponseWindow=120000L;
     const long Latency=100L;
     readonly string policy;
+    readonly Scp1ScoreModel? scoreModel;
+    readonly List<Scp1ChoiceReceipt> scoredChoices=new();
     readonly NativeFundedSession model;
     readonly NativeFundedSession broker;
     readonly Dictionary<string,Ucp1Plan> plans=new(StringComparer.Ordinal);
@@ -120,12 +126,20 @@ public sealed class NativeUnifiedPortfolioEngine
     int proposed,admitted,openFills,expiredOpens,expiredCloses,
         closeRequests,rejections,sourceUnknownClocks,gapExposures;
     string lastBrokerEvidence="NO_BROKER_FACT_REPLAY_ONLY";
-    public NativeUnifiedPortfolioEngine(string policy,string brokerBinding="")
+    public NativeUnifiedPortfolioEngine(string policy,string brokerBinding="",
+        Scp1ScoreModel? scoredModel=null)
     {
         if(policy is not ("JOINT" or "TRANSITION_ONLY" or "REPAIR_ONLY" or
-                          "LONG" or "SHORT" or "CASH"))
+                          "LONG" or "SHORT" or "CASH" or
+                          "SCP1_FIRST" or "SCP1_SCORE" or
+                          "SCP1_MARGINAL" or "SCP1_ABSTAIN" or
+                          "SCP1_LONG" or "SCP1_SHORT" or "SCP1_CASH"))
             throw new ArgumentException("UCP1_UNDECLARED_COMPLETE_POLICY");
         this.policy=policy;
+        if(policy.StartsWith("SCP1_",StringComparison.Ordinal) &&
+           (scoredModel is null || scoredModel.Version!=NativeScp1EconomicScorer.Version))
+            throw new ArgumentException("SCP1_FROZEN_SCORE_SNAPSHOT_REQUIRED");
+        scoreModel=scoredModel;
         model=new NativeFundedSession("UCP1_MODEL_EUR300_"+policy);
         broker=new NativeFundedSession(string.IsNullOrWhiteSpace(brokerBinding)?
             "UCP1_BROKER_READ_ONLY_"+policy:brokerBinding);
@@ -134,6 +148,8 @@ public sealed class NativeUnifiedPortfolioEngine
     {
         if(s.Version!=Version)throw new ArgumentException("UCP1_CHECKPOINT_VERSION");
         policy=s.Policy;
+        scoreModel=s.Scp1Model;
+        if(s.Scp1Choices is not null)scoredChoices.AddRange(s.Scp1Choices);
         model=NativeFundedSession.Restore(s.Session,"UCP1_MODEL_EUR300_"+policy);
         broker=NativeFundedSession.Restore(s.BrokerSession,s.BrokerBinding);
         foreach(var p in s.Plans)plans.Add(p.Key,p.Value);
@@ -152,6 +168,7 @@ public sealed class NativeUnifiedPortfolioEngine
              ??throw new ArgumentException("UCP1_MISSING_CHECKPOINT"));
     public LedgerEvent[] OriginalModelEvents=>facts.ToArray();
     public LedgerSummary ModelSummary=>model.Ledger.Summary();
+    public Scp1ChoiceReceipt[] Scp1ChoiceReceipts=>scoredChoices.ToArray();
     public string[] ActiveSymbols=>plans.Values.Where(p=>p.OpenAt>0)
         .Select(p=>p.Symbol).Distinct(StringComparer.Ordinal).ToArray();
     public string Checkpoint()=>JsonSerializer.Serialize(new Ucp1Checkpoint(
@@ -160,7 +177,8 @@ public sealed class NativeUnifiedPortfolioEngine
         previousClock,seq,proposed,admitted,openFills,expiredOpens,
         expiredCloses,closeRequests,rejections,sourceUnknownClocks,
         gapExposures,new(reasons,StringComparer.Ordinal),
-        facts.ToArray(),trips.ToArray(),curve.ToArray(),lastBrokerEvidence));
+        facts.ToArray(),trips.ToArray(),curve.ToArray(),lastBrokerEvidence,
+        scoreModel,scoredChoices.ToArray()));
     static string Sha(string s)=>Convert.ToHexString(SHA256.HashData(
         Encoding.UTF8.GetBytes(s))).ToLowerInvariant();
     LedgerEvent Event(string kind,long at,string id="",string sym="",int side=0,
@@ -341,7 +359,8 @@ public sealed class NativeUnifiedPortfolioEngine
         }
         // Signal time is LAST COMPLETED M5 clock, not the still-forming bar.
         // Selection is conducted in one C# portfolio allocator, not per asset.
-        if(policy!="CASH")
+        bool scp1=policy.StartsWith("SCP1_",StringComparison.Ordinal);
+        if(policy!="CASH" && policy!="SCP1_CASH")
         {
             var options=new List<(Ucp1DecisionSignal Signal,Ucp1MarketFrame Frame)>();
             foreach(var m in frame.Markets.OrderBy(x=>x.Symbol,StringComparer.Ordinal))
@@ -354,10 +373,14 @@ public sealed class NativeUnifiedPortfolioEngine
                 var choices=policy switch {
                     "TRANSITION_ONLY"=>signals.Where(s=>s.Family=="RANGE_TRANSITION"),
                     "REPAIR_ONLY"=>signals.Where(s=>s.Family=="EQUILIBRIUM_REPAIR"),
-                    "LONG"=>signals.Take(1).Select(s=>s with {Family="FUNDED_LONG_CONTROL",Side=1}),
-                    "SHORT"=>signals.Take(1).Select(s=>s with {Family="FUNDED_SHORT_CONTROL",Side=-1}),
+                    "LONG" or "SCP1_LONG"=>signals.Take(1).Select(s=>s with {Family="FUNDED_LONG_CONTROL",Side=1}),
+                    "SHORT" or "SCP1_SHORT"=>signals.Take(1).Select(s=>s with {Family="FUNDED_SHORT_CONTROL",Side=-1}),
                     _=>signals.AsEnumerable()};
-                foreach(var s in choices.Take(1)) options.Add((s,m));
+                // SCP1 never removes an alternative of the same instrument
+                // before the learned economic selection. UCP1 exact closed
+                // model retains its original Take(1) unchanged.
+                foreach(var s in scp1?choices:choices.Take(1))
+                    options.Add((s,m));
             }
             proposed+=options.Count;
             var ledger=model.Ledger;
@@ -371,7 +394,7 @@ public sealed class NativeUnifiedPortfolioEngine
                 .Where(x=>x.Kind=="REQUEST_OPEN").ToArray();
             if(summary.LiquidationEquityEur is decimal equity &&
                summary.FreeMarginEur is decimal free && equity>210m &&
-               ModelSlotsPermitAdmission(summary,pendingEntryFacts) &&
+               (scp1 || ModelSlotsPermitAdmission(summary,pendingEntryFacts)) &&
                ledger.PositionSnapshot().All(x=>by.ContainsKey(x.Symbol)) &&
                pendingEntryFacts.All(x=>by.ContainsKey(x.Symbol)))
             {
@@ -395,7 +418,77 @@ public sealed class NativeUnifiedPortfolioEngine
                 var offers=new List<EconomicOpportunity>();
                 var terms=new List<ResearchEntryTerms>();
                 var local=new Dictionary<string,Ucp1Plan>(StringComparer.Ordinal);
-                foreach(var (signal,m) in options.OrderBy(x=>x.Signal.Symbol,StringComparer.Ordinal))
+                // ALL SCP1 proposals are scored with the frozen, separately
+                // trained native model BEFORE any family/symbol alternative
+                // is discarded. Duplicate-symbol simultaneous exposure is
+                // still forbidden in the common funded allocator.
+                var sourceOffers=options.OrderBy(x=>x.Signal.Symbol,StringComparer.Ordinal)
+                    .ThenBy(x=>x.Signal.Family,StringComparer.Ordinal).ToArray();
+                var scpForecasts=new Dictionary<string,(Scp1Prediction Forecast,
+                    decimal Central,decimal Lower,decimal LossPerUnit)>(
+                        StringComparer.Ordinal);
+                if(scp1)
+                {
+                    foreach(var (s,m) in sourceOffers)
+                    {
+                        string key=m.Symbol+"/"+s.Family+"/"+s.Side;
+                        Scp1Prediction pred;
+                        try
+                        {
+                            var feature=NativeScp1EconomicScorer.Features(
+                                m.Symbol,t,s.Side,s.Family,m.M5,m.M15,
+                                frame.IntermarketBreadth??0m);
+                            pred=NativeScp1EconomicScorer.Predict(
+                                scoreModel!,s.Family,s.Side,feature,
+                                scoreModel!.Method);
+                        }
+                        catch(ArgumentException e)
+                        {
+                            Count("SCP1_FEATURE_UNAVAILABLE_"+e.Message);continue;
+                        }
+                        var q=m.Quote;
+                        decimal riskPerUnit=1.5m*s.Atr;
+                        decimal fee=Fee(q,m.Contract.MinimumUnits);
+                        decimal costs=(q.Ask-q.Bid+2m*m.SlippagePerSideQuote)
+                            *q.EurDebit+2m*fee/m.Contract.MinimumUnits;
+                        decimal central=(decimal)pred.MeanR*riskPerUnit*
+                            q.EurCredit-costs;
+                        decimal lower=(decimal)pred.LowerConfidenceR*riskPerUnit*
+                            q.EurDebit-costs;
+                        decimal adverseLoss=riskPerUnit*q.EurDebit*
+                            (decimal)Math.Max(1.5d,Math.Abs(pred.MeanNegativeR)+
+                                pred.UncertaintyR);
+                        scpForecasts[key]=(pred,central,lower,adverseLoss);
+                        scoredChoices.Add(new Scp1ChoiceReceipt(t,m.Symbol,s.Family,
+                            s.Side,central*m.Contract.MinimumUnits,
+                            lower*m.Contract.MinimumUnits,pred.PWin,
+                            scoreModel!.Method,"OBSERVED_NOT_YET_ADMITTED"));
+                    }
+                    // Controls preserve causal first-candidate order. Ranking
+                    // selects a single proposal only for SCORE; MARGINAL and
+                    // ABSTAIN present ALL alternatives to the common allocator.
+                    if(policy=="SCP1_SCORE" &&
+                       scoreModel!.Method!="NO_SCORE")
+                        sourceOffers=sourceOffers.Where(x=>
+                            scpForecasts.ContainsKey(x.Frame.Symbol+"/"+
+                                x.Signal.Family+"/"+x.Signal.Side))
+                            .OrderByDescending(x=>scpForecasts[x.Frame.Symbol+"/"+
+                                x.Signal.Family+"/"+x.Signal.Side].Lower)
+                            .ThenBy(x=>x.Signal.Symbol,StringComparer.Ordinal)
+                            .ThenBy(x=>x.Signal.Family,StringComparer.Ordinal)
+                            .Take(1).ToArray();
+                    if(policy is "SCP1_FIRST" or "SCP1_LONG" or "SCP1_SHORT")
+                        sourceOffers=sourceOffers.Take(1).ToArray();
+                    if(policy=="SCP1_ABSTAIN")
+                        sourceOffers=scoreModel!.Method=="NO_SCORE"?
+                            Array.Empty<(Ucp1DecisionSignal Signal,Ucp1MarketFrame Frame)>():
+                            sourceOffers.Where(x=>scpForecasts.TryGetValue(
+                                x.Frame.Symbol+"/"+x.Signal.Family+"/"+x.Signal.Side,
+                                out var p)&&p.Lower>0m).ToArray();
+                    if(policy=="SCP1_MARGINAL"&&scoreModel!.Method=="NO_SCORE")
+                        sourceOffers=Array.Empty<(Ucp1DecisionSignal Signal,Ucp1MarketFrame Frame)>();
+                }
+                foreach(var (signal,m) in sourceOffers)
                 {
                     if(ledger.PositionSnapshot().Any(x=>x.Symbol==signal.Symbol) ||
                        ledger.PendingSnapshot().Any(x=>x.Symbol==signal.Symbol))
@@ -407,20 +500,50 @@ public sealed class NativeUnifiedPortfolioEngine
                        m.Contract.MaximumUnits<units)
                     {Count("ORIGINAL_ACCOUNT_VOLUME_UNSUPPORTED");continue;}
                     decimal fee=Fee(m.Quote,units);
+                    // UCP1 frozen exact path keeps its old amplitude estimate.
+                    // SCP1 uses fitted conditional P(win), P(loss), signed
+                    // reward size and explicit uncertainty, priced in EUR
+                    // only from current genuine market/contract evidence.
                     decimal excess=signal.ExpectedMove-
                         (qCost+2m*slip+2m*fee/units/m.Quote.EurDebit);
-                    if(excess<=0){Count("NO_PREDECISION_COST_SURPLUS");continue;}
                     decimal riskPerUnit=(1.5m*signal.Atr+qCost+2m*slip)*
                         m.Quote.EurDebit;
+                    string scoreKey=m.Symbol+"/"+signal.Family+"/"+signal.Side;
+                    bool found=scpForecasts.TryGetValue(scoreKey,out var prediction);
+                    bool simpleControl=policy is "SCP1_FIRST" or "SCP1_LONG" or "SCP1_SHORT";
+                    if(scp1 && !simpleControl && !found)
+                    {Count("SCP1_SCORE_EVIDENCE_MISSING");continue;}
+                    if(!scp1 && excess<=0)
+                    {Count("NO_PREDECISION_COST_SURPLUS");continue;}
+                    if(scp1 && !simpleControl && prediction.Central<=0)
+                    {Count("SCP1_NONPOSITIVE_EXPECTED_FINANCIAL_SURPLUS");continue;}
+                    if(scp1 && simpleControl)
+                        Count("SCP1_NONLEARNED_SIMPLE_ADMISSION_BASELINE");
                     string id="UCP1/"+policy+"/"+signal.Symbol+"/"+
                         signal.Family+"/"+t;
-                    var samples=baselines.Select((s,i)=>
-                        new OpportunityScenario(s.StateId,t-1,true,
+                    var samples=baselines.Select((s,i)=>{
+                        if(!scp1)return new OpportunityScenario(s.StateId,t-1,true,
                             excess*units*m.Quote.EurCredit*
                                 (i==0?1m:i==1?.55m:-.3m),
                             0m,riskPerUnit*units*(i==2?1.5m:1m),
-                            Math.Max(0,excess)*units*m.Quote.EurCredit))
-                        .ToArray();
+                            Math.Max(0,excess)*units*m.Quote.EurCredit);
+                        // Fitted score is the central/adverse cash expectation;
+                        // PRESSURE is a real uncertainty/loss scenario and no
+                        // future quote or broker fill is manufactured.
+                        decimal central=simpleControl?Math.Max(.000001m,
+                            signal.Atr*m.Quote.EurCredit/2m-
+                            (qCost+2m*slip)*m.Quote.EurDebit-
+                            2m*fee/units):prediction.Central;
+                        decimal lower=simpleControl?central/2m:prediction.Lower;
+                        decimal pressure=simpleControl?riskPerUnit:
+                            prediction.LossPerUnit;
+                        decimal loss=pressure*(1m+
+                            Math.Abs(frame.IntermarketBreadth??0m)*.5m);
+                        return new OpportunityScenario(s.StateId,t-1,true,
+                            i==0?central:i==1?lower:-pressure,
+                            0m,loss*(i==2?1.5m:1m),
+                            Math.Max(0m,central));
+                    }).ToArray();
                     var grid=new AdaptiveRiskInputs(equity,0,free,
                         units,m.Contract.VolumeStepUnits,units,
                         qMargin,0,false,false,2,0m);
@@ -443,7 +566,7 @@ public sealed class NativeUnifiedPortfolioEngine
                                 1m,1m,1m,1m,1m,2,0m),
                             baselines,offers.ToArray(),exposure,
                             terms.ToArray(),Sha(dId),
-                            MaximumFundedOpenSlots:2);
+                            MaximumFundedOpenSlots:scp1?0:2);
                         var selected=model.DecideResearch(d);
                         foreach(var chosen in selected.Selection.Allocations)
                         {
@@ -555,6 +678,8 @@ public sealed class NativeUnifiedPortfolioEngine
             IndividualTrips=complete,
             SampledEquityCurve=curve.ToArray(),
             OriginalCSharpNativeLedgerEvents=facts.ToArray(),
+            Scp1PredictionsAndPreselection=scoredChoices.ToArray(),
+            ScoreModelMethod=scoreModel?.Method??"LEGACY_EXACT_UCP1",
             EventChainHash=last.EventChainHash,
             NoOrderSideEffect=true,NoCloudActivation=true,
             BrokerExecutedNetEur=(decimal?)null,
