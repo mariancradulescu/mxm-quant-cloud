@@ -31,12 +31,15 @@ public static class NativeFcp1FinancedSelection
     public static Fcp1Decision Choose(string policy,long at,Scp1ScoreModel model,
         IReadOnlyList<Fcp1Offer> input,LedgerSummary book,
         LedgerPosition[] held,LedgerEvent[] pending,
-        decimal committedAdverseRiskEur,decimal breadth)
+        decimal committedAdverseRiskEur,decimal breadth,
+        Ucp1MarketFrame[] allMarkets)
     {
         if(!Policies.Contains(policy,StringComparer.Ordinal)||
            model is null||model.Version!=NativeScp1EconomicScorer.Version||
            at<=0||input is null||held is null||pending is null||
-           committedAdverseRiskEur<0m ||
+           committedAdverseRiskEur<0m || allMarkets is null ||
+           allMarkets.Select(x=>x.Symbol).Distinct(StringComparer.Ordinal).Count()!=allMarkets.Length ||
+           allMarkets.Any(x=>x.Quote.At!=at) ||
            input.Any(x=>x.Signal.Symbol!=x.Market.Symbol ||
                x.Market.Quote.At!=at))
             throw new ArgumentException("FCP1_INVALID_CAUSAL_CANDIDATE_SET");
@@ -53,8 +56,8 @@ public static class NativeFcp1FinancedSelection
                 s=s with {Side=-1,Family="FUNDED_SHORT_CONTROL"};
             return new Fcp1Offer(s,x.Market);
         }).ToArray();
-        var byMarket=observed.Select(x=>x.Market).GroupBy(x=>x.Symbol)
-            .ToDictionary(g=>g.Key,g=>g.First(),StringComparer.Ordinal);
+        var byMarket=allMarkets.ToDictionary(x=>x.Symbol,
+            StringComparer.Ordinal);
         var occupied=held.Select(p=>p.Symbol).Concat(pending.Where(p=>
             p.Kind=="REQUEST_OPEN").Select(p=>p.Symbol))
             .ToHashSet(StringComparer.Ordinal);
