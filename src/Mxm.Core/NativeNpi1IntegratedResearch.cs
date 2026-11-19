@@ -26,7 +26,7 @@ public static class NativeNpi1IntegratedResearch
         public int Side;
         public decimal Atr,Equilibrium,Slippage;
         public long OpenedAt,LastAt;
-        public decimal Entry,Extreme;
+        public decimal Entry,Extreme,LastObservedMid;
         public bool GapSeen;
     }
     private sealed class Book
@@ -37,7 +37,7 @@ public static class NativeNpi1IntegratedResearch
         public readonly Dictionary<string,List<Step>> History=new(StringComparer.Ordinal);
         public readonly Dictionary<string,int> Reasons=new(StringComparer.Ordinal);
         public int Proposals,Selected,OpenFills,CloseRequests,CloseFills,MissingHeldMarks,GapExposures;
-        public int UnknownFinancingExposure;
+        public int UnknownFinancingExposure,WithinCollectionCoverageGaps,SourceWindowCrossingsSessionUnknown,ReobservedPriceDiscontinuities;
         public long Serial;
         public void Count(string reason)=>Reasons[reason]=Reasons.GetValueOrDefault(reason)+1;
     }
@@ -190,6 +190,7 @@ public static class NativeNpi1IntegratedResearch
                             "SOURCE_QUOTE_CONDITIONAL_MODEL_FILL",available:request.AvailableAt,
                             calibrated:request.CalibratedThrough,latency:request.LatencyMs));
                         plan.OpenedAt=t;plan.LastAt=t;plan.Entry=entry;plan.Extreme=entry;
+                        plan.LastObservedMid=(q.Bid+q.Ask)/2m;
                         book.OpenFills++;
                     }
                     catch(InvalidOperationException e) when(e.Message=="NATIVE_LEDGER_UNFINANCED_MODEL_FILL" ||
@@ -227,9 +228,18 @@ public static class NativeNpi1IntegratedResearch
                 if(t-p.LastAt>Minute)
                 {
                     p.GapSeen=true;book.GapExposures++;
-                    if(t/Day>p.LastAt/Day)book.UnknownFinancingExposure++;
+                    if(t/Day>p.LastAt/Day)
+                    {
+                        // Source only covers a 2h window: this cannot certify
+                        // the official broker session boundary or execution.
+                        book.SourceWindowCrossingsSessionUnknown++;
+                        book.UnknownFinancingExposure++;
+                    }
+                    else book.WithinCollectionCoverageGaps++;
+                    if(Math.Abs((q.Bid+q.Ask)/2m-p.LastObservedMid)>3m*p.Atr)
+                        book.ReobservedPriceDiscontinuities++;
                 }
-                p.LastAt=t;
+                p.LastAt=t;p.LastObservedMid=(q.Bid+q.Ask)/2m;
                 decimal trend=0;
                 if(book.History.TryGetValue(held.Symbol,out var history) && history.Count>=2 &&
                    history[^1].At<=t)
@@ -334,6 +344,20 @@ public static class NativeNpi1IntegratedResearch
         var completed=book.Session.Ledger.ClosedFragments();
         var perWeek=completed.Where(x=>x.CompletesRoundTrip)
             .GroupBy(x=>Week(x.ClosedAt)).ToDictionary(x=>x.Key,x=>x.Count());
+        long calStart=new DateTimeOffset(2026,9,28,0,0,0,TimeSpan.Zero).ToUnixTimeMilliseconds();
+        long evalStart=new DateTimeOffset(2026,10,19,0,0,0,TimeSpan.Zero).ToUnixTimeMilliseconds();
+        object Stage(string name,long lo,long hi)
+        {
+            var stage=completed.Where(x=>x.CompletesRoundTrip&&x.ClosedAt>=lo&&x.ClosedAt<hi).ToArray();
+            return new {Name=name,ClosedTrips=stage.Length,
+                ConditionalPreFinancingQuoteNetEur=stage.Sum(x=>x.NetEur),
+                HistoricalFundingAndTariffCertified=false};
+        }
+        var stages=new[]{
+            Stage("DEVELOPMENT_EXPOSED",tape.Start,calStart),
+            Stage("CALIBRATION_EXPOSED",calStart,evalStart),
+            Stage("EVALUATION_GLOBALLY_EXPOSED",evalStart,tape.End)
+        };
         return new {
             Policy=policy,StartCashEur=300m,
             AuthenticatedOriginalSourceQuoteClocks=true,
@@ -341,13 +365,15 @@ public static class NativeNpi1IntegratedResearch
             NativeSignalExitUsed=true,NoTradingOrders=true,
             book.Proposals,book.Selected,book.OpenFills,book.CloseRequests,book.CloseFills,
             book.GapExposures,book.MissingHeldMarks,book.UnknownFinancingExposure,
+            book.WithinCollectionCoverageGaps,book.SourceWindowCrossingsSessionUnknown,
+            book.ReobservedPriceDiscontinuities,
             HeldPositions=last.OpenPositions,UnfilledOrUnclosedIntents=last.PendingIntents,
             CompleteModeledTrips=last.CompleteRoundTrips,
             ConditionalQuotePricedClosedNetBeforeUnverifiedFinancingEur=last.ClosedNetEur,
             CashEur=last.CashEur,CurrentlyMarkedEquityEur=last.LiquidationEquityEur,
             SampledDrawdownNotContinuous=last.MaximumSampledDrawdown,
             EventChainHash=last.EventChainHash,
-            ModeledTripsPerWeek=perWeek,Rejections=book.Reasons,
+            ModeledTripsPerWeek=perWeek,Stages=stages,Rejections=book.Reasons,
             RealizedBrokerNetEur=(decimal?)null,
             CertifiedAdverseNetEur=(decimal?)null,
             CertifiedContinuousFloatingDrawdown=(decimal?)null,
