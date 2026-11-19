@@ -150,6 +150,8 @@ public sealed class NativeUnifiedPortfolioEngine
     public static NativeUnifiedPortfolioEngine Restore(string checkpoint)
         =>new(JsonSerializer.Deserialize<Ucp1Checkpoint>(checkpoint)
              ??throw new ArgumentException("UCP1_MISSING_CHECKPOINT"));
+    public LedgerEvent[] OriginalModelEvents=>facts.ToArray();
+    public LedgerSummary ModelSummary=>model.Ledger.Summary();
     public string[] ActiveSymbols=>plans.Values.Where(p=>p.OpenAt>0)
         .Select(p=>p.Symbol).Distinct(StringComparer.Ordinal).ToArray();
     public string Checkpoint()=>JsonSerializer.Serialize(new Ucp1Checkpoint(
