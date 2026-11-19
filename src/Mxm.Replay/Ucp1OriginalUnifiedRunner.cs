@@ -133,17 +133,22 @@ internal static class Ucp1OriginalUnifiedRunner
                 tape.OriginalSourceSha256);
             // Independent native ledger replay using only published original
             // event receipts, not the original strategy evaluator's aggregate.
-            var independently=NativeFundedLedger.ReceiveFacts(kv.Value.OriginalModelEvents);
-            using var doc=JsonDocument.Parse(JsonSerializer.Serialize(independently,Options));
-            string hash=doc.RootElement.GetProperty("Summary")
-                .GetProperty("EventChainHash").GetString()!;
+            var independently=new NativeFundedLedger();
+            foreach(var evidence in kv.Value.OriginalModelEvents)
+                independently.Apply(evidence);
+            string hash=independently.Summary().EventChainHash;
+            if(independently.Summary().CashEur!=kv.Value.ModelSummary.CashEur ||
+               independently.Summary().CompleteRoundTrips!=kv.Value.ModelSummary.CompleteRoundTrips ||
+               independently.Summary().OpenPositions!=kv.Value.ModelSummary.OpenPositions ||
+               independently.Summary().PendingIntents!=kv.Value.ModelSummary.PendingIntents)
+                throw new InvalidOperationException("UCP1_EVENTWISE_LEDGER_ECONOMICS_MISMATCH_"+kv.Key);
             if(hash!=kv.Value.ModelSummary.EventChainHash)
                 throw new InvalidOperationException("UCP1_INDEPENDENT_NATIVE_EVENT_CHAIN_MISMATCH_"+kv.Key);
             results[kv.Key]=result;
             verification[kv.Key]=new {
                 OriginalNativeEvents=kv.Value.OriginalModelEvents.Length,
                 EventChainSha256=hash,
-                RestartEveryEventMatched=true,
+                UninterruptedIndependentNativeEventRebuild=true,
                 ModelOnlyNoBrokerExecutedFills=true
             };
         }
