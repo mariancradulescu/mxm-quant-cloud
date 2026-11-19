@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - 'research/SCP1_FROZEN_CAUSAL_ECONOMIC_RANKING_20261119.md'
+      - 'research/SCP1_A0_PRESOURCE_M5_CAUSAL_LABEL_ALIGNMENT_20261119.md'
       - 'research/scp1_original_source_native_score.py'
       - 'src/Mxm.Core/NativeScp1EconomicScorer.cs'
       - 'src/Mxm.Core/NativeUnifiedPortfolioEngine.cs'
@@ -42,6 +43,9 @@ jobs:
           git merge-base --is-ancestor a1630a65205805d4151499a7bfef0a90880b40db HEAD
           git show a1630a65205805d4151499a7bfef0a90880b40db:research/SCP1_FROZEN_CAUSAL_ECONOMIC_RANKING_20261119.md > /tmp/scp1-score-freeze
           cmp /tmp/scp1-score-freeze research/SCP1_FROZEN_CAUSAL_ECONOMIC_RANKING_20261119.md
+          git merge-base --is-ancestor c3e8349eeb266cff22c5f221b6a31fdb1cbf4369 HEAD
+          git show c3e8349eeb266cff22c5f221b6a31fdb1cbf4369:research/SCP1_A0_PRESOURCE_M5_CAUSAL_LABEL_ALIGNMENT_20261119.md > /tmp/scp1-a0-freeze
+          cmp /tmp/scp1-a0-freeze research/SCP1_A0_PRESOURCE_M5_CAUSAL_LABEL_ALIGNMENT_20261119.md
       - name: Same native CSharp Replay built
         run: dotnet build src/Mxm.Replay -c Release
       - name: Same native CSharp cBot observation adapter built no trading
