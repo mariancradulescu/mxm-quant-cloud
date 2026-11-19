@@ -18,7 +18,8 @@ public sealed record Scp1OriginalQuoteSource(string Symbol,
     decimal TickSize,Npi1ObservedQuote[] Quotes);
 public sealed record Scp1OriginalInput(string OriginalHxc1SourceSha256,
     string OriginalOei1SourceSha256,Scp1OriginalBarStream[] Streams,
-    Scp1OriginalQuoteSource[] QuoteMarkets);
+    Scp1OriginalQuoteSource[] QuoteMarkets,
+    string SourceGeometry="",string[]? OriginalCxl1CipherHashes=null);
 public sealed record Scp1LabeledEpisode(long At,long End,string Symbol,
     string Family,int Side,double[] Features,decimal GrossPriceOnlyR,
     string ExitReason,bool Complete,int MissingFutureSegments);
