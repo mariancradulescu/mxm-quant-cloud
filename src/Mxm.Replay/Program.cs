@@ -1,6 +1,9 @@
 using System.Text.Json;
 using System.Security.Cryptography;
 
+if(args.Length==4 && args[3]=="--fcp1-financed-original-source-exploratory")
+    return Fcp1FinancedScoreRunner.Run(args[0],args[1],args[2]);
+
 if(args.Length==3 && args[2]=="--scp1-a1-original-scored-economics")
     return Scp1OriginalScoredEconomicRunner.Run(args[0],args[1]);
 
