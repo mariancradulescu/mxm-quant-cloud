@@ -11,9 +11,9 @@ on:
       - 'research/fcp1_original_source_finance_comparison.py'
       - '.github/workflows/fcp1-original-financed-comparison.yml'
   push:
-    branches: [owner-fcp1-funded-first-and-score-selection-20261119]
+    branches: [main]
     paths:
-      - 'ops/fcp1-once.txt'
+      - 'ops/fcp1-main-once.txt'
 permissions:
   contents: read
   actions: read
@@ -37,7 +37,8 @@ jobs:
       - name: Preimplementation hypothesis and frozen closed-study ancestry
         run: |
           git merge-base --is-ancestor 49ce98ac1f44a2fb99627584c87b783d9889b13c HEAD
-          test -f research/FCP1_FROZEN_FIRST_FINANCE_SCORE_PORTFOLIO_20261119.md
+          git diff --exit-code 49ce98ac1f44a2fb99627584c87b783d9889b13c HEAD -- \
+            research/FCP1_FROZEN_FIRST_FINANCE_SCORE_PORTFOLIO_20261119.md
           git diff --exit-code ba07814ab8c249832ba4eae9e7d5d188ec214ee2 -- \
             src/Mxm.Core/NativeScp1EconomicScorer.cs \
             src/Mxm.Replay/Scp1OriginalScoredEconomicRunner.cs \
@@ -54,23 +55,28 @@ jobs:
           dotnet build src/Mxm.Cloud -c Release
           dotnet run --project tests/Mxm.Checks -c Release
           python -m py_compile research/fcp1_original_source_finance_comparison.py
-      - name: Explicit distinct owner-run marker, never SCP1-A1
+      - name: First addition of the distinct OWNER marker on main
         id: owner
         shell: bash
         run: |
+          marker=ops/fcp1-main-once.txt
           echo "one=false" >> "$GITHUB_OUTPUT"
           if [[ "$GITHUB_EVENT_NAME" == "push" &&
-                "$GITHUB_REF" == "refs/heads/owner-fcp1-funded-first-and-score-selection-20261119" &&
+                "$GITHUB_REF" == "refs/heads/main" &&
                 "$GITHUB_ACTOR" == "mariancradulescu" &&
                 "$GITHUB_RUN_ATTEMPT" == "1" &&
-                "$(git log -1 --format=%s)" == "OWNER_FCP1_FINANCE_FIRST_DISTINCT_SOURCE_ONCE" &&
-                "$(git diff-tree --no-commit-id --name-only -r HEAD)" == "ops/fcp1-once.txt" &&
-                "$(cat ops/fcp1-once.txt)" == "FCP1_DISTINCT_FINANCED_FIRST_FROZEN_MODEL_NEGATIVE_CONTROLS_NO_TRADING" ]]; then
+                "$(git log -1 --format=%s)" == "OWNER_FCP1_MAIN_FINANCE_FIRST_DISTINCT_SOURCE_ONCE" &&
+                "$(git diff-tree --no-commit-id --name-status -r HEAD)" == $'A\t'"$marker" &&
+                -z "$(git log -1 --format=%H HEAD^ -- "$marker")" &&
+                "$(cat "$marker")" == "FCP1_MAIN_DISTINCT_FINANCED_FIRST_FROZEN_NEGATIVE_CONTROLS_NO_TRADING" ]]; then
             echo "one=true" >> "$GITHUB_OUTPUT"
           fi
   distinct-protected-authentic-source-financed-comparison:
     needs: native-csharp-and-frozen-source-contract
-    if: ${{ needs.native-csharp-and-frozen-source-contract.outputs.one == 'true' }}
+    if: >-
+      ${{ github.ref == 'refs/heads/main' &&
+          github.run_attempt == '1' &&
+          needs.native-csharp-and-frozen-source-contract.outputs.one == 'true' }}
     environment: mxm-r3-custody-v1
     concurrency:
       group: owner-fcp1-distinct-first-finance-comparison-once

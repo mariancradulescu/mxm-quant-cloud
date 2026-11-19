@@ -35,10 +35,10 @@ MINUTE=60000
 
 def main():
     need(os.environ.get("GITHUB_EVENT_NAME")=="push" and
-         os.environ.get("GITHUB_REF")=="refs/heads/owner-fcp1-funded-first-and-score-selection-20261119" and
+         os.environ.get("GITHUB_REF")=="refs/heads/main" and
          os.environ.get("GITHUB_ACTOR")=="mariancradulescu" and
          os.environ.get("GITHUB_RUN_ATTEMPT")=="1",
-         "FCP1_NEW_BRANCH_OWNER_ONCE_ONLY")
+         "FCP1_MAIN_OWNER_ONCE_ONLY")
     secret=os.environ.get("R3_CUSTODY_PRIVATE_KEY_PEM","").encode()
     need(bool(secret.strip()),"SCP1_PROTECTED_CUSTODY_KEY_MISSING")
     OUT.mkdir(exist_ok=True)
