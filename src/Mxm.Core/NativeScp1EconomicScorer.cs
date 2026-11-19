@@ -263,47 +263,63 @@ public static class NativeScp1EconomicScorer
             "GLOBALLY_EXPOSED_COMPLETED_M5_M15_PRICE_ONLY_LABEL_NOT_EXECUTION");
     }
 
-    // Source-only non-executable label. Prospectively defined NORMAL exits are
-    // based on NativeCausalExitResearch on future *completed close* after
-    // conditional next-bar entry. Price high/low isn't treated as a fill.
+    // Source-only NONEXECUTABLE complete-policy label, under SCP1-A0
+    // pre-original causal alignment. The next *completed M5 close* is a
+    // directional price-only proxy entry, never a Pepperstone fill.
+    // We invoke the SAME native signal/structure/risk exit decision on
+    // later genuinely completed M5 closes, with M15 trends as-of each.
     static Scp1LabeledEpisode Label(string symbol,long at,
         Ucp1DecisionSignal signal,double[] features,
-        NativeClosedMarketBar[] m15,int idx)
+        NativeClosedMarketBar[] m5,NativeClosedMarketBar[] m15,
+        int nextM5Index,int lastSignalM15Index)
     {
         Scp1LabeledEpisode Unknown(string reason,int gaps=1)
             =>new(at,0,symbol,signal.Family,signal.Side,features,
                 0m,reason,false,gaps);
-        if(idx+2>=m15.Length ||
-           m15[idx+1].OpenAt!=m15[idx].CloseAt)
-            return Unknown("NEXT_REAL_COMPLETED_M15_PRICE_UNKNOWN");
-        decimal entry=m15[idx+1].Close;
+        if(nextM5Index<=0 ||nextM5Index+2>=m5.Length ||
+           m5[nextM5Index-1].CloseAt>=at ||
+           m5[nextM5Index].CloseAt<=at ||
+           m5[nextM5Index].OpenAt!=m5[nextM5Index-1].CloseAt)
+            return Unknown("NEXT_REAL_COMPLETED_M5_ENTRY_PRICE_UNKNOWN");
+        decimal entry=m5[nextM5Index].Close;
         decimal stop=entry-signal.Side*1.5m*signal.Atr;
         decimal extreme=entry;
         var seed=new NativeExitSeed(signal.Atr,signal.Equilibrium);
-        int max=Math.Min(m15.Length-2,idx+128);
-        for(int k=idx+2;k<=max;k++)
+        int lastM15=Math.Max(1,lastSignalM15Index);
+        int max=Math.Min(m5.Length-2,nextM5Index+128);
+        for(int k=nextM5Index+1;k<=max;k++)
         {
-            if(m15[k].OpenAt!=m15[k-1].CloseAt ||
-               m15[k+1].OpenAt!=m15[k].CloseAt)
-                return Unknown("UNOBSERVED_COMPLETE_POLICY_PATH_GAP");
-            var q=new LedgerQuote(symbol,m15[k].CloseAt,
-                m15[k].Close,m15[k].Close,1m,1m,0m,0m,1m);
-            decimal slope=m15[k].Close-m15[k-1].Close;
-            NativeExitVerdict close;
+            if(m5[k].OpenAt!=m5[k-1].CloseAt ||
+               m5[k+1].OpenAt!=m5[k].CloseAt)
+                return Unknown("UNOBSERVED_COMPLETE_POLICY_M5_PATH_GAP");
+            // No M15 regime information becomes visible before its
+            // genuine completed timestamp. Never read the forming candle.
+            while(lastM15+1<m15.Length &&
+                  m15[lastM15+1].CloseAt<=m5[k].CloseAt)
+                lastM15++;
+            decimal direction=0m;
+            if(lastM15>0 && m15[lastM15-1].CloseAt==m15[lastM15].OpenAt)
+                direction=m15[lastM15].Close-m15[lastM15-1].Close;
+            var q=new LedgerQuote(symbol,m5[k].CloseAt,
+                m5[k].Close,m5[k].Close,1m,1m,0m,0m,1m);
+            NativeExitVerdict exit;
             try {
-                close=NativeCausalExitResearch.AssessLifecycle(
+                exit=NativeCausalExitResearch.AssessLifecycle(
                     signal.Family=="RANGE_TRANSITION"?"ADAPT":"STRUCT",
-                    signal.Side,entry,seed,stop,extreme,q,slope,false);
-            } catch(ArgumentException){return Unknown("NATIVE_PRICE_ONLY_EXIT_UNSUPPORTED");}
-            extreme=close.FavorableExtreme;
-            if(!close.RequestClose)continue;
-            // Strictly later CLOSE proxy (no assumed same-bar fills).
-            decimal grossR=signal.Side*(m15[k+1].Close-entry)/
+                    signal.Side,entry,seed,stop,extreme,q,direction,false);
+            }
+            catch(ArgumentException)
+            {return Unknown("M5_COMPLETE_POLICY_EXIT_INPUT_INVALID");}
+            extreme=exit.FavorableExtreme;
+            if(!exit.RequestClose)continue;
+            // Modeled CLOSE request is known here; realized proxy
+            // exit requires a later *authentic* contiguous M5 close.
+            decimal grossR=signal.Side*(m5[k+1].Close-entry)/
                 (1.5m*signal.Atr);
-            return new(at,m15[k+1].CloseAt,symbol,signal.Family,
-                signal.Side,features,grossR,close.Reason,true,0);
+            return new(at,m5[k+1].CloseAt,symbol,signal.Family,
+                signal.Side,features,grossR,exit.Reason,true,0);
         }
-        return Unknown("EMERGENCY_MAX_OBSERVATIONS_CENSORED_NOT_EXIT");
+        return Unknown("EMERGENCY_M5_MAX_OBSERVATIONS_CENSORED_NOT_EXIT");
     }
 
     public static Scp1LabeledEpisode[] BuildTrainingEpisodes(
@@ -354,7 +370,7 @@ public static class NativeScp1EconomicScorer
                     try {f=Features(symbol,t,signal.Side,signal.Family,
                         x,z,breadth.GetValueOrDefault(bar.CloseAt));}
                     catch(ArgumentException){continue;}
-                    rows.Add(Label(symbol,t,signal,f,m15,j));
+                    rows.Add(Label(symbol,t,signal,f,m5,m15,k5,j));
                 }
             }
         }
