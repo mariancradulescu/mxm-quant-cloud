@@ -256,6 +256,11 @@ internal static class ProspectiveIntegratedChecks
                 i==0?v with {NetEur=v.NetEur+.1m}:v).ToArray()});
         check(fakeFragments.ModeledFundedCompleteTrips is null,
             "SYC2 forged closed PnL fails native event-chain reconciliation");
+        var forgedCloseSide=NativeSystemicOpportunityCensus.Assess(auditInput with {
+            ModelEventTrace=eventTrace.Select(e=>e.EventId=="final-B"
+                ?e with {Side=1}:e).ToArray()});
+        check(forgedCloseSide.ModeledFundedCompleteTrips is null,
+            "SYC2 wrong side in partial/final native CLOSE_FILL must invalidate position identity");
         var spoofedCertified=NativeSystemicOpportunityCensus.Assess(auditInput with {
             CommonLedger=auditInput.CommonLedger! with {GlobalDrawdownCertified=true,BrokerStateReconciled=true},
             SourceProof=new NativeSystemicSourceProof(true,true,true,true,true,true)});
