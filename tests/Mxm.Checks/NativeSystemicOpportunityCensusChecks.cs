@@ -57,7 +57,8 @@ internal static class NativeSystemicOpportunityCensusChecks
         var modeled=NativeSystemicOpportunityCensus.Assess(new(source,
             new[]{new NativeSystemicPositionLink("a","POS-A")},
             new[]{fragment1,fragment2},
-            baseBook with {CompleteRoundTrips=1,ClosedNetEur=1m},
+            baseBook with {CompleteRoundTrips=1,ClosedNetEur=1m,
+                CashEur=301m,LiquidationEquityEur=301m,FreeMarginEur=301m},
             new[]{"2026-W47"}));
         check(modeled.ModeledFundedCompleteTrips==1 &&
             modeled.ModeledClosedNetEur==1m &&
@@ -85,6 +86,8 @@ internal static class NativeSystemicOpportunityCensusChecks
             NativeSystemicOpportunityCensus.Assess(new(
                 proposals,links.Take(trips).ToArray(),trades.Take(trips).ToArray(),
                 baseBook with {CompleteRoundTrips=trips,ClosedNetEur=trips,
+                    CashEur=300m+trips,LiquidationEquityEur=300m+trips,
+                    FreeMarginEur=300m+trips,
                     GlobalDrawdownCertified=globalCertificate,MaximumSampledDrawdown=.1m},
                 weeks,proof));
         check(Run(21,false,new[]{"2026-W47"}).SystemHard21EvidenceState=="UNKNOWN",
