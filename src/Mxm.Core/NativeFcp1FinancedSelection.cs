@@ -64,7 +64,7 @@ public static class NativeFcp1FinancedSelection
             Math.Max(x.MarginPerUnit,byMarket[x.Symbol].Quote.MarginPerUnit));
         bool accountKnown=book.LiquidationEquityEur is decimal &&
             book.FreeMarginEur is decimal &&book.UsedMarginEur is decimal &&
-            !book.HistoryEvidenceIncomplete &&!missingPending &&
+            !missingPending &&
             book.MaximumSampledDrawdown<.30m;
         decimal equity=book.LiquidationEquityEur??0m;
         decimal free=book.FreeMarginEur??0m;
