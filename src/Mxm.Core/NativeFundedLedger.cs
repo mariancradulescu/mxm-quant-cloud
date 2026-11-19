@@ -161,6 +161,24 @@ public sealed partial class NativeFundedLedger
             // SIR1: entirely local, NEVER TRANSMITTED model close intent.
             // Unlike CONFIRMED_CANCEL, this never claims a broker acknowledgement,
             // cannot cancel a real broker order, and NEVER removes the held position.
+            // New UCP1 MODEL-ONLY open intent: no real broker transmission.
+            // Explicit cancellation cannot release an opened position: there
+            // must not be one, and no broker-confirmed CANCEL is manufactured.
+            case "MODEL_OPEN_INTENT_EXPIRED":
+                if(!state.Pending.TryGetValue(e.PositionId,out var modelOpen) ||
+                   modelOpen.Kind!="REQUEST_OPEN" ||
+                   modelOpen.Reason!="NATIVE_CONDITIONAL_SELECTION" ||
+                   state.Positions.ContainsKey(e.PositionId) ||
+                   e.At<=modelOpen.At ||
+                   e.Symbol!=modelOpen.Symbol ||e.Side!=modelOpen.Side ||
+                   e.Units!=modelOpen.Units ||
+                   e.Reason is not ("MODEL_UNTRANSMITTED_OPEN_RESPONSE_WINDOW_EXPIRED" or
+                                    "MODEL_UNTRANSMITTED_OPEN_FUNDED_FILL_REJECTED") ||
+                   e.Quotes.Length!=0 ||e.ExecutionPrice!=0m ||
+                   e.FeeEur!=0m ||e.MarginPerUnit!=0m ||
+                   e.SlippagePerSide!=0m)
+                    throw new ArgumentException("MODEL_OPEN_EXPIRY_MUST_BE_UNTRANSMITTED");
+                state.Pending.Remove(e.PositionId);break;
             case "MODEL_CLOSE_INTENT_EXPIRED":
                 if(!state.Pending.TryGetValue(e.PositionId,out var staleClose) ||
                    staleClose.Kind!="REQUEST_CLOSE" ||

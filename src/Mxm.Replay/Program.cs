@@ -1,6 +1,9 @@
 using System.Text.Json;
 using System.Security.Cryptography;
 
+if(args.Length==3 && args[2]=="--ucp1-original-complete-policy")
+    return Ucp1OriginalUnifiedRunner.Run(args[0],args[1]);
+
 if(args.Length==3 && args[2]=="--sir1-original-native-source-witness")
     return Sir1NativeOriginalWitnessRunner.Run(args[0],args[1]);
 

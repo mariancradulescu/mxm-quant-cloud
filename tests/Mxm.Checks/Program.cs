@@ -12,6 +12,7 @@ McsNativeChecks.Run(Check);
 ProspectiveIntegratedChecks.Run(Check);
 NativeSimulatedCloseRecoveryChecks.Run(Check);
 NativeSir1SourceWitnessChecks.Run(Check);
+Ucp1UnifiedProductChecks.Run(Check);
 ResearchScopeContractChecks.Run(Check);
 NativeCausalWarmupChecks.Run(Check);
 NativeResearchUniverseChecks.Run(Check);
