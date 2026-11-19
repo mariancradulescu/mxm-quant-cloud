@@ -3,6 +3,7 @@ var passed = 0;
 MonetaryRecoveryChecks.Run(Check);
 NativePerformanceScorecardChecks.Run(Check);
 NativeSystemicOpportunityCensusChecks.Run(Check);
+Mvo1NativeChecks.Run(Check);
 NativeAuthorityBoundaryChecks.Run(Check);
 FundedDecisionCycleChecks.Run(Check);
 NativeContractCostChecks.Run(Check);

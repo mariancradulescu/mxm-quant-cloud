@@ -253,4 +253,52 @@ public static class NativeCausalExitResearch
             return new(true,"SAFETY_TIMEOUT_ANTI_LOCK",extreme);
         return new(false,"HOLD_THESIS_STILL_OBSERVABLE",extreme);
     }
+
+    // MVO1 NEW prospective economic hypotheses: only authentic completed M15
+    // observation state; no guessed intrabar stop/target fill or EUR execution.
+    // Gap does NOT close a position: first re-observed completed CLOSE can only
+    // invalidate an ENTRY-FROZEN protective thesis. Full exits resume after
+    // genuine consecutive-session warmup; timeout only anti-lock.
+    public static NativeExitVerdict AssessMarginalPriceOnlyThesis(
+        string family,int side,decimal entry,decimal entryAtr,decimal bestClose,
+        decimal lastRealClose,decimal mean16,decimal mean32,
+        decimal previousHigh8,decimal previousLow8,bool warmupReady,
+        bool reObservedAfterGap,int observedBarsHeld)
+    {
+        if(family is not ("RANGE_RELEASE" or "EXHAUSTION_REPAIR") ||
+           side is not (1 or -1) || entry<=0m || entryAtr<=0m ||
+           bestClose<=0m || lastRealClose<=0m || observedBarsHeld<=0)
+            throw new ArgumentException("MVO1_INCOMPLETE_PROTECTIVE_THESIS");
+        decimal extreme=side>0?Math.Max(bestClose,lastRealClose):
+            Math.Min(bestClose,lastRealClose);
+        if(side*(lastRealClose-entry)<=-1.5m*entryAtr)
+            return new(true,reObservedAfterGap?
+                "POST_GAP_OBSERVED_PROTECTIVE_CLOSE":"OBSERVED_ENTRY_ATR_THESIS_INVALIDATION",extreme);
+        if(!warmupReady)
+            return new(false,"HOLD_UNKNOWN_REGIME_WAIT_REAL_OBSERVATIONS",extreme);
+        if(mean16<=0m || mean32<=0m || previousHigh8<previousLow8)
+            throw new ArgumentException("MVO1_FULL_REGIME_NOT_CAUSAL");
+        if(family=="RANGE_RELEASE")
+        {
+            if(side==1?lastRealClose<previousLow8:lastRealClose>previousHigh8)
+                return new(true,"SIGNAL_INVERSE_EIGHT_BAR_STRUCTURE",extreme);
+            if(side==1?lastRealClose<mean16:lastRealClose>mean16)
+                return new(true,"SIGNAL_TREND_REGIME_INVALIDATION",extreme);
+            if(side*(extreme-lastRealClose)>=1.5m*entryAtr)
+                return new(true,"SIGNAL_TRAILING_COMPLETED_CLOSE",extreme);
+        }
+        else
+        {
+            if(side==1?lastRealClose>=mean32:lastRealClose<=mean32)
+                return new(true,"SIGNAL_32BAR_EQUILIBRIUM_REACHED",extreme);
+            if(side==1?lastRealClose<previousLow8:lastRealClose>previousHigh8)
+                return new(true,"SIGNAL_EXHAUSTION_THESIS_OPPOSITE_BREAK",extreme);
+            if(side*(extreme-entry)>=1.25m*entryAtr &&
+               side*(extreme-lastRealClose)>=1.25m*entryAtr)
+                return new(true,"SIGNAL_PROFIT_RETRACE",extreme);
+        }
+        if(observedBarsHeld>=288)
+            return new(true,"SAFETY_ANTI_LOCK_LAST_RESORT",extreme);
+        return new(false,"HOLD_CAUSAL_THESIS_PERSISTS",extreme);
+    }
 }
