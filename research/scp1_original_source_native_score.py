@@ -115,8 +115,8 @@ def main():
                     ai=bisect.bisect_right(ta,t)-1
                     if bi<0 or ai<0:continue
                     bt,bv=bids[bi];at,av=asks[ai]
-                    if bt>t or at>t or t-bt>30000 or t-at>30000 or
-                       bv<=0 or av<bv:continue
+                    if (bt>t or at>t or t-bt>30000 or t-at>30000 or
+                        bv<=0 or av<bv):continue
                     if bi>0 and bids[bi-1][0]==bt and bids[bi-1][1]!=bv:continue
                     if ai>0 and asks[ai-1][0]==at and asks[ai-1][1]!=av:continue
                     sample.append(dict(At=t,Bid=str(Decimal(bv)/LIMIT),
