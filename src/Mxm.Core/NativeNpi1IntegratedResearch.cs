@@ -37,7 +37,7 @@ public static class NativeNpi1IntegratedResearch
         public readonly Dictionary<string,List<Step>> History=new(StringComparer.Ordinal);
         public readonly Dictionary<string,int> Reasons=new(StringComparer.Ordinal);
         public int Proposals,Selected,OpenFills,CloseRequests,CloseFills,MissingHeldMarks,GapExposures;
-        public int UnknownFinancingExposure,FeeSideUncertified;
+        public int UnknownFinancingExposure;
         public long Serial;
         public void Count(string reason)=>Reasons[reason]=Reasons.GetValueOrDefault(reason)+1;
     }
@@ -248,6 +248,8 @@ public static class NativeNpi1IntegratedResearch
                 policy=="REJECT"&&x.Family=="MICROPRICE_REJECTION")
                 .GroupBy(x=>x.Symbol).Select(x=>x.OrderBy(v=>v.Family,StringComparer.Ordinal).First())
                 .OrderBy(x=>x.Symbol,StringComparer.Ordinal).ToArray();
+            // A simple causal first-offer control, not a hindsight winner pick.
+            if(policy=="FIRST")options=options.Take(1).ToArray();
             book.Proposals+=options.Length;
             if(options.Length==0)continue;
             var summary=ledger.Summary(t);
@@ -255,6 +257,12 @@ public static class NativeNpi1IntegratedResearch
                summary.FreeMarginEur is not decimal free || equity<=0)
             {
                 book.Count("ORIGINAL_HELD_OR_PENDING_MARK_UNKNOWN");
+                continue;
+            }
+            if(ledger.PositionSnapshot().Any(x=>!quotes.ContainsKey(x.Symbol)) ||
+               ledger.PendingSnapshot().Any(x=>!quotes.ContainsKey(x.Symbol)))
+            {
+                book.Count("HELD_OR_PENDING_EXPOSURE_QUOTE_NOT_AUTHENTICATED");
                 continue;
             }
             var baselines=new[]{"NORMAL","ADVERSE","PRESSURE"}.Select(
@@ -280,7 +288,7 @@ public static class NativeNpi1IntegratedResearch
                 decimal slip=Math.Max(m.TickSize,q.Ask-q.Bid);
                 decimal friction=(q.Ask-q.Bid+2m*slip)*q.EurDebit+2m*Fee(q,units)/units;
                 decimal expected=s.ExpectedMove*q.EurCredit-friction;
-                if(expected<=0){book.Count("PREDECISION_EXPECTED_FRICITON_EXCEEDS_MOVE");continue;}
+                if(expected<=0){book.Count("PREDECISION_EXPECTED_FRICTION_EXCEEDS_MOVE");continue;}
                 decimal riskPerUnit=(2m*s.Atr+q.Ask-q.Bid+2m*slip)*q.EurDebit;
                 string id="NPI1/"+policy+"/"+s.Symbol+"/"+t;
                 decimal[] multipliers={1.0m,0.6m,-0.3m};
