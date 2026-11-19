@@ -1,0 +1,120 @@
+name: UCP1 unified CSharp product and genuine multiasset economic programme
+on:
+  pull_request:
+    paths:
+      - 'research/UCP1_FROZEN_UNIFIED_PRODUCT_ECONOMICS_20261119.md'
+      - 'research/ucp1_original_unified_bridge.py'
+      - 'src/Mxm.Core/NativeUnifiedPortfolioEngine.cs'
+      - 'src/Mxm.Core/NativeFundedLedger.cs'
+      - 'src/Mxm.Cloud/NativeUnifiedCloudParityAdapter.cs'
+      - 'src/Mxm.Cloud/MxmCloud.cs'
+      - 'src/Mxm.Replay/Ucp1OriginalUnifiedRunner.cs'
+      - 'src/Mxm.Replay/Program.cs'
+      - 'tests/Mxm.Checks/Ucp1UnifiedProductChecks.cs'
+      - 'tests/Mxm.Checks/Mxm.Checks.csproj'
+      - 'tests/Mxm.Checks/Program.cs'
+      - '.github/workflows/ucp1-unified-product-original-economic.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ops/ucp1-once.txt'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  unified-native-product-parity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    outputs:
+      once: ${{ steps.owner.outputs.once }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Protocol committed before any UCP1 model and original economic scores
+        run: |
+          git merge-base --is-ancestor e67163959208982aceb1bf98e6f7296b460eb3ae HEAD
+          git show e67163959208982aceb1bf98e6f7296b460eb3ae:research/UCP1_FROZEN_UNIFIED_PRODUCT_ECONOMICS_20261119.md > /tmp/ucp1-frozen
+          cmp /tmp/ucp1-frozen research/UCP1_FROZEN_UNIFIED_PRODUCT_ECONOMICS_20261119.md
+      - name: Exact native CSharp Replay build
+        run: dotnet build src/Mxm.Replay -c Release
+      - name: Exact cTrader observation-only cBot compiled
+        run: dotnet build src/Mxm.Cloud -c Release
+      - name: Same-input full-cycle and broker account boundary Core Cloud adapter
+        run: dotnet run --project tests/Mxm.Checks -c Release
+      - name: Python custody only compile
+        run: python -m py_compile research/ucp1_original_unified_bridge.py
+      - name: No historical closed model or report mutated
+        run: |
+          git diff --exit-code 1b090f27919ee53a8a04698952b603481ecafef5 -- \
+            src/Mxm.Core/NativeNpi1IntegratedResearch.cs \
+            src/Mxm.Core/NativeMarginalValueResearch.cs \
+            src/Mxm.Core/NativeSir1OriginalSourceWitness.cs \
+            src/Mxm.Core/NativeSignalEconomicResearch.cs \
+            research/NPI1_ORIGINAL_NATIVE_FINANCIAL_RESULT_READBACK_20261119.md \
+            research/SIR1_ORIGINAL_SOURCE_LIFECYCLE_READBACK_20261119.md
+      - name: Exact OWNER one-shot source trigger; no PR or rerun
+        id: owner
+        shell: bash
+        run: |
+          echo "once=false" >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_EVENT_NAME" == "push" &&
+                "$GITHUB_REF" == "refs/heads/main" &&
+                "$GITHUB_ACTOR" == "mariancradulescu" &&
+                "$GITHUB_RUN_ATTEMPT" == "1" &&
+                "$(git log -1 --format=%s)" == "OWNER_UCP1_UNIFIED_COMPLETE_ECONOMICS_ONCE" &&
+                "$(git diff-tree --no-commit-id --name-only -r HEAD)" == "ops/ucp1-once.txt" &&
+                "$(cat ops/ucp1-once.txt)" == "UCP1_ORIGINAL_OEI1_SOURCE_UNIFIED_EUR300_COMPLETE_POLICY_NO_TRADING" ]]; then
+            echo "once=true" >> "$GITHUB_OUTPUT"
+          fi
+  original-sealed-source-full-policy:
+    needs: unified-native-product-parity
+    if: ${{ needs.unified-native-product-parity.outputs.once == 'true' }}
+    environment: mxm-r3-custody-v1
+    concurrency:
+      group: ucp1-original-fully-integrated-multiasset-frozen-once
+      cancel-in-progress: false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - run: dotnet build src/Mxm.Replay -c Release
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: oei1-original-pepperstone-encrypted-custody
+          run-id: 44247979857
+          github-token: ${{ github.token }}
+          path: ucp1-original-source
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: oei1-original-integrated-3phase-public
+          run-id: 44247979857
+          github-token: ${{ github.token }}
+          path: ucp1-original-public
+      - name: NEW complete multiasset policy, shared Core and ORIGINAL native finance
+        run: python -m research.ucp1_original_unified_bridge
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: ucp1-original-complete-unified-economic-public
+          path: ucp1-public/
+          retention-days: 90
+          if-no-files-found: warn
