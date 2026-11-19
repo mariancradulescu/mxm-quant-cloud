@@ -23,7 +23,8 @@ public sealed record NativeSystemicCensusInput(
     LedgerClosedFragment[] ClosedFragments,
     LedgerSummary? CommonLedger,
     string[] ExAnteEligibleIsoWeeks,
-    NativeSystemicSourceProof? SourceProof=null);
+    NativeSystemicSourceProof? SourceProof=null,
+    LedgerEvent[]? ModelEventTrace=null);
 public sealed record NativeSystemicWeek(
     string IsoWeek,Dictionary<string,int> RawPerSymbolFamily,
     int RawCombinedProposals,int UniqueNonconflictingOpportunities,
@@ -119,26 +120,70 @@ public static class NativeSystemicOpportunityCensus
                 x.CommonLedger.LiquidationEquityEur==x.CommonLedger.CashEur &&
                 !x.CommonLedger.HistoryEvidenceIncomplete &&
                 x.CommonLedger.OpenPositions==0 && x.CommonLedger.PendingIntents==0;
-            matched=mapped;
+            // The fragments do not include Side. It MUST be obtained from the
+            // OPEN_FILL and REQUEST_OPEN facts of the SAME native model book.
+            // Replaying caller-provided model events is necessary for technical
+            // modeled counts, but is NOT original broker source authentication.
+            bool traceValid=false;
+            if(mapped && x.ModelEventTrace is {Length: > 0} events)
+            {
+                try
+                {
+                    var live=new NativeFundedLedger();
+                    foreach(var e in events) live.Apply(e);
+                    var rebuilt=live.Summary();
+                    var fragments=live.ClosedFragments();
+                    var opens=events.Where(e=>e.Kind=="OPEN_FILL").ToArray();
+                    var requests=events.Where(e=>e.Kind=="REQUEST_OPEN").ToArray();
+                    var closures=events.Where(e=>e.Kind=="CLOSE_FILL").ToArray();
+                    bool identity=opens.Length==x.PositionLinks.Length &&
+                        requests.Length==opens.Length &&
+                        opens.Select(e=>e.PositionId).Distinct(StringComparer.Ordinal).Count()==opens.Length &&
+                        opens.All(fill=>links.TryGetValue(fill.PositionId,out var proposalId) &&
+                            proposals.TryGetValue(proposalId,out var p) &&
+                            fill.Symbol==p.Symbol && fill.Side==p.Side &&
+                            requests.Count(req=>req.PositionId==fill.PositionId &&
+                                req.Symbol==p.Symbol && req.Side==p.Side && req.Units==fill.Units)==1 &&
+                            closures.Where(e=>e.PositionId==fill.PositionId).All(close=>
+                                close.Symbol==p.Symbol && close.Side==p.Side) &&
+                            closures.Where(e=>e.PositionId==fill.PositionId).Sum(close=>close.Units)==fill.Units) &&
+                        x.ClosedFragments.All(f=>links.TryGetValue(f.PositionId,out var id) &&
+                            proposals.TryGetValue(id,out var p) && f.Symbol==p.Symbol) &&
+                        fragments.SequenceEqual(x.ClosedFragments);
+                    traceValid=identity &&
+                        rebuilt.EventChainHash==x.CommonLedger.EventChainHash &&
+                        rebuilt.CompleteRoundTrips==x.CommonLedger.CompleteRoundTrips &&
+                        rebuilt.ClosedNetEur==x.CommonLedger.ClosedNetEur &&
+                        rebuilt.CashEur==x.CommonLedger.CashEur &&
+                        rebuilt.LiquidationEquityEur==x.CommonLedger.LiquidationEquityEur &&
+                        rebuilt.UsedMarginEur==x.CommonLedger.UsedMarginEur &&
+                        rebuilt.FreeMarginEur==x.CommonLedger.FreeMarginEur &&
+                        rebuilt.MaximumSampledDrawdown==x.CommonLedger.MaximumSampledDrawdown &&
+                        rebuilt.ObservedPeakEur==x.CommonLedger.ObservedPeakEur &&
+                        rebuilt.OpenPositions==0 && rebuilt.PendingIntents==0 &&
+                        !rebuilt.HistoryEvidenceIncomplete;
+                }
+                catch (Exception ex) when (ex is ArgumentException or InvalidOperationException or OverflowException)
+                {
+                    traceValid=false;
+                }
+            }
+            matched=mapped && traceValid;
             if(matched)
                 foreach(var f in x.ClosedFragments.Where(f=>f.CompletesRoundTrip))
                     completed.Add((f.PositionId,f.ClosedAt));
-            else missing.Add("COMMON_LEDGER_TRIP_MAPPING_CASH_IDENTITY_OR_FINAL_SETTLEMENT_UNKNOWN");
+            else missing.Add("NATIVE_EVENT_TRACE_SYMBOL_SIDE_VOLUME_SETTLEMENT_OR_CASH_IDENTITY_UNVERIFIED");
         }
 
-        var proof=x.SourceProof;
+        // Caller booleans and LedgerSummary.GlobalDrawdownCertified are never
+        // independently authenticated broker proof. There is deliberately NO
+        // CERTIFIED branch until a separate original-source verifier is wired.
         var eligible=x.ExAnteEligibleIsoWeeks.ToHashSet(StringComparer.Ordinal);
         bool completeCalendarScope=x.Proposals.All(p=>eligible.Contains(Week(p.DecisionAt))) &&
             x.ClosedFragments.All(f=>eligible.Contains(Week(f.ClosedAt)));
-        bool sourceComplete=matched && completeCalendarScope && proof is not null &&
-            proof.ExAnteEligibleWeekCalendarVerified &&
-            proof.SingleOriginalEur300Account && proof.LegalBrokerMinimumStepAndMargin &&
-            proof.HistoricPairedBidAskCostsFxAndFinancing &&
-            proof.EveryPositionAndFloatingMarkReconciled &&
-            proof.ContinuousFloatingDrawdownCertified &&
-            x.CommonLedger!.GlobalDrawdownCertified &&
-            x.CommonLedger.MaximumSampledDrawdown<=OwnerRiskAuthority.MaximumSystemDrawdown;
-        if(!sourceComplete)missing.Add("BROKER_EXECUTION_COST_MARGIN_FX_FLOATING_RISK_CALENDAR_OR_CERTIFICATE_UNVERIFIED");
+        if(!completeCalendarScope)missing.Add("ELIGIBLE_WEEK_CALENDAR_INCOMPLETE_OR_OUTSIDE_SCOPE");
+        missing.Add("INDEPENDENT_ORIGINAL_BROKER_SOURCE_AND_CONTINUOUS_DD_VERIFIER_NOT_CONNECTED");
+        bool sourceComplete=false;
         var weeks=x.ExAnteEligibleIsoWeeks.OrderBy(w=>w,StringComparer.Ordinal).Select(week=>
         {
             var raw=x.Proposals.Where(p=>Week(p.DecisionAt)==week).ToArray();
