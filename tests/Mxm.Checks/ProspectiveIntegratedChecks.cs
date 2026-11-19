@@ -233,6 +233,14 @@ internal static class ProspectiveIntegratedChecks
             session.Ledger.ClosedFragments(),session.Ledger.Summary(),
             new[]{"1970-W01"},ModelEventTrace:eventTrace.ToArray());
         var census=NativeSystemicOpportunityCensus.Assess(auditInput);
+        var standalone=new NativeFundedLedger();
+        foreach(var ev in eventTrace)standalone.Apply(ev);
+        System.Console.WriteLine("SYC2_TRACE_DIAG "+System.Text.Json.JsonSerializer.Serialize(new{
+            Count=eventTrace.Count,Original=session.Ledger.Summary(),
+            Rebuilt=standalone.Summary(),Proposal=proposed,Links=links,
+            FragmentsEqual=standalone.ClosedFragments().SequenceEqual(auditInput.ClosedFragments),
+            Missing=census.MissingEvidence,Modeled=census.ModeledFundedCompleteTrips
+        }));
         check(census.RawCombinedProposals==2 &&
             census.UniqueNonconflictingOpportunities==2 &&
             census.ModeledFundedCompleteTrips==2 &&
