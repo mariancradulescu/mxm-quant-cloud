@@ -99,8 +99,10 @@ public static class NativeSimulatedCloseLifecycle
 
         var pending=session.Ledger.PendingSnapshot()
             .SingleOrDefault(x=>x.PositionId==held.Id);
-        if(pending is not null && pending.Kind!="REQUEST_CLOSE")
-            return new(protection,"MODEL_POSITION_OTHER_INTENT_HELD",
+        if(pending is not null &&
+           (pending.Kind!="REQUEST_CLOSE" ||
+            !pending.Reason.StartsWith("MODEL_UNTRANSMITTED_",StringComparison.Ordinal)))
+            return new(protection,"NON_SIR1_INTENT_PRESERVED_NO_MODEL_RECONCILIATION",
                 facts.ToArray(),session.Ledger.Summary(at),false);
 
         if(pending is not null && at-pending.At>ModelCloseResponseWindowMs)
