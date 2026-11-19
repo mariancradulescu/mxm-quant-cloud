@@ -1,6 +1,9 @@
 using System.Text.Json;
 using System.Security.Cryptography;
 
+if(args.Length==3 && args[2]=="--mvo1-original-persistent-marginal-portfolio")
+    return Mvo1NativeStudy.Run(args[0],args[1]);
+
 if(args.Length==3 && args[2]=="--spe1-twelve-asset-causal-signal-exits")
     return Spe1NativeStudy.Run(args[0],args[1]);
 
