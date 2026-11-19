@@ -365,6 +365,17 @@ public sealed class NativeUnifiedPortfolioEngine
             var options=new List<(Ucp1DecisionSignal Signal,Ucp1MarketFrame Frame)>();
             foreach(var m in frame.Markets.OrderBy(x=>x.Symbol,StringComparer.Ordinal))
             {
+                if(scp1)
+                {
+                    // The training cohort was sampled immediately AFTER a
+                    // genuine completed M15 bar. Never apply that learned
+                    // score to materially different mid-bar opportunity
+                    // clocks or to an old bar after a source-window gap.
+                    var completed15=m.M15.Where(x=>x.CloseAt<t).TakeLast(1).ToArray();
+                    if(completed15.Length==0 ||
+                       t-completed15[0].CloseAt>120000L)
+                    {Count("SCP1_COMPLETED_M15_DECISION_CLOCK_STALE");continue;}
+                }
                 var signals=Ucp1CausalSignals.Describe(m,t);
                 if(signals.Length==0)continue;
                 long completed=signals[0].LastCompletedM5At;
