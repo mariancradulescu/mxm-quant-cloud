@@ -111,6 +111,11 @@ public static class NativeSystemicOpportunityCensus
                 x.CommonLedger.CompleteRoundTrips==
                     x.ClosedFragments.Count(f=>f.CompletesRoundTrip) &&
                 Math.Abs(x.CommonLedger.ClosedNetEur-x.ClosedFragments.Sum(f=>f.NetEur))<=0.0000001m &&
+                Math.Abs(x.CommonLedger.CashEur-
+                    (OwnerRiskAuthority.InitialCapitalEur+x.CommonLedger.ClosedNetEur))<=0.0000001m &&
+                x.CommonLedger.UsedMarginEur==0m &&
+                x.CommonLedger.FreeMarginEur==x.CommonLedger.CashEur &&
+                x.CommonLedger.LiquidationEquityEur==x.CommonLedger.CashEur &&
                 !x.CommonLedger.HistoryEvidenceIncomplete &&
                 x.CommonLedger.OpenPositions==0 && x.CommonLedger.PendingIntents==0;
             matched=mapped;
