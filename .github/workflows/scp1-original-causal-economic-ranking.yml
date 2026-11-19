@@ -1,0 +1,129 @@
+name: SCP1 original authentic CSharp scoring selection and unified EUR300 portfolio
+on:
+  pull_request:
+    paths:
+      - 'research/SCP1_FROZEN_CAUSAL_ECONOMIC_RANKING_20261119.md'
+      - 'research/SCP1_A0_PRESOURCE_M5_CAUSAL_LABEL_ALIGNMENT_20261119.md'
+      - 'research/scp1_original_source_native_score.py'
+      - 'src/Mxm.Core/NativeScp1EconomicScorer.cs'
+      - 'src/Mxm.Core/NativeUnifiedPortfolioEngine.cs'
+      - 'src/Mxm.Cloud/MxmCloud.cs'
+      - 'src/Mxm.Cloud/NativeUnifiedCloudParityAdapter.cs'
+      - 'src/Mxm.Replay/Scp1OriginalScoredEconomicRunner.cs'
+      - 'src/Mxm.Replay/Program.cs'
+      - 'tests/Mxm.Checks/Scp1EconomicScoringChecks.cs'
+      - 'tests/Mxm.Checks/Program.cs'
+      - '.github/workflows/scp1-original-causal-economic-ranking.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ops/scp1-once.txt'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  native-unified-scoring-parity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    outputs:
+      once: ${{ steps.owner.outputs.once }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Protocol unchanged and ancestor of new CSharp scoring implementation
+        run: |
+          git merge-base --is-ancestor a1630a65205805d4151499a7bfef0a90880b40db HEAD
+          git show a1630a65205805d4151499a7bfef0a90880b40db:research/SCP1_FROZEN_CAUSAL_ECONOMIC_RANKING_20261119.md > /tmp/scp1-score-freeze
+          cmp /tmp/scp1-score-freeze research/SCP1_FROZEN_CAUSAL_ECONOMIC_RANKING_20261119.md
+          git merge-base --is-ancestor c3e8349eeb266cff22c5f221b6a31fdb1cbf4369 HEAD
+          git show c3e8349eeb266cff22c5f221b6a31fdb1cbf4369:research/SCP1_A0_PRESOURCE_M5_CAUSAL_LABEL_ALIGNMENT_20261119.md > /tmp/scp1-a0-freeze
+          cmp /tmp/scp1-a0-freeze research/SCP1_A0_PRESOURCE_M5_CAUSAL_LABEL_ALIGNMENT_20261119.md
+      - name: Same native CSharp Replay built
+        run: dotnet build src/Mxm.Replay -c Release
+      - name: Same native CSharp cBot observation adapter built no trading
+        run: dotnet build src/Mxm.Cloud -c Release
+      - name: Native full scorer and Core Replay/Cloud same-event tests
+        run: dotnet run --project tests/Mxm.Checks -c Release
+      - name: Python only HXC1 plus OEI1 custody syntax
+        run: python -m py_compile research/scp1_original_source_native_score.py
+      - name: Existing original completed studies and receipts are unchanged
+        run: |
+          git diff --exit-code 9ac9ecaf06023ee0a7c6b6412283069bab207f77 -- \
+            src/Mxm.Core/NativeNpi1IntegratedResearch.cs \
+            src/Mxm.Core/NativeSir1OriginalSourceWitness.cs \
+            src/Mxm.Core/NativeMarginalValueResearch.cs \
+            research/UCP1_ORIGINAL_UNIFIED_ECONOMIC_RESULT_READBACK_20261119.md \
+            research/NPI1_ORIGINAL_NATIVE_FINANCIAL_RESULT_READBACK_20261119.md \
+            research/SIR1_ORIGINAL_SOURCE_LIFECYCLE_READBACK_20261119.md
+      - name: Only OWNER can trigger exact one original genuine new score evaluation
+        id: owner
+        shell: bash
+        run: |
+          echo "once=false" >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_EVENT_NAME" == "push" &&
+                "$GITHUB_REF" == "refs/heads/main" &&
+                "$GITHUB_ACTOR" == "mariancradulescu" &&
+                "$GITHUB_RUN_ATTEMPT" == "1" &&
+                "$(git log -1 --format=%s)" == "OWNER_SCP1_AUTHENTIC_SCORE_SELECTION_ONCE" &&
+                "$(git diff-tree --no-commit-id --name-only -r HEAD)" == "ops/scp1-once.txt" &&
+                "$(cat ops/scp1-once.txt)" == "SCP1_12_NATIVE_M5_M15_SCORES_OEI1_EUR300_EVALUATION_NO_TRADING" ]]; then
+            echo "once=true" >> "$GITHUB_OUTPUT"
+          fi
+  original-authentic-source-economic-scoring:
+    needs: native-unified-scoring-parity
+    if: ${{ needs.native-unified-scoring-parity.outputs.once == 'true' }}
+    environment: mxm-r3-custody-v1
+    concurrency:
+      group: scp1-original-hxc1-oei1-score-selection-once
+      cancel-in-progress: false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 110
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - run: dotnet build src/Mxm.Replay -c Release
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: hxc1-original-historical-encrypted-source
+          run-id: 43817213663
+          github-token: ${{ github.token }}
+          path: scp1-hxc1-original-source
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: oei1-original-pepperstone-encrypted-custody
+          run-id: 44247979857
+          github-token: ${{ github.token }}
+          path: scp1-oei1-original-source
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: oei1-original-integrated-3phase-public
+          run-id: 44247979857
+          github-token: ${{ github.token }}
+          path: scp1-oei1-original-public
+      - name: Cryptographically verify actual M5 M15 and EO quote source then run NEW native CSharp scorer and EUR300 policies
+        run: python -m research.scp1_original_source_native_score
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: scp1-original-causal-scored-common-eur300-public
+          path: scp1-public/
+          retention-days: 90
+          if-no-files-found: warn

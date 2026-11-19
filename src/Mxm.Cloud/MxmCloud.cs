@@ -36,6 +36,8 @@ public class MxmCloud : Robot
     private bool _calibratedResearch;
     [Parameter("UCP1 unified economic observation (NO ORDERS)", DefaultValue = false)]
     public bool EnableUnifiedReadOnlyPolicy {get;set;}
+    [Parameter("SCP1 precommitted score snapshot (NO ORDERS)", DefaultValue = "")]
+    public string Scp1FrozenModelEnvelope {get;set;}="";
     private NativeUnifiedCloudParityAdapter? _unifiedPolicy;
     private long _lastUnifiedObservedAt;
     private int _lastUnifiedClosed=-1;
@@ -68,7 +70,33 @@ public class MxmCloud : Robot
         // as the restart authority. Reconstruct from native broker facts.
         _fundedSession=new NativeFundedSession(_accountBinding);
         if(EnableUnifiedReadOnlyPolicy)
-            _unifiedPolicy=new NativeUnifiedCloudParityAdapter("JOINT",_accountBinding);
+        {
+            if(!string.IsNullOrWhiteSpace(Scp1FrozenModelEnvelope))
+            {
+                try
+                {
+                    var score=System.Text.Json.JsonSerializer.Deserialize<Scp1ScoreModel>(
+                        Scp1FrozenModelEnvelope);
+                    if(score is null || score.Version!=NativeScp1EconomicScorer.Version ||
+                       score.TrainingEnd>=Stamp(Server.TimeInUtc) ||
+                       score.CalibrationEnd>=Stamp(Server.TimeInUtc) ||
+                       !score.MethodSelectedWithoutEvaluation)
+                        throw new System.ArgumentException("SCP1_FROZEN_MODEL_NOT_CAUSAL");
+                    _unifiedPolicy=new NativeUnifiedCloudParityAdapter(
+                        "SCP1_ABSTAIN",_accountBinding,score);
+                    Print("MXM SCP1 observation-only common Core: frozen score loaded; method {0}; no trading.",
+                        score.Method);
+                }
+                catch(System.Exception)
+                {
+                    // No fallback to a fake trained score or unspecified
+                    // model; observing real account risk remains active.
+                    Print("MXM SCP1 model envelope rejected, financial decisions inactive.");
+                }
+            }
+            else
+                _unifiedPolicy=new NativeUnifiedCloudParityAdapter("JOINT",_accountBinding);
+        }
         // Independent MODEL_REPLAY capital, never the broker monetary domain.
         // A restart begins a fresh observational simulation, not a cash reset
         // of any broker account; historical recovery requires causal replay.
@@ -383,10 +411,21 @@ public class MxmCloud : Robot
                             // fictitious position fill or a session-close claim.
                         }
                     }
+                    // Available, causally completed cTrader M15 context
+                    // includes no future bar. On both Cloud/Replay only
+                    // actually supplied universe returns contribute breadth.
+                    var directions=observations.Select(x=>{
+                        var z=x.M15.Where(v=>v.CloseAt<at).TakeLast(2).ToArray();
+                        return z.Length==2 && z[0].CloseAt==z[1].OpenAt &&
+                            at-z[1].CloseAt<=900000L?
+                            System.Math.Sign(z[1].Close-z[0].Close):0;
+                    }).Where(x=>x!=0).ToArray();
+                    decimal currentBreadth=directions.Length>=4?
+                        (decimal)directions.Sum()/directions.Length:0m;
                     var productBroker=new Ucp1BrokerFrame(broker,
                         (decimal)Account.Balance,Account.AccountType.ToString());
                     var unified=_unifiedPolicy.Observe(new Ucp1Frame(at,
-                        observations.ToArray(),productBroker));
+                        observations.ToArray(),productBroker,currentBreadth));
                     if(unified.ModelBook.CompleteRoundTrips!=_lastUnifiedClosed)
                     {
                         _lastUnifiedClosed=unified.ModelBook.CompleteRoundTrips;

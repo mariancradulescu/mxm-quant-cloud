@@ -9,11 +9,12 @@ public sealed class NativeUnifiedCloudParityAdapter
 {
     private NativeUnifiedPortfolioEngine engine;
     public NativeUnifiedCloudParityAdapter(string policy="JOINT",
-        string brokerAccountBinding="")
-        =>engine=new NativeUnifiedPortfolioEngine(policy,brokerAccountBinding);
+        string brokerAccountBinding="",Scp1ScoreModel? scoreModel=null)
+        =>engine=new NativeUnifiedPortfolioEngine(policy,brokerAccountBinding,scoreModel);
     public Ucp1FrameResult Observe(Ucp1Frame frame)=>engine.Advance(frame);
     public string[] ActiveSymbols=>engine.ActiveSymbols;
     public LedgerEvent[] ModelFacts=>engine.OriginalModelEvents;
+    public Scp1ChoiceReceipt[] Scp1Choices=>engine.Scp1ChoiceReceipts;
     public LedgerSummary ModelBook=>engine.ModelSummary;
     public string Checkpoint()=>engine.Checkpoint();
     public void Restore(string checkpoint)
