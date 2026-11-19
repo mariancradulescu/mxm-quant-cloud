@@ -211,4 +211,46 @@ public static class NativeCausalExitResearch
             return new(true,"MAXIMUM_EXPOSURE_SAFETY_LIMIT",extreme);
         return new(false,"HOLD_CAUSALLY_OBSERVED",extreme);
     }
+
+    // SPE1 prospective price-only closed-bar thesis exits. No broker quotes,
+    // intrabar trigger, assumed stop fill, target hold time, or realized NET.
+    // This additive routine does NOT alter any previously frozen LPM1 exits.
+    public static NativeExitVerdict AssessClosedBarThesis(
+        string mechanism,int side,decimal entryClose,decimal bestCompletedClose,
+        decimal completedClose,decimal equilibrium32,decimal atr16,
+        decimal slow16Move,decimal prior16High,decimal prior16Low,int completedBarsHeld)
+    {
+        if(mechanism is not ("STRUCTURE_CONTINUATION" or "EXTREME_REVERSION") ||
+           side is not (1 or -1) || entryClose<=0m || bestCompletedClose<=0m ||
+           completedClose<=0m || equilibrium32<=0m || atr16<=0m ||
+           completedBarsHeld<1 || prior16High<prior16Low)
+            throw new ArgumentException("SPE1_NONCAUSAL_CLOSED_PRICE_EXIT");
+        decimal extreme=side>0?Math.Max(bestCompletedClose,completedClose):
+                               Math.Min(bestCompletedClose,completedClose);
+        bool againstEq=side>0?completedClose<equilibrium32:completedClose>equilibrium32;
+        if(mechanism=="STRUCTURE_CONTINUATION")
+        {
+            if(side>0?completedClose<prior16Low:completedClose>prior16High)
+                return new(true,"SIGNAL_OPPOSITE_STRUCTURE_BREAK",extreme);
+            if(againstEq)return new(true,"SIGNAL_REGIME_INVALIDATION",extreme);
+            if(side*(extreme-completedClose)>=2m*atr16)
+                return new(true,"SIGNAL_COMPLETED_CLOSE_TRAILING_STOP",extreme);
+        }
+        else
+        {
+            if(side>0?completedClose>=equilibrium32:completedClose<=equilibrium32)
+                return new(true,"SIGNAL_EQUILIBRIUM_REACHED",extreme);
+            if(side*(completedClose-entryClose)<=-1.5m*atr16)
+                return new(true,"SIGNAL_ATR_THESIS_INVALIDATION",extreme);
+            if(side*slow16Move< -4m*atr16)
+                return new(true,"SIGNAL_SLOW_REGIME_SHIFT",extreme);
+            if(side*(extreme-entryClose)>=2m*atr16 &&
+               side*(extreme-completedClose)>=1.25m*atr16)
+                return new(true,"SIGNAL_COMPLETED_CLOSE_PROFIT_TRAIL",extreme);
+        }
+        // Last resort: never a primary profit/exit target or fixed horizon.
+        if(completedBarsHeld>=192)
+            return new(true,"SAFETY_TIMEOUT_ANTI_LOCK",extreme);
+        return new(false,"HOLD_THESIS_STILL_OBSERVABLE",extreme);
+    }
 }
