@@ -222,9 +222,9 @@ internal static class ProspectiveIntegratedChecks
               "completed accounting, accumulated risk and trade counter persist through restart and duplicate");
 
         var proposed=new[]{
-            new NativeSystemicProposal(x.Id,x.Mechanism,x.Symbol,x.Direction,
+            new NativeSystemicProposal(x.Id,x.Candidate,x.Symbol,x.Direction,
                 clock,t+10000),
-            new NativeSystemicProposal(y.Id,y.Mechanism,y.Symbol,y.Direction,
+            new NativeSystemicProposal(y.Id,y.Candidate,y.Symbol,y.Direction,
                 clock,t+10000)
         };
         var links=new[]{new NativeSystemicPositionLink(x.Id,x.Id),
