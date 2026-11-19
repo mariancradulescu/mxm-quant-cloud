@@ -133,9 +133,13 @@ public static class NativeSystemicOpportunityCensus
                     foreach(var e in events) live.Apply(e);
                     var rebuilt=live.Summary();
                     var fragments=live.ClosedFragments();
-                    var opens=events.Where(e=>e.Kind=="OPEN_FILL").ToArray();
-                    var requests=events.Where(e=>e.Kind=="REQUEST_OPEN").ToArray();
-                    var closures=events.Where(e=>e.Kind=="CLOSE_FILL").ToArray();
+                    // The native ledger treats an exactly repeated EventId as
+                    // idempotent. Match physical volumes on unique event IDs;
+                    // replay itself rejects a conflicting duplicate payload.
+                    var unique=events.DistinctBy(e=>e.EventId).ToArray();
+                    var opens=unique.Where(e=>e.Kind=="OPEN_FILL").ToArray();
+                    var requests=unique.Where(e=>e.Kind=="REQUEST_OPEN").ToArray();
+                    var closures=unique.Where(e=>e.Kind=="CLOSE_FILL").ToArray();
                     bool identity=opens.Length==x.PositionLinks.Length &&
                         requests.Length==opens.Length &&
                         opens.Select(e=>e.PositionId).Distinct(StringComparer.Ordinal).Count()==opens.Length &&
