@@ -9,7 +9,8 @@ public sealed record ResearchEntryTerms(string OpportunityId,long LatencyMs,deci
 public sealed record NativeResearchDecision(string Id,long Clock,ScenarioSizingInputs Sizing,
     PortfolioScenario[] EmptyStates,EconomicOpportunity[] Opportunities,
     ResearchExposureScenarios[] Exposure,ResearchEntryTerms[] EntryTerms,string EvidenceHash,
-    SpecialistEuroEvidence[]? SpecialistEvidence=null);
+    SpecialistEuroEvidence[]? SpecialistEvidence=null,
+    int MaximumFundedOpenSlots=0);
 public sealed record NativeResearchDecisionReceipt(string InputHash,OrchestrationResult Selection,
     LedgerSummary Ledger,decimal PendingMarginReservedEur,string Status,
     bool Qualified=false,bool OrdersEnabled=false);
@@ -70,14 +71,19 @@ public sealed partial class NativeFundedSession
                 d.Opportunities,d.Exposure,d.EntryTerms,d.EvidenceHash}) :
             JsonSerializer.Serialize(d);
         // A receipt saved by the historical path cannot satisfy the prospective gates.
-        string hash=Hash(prospective?"PROSPECTIVE/"+payload:payload);
+        // A strictly optional prospective portfolio rule. All historic
+        // uncapped decision identities retain their exact old hash bytes.
+        string capScope=d.MaximumFundedOpenSlots>0?
+            "MAX_FUNDED_SLOTS/"+d.MaximumFundedOpenSlots+"/":"";
+        string hash=Hash(capScope+(prospective?"PROSPECTIVE/"+payload:payload));
         if(ResearchDecisions.TryGetValue(d.Id,out var previous))
         {
             if(previous.InputHash!=hash)throw new ArgumentException("CONFLICTING_NATIVE_RESEARCH_DECISION");
             return previous;
         }
         if(Ledger.MonetaryDomain!="MODEL_REPLAY" || string.IsNullOrWhiteSpace(d.Id) || d.Clock<=0 ||
-            d.EvidenceHash.Length!=64 || !d.EvidenceHash.All(Uri.IsHexDigit))
+            d.EvidenceHash.Length!=64 || !d.EvidenceHash.All(Uri.IsHexDigit) ||
+            d.MaximumFundedOpenSlots is <0 or >256)
             throw new ArgumentException("NATIVE_RESEARCH_DECISION_DOMAIN_OR_IDENTITY");
         var summary=Ledger.Summary(d.Clock);
         NativeResearchDecisionReceipt Pause(string reason)
@@ -155,6 +161,31 @@ public sealed partial class NativeFundedSession
             var relevant=d.SpecialistEvidence.Where(e=>offered.Any(o=>o.Id==e.OpportunityId)).ToArray();
             selection=ResearchSpecialistAdmission.Estimate(request,relevant,prospective
                 ?(o,e)=>CheckProspectiveEntryCosts(o,e,d.Clock):null).NativeAllocation;
+        }
+        // Existing held exposures keep one slot even while REQUEST_CLOSE is
+        // pending; pending NEW OPEN requests take another reserved slot.
+        // The common selector may allocate multiple distinct candidates in
+        // one call, so the pre-call single-vacancy test is not sufficient.
+        // Clamp only after ranking under the SAME predecision joint states,
+        // and before any REQUEST_OPEN fact is committed to the funded ledger.
+        // Historic calls have MaximumFundedOpenSlots==0 and are untouched.
+        if(d.MaximumFundedOpenSlots>0)
+        {
+            int available=Math.Max(0,d.MaximumFundedOpenSlots-held.Length-pending.Length);
+            if(selection.Allocations.Length>available)
+            {
+                var permitted=selection.Allocations.Take(available).ToArray();
+                var denied=selection.Allocations.Skip(available).Select(x=>
+                    x with {Units=0,Reason="NATIVE_PROSPECTIVE_FUNDED_POSITION_SLOT_CAP"}).ToArray();
+                decimal retainedMargin=permitted.Sum(x=>x.Units*
+                    offered.Single(o=>o.Id==x.Id).VolumeGrid.MarginPerUnitEur);
+                selection=selection with {
+                    Allocations=permitted,
+                    Declined=selection.Declined.Concat(denied).ToArray(),
+                    ReservedMarginEur=retainedMargin,
+                    Status="NATIVE_PROSPECTIVE_MAX_FUNDED_POSITION_SLOTS_ENFORCED"
+                };
+            }
         }
         selection=selection with {Declined=selection.Declined.Concat(blocked.Select(o=>
             new OpportunityAllocation(o.Id,0,0,0,"NATIVE_RESEARCH_SYMBOL_HELD_OR_PENDING"))).ToArray()};
