@@ -73,7 +73,8 @@ internal static class Scp1EconomicScoringChecks
             "SYNTHETIC_SOURCE_CONTRACT_TEST_NOT_MARKET");
         var input=new Ucp1Frame(at,new[]{market},
             IntermarketBreadth:.25m);
-        var a=core.Advance(input),b=cloud.Observe(input);
+        var a=core.Advance(input);
+        var b=cloud.Observe(input);
         check(JsonSerializer.Serialize(a)==JsonSerializer.Serialize(b) &&
             JsonSerializer.Serialize(core.Scp1ChoiceReceipts)==
               JsonSerializer.Serialize(cloud.Scp1Choices) &&
