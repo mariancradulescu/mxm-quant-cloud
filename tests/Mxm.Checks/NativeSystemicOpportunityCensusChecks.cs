@@ -72,7 +72,7 @@ internal static class NativeSystemicOpportunityCensusChecks
             new[]{"2026-W47"}));
         check(broken.ModeledFundedCompleteTrips is null &&
             broken.Weeks[0].ModeledFundedCompleteTrips is null &&
-            broken.MissingEvidence.Contains("COMMON_LEDGER_TRIP_MAPPING_CASH_IDENTITY_OR_FINAL_SETTLEMENT_UNKNOWN"),
+            broken.MissingEvidence.Contains("NATIVE_EVENT_TRACE_SYMBOL_SIDE_VOLUME_SETTLEMENT_OR_CASH_IDENTITY_UNVERIFIED"),
             "SYC1 ledger mismatch invalidates financial counts instead of treating missing proof as zero");
         const int n=21;
         var proposals=Enumerable.Range(0,n).Select(i=>P(
