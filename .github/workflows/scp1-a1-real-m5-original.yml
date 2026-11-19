@@ -1,0 +1,152 @@
+name: SCP1-A1 genuine historical M5 source correction and conditional economic scoring once
+on:
+  pull_request:
+    paths:
+      - 'research/SCP1_A1_PRESOURCE_REAL_M5_CXL1_AND_HXC1_M1_SOURCE_CORRECTION_20261119.md'
+      - 'research/scp1_a1_source_recovery_native_score.py'
+      - 'src/Mxm.Core/NativeScp1EconomicScorer.cs'
+      - 'src/Mxm.Replay/Scp1OriginalScoredEconomicRunner.cs'
+      - 'src/Mxm.Replay/Program.cs'
+      - '.github/workflows/scp1-a1-real-m5-original.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ops/scp1a1-once.txt'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  native-product-and-source-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    outputs:
+      one: ${{ steps.owner.outputs.one }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: All three separate source / scoring freezes precede this implementation
+        run: |
+          git merge-base --is-ancestor a1630a65205805d4151499a7bfef0a90880b40db HEAD
+          git merge-base --is-ancestor c3e8349eeb266cff22c5f221b6a31fdb1cbf4369 HEAD
+          git merge-base --is-ancestor 7f247ec8c41dccadd73887953b889a9be195067f HEAD
+          git show a1630a65205805d4151499a7bfef0a90880b40db:research/SCP1_FROZEN_CAUSAL_ECONOMIC_RANKING_20261119.md >/tmp/scp1-freeze
+          git show c3e8349eeb266cff22c5f221b6a31fdb1cbf4369:research/SCP1_A0_PRESOURCE_M5_CAUSAL_LABEL_ALIGNMENT_20261119.md >/tmp/scp1-a0-freeze
+          git show 7f247ec8c41dccadd73887953b889a9be195067f:research/SCP1_A1_PRESOURCE_REAL_M5_CXL1_AND_HXC1_M1_SOURCE_CORRECTION_20261119.md >/tmp/scp1-a1-freeze
+          cmp /tmp/scp1-freeze research/SCP1_FROZEN_CAUSAL_ECONOMIC_RANKING_20261119.md
+          cmp /tmp/scp1-a0-freeze research/SCP1_A0_PRESOURCE_M5_CAUSAL_LABEL_ALIGNMENT_20261119.md
+          cmp /tmp/scp1-a1-freeze research/SCP1_A1_PRESOURCE_REAL_M5_CXL1_AND_HXC1_M1_SOURCE_CORRECTION_20261119.md
+      - name: Exact shared CSharp Core Replay product build
+        run: dotnet build src/Mxm.Replay -c Release
+      - name: Observation-only cTrader same Core build
+        run: dotnet build src/Mxm.Cloud -c Release
+      - name: All native Core economic and parity regression tests
+        run: dotnet run --project tests/Mxm.Checks -c Release
+      - name: Source-only Python authenticated custody syntax
+        run: python -m py_compile research/scp1_a1_source_recovery_native_score.py
+      - name: Frozen first-original exact UCP1/NPI1/SIR1/CXL1 and OEI1 source unchanged
+        run: |
+          git diff --exit-code 366b1421b94113f01b8edeadfb12601858c1df5b -- \
+            research/scp1_original_source_native_score.py \
+            research/ucp1_original_unified_bridge.py \
+            research/cxl1_original_native_eur_readback.py \
+            research/cxl1_original_275_source.py \
+            research/hxc1_historical_readback.py \
+            src/Mxm.Core/NativeNpi1IntegratedResearch.cs \
+            src/Mxm.Core/NativeSir1OriginalSourceWitness.cs \
+            research/UCP1_ORIGINAL_UNIFIED_ECONOMIC_RESULT_READBACK_20261119.md
+      - name: Exactly one separate OWNER main source-correction intent
+        id: owner
+        shell: bash
+        run: |
+          echo "one=false" >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_EVENT_NAME" == "push" &&
+                "$GITHUB_REF" == "refs/heads/main" &&
+                "$GITHUB_ACTOR" == "mariancradulescu" &&
+                "$GITHUB_RUN_ATTEMPT" == "1" &&
+                "$(git log -1 --format=%s)" == "OWNER_SCP1_A1_AUTHENTIC_M5_SOURCE_SCORE_ONCE" &&
+                "$(git diff-tree --no-commit-id --name-only -r HEAD)" == "ops/scp1a1-once.txt" &&
+                "$(cat ops/scp1a1-once.txt)" == "SCP1_A1_CXL1_REAL_M5_HXC1_REAL_M1_REBUILT_M5_EUR300_NO_TRADING" ]]; then
+            echo "one=true" >> "$GITHUB_OUTPUT"
+          fi
+  protected-original-real-m5-economic-ranking:
+    needs: native-product-and-source-contract
+    if: ${{ needs.native-product-and-source-contract.outputs.one == 'true' }}
+    environment: mxm-r3-custody-v1
+    concurrency:
+      group: scp1-a1-correct-source-geometry-exact-once
+      cancel-in-progress: false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 110
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - run: dotnet build src/Mxm.Replay -c Release
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: hxc1-original-historical-encrypted-source
+          run-id: 43817213663
+          github-token: ${{ github.token }}
+          path: scp1a1-hxc1-original-source
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: cxl1-original-275-earlier-sealed-source
+          run-id: 43947388854
+          github-token: ${{ github.token }}
+          path: scp1a1-cxl1-earlier-encrypted
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: cxl1-original-275-earlier-source-coverage
+          run-id: 43947388854
+          github-token: ${{ github.token }}
+          path: scp1a1-cxl1-earlier-public
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: cxl1-original-50clock-source-encrypted
+          run-id: 43945139889
+          github-token: ${{ github.token }}
+          path: scp1a1-cxl1-pilot-encrypted
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: cxl1-original-50clock-pilot-public
+          run-id: 43945139889
+          github-token: ${{ github.token }}
+          path: scp1a1-cxl1-pilot-public
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: oei1-original-pepperstone-encrypted-custody
+          run-id: 44247979857
+          github-token: ${{ github.token }}
+          path: scp1a1-oei1-original-source
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: oei1-original-integrated-3phase-public
+          run-id: 44247979857
+          github-token: ${{ github.token }}
+          path: scp1a1-oei1-original-public
+      - name: Rebuild verified exact M5/M15 from original M1/M5 OHLC and score new EUR300 full policies
+        run: python -m research.scp1_a1_source_recovery_native_score
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: scp1-a1-true-source-causal-score-and-eur300-original-public
+          path: scp1a1-public/
+          if-no-files-found: warn
+          retention-days: 90

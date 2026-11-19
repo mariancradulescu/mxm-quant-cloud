@@ -57,14 +57,21 @@ internal static class Scp1OriginalScoredEconomicRunner
         var input=JsonSerializer.Deserialize<Scp1OriginalInput>(
             File.ReadAllText(sourceFile),Opt)
             ??throw new ArgumentException("SCP1_PROTECTED_ORIGINAL_INPUT_NOT_READABLE");
-        if(input.Streams.Length!=12 ||
-           input.Streams.Select(s=>s.Symbol).Distinct(StringComparer.Ordinal).Count()!=12 ||
-           input.QuoteMarkets.Select(x=>x.Symbol)
+        var genuineSix=new[]{"BTCUSD","ETHUSD","EURUSD","NAS100","US500","XAUUSD"}
+            .OrderBy(x=>x,StringComparer.Ordinal).ToArray();
+        if(input.SourceGeometry!="SCP1_A1_REAL_CXL1_M5_AND_HXC1_M1_TO_M5" ||
+           input.OriginalCxl1CipherHashes is null ||
+           input.OriginalCxl1CipherHashes.Length!=2 ||
+           input.OriginalCxl1CipherHashes.Any(x=>x.Length!=64) ||
+           input.Streams.Length!=6 ||
+           !input.Streams.Select(s=>s.Symbol).OrderBy(x=>x,StringComparer.Ordinal)
+               .SequenceEqual(genuineSix) ||
+           !input.QuoteMarkets.Select(x=>x.Symbol)
                .OrderBy(x=>x,StringComparer.Ordinal)
-               .SequenceEqual(new[]{"EURUSD","US500"})==false ||
-           input.OriginalHxc1SourceSha256.Length!=64||
+               .SequenceEqual(new[]{"ETHUSD","EURUSD","US500"}.OrderBy(x=>x,StringComparer.Ordinal)) ||
+           input.OriginalHxc1SourceSha256.Length!=64 ||
            input.OriginalOei1SourceSha256.Length!=64)
-            throw new ArgumentException("SCP1_ORIGINAL_SOURCE_SCOPE_MISMATCH");
+            throw new ArgumentException("SCP1_A1_REAL_M5_SIX_SOURCE_SCOPE_MISMATCH");
         // Full original genuine completed M5/M15; no resampled mid extrema.
         foreach(var s in input.Streams)
         {
@@ -266,7 +273,8 @@ internal static class Scp1OriginalScoredEconomicRunner
             input.OriginalHxc1SourceSha256,input.OriginalOei1SourceSha256,
             Protocol=NativeScp1EconomicScorer.Version,
             Model=snapshot,
-            SourceClass="GENUINE_ORIGINAL_PEPPERSTONE_HXC1_M5_M15_AND_OEI1_QUOTE",
+            SourceClass="SCP1_A1_VERIFIED_ORIGINAL_CXL1_M5_AND_HXC1_M1_AGGREGATED_REAL_M5_TRUE_OHLC",
+            input.SourceGeometry,input.OriginalCxl1CipherHashes,
             FinancialDecisionWindow="ONLY_EVALUATION_2026_10_19_THROUGH_2026_11_09_POST_CAL",
             NoInSampleFinancialDecisionLeakage=true,
             PriceOnlyTrainingLabelCount=training.Length,
@@ -280,10 +288,13 @@ internal static class Scp1OriginalScoredEconomicRunner
             AllPhasesHistoricallyGloballyExposed=true,
             SameClockGenuineQuoteFinanceFrames=genuineFinanceFrames,
             OriginalQuoteClocks=times.Length,
+            TrainingEligibleSourceSymbols=new[]{"BTCUSD","ETHUSD"},
+            LateOnlyCrossMarketSourceSymbols=new[]{"EURUSD","US500","XAUUSD","NAS100"},
+            FundingEligibleSymbols=new[]{"EURUSD","US500","ETHUSD"},
             SourceCounts=input.Streams.ToDictionary(s=>s.Symbol,
                 s=>new {AuthenticM5=s.M5.Length,AuthenticM15=s.M15.Length}),
             FundingIneligibleClassesWithoutMatchingNativeM5M15=
-                new[]{"ETHUSD","SpotBrent"},
+                new[]{"BTCUSD","XAUUSD","NAS100","SpotBrent"},
             ObservedCandidateFamilies=familyProposals,
             MissingFinancialOrBarEvidence=rejected,
             ConditionalPolicies=result,LedgerReceipts=chains,
