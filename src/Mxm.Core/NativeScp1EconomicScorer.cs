@@ -33,11 +33,11 @@ public sealed record Scp1ScoreModel(string Version,string Method,
     int TrainingComplete,int TrainingCensored,double GlobalPrior,
     double GlobalMeanWinR,double GlobalMeanLossR,double GlobalStdR,
     Dictionary<string,Scp1Bucket> Cells,double[] RidgeWeights,
-    int CalibrationComplete,double PriorCalibrationBrier,
-    double BayesCalibrationBrier,double RidgeCalibrationBrier,
+    int CalibrationComplete,double? PriorCalibrationBrier,
+    double? BayesCalibrationBrier,double? RidgeCalibrationBrier,
     bool MethodSelectedWithoutEvaluation);
-public sealed record Scp1ScoreBand(int Band,int Count,double AverageForecastP,
-    double ActualPositiveRate,decimal MeanGrossPriceOnlyR,
+public sealed record Scp1ScoreBand(int Band,int Count,double? AverageForecastP,
+    double? ActualPositiveRate,decimal? MeanGrossPriceOnlyR,
     string Disclosure);
 public sealed record Scp1ScoreDiagnostics(string Stage,string Method,
     int Eligible,int Complete,int Censored,double? Brier,
@@ -174,23 +174,24 @@ public static class NativeScp1EconomicScorer
                 string.Join("|",train.Select(x=>x.At+":"+x.Symbol+":"+x.Family+
                     ":"+x.Side+":"+x.GrossPriceOnlyR.ToString(CultureInfo.InvariantCulture)))),
             train.Length,censored,prior,wmean,lmean,std,cells,beta,
-            0,double.NaN,double.NaN,double.NaN,false);
+            0,null,null,null,false);
         var cal=rows.Where(x=>x.At>=EndTrain&&x.At<EndCal&&
                    x.Complete&&x.End<EndCal).ToArray();
-        double Brier(string method)=>cal.Length>0?cal.Average(x=>{
+        double? Brier(string method)=>cal.Length>0?cal.Average(x=>{
             double p=method=="PRIOR"?prior:
                 Predict(draft,x.Family,x.Side,x.Features,method).PWin;
             double y=x.GrossPriceOnlyR>0?1d:0d;
             return (p-y)*(p-y);
-        }):double.NaN;
-        double priorError=Brier("PRIOR"),
+        }):null;
+        double? priorError=Brier("PRIOR"),
             bayes=Brier("BAYES_CONTEXT"),ridge=Brier("RIDGE_NONLINEAR");
         string chosen="NO_SCORE";
-        if(cal.Length>=60)
+        if(cal.Length>=60 && priorError.HasValue&&
+           bayes.HasValue&&ridge.HasValue)
         {
             string best=bayes<=ridge?"BAYES_CONTEXT":"RIDGE_NONLINEAR";
-            double score=Math.Min(bayes,ridge);
-            if(score+.0000001<priorError)
+            double score=Math.Min(bayes.Value,ridge.Value);
+            if(score+.0000001<priorError.Value)
             {
                 var ranked=cal.OrderBy(x=>Predict(draft,x.Family,x.Side,
                     x.Features,best).PWin).ToArray();
@@ -222,14 +223,16 @@ public static class NativeScp1EconomicScorer
             var chunk=pairs.Skip(i*pairs.Length/5)
                 .Take((i+1)*pairs.Length/5-i*pairs.Length/5).ToArray();
             bands.Add(new(i+1,chunk.Length,
-                chunk.Length>0?chunk.Average(x=>x.P):double.NaN,
-                chunk.Length>0?chunk.Count(x=>x.Row.GrossPriceOnlyR>0)/
-                    (double)chunk.Length:double.NaN,
-                chunk.Length>0?chunk.Average(x=>x.Row.GrossPriceOnlyR):0m,
+                chunk.Length>0?(double?)chunk.Average(x=>x.P):null,
+                chunk.Length>0?(double?)(chunk.Count(x=>x.Row.GrossPriceOnlyR>0)/
+                    (double)chunk.Length):null,
+                chunk.Length>0?(decimal?)chunk.Average(x=>x.Row.GrossPriceOnlyR):null,
                 "PRICE_ONLY_COMPLETED_BAR_PATH_PROXY_NOT_NET_EUR"));
         }
-        double? uplift=pairs.Length>=10?
-            (double)(bands[^1].MeanGrossPriceOnlyR-bands[0].MeanGrossPriceOnlyR):null;
+        double? uplift=pairs.Length>=10 &&
+            bands[^1].MeanGrossPriceOnlyR is decimal high &&
+            bands[0].MeanGrossPriceOnlyR is decimal low?
+            (double)(high-low):null;
         // Pairwise random baseline .5; fixed deterministic stratified comparison
         // to avoid quadratic comparisons or hindsight-selected winners.
         int concord=0,disagree=0;
