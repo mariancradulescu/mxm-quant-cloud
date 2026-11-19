@@ -116,8 +116,8 @@ public static class NativeSir1OriginalSourceWitness
                         decimal margin=units*quote.MarginPerUnit;
                         decimal slip=Math.Max(market.TickSize,quote.Ask-quote.Bid);
                         decimal expectedFees=2m*Math.Max(quote.ExitFeeFloor,quote.ExitFeePerUnit*units);
-                        var book=model.Ledger.Summary(t);
-                        if(book.FreeMarginEur is not decimal free || margin+reserved+
+                        var initialSummary=model.Ledger.Summary(t);
+                        if(initialSummary.FreeMarginEur is not decimal free || margin+reserved+
                            expectedFees+units*(quote.Ask-quote.Bid+2*slip)*quote.EurDebit>=free)
                         {
                             issues.Add("ORIGINAL_MINIMUM_NOT_FINANCED/"+market.Name);
