@@ -81,7 +81,7 @@ internal static class NativeSystemicOpportunityCensusChecks
         var trades=Enumerable.Range(0,n).Select(i=>new LedgerClosedFragment(
             "P"+i,"S"+i,t+i*60000+100,t+i*60000+40000,1,
             1m,0m,0m,0m,0m,0m,1m,true,"SYNTH_COMPLETE")).ToArray();
-        var proof=new NativeSystemicSourceProof(true,true,true,true,true);
+        var proof=new NativeSystemicSourceProof(true,true,true,true,true,true);
         NativeSystemicCensusResult Run(int trips,bool globalCertificate,string[] weeks)=>
             NativeSystemicOpportunityCensus.Assess(new(
                 proposals,links.Take(trips).ToArray(),trades.Take(trips).ToArray(),
