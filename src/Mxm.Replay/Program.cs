@@ -1,6 +1,10 @@
 using System.Text.Json;
 using System.Security.Cryptography;
 
+if(args.Length==3 && args[2]=="--npi1-original-integrated")
+    return Npi1NativeStudy.Run(args[0],args[1]);
+
+
 if(args.Length==3 && args[2]=="--mvo1-original-persistent-marginal-portfolio")
     return Mvo1NativeStudy.Run(args[0],args[1]);
 
