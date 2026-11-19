@@ -15,7 +15,8 @@ public sealed record NativeSystemicSourceProof(
     bool LegalBrokerMinimumStepAndMargin,
     bool HistoricPairedBidAskCostsFxAndFinancing,
     bool EveryPositionAndFloatingMarkReconciled,
-    bool ContinuousFloatingDrawdownCertified);
+    bool ContinuousFloatingDrawdownCertified,
+    bool ExAnteEligibleWeekCalendarVerified);
 public sealed record NativeSystemicCensusInput(
     NativeSystemicProposal[] Proposals,
     NativeSystemicPositionLink[] PositionLinks,
@@ -126,14 +127,18 @@ public static class NativeSystemicOpportunityCensus
         }
 
         var proof=x.SourceProof;
-        bool sourceComplete=matched && proof is not null &&
+        var eligible=x.ExAnteEligibleIsoWeeks.ToHashSet(StringComparer.Ordinal);
+        bool completeCalendarScope=x.Proposals.All(p=>eligible.Contains(Week(p.DecisionAt))) &&
+            x.ClosedFragments.All(f=>eligible.Contains(Week(f.ClosedAt)));
+        bool sourceComplete=matched && completeCalendarScope && proof is not null &&
+            proof.ExAnteEligibleWeekCalendarVerified &&
             proof.SingleOriginalEur300Account && proof.LegalBrokerMinimumStepAndMargin &&
             proof.HistoricPairedBidAskCostsFxAndFinancing &&
             proof.EveryPositionAndFloatingMarkReconciled &&
             proof.ContinuousFloatingDrawdownCertified &&
             x.CommonLedger!.GlobalDrawdownCertified &&
             x.CommonLedger.MaximumSampledDrawdown<=OwnerRiskAuthority.MaximumSystemDrawdown;
-        if(!sourceComplete)missing.Add("BROKER_EXECUTION_COST_MARGIN_FX_FLOATING_RISK_OR_CERTIFICATE_UNVERIFIED");
+        if(!sourceComplete)missing.Add("BROKER_EXECUTION_COST_MARGIN_FX_FLOATING_RISK_CALENDAR_OR_CERTIFICATE_UNVERIFIED");
         var weeks=x.ExAnteEligibleIsoWeeks.OrderBy(w=>w,StringComparer.Ordinal).Select(week=>
         {
             var raw=x.Proposals.Where(p=>Week(p.DecisionAt)==week).ToArray();
