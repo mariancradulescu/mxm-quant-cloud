@@ -220,7 +220,7 @@ def main():
             need(len(originals)==1,"FCP1_IMMUTABLE_SCP1_PUBLIC_REPORT_NOT_FOUND")
             original_report=originals[0]
             old_hash=hashlib.sha256(original_report.read_bytes()).hexdigest()
-            need(old_hash=="64350a59aad0c3e272b935d96a9ce1f274f4b26ea7e984b8ad884c4148f5da5",
+            need(old_hash=="64350a59aad0c3e272b935d96a9ce1f274f4b26ea7e984b8ad884c4148f5da5d",
                  "FCP1_ORIGINAL_SCP1_A1_NATIVE_REPORT_HASH_MISMATCH")
             output=OUT/"fcp1-native-financed-first-score-eur300.json"
             result=subprocess.run(["dotnet","src/Mxm.Replay/bin/Release/net8.0/Mxm.Replay.dll",
