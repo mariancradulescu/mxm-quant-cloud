@@ -192,6 +192,11 @@ internal static class ProspectiveIntegratedChecks
               session.Ledger.ClosedFragments().Length==1 &&
               !session.Ledger.ClosedFragments()[0].CompletesRoundTrip,
               "partial settlement changes cash and volume but not completed HARD21 trade count");
+        var exitB=NativeCausalExitResearch.AssessLifecycle("VOL",-1,19.99m,
+            new NativeExitSeed(.2m,19.5m),20.3m,19.99m,
+            Q("SYNTH_B",t+7000,19.4m),0m,false);
+        check(exitB.RequestClose && exitB.Reason=="OBSERVED_PATH_ATR_TARGET",
+            "second simultaneous instrument independently holds then closes using same native lifecycle engine");
         ApplyTraced(new[]{
             E("final-A",t+6100,"CLOSE_FILL",x.Id,x.Symbol,1,1m,10.995m,.1m,20m,.005m,
                 new[]{Q("SYNTH_A",t+6100,11m),Q("SYNTH_B",t+6100,20m)}),
