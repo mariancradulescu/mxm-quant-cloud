@@ -255,7 +255,7 @@ public sealed class NativeUnifiedPortfolioEngine
         var result=NativeFcp1FinancedSelection.Choose(policy,t,scoreModel!,
             options.Select(x=>new Fcp1Offer(x.Signal,x.Frame)).ToArray(),
             ledger.Summary(t),held,pending,riskCommitted,
-            frame.IntermarketBreadth??0m);
+            frame.IntermarketBreadth??0m,frame.Markets);
         foreach(var x in result.Examined)
         {
             bool selected=ReferenceEquals(x,result.Selected);
@@ -284,7 +284,7 @@ public sealed class NativeUnifiedPortfolioEngine
             Count(result.Status);rejections++;
         }
         previousClock=t;
-        var end=ledger.Summary(t);
+        var end=model.Ledger.Summary(t);
         curve.Add(new Ucp1CurvePoint(t,end.CashEur,end.LiquidationEquityEur,
             end.UsedMarginEur,end.OpenPositions,end.PendingIntents,
             end.CompleteRoundTrips));
