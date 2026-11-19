@@ -14,6 +14,7 @@ public sealed class NativeUnifiedCloudParityAdapter
     public Ucp1FrameResult Observe(Ucp1Frame frame)=>engine.Advance(frame);
     public string[] ActiveSymbols=>engine.ActiveSymbols;
     public LedgerEvent[] ModelFacts=>engine.OriginalModelEvents;
+    public Scp1ChoiceReceipt[] Scp1Choices=>engine.Scp1ChoiceReceipts;
     public LedgerSummary ModelBook=>engine.ModelSummary;
     public string Checkpoint()=>engine.Checkpoint();
     public void Restore(string checkpoint)
