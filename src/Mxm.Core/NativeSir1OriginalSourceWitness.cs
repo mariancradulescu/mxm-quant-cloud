@@ -201,7 +201,7 @@ public static class NativeSir1OriginalSourceWitness
         }
         // Original, canonical model-fact stream is independently replayable
         // against the exact same already-installed native ledger class.
-        var reconstructed=NativeFundedLedger.ReceiveFacts(trace.ToArray());
+        _ = NativeFundedLedger.ReceiveFacts(trace.ToArray());
         var book=model.Ledger.Summary();
         // Strict original-source model replays can be still held; don't fabricate
         // floating equity over Friday–Monday or historically missing swaps.
