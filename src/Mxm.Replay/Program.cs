@@ -1,8 +1,8 @@
-if(args.Length==3 && args[2]=="--spe1-twelve-asset-causal-signal-exits")
-    return Spe1NativeStudy.Run(args[0],args[1]);
-
 using System.Text.Json;
 using System.Security.Cryptography;
+
+if(args.Length==3 && args[2]=="--spe1-twelve-asset-causal-signal-exits")
+    return Spe1NativeStudy.Run(args[0],args[1]);
 
 if(args.Length==3 && args[2]=="--mde1-selftest")
     return Mde1NativeStudy.SelfTest(args[1]);
