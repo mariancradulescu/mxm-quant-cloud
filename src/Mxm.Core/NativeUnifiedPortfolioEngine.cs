@@ -205,6 +205,14 @@ public sealed class NativeUnifiedPortfolioEngine
         lastBrokerEvidence="BROKER_"+b.AccountType+"_"+
             report.Status+"_NO_MODEL_IMPORT";
     }
+    public static bool ModelSlotsPermitAdmission(LedgerSummary summary,
+        LedgerEvent[] pendingFacts)
+    {
+        if(pendingFacts is null || summary.OpenPositions<0)
+            throw new ArgumentException("UCP1_INVALID_MODEL_CAPACITY_INPUT");
+        int open=pendingFacts.Count(x=>x.Kind=="REQUEST_OPEN");
+        return summary.OpenPositions+open<2;
+    }
     public Ucp1FrameResult Advance(Ucp1Frame frame)
     {
         if(frame is null||frame.At<=previousClock||frame.At<=0||
@@ -354,10 +362,18 @@ public sealed class NativeUnifiedPortfolioEngine
             proposed+=options.Count;
             var ledger=model.Ledger;
             var summary=ledger.Summary(t);
+            // Held position with REQUEST_CLOSE retains its booked exposure
+            // but its pending close NEVER consumes an extra position slot.
+            // Pending REQUEST_OPEN does reserve a future capacity slot.
+            // All held/pending-open marks must be present before marginal
+            // scenario construction; UNKNOWN is not a zero-price exposure.
+            var pendingEntryFacts=ledger.PendingSnapshot()
+                .Where(x=>x.Kind=="REQUEST_OPEN").ToArray();
             if(summary.LiquidationEquityEur is decimal equity &&
                summary.FreeMarginEur is decimal free && equity>210m &&
-               summary.OpenPositions+summary.PendingIntents<2 &&
-               ledger.PositionSnapshot().All(x=>by.ContainsKey(x.Symbol)))
+               ModelSlotsPermitAdmission(summary,pendingEntryFacts) &&
+               ledger.PositionSnapshot().All(x=>by.ContainsKey(x.Symbol)) &&
+               pendingEntryFacts.All(x=>by.ContainsKey(x.Symbol)))
             {
                 var baselines=new[]{"NORMAL","ADVERSE","PRESSURE"}
                     .Select(x=>new PortfolioScenario(x,t-1,true,0m,0m,0m,0m)).ToArray();
