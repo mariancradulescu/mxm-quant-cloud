@@ -35,7 +35,8 @@ public sealed record Scp1ScoreModel(string Version,string Method,
     Dictionary<string,Scp1Bucket> Cells,double[] RidgeWeights,
     int CalibrationComplete,double? PriorCalibrationBrier,
     double? BayesCalibrationBrier,double? RidgeCalibrationBrier,
-    bool MethodSelectedWithoutEvaluation);
+    bool MethodSelectedWithoutEvaluation,
+    int TrainingEffectiveCalendarWeeks=0);
 public sealed record Scp1ScoreBand(int Band,int Count,double? AverageForecastP,
     double? ActualPositiveRate,decimal? MeanGrossPriceOnlyR,
     string Disclosure);
@@ -121,8 +122,13 @@ public static class NativeScp1EconomicScorer
         double p=method=="RIDGE_NONLINEAR"?
             ClipP(NativeContextValueResearch.Predict(model.RidgeWeights,features)):
             method=="NO_SCORE"?model.GlobalPrior:pBayes;
-        double uncertainty=Math.Max(Sigma(p,n),
-            Sigma(p,Math.Max(0,model.TrainingComplete/18)));
+        // Overlapping trade episodes and twelve correlated symbols do NOT
+        // provide n independent trials. The bound is floored by the actual
+        // number of distinct TRAIN calendar weeks, irrespective of signal
+        // count, and is explicitly a diagnostic not 12-month confirmation.
+        int effective=Math.Min(n,Math.Max(1,model.TrainingEffectiveCalendarWeeks));
+        double uncertainty=Math.Max(Sigma(p,effective),
+            Sigma(p,Math.Max(1,model.TrainingEffectiveCalendarWeeks)));
         double lower=ClipP(p-1.645*uncertainty);
         // Train conditional upside/downside on observed COMPLETE price-path
         // proxy labels. Empirical sizes shrink to train-wide prior, not a
@@ -158,6 +164,11 @@ public static class NativeScp1EconomicScorer
         double mean=(double)train.Average(x=>x.GrossPriceOnlyR);
         double std=Math.Sqrt(Math.Max(.00001,
             train.Average(x=>Math.Pow((double)x.GrossPriceOnlyR-mean,2))));
+        int calendarWeeks=train.Select(x=>{
+            var d=DateTimeOffset.FromUnixTimeMilliseconds(x.At).UtcDateTime;
+            return System.Globalization.ISOWeek.GetYear(d)+"-"+
+                System.Globalization.ISOWeek.GetWeekOfYear(d);
+        }).Distinct(StringComparer.Ordinal).Count();
         var cells=train.GroupBy(x=>Key(x.Family,x.Side,x.Features),
                 StringComparer.Ordinal).ToDictionary(g=>g.Key,g=>
             new Scp1Bucket(g.Count(),g.Count(x=>x.GrossPriceOnlyR>0),
@@ -174,7 +185,7 @@ public static class NativeScp1EconomicScorer
                 string.Join("|",train.Select(x=>x.At+":"+x.Symbol+":"+x.Family+
                     ":"+x.Side+":"+x.GrossPriceOnlyR.ToString(CultureInfo.InvariantCulture)))),
             train.Length,censored,prior,wmean,lmean,std,cells,beta,
-            0,null,null,null,false);
+            0,null,null,null,false,calendarWeeks);
         var cal=rows.Where(x=>x.At>=EndTrain&&x.At<EndCal&&
                    x.Complete&&x.End<EndCal).ToArray();
         double? Brier(string method)=>cal.Length>0?cal.Average(x=>{
