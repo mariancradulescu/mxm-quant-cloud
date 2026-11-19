@@ -22,16 +22,16 @@ public static class NativeNpi1IntegratedResearch
         decimal Equilibrium,decimal ExpectedMove);
     private sealed class Plan
     {
-        public required string Id,Symbol,Family;
-        public required int Side;
-        public required decimal Atr,Equilibrium,Slippage;
+        public string Id="",Symbol="",Family="";
+        public int Side;
+        public decimal Atr,Equilibrium,Slippage;
         public long OpenedAt,LastAt;
         public decimal Entry,Extreme;
         public bool GapSeen;
     }
     private sealed class Book
     {
-        public required string Name;
+        public string Name="";
         public readonly NativeFundedSession Session=new("NPI1_RESEARCH_ONLY");
         public readonly Dictionary<string,Plan> Plans=new(StringComparer.Ordinal);
         public readonly Dictionary<string,List<Step>> History=new(StringComparer.Ordinal);
@@ -93,6 +93,8 @@ public static class NativeNpi1IntegratedResearch
         if(!quotes.TryGetValue("EURUSD",out var fx) ||
            !b.History.TryGetValue("EURUSD",out var macro) || macro.Count<7)
             return Array.Empty<Signal>();
+        if(macro[^1].At!=at || macro.TakeLast(4).Zip(macro.TakeLast(4).Skip(1))
+            .Any(p=>p.Second.At-p.First.At!=Five))return Array.Empty<Signal>();
         var reference=macro[^1].Mid-macro[^4].Mid;
         var list=new List<Signal>();
         foreach(var (symbol,q) in quotes.OrderBy(x=>x.Key,StringComparer.Ordinal))
@@ -349,7 +351,7 @@ public static class NativeNpi1IntegratedResearch
            !tape.Markets.Select(x=>x.Name).OrderBy(x=>x,StringComparer.Ordinal)
                 .SequenceEqual(new[]{"ETHUSD","EURUSD","SpotBrent","US500"}) ||
            tape.Markets.Any(m=>m.Contract is null || m.Contract.Symbol!=m.Name ||
-               m.Quotes is null || m.Quotes.Any(x=>x.At<m.StartSafe(tape.Start) ||
+               m.Quotes is null || m.Quotes.Any(x=>x.At<tape.Start ||
                    x.At>=tape.End ||x.BidAt>x.At || x.AskAt>x.At ||
                    x.Bid<=0||x.Ask<x.Bid) ||
                m.Quotes.Zip(m.Quotes.Skip(1)).Any(x=>x.First.At>=x.Second.At)))
@@ -367,5 +369,4 @@ public static class NativeNpi1IntegratedResearch
             IndependentConfirmation=false,NetCertified=false,
             ContinuousFloatingRiskCertified=false};
     }
-    private static long StartSafe(this Npi1OriginalMarket m,long start)=>start;
 }
