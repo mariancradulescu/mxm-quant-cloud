@@ -179,8 +179,59 @@ internal static class Scp1OriginalScoredEconomicRunner
             foreach(var book in engines.Values)
                 book.Advance(frame);
         }
+        // Performance BY PREDECISION SCORE BINS, with bin boundaries
+        // set from ALL observed proposals, not retrospectively from winners.
+        // Untraded proposals have unknown funded P&L and are NOT treated
+        // as fictitious executed losing/winning controls.
+        object ScoreConditionedEconomicOutcome(NativeUnifiedPortfolioEngine e)
+        {
+            var offered=e.Scp1ChoiceReceipts
+                .Where(x=>x.ConditionalExpectedNetEur.HasValue)
+                .OrderBy(x=>x.ConditionalExpectedNetEur!.Value).ToArray();
+            if(offered.Length==0)
+                return new {Evidence="NO_RELIABLE_OFFERED_SCORE_TO_BIN",
+                    Bands=Array.Empty<object>()};
+            decimal[] bounds=Enumerable.Range(1,4)
+                .Select(i=>offered[Math.Min(offered.Length-1,
+                    i*offered.Length/5)].ConditionalExpectedNetEur!.Value)
+                .ToArray();
+            var linked=e.CompleteModelTrips.Select(x=>{
+                long at=0;
+                string token=x.PositionId.Split('/').Last();
+                _=long.TryParse(token,out at);
+                var score=offered.FirstOrDefault(y=>
+                    y.At==at&&y.Symbol==x.Symbol&&y.Family==x.Family&&
+                    y.Side==x.Side);
+                int bin=score?.ConditionalExpectedNetEur is decimal v?
+                    1+bounds.Count(z=>v>z):0;
+                return new {Trip=x,Band=bin};
+            }).ToArray();
+            var bands=Enumerable.Range(1,5).Select(k=>{
+                var group=linked.Where(x=>x.Band==k)
+                    .Select(x=>x.Trip).ToArray();
+                return (object)new {
+                    ScoreBin=k,
+                    OfferedProposalCount=offered.Count(x=>
+                        1+bounds.Count(z=>x.ConditionalExpectedNetEur!.Value>z)==k),
+                    ActuallyClosedModeledTrips=group.Length,
+                    ConditionalClosedModelNetEur=group.Sum(x=>x.NetEur),
+                    ConditionalMeanEurPerCompletedTrip=group.Length>0?
+                        (decimal?)group.Average(x=>x.NetEur):null,
+                    WinRate=group.Length>0?
+                        (decimal?)group.Count(x=>x.NetEur>0m)/group.Length:null,
+                    ScoreBoundariesFromAllPredecisionCandidates=true,
+                    BrokerNetCertified=false
+                };
+            }).ToArray();
+            return new {Evidence="CONDITIONAL_EUR_FINANCED_NATIVE_BOOK_COMPLETED_TRIPS_BY_EX_ANTE_SCORE_QUINTILE",
+                Offered=offered.Length,
+                CompletedWithMatchedPredecisionScore=linked.Count(x=>x.Band>0),
+                CompletedWithUnmatchedOrMissingScore=linked.Count(x=>x.Band==0),
+                Bands=bands};
+        }
         var result=new Dictionary<string,object>(StringComparer.Ordinal);
         var chains=new Dictionary<string,object>(StringComparer.Ordinal);
+        var scoreConditionalBins=new Dictionary<string,object>(StringComparer.Ordinal);
         foreach(var (policy,engine) in engines)
         {
             object outcome=engine.OriginalOutcomeReport(
@@ -201,6 +252,7 @@ internal static class Scp1OriginalScoredEconomicRunner
                verified.PendingIntents!=aggregate.PendingIntents)
                 throw new InvalidOperationException("SCP1_INDEPENDENT_COMMON_EUR_LEDGER_REPLAY_MISMATCH_"+policy);
             result[policy]=outcome;
+            scoreConditionalBins[policy]=ScoreConditionedEconomicOutcome(engine);
             chains[policy]=new {
                 Events=engine.OriginalModelEvents.Length,
                 ChainHash=aggregate.EventChainHash,
@@ -235,6 +287,7 @@ internal static class Scp1OriginalScoredEconomicRunner
             ObservedCandidateFamilies=familyProposals,
             MissingFinancialOrBarEvidence=rejected,
             ConditionalPolicies=result,LedgerReceipts=chains,
+            ScoreConditionedConditionalEurPerformance=scoreConditionalBins,
             OrdersSubmitted=0,CloudActivated=false,
             BrokerNetCertified=false,
             HistoricFundingCertified=false,
