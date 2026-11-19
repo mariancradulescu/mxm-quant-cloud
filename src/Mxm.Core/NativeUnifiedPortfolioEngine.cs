@@ -413,7 +413,7 @@ public sealed class NativeUnifiedPortfolioEngine
                         false,grid,samples));
                     terms.Add(new ResearchEntryTerms(id,Latency,slip,Sha(id)));
                     local[id]=new Ucp1Plan(id,m.Symbol,signal.Family,signal.Side,
-                        signal.Atr,signal.Equilibrium,0m,0m,0m,0m,0m,
+                        signal.Atr,signal.Equilibrium,0m,0m,0m,0L,
                         0m,0m,0m,0m,0L,false);
                 }
                 if(offers.Count>0)
