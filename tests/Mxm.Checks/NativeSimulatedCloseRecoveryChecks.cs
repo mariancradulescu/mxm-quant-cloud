@@ -15,7 +15,7 @@ internal static class NativeSimulatedCloseRecoveryChecks
     private const string B="SIR1_SYNTH_B";
     private const string Position="SIR1_SYNTH_POSITION_A";
     private const string SessionBinding="SIR1_SYNTH_MODEL_ONLY";
-    private const string Hash=new string('a',64);
+    private static readonly string Hash=new string('a',64);
 
     static LedgerQuote Q(string symbol,long at,decimal bid)=>
         new(symbol,at,bid,bid+.01m,1m,1m,.01m,0m,1m);
