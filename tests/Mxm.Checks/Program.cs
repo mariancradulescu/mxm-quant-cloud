@@ -10,6 +10,7 @@ NativeContractCostChecks.Run(Check);
 SfxNativeChecks.Run(Check);
 McsNativeChecks.Run(Check);
 ProspectiveIntegratedChecks.Run(Check);
+NativeSimulatedCloseRecoveryChecks.Run(Check);
 ResearchScopeContractChecks.Run(Check);
 NativeCausalWarmupChecks.Run(Check);
 NativeResearchUniverseChecks.Run(Check);
