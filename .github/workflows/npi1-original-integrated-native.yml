@@ -1,0 +1,101 @@
+name: NPI1 original four-class native integrated funded research
+on:
+  pull_request:
+    paths:
+      - 'research/NPI1_FROZEN_NATIVE_FINANCIAL_INTEGRATION_20261119.md'
+      - 'research/npi1_original_native_bridge.py'
+      - 'src/Mxm.Core/NativeNpi1IntegratedResearch.cs'
+      - 'src/Mxm.Replay/Npi1NativeStudy.cs'
+      - 'src/Mxm.Replay/Program.cs'
+      - '.github/workflows/npi1-original-integrated-native.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ops/npi1-once.txt'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    outputs:
+      original_once: ${{ steps.owner.outputs.original_once }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Separate original protocol freeze before implementation
+        run: |
+          git merge-base --is-ancestor e26c4584eeac2cfd910d970a0e4df95d2722fe5d HEAD
+          git show e26c4584eeac2cfd910d970a0e4df95d2722fe5d:research/NPI1_FROZEN_NATIVE_FINANCIAL_INTEGRATION_20261119.md > /tmp/npi1-freeze
+          cmp /tmp/npi1-freeze research/NPI1_FROZEN_NATIVE_FINANCIAL_INTEGRATION_20261119.md
+      - run: dotnet build src/Mxm.Replay -c Release
+      - run: dotnet run --project tests/Mxm.Checks -c Release
+      - run: dotnet build src/Mxm.Cloud -c Release
+      - run: python -m py_compile research/npi1_original_native_bridge.py
+      - name: Exact OWNER once-only trigger after merge
+        id: owner
+        shell: bash
+        run: |
+          echo "original_once=false" >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_EVENT_NAME" == "push" &&
+                "$GITHUB_REF" == "refs/heads/main" &&
+                "$GITHUB_ACTOR" == "mariancradulescu" &&
+                "$GITHUB_RUN_ATTEMPT" == "1" &&
+                "$(git log -1 --format=%s)" == "OWNER_NPI1_NEW_ORIGINAL_NATIVE_INTEGRATION_ONCE" &&
+                "$(git diff-tree --no-commit-id --name-only -r HEAD)" == "ops/npi1-once.txt" &&
+                "$(cat ops/npi1-once.txt)" == "OWNER_NPI1_NATIVE_OEI1_AUTHENTIC_FOUR_CLASS_SOURCE_ONCE" ]]; then
+             echo "original_once=true" >> "$GITHUB_OUTPUT"
+          fi
+  original-immutable-source-native-financial:
+    needs: verify
+    if: ${{ needs.verify.outputs.original_once == 'true' }}
+    environment: mxm-r3-custody-v1
+    concurrency:
+      group: mxm-npi1-four-class-native-one-time-source-reuse
+      cancel-in-progress: false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - run: dotnet build src/Mxm.Replay -c Release
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: oei1-original-pepperstone-encrypted-custody
+          run-id: 44247979857
+          github-token: ${{ github.token }}
+          path: npi1-original-source
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: oei1-original-integrated-3phase-public
+          run-id: 44247979857
+          github-token: ${{ github.token }}
+          path: npi1-original-public
+      - name: NEW native NPI1 causal and native EUR300 ledger using unchanged original ciphertext
+        run: python -m research.npi1_original_native_bridge
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: npi1-original-native-financial-conditional-public
+          path: npi1-public/
+          retention-days: 90
+          if-no-files-found: warn
