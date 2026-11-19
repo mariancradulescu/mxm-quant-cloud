@@ -442,7 +442,8 @@ public sealed class NativeUnifiedPortfolioEngine
                                 Math.Max(equity,summary.ObservedPeakEur),free,
                                 1m,1m,1m,1m,1m,2,0m),
                             baselines,offers.ToArray(),exposure,
-                            terms.ToArray(),Sha(dId));
+                            terms.ToArray(),Sha(dId),
+                            MaximumFundedOpenSlots:2);
                         var selected=model.DecideResearch(d);
                         foreach(var chosen in selected.Selection.Allocations)
                         {
