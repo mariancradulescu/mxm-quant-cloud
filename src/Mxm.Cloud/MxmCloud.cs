@@ -33,6 +33,11 @@ public class MxmCloud : Robot
     private bool _conditionalResearch;
     private bool _discoveryResearch;
     private bool _calibratedResearch;
+    [Parameter("UCP1 unified economic observation (NO ORDERS)", DefaultValue = false)]
+    public bool EnableUnifiedReadOnlyPolicy {get;set;}
+    private NativeUnifiedCloudParityAdapter? _unifiedPolicy;
+    private long _lastUnifiedObservedAt;
+    private int _lastUnifiedClosed=-1;
     private NativeProductResearchLoop? _productResearch;
     private int _lastResearchModelTrips = -1;
     private string _lastResearchEconomicStatus = "";
@@ -61,10 +66,12 @@ public class MxmCloud : Robot
         // unset key may raise LocalStorageException. Do not load any checkpoint
         // as the restart authority. Reconstruct from native broker facts.
         _fundedSession=new NativeFundedSession(_accountBinding);
+        if(EnableUnifiedReadOnlyPolicy)
+            _unifiedPolicy=new NativeUnifiedCloudParityAdapter("JOINT",_accountBinding);
         // Independent MODEL_REPLAY capital, never the broker monetary domain.
         // A restart begins a fresh observational simulation, not a cash reset
         // of any broker account; historical recovery requires causal replay.
-        if(EnableExploratoryReplay)
+        if(EnableExploratoryReplay && !EnableUnifiedReadOnlyPolicy)
         {
             if(!string.IsNullOrWhiteSpace(IntegratedDevelopmentModel))
             {
@@ -177,7 +184,7 @@ public class MxmCloud : Robot
         if(pip!=1m)return null;
         decimal bid=(decimal)market.Bid,ask=(decimal)market.Ask;
         decimal credit,debit;
-        if(_integratedResearch)
+        if(_integratedResearch || _unifiedPolicy is not null)
         {
             if(market.QuoteAsset.Name!="USD" || ReadTickAsOf(name,clock) is not { } pair ||
                ReadTickAsOf("EURUSD",clock) is not { } conversion)return null;
@@ -215,12 +222,12 @@ public class MxmCloud : Robot
             (decimal)market.SwapLong,(decimal)market.SwapShort,pipPosition,
             24,1320,triple,false,0,false,false);
         var usdFx=NativeBrokerContractCosts.RequiresUsdCommissionRate(terms)
-            ?(_integratedResearch?(credit+debit)/2m:(decimal)AssetConverter.Convert(1d,"USD",Account.Asset)):0m;
+            ?(_integratedResearch || _unifiedPolicy is not null?(credit+debit)/2m:(decimal)AssetConverter.Convert(1d,"USD",Account.Asset)):0m;
         decimal? minAssetFx=minWire>0 && terms.MinimumCommissionType==1 &&
             minimumAsset.Length>0 && minimumAsset!=terms.QuoteAsset && minimumAsset!="USD"
             ?(decimal)AssetConverter.Convert(1d,minimumAsset,Account.Asset):null;
         var context=new NativeMarketCostContext(clock,bid,ask,credit,debit,usdFx,minAssetFx,
-            requiredMargin,minimum,_integratedResearch?System.Math.Max(.00001m,(ask-bid)/4m):(ask-bid)/4m);
+            requiredMargin,minimum,(_integratedResearch || _unifiedPolicy is not null)?System.Math.Max(.00001m,(ask-bid)/4m):(ask-bid)/4m);
         var attribution=NativeBrokerContractCosts.QuoteCurrentAlgo(terms,context);
         return new NativeProductMarket(name,shortBars,mediumBars,
             attribution.Quote,terms,context.SlippagePerSideQuote,
@@ -343,6 +350,52 @@ public class MxmCloud : Robot
                     .Concat(_productResearch?.ActiveSymbols ?? System.Array.Empty<string>()),
                 name=>Symbols.Exists(name),sweep:_readOnlyUniverseSweep);
             var symbols=universe.Symbols;
+            // UCP1 observation-only product path: exactly the same C# Core
+            // Advance(frame) and EUR300 MODEL ledger as original-source Replay.
+            // The independently observed broker inventory, order identities and
+            // account type never become model ORDER/FILL/CANCEL facts.
+            if(_unifiedPolicy is not null)
+            {
+                long current=Stamp(Server.TimeInUtc);
+                long at=current/60000L*60000L+15000L;
+                if(at<=current && at>_lastUnifiedObservedAt)
+                {
+                    _lastUnifiedObservedAt=at;
+                    var observations=new System.Collections.Generic.List<Ucp1MarketFrame>();
+                    var sourceNames=_unifiedPolicy.ActiveSymbols
+                        .Concat(universe.ResearchSymbols)
+                        .Distinct(System.StringComparer.Ordinal).Take(16).ToArray();
+                    foreach(string name in sourceNames)
+                    {
+                        try
+                        {
+                            if(!Symbols.Exists(name))continue;
+                            var m=ReadProductResearchMarket(name,at);
+                            if(m is null || m.Contract is null)continue;
+                            observations.Add(new Ucp1MarketFrame(name,m.Quote,m.Contract,
+                                m.M5,m.M15,m.SlippagePerSideQuote,
+                                "ACTUAL_CTRADER_PLATFORM_M5_M15_COMPLETED_BARS_BIDASK_ASOF"));
+                        }
+                        catch(System.Exception)
+                        {
+                            // Missing any market source does not justify a
+                            // fictitious position fill or a session-close claim.
+                        }
+                    }
+                    var productBroker=new Ucp1BrokerFrame(broker,
+                        (decimal)Account.Balance,Account.AccountType.ToString());
+                    var unified=_unifiedPolicy.Observe(new Ucp1Frame(at,
+                        observations.ToArray(),productBroker));
+                    if(unified.ModelBook.CompleteRoundTrips!=_lastUnifiedClosed)
+                    {
+                        _lastUnifiedClosed=unified.ModelBook.CompleteRoundTrips;
+                        Print("MXM unified read-only native policy: modeled completed {0}; held {1}; pending {2}; cash EUR {3}; broker {4}. NOT broker PNL; no orders.",
+                            unified.ModelBook.CompleteRoundTrips,unified.Held,
+                            unified.Pending,unified.ModelBook.CashEur,
+                            unified.BrokerStatus);
+                    }
+                }
+            }
             string universeStatus=universe.Status+"; candidates "+
                 universe.ResearchSymbols.Length+"; unavailable "+universe.Unavailable.Length;
             if(universeStatus!=_lastUniverseStatus)
