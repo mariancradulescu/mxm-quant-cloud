@@ -205,7 +205,7 @@ internal static class NativeSimulatedCloseRecoveryChecks
             First+1002000L,reason:"HISTORIC_LEGACY_REQUEST_NO_MODEL_PROOF")});
         var oldStep=NativeSimulatedCloseLifecycle.Advance(old,oldProtection,
             new(First+1002000L+300000L,null));
-        check(oldStep.Status=="HOLD_UNOBSERVED_QUOTE_NO_MODEL_FILL" &&
+        check(oldStep.Status=="NON_SIR1_INTENT_PRESERVED_NO_MODEL_RECONCILIATION" &&
               oldStep.CommonBook.PendingIntents==1,
             "non-SIR1 unresolved model or broker-like request is not silently expired");
         bool falseModelExpiryDenied=false;
