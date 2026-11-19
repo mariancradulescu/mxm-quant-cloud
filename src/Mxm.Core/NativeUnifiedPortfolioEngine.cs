@@ -464,6 +464,16 @@ public sealed class NativeUnifiedPortfolioEngine
                             lower*m.Contract.MinimumUnits,pred.PWin,
                             scoreModel!.Method,"OBSERVED_NOT_YET_ADMITTED"));
                     }
+                    // A ranker must select among ACTUALLY unoccupied
+                    // independently financed alternatives. Never let a known
+                    // held symbol at the head of the list mask a feasible
+                    // candidate on another symbol before comparison.
+                    var occupied=new HashSet<string>(
+                        ledger.PositionSnapshot().Select(p=>p.Symbol).Concat(
+                        ledger.PendingSnapshot().Select(p=>p.Symbol)),
+                        StringComparer.Ordinal);
+                    sourceOffers=sourceOffers.Where(x=>
+                        !occupied.Contains(x.Frame.Symbol)).ToArray();
                     // Controls preserve causal first-candidate order. Ranking
                     // selects a single proposal only for SCORE; MARGINAL and
                     // ABSTAIN present ALL alternatives to the common allocator.
@@ -693,7 +703,9 @@ public sealed class NativeUnifiedPortfolioEngine
             HistoricalTariffContinuityCertified=false,
             OriginalBrokerFillsCertified=false,
             Independent12MonthConfirmation=false,
-            SourceQualification="GLOBALLY_EXPOSED_ORIGINAL_SAMPLE_M5_M15_PROXY_CONDITIONAL"
+            SourceQualification=scoreModel is null?
+                "GLOBALLY_EXPOSED_ORIGINAL_SAMPLE_M5_M15_PROXY_CONDITIONAL":
+                "GENUINE_ORIGINAL_COMPLETED_HXC1_M5_M15_AND_OEI1_ASOF_CONDITIONAL_NO_BROKER_FILLS"
         };
     }
 }
