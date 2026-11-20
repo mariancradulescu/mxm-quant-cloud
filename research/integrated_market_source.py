@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 import time
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from decimal import Decimal
 from pathlib import Path
@@ -36,6 +37,40 @@ PROTOCOL = Path("research/INTEGRATED_ECONOMIC_DISCOVERY_20261120.md")
 CIPHER_DIR = Path("integrated-sealed-source")
 PUBLIC_DIR = Path("integrated-source-public")
 MARKER = "OWNER_INTEGRATED_FULL_SESSION_READ_ONLY_SOURCE_ONCE"
+TICK_PAGE_MODEL = "BINARY_PREORDER_V1"
+HISTORICAL_REQUEST_SPACING_SECONDS = 0.25
+
+
+@dataclass(frozen=True)
+class CaptureScope:
+    study: str
+    warmup: int
+    start: int
+    end: int
+    universe: tuple
+    periods: dict
+    protocol: Path
+    marker_file: Path
+    marker: str
+    request_limit: int
+    deadline_minutes: int | None = None
+
+
+ORIGINAL = CaptureScope("INTEGRATED_ECONOMIC_DISCOVERY", WARMUP, START, END, UNIVERSE, NATIVE_PERIODS,
+                        PROTOCOL, Path("ops/integrated-full-session-source-once.txt"), MARKER, 10_000)
+
+
+def utc_ms(month, day):
+    return int(datetime(2026, month, day, tzinfo=timezone.utc).timestamp()) * 1000
+
+
+FUNDED_HISTORY = CaptureScope(
+    "FUNDED_ACTION_HISTORY", utc_ms(7, 13), utc_ms(7, 27), utc_ms(10, 26),
+    UNIVERSE + (("FX", ("AUDUSD",)), ("INDEX", ("NAS100",))),
+    {**NATIVE_PERIODS, "M1": (1, DAY), "M30": (30, 4 * DAY)},
+    Path("research/FUNDED_ACTION_VALUE_HISTORICAL.md"), Path("ops/funded-action-history-source-once.txt"),
+    "OWNER_FUNDED_ACTION_HISTORY_READ_ONLY_SOURCE_ONCE", 64_000, 315,
+)
 
 
 def digest(data):
@@ -57,20 +92,20 @@ def unpack(row):
     return request, response
 
 
-def validate_environment():
+def validate_environment(scope=ORIGINAL):
     need(os.environ.get("GITHUB_EVENT_NAME") == "push"
          and os.environ.get("GITHUB_REF") == "refs/heads/main"
          and os.environ.get("GITHUB_ACTOR") == "mariancradulescu"
          and os.environ.get("GITHUB_RUN_ATTEMPT") == "1"
-         and Path("ops/integrated-full-session-source-once.txt").read_text().strip() == MARKER,
+         and scope.marker_file.read_text().strip() == scope.marker,
          "INTEGRATED_OWNER_MAIN_FIRST_ATTEMPT_ONLY")
 
 
-def bars_from_page(response, period, first, last):
+def bars_from_page(response, period, first, last, periods=NATIVE_PERIODS):
     if isinstance(response, m.ProtoOAErrorRes):
         need(response.errorCode == "NO_QUOTES", "INTEGRATED_BAR_SOURCE_ERROR")
         return []
-    minutes = NATIVE_PERIODS[period][0]
+    minutes = periods[period][0]
     step = minutes * MINUTE
     need(response.period == getattr(e, period) and not response.hasMore, "INTEGRATED_BAR_PAGE_INVALID")
     rows = decode_bars(response.trendbar, first - step, last + step, minutes)
@@ -86,20 +121,108 @@ def margin_snapshot(response, volumes):
              "SellMargin": str(Decimal(r.sellMargin) / scale)} for r in response.margin]
 
 
-def collect():
-    validate_environment()
+def tick_windows(day, active_hours):
+    """Root intervals have inclusive millisecond boundaries and no overlap."""
+    for at in range(day, day + DAY, 2 * HOUR):
+        hours = [hour for hour in (at, at + HOUR) if hour in active_hours]
+        if hours:
+            yield hours[0], hours[-1] + HOUR - 1
+
+
+def divided_tick_window(first, last):
+    need(last > first, "INTEGRATED_TICK_SAME_MS_SERVER_TRUNCATION")
+    midpoint = (first + last) // 2
+    return (first, midpoint), (midpoint + 1, last)
+
+
+def collect_tick_window(account, symbol_id, side, first, last, request):
+    """Request in preorder. The request callback retains every original response."""
+    response = request(m.ProtoOAGetTickDataReq(ctidTraderAccountId=account, symbolId=symbol_id,
+        type=side, fromTimestamp=first, toTimestamp=last))
+    if isinstance(response, m.ProtoOAErrorRes):
+        need(response.errorCode == "NO_QUOTES", "INTEGRATED_TICK_SOURCE_ERROR")
+        return 0
+    if response.hasMore:
+        return sum(collect_tick_window(account, symbol_id, side, lo, hi, request)
+                   for lo, hi in divided_tick_window(first, last))
+    return len(decode_side(response.tickData, first, last))
+
+
+def minimum_volume_grid(terms):
+    need_grid = 0 < terms.minVolume <= terms.maxVolume and terms.stepVolume > 0
+    if not need_grid:
+        return []
+    return [v for v in (terms.minVolume, terms.minVolume + terms.stepVolume,
+                       terms.minVolume + 3 * terms.stepVolume) if v <= terms.maxVolume]
+
+
+def funding_snapshot(terms, quote_asset, enabled, grid, margin_status):
+    """Current finance metadata is recorded separately from market data availability."""
+    restrictions = []
+    if not enabled:
+        restrictions.append("SYMBOL_DISABLED_AT_CAPTURE")
+    if terms.tradingMode != 0:
+        restrictions.append("CURRENT_TRADING_MODE_RESTRICTED")
+    if quote_asset != "USD":
+        restrictions.append("USD_EUR_CONVERSION_ROUTE_NOT_APPLICABLE")
+    affordable = any(0 < Decimal(row[side]) < 300 for row in grid[:1]
+                     for side in ("BuyMargin", "SellMargin"))
+    if not affordable:
+        restrictions.append("MINIMUM_MARGIN_NOT_PROVEN_BELOW_EUR300")
+    return {"EnabledAtCapture": enabled, "ExpectedMarginStatus": margin_status,
+            "MinimumMarginBelowEur300AtCapture": affordable, "Restrictions": restrictions,
+            "HistoricalFundingCertified": False}
+
+
+def expected_margin_evidence(terms, response):
+    if not (volumes := minimum_volume_grid(terms)):
+        return [], "BROKER_VOLUME_GRID_UNAVAILABLE"
+    if isinstance(response, m.ProtoOAErrorRes) or response is None:
+        return [], "BROKER_EXPECTED_MARGIN_UNAVAILABLE"
+    try:
+        return margin_snapshot(response, volumes), "BROKER_EXPECTED_MARGIN_OBSERVED"
+    except CaptureContractError as exc:
+        # Preserve the original response and treat an unusable grid as a financial
+        # evidence gap. It has no authority over which market data are requested.
+        return [], str(exc)
+
+
+def request_capacity(scope):
+    days = (scope.end - scope.start) // DAY
+    markets = len(scope.universe)
+    warmup_span = scope.end - scope.warmup
+    bar_pages = markets * sum((warmup_span + chunk - 1) // chunk for _, chunk in scope.periods.values())
+    roots = days * 12 * 2 * markets
+    identity = 3 + 2 * markets
+    return {"BarPages": bar_pages, "TickRoots": roots, "IdentityRequests": identity,
+            "RequestsIfEveryRootSplitsOnce": identity + bar_pages + 3 * roots,
+            "RequestLimit": scope.request_limit, "DeadlineMinutes": scope.deadline_minutes}
+
+
+def provider_error_code(response):
+    code = response.errorCode
+    return code if code.isascii() and code.replace("_", "").isalnum() else "UNCLASSIFIED"
+
+
+def collect(scope=ORIGINAL):
+    validate_environment(scope)
     run = os.environ["GITHUB_RUN_ID"]
     recipient = checked_public(Path("new-source-recipient"), run)
     PUBLIC_DIR.mkdir(exist_ok=True)
     CIPHER_DIR.mkdir(exist_ok=True)
     transport = StdlibCTraderTransport()
     status = {
-        "Study": "INTEGRATED_ECONOMIC_DISCOVERY", "Status": "COLLECTING", "RunId": run,
-        "ProtocolSha256": digest(PROTOCOL.read_bytes()), "Requests": 0, "Shards": [],
-        "Warmup": WARMUP, "Start": START, "End": END, "Markets": {}, "Unavailable": {},
+        "Study": scope.study, "Status": "COLLECTING", "RunId": run,
+        "ProtocolSha256": digest(scope.protocol.read_bytes()), "Requests": 0, "Shards": [],
+        "Warmup": scope.warmup, "Start": scope.start, "End": scope.end, "Markets": {}, "Unavailable": {},
         "NewOrders": 0, "CloudActivated": False, "EconomicEvaluations": 0,
     }
+
+    status["TickPageModel"] = TICK_PAGE_MODEL
+    status["RequestCapacity"] = request_capacity(scope)
     next_historical = 0.0
+    deadline = time.monotonic() + scope.deadline_minutes * 60 if scope.deadline_minutes else None
+    position = {}
 
     def publish():
         (PUBLIC_DIR / "source.json").write_text(json.dumps(status, indent=2) + "\n")
@@ -115,20 +238,30 @@ def collect():
     def observe(request, response_type, raw, historical=False):
         nonlocal next_historical
         require_read_only_request(request)
-        need(status["Requests"] < 10_000, "INTEGRATED_HISTORICAL_REQUEST_BUDGET")
+        if historical:
+            if isinstance(request, m.ProtoOAGetTickDataReq):
+                position.update(Side=e.ProtoOAQuoteType.Name(request.type),
+                                From=request.fromTimestamp, To=request.toTimestamp)
+            else:
+                position.update(Period=e.ProtoOATrendbarPeriod.Name(request.period),
+                                From=request.fromTimestamp, To=request.toTimestamp)
+        need(status["Requests"] < scope.request_limit, "INTEGRATED_HISTORICAL_REQUEST_BUDGET")
+        need(deadline is None or time.monotonic() < deadline, "INTEGRATED_HISTORICAL_TIME_BUDGET")
         if historical:
             time.sleep(max(0, next_historical - time.monotonic()))
-            next_historical = time.monotonic() + .25
+            next_historical = time.monotonic() + HISTORICAL_REQUEST_SPACING_SECONDS
         status["Requests"] += 1
         result = transport.request(request)
         raw.append(pack(request, result))
         need(result.IsInitialized() and result.ctidTraderAccountId == request.ctidTraderAccountId,
              "INTEGRATED_ACCOUNT_RESPONSE_MISMATCH")
         if historical and isinstance(result, m.ProtoOAErrorRes):
+            if result.errorCode != "NO_QUOTES":
+                position["ProviderCode"] = provider_error_code(result)
             need(result.errorCode == "NO_QUOTES", "INTEGRATED_HISTORICAL_REQUEST_REJECTED")
             return result
         if response_type is m.ProtoOAExpectedMarginRes and isinstance(result, m.ProtoOAErrorRes):
-            return None
+            return result
         need(type(result) is response_type, "INTEGRATED_READ_ONLY_RESPONSE_MISMATCH")
         return result
 
@@ -142,99 +275,80 @@ def collect():
              and names[trader.trader.depositAssetId] == "EUR", "INTEGRATED_PEPPERSTONE_EUR_BINDING")
         roster = observe(m.ProtoOASymbolsListReq(ctidTraderAccountId=account, includeArchivedSymbols=False),
                          m.ProtoOASymbolsListRes, identity)
-        available = {row.symbolName: row for row in roster.symbol if row.enabled}
-        status["EnabledSymbols"] = len(available)
+        available = {row.symbolName: row for row in roster.symbol}
+        status["EnabledSymbols"] = sum(bool(row.enabled) for row in roster.symbol)
         captured = []
-        for asset_class, aliases in UNIVERSE:
-            name = next((alias for alias in aliases if alias in available), aliases[0])
-            if name not in available:
-                status["Unavailable"][name] = "ENABLED_ALIAS_NOT_PRESENT"
-                continue
-            symbol = available[name]
-            if names.get(symbol.quoteAssetId) != "USD":
-                status["Unavailable"][name] = "USD_EUR_CONVERSION_ROUTE_NOT_APPLICABLE"
-                continue
-            details = observe(m.ProtoOASymbolByIdReq(ctidTraderAccountId=account, symbolId=[symbol.symbolId]),
-                              m.ProtoOASymbolByIdRes, identity)
-            need(len(details.symbol) == 1 and details.symbol[0].symbolId == symbol.symbolId,
-                 "INTEGRATED_CONTRACT_IDENTITY")
-            terms = details.symbol[0]
-            if not 0 < terms.minVolume <= terms.maxVolume or terms.stepVolume <= 0:
-                status["Unavailable"][name] = "BROKER_VOLUME_GRID_UNAVAILABLE"
-                continue
-            volumes = [v for v in (terms.minVolume, terms.minVolume + terms.stepVolume,
-                                   terms.minVolume + 3 * terms.stepVolume) if v <= terms.maxVolume]
-            margin = observe(m.ProtoOAExpectedMarginReq(ctidTraderAccountId=account, symbolId=symbol.symbolId,
-                                                       volume=volumes),
-                             m.ProtoOAExpectedMarginRes, identity)
-            grid = margin_snapshot(margin, volumes) if margin is not None else []
-            if not grid:
-                status["Unavailable"][name] = "BROKER_EXPECTED_MARGIN_UNAVAILABLE"
-            metadata = {"Name": name, "Class": asset_class,
-                        "Contract": contract(name, terms, "USD", int(time.time() * 1000)),
-                        "TickSize": str(Decimal(10) ** -terms.digits),
-                        "TradingMode": terms.tradingMode, "ShortAllowed": terms.enableShortSelling,
-                        "Schedule": [[i.startSecond, i.endSecond] for i in terms.schedule],
-                        "ScheduleTimeZone": terms.scheduleTimeZone, "Margin": grid}
-            captured.append((symbol.symbolId, metadata))
-            status["Markets"][name] = {**metadata, "Bars": {}, "ActiveHours": 0,
-                                       "SourceTickHours": 0, "Bid": 0, "Ask": 0}
-        need(any(info["Name"] == "EURUSD" for _, info in captured), "INTEGRATED_EURUSD_SOURCE_MISSING")
-        seal("account-contracts.enc", {"Identity": identity, "Markets": [v for _, v in captured]})
+        try:
+            for asset_class, aliases in scope.universe:
+                name = next((alias for alias in aliases if alias in available), aliases[0])
+                position = {"Market": name, "Stage": "CONTRACT"}
+                if name not in available:
+                    status["Unavailable"][name] = "ALIAS_NOT_PRESENT_IN_BROKER_ROSTER"
+                    continue
+                symbol = available[name]
+                quote_asset = names.get(symbol.quoteAssetId, "UNKNOWN")
+                details = observe(m.ProtoOASymbolByIdReq(ctidTraderAccountId=account, symbolId=[symbol.symbolId]),
+                                  m.ProtoOASymbolByIdRes, identity)
+                need(len(details.symbol) == 1 and details.symbol[0].symbolId == symbol.symbolId,
+                     "INTEGRATED_CONTRACT_IDENTITY")
+                terms = details.symbol[0]
+                volumes = minimum_volume_grid(terms)
+                margin = observe(m.ProtoOAExpectedMarginReq(ctidTraderAccountId=account, symbolId=symbol.symbolId,
+                                 volume=volumes), m.ProtoOAExpectedMarginRes, identity) if volumes else None
+                grid, margin_status = expected_margin_evidence(terms, margin)
+                metadata = {"Name": name, "Class": asset_class,
+                            "Contract": contract(name, terms, quote_asset, int(time.time() * 1000)),
+                            "TickSize": str(Decimal(10) ** -terms.digits),
+                            "TradingMode": terms.tradingMode, "ShortAllowed": terms.enableShortSelling,
+                            "Schedule": [[i.startSecond, i.endSecond] for i in terms.schedule],
+                            "ScheduleTimeZone": terms.scheduleTimeZone, "Margin": grid,
+                            "Funding": funding_snapshot(terms, quote_asset, symbol.enabled, grid, margin_status)}
+                if isinstance(margin, m.ProtoOAErrorRes):
+                    metadata["Funding"]["ExpectedMarginProviderCode"] = provider_error_code(margin)
+                captured.append((symbol.symbolId, metadata))
+                status["Markets"][name] = {**metadata, "Bars": {}, "ActiveHours": 0, "BarNoQuotesPages": {},
+                                           "SourceTickHours": 0, "Bid": 0, "Ask": 0}
+        finally:
+            if identity:
+                seal("account-contracts.enc", {"Identity": identity, "Markets": [v for _, v in captured]})
 
         for symbol_id, meta in captured:
             name = meta["Name"]
             info = status["Markets"][name]
             raw = []
-            active_m5 = []
-            for period, (minutes, chunk) in NATIVE_PERIODS.items():
-                count = 0
-                for first in range(WARMUP, END, chunk):
-                    last = min(END, first + chunk)
-                    response = observe(
-                        m.ProtoOAGetTrendbarsReq(ctidTraderAccountId=account, symbolId=symbol_id,
-                            period=getattr(e, period), fromTimestamp=first, toTimestamp=last),
-                        m.ProtoOAGetTrendbarsRes, raw, historical=True)
-                    rows = bars_from_page(response, period, first, last)
-                    count += len(rows)
-                    if period == "M5":
-                        active_m5.extend(row[0] for row in rows if row[0] >= START)
-                info["Bars"][period] = count
-            seal(f"{name}-bars.enc", {"Name": name, "Raw": raw})
-            active_hours = {t // HOUR * HOUR for t in active_m5}
-            info["ActiveHours"] = len(active_hours)
-            have_margin = any(0 < Decimal(step[key]) < 300 for step in meta["Margin"][:1]
-                              for key in ("BuyMargin", "SellMargin"))
-            if name != "EURUSD" and (not have_margin or meta["TradingMode"] != 0):
-                status["Unavailable"][name] = ("CURRENT_TRADING_MODE_RESTRICTED" if meta["TradingMode"] != 0
-                                               else "MINIMUM_MARGIN_NOT_PROVEN_BELOW_EUR300")
-                publish()
-                continue
-
-            def ticks(side, first, last, records):
-                response = observe(m.ProtoOAGetTickDataReq(ctidTraderAccountId=account, symbolId=symbol_id,
-                                       type=side, fromTimestamp=first, toTimestamp=last),
-                                   m.ProtoOAGetTickDataRes, records, historical=True)
-                if isinstance(response, m.ProtoOAErrorRes):
-                    return 0
-                if response.hasMore:
-                    need(last > first, "INTEGRATED_TICK_SAME_MS_SERVER_TRUNCATION")
-                    midpoint = (first + last) // 2
-                    return ticks(side, first, midpoint, records) + ticks(side, midpoint + 1, last, records)
-                return len(decode_side(response.tickData, first, last))
-
-            for day in range(START, END, DAY):
-                raw = []
-                for time_at in range(day, day + DAY, 2 * HOUR):
-                    covered = [t for t in (time_at, time_at + HOUR) if t in active_hours]
-                    if not covered:
-                        continue
-                    first, last = min(covered), max(covered) + HOUR - 1
-                    info["Bid"] += ticks(e.BID, first, last, raw)
-                    info["Ask"] += ticks(e.ASK, first, last, raw)
-                    info["SourceTickHours"] += len(covered)
+            active_hours = set()
+            position = {"Market": name, "Stage": "BARS"}
+            try:
+                for period, (_, chunk) in scope.periods.items():
+                    info["Bars"][period] = 0
+                    info["BarNoQuotesPages"][period] = 0
+                    for first in range(scope.warmup, scope.end, chunk):
+                        last = min(scope.end, first + chunk)
+                        response = observe(
+                            m.ProtoOAGetTrendbarsReq(ctidTraderAccountId=account, symbolId=symbol_id,
+                                period=getattr(e, period), fromTimestamp=first, toTimestamp=last),
+                            m.ProtoOAGetTrendbarsRes, raw, historical=True)
+                        info["BarNoQuotesPages"][period] += isinstance(response, m.ProtoOAErrorRes)
+                        rows = bars_from_page(response, period, first, last, scope.periods)
+                        info["Bars"][period] += len(rows)
+                        active_hours.update(row[0] // HOUR * HOUR for row in rows if row[0] >= scope.start)
+            finally:
                 if raw:
-                    seal(f"{name}-{day}-ticks.enc", {"Name": name, "Day": day, "Raw": raw})
+                    seal(f"{name}-bars.enc", {"Name": name, "Raw": raw})
+            info["ActiveHours"] = len(active_hours)
+
+            for day in range(scope.start, scope.end, DAY):
+                raw = []
+                position = {"Market": name, "Stage": "TICKS", "Day": day}
+                try:
+                    for first, last in tick_windows(day, active_hours):
+                        for side, side_name in ((e.BID, "Bid"), (e.ASK, "Ask")):
+                            info[side_name] += collect_tick_window(account, symbol_id, side, first, last,
+                                lambda req: observe(req, m.ProtoOAGetTickDataRes, raw, historical=True))
+                        info["SourceTickHours"] += (last + 1 - first) // HOUR
+                finally:
+                    if raw:
+                        seal(f"{name}-{day}-ticks.enc", {"Name": name, "Day": day, "Raw": raw})
             print("INTEGRATED_MARKET_CAPTURED", name, info["Bars"], info["SourceTickHours"],
                   info["Bid"], info["Ask"], flush=True)
         status["Status"] = "AUTHENTIC_READ_ONLY_SOURCE_CAPTURED"
@@ -244,6 +358,7 @@ def collect():
         status["Failure"] = (str(exc) if isinstance(exc, CaptureContractError)
                              and str(exc).replace("_", "").isalnum() and str(exc).isupper()
                              else type(exc).__name__)
+        status["FailureAt"] = position
         publish()
         print("INTEGRATED_SOURCE_FAILURE", status["Failure"], flush=True)
         raise SystemExit(1) from None
@@ -252,4 +367,10 @@ def collect():
 
 
 if __name__ == "__main__":
-    collect()
+    import sys
+    if sys.argv[1:] == ["--funded-action-history"]:
+        collect(FUNDED_HISTORY)
+    elif len(sys.argv) == 1:
+        collect()
+    else:
+        raise SystemExit("Unsupported source scope")

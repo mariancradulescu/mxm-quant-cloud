@@ -13,6 +13,7 @@ internal static partial class IntegratedEconomicReplay
         NativeProtectionDistances? Protection)
     {
         public Dictionary<string, AdditionalBars>? AdditionalTimeframes { get; init; }
+        public bool? EnabledAtCapture { get; init; }
     }
     sealed record AdditionalBars(string Source, NativeClosedMarketBar[] Bars);
     sealed record Source(long Start,long End,string SourceRun,string ProtocolSha256,SourceMarket[] Markets,
@@ -54,7 +55,7 @@ internal static partial class IntegratedEconomicReplay
         {
             var m=Source;
             var q=At(at);
-            if(q is null || !m.CostTermsComplete || m.TradingMode!=0 ||
+            if(q is null || !m.CostTermsComplete || m.TradingMode!=0 || m.EnabledAtCapture is false ||
                !m.Contract.OriginalBrokerAuthenticated || m.Margin.Length==0 || m.Contract.Symbol!=m.Name ||
                q.BidAt>at || q.AskAt>at || at-q.BidAt>30_000 || at-q.AskAt>30_000)
                 return null;

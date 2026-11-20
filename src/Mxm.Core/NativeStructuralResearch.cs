@@ -35,7 +35,7 @@ public static class NativeStructuralResearch
         return offers.ToArray();
     }
 
-    static bool FinancingUnverified(Ucp1Episode trip, NativeObservedContractTerms terms)
+    internal static bool FinancingUnverified(Ucp1Episode trip, NativeObservedContractTerms terms)
     {
         if (terms.SwapPeriodHours is not (> 0 and <= 24) || terms.SwapTimeUtcMinute is not (>= 0 and < 1440))
             return true;
@@ -181,9 +181,9 @@ public static class NativeStructuralResearch
         };
     }
 
-    static (object Report, decimal RealizedLedgerNet, decimal? CompleteModeledNet) DevelopmentBook(
+    internal static (object Report, decimal RealizedLedgerNet, decimal? CompleteModeledNet) DevelopmentBook(
         NativeUnifiedPortfolioEngine engine, long start, long end,
-        IReadOnlyDictionary<string, NativeObservedContractTerms> contracts)
+        IReadOnlyDictionary<string, NativeObservedContractTerms> contracts, bool includeEquityTrace = true)
     {
         var summary = engine.ModelSummary;
         var events = engine.OriginalModelEvents;
@@ -268,7 +268,7 @@ public static class NativeStructuralResearch
                 SettlementEvents = events.Where(e => e.Kind != "MARK")
                     .Select(e => e with { Quotes = Array.Empty<LedgerQuote>() }).ToArray(),
                 RealizedFragments = fragments,
-                SampledEquity = equity,
+                SampledEquity = includeEquityTrace ? equity : null,
                 LedgerReconciled = true
             },
             CompletedTradesByWeek = weekly,

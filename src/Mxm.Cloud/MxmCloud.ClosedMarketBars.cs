@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using cAlgo.API;
+using Mxm.Cloud;
 using Mxm.Core;
 
 namespace cAlgo.Robots;
@@ -14,9 +15,36 @@ public partial class MxmCloud
     [Parameter("Structural portfolio observation (NO ORDERS)", DefaultValue = false)]
     public bool ObserveStructuralPortfolio { get; set; }
 
+    [Parameter("Funded action model snapshot (NO ORDERS)", DefaultValue = "")]
+    public string FundedActionSnapshot { get; set; } = "";
+
+    string[]? fundedActionSymbols;
     readonly Dictionary<(string Symbol, NativeBarTimeframe Period), Bars> closedBarSources = new();
     long lastContextClock;
     string lastContextStatus = "";
+
+    void StartStructuralObservation()
+    {
+        if (string.IsNullOrWhiteSpace(FundedActionSnapshot))
+        {
+            _unifiedPolicy = new NativeUnifiedCloudParityAdapter(NativeStructuralOpportunity.Prefix + "FIRST", _accountBinding);
+            return;
+        }
+        try
+        {
+            var model = System.Text.Json.JsonSerializer.Deserialize<NativeFundedActionModel>(FundedActionSnapshot)
+                ?? throw new ArgumentException("FUNDED_ACTION_MODEL_MISSING");
+            if (!model.Adverse || model.AvailableAt >= Stamp(Server.TimeInUtc))
+                throw new ArgumentException("FUNDED_ACTION_MODEL_NOT_AVAILABLE");
+            _unifiedPolicy = new NativeUnifiedCloudParityAdapter(NativeStructuralOpportunity.Prefix +
+                NativeFundedActionValue.Context + "_ADVERSE", _accountBinding, actionModel: model);
+            fundedActionSymbols = model.SourceSymbols ?? NativeFundedActionResearch.Universe.ToArray();
+        }
+        catch (Exception)
+        {
+            Print("Funded action snapshot rejected. Native broker observation remains read-only.");
+        }
+    }
 
     static TimeFrame PlatformTimeframe(NativeBarTimeframe period) => period switch
     {
