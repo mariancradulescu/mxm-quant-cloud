@@ -9,8 +9,10 @@ internal static class IntegratedEconomicReplay
     sealed record SourceMarket(string Name,string Class,NativeObservedContractTerms Contract,
         decimal TickSize,bool ShortAllowed,int TradingMode,bool CostTermsComplete,NativeObservedVolume[] Margin,
         NativeClosedMarketBar[] M5,NativeClosedMarketBar[] M15,NativeClosedMarketBar[] H1,SourceQuote[] Quotes,
-        int ActiveHours,int RequestedTickHours,int[][] Schedule,string ScheduleTimeZone);
-    sealed record Source(long Start,long End,string SourceRun,string ProtocolSha256,SourceMarket[] Markets);
+        int ActiveHours,int RequestedTickHours,int[][] Schedule,string ScheduleTimeZone,
+        NativeProtectionDistances? Protection);
+    sealed record Source(long Start,long End,string SourceRun,string ProtocolSha256,SourceMarket[] Markets,
+        long ManagementIntervalMs=60_000L);
 
     sealed class BarPrefix
     {
@@ -64,7 +66,8 @@ internal static class IntegratedEconomicReplay
             return new(m.Name,quote,m.Contract,m5.Observe(at),m15.Observe(at),
                 NativeIntegratedEconomicPolicy.Slippage(q.Bid,q.Ask,m.TickSize,false),
                 "ORIGINAL_NATIVE_BARS_AND_OBSERVED_EXECUTABLE_SIDES",
-                new(h1.Observe(at),m.Margin,m.ShortAllowed,m.TickSize,q.Path));
+                new NativeIntegratedMarket(h1.Observe(at),m.Margin,m.ShortAllowed,m.TickSize,q.Path)
+                { Protection=m.Protection });
         }
     }
 
@@ -152,12 +155,65 @@ internal static class IntegratedEconomicReplay
             Interpretation="EXPOSED_HINDSIGHT_SOLO_MINIMUM_VOLUME_PATH_DIAGNOSTIC" };
     }
 
-    public static int Run(string inputFile,string outputDirectory)
+    static long UtcDay(long t)=>t/86_400_000L;
+
+    static bool? PotentialRollover(Ucp1Episode trip,NativeObservedContractTerms contract)
+    {
+        if(contract.SwapTimeUtcMinute is not (>=0 and <1440) ||
+            contract.SwapPeriodHours is not (>0 and <=24)) return null;
+        long phase=contract.SwapTimeUtcMinute.Value*60_000L;
+        long period=contract.SwapPeriodHours.Value*3_600_000L;
+        return (trip.CloseAt-phase)/period>(trip.OpenAt-phase)/period;
+    }
+
+    static object LifecycleReport(NativeUnifiedPortfolioEngine engine,Ucp1Episode[] trips,
+        Ucp1CurvePoint[] curve,Dictionary<string,NativeObservedContractTerms> contracts,long evaluationStart)
+    {
+        var r=trips.Select(x=>x.R!.Value).OrderBy(x=>x).ToArray();
+        var age=trips.Select(x=>x.CloseAt-x.OpenAt).OrderBy(x=>x).ToArray();
+        var wins=trips.Where(x=>x.NetEur>0m).ToArray();
+        var losses=trips.Where(x=>x.NetEur<0m).ToArray();
+        var summary=engine.ModelSummary;
+        var calibration=engine.IntegratedCalibration()!;
+        return new {
+            calibration.Cells,calibration.Cancelled,
+            MedianHoldMs=age.Length==0?(long?)null:age[age.Length/2],
+            CompleteWithinTwoMinutes=age.Count(x=>x<=120_000L),
+            RegimeExits=trips.Count(x=>x.ExitReason.EndsWith("INTEGRATED_NEW_M15_THESIS_INVALIDATION",StringComparison.Ordinal)),
+            LegacyRegimeExits=trips.Count(x=>x.ExitReason.EndsWith("CLOSED_BAR_REGIME_INVALIDATION",StringComparison.Ordinal)),
+            PlannedNetTargetNonpositive=trips.Count(x=>x.Integrated!.InitialPlannedRewardEur<=0m),
+            MeanWinEur=wins.Length==0?(decimal?)null:wins.Average(x=>x.NetEur),
+            MeanLossEur=losses.Length==0?(decimal?)null:losses.Average(x=>x.NetEur),
+            MeanPlannedRewardToRisk=trips.Length==0?(decimal?)null:trips.Average(x=>x.Integrated!.PlannedRewardToRisk),
+            MaxStressedEntryRiskEur=trips.Length==0?(decimal?)null:trips.Max(x=>x.Integrated!.Thesis!.StressedRiskAtFillEur),
+            WorstR=r.Length==0?(decimal?)null:r[0],
+            FifthPercentileR=r.Length==0?(decimal?)null:r[(int)Math.Floor((r.Length-1)*.05)],
+            LessThanMinusTwoR=r.Count(x=>x< -2m),
+            BeyondStressedRisk=trips.Count(x=>x.NetEur< -x.Integrated!.Thesis!.StressedRiskAtFillEur),
+            Costs=new { Commission=trips.Sum(x=>x.Integrated!.CommissionsEur),
+                Spread=trips.Sum(x=>x.Integrated!.SpreadEur),Slippage=trips.Sum(x=>x.Integrated!.SlippageEur),
+                Conversion=trips.Sum(x=>x.Integrated!.ConversionEur) },
+            RolloverPotential=trips.Count(x=>PotentialRollover(x,contracts[x.Symbol])==true),
+            RolloverTermsUnknown=trips.Count(x=>PotentialRollover(x,contracts[x.Symbol]) is null),
+            summary.ObservedPeakEur,summary.MaximumSampledDrawdown,
+            EquityByUtcDay=curve.Where(x=>x.At>=evaluationStart).GroupBy(x=>UtcDay(x.At)).Select(group=>{
+                var known=group.Where(x=>x.EquityEur is not null).ToArray();
+                return new { Day=DateTimeOffset.FromUnixTimeMilliseconds(group.Key*86_400_000L).ToString("yyyy-MM-dd"),
+                    LastCashEur=group.Last().CashEur, LastSampledEquityEur=known.LastOrDefault()?.EquityEur,
+                    MinimumSampledEquityEur=known.Length>0?known.Min(x=>x.EquityEur):null,
+                    MaximumSampledEquityEur=known.Length>0?known.Max(x=>x.EquityEur):null,
+                    UnknownExposureMarks=group.Count(x=>x.Held>0&&x.EquityEur is null) };
+            }).ToArray(),
+        };
+    }
+
+    public static int Run(string inputFile,string outputDirectory,bool coherent=false)
     {
         using var stream=File.OpenRead(inputFile);
         var source=JsonSerializer.Deserialize<Source>(stream,Json)
             ??throw new ArgumentException("INTEGRATED_VERIFIED_SOURCE_MISSING");
-        if(source.Start<=0 || source.End-source.Start!=21*86400000L ||
+        long spacing=coherent?NativeIntegratedLifecycle.IntervalMs:60_000L;
+        if(source.Start<=0 || source.End-source.Start!=21*86400000L || source.ManagementIntervalMs!=spacing ||
            source.ProtocolSha256.Length!=64 || source.SourceRun.Length==0 ||
            !source.SourceRun.All(char.IsAsciiDigit) ||
            source.Markets.Select(x=>x.Name).Distinct(StringComparer.Ordinal).Count()!=source.Markets.Length)
@@ -165,7 +221,7 @@ internal static class IntegratedEconomicReplay
         var markets=source.Markets.Select(m=>new MarketStream(m)).ToArray();
         var fx=markets.Single(m=>m.Source.Name=="EURUSD");
         var frames=new List<Ucp1Frame>();
-        for(long at=source.Start+NativeIntegratedEconomicPolicy.ClockOffsetMs;at<source.End;at+=60_000)
+        for(long at=source.Start+NativeIntegratedEconomicPolicy.ClockOffsetMs;at<source.End;at+=spacing)
         {
             var conversion=fx.At(at);
             var observed=conversion is null?Array.Empty<Ucp1MarketFrame>():markets
@@ -173,13 +229,13 @@ internal static class IntegratedEconomicReplay
             frames.Add(new Ucp1Frame(at,observed));
         }
         var clocks=frames.ToArray();
-        var diagnostic=ReachablePath(clocks);
-        var policies=NativeIntegratedEconomicPolicy.Policies
+        var diagnostic=coherent?null:ReachablePath(clocks);
+        var policies=coherent?NativeIntegratedLifecycle.Policies:NativeIntegratedEconomicPolicy.Policies
             .Concat(new[]{"INTEGRATED_FIRST_MIN_ADVERSE","INTEGRATED_STRUCTURE_BUDGET_ADVERSE"}).ToArray();
-        var reports=new Dictionary<string,object>(StringComparer.Ordinal);
-        var totals=new Dictionary<string,decimal>(StringComparer.Ordinal);
-        var weeks=Enumerable.Range(0,3).Select(i=>Week(source.Start+i*7*86400000L)).ToArray();
-        foreach(var policy in policies)
+        long evaluationStart=source.Start+NativeIntegratedLifecycle.CalibrationMs;
+        var weeks=Enumerable.Range(coherent?1:0,coherent?2:3).Select(i=>Week(source.Start+i*7*86400000L)).ToArray();
+        var contracts=source.Markets.ToDictionary(x=>x.Name,x=>x.Contract,StringComparer.Ordinal);
+        (string Policy, decimal NetEur, object Report, object? Lifecycle) Evaluate(string policy)
         {
             var engine=new NativeUnifiedPortfolioEngine(policy);
             foreach(var frame in clocks) engine.Advance(frame);
@@ -191,16 +247,15 @@ internal static class IntegratedEconomicReplay
             foreach(var fact in events) check.Apply(fact);
             if(check.Summary()!=valid)
                 throw new InvalidOperationException("INTEGRATED_ORIGINAL_LEDGER_RECONCILIATION");
-            totals.Add(policy,valid.ClosedNetEur);
             var weekly=weeks.Select(w=>{
                 var match=trips.Where(t=>Week(t.CloseAt)==w).ToArray();
                 var value=curve.LastOrDefault(x=>Week(x.At)==w && x.EquityEur is not null);
                 return new { Week=w, Completed=match.Length, NetEur=match.Sum(x=>x.NetEur),
                     LastObservedEquityEur=value?.EquityEur, Hard21ModelOnly=match.Length>=21 };
             }).ToArray();
-            reports.Add(policy,new {
+            var report=new {
                 Outcome=engine.OriginalOutcomeReport(source.Start,source.Start,
-                    source.Start+7*86400000L,source.End,source.ProtocolSha256,includeTrace:false),
+                    evaluationStart,source.End,source.ProtocolSha256,includeTrace:false),
                 GrossFromCompletedEur=trips.Sum(t=>t.GrossEur),
                 CostFromCompletedEur=trips.Sum(t=>t.GrossEur-t.NetEur),
                 CommissionOnCompletedEur=trips.Sum(t=>t.Integrated?.CommissionsEur??0m),
@@ -220,10 +275,24 @@ internal static class IntegratedEconomicReplay
                 CheckedMonetaryEventCount=events.Length, EventChain=valid.EventChainHash,
                 NonMarkEvents=events.Where(x=>x.Kind!="MARK").ToArray(),
                 NoRealBrokerExecution=true,ContinuousDrawdownCertified=false
-            });
+            };
             Console.WriteLine($"INTEGRATED_BOOK {policy} {trips.Length} {valid.ClosedNetEur.ToString(CultureInfo.InvariantCulture)}");
+            object? lifecycle=coherent?LifecycleReport(engine,trips,curve,contracts,evaluationStart):null;
+            return (policy,valid.ClosedNetEur,report,lifecycle);
         }
-        var comparison=totals.ToDictionary(x=>x.Key,x=>new {
+        var evaluated=coherent
+            ?policies.AsParallel().AsOrdered().WithDegreeOfParallelism(2).Select(Evaluate).ToArray()
+            :policies.Select(Evaluate).ToArray();
+        var totals=evaluated.ToDictionary(x=>x.Policy,x=>x.NetEur,StringComparer.Ordinal);
+        var reports=evaluated.ToDictionary(x=>x.Policy,x=>x.Report,StringComparer.Ordinal);
+        object comparison=coherent?totals.ToDictionary(x=>x.Key,x=>new {
+            VsCashEur=x.Value-totals[NativeIntegratedLifecycle.Cash],
+            VsFirstEur=x.Value-totals[x.Key.EndsWith("_ADVERSE",StringComparison.Ordinal)
+                ?NativeIntegratedLifecycle.FirstAdverse:NativeIntegratedLifecycle.First],
+            VsLongEur=x.Value-totals[NativeIntegratedLifecycle.Long],
+            VsShortEur=x.Value-totals[NativeIntegratedLifecycle.Short],
+            VsRandomEur=x.Value-totals[NativeIntegratedLifecycle.Random]
+        }):totals.ToDictionary(x=>x.Key,x=>new {
             VsCashEur=x.Value-totals["INTEGRATED_CASH"],
             VsFirstMinimumEur=x.Value-totals["INTEGRATED_FIRST_MIN"],
             VsFirstBudgetEur=x.Value-totals["INTEGRATED_FIRST_BUDGET"],
@@ -233,21 +302,33 @@ internal static class IntegratedEconomicReplay
         });
         Directory.CreateDirectory(outputDirectory);
         using var output=File.Create(Path.Combine(outputDirectory,"economic.json"));
-        JsonSerializer.Serialize(output,new {
-            Study="INTEGRATED_ECONOMIC_DISCOVERY_SHARED_NATIVE_CORE",source.SourceRun,source.ProtocolSha256,
-            source.Start,source.End,ObservedClocks=clocks.Count(x=>x.Markets.Length>0),
-            SourceCoverage=markets.Select(x=>new {
-                x.Source.Name,x.Source.Class,x.Source.ActiveHours,x.Source.RequestedTickHours,
-                x.Source.CostTermsComplete,x.Source.Contract,x.Source.Margin,x.Source.Schedule,x.Source.ScheduleTimeZone,
-                BrokerM5=x.Source.M5.Length,BrokerM15=x.Source.M15.Length,BrokerH1=x.Source.H1.Length,
-                AcceptedMarks=x.AcceptedMarks,SourceMarks=x.Source.Quotes.Length,
-                SuppliedHours=x.Source.Quotes.GroupBy(q=>DateTimeOffset.FromUnixTimeMilliseconds(q.At).UtcDateTime.Hour)
-                    .ToDictionary(g=>g.Key,g=>g.Count())
-            }).ToArray(),
-            Diagnostic=diagnostic,Policies=reports,Incremental=comparison,
-            DistinctCommonBookCapitalEur=300,OrdersSubmitted=0,CloudActivated=false,
-            FundingHistoryReconciled=false,IndependentConfirmation=false,BrokerNetCertified=false
-        },Json);
+        var coverage=markets.Select(x=>new {
+            x.Source.Name,x.Source.Class,x.Source.ActiveHours,x.Source.RequestedTickHours,
+            x.Source.CostTermsComplete,x.Source.Contract,x.Source.Margin,x.Source.Schedule,x.Source.ScheduleTimeZone,
+            BrokerM5=x.Source.M5.Length,BrokerM15=x.Source.M15.Length,BrokerH1=x.Source.H1.Length,
+            AcceptedMarks=x.AcceptedMarks,SourceMarks=x.Source.Quotes.Length,
+            SuppliedHours=x.Source.Quotes.GroupBy(q=>DateTimeOffset.FromUnixTimeMilliseconds(q.At).UtcDateTime.Hour)
+                .ToDictionary(g=>g.Key,g=>g.Count())
+        }).ToArray();
+        if(coherent)
+            JsonSerializer.Serialize(output,new {
+                Study="INTEGRATED_CAUSAL_LIFECYCLE_SHARED_NATIVE_CORE",source.SourceRun,source.ProtocolSha256,
+                source.Start,source.End,EvaluationStart=evaluationStart,ManagementIntervalMs=spacing,
+                ObservedClocks=clocks.Count(x=>x.Markets.Length>0),
+                ObservedEvaluationClocks=clocks.Count(x=>x.At>=evaluationStart && x.Markets.Length>0),
+                SourceCoverage=coverage,Protection=source.Markets.ToDictionary(x=>x.Name,x=>x.Protection),
+                Policies=reports,Lifecycle=evaluated.ToDictionary(x=>x.Policy,x=>x.Lifecycle),
+                Incremental=comparison,DistinctCommonBookCapitalEur=300,OrdersSubmitted=0,CloudActivated=false,
+                FundingHistoryReconciled=false,IndependentConfirmation=false,BrokerNetCertified=false
+            },Json);
+        else
+            JsonSerializer.Serialize(output,new {
+                Study="INTEGRATED_ECONOMIC_DISCOVERY_SHARED_NATIVE_CORE",source.SourceRun,source.ProtocolSha256,
+                source.Start,source.End,ObservedClocks=clocks.Count(x=>x.Markets.Length>0),
+                SourceCoverage=coverage,Diagnostic=diagnostic,Policies=reports,Incremental=comparison,
+                DistinctCommonBookCapitalEur=300,OrdersSubmitted=0,CloudActivated=false,
+                FundingHistoryReconciled=false,IndependentConfirmation=false,BrokerNetCertified=false
+            },Json);
         return 0;
     }
 }

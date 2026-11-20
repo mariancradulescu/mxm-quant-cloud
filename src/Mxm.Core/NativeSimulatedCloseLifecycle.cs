@@ -16,7 +16,7 @@ public sealed record NativeModelCloseProtection(
 public sealed record NativeModelCloseObservation(
     long Clock,LedgerQuote? AuthenticatedQuote,decimal ClosedM15Direction=0m,
     long ClosedM15DirectionKnownAt=0,NativeModelCloseInstruction? Instruction=null,
-    bool FullSessionMark=false);
+    bool FullSessionMark=false,bool IntegratedManagesProtection=false);
 
 public sealed record NativeModelCloseInstruction(string Reason,decimal Units);
 
@@ -155,7 +155,9 @@ public static class NativeSimulatedCloseLifecycle
         // Re-assess on the FIRST actually observed quote after expiry or gap.
         // Supplied closed-bar direction is required to be timestamped strictly
         // earlier than this observation; no future return is inspected.
-        var verdict=NativeCausalExitResearch.AssessLifecycle(
+        var verdict=observation.IntegratedManagesProtection
+            ?new NativeExitVerdict(false,"INTEGRATED_HOLD",protection.FavorableExtreme)
+            :NativeCausalExitResearch.AssessLifecycle(
             protection.Policy,held.Side,entry,protection.EntryFrozenSeed,
             protection.EntryFrozenStop,protection.FavorableExtreme,quote,
             observation.ClosedM15Direction,false);

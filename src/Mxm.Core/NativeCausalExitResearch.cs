@@ -47,17 +47,7 @@ public static class NativeCausalExitResearch
             throw new ArgumentException("LPM1_PATH_STATE_INVALID");
         decimal price=side>0?quote.Bid:quote.Ask;
         decimal extreme=side>0?Math.Max(priorExtreme,price):Math.Min(priorExtreme,price);
-        decimal stop=initialStop;
-        if(mode=="ADAPT")
-        {
-            decimal trail=extreme-side*2m*seed.AtrQuote;
-            stop=side>0?Math.Max(stop,trail):Math.Min(stop,trail);
-            if(side*(extreme-entry)>=1.25m*seed.AtrQuote)
-            {
-                decimal locked=entry+side*.35m*seed.AtrQuote;
-                stop=side>0?Math.Max(stop,locked):Math.Min(stop,locked);
-            }
-        }
+        decimal stop=mode=="ADAPT"?AdaptivePathStop(side,entry,initialStop,extreme,seed.AtrQuote):initialStop;
         if(side*(price-stop)<=0)return new(true,"OBSERVED_PATH_STOP_"+mode,extreme);
         if(mode=="VOL" && side*(price-entry)>=2m*seed.AtrQuote)
             return new(true,"OBSERVED_PATH_ATR_TARGET",extreme);
@@ -67,6 +57,19 @@ public static class NativeCausalExitResearch
         if(mode!="VOL" && side*closedM15Direction<0)
             return new(true,"CLOSED_BAR_REGIME_INVALIDATION",extreme);
         return new(sessionEnd,sessionEnd?"SESSION_SAFETY_CLOSE":"HOLD_PATH",extreme);
+    }
+
+    internal static decimal AdaptivePathStop(int side,decimal entry,decimal initialStop,
+        decimal extreme,decimal atr)
+    {
+        decimal trail=extreme-side*2m*atr;
+        decimal stop=side>0?Math.Max(initialStop,trail):Math.Min(initialStop,trail);
+        if(side*(extreme-entry)>=1.25m*atr)
+        {
+            decimal locked=entry+side*.35m*atr;
+            stop=side>0?Math.Max(stop,locked):Math.Min(stop,locked);
+        }
+        return stop;
     }
 
     public const string FrozenFixed = "FROZEN_LEGACY_FIXED";

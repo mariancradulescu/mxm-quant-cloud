@@ -1,0 +1,110 @@
+name: Integrated causal lifecycle - protected common-book economics
+on:
+  pull_request:
+    paths:
+      - 'src/Mxm.Core/NativeIntegrated*.cs'
+      - 'src/Mxm.Core/NativeUnifiedPortfolioEngine*.cs'
+      - 'src/Mxm.Core/NativeSimulatedCloseLifecycle.cs'
+      - 'src/Mxm.Cloud/MxmCloud.cs'
+      - 'src/Mxm.Replay/IntegratedEconomicReplay.cs'
+      - 'tests/Mxm.Checks/IntegratedEconomicPolicyChecks.cs'
+      - 'research/integrated_lifecycle_evaluation.py'
+      - 'research/integrated_market_readback.py'
+      - '.github/workflows/integrated-lifecycle-evaluation.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ops/integrated-causal-lifecycle-evaluation-once.txt'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    outputs:
+      ready: ${{ steps.marker.outputs.ready }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - name: Verify frozen protocol ancestry, closed-study identity and shared Core behavior
+        run: |
+          git merge-base --is-ancestor e3d0c98f29578eaa29741f7e5c7e1564bb48fe96 HEAD
+          echo '1020f6493849138d1394e02dc1085d1f775ae57794e5845006e32341056a4aac  research/INTEGRATED_CAUSAL_LIFECYCLE_20261120.md' | sha256sum -c
+          git diff --exit-code f9d98afa077f23d767034c1ddc34c4600edf65aa -- \
+            research/INTEGRATED_ECONOMIC_DISCOVERY_20261120.md \
+            research/FCP1_FROZEN_FIRST_FINANCE_SCORE_PORTFOLIO_20261119.md \
+            ops/integrated-common-book-original-once.txt ops/integrated-full-session-source-once.txt \
+            ops/fcp1-main-once.txt src/Mxm.Replay/Fcp1FinancedScoreRunner.cs
+          dotnet build src/Mxm.Replay -c Release
+          dotnet build src/Mxm.Cloud -c Release
+          dotnet run --project tests/Mxm.Checks -c Release
+          python -m py_compile research/integrated_lifecycle_evaluation.py research/integrated_market_readback.py
+      - name: Match separate first-addition evaluation marker
+        id: marker
+        shell: bash
+        run: |
+          marker=ops/integrated-causal-lifecycle-evaluation-once.txt
+          subject=OWNER_INTEGRATED_CAUSAL_LIFECYCLE_EVALUATION_ONCE
+          echo "ready=false" >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_EVENT_NAME" == push && "$GITHUB_REF" == refs/heads/main &&
+                "$GITHUB_ACTOR" == mariancradulescu && "$GITHUB_RUN_ATTEMPT" == 1 &&
+                "$(git log -1 --format=%s)" == "$subject" &&
+                "$(git diff-tree --no-commit-id --name-status -r HEAD)" == $'A\t'"$marker" &&
+                -z "$(git log -1 --format=%H HEAD^ -- "$marker")" &&
+                "$(cat "$marker")" == "$subject" ]]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+  coherent-native-economics:
+    needs: verify
+    if: ${{ github.ref == 'refs/heads/main' && github.run_attempt == '1' && needs.verify.outputs.ready == 'true' }}
+    environment: mxm-r3-custody-v1
+    concurrency:
+      group: mxm-integrated-causal-lifecycle-evaluation
+      cancel-in-progress: false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - run: dotnet build src/Mxm.Replay -c Release
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: integrated-full-session-custody
+          path: integrated-sealed-source
+          run-id: 44687919474
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: integrated-full-session-source-public
+          path: integrated-source-public
+          run-id: 44687919474
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: integrated-lifecycle-original-forensics-public
+          path: integrated-lifecycle-existing-forensics
+          run-id: 44698833443
+          github-token: ${{ github.token }}
+      - name: Validate authentic custody and evaluate coherent native common books
+        run: python -m research.integrated_lifecycle_evaluation
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: integrated-causal-lifecycle-economic-public
+          path: integrated-lifecycle-economic-public/
+          if-no-files-found: error
+          retention-days: 90
