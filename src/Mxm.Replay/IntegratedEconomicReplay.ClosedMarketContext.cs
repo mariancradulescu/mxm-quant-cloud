@@ -12,6 +12,46 @@ internal static partial class IntegratedEconomicReplay
             _ => market.AdditionalTimeframes?.GetValueOrDefault(timeframe.ToString())
         };
 
+    static NativeBarContext HistoricalContext(SourceMarket market, SourceQuote quote)
+    {
+        long? witness = NativeClosedMarketContext.QuoteWitness(quote.At, quote.BidAt, quote.AskAt, 30_000L);
+        return new(quote.At, NativeClosedMarketContext.CoverageWindows.Select(requirement =>
+        {
+            var series = ContextSource(market, requirement.Timeframe);
+            return NativeClosedMarketContext.History(requirement, quote.At, witness,
+                series?.Source ?? "UNAVAILABLE", series?.Bars);
+        }).ToArray());
+    }
+
+    public static int RunStructural(string inputFile, string outputFile)
+    {
+        using var input = File.OpenRead(inputFile);
+        var source = JsonSerializer.Deserialize<Source>(input, Json)
+            ?? throw new ArgumentException("CLOSED_MARKET_ORIGINAL_SOURCE_MISSING");
+        if (source.SourceRun != "44687919474" || source.Start != 1792972800000L ||
+            source.End - source.Start != 3 * NativeCompletePolicy.Week || source.ProtocolSha256.Length != 64 ||
+            source.Markets.Select(x => x.Name).Distinct(StringComparer.Ordinal).Count() != source.Markets.Length)
+            throw new ArgumentException("CLOSED_MARKET_ORIGINAL_SOURCE_BOUNDARY");
+        var markets = source.Markets.Select(m => new MarketStream(m)).ToArray();
+        var fx = markets.Single(m => m.Source.Name == "EURUSD");
+        var frames = new List<Ucp1Frame>();
+        for (long at = source.Start + NativeIntegratedEconomicPolicy.ClockOffsetMs; at < source.End;
+             at += NativeIntegratedLifecycle.IntervalMs)
+        {
+            var conversion = fx.At(at);
+            var observed = conversion is null ? Array.Empty<Ucp1MarketFrame>() :
+                markets.Select(m => m.Frame(at, conversion, closedContext: true)).OfType<Ucp1MarketFrame>().ToArray();
+            frames.Add(new(at, observed));
+        }
+        var result = NativeStructuralResearch.Run(frames.ToArray(), source.Start, source.End,
+            source.Markets.ToDictionary(x => x.Name, x => x.Contract, StringComparer.Ordinal));
+        using var output = File.Create(outputFile);
+        JsonSerializer.Serialize(output, new { source.SourceRun, source.ProtocolSha256,
+            Coverage = markets.Select(m => new { m.Source.Name, m.Source.Class, m.Source.Contract.ObservedAtUtcMs,
+                SourceMarks = m.Source.Quotes.Length, m.AcceptedMarks }).ToArray(), Result = result }, Json);
+        return 0;
+    }
+
     public static int RunContextAudit(string inputFile, string outputFile)
     {
         using var input = File.OpenRead(inputFile);
@@ -27,6 +67,13 @@ internal static partial class IntegratedEconomicReplay
             ObservedAccountTermsAt = m.Contract.ObservedAtUtcMs,
             CompleteQuoteIntervals = m.Quotes.Count(q => q.Path.Complete),
             QuoteClocks = m.Quotes.Length,
+            SynchronizedDecisionContexts = m.Quotes.Count(q =>
+            {
+                var context = HistoricalContext(m, q);
+                return context.Windows.Where(w => NativeClosedMarketContext.Duration(w.Timeframe) <= 3_600_000L)
+                    .All(w => w.Ready) && context.For(NativeBarTimeframe.M1).ExpectedCloseAt ==
+                    context.For(NativeBarTimeframe.M5).ExpectedCloseAt;
+            }),
             Timeframes = NativeClosedMarketContext.CoverageWindows.Select(requirement =>
             {
                 var series = ContextSource(m, requirement.Timeframe);

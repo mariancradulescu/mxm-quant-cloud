@@ -59,6 +59,7 @@ public static class NativeIntegratedEconomicPolicy
     };
     public static bool IsPolicy(string policy)
         => Policies.Contains(policy, StringComparer.Ordinal) || NativeIntegratedLifecycle.IsPolicy(policy) || NativeCompletePolicy.IsPolicy(policy) ||
+           NativeStructuralOpportunity.IsPolicy(policy) ||
            (policy.EndsWith("_ADVERSE", StringComparison.Ordinal) &&
             policy[..^8] is "INTEGRATED_FIRST_MIN" or "INTEGRATED_STRUCTURE_BUDGET");
 

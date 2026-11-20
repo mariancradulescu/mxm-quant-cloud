@@ -75,7 +75,9 @@ public partial class MxmCloud : Robot
         // as the restart authority. Reconstruct from native broker facts.
         _fundedSession=new NativeFundedSession(_accountBinding);
 
-        if(EnableFullSessionObservation)
+        if (ObserveStructuralPortfolio)
+            _unifiedPolicy = new NativeUnifiedCloudParityAdapter(NativeStructuralOpportunity.Prefix + "FIRST", _accountBinding);
+        else if(EnableFullSessionObservation)
         {
             if(string.IsNullOrWhiteSpace(CompletePolicySnapshot))
                 _unifiedPolicy=new NativeUnifiedCloudParityAdapter(NativeIntegratedLifecycle.Economic,_accountBinding);
@@ -129,7 +131,7 @@ public partial class MxmCloud : Robot
         // Independent MODEL_REPLAY capital, never the broker monetary domain.
         // A restart begins a fresh observational simulation, not a cash reset
         // of any broker account; historical recovery requires causal replay.
-        if(EnableExploratoryReplay && !EnableUnifiedReadOnlyPolicy && !EnableFullSessionObservation)
+        if(EnableExploratoryReplay && !EnableUnifiedReadOnlyPolicy && !EnableFullSessionObservation && !ObserveStructuralPortfolio)
         {
             if(!string.IsNullOrWhiteSpace(IntegratedDevelopmentModel))
             {
@@ -351,6 +353,14 @@ public partial class MxmCloud : Robot
             Protection=new((decimal)symbol.MinStopLossDistance*protectionScale,
                 (decimal)symbol.MinTakeProfitDistance*protectionScale,protectionPercentage)
         };
+        if (ObserveStructuralPortfolio)
+        {
+            var closed = ReadClosedMarketBars(name, at, samples[0].At);
+            return new(name, quote, contract, closed.For(NativeBarTimeframe.M5).Bars, closed.For(NativeBarTimeframe.M15).Bars,
+                NativeIntegratedEconomicPolicy.Slippage(quote.Bid, quote.Ask, tick, false),
+                "PLATFORM_MARK_AND_CAUSAL_CLOSED_CONTEXT", context with { H1 = closed.For(NativeBarTimeframe.H1).Bars })
+                { ClosedBars = closed };
+        }
         return new(name,quote,contract,existing.M5,existing.M15,
             NativeIntegratedEconomicPolicy.Slippage(quote.Bid,quote.Ask,tick,false),
             "OBSERVATIONAL_PLATFORM_MARK_AND_DIRECTIONAL_MARGIN_ESTIMATE",context);
@@ -475,14 +485,17 @@ public partial class MxmCloud : Robot
             if(_unifiedPolicy is not null)
             {
                 long current=Stamp(Server.TimeInUtc);
-                long spacing=EnableFullSessionObservation?NativeIntegratedLifecycle.IntervalMs:60_000L;
-                long at=current/spacing*spacing+NativeIntegratedEconomicPolicy.ClockOffsetMs;
+                bool fullSession = EnableFullSessionObservation || ObserveStructuralPortfolio;
+                long spacing=fullSession?NativeIntegratedLifecycle.IntervalMs:60_000L;
+                long at = ObserveStructuralPortfolio
+                    ? NativeClosedMarketContext.LatestClock(current, spacing, NativeIntegratedEconomicPolicy.ClockOffsetMs)
+                    : current/spacing*spacing+NativeIntegratedEconomicPolicy.ClockOffsetMs;
                 if(at<=current && at>_lastUnifiedObservedAt)
                 {
                     _lastUnifiedObservedAt=at;
                     var observations=new System.Collections.Generic.List<Ucp1MarketFrame>();
                     var researchNames=_completePolicyObservation?new[]{"EURUSD","GBPUSD","AUDUSD"}:
-                        EnableFullSessionObservation
+                        fullSession
                         ? new[]{"EURUSD","GBPUSD","XAUUSD","SpotBrent","US500",Symbols.Exists("AAPL")?"AAPL":"AAPL.US"}
                         : universe.ResearchSymbols;
                     var sourceNames=_unifiedPolicy.ActiveSymbols
@@ -493,7 +506,7 @@ public partial class MxmCloud : Robot
                         try
                         {
                             if(!Symbols.Exists(name))continue;
-                            if(EnableFullSessionObservation)
+                            if(fullSession)
                             {
                                 var integrated=ReadFullSessionMarket(name,at);
                                 if(integrated is not null)observations.Add(integrated);

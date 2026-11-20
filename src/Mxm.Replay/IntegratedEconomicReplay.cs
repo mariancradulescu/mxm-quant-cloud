@@ -50,7 +50,7 @@ internal static partial class IntegratedEconomicReplay
             h1=new(source.H1,6);
         }
         public SourceQuote? At(long at)=>quotes.TryGetValue(at,out var value)?value:null;
-        public Ucp1MarketFrame? Frame(long at,SourceQuote fx)
+        public Ucp1MarketFrame? Frame(long at,SourceQuote fx,bool closedContext=false)
         {
             var m=Source;
             var q=At(at);
@@ -67,6 +67,16 @@ internal static partial class IntegratedEconomicReplay
             catch(ArgumentException) {return null;}
             catch(InvalidOperationException) {return null;}
             AcceptedMarks++;
+            if (closedContext)
+            {
+                var context = HistoricalContext(m, q);
+                return new(m.Name, quote, m.Contract, context.For(NativeBarTimeframe.M5).Bars,
+                    context.For(NativeBarTimeframe.M15).Bars,
+                    NativeIntegratedEconomicPolicy.Slippage(q.Bid, q.Ask, m.TickSize, false),
+                    "ORIGINAL_MARK_AND_CAUSAL_CLOSED_CONTEXT",
+                    new NativeIntegratedMarket(context.For(NativeBarTimeframe.H1).Bars, m.Margin, m.ShortAllowed, m.TickSize, q.Path)
+                    { Protection = m.Protection }) { ClosedBars = context };
+            }
             return new(m.Name,quote,m.Contract,m5.Observe(at),m15.Observe(at),
                 NativeIntegratedEconomicPolicy.Slippage(q.Bid,q.Ask,m.TickSize,false),
                 "ORIGINAL_NATIVE_BARS_AND_OBSERVED_EXECUTABLE_SIDES",

@@ -21,8 +21,8 @@ INTEGRATED_RECEIPT = "1f4621b9e76cb38d0ac69f0d88ea02b4face3d124b5528a56ba853d1ac
 AUDIT = Path("closed-market-context-public")
 
 
-def sources(key, supplementary_run):
-    more, new_receipt = supplement.readback(key, supplementary_run)
+def sources(key, supplementary_run, native_boundaries=False):
+    more, new_receipt = supplement.readback(key, supplementary_run, native_boundaries=native_boundaries)
 
     root = Path("hxc1-original")
     hxc_receipt = json.loads((root / "receipt.public.json").read_text())

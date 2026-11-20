@@ -13,6 +13,9 @@ if(args.Length==3 && args[0]=="--integrated-coherent")
 if(args.Length==3 && args[0]=="--closed-market-context-audit")
     return IntegratedEconomicReplay.RunContextAudit(args[1],args[2]);
 
+if(args.Length==3 && args[0]=="--closed-market-opportunities")
+    return IntegratedEconomicReplay.RunStructural(args[1],args[2]);
+
 if(args.Length==4 && args[3]=="--fcp1-financed-original-source-exploratory")
     return Fcp1FinancedScoreRunner.Run(args[0],args[1],args[2]);
 

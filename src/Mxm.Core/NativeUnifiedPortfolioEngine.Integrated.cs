@@ -16,9 +16,11 @@ public sealed partial class NativeUnifiedPortfolioEngine
         if (policy is "INTEGRATED_CASH" or NativeIntegratedLifecycle.Cash)
             return RecordIntegratedFrame(at, book);
         bool coherent = CoherentIntegrated;
-        string variant = CompletePolicy ? NativeCompletePolicy.Variant(policy) : "";
-        if (variant == "CASH" || CompletePolicy && (!NativeCompletePolicy.IsDecision(at) ||
-            completeProbe is { } probe && at != probe.At)) return RecordIntegratedFrame(at, book);
+        string variant = StructuralPolicy ? NativeStructuralOpportunity.Variant(policy) :
+            CompletePolicy ? NativeCompletePolicy.Variant(policy) : "";
+        if (variant == "CASH" || CompletePolicy && !NativeCompletePolicy.IsDecision(at) ||
+            ExecutableBracketTerms && completeProbe is { } probe && at != probe.At)
+            return RecordIntegratedFrame(at, book);
         bool economic = NativeIntegratedLifecycle.SelectsEconomically(policy);
         bool adverse = policy.EndsWith("_ADVERSE", StringComparison.Ordinal);
         if (integratedCalibration is not null && !integratedCalibration.Evaluation(at))
@@ -26,7 +28,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
             if (economic) integratedCalibration.Observe(frame, adverse);
             return RecordIntegratedFrame(at, book);
         }
-        if (coherent && at % 60_000L != NativeIntegratedEconomicPolicy.ClockOffsetMs)
+        if (coherent && !StructuralPolicy && at % 60_000L != NativeIntegratedEconomicPolicy.ClockOffsetMs)
             return RecordIntegratedFrame(at, book);
 
         var markets = frame.Markets.ToDictionary(m => m.Symbol, StringComparer.Ordinal);
@@ -48,20 +50,27 @@ public sealed partial class NativeUnifiedPortfolioEngine
 
         foreach (var market in frame.Markets.OrderBy(m => m.Symbol, StringComparer.Ordinal))
         {
-            if (market.Integrated is not { } evidence || market.M5.Length == 0)
+            if (market.Integrated is not { } evidence || market.M5.Length == 0 ||
+                StructuralPolicy && !NativeStructuralOpportunity.ContextReady(market))
                 continue;
             long completedBar = market.M5[^1].CloseAt;
             if (at <= completedBar || completedBar <= lastSignalBar.GetValueOrDefault(market.Symbol))
                 continue;
             lastSignalBar[market.Symbol] = completedBar;
             if (completeProbe is { } desired && market.Symbol != desired.Symbol) continue;
-            var signals = CompletePolicy ? NativeCompletePolicy.Describe(market, at) :
-                NativeIntegratedEconomicPolicy.Describe(market, at);
+            var setup = StructuralPolicy ? NativeStructuralOpportunity.Describe(market) : null;
+            var signals = StructuralPolicy ? setup is null ? Array.Empty<NativeIntegratedCandidate>() : new[] { setup.Signal } :
+                CompletePolicy ? NativeCompletePolicy.Describe(market, at) : NativeIntegratedEconomicPolicy.Describe(market, at);
             foreach (var detected in signals.OrderBy(x => x.Family, StringComparer.Ordinal))
             {
                 if (CompletePolicy && (variant == "LONG" && detected.Side != 1 ||
                     variant == "SHORT" && detected.Side != -1 ||
                     completeProbe is { } force && detected.Side != force.Side)) continue;
+                if (StructuralPolicy &&
+                    (variant == "TREND" && detected.Family != NativeStructuralOpportunity.Compression ||
+                     variant == "REJECTION" && detected.Family != NativeStructuralOpportunity.Rejection ||
+                     completeProbe is { } structuralProbe && detected.Side != structuralProbe.Side))
+                    continue;
                 proposed++;
                 string instrument = "/" + market.Symbol;
                 Count("DETECTED" + instrument);
@@ -85,14 +94,15 @@ public sealed partial class NativeUnifiedPortfolioEngine
                     rejections++;
                     continue;
                 }
-                if (CompletePolicy)
+                if (ExecutableBracketTerms)
                     minTerms = ExecutableTerms(minTerms, signal.Side, signal.Stop, signal.Target, market);
                 NativeEntryThesis? thesis = null;
                 decimal reserved = minTerms.RiskEur;
                 if (coherent)
                 {
-                    thesis = CompletePolicy ? new NativeEntryThesis("", 0m, signal.DecisionBar) :
-                        NativeIntegratedLifecycle.Freeze(signal, market, directionControl);
+                    thesis = StructuralPolicy ? setup!.Thesis :
+                        CompletePolicy ? new NativeEntryThesis("", 0m, signal.DecisionBar) :
+                            NativeIntegratedLifecycle.Freeze(signal, market, directionControl);
                     if (thesis is null || !NativeIntegratedLifecycle.ProtectionCompatible(
                         signal.Side, signal.Stop, signal.Target, market))
                     {
@@ -132,7 +142,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
                     rejections++;
                     continue;
                 }
-                if (CompletePolicy && DirectionalRisk(signal.Side) + reserved > equity * .04m)
+                if (ExecutableBracketTerms && DirectionalRisk(signal.Side) + reserved > equity * .04m)
                 {
                     Count("USD_DIRECTION_STRESS_BUDGET" + instrument);
                     rejections++;
@@ -155,6 +165,12 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 {
                     var features = NativeCompletePolicy.EntryFeatures(evidence.Residence!, terms, signal, market.Quote);
                     var forecast = CompleteEntryModel(variant, at)?.Predict(features, at, terms.RiskEur);
+                    entry = new(features, terms.RiskEur, forecast);
+                }
+                if (setup is not null)
+                {
+                    var features = NativeStructuralOpportunity.Features(setup, terms, market.Quote);
+                    var forecast = structuralModels?.Predict(variant, signal.Family, features, at, terms.RiskEur);
                     entry = new(features, terms.RiskEur, forecast);
                 }
                 financeable.Add(new(market, signal, terms, thesis, coherent ? reserved : terms.RiskEur, entry));
@@ -200,10 +216,21 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 rejections += rejected;
                 if (financeable.Count == 0) return RecordIntegratedFrame(at, book);
             }
-            var selected = variant is "RANK" or "ABLATION" or "ECONOMIC"
+            bool structuralRank = StructuralPolicy && variant is "RANK" or "SELECT" or "POOLED";
+            if (structuralRank)
+            {
+                int removed = financeable.RemoveAll(offer => offer.Complete?.Prediction is null ||
+                    variant == "SELECT" && offer.Complete.Prediction.Lower <= 0m);
+                if (removed > 0) Count("CLOSED_MARKET_NO_SUPPORTED_ECONOMIC_OFFER");
+                rejections += removed;
+                if (financeable.Count == 0) return RecordIntegratedFrame(at, book);
+            }
+            var selected = structuralRank
+                ? financeable.OrderByDescending(x => x.Complete!.Prediction!.Mean / x.ReservedRiskEur).First()
+                : variant is "RANK" or "ABLATION" or "ECONOMIC"
                 ? financeable.OrderByDescending(x => x.Complete?.Prediction?.Mean ?? decimal.MinValue).First()
                 : variant == "RANDOM"
-                    ? financeable.OrderBy(x => Sha("COMPLETE_POLICY_20261120/" + at + "/" + x.Market.Symbol + "/" +
+                    ? financeable.OrderBy(x => Sha((StructuralPolicy ? "CLOSED_MARKET_20261120/" : "COMPLETE_POLICY_20261120/") + at + "/" + x.Market.Symbol + "/" +
                         x.Signal.Side), StringComparer.Ordinal).First()
                 : economic
                 ? financeable.OrderByDescending(x => x.Thesis!.EstimatedEdgeAtAdmissionEur).First()
@@ -231,7 +258,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
             Count("ADMITTED/" + market.Symbol);
         }
         // The funding session may replace its ledger after an atomic intent.
-        return RecordIntegratedFrame(at, CompletePolicy ? model.Ledger.Summary(at) : ledger.Summary(at));
+        return RecordIntegratedFrame(at, ExecutableBracketTerms ? model.Ledger.Summary(at) : ledger.Summary(at));
     }
 
     Ucp1FrameResult RecordIntegratedFrame(long at, LedgerSummary summary)
@@ -289,11 +316,13 @@ public sealed partial class NativeUnifiedPortfolioEngine
             summary.MaximumSampledDrawdown >= .30m || plan.Side * (geometry.Target - execution) <= 0m ||
             !NativeIntegratedLifecycle.ProtectionCompatible(plan.Side, geometry.Stop, geometry.Target, input))
             return null;
-        var thesis = NativeIntegratedLifecycle.AtFill(geometry.Thesis!, plan.Side, input);
+        var thesis = StructuralPolicy
+            ? NativeStructuralOpportunity.AtFill(geometry.Thesis!, plan.Side, input)
+            : NativeIntegratedLifecycle.AtFill(geometry.Thesis!, plan.Side, input);
         if (thesis is null) return null;
         var terms = new NativeIntegratedTerms(plan.Units, geometry.InitialRiskEur, geometry.InitialRewardEur,
             plan.Units * q.MarginPerUnit, geometry.EntrySlippage!.Value);
-        terms = CompletePolicy ? ExecutableTerms(terms, plan.Side, geometry.Stop, geometry.Target, input) :
+        terms = ExecutableBracketTerms ? ExecutableTerms(terms, plan.Side, geometry.Stop, geometry.Target, input) :
             NativeIntegratedLifecycle.Revalue(terms, plan.Side, geometry.Stop, geometry.Target, input);
         decimal stressed = NativeIntegratedLifecycle.StressedRisk(terms, plan.Atr, q);
         decimal usedRisk = plans.Values.Sum(p => p.RiskEur) - plan.RiskEur;
@@ -302,8 +331,15 @@ public sealed partial class NativeUnifiedPortfolioEngine
             usedRisk + stressed > Math.Min(equity * .06m, equity - .70m * summary.ObservedPeakEur) ||
             terms.MarginEur + fee > Math.Min(free, equity * .75m - used))
             return null;
-        if (CompletePolicy && DirectionalRisk(plan.Side, plan.Id) + stressed > equity * .04m)
+        if (ExecutableBracketTerms && DirectionalRisk(plan.Side, plan.Id) + stressed > equity * .04m)
             return null;
+        if (StructuralPolicy && NativeStructuralOpportunity.Variant(policy) == "SELECT" &&
+            geometry.CompletePolicy is { } scored)
+        {
+            var repriced = NativeStructuralOpportunity.Reprice(scored.Features, terms, q, plan.Atr);
+            if (structuralModels?.Predict("SELECT", plan.Family, repriced, q.At, terms.RiskEur)?.Lower is not > 0m)
+                return null;
+        }
         if ((policy is NativeCompletePolicy.Economic or NativeCompletePolicy.EconomicAdverse) &&
             geometry.CompletePolicy is { } planned)
         {
@@ -332,7 +368,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
         decimal heldRisk = plans.Values.Where(x => x.OpenAt > 0L).Sum(x => x.RiskEur);
         return summary.MaximumSampledDrawdown >= .30m || used > equity * .75m ||
             equity - summary.ObservedPeakEur * .70m <= heldRisk ||
-            CompletePolicy && Math.Max(DirectionalRisk(1), DirectionalRisk(-1)) > equity * .04m;
+            ExecutableBracketTerms && Math.Max(DirectionalRisk(1), DirectionalRisk(-1)) > equity * .04m;
     }
 
     (Ucp1Plan, NativeModelCloseInstruction?) ManageIntegrated(Ucp1Plan plan,
@@ -366,7 +402,9 @@ public sealed partial class NativeUnifiedPortfolioEngine
             decimal stop = NativeCausalExitResearch.AdaptivePathStop(side, plan.Entry, geometry.Stop,
                 plan.Extreme, plan.Atr);
             adaptiveStop = side * (adverse - stop) <= 0m;
-            geometry = geometry with { Thesis = NativeIntegratedLifecycle.Observe(thesis, side, plan.OpenAt, market) };
+            geometry = geometry with { Thesis = StructuralPolicy
+                ? NativeStructuralOpportunity.Observe(thesis, side, plan.OpenAt, market)
+                : NativeIntegratedLifecycle.Observe(thesis, side, plan.OpenAt, market) };
             plan = plan with { Integrated = geometry,
                 Extreme = side > 0 ? Math.Max(plan.Extreme, favorable) : Math.Min(plan.Extreme, favorable) };
         }
@@ -380,7 +418,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
             return (plan, new("INTEGRATED_COMMON_BOOK_RISK_REDUCTION", position.Units));
         if (geometry.Thesis is { InvalidatingM15CloseAt: > 0L })
             return (plan, new("INTEGRATED_NEW_M15_THESIS_INVALIDATION", position.Units));
-        if (geometry.CompletePolicy is { } entry)
+        if (!StructuralPolicy && geometry.CompletePolicy is { } entry)
         {
             if (NativeCompletePolicy.SessionExit(q.At, plan.OpenAt))
                 return (plan, new("INTEGRATED_SESSION_COVERAGE_EXIT", position.Units));
