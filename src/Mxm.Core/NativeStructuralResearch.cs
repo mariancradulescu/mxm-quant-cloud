@@ -228,4 +228,70 @@ public static class NativeStructuralResearch
             Central = Scenario(""), Adverse = Scenario("_ADVERSE"), ExposedHistory = true,
             AssetFinancingAndDrawdownCertified = false, IndependentConfirmation = false, Orders = 0, CloudActivation = false };
     }
+
+    // Distinct post-415 development only. The input may include W46 for custody,
+    // but this method never advances any engine at or after the W45 boundary.
+    // These two already exposed weeks are NOT an independent holdout.
+    public static object RunExhaustionDevelopment(Ucp1Frame[] frames, long start, long end,
+        IReadOnlyDictionary<string, NativeObservedContractTerms> contracts)
+    {
+        long week = NativeCompletePolicy.Week;
+        if (end - start != 3 * week || start != 1792972800000L || frames.Length == 0)
+            throw new ArgumentException("POST415_DEVELOPMENT_ORIGINAL_SOURCE_BOUNDARY");
+        long developmentEnd = start + 2 * week; // [2026-10-26, 2026-11-09)
+        var scoped = frames.Where(f => f.At >= start && f.At < developmentEnd).ToArray();
+        if (scoped.Length == 0 || scoped.Any(f => f.At >= developmentEnd))
+            throw new ArgumentException("POST415_DEVELOPMENT_COHORT_MISSING");
+
+        var census = new Dictionary<string, int>(StringComparer.Ordinal);
+        var seen = new Dictionary<string, long>(StringComparer.Ordinal);
+        foreach (var frame in scoped)
+            foreach (var market in frame.Markets)
+            {
+                if (!NativeStructuralOpportunity.ContextReady(market)) continue;
+                long lastM5 = market.M5[^1].CloseAt;
+                if (seen.GetValueOrDefault(market.Symbol) >= lastM5) continue;
+                seen[market.Symbol] = lastM5;
+                Add(census, "CAUSAL_CONTEXT/" + market.Symbol);
+                var previous = NativeStructuralOpportunity.Describe(market);
+                var exhaustion = NativeImpulseExhaustionResearch.Describe(market);
+                if (previous is not null) Add(census, "LEGACY_MECHANISM/" + previous.Signal.Family + "/" + market.Symbol);
+                if (exhaustion is not null) Add(census, "NEW_EXHAUSTION/" + market.Symbol);
+                if (previous is not null && exhaustion is not null)
+                    Add(census, "SIMULTANEOUS_FAMILIES/" + market.Symbol);
+            }
+
+        object Scenario(string suffix)
+        {
+            var books = new Dictionary<string, object>(StringComparer.Ordinal);
+            decimal first = 0m;
+            foreach (var variant in new[] { "CASH", "FIRST", "RANDOM", "TREND",
+                "REJECTION", "EXHAUSTION", "COMBINED", "COMBINED_RANDOM" })
+            {
+                var engine = new NativeUnifiedPortfolioEngine(
+                    NativeStructuralOpportunity.Prefix + variant + suffix);
+                foreach (var frame in scoped) engine.Advance(frame);
+                books.Add(variant, Book(engine, start, developmentEnd, contracts));
+                if (variant == "FIRST") first = engine.ModelSummary.ClosedNetEur;
+            }
+            var deltas = books.ToDictionary(x => x.Key, x =>
+            {
+                // Books are anonymous receipts; authoritative comparisons are
+                // computed from native complete round-trip ledger inside Book().
+                var property = x.Value.GetType().GetProperty("Ledger");
+                if (property?.GetValue(x.Value) is not LedgerSummary summary)
+                    throw new InvalidOperationException("POST415_NO_LEDGER");
+                return summary.ClosedNetEur - first;
+            });
+            return new { Books = books, IncrementVsFirstEur = deltas };
+        }
+        return new
+        {
+            SourceStart = start, OriginalSourceEnd = end, DevelopmentEnd = developmentEnd,
+            W46AdvancedClocks = 0, W44W45PreviouslyExposed = true,
+            IndependentConfirmation = false, BrokerNetCertified = false,
+            Orders = 0, CloudActivation = false, Census = census,
+            Central = Scenario(""), Adverse = Scenario("_ADVERSE")
+        };
+    }
 }
