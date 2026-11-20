@@ -14,7 +14,7 @@ namespace Mxm.Core;
 public sealed record Ucp1MarketFrame(
     string Symbol,LedgerQuote Quote,NativeObservedContractTerms Contract,
     NativeClosedMarketBar[] M5,NativeClosedMarketBar[] M15,
-    decimal SlippagePerSideQuote,string PriceEvidenceClass);
+    decimal SlippagePerSideQuote,string PriceEvidenceClass,NativeIntegratedMarket? Integrated=null);
 public sealed record Ucp1BrokerFrame(BrokerIdentitySnapshot Identity,
     decimal? AccountCashEur,string AccountType);
 public sealed record Ucp1Frame(long At,Ucp1MarketFrame[] Markets,
@@ -25,9 +25,17 @@ public sealed record Ucp1Episode(string PositionId,string Symbol,string Family,
     int Side,long OpenAt,long CloseAt,decimal Units,decimal NetEur,
     decimal GrossEur,decimal EntryRiskEur,decimal? R,
     decimal SampledMfeEur,decimal SampledMaeEur,string ExitReason,
-    bool CrossedUnknownHistory);
+    bool CrossedUnknownHistory)
+{
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public NativeIntegratedEpisode? Integrated { get; init; }
+}
 public sealed record Ucp1CurvePoint(long At,decimal CashEur,decimal? EquityEur,
-    decimal? UsedMarginEur,int Held,int Pending,int Completed);
+    decimal? UsedMarginEur,int Held,int Pending,int Completed)
+{
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public decimal? PlannedAggregateRiskEur { get; init; }
+}
 public sealed record Ucp1Checkpoint(string Version,string Policy,string Session,
     string BrokerSession,string BrokerBinding,Dictionary<string,Ucp1Plan> Plans,
     Dictionary<string,long> LastSignalBar,long LastAt,long Sequence,
@@ -45,7 +53,7 @@ public sealed record Ucp1Plan(string Id,string Symbol,string Family,int Side,
     decimal Atr,decimal Equilibrium,decimal RiskEur,
     decimal Stop,decimal Extreme,long OpenAt,decimal Entry,
     decimal Units,decimal MfeEur,decimal MaeEur,long LastObservedAt,
-    bool CrossedUnknownHistory);
+    bool CrossedUnknownHistory,NativeIntegratedPlan? Integrated=null);
 public sealed record Ucp1FrameResult(string Policy,long At,
     LedgerSummary ModelBook,int Proposed,int Admitted,int OpenFills,
     int CloseFills,int Pending,int Held,string BrokerStatus,
@@ -106,7 +114,7 @@ public static class Ucp1CausalSignals
 
 // All model SOURCE and broker observation events are read-only or simulated.
 // This class does not import cTrader Robot or expose any trade action.
-public sealed class NativeUnifiedPortfolioEngine
+public sealed partial class NativeUnifiedPortfolioEngine
 {
     const string Version="UCP1_UNIFIED_CSHARP_COMPLETE_POLICY_V1";
     const long ResponseWindow=120000L;
@@ -136,7 +144,8 @@ public sealed class NativeUnifiedPortfolioEngine
                           "SCP1_LONG" or "SCP1_SHORT" or "SCP1_CASH" or
                           "FCP1_FIRST" or "FCP1_SCORE" or "FCP1_RIDGE" or
                           "FCP1_MARGINAL" or "FCP1_ABSTAIN" or
-                          "FCP1_LONG" or "FCP1_SHORT" or "FCP1_CASH"))
+                          "FCP1_LONG" or "FCP1_SHORT" or "FCP1_CASH") &&
+           !NativeIntegratedEconomicPolicy.IsPolicy(policy))
             throw new ArgumentException("UCP1_UNDECLARED_COMPLETE_POLICY");
         this.policy=policy;
         if((policy.StartsWith("SCP1_",StringComparison.Ordinal) ||
@@ -175,7 +184,7 @@ public sealed class NativeUnifiedPortfolioEngine
     public Scp1ChoiceReceipt[] Scp1ChoiceReceipts=>scoredChoices.ToArray();
     public Ucp1Episode[] CompleteModelTrips=>trips.ToArray();
     public Ucp1CurvePoint[] CommonBookEquityPath=>curve.ToArray();
-    public string[] ActiveSymbols=>plans.Values.Where(p=>p.OpenAt>0)
+    public string[] ActiveSymbols=>plans.Values.Where(p=>p.OpenAt>0 || p.Integrated is not null)
         .Select(p=>p.Symbol).Distinct(StringComparer.Ordinal).ToArray();
     public string Checkpoint()=>JsonSerializer.Serialize(new Ucp1Checkpoint(
         Version,policy,model.Checkpoint(),broker.Checkpoint(),broker.AccountBinding,
@@ -335,6 +344,17 @@ public sealed class NativeUnifiedPortfolioEngine
             var q=input.Quote;
             decimal px=request.Side>0?q.Ask+request.SlippagePerSide:
                 q.Bid-request.SlippagePerSide;
+            var plan=plans[request.PositionId];
+            if(plan.Integrated is not null && !IntegratedFillStillAdmissible(plan,input,start,px))
+            {
+                Apply(Event("MODEL_OPEN_INTENT_EXPIRED",t,request.PositionId,
+                    request.Symbol,request.Side,request.Units,
+                    reason:"MODEL_UNTRANSMITTED_OPEN_FUNDED_FILL_REJECTED"));
+                plans.Remove(request.PositionId);
+                expiredOpens++;
+                Count("INTEGRATED_PLAN_INVALIDATED_BEFORE_FILL");
+                continue;
+            }
             try
             {
                 Apply(Event("OPEN_FILL",t,request.PositionId,request.Symbol,
@@ -342,12 +362,12 @@ public sealed class NativeUnifiedPortfolioEngine
                     q.MarginPerUnit,request.SlippagePerSide,
                     "LATER_AUTHENTIC_QUOTE_CONDITIONAL_MODEL_FILL"));
                 var p=plans[request.PositionId];
-                decimal risk=Math.Max(.00000001m,p.Atr*1.5m+
-                    q.Ask-q.Bid+2m*request.SlippagePerSide)*request.Units*q.EurDebit;
+                decimal risk=p.Integrated?.InitialRiskEur??(Math.Max(.00000001m,p.Atr*1.5m+
+                    q.Ask-q.Bid+2m*request.SlippagePerSide)*request.Units*q.EurDebit);
                 var entry=px;
                 plans[request.PositionId]=p with {OpenAt=t,Entry=entry,
                     Units=request.Units,RiskEur=risk,Extreme=entry,
-                    Stop=entry-request.Side*1.5m*p.Atr,LastObservedAt=t};
+                    Stop=p.Integrated?.Stop??entry-request.Side*1.5m*p.Atr,LastObservedAt=t};
                 openFills++;
             }
             catch(InvalidOperationException e) when(e.Message is
@@ -372,7 +392,8 @@ public sealed class NativeUnifiedPortfolioEngine
                 throw new InvalidOperationException("UCP1_HELD_PLAN_MISSING");
             by.TryGetValue(held.Symbol,out var input);
             var q=input?.Quote;
-            if(t-p.LastObservedAt>60000L)
+            if(t-p.LastObservedAt>60000L ||
+               (p.Integrated is not null && input?.Integrated?.Path?.Complete!=true))
             {
                 p=p with {CrossedUnknownHistory=true};
                 gapExposures++;
@@ -388,8 +409,11 @@ public sealed class NativeUnifiedPortfolioEngine
                 p.Family=="EQUILIBRIUM_REPAIR"?"STRUCT":"ADAPT",
                 new NativeExitSeed(p.Atr,p.Equilibrium),p.Stop,p.Extreme,
                 p.LastObservedAt);
+            NativeModelCloseInstruction? instruction=null;
+            if(p.Integrated is not null && input is not null)
+                (p,instruction)=ManageIntegrated(p,held,input);
             var verdict=NativeSimulatedCloseLifecycle.Advance(model,state,
-                new NativeModelCloseObservation(t,q,direction,t-1));
+                new NativeModelCloseObservation(t,q,direction,t-1,instruction));
             facts.AddRange(verdict.AppliedFacts);
             expiredCloses+=verdict.AppliedFacts.Count(x=>
                 x.Kind=="MODEL_CLOSE_INTENT_EXPIRED");
@@ -407,15 +431,23 @@ public sealed class NativeUnifiedPortfolioEngine
             }
             p=p with {Extreme=verdict.Protection.FavorableExtreme,
                 LastObservedAt=q is null?p.LastObservedAt:t};
+            if(p.Integrated is { } active && !verdict.ModelPositionClosed &&
+               verdict.AppliedFacts.Any(f=>f.Kind=="CLOSE_FILL"))
+            {
+                decimal reduced=verdict.AppliedFacts.Where(f=>f.Kind=="CLOSE_FILL").Sum(f=>f.Units);
+                p=p with {RiskEur=p.RiskEur*(held.Units-reduced)/held.Units,
+                    Integrated=active with {Reduced=true}};
+            }
             plans[held.Id]=p;
             if(verdict.ModelPositionClosed)
             {
                 var close=model.Ledger.ClosedFragments()
                     .Last(x=>x.PositionId==held.Id&&x.CompletesRoundTrip);
-                trips.Add(new Ucp1Episode(held.Id,held.Symbol,p.Family,held.Side,
+                var trip=new Ucp1Episode(held.Id,held.Symbol,p.Family,held.Side,
                     p.OpenAt,close.ClosedAt,held.Units,close.NetEur,
                     close.GrossEur,p.RiskEur,p.RiskEur>0?close.NetEur/p.RiskEur:null,
-                    p.MfeEur,p.MaeEur,close.Reason,p.CrossedUnknownHistory));
+                    p.MfeEur,p.MaeEur,close.Reason,p.CrossedUnknownHistory);
+                trips.Add(p.Integrated is null?trip:CompleteIntegrated(trip,p));
                 plans.Remove(held.Id);
             }
         }
@@ -423,6 +455,8 @@ public sealed class NativeUnifiedPortfolioEngine
         // Selection is conducted in one C# portfolio allocator, not per asset.
         bool scp1=policy.StartsWith("SCP1_",StringComparison.Ordinal);
         bool fcp1=policy.StartsWith("FCP1_",StringComparison.Ordinal);
+        if(NativeIntegratedEconomicPolicy.IsPolicy(policy))
+            return AdvanceIntegrated(t,frame);
         if(policy!="CASH" && policy!="SCP1_CASH" && policy!="FCP1_CASH")
         {
             var options=new List<(Ucp1DecisionSignal Signal,Ucp1MarketFrame Frame)>();
@@ -693,7 +727,7 @@ public sealed class NativeUnifiedPortfolioEngine
             end.EventChainHash);
     }
     public object OriginalOutcomeReport(long start,long calibrationStart,
-        long evaluationStart,long end,string sourceSha256)
+        long evaluationStart,long end,string sourceSha256,bool includeTrace=true)
     {
         var last=model.Ledger.Summary();
         var complete=trips.ToArray();
@@ -765,10 +799,11 @@ public sealed class NativeUnifiedPortfolioEngine
             WeeklyCompleteFundedModelTrips=complete.GroupBy(x=>Week(x.CloseAt))
                 .ToDictionary(x=>x.Key,x=>x.Count()),
             IndividualTrips=complete,
-            SampledEquityCurve=curve.ToArray(),
-            OriginalCSharpNativeLedgerEvents=facts.ToArray(),
-            Scp1PredictionsAndPreselection=scoredChoices.ToArray(),
-            ScoreModelMethod=scoreModel?.Method??"LEGACY_EXACT_UCP1",
+            SampledEquityCurve=includeTrace?curve.ToArray():Array.Empty<Ucp1CurvePoint>(),
+            OriginalCSharpNativeLedgerEvents=includeTrace?facts.ToArray():Array.Empty<LedgerEvent>(),
+            Scp1PredictionsAndPreselection=includeTrace?scoredChoices.ToArray():Array.Empty<Scp1ChoiceReceipt>(),
+            ScoreModelMethod=NativeIntegratedEconomicPolicy.IsPolicy(policy)
+                ?"FROZEN_CAUSAL_STRUCTURE_WITHOUT_FITTED_SCORE":scoreModel?.Method??"LEGACY_EXACT_UCP1",
             EventChainHash=last.EventChainHash,
             NoOrderSideEffect=true,NoCloudActivation=true,
             BrokerExecutedNetEur=(decimal?)null,
@@ -779,7 +814,9 @@ public sealed class NativeUnifiedPortfolioEngine
             HistoricalTariffContinuityCertified=false,
             OriginalBrokerFillsCertified=false,
             Independent12MonthConfirmation=false,
-            SourceQualification=scoreModel is null?
+            SourceQualification=NativeIntegratedEconomicPolicy.IsPolicy(policy)?
+                "NATIVE_MULTICLASS_COMMON_BOOK_MODEL_WITH_ORIGINAL_PATH_AND_UNVERIFIED_HISTORICAL_FINANCING":
+                scoreModel is null?
                 "GLOBALLY_EXPOSED_ORIGINAL_SAMPLE_M5_M15_PROXY_CONDITIONAL":
                 "GENUINE_ORIGINAL_COMPLETED_HXC1_M5_M15_AND_OEI1_ASOF_CONDITIONAL_NO_BROKER_FILLS"
         };
