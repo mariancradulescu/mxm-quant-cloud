@@ -1,0 +1,89 @@
+name: Integrated position lifecycle - original-event forensics
+on:
+  pull_request:
+    paths:
+      - 'research/integrated_lifecycle_forensics.py'
+      - '.github/workflows/integrated-lifecycle-forensics.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ops/integrated-lifecycle-original-forensics-once.txt'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    outputs:
+      ready: ${{ steps.marker.outputs.ready }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Verify read-only code and closed protocol
+        run: |
+          python -m py_compile research/integrated_lifecycle_forensics.py
+          git diff --exit-code f9d98afa077f23d767034c1ddc34c4600edf65aa -- \
+            research/INTEGRATED_ECONOMIC_DISCOVERY_20261120.md research/integrated_market_readback.py \
+            ops/integrated-common-book-original-once.txt ops/integrated-full-session-source-once.txt
+      - name: Match separate first-addition forensic marker
+        id: marker
+        shell: bash
+        run: |
+          marker=ops/integrated-lifecycle-original-forensics-once.txt
+          subject=OWNER_INTEGRATED_LIFECYCLE_ORIGINAL_FORENSICS_ONCE
+          echo "ready=false" >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_EVENT_NAME" == push && "$GITHUB_REF" == refs/heads/main &&
+                "$GITHUB_ACTOR" == mariancradulescu && "$GITHUB_RUN_ATTEMPT" == 1 &&
+                "$(git log -1 --format=%s)" == "$subject" &&
+                "$(git diff-tree --no-commit-id --name-status -r HEAD)" == $'A\t'"$marker" &&
+                -z "$(git log -1 --format=%H HEAD^ -- "$marker")" &&
+                "$(cat "$marker")" == "$subject" ]]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+  original-event-forensics:
+    needs: verify
+    if: ${{ github.ref == 'refs/heads/main' && github.run_attempt == '1' && needs.verify.outputs.ready == 'true' }}
+    environment: mxm-r3-custody-v1
+    concurrency:
+      group: mxm-integrated-lifecycle-original-forensics
+      cancel-in-progress: false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: integrated-full-session-custody
+          path: integrated-sealed-source
+          run-id: 44687919474
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: integrated-full-session-source-public
+          path: integrated-source-public
+          run-id: 44687919474
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: integrated-native-economic-original-public
+          path: integrated-existing-economic
+          run-id: 44691260616
+          github-token: ${{ github.token }}
+      - name: Join original events to known-at M15 and observed risk path
+        run: python -m research.integrated_lifecycle_forensics
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: integrated-lifecycle-original-forensics-public
+          path: integrated-lifecycle-forensics-public/forensics.json
+          if-no-files-found: error
+          retention-days: 90
