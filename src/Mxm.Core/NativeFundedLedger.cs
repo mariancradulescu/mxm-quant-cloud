@@ -5,7 +5,11 @@ using System.Text.Json.Serialization;
 namespace Mxm.Core;
 
 public sealed record LedgerQuote(string Symbol,long At,decimal Bid,decimal Ask,decimal EurCredit,decimal EurDebit,
-    decimal ExitFeePerUnit,decimal ExitFeeFloor,decimal MarginPerUnit);
+    decimal ExitFeePerUnit,decimal ExitFeeFloor,decimal MarginPerUnit)
+{
+    [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)]
+    public decimal? LiquidationSlippagePerSide { get; init; }
+}
 public sealed record LedgerEvent(string EventId,long At,string Kind,string PositionId,string Symbol,int Side,
     decimal Units,decimal ExecutionPrice,decimal FeeEur,decimal MarginPerUnit,decimal SlippagePerSide,
     long AvailableAt,long CalibratedThrough,long LatencyMs,string Reason,string EvidenceHash,LedgerQuote[] Quotes,
@@ -66,7 +70,8 @@ public sealed partial class NativeFundedLedger
     decimal Floating(LedgerPosition p,LedgerQuote q)
     {
         if(p.MonetaryDomain!="MODEL_REPLAY")throw new InvalidOperationException("BROKER_FLOATING_AND_EXIT_COST_EVIDENCE_NOT_SUPPLIED");
-        decimal liquidation=p.Side>0?q.Bid-p.SlippagePerSide:q.Ask+p.SlippagePerSide;
+        decimal liquidation=NativeExecutableEconomics.ExitPrice(p.Side>0?q.Bid:q.Ask,p.Side,
+            q.LiquidationSlippagePerSide??p.SlippagePerSide);
         return ConvertQuote(q,p.Side*p.Units*(liquidation-(p.EntryPrice??throw new InvalidOperationException("ENTRY_BASIS_UNKNOWN"))))-Fee(q,p.Units);
     }
     decimal Equity(Dictionary<string,LedgerQuote> quotes,long at)=>state.CashEur+
@@ -93,7 +98,7 @@ public sealed partial class NativeFundedLedger
         foreach(var q in e.Quotes)
         {
             if(string.IsNullOrWhiteSpace(q.Symbol) || q.At>e.At || e.At-q.At>maximumStalenessMs || q.Bid<=0 || q.Ask<q.Bid ||
-                q.EurCredit<=0 || q.EurDebit<q.EurCredit || q.ExitFeePerUnit<0 || q.ExitFeeFloor<0 || q.MarginPerUnit<=0 ||
+                q.EurCredit<=0 || q.EurDebit<q.EurCredit || q.ExitFeePerUnit<0 || q.ExitFeeFloor<0 || q.MarginPerUnit<=0 || q.LiquidationSlippagePerSide is <0m ||
                 (quotes.TryGetValue(q.Symbol,out var old) && (q.At<old.At || q.At==old.At && q!=old)))
                 throw new ArgumentException("NATIVE_LEDGER_QUOTE_CONTRACT");
             quotes[q.Symbol]=q;

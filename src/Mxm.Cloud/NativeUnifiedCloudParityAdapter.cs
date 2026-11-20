@@ -8,10 +8,15 @@ namespace Mxm.Cloud;
 public sealed class NativeUnifiedCloudParityAdapter
 {
     private NativeUnifiedPortfolioEngine engine;
+    private readonly NativeQuoteResidenceStream? residence;
     public NativeUnifiedCloudParityAdapter(string policy="JOINT",
-        string brokerAccountBinding="",Scp1ScoreModel? scoreModel=null)
-        =>engine=new NativeUnifiedPortfolioEngine(policy,brokerAccountBinding,scoreModel);
-    public Ucp1FrameResult Observe(Ucp1Frame frame)=>engine.Advance(frame);
+        
+        string brokerAccountBinding="",Scp1ScoreModel? scoreModel=null,NativeCompleteModels? models=null)
+    {
+        engine=new NativeUnifiedPortfolioEngine(policy,brokerAccountBinding,scoreModel,models);
+        if(NativeCompletePolicy.IsPolicy(policy)) residence=new NativeQuoteResidenceStream();
+    }
+    public Ucp1FrameResult Observe(Ucp1Frame frame)=>engine.Advance(residence?.Observe(frame)??frame);
     public string[] ActiveSymbols=>engine.ActiveSymbols;
     public LedgerEvent[] ModelFacts=>engine.OriginalModelEvents;
     public Scp1ChoiceReceipt[] Scp1Choices=>engine.Scp1ChoiceReceipts;

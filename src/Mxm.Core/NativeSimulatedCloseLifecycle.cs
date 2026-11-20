@@ -130,9 +130,8 @@ public static class NativeSimulatedCloseLifecycle
             if(pending.Kind=="REQUEST_CLOSE" &&
                at>=pending.At+pending.LatencyMs && at>pending.At)
             {
-                decimal exitPrice=held.Side>0 ?
-                    quote.Bid-held.SlippagePerSide :
-                    quote.Ask+held.SlippagePerSide;
+                decimal exitPrice=NativeExecutableEconomics.ExitPrice(held.Side>0?quote.Bid:quote.Ask,
+                    held.Side,quote.LiquidationSlippagePerSide??held.SlippagePerSide);
                 decimal units=pending.Reason=="MODEL_UNTRANSMITTED_INTEGRATED_FAVORABLE_REDUCTION"
                     ?pending.Units:held.Units;
                 if(units<=0m || units>held.Units)
@@ -141,7 +140,8 @@ public static class NativeSimulatedCloseLifecycle
                     quote.ExitFeeFloor);
                 var close=Fact("CLOSE_FILL",held,at,exitPrice,fee,
                     held.SlippagePerSide,pending.Reason,
-                    latency:pending.LatencyMs,units:units);
+                    latency:pending.LatencyMs,units:units)
+                    with { ObservedExitSlippagePerSide=quote.LiquidationSlippagePerSide };
                 Apply(close);
                 return new(protection with {LastObservedQuoteAt=at},
                     "MODEL_QUOTE_BOUND_CLOSE_SETTLED",facts.ToArray(),

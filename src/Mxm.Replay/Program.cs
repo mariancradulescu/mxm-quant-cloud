@@ -4,6 +4,9 @@ using System.Security.Cryptography;
 if(args.Length==3 && args[0]=="--integrated-original")
     return IntegratedEconomicReplay.Run(args[1],args[2]);
 
+if(args.Length==3 && args[0]=="--complete-policy-economics")
+    return IntegratedEconomicReplay.Run(args[1],args[2],completePolicy:true);
+
 if(args.Length==3 && args[0]=="--integrated-coherent")
     return IntegratedEconomicReplay.Run(args[1],args[2],coherent:true);
 
