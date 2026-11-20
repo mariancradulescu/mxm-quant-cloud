@@ -12,10 +12,10 @@ public sealed class NativeUnifiedCloudParityAdapter
     public NativeUnifiedCloudParityAdapter(string policy="JOINT",
         
         string brokerAccountBinding="",Scp1ScoreModel? scoreModel=null,NativeCompleteModels? models=null,
-        NativeStructuralModels? closedContextModels=null)
+        NativeStructuralModels? closedContextModels=null, NativeFundedActionModel? actionModel=null)
     {
         engine=new NativeUnifiedPortfolioEngine(policy,brokerAccountBinding,scoreModel,models,
-            closedContextModels:closedContextModels);
+            closedContextModels:closedContextModels, actionModel:actionModel);
         if(NativeCompletePolicy.IsPolicy(policy)) residence=new NativeQuoteResidenceStream();
     }
     public Ucp1FrameResult Observe(Ucp1Frame frame)=>engine.Advance(residence?.Observe(frame)??frame);
@@ -23,6 +23,7 @@ public sealed class NativeUnifiedCloudParityAdapter
     public LedgerEvent[] ModelFacts=>engine.OriginalModelEvents;
     public Scp1ChoiceReceipt[] Scp1Choices=>engine.Scp1ChoiceReceipts;
     public LedgerSummary ModelBook=>engine.ModelSummary;
+    public NativeFundedActionReceipt[] FundedActions=>engine.FundedActionReceipts;
     public string Checkpoint()=>engine.Checkpoint();
     public void Restore(string checkpoint)
         =>engine=NativeUnifiedPortfolioEngine.Restore(checkpoint);

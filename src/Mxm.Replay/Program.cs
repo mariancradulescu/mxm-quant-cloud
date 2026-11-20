@@ -19,6 +19,9 @@ if(args.Length==3 && args[0]=="--closed-market-opportunities")
 if(args.Length==3 && args[0]=="--post415-exhaustion-development")
     return IntegratedEconomicReplay.RunExhaustionDevelopment(args[1],args[2]);
 
+if(args.Length==3 && args[0]=="--funded-action-value")
+    return IntegratedEconomicReplay.RunFundedActionValue(args[1],args[2]);
+
 if(args.Length==4 && args[3]=="--fcp1-financed-original-source-exploratory")
     return Fcp1FinancedScoreRunner.Run(args[0],args[1],args[2]);
 

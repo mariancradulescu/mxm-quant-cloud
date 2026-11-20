@@ -35,7 +35,7 @@ public static class NativeStructuralResearch
         return offers.ToArray();
     }
 
-    static bool FinancingUnverified(Ucp1Episode trip, NativeObservedContractTerms terms)
+    internal static bool FinancingUnverified(Ucp1Episode trip, NativeObservedContractTerms terms)
     {
         if (terms.SwapPeriodHours is not (> 0 and <= 24) || terms.SwapTimeUtcMinute is not (>= 0 and < 1440))
             return true;
@@ -181,7 +181,7 @@ public static class NativeStructuralResearch
         };
     }
 
-    static (object Report, decimal RealizedLedgerNet, decimal? CompleteModeledNet) DevelopmentBook(
+    internal static (object Report, decimal RealizedLedgerNet, decimal? CompleteModeledNet) DevelopmentBook(
         NativeUnifiedPortfolioEngine engine, long start, long end,
         IReadOnlyDictionary<string, NativeObservedContractTerms> contracts)
     {

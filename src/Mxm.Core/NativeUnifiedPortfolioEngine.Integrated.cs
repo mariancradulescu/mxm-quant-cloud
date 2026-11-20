@@ -15,7 +15,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
     {
         if (variant != "EXHAUSTION" && describeLegacy(market) is { } legacy)
             yield return legacy;
-        if ((variant is "EXHAUSTION" or NativeStructuralOpportunity.Combined or NativeStructuralOpportunity.CombinedRandom) &&
+        if (((variant is "EXHAUSTION" or NativeStructuralOpportunity.Combined or NativeStructuralOpportunity.CombinedRandom) ||
+            NativeFundedActionValue.IsVariant(variant) && variant != NativeFundedActionValue.WithoutExhaustion) &&
             describeExhaustion(market) is { } exhaustion)
             yield return exhaustion;
     }
@@ -25,7 +26,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
 
     Ucp1FrameResult AdvanceIntegrated(long at, Ucp1Frame frame,
         Func<Ucp1MarketFrame, NativeStructuralSetup?> describeLegacy,
-        Func<Ucp1MarketFrame, NativeStructuralSetup?> describeExhaustion)
+        Func<Ucp1MarketFrame, NativeStructuralSetup?> describeExhaustion,
+        NativeFundedActionProbe? actionProbe)
     {
         var ledger = model.Ledger;
         var book = ledger.Summary(at);
@@ -35,7 +37,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
         string variant = StructuralPolicy ? NativeStructuralOpportunity.Variant(policy) :
             CompletePolicy ? NativeCompletePolicy.Variant(policy) : "";
         bool competition = StructuralPolicy && NativeStructuralOpportunity.IsCompetition(variant);
-        if (variant == "CASH" || CompletePolicy && !NativeCompletePolicy.IsDecision(at) ||
+        bool fundedValue = StructuralPolicy && NativeFundedActionValue.IsVariant(variant);
+        if (variant is "CASH" or NativeFundedActionValue.Cash || CompletePolicy && !NativeCompletePolicy.IsDecision(at) ||
             ExecutableBracketTerms && completeProbe is { } probe && at != probe.At)
             return RecordIntegratedFrame(at, book);
         bool economic = NativeIntegratedLifecycle.SelectsEconomically(policy);
@@ -252,7 +255,9 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 rejections += removed;
                 if (financeable.Count == 0) return RecordIntegratedFrame(at, book);
             }
-            var selected = structuralRank
+            var selected = fundedValue
+                ? SelectFundedAction(variant, frame, book, committed, financeable, actionProbe)
+                : structuralRank
                 ? financeable.OrderByDescending(x => x.Complete!.Prediction!.Mean / x.ReservedRiskEur).First()
                 : variant is "RANK" or "ABLATION" or "ECONOMIC"
                 ? financeable.OrderByDescending(x => x.Complete?.Prediction?.Mean ?? decimal.MinValue).First()
@@ -274,6 +279,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
                             at + "/" + x.Market.Symbol + "/" + x.Signal.Family + "/" + x.Signal.Side),
                             StringComparer.Ordinal).First()
                         : financeable[0];
+            if (selected is null) return RecordIntegratedFrame(at, book);
             var signal = selected.Signal;
             var market = selected.Market;
             var terms = selected.Terms;
@@ -298,6 +304,80 @@ public sealed partial class NativeUnifiedPortfolioEngine
         }
         // The funding session may replace its ledger after an atomic intent.
         return RecordIntegratedFrame(at, ExecutableBracketTerms ? model.Ledger.Summary(at) : ledger.Summary(at));
+    }
+
+    FinancedCandidate? SelectFundedAction(string variant, Ucp1Frame frame, LedgerSummary book,
+        decimal committed, List<FinancedCandidate> candidates, NativeFundedActionProbe? probe)
+    {
+        if (probe is null && !NativeFundedActionValue.Forecasts(variant))
+            return variant == NativeFundedActionValue.Hash
+                ? candidates.OrderBy(x => CompetitionOrder(frame.At, x), StringComparer.Ordinal).First()
+                : candidates[0];
+
+        var assessed = candidates.Select(c =>
+        {
+            var features = NativeFundedActionValue.Features(c.Market, frame, c.Signal.Side, book, committed,
+                c.ReservedRiskEur, c.Terms.MarginEur, new[]
+                {
+                    (c.Market.Quote.Ask - c.Market.Quote.Bid) / c.Signal.Volatility,
+                    c.Terms.RewardEur / c.ReservedRiskEur,
+                    (decimal)(candidates.Count - 1)
+                });
+            var offer = new NativeFundedActionOffer(NativeFundedActionValue.Enter,
+                c.Market.Symbol + "/" + c.Signal.Family + "/" + c.Signal.Side, c.Market.Symbol, c.Signal.Family,
+                c.Signal.Side, frame.At, c.ReservedRiskEur, features);
+            probe?.Available.Add(offer);
+            var prediction = NativeFundedActionValue.Forecasts(variant)
+                ? fundedActionModel?.Predict(variant, offer) : null;
+            return (Candidate: c, Offer: offer, Prediction: prediction);
+        }).ToArray();
+        if (probe is not null)
+        {
+            if (probe.Wait) return null;
+            if (probe.Enter is not null) return assessed.Single(x => x.Offer.Key == probe.Enter).Candidate;
+        }
+        if (!NativeFundedActionValue.Forecasts(variant)) return candidates[0];
+        var selected = assessed.Where(x => x.Prediction?.Lower > 0m)
+            .OrderByDescending(x => x.Prediction!.Mean)
+            .ThenBy(x => CompetitionOrder(frame.At, x.Candidate), StringComparer.Ordinal).FirstOrDefault();
+        foreach (var x in assessed)
+            fundedActions.Add(new(x.Offer, x.Prediction, x.Offer == selected.Offer ? "ENTER" :
+                x.Prediction is null ? "WAIT_UNCALIBRATED" : x.Prediction.Lower <= 0m ? "WAIT_NONPOSITIVE" : "WAIT_OTHER_OFFER"));
+        return selected.Candidate;
+    }
+
+    (Ucp1Plan, NativeModelCloseInstruction?) ManageFundedAction(Ucp1Plan plan, LedgerPosition position,
+        Ucp1MarketFrame market, Ucp1Frame frame, NativeFundedActionProbe? probe)
+    {
+        string variant = NativeStructuralOpportunity.Variant(policy);
+        if ((probe is null && !NativeFundedActionValue.ValuesHolding(variant)) ||
+            plan.Integrated is not { CompletePolicy: { } entry } geometry ||
+            market.Integrated?.Path?.Complete != true || !NativeStructuralOpportunity.ContextReady(market) ||
+            model.Ledger.PendingSnapshot().Any(e => e.PositionId == position.Id))
+            return (plan, null);
+        var book = model.Ledger.Summary(frame.At);
+        long closed = market.ClosedBars!.For(NativeBarTimeframe.M15).ExpectedCloseAt;
+        if (book.LiquidationEquityEur is not > 0m || book.UsedMarginEur is null ||
+            closed <= Math.Max(plan.OpenAt, entry.Hold?.BarCloseAt ?? 0L))
+            return (plan, null);
+        var q = market.Quote;
+        decimal sidePrice = position.Side > 0 ? q.Bid : q.Ask;
+        decimal liquidation = NativeExecutableEconomics.EstimateNet(position.EntryQuote!, q, position.Side,
+            position.Units, plan.Entry, sidePrice, q.LiquidationSlippagePerSide ?? position.SlippagePerSide);
+        var features = NativeFundedActionValue.Features(market, frame, position.Side, book,
+            plans.Values.Sum(p => p.RiskEur), plan.RiskEur, position.Units * q.MarginPerUnit,
+            new[] { liquidation / plan.RiskEur, plan.MfeEur / plan.RiskEur,
+                plan.MaeEur / plan.RiskEur, (frame.At - plan.OpenAt) / (decimal)NativeCompletePolicy.Day });
+        var offer = new NativeFundedActionOffer(NativeFundedActionValue.Close, position.Id, market.Symbol,
+            plan.Family, position.Side, frame.At, plan.RiskEur, features);
+        probe?.Available.Add(offer);
+        var prediction = NativeFundedActionValue.ValuesHolding(variant) ? fundedActionModel?.Predict(variant, offer) : null;
+        bool close = probe?.Close == position.Id || prediction?.Lower > 0m;
+        if (NativeFundedActionValue.ValuesHolding(variant))
+            fundedActions.Add(new(offer, prediction, close ? "CLOSE" : "KEEP"));
+        var hold = new NativeCompleteHold(frame.At, closed, features, plan.RiskEur, -prediction?.Mean, close);
+        return (plan with { Integrated = geometry with { CompletePolicy = entry with { Hold = hold } } },
+            close ? new("INTEGRATED_FUNDED_ACTION_VALUE_CLOSE", position.Units) : null);
     }
 
     Ucp1FrameResult RecordIntegratedFrame(long at, LedgerSummary summary)

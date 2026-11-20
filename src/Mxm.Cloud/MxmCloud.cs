@@ -76,7 +76,7 @@ public partial class MxmCloud : Robot
         _fundedSession=new NativeFundedSession(_accountBinding);
 
         if (ObserveStructuralPortfolio)
-            _unifiedPolicy = new NativeUnifiedCloudParityAdapter(NativeStructuralOpportunity.Prefix + "FIRST", _accountBinding);
+            StartStructuralObservation();
         else if(EnableFullSessionObservation)
         {
             if(string.IsNullOrWhiteSpace(CompletePolicySnapshot))
@@ -494,7 +494,8 @@ public partial class MxmCloud : Robot
                 {
                     _lastUnifiedObservedAt=at;
                     var observations=new System.Collections.Generic.List<Ucp1MarketFrame>();
-                    var researchNames=_completePolicyObservation?new[]{"EURUSD","GBPUSD","AUDUSD"}:
+                    var researchNames=_fundedActionObservation?NativeFundedActionResearch.Universe.ToArray():
+                        _completePolicyObservation?new[]{"EURUSD","GBPUSD","AUDUSD"}:
                         fullSession
                         ? new[]{"EURUSD","GBPUSD","XAUUSD","SpotBrent","US500",Symbols.Exists("AAPL")?"AAPL":"AAPL.US"}
                         : universe.ResearchSymbols;

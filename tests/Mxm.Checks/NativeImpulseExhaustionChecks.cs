@@ -4,7 +4,7 @@ using Mxm.Core;
 
 internal static class NativeImpulseExhaustionChecks
 {
-    static Ucp1Frame Frame(long barEnd, long at, bool fastActivity = false)
+    internal static Ucp1Frame Frame(long barEnd, long at, bool fastActivity = false)
     {
         var contract = new NativeObservedContractTerms("EURUSD", "USD", barEnd - 1,
             .25m, .25m, 100m, 100m, 2, 0, 2, 0, null, 0, 0, 0m, 0m, 2, 24, 1320, 3,
@@ -87,7 +87,7 @@ internal static class NativeImpulseExhaustionChecks
         => new(new(NativeStructuralOpportunity.Compression, 1, stop, target, 1m, m.M5[^1].CloseAt),
             new(NativeStructuralOpportunity.Compression, 100.3m, m.M15[^1].CloseAt), new decimal[6]);
 
-    static Ucp1MarketFrame Reprice(Ucp1MarketFrame market, decimal bid, string symbol = "EURUSD",
+    internal static Ucp1MarketFrame Reprice(Ucp1MarketFrame market, decimal bid, string symbol = "EURUSD",
         decimal marginPerUnit = 15m, decimal minimumUnits = .25m)
     {
         decimal ask = bid + .05m;

@@ -39,7 +39,7 @@ public static class NativeStructuralOpportunity
     {
         if (!policy.StartsWith(Prefix, StringComparison.Ordinal)) return false;
         string variant = Variant(policy);
-        return variant is "PROBE" or "EXHAUSTION" || IsCompetition(variant) ||
+        return variant is "PROBE" or "EXHAUSTION" || IsCompetition(variant) || NativeFundedActionValue.IsVariant(variant) ||
             Variants.Contains(variant, StringComparer.Ordinal);
     }
 

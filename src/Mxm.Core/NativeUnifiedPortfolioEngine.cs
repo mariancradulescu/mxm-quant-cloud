@@ -59,6 +59,10 @@ public sealed record Ucp1Checkpoint(string Version,string Policy,string Session,
 {
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public NativeStructuralModels? StructuralModels { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public NativeFundedActionModel? FundedActionModel { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public NativeFundedActionReceipt[]? FundedActions { get; init; }
 }
 public sealed record Scp1ChoiceReceipt(long At,string Symbol,string Family,int Side,
     decimal? ConditionalExpectedNetEur,decimal? AdverseLowerNetEur,
@@ -143,6 +147,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
     bool ExecutableBracketTerms => CompletePolicy || StructuralPolicy;
     bool CoherentIntegrated => integratedCalibration is not null || ExecutableBracketTerms;
     readonly NativeStructuralModels? structuralModels;
+    readonly NativeFundedActionModel? fundedActionModel;
+    readonly List<NativeFundedActionReceipt> fundedActions = new();
     bool AdverseCompletePolicy => policy.EndsWith("_ADVERSE",StringComparison.Ordinal);
     readonly List<Scp1ChoiceReceipt> scoredChoices=new();
     readonly NativeFundedSession model;
@@ -159,7 +165,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
     string lastBrokerEvidence="NO_BROKER_FACT_REPLAY_ONLY";
     public NativeUnifiedPortfolioEngine(string policy,string brokerBinding="",
         Scp1ScoreModel? scoredModel=null,NativeCompleteModels? models=null,NativeCompleteProbe? probe=null,
-        NativeStructuralModels? closedContextModels=null)
+        NativeStructuralModels? closedContextModels=null, NativeFundedActionModel? actionModel=null)
     {
         if(policy is not ("JOINT" or "TRANSITION_ONLY" or "REPAIR_ONLY" or
                           "LONG" or "SHORT" or "CASH" or
@@ -175,6 +181,10 @@ public sealed partial class NativeUnifiedPortfolioEngine
         completeModels=models;
         completeProbe=probe;
         structuralModels=closedContextModels;
+        fundedActionModel=actionModel;
+        fundedActionModel?.Validate();
+        if (fundedActionModel is not null && fundedActionModel.Adverse != AdverseCompletePolicy)
+            throw new ArgumentException("FUNDED_ACTION_MODEL_FRICTION_MISMATCH");
         if(NativeIntegratedLifecycle.IsPolicy(policy))integratedCalibration=new();
         if((policy.StartsWith("SCP1_",StringComparison.Ordinal) ||
             policy.StartsWith("FCP1_",StringComparison.Ordinal)) &&
@@ -192,6 +202,11 @@ public sealed partial class NativeUnifiedPortfolioEngine
         completeModels=s.CompleteModels;
         completeProbe=s.CompleteProbe;
         structuralModels=s.StructuralModels;
+        fundedActionModel=s.FundedActionModel;
+        fundedActionModel?.Validate();
+        if (fundedActionModel is not null && fundedActionModel.Adverse != AdverseCompletePolicy)
+            throw new ArgumentException("FUNDED_ACTION_MODEL_FRICTION_MISMATCH");
+        if(s.FundedActions is not null) fundedActions.AddRange(s.FundedActions);
         if(NativeIntegratedLifecycle.IsPolicy(policy))
             integratedCalibration=new(s.IntegratedCalibration??
                 throw new ArgumentException("INTEGRATED_CALIBRATION_CHECKPOINT_MISSING"));
@@ -218,6 +233,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
     public Scp1ChoiceReceipt[] Scp1ChoiceReceipts=>scoredChoices.ToArray();
     public NativeIntegratedCalibrationState? IntegratedCalibration()=>integratedCalibration?.Checkpoint();
     public Ucp1Episode[] CompleteModelTrips=>trips.ToArray();
+    public NativeFundedActionReceipt[] FundedActionReceipts=>fundedActions.ToArray();
     public Ucp1CurvePoint[] CommonBookEquityPath=>curve.ToArray();
     public string[] ActiveSymbols=>plans.Values.Where(p=>p.OpenAt>0 || p.Integrated is not null)
         .Select(p=>p.Symbol).Distinct(StringComparer.Ordinal).ToArray();
@@ -229,7 +245,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
         gapExposures,new(reasons,StringComparer.Ordinal),
         facts.ToArray(),trips.ToArray(),curve.ToArray(),lastBrokerEvidence,
         scoreModel,scoredChoices.ToArray(),integratedCalibration?.Checkpoint(),completeModels,completeProbe)
-        { StructuralModels = structuralModels });
+        { StructuralModels = structuralModels, FundedActionModel = fundedActionModel,
+            FundedActions = fundedActions.Count == 0 ? null : fundedActions.ToArray() });
     static string Sha(string s)=>Convert.ToHexString(SHA256.HashData(
         Encoding.UTF8.GetBytes(s))).ToLowerInvariant();
     LedgerEvent Event(string kind,long at,string id="",string sym="",int side=0,
@@ -345,7 +362,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
 
     internal Ucp1FrameResult Advance(Ucp1Frame frame,
         Func<Ucp1MarketFrame, NativeStructuralSetup?> describeLegacy,
-        Func<Ucp1MarketFrame, NativeStructuralSetup?> describeExhaustion)
+        Func<Ucp1MarketFrame, NativeStructuralSetup?> describeExhaustion,
+        NativeFundedActionProbe? actionProbe = null)
     {
         if(frame is null||frame.At<=previousClock||frame.At<=0||
            frame.Markets is null||frame.Markets.Select(m=>m.Symbol)
@@ -459,7 +477,12 @@ public sealed partial class NativeUnifiedPortfolioEngine
             }
             NativeModelCloseInstruction? instruction=null;
             if(p.Integrated is not null && input is not null)
+            {
                 (p,instruction)=ManageIntegrated(p,held,input,deRisk);
+                if (instruction is null && StructuralPolicy &&
+                    NativeFundedActionValue.IsVariant(NativeStructuralOpportunity.Variant(policy)))
+                    (p,instruction)=ManageFundedAction(p,held,input,frame,actionProbe);
+            }
             var state=new NativeModelCloseProtection(held.Id,
                 p.Family=="EQUILIBRIUM_REPAIR"?"STRUCT":"ADAPT",
                 new NativeExitSeed(p.Atr,p.Equilibrium),p.Stop,p.Extreme,
@@ -510,7 +533,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
         bool scp1=policy.StartsWith("SCP1_",StringComparison.Ordinal);
         bool fcp1=policy.StartsWith("FCP1_",StringComparison.Ordinal);
         if(NativeIntegratedEconomicPolicy.IsPolicy(policy))
-            return AdvanceIntegrated(t, frame, describeLegacy, describeExhaustion);
+            return AdvanceIntegrated(t, frame, describeLegacy, describeExhaustion, actionProbe);
         if(policy!="CASH" && policy!="SCP1_CASH" && policy!="FCP1_CASH")
         {
             var options=new List<(Ucp1DecisionSignal Signal,Ucp1MarketFrame Frame)>();

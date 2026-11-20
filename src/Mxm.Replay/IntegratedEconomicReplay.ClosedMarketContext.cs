@@ -148,4 +148,43 @@ internal static partial class IntegratedEconomicReplay
             EconomicEvaluations = 0, BrokerOrders = 0, CloudActivated = false }, Json);
         return 0;
     }
+
+    public static int RunFundedActionValue(string inputFile, string outputFile)
+    {
+        using var input = File.OpenRead(inputFile);
+        var inputHash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(input)).ToLowerInvariant();
+        input.Position = 0;
+        var source = JsonSerializer.Deserialize<Source>(input, Json)
+            ?? throw new ArgumentException("FUNDED_ACTION_SOURCE_MISSING");
+        if (source.Start != NativeFundedActionResearch.Start || source.End != NativeFundedActionResearch.End ||
+            source.End > DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() ||
+            source.SourceRun.Length == 0 || !source.SourceRun.All(char.IsAsciiDigit) ||
+            source.ProtocolSha256.Length != 64 || !source.ProtocolSha256.All(Uri.IsHexDigit) ||
+            source.Markets.Select(m => m.Name).Distinct(StringComparer.Ordinal).Count() != source.Markets.Length ||
+            source.Markets.Any(m => !NativeFundedActionResearch.Universe.Contains(m.Name, StringComparer.Ordinal)))
+            throw new ArgumentException("FUNDED_ACTION_PROSPECTIVE_SOURCE_SCOPE");
+        var markets = source.Markets.Select(m => new MarketStream(m)).ToArray();
+        var currency = markets.SingleOrDefault(m => m.Source.Name == "EURUSD")
+            ?? throw new ArgumentException("FUNDED_ACTION_EUR_CONVERSION_SOURCE_MISSING");
+        var frames = new List<Ucp1Frame>();
+        for (long at = source.Start + NativeIntegratedEconomicPolicy.ClockOffsetMs; at < source.End;
+             at += NativeIntegratedLifecycle.IntervalMs)
+        {
+            var fx = currency.At(at);
+            var observations = fx is null || NativeClosedMarketContext.QuoteWitness(at, fx.BidAt, fx.AskAt, 30_000L) is null
+                ? Array.Empty<Ucp1MarketFrame>()
+                : markets.Where(m => m.Source.Contract.ObservedAtUtcMs > 0 && m.Source.Contract.ObservedAtUtcMs <= at)
+                    .Select(m => m.Frame(at, fx, closedContext: true)).OfType<Ucp1MarketFrame>().ToArray();
+            frames.Add(new(at, observations));
+        }
+        if (frames.All(f => f.Markets.Length == 0))
+            throw new ArgumentException("FUNDED_ACTION_CAUSAL_QUOTE_AND_CONTRACT_COVERAGE_MISSING");
+        var result = NativeFundedActionResearch.Run(frames.ToArray(),
+            source.Markets.ToDictionary(m => m.Name, m => m.Contract, StringComparer.Ordinal));
+        using var output = File.Create(outputFile);
+        JsonSerializer.Serialize(output, new { source.SourceRun, source.ProtocolSha256, InputSha256 = inputHash,
+            Coverage = markets.Select(m => new { m.Source.Name, m.Source.Class, m.Source.Contract.ObservedAtUtcMs,
+                SourceMarks = m.Source.Quotes.Length, m.AcceptedMarks }).ToArray(), Result = result }, Json);
+        return 0;
+    }
 }
