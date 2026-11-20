@@ -5,6 +5,7 @@ on:
       - 'research/FUNDED_ACTION_VALUE_HISTORICAL.md'
       - 'research/integrated_market_source.py'
       - 'research/integrated_market_readback.py'
+      - 'research/test_integrated_market_ticks.py'
       - '.github/workflows/funded-action-history-source.yml'
   push:
     branches: [main]
@@ -29,7 +30,7 @@ jobs:
       - run: python -m pip install -r research/requirements.txt
       - name: Verify source scope and read-only archive decoder
         run: |
-          python -m unittest research.test_hxc1_historical_source
+          python -m unittest research.test_hxc1_historical_source research.test_integrated_market_ticks
           python -m py_compile research/integrated_market_source.py research/integrated_market_readback.py
           python -c 'from research.integrated_market_source import DAY, FUNDED_HISTORY as s; assert s.end-s.start == 91*DAY and set(s.periods) == {"M1", "M5", "M15", "M30", "H1"} and s.protocol.is_file()'
       - name: Verify exact first-addition source marker
@@ -142,6 +143,7 @@ jobs:
         env:
           R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
         with:
           name: funded-action-history-native-source-coverage
           path: funded-history-coverage/
