@@ -1,0 +1,20 @@
+# A — Audit of the complete policy accounting and information
+
+The preserved native JSON SHA-256 is 514848c4df4061dca7461f269f5836dcf7cf2a263c3a0d85445f4ca8431bd95c. The arithmetic audit can be repeated with python -m research.audit_complete_policy_original ECONOMIC.zip FORENSICS.zip OUTPUT.json. It binds both original hashes and requires no replay. [Original economics](https://github.com/mariancradulescu/mxm-quant-cloud/actions/runs/44700828331/artifacts/14612434985) · [Original forensics](https://github.com/mariancradulescu/mxm-quant-cloud/actions/runs/44698833443/artifacts/14611509049)
+
+FIRST reconciles 462 complete trips to −2.0086 EUR gross, 35.2564 EUR costs and −37.2650 EUR NET. Its two signal families were both negative gross. SHORT gross +13.3536 EUR fell below 40.2080 EUR costs. Realized fees match intake and exit events, and signed conversion, spread and slippage reconcile. There is no duplicate realized spread charge in this ledger. The planning routine did add a half spread to executable-side stop risk and subtract it from executable-side target reward. In an independent long and short fixture, the old planned reward/risk are 2.80/6.70 EUR and the modeled brackets settle +3.60/−5.80 EUR at central slippage; applying adverse slippage explicitly settles +2.80/−6.70 EUR. The remedy uses the same sign-aware ledger arithmetic with a separately reserved stress amount. Future realized crossings can exceed planning risk.
+
+The old decision score used target first versus a static stop. The 132/462 other exits (72 gain-protection, 35 adaptive trail, 25 new M15) contributed −10.0651 EUR NET and were missing from the label. The five days of W44 and six cells estimate a different outcome. Even the four supported raw barrier frequencies were below the floor of their break-even bin. This establishes weak static evidence on that cohort. It leaves open the question of full conditional economic value.
+
+Of 98 FIRST planned-risk overruns, 95 were structural stop exits and five occurred on an unknown path. One crossed the separate stress reserve. The earlier XAUUSD overrun deteriorated by 6.52 EUR in the minute after the request. FIRST had 6,988 unobserved-held equity clocks. Current distance metadata and sampled drawdown support modeling checks. They do not evidence submitted or executed broker protections.
+
+| Mechanism | What was tested and established |
+| --- | --- |
+| BDP1, SQP1, CPF1/MFA1, SPE1, FCP1 and the integrated originals | Closely related breakout, continuation and reversion with matching funding and management checks. Prior FCP1 lacked funded competitive alternatives. The two later integrated runs share their two chief signal families. Technical fixes are evidenced, portable edge is unestablished. |
+| LPM1 | Full managed labels for EURUSD, coarse M15/H1 and ATR cells. All active controls lost, selector inactive. |
+| CVP1 | EMA, RSI and peer endpoint direction with linear entry and continuation values. Full adverse EUR −0.94 on 11 trips, HARD21 failed and some fits did not converge. Its original tick source remains usable. |
+| ORX1 | Hindsight on the recorded CVP1 subset, adverse +11.93 EUR with one slot and failed HARD21. This does not describe a causal selection rule or full universe. |
+| SCP1-A1, SDP2, MVE1, MRF1 and XMH2/MCE1 | Linear or nonlinear endpoint models, price proxies or matched chronology. No confirmed incremental funded edge. Fixed endpoints cannot validate a score for adaptive positions without evidence of agreement. |
+| QPI1, LQR1, SPL1, WCR1 and ECA1 | Quote counts/last revision, cross-series catch-up and session opens. Frozen designs found weak or insufficient economic support. Occupation time of both executable sides relative to an earlier price survives fixed endpoints, counts and last-event signs as a specifically testable different input. |
+
+Unknowns for stage B include full economic signal strength, reachability net of costs, effect of delaying exit within that same lifecycle, and stability under joint funding. The arithmetic correction has no claim of reversing an old result. Zero LIVE/DEMO orders and no activation.
