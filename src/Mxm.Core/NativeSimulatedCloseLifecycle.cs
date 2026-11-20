@@ -15,7 +15,8 @@ public sealed record NativeModelCloseProtection(
 
 public sealed record NativeModelCloseObservation(
     long Clock,LedgerQuote? AuthenticatedQuote,decimal ClosedM15Direction=0m,
-    long ClosedM15DirectionKnownAt=0,NativeModelCloseInstruction? Instruction=null);
+    long ClosedM15DirectionKnownAt=0,NativeModelCloseInstruction? Instruction=null,
+    bool FullSessionMark=false);
 
 public sealed record NativeModelCloseInstruction(string Reason,decimal Units);
 
@@ -87,7 +88,8 @@ public static class NativeSimulatedCloseLifecycle
         var facts=new List<LedgerEvent>();
         void Apply(LedgerEvent e)
         {
-            session.ApplyResearchFacts(new[]{e});
+            if(e.Kind=="MARK" && observation.FullSessionMark)session.RecordResearchMark(e);
+            else session.ApplyResearchFacts(new[]{e});
             facts.Add(e);
         }
 

@@ -209,7 +209,9 @@ public sealed partial class NativeUnifiedPortfolioEngine
     void Count(string s){reasons[s]=reasons.GetValueOrDefault(s)+1;}
     void Apply(LedgerEvent e)
     {
-        model.ApplyResearchFacts(new[]{e});
+        if(e.Kind=="MARK" && NativeIntegratedEconomicPolicy.IsPolicy(policy))
+            model.RecordResearchMark(e);
+        else model.ApplyResearchFacts(new[]{e});
         facts.Add(e);
     }
     static decimal Fee(LedgerQuote q,decimal units)
@@ -413,7 +415,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
             if(p.Integrated is not null && input is not null)
                 (p,instruction)=ManageIntegrated(p,held,input);
             var verdict=NativeSimulatedCloseLifecycle.Advance(model,state,
-                new NativeModelCloseObservation(t,q,direction,t-1,instruction));
+                new NativeModelCloseObservation(t,q,direction,t-1,instruction,p.Integrated is not null));
             facts.AddRange(verdict.AppliedFacts);
             expiredCloses+=verdict.AppliedFacts.Count(x=>
                 x.Kind=="MODEL_CLOSE_INTENT_EXPIRED");
