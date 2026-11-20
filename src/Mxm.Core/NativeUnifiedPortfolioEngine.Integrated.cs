@@ -235,10 +235,12 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 ? financeable.OrderByDescending(x => x.Complete!.Prediction!.Mean / x.ReservedRiskEur).First()
                 : variant is "RANK" or "ABLATION" or "ECONOMIC"
                 ? financeable.OrderByDescending(x => x.Complete?.Prediction?.Mean ?? decimal.MinValue).First()
-                : variant is "RANDOM" or "COMBINED_RANDOM"
-                    ? financeable.OrderBy(x => Sha((variant == "COMBINED_RANDOM" ? "POST415_PROSPECTIVE_COMBINED/" :
-                        StructuralPolicy ? "CLOSED_MARKET_20261120/" : "COMPLETE_POLICY_20261120/") +
-                        at + "/" + x.Market.Symbol + "/" + x.Signal.Family + "/" + x.Signal.Side),
+                : variant == "RANDOM"
+                    ? financeable.OrderBy(x => Sha((StructuralPolicy ? "CLOSED_MARKET_20261120/" : "COMPLETE_POLICY_20261120/") + at + "/" + x.Market.Symbol + "/" +
+                        x.Signal.Side), StringComparer.Ordinal).First()
+                : variant == "COMBINED_RANDOM"
+                    ? financeable.OrderBy(x => Sha("POST415_PROSPECTIVE_COMBINED/" + at +
+                        "/" + x.Market.Symbol + "/" + x.Signal.Family + "/" + x.Signal.Side),
                         StringComparer.Ordinal).First()
                 : economic
                 ? financeable.OrderByDescending(x => x.Thesis!.EstimatedEdgeAtAdmissionEur).First()
