@@ -58,7 +58,13 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 continue;
             lastSignalBar[market.Symbol] = completedBar;
             if (completeProbe is { } desired && market.Symbol != desired.Symbol) continue;
-            var setup = StructuralPolicy ? NativeStructuralOpportunity.Describe(market) : null;
+            var setup = StructuralPolicy
+                ? variant == "EXHAUSTION" ? NativeImpulseExhaustionResearch.Describe(market)
+                    : variant is "COMBINED" or "COMBINED_RANDOM"
+                        ? NativeStructuralOpportunity.Describe(market) ??
+                          NativeImpulseExhaustionResearch.Describe(market)
+                        : NativeStructuralOpportunity.Describe(market)
+                : null;
             var signals = StructuralPolicy ? setup is null ? Array.Empty<NativeIntegratedCandidate>() : new[] { setup.Signal } :
                 CompletePolicy ? NativeCompletePolicy.Describe(market, at) : NativeIntegratedEconomicPolicy.Describe(market, at);
             foreach (var detected in signals.OrderBy(x => x.Family, StringComparer.Ordinal))
@@ -229,9 +235,11 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 ? financeable.OrderByDescending(x => x.Complete!.Prediction!.Mean / x.ReservedRiskEur).First()
                 : variant is "RANK" or "ABLATION" or "ECONOMIC"
                 ? financeable.OrderByDescending(x => x.Complete?.Prediction?.Mean ?? decimal.MinValue).First()
-                : variant == "RANDOM"
-                    ? financeable.OrderBy(x => Sha((StructuralPolicy ? "CLOSED_MARKET_20261120/" : "COMPLETE_POLICY_20261120/") + at + "/" + x.Market.Symbol + "/" +
-                        x.Signal.Side), StringComparer.Ordinal).First()
+                : variant is "RANDOM" or "COMBINED_RANDOM"
+                    ? financeable.OrderBy(x => Sha((variant == "COMBINED_RANDOM" ? "POST415_PROSPECTIVE_COMBINED/" :
+                        StructuralPolicy ? "CLOSED_MARKET_20261120/" : "COMPLETE_POLICY_20261120/") +
+                        at + "/" + x.Market.Symbol + "/" + x.Signal.Family + "/" + x.Signal.Side),
+                        StringComparer.Ordinal).First()
                 : economic
                 ? financeable.OrderByDescending(x => x.Thesis!.EstimatedEdgeAtAdmissionEur).First()
                 : policy.Contains("_STRUCTURE_", StringComparison.Ordinal)
