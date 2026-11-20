@@ -12,6 +12,7 @@ on:
     branches: [main]
     paths:
       - 'ops/complete-policy-economics-once.txt'
+      - 'ops/complete-policy-economics-readback-recovery-once.txt'
 permissions:
   contents: read
   actions: read
@@ -46,6 +47,12 @@ jobs:
         run: |
           marker=ops/complete-policy-economics-once.txt
           subject=OWNER_COMPLETE_POLICY_ECONOMIC_DISCOVERY_ONCE
+          if [[ "$(git log -1 --format=%s)" == OWNER_COMPLETE_POLICY_CUSTODY_READBACK_RECOVERY_ONCE ]]; then
+            git merge-base --is-ancestor f174c45095b69b22a432a74205870788c6e78ba9 HEAD
+            test "$(git show f174c45095b69b22a432a74205870788c6e78ba9:ops/complete-policy-economics-once.txt)" = OWNER_COMPLETE_POLICY_ECONOMIC_DISCOVERY_ONCE
+            marker=ops/complete-policy-economics-readback-recovery-once.txt
+            subject=OWNER_COMPLETE_POLICY_CUSTODY_READBACK_RECOVERY_ONCE
+          fi
           echo "ready=false" >> "$GITHUB_OUTPUT"
           if [[ "$GITHUB_EVENT_NAME" == push && "$GITHUB_REF" == refs/heads/main &&
                 "$GITHUB_ACTOR" == mariancradulescu && "$GITHUB_RUN_ATTEMPT" == 1 &&
