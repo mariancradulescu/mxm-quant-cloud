@@ -39,7 +39,7 @@ internal static class NativeImpulseExhaustionChecks
                         return new NativeClosedMarketBar(open,close,99m,102m,98.5m,
                             trigger?100.7m:100.6m,20);
                     if (req.Timeframe == NativeBarTimeframe.M30)
-                        return new NativeClosedMarketBar(open,close,99m,102m,99.5m,
+                        return new NativeClosedMarketBar(open,close,100m,102m,99.5m,
                             trigger?100.7m:100.6m,20);
                     return new NativeClosedMarketBar(open,close,99m,104m,98.5m,
                         trigger?100.7m:100.6m,20);
