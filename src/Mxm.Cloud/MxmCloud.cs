@@ -36,6 +36,8 @@ public class MxmCloud : Robot
     private bool _calibratedResearch;
     [Parameter("UCP1 unified economic observation (NO ORDERS)", DefaultValue = false)]
     public bool EnableUnifiedReadOnlyPolicy {get;set;}
+    [Parameter("Full-session integrated policy observation (NO ORDERS)", DefaultValue = false)]
+    public bool EnableFullSessionObservation {get;set;}
     [Parameter("SCP1 precommitted score snapshot (NO ORDERS)", DefaultValue = "")]
     public string Scp1FrozenModelEnvelope {get;set;}="";
     private NativeUnifiedCloudParityAdapter? _unifiedPolicy;
@@ -69,7 +71,9 @@ public class MxmCloud : Robot
         // unset key may raise LocalStorageException. Do not load any checkpoint
         // as the restart authority. Reconstruct from native broker facts.
         _fundedSession=new NativeFundedSession(_accountBinding);
-        if(EnableUnifiedReadOnlyPolicy)
+        if(EnableFullSessionObservation)
+            _unifiedPolicy=new NativeUnifiedCloudParityAdapter("INTEGRATED_STRUCTURE_BUDGET",_accountBinding);
+        else if(EnableUnifiedReadOnlyPolicy)
         {
             if(!string.IsNullOrWhiteSpace(Scp1FrozenModelEnvelope))
             {
@@ -100,7 +104,7 @@ public class MxmCloud : Robot
         // Independent MODEL_REPLAY capital, never the broker monetary domain.
         // A restart begins a fresh observational simulation, not a cash reset
         // of any broker account; historical recovery requires causal replay.
-        if(EnableExploratoryReplay && !EnableUnifiedReadOnlyPolicy)
+        if(EnableExploratoryReplay && !EnableUnifiedReadOnlyPolicy && !EnableFullSessionObservation)
         {
             if(!string.IsNullOrWhiteSpace(IntegratedDevelopmentModel))
             {
@@ -166,7 +170,7 @@ public class MxmCloud : Robot
         return null;
     }
 
-    private NativeProductMarket? ReadProductResearchMarket(string name,long clock)
+    private NativeProductMarket? ReadProductResearchMarket(string name,long clock,bool fullSession=false)
     {
         // All mappings use CURRENT cTrader platform terms, not retrospectively
         // certified Pepperstone history or guaranteed historical fill prices.
@@ -177,12 +181,15 @@ public class MxmCloud : Robot
 
         NativeClosedMarketBar[] Prefix(Bars bars,int minutes,int n=NativeCausalWarmup.WindowBars)
         {
-            if(bars.Count<n+1)return System.Array.Empty<NativeClosedMarketBar>();
-            int end=bars.Count-2;
-            var output=new NativeClosedMarketBar[n];
-            for(int j=0;j<n;j++)
+            if(bars.Count<n+1 && !fullSession)return System.Array.Empty<NativeClosedMarketBar>();
+            int end=fullSession?bars.Count-1:bars.Count-2;
+            if(fullSession)
+                while(end>=0 && Stamp(bars.OpenTimes[end])+minutes*60000L>=clock)end--;
+            int length=System.Math.Min(n,end+1);
+            var output=new NativeClosedMarketBar[length];
+            for(int j=0;j<length;j++)
             {
-                int i=end-n+1+j;
+                int i=end-length+1+j;
                 long open=Stamp(bars.OpenTimes[i]);
                 output[j]=new(open,open+(long)minutes*60000L,
                     (decimal)bars.OpenPrices[i],(decimal)bars.HighPrices[i],
@@ -192,18 +199,19 @@ public class MxmCloud : Robot
             return output;
         }
         var m5Prefix=Prefix(m5,5,_integratedResearch?3*NativeCausalWarmup.WindowBars+2:
-            NativeCausalWarmup.WindowBars);
+            fullSession?5:NativeCausalWarmup.WindowBars);
         var shortBars=m5Prefix.TakeLast(NativeCausalWarmup.WindowBars).ToArray();
         var mediumBars=_integratedResearch?NativeHistoricalProductReplay.AggregateCompletedM15(m5Prefix)
-            .TakeLast(NativeCausalWarmup.WindowBars).ToArray():Prefix(MarketData.GetBars(TimeFrame.Minute15,name),15);
-        if(shortBars.Length<NativeCausalWarmup.WindowBars ||
-            mediumBars.Length<NativeCausalWarmup.WindowBars)return null;
+            .TakeLast(NativeCausalWarmup.WindowBars).ToArray():Prefix(MarketData.GetBars(TimeFrame.Minute15,name),15,
+                fullSession?3:NativeCausalWarmup.WindowBars);
+        if(!fullSession && (shortBars.Length<NativeCausalWarmup.WindowBars ||
+            mediumBars.Length<NativeCausalWarmup.WindowBars))return null;
         var feeType=(int)market.CommissionType+1;
         if(feeType<1 || feeType>4)return null;
         // Price-proportional commissions must use execution BUY/SELL sides.
         // The existing single-fee-attributed model quote is not sufficient
         // for both sides of these contracts: never misprice them.
-        if(feeType is 1 or 3)return null;
+        if(feeType is 1 or 3 && (!fullSession || market.Commission!=0d))return null;
         int pipPosition=0;
         decimal pip=(decimal)market.PipSize;
         while(pip>0m && pip<1m && pipPosition<18)
@@ -266,6 +274,54 @@ public class MxmCloud : Robot
             _discoveryResearch?NativeDiscoveryResearch.Exit(name):_conditionalResearch?NativeConditionalResearch.Exit(name):_integratedResearch?NativeIntegratedResearch.Exit(name):
             _calibratedResearch?(FridayInventoryResearch?NativeEntryOutcomeCalibration.InventoryExitPolicy:
                 NativeEntryOutcomeCalibration.ExitPolicy):NativeCausalExitResearch.FrozenFixed);
+    }
+
+    private Ucp1MarketFrame? ReadFullSessionMarket(string name,long at)
+    {
+        var existing=ReadProductResearchMarket(name,at,fullSession:true);
+        if(existing is null || existing.Contract is not { } contract ||
+            ReadTickAsOf("EURUSD",at) is not { } conversion)return null;
+        var symbol=Symbols.GetSymbol(name);
+        if(symbol.TradingMode!=SymbolTradingMode.FullAccess)return null;
+        decimal minimum=contract.MinimumUnits,step=contract.VolumeStepUnits;
+        var volumes=new[]{minimum,minimum+step,minimum+3m*step}
+            .Where(v=>v<=contract.MaximumUnits).Select(v=>new NativeObservedVolume(v,
+                (decimal)symbol.GetEstimatedMargin(TradeType.Buy,(double)v),
+                (decimal)symbol.GetEstimatedMargin(TradeType.Sell,(double)v))).ToArray();
+        decimal tick=(decimal)symbol.TickSize;
+        var platform=MarketData.GetTicks(name);
+        var samples=new System.Collections.Generic.List<(long At,decimal Bid,decimal Ask)>();
+        for(int i=platform.Count-1;i>=0;i--)
+        {
+            var observation=platform[i];
+            long stamp=Stamp(observation.Time);
+            if(stamp>at)continue;
+            if(observation.Bid<=0d || observation.Ask<observation.Bid)break;
+            samples.Add((stamp,(decimal)observation.Bid,(decimal)observation.Ask));
+            if(stamp<=at-60_000L)break;
+        }
+        if(samples.Count==0)return null;
+        bool complete=samples[^1].At<=at-60_000L && samples[^1].At>=at-90_000L &&
+            samples.Zip(samples.Skip(1),(a,b)=>a.At-b.At).All(gap=>gap<=30_000L);
+        var path=new NativeObservedQuotePath(samples.Min(x=>x.Bid),samples.Max(x=>x.Bid),
+            samples.Min(x=>x.Ask),samples.Max(x=>x.Ask),complete);
+        var h1=MarketData.GetBars(TimeFrame.Hour,name);
+        var hours=new System.Collections.Generic.List<NativeClosedMarketBar>();
+        for(int i=h1.Count-1;i>=0 && hours.Count<6;i--)
+        {
+            long open=Stamp(h1.OpenTimes[i]);
+            long close=open+3_600_000L;
+            if(close>=at)continue;
+            hours.Add(new(open,close,(decimal)h1.OpenPrices[i],(decimal)h1.HighPrices[i],
+                (decimal)h1.LowPrices[i],(decimal)h1.ClosePrices[i],(long)h1.TickVolumes[i]));
+        }
+        hours.Reverse();
+        var quote=NativeIntegratedEconomicPolicy.BuildQuote(contract,at,existing.Quote.Bid,existing.Quote.Ask,
+            conversion.Bid,conversion.Ask,volumes,tick);
+        return new(name,quote,contract,existing.M5,existing.M15,
+            NativeIntegratedEconomicPolicy.Slippage(quote.Bid,quote.Ask,tick,false),
+            "OBSERVATIONAL_PLATFORM_MARK_AND_DIRECTIONAL_MARGIN_ESTIMATE",
+            new(hours.ToArray(),volumes,volumes.Any(v=>v.SellMargin>0m),tick,path));
     }
 
     private void ObserveNative()
@@ -386,19 +442,28 @@ public class MxmCloud : Robot
             if(_unifiedPolicy is not null)
             {
                 long current=Stamp(Server.TimeInUtc);
-                long at=current/60000L*60000L+15000L;
+                long at=current/60000L*60000L+NativeIntegratedEconomicPolicy.ClockOffsetMs;
                 if(at<=current && at>_lastUnifiedObservedAt)
                 {
                     _lastUnifiedObservedAt=at;
                     var observations=new System.Collections.Generic.List<Ucp1MarketFrame>();
+                    var researchNames=EnableFullSessionObservation
+                        ? new[]{"EURUSD","GBPUSD","XAUUSD","SpotBrent","US500",Symbols.Exists("AAPL")?"AAPL":"AAPL.US"}
+                        : universe.ResearchSymbols;
                     var sourceNames=_unifiedPolicy.ActiveSymbols
-                        .Concat(universe.ResearchSymbols)
+                        .Concat(researchNames)
                         .Distinct(System.StringComparer.Ordinal).Take(16).ToArray();
                     foreach(string name in sourceNames)
                     {
                         try
                         {
                             if(!Symbols.Exists(name))continue;
+                            if(EnableFullSessionObservation)
+                            {
+                                var integrated=ReadFullSessionMarket(name,at);
+                                if(integrated is not null)observations.Add(integrated);
+                                continue;
+                            }
                             var m=ReadProductResearchMarket(name,at);
                             if(m is null || m.Contract is null)continue;
                             observations.Add(new Ucp1MarketFrame(name,m.Quote,m.Contract,

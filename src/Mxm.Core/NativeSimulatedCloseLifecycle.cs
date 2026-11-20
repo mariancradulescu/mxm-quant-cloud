@@ -15,7 +15,9 @@ public sealed record NativeModelCloseProtection(
 
 public sealed record NativeModelCloseObservation(
     long Clock,LedgerQuote? AuthenticatedQuote,decimal ClosedM15Direction=0m,
-    long ClosedM15DirectionKnownAt=0);
+    long ClosedM15DirectionKnownAt=0,NativeModelCloseInstruction? Instruction=null);
+
+public sealed record NativeModelCloseInstruction(string Reason,decimal Units);
 
 public sealed record NativeModelCloseStep(
     NativeModelCloseProtection Protection,string Status,
@@ -36,12 +38,12 @@ public static class NativeSimulatedCloseLifecycle
     static LedgerEvent Fact(string kind,LedgerPosition position,long at,
         decimal price=0m,decimal fee=0m,decimal slip=0m,
         string reason="MODEL_UNTRANSMITTED",LedgerQuote[]? quotes=null,
-        long latency=ModelRequestLatencyMs)
+        long latency=ModelRequestLatencyMs,decimal? units=null)
     {
         // Stable evidence-bound identity for replay, restart and duplicate tests.
         string identity="SIR1/"+position.Id+"/"+at+"/"+kind;
         return new LedgerEvent(identity,at,kind,position.Id,position.Symbol,
-            position.Side,position.Units,price,fee,0m,slip,
+            position.Side,units??position.Units,price,fee,0m,slip,
             Math.Max(0,at-1),Math.Max(0,at-2),latency,reason,
             Hash(identity),quotes??Array.Empty<LedgerQuote>());
     }
@@ -129,15 +131,19 @@ public static class NativeSimulatedCloseLifecycle
                 decimal exitPrice=held.Side>0 ?
                     quote.Bid-held.SlippagePerSide :
                     quote.Ask+held.SlippagePerSide;
-                decimal fee=Math.Max(quote.ExitFeePerUnit*held.Units,
+                decimal units=pending.Reason=="MODEL_UNTRANSMITTED_INTEGRATED_FAVORABLE_REDUCTION"
+                    ?pending.Units:held.Units;
+                if(units<=0m || units>held.Units)
+                    throw new ArgumentException("INTEGRATED_REDUCTION_VOLUME");
+                decimal fee=Math.Max(quote.ExitFeePerUnit*units,
                     quote.ExitFeeFloor);
                 var close=Fact("CLOSE_FILL",held,at,exitPrice,fee,
                     held.SlippagePerSide,pending.Reason,
-                    latency:pending.LatencyMs);
+                    latency:pending.LatencyMs,units:units);
                 Apply(close);
                 return new(protection with {LastObservedQuoteAt=at},
                     "MODEL_QUOTE_BOUND_CLOSE_SETTLED",facts.ToArray(),
-                    session.Ledger.Summary(at),true);
+                    session.Ledger.Summary(at),units==held.Units);
             }
             return new(protection with {LastObservedQuoteAt=at},
                 "MODEL_CLOSE_INTENT_PENDING_UNTRANSMITTED",
@@ -153,10 +159,16 @@ public static class NativeSimulatedCloseLifecycle
             observation.ClosedM15Direction,false);
         var updated=protection with {FavorableExtreme=verdict.FavorableExtreme,
             LastObservedQuoteAt=at};
-        if(verdict.RequestClose)
+        var instruction=observation.Instruction;
+        if(instruction is not null && (instruction.Units<=0m || instruction.Units>held.Units ||
+           !instruction.Reason.StartsWith("INTEGRATED_",StringComparison.Ordinal) ||
+           (instruction.Units<held.Units && instruction.Reason!="INTEGRATED_FAVORABLE_REDUCTION")))
+            throw new ArgumentException("INTEGRATED_CAUSAL_CLOSE_INSTRUCTION");
+        if(instruction is not null || verdict.RequestClose)
         {
             Apply(Fact("REQUEST_CLOSE",held,at,
-                reason:"MODEL_UNTRANSMITTED_"+verdict.Reason));
+                reason:"MODEL_UNTRANSMITTED_"+(instruction?.Reason??verdict.Reason),
+                units:instruction?.Units));
             return new(updated,"MODEL_CAUSAL_CLOSE_REISSUED_UNTRANSMITTED",
                 facts.ToArray(),session.Ledger.Summary(at),false);
         }

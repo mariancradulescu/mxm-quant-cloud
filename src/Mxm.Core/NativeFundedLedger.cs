@@ -156,7 +156,13 @@ public sealed partial class NativeFundedLedger
                 state.Closed.Add(new(closedPosition.Id,closedPosition.Symbol,closedPosition.EntryAt,e.At,e.Units,gross,spread,slip,conversion,entryFee+e.FeeEur,-finance,net,complete,e.Reason));
                 state=state with {CashEur=state.CashEur+converted-e.FeeEur};
                 if(complete){state.Positions.Remove(closedPosition.Id);state.Pending.Remove(closedPosition.Id);}
-                else state.Positions[closedPosition.Id]=closedPosition with {Units=closedPosition.Units-e.Units,EntryFeeRemaining=closedPosition.EntryFeeRemaining-entryFee,FinancingRemaining=closedPosition.FinancingRemaining-finance};
+                else
+                {
+                    state.Positions[closedPosition.Id]=closedPosition with {Units=closedPosition.Units-e.Units,EntryFeeRemaining=closedPosition.EntryFeeRemaining-entryFee,FinancingRemaining=closedPosition.FinancingRemaining-finance};
+                    if(close.Reason=="MODEL_UNTRANSMITTED_INTEGRATED_FAVORABLE_REDUCTION" &&
+                       close.Units==e.Units)
+                        state.Pending.Remove(closedPosition.Id);
+                }
                 break;
             // SIR1: entirely local, NEVER TRANSMITTED model close intent.
             // Unlike CONFIRMED_CANCEL, this never claims a broker acknowledgement,
