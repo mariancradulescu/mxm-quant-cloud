@@ -52,6 +52,44 @@ internal static partial class IntegratedEconomicReplay
         return 0;
     }
 
+    // New post-415 causal economic development: only W44-W45, never W46.
+    // The underlying sealed source is recovered in the protected workflow,
+    // but no broker order or re-execution of frozen W46 is performed.
+    public static int RunExhaustionDevelopment(string inputFile, string outputFile)
+    {
+        using var input = File.OpenRead(inputFile);
+        var source = JsonSerializer.Deserialize<Source>(input, Json)
+            ?? throw new ArgumentException("POST415_ORIGINAL_SOURCE_MISSING");
+        if (source.SourceRun != "44687919474" || source.Start != 1792972800000L ||
+            source.End - source.Start != 3 * NativeCompletePolicy.Week ||
+            source.ProtocolSha256.Length != 64 ||
+            source.Markets.Select(m => m.Name).Distinct(StringComparer.Ordinal).Count() != source.Markets.Length)
+            throw new ArgumentException("POST415_ORIGINAL_SOURCE_BOUNDARY");
+        var markets = source.Markets.Select(m => new MarketStream(m)).ToArray();
+        var fx = markets.Single(m => m.Source.Name == "EURUSD");
+        var frames = new List<Ucp1Frame>();
+        long developmentEnd = source.Start + 2 * NativeCompletePolicy.Week;
+        for (long at = source.Start + NativeIntegratedEconomicPolicy.ClockOffsetMs;
+             at < developmentEnd; at += NativeIntegratedLifecycle.IntervalMs)
+        {
+            var conversion = fx.At(at);
+            var observed = conversion is null ? Array.Empty<Ucp1MarketFrame>() :
+                markets.Select(m => m.Frame(at, conversion, closedContext: true))
+                    .OfType<Ucp1MarketFrame>().ToArray();
+            frames.Add(new(at, observed));
+        }
+        var result = NativeStructuralResearch.RunExhaustionDevelopment(frames.ToArray(),
+            source.Start, source.End,
+            source.Markets.ToDictionary(m => m.Name, m => m.Contract, StringComparer.Ordinal));
+        using var output = File.Create(outputFile);
+        JsonSerializer.Serialize(output, new { source.SourceRun, source.ProtocolSha256,
+            DevelopmentScope = "EXPOSED_W44_W45_ONLY_NO_W46_FRAMES",
+            Coverage = markets.Select(m => new { m.Source.Name, m.Source.Class,
+                m.Source.Contract.ObservedAtUtcMs, SourceMarks = m.Source.Quotes.Length,
+                m.AcceptedMarks }).ToArray(), Result = result }, Json);
+        return 0;
+    }
+
     public static int RunContextAudit(string inputFile, string outputFile)
     {
         using var input = File.OpenRead(inputFile);
