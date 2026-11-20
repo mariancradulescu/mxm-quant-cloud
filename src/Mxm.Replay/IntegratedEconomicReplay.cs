@@ -3,14 +3,18 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Mxm.Core;
 
-internal static class IntegratedEconomicReplay
+internal static partial class IntegratedEconomicReplay
 {
     sealed record SourceQuote(long At,long BidAt,long AskAt,decimal Bid,decimal Ask,NativeObservedQuotePath Path);
     sealed record SourceMarket(string Name,string Class,NativeObservedContractTerms Contract,
         decimal TickSize,bool ShortAllowed,int TradingMode,bool CostTermsComplete,NativeObservedVolume[] Margin,
         NativeClosedMarketBar[] M5,NativeClosedMarketBar[] M15,NativeClosedMarketBar[] H1,SourceQuote[] Quotes,
         int ActiveHours,int RequestedTickHours,int[][] Schedule,string ScheduleTimeZone,
-        NativeProtectionDistances? Protection);
+        NativeProtectionDistances? Protection)
+    {
+        public Dictionary<string, AdditionalBars>? AdditionalTimeframes { get; init; }
+    }
+    sealed record AdditionalBars(string Source, NativeClosedMarketBar[] Bars);
     sealed record Source(long Start,long End,string SourceRun,string ProtocolSha256,SourceMarket[] Markets,
         long ManagementIntervalMs=60_000L);
 

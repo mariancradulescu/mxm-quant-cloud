@@ -1,0 +1,22 @@
+{
+  "source": "Original Pepperstone LIVE EUR account, cTrader Open API view scope",
+  "confirmation": "EXPLORED_HISTORICAL_CONTEXT_COVERAGE_ONLY",
+  "universe": {
+    "EURUSD": ["EURUSD"],
+    "GBPUSD": ["GBPUSD"],
+    "XAUUSD": ["XAUUSD"],
+    "SpotBrent": ["SpotBrent"],
+    "US500": ["US500"],
+    "AAPL": ["AAPL", "AAPL.US"],
+    "NAS100": ["NAS100"],
+    "GER40": ["GER40"]
+  },
+  "warmupFrom": "2026-10-05T00:00:00Z",
+  "end": "2026-11-16T00:00:00Z",
+  "minuteWarmupFrom": "2026-10-12T00:00:00Z",
+  "coveredByHxc1From": "2026-10-19T00:00:00Z",
+  "coveredByHxc1": ["EURUSD", "XAUUSD", "US500", "NAS100"],
+  "chunkHours": {"M1": 12, "M30": 168, "H4": 168, "D1": 168},
+  "maximumTrendbarRequests": 900,
+  "scope": "Native M1 where absent from the aligned HXC1 corpus; original M30/H4/D1 across an eight-symbol watchlist. Reuse integrated full-session protected M5/M15/H1 and paired BID/ASK for the six overlapping symbols. The new bars establish context availability only. No economic study or orders."
+}
