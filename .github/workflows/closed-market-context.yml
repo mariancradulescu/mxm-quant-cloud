@@ -1,0 +1,173 @@
+name: Closed market context and original source coverage
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/closed-market-context.yml'
+      - 'research/closed_market_*.py'
+      - 'research/closed_market_bar_source_protocol.json'
+      - 'src/Mxm.Core/NativeClosedMarketContext.cs'
+      - 'src/Mxm.Replay/IntegratedEconomicReplay.ClosedMarketContext.cs'
+      - 'src/Mxm.Cloud/MxmCloud.ClosedMarketBars.cs'
+      - 'tests/Mxm.Checks/NativeClosedMarketContextChecks.cs'
+  push:
+    branches: [main]
+    paths:
+      - 'ops/closed-market-context-source-once.txt'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    outputs:
+      authorized: ${{ steps.intent.outputs.authorized }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: |
+            8.0.x
+            6.0.x
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - run: dotnet run --project tests/Mxm.Checks -c Release
+      - run: dotnet build src/Mxm.Replay -c Release
+      - run: dotnet build src/Mxm.Cloud -c Release
+      - name: Verify acquisition geometry and the frozen protocol
+        run: |
+          echo '0e1b61646e0aaf0136d92463338ae4f612a334e1a88f9f7fe72f423897fb242b  research/closed_market_bar_source_protocol.json' | sha256sum -c
+          python -m py_compile research/closed_market_bar_source.py research/closed_market_context_readback.py
+          python -c 'from research.closed_market_bar_source import PROTOCOL, MINUTES, e, requests, json; plan=json.loads(PROTOCOL.read_text()); assert len({getattr(e, period) for period in MINUTES})==4; assert len(requests(plan,[aliases[-1] for aliases in plan["universe"].values()])[1])==480'
+      - name: Verify exact first-addition context acquisition intent
+        id: intent
+        shell: bash
+        run: |
+          marker=ops/closed-market-context-source-once.txt
+          subject=OWNER_CLOSED_MARKET_CONTEXT_SOURCE_ONCE
+          echo "authorized=false" >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_EVENT_NAME" == "push" && "$GITHUB_REF" == "refs/heads/main" &&
+                "$GITHUB_ACTOR" == "mariancradulescu" && "$GITHUB_RUN_ATTEMPT" == "1" &&
+                "$(git log -1 --format=%s)" == "$subject" &&
+                "$(git diff-tree --no-commit-id --name-status -r HEAD)" == $'A\t'"$marker" &&
+                -z "$(git log -1 --format=%H HEAD^ -- "$marker")" && "$(cat "$marker")" == "$subject" ]]; then
+            echo "authorized=true" >> "$GITHUB_OUTPUT"
+          fi
+  recipient:
+    needs: verify
+    if: needs.verify.outputs.authorized == 'true'
+    environment: mxm-r3-custody-v1
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - run: python -m research.custody_new
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: closed-market-context-recipient
+          path: new-recipient-output/
+          retention-days: 3
+          if-no-files-found: error
+  collect:
+    needs: [verify, recipient]
+    if: needs.verify.outputs.authorized == 'true'
+    environment: mxm-r3-pepperstone-v1
+    concurrency:
+      group: mxm-existing-oauth-read-only
+      cancel-in-progress: false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: closed-market-context-recipient
+          path: new-source-recipient
+      - run: python -m research.closed_market_bar_source
+        env:
+          R3_CTRADER_CLIENT_ID: ${{ secrets.R3_CTRADER_CLIENT_ID }}
+          R3_CTRADER_CLIENT_SECRET: ${{ secrets.R3_CTRADER_CLIENT_SECRET }}
+          R3_CTRADER_ACCESS_TOKEN: ${{ secrets.R3_CTRADER_ACCESS_TOKEN }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: closed-market-original-ciphertext
+          path: closed-market-source/source.enc
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 90
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: closed-market-original-source-public
+          path: closed-market-source/source.public.json
+          if-no-files-found: error
+          retention-days: 90
+  readback:
+    needs: [verify, collect]
+    if: needs.verify.outputs.authorized == 'true'
+    environment: mxm-r3-custody-v1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - run: dotnet build src/Mxm.Replay -c Release
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: closed-market-original-ciphertext
+          path: closed-market-source
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: closed-market-original-source-public
+          path: closed-market-source
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: hxc1-original-historical-encrypted-source
+          path: hxc1-original
+          run-id: 43817213663
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: integrated-full-session-custody
+          path: integrated-sealed-source
+          run-id: 44687919474
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: integrated-full-session-source-public
+          path: integrated-source-public
+          run-id: 44687919474
+          github-token: ${{ github.token }}
+      - run: python -m research.closed_market_context_readback
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: native-closed-market-context-census
+          path: closed-market-context-public/
+          if-no-files-found: error
+          retention-days: 90

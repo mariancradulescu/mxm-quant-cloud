@@ -6,7 +6,7 @@ using Mxm.Cloud;
 namespace cAlgo.Robots;
 
 [Robot(TimeZone = TimeZones.UTC, AccessRights = AccessRights.None)]
-public class MxmCloud : Robot
+public partial class MxmCloud : Robot
 {
     // Adds proactively observed markets before positions exist; no order permission.
     [Parameter("Read-only research universe", DefaultValue = "EURUSD,GBPUSD,AUDUSD,USDJPY,USDCAD,US500,NAS100,XAUUSD")]
@@ -181,7 +181,7 @@ public class MxmCloud : Robot
     }
 
 
-    private (decimal Bid,decimal Ask)? ReadTickAsOf(string symbol,long clock)
+    private (decimal Bid,decimal Ask,long At)? ReadTickAsOf(string symbol,long clock)
     {
         var ticks=MarketData.GetTicks(symbol);
         for(int i=ticks.Count-1;i>=0;i--)
@@ -190,7 +190,7 @@ public class MxmCloud : Robot
             long stamp=Stamp(tick.Time);
             if(stamp>clock)continue;
             if(clock-stamp>30000L || tick.Bid<=0d || tick.Ask<tick.Bid)return null;
-            return ((decimal)tick.Bid,(decimal)tick.Ask);
+            return ((decimal)tick.Bid,(decimal)tick.Ask,stamp);
         }
         return null;
     }
@@ -250,7 +250,7 @@ public class MxmCloud : Robot
         {
             if(market.QuoteAsset.Name!="USD" || ReadTickAsOf(name,clock) is not { } pair ||
                ReadTickAsOf("EURUSD",clock) is not { } conversion)return null;
-            (bid,ask)=pair;
+            (bid,ask)=(pair.Bid,pair.Ask);
             credit=1m/conversion.Ask;
             debit=1m/conversion.Bid;
         }
@@ -467,6 +467,7 @@ public class MxmCloud : Robot
                     .Concat(_productResearch?.ActiveSymbols ?? System.Array.Empty<string>()),
                 name=>Symbols.Exists(name),sweep:_readOnlyUniverseSweep);
             var symbols=universe.Symbols;
+            if (ObserveClosedMarketBars) ReportClosedMarketBars(universe.ResearchSymbols);
             // UCP1 observation-only product path: exactly the same C# Core
             // Advance(frame) and EUR300 MODEL ledger as original-source Replay.
             // The independently observed broker inventory, order identities and
