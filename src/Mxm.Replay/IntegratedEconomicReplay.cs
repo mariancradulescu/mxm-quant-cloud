@@ -239,7 +239,7 @@ internal static class IntegratedEconomicReplay
         {
             Directory.CreateDirectory(outputDirectory);
             using var economy=File.Create(Path.Combine(outputDirectory,"economic.json"));
-            var coverage=markets.Select(x=>new {
+            var completeCoverage=markets.Select(x=>new {
                 x.Source.Name,x.Source.Class,x.Source.ActiveHours,x.Source.RequestedTickHours,
                 M5=x.Source.M5.Length,M15=x.Source.M15.Length,H1=x.Source.H1.Length,
                 x.Source.Protection,x.Source.Margin,x.AcceptedMarks
@@ -247,7 +247,7 @@ internal static class IntegratedEconomicReplay
             var result=NativeCompletePolicyResearch.Run(clocks,source.Start,source.End,
                 source.Markets.ToDictionary(x=>x.Name,x=>x.Contract,StringComparer.Ordinal));
             JsonSerializer.Serialize(economy,new { Study="COMPLETE_POLICY_EXECUTABLE_QUOTE_RESIDENCE",
-                source.SourceRun,source.ProtocolSha256,SourceCoverage=coverage,Result=result },Json);
+                source.SourceRun,source.ProtocolSha256,SourceCoverage=completeCoverage,Result=result },Json);
             return 0;
         }
         var diagnostic=coherent?null:ReachablePath(clocks);
