@@ -30,11 +30,21 @@ public static class NativeStructuralOpportunity
     public const string Prefix = "CLOSED_MARKET_";
     public const string Compression = "COMPRESSION_RELEASE";
     public const string Rejection = "RANGE_EDGE_REJECTION";
-    public static readonly string[] Variants = { "CASH", "FIRST", "RANDOM", "TREND", "REJECTION", "POOLED", "RANK", "SELECT", "EXHAUSTION", "COMBINED", "COMBINED_RANDOM" };
+    internal const string Combined = "COMBINED";
+    internal const string CombinedRandom = "COMBINED_RANDOM";
+    internal const string CombinedWithoutExhaustion = "COMBINED_WITHOUT_EXHAUSTION";
+    public static readonly string[] Variants = { "CASH", "FIRST", "RANDOM", "TREND", "REJECTION", "POOLED", "RANK", "SELECT" };
 
     public static bool IsPolicy(string policy)
-        => policy.StartsWith(Prefix, StringComparison.Ordinal) &&
-            (Variant(policy) == "PROBE" || Variants.Contains(Variant(policy), StringComparer.Ordinal));
+    {
+        if (!policy.StartsWith(Prefix, StringComparison.Ordinal)) return false;
+        string variant = Variant(policy);
+        return variant is "PROBE" or "EXHAUSTION" || IsCompetition(variant) ||
+            Variants.Contains(variant, StringComparer.Ordinal);
+    }
+
+    internal static bool IsCompetition(string variant) =>
+        variant is Combined or CombinedRandom or CombinedWithoutExhaustion;
 
     public static string Variant(string policy)
         => policy.EndsWith("_ADVERSE", StringComparison.Ordinal) ? policy[Prefix.Length..^8] : policy[Prefix.Length..];
