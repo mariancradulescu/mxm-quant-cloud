@@ -72,7 +72,7 @@ public class MxmCloud : Robot
         // as the restart authority. Reconstruct from native broker facts.
         _fundedSession=new NativeFundedSession(_accountBinding);
         if(EnableFullSessionObservation)
-            _unifiedPolicy=new NativeUnifiedCloudParityAdapter("INTEGRATED_STRUCTURE_BUDGET",_accountBinding);
+            _unifiedPolicy=new NativeUnifiedCloudParityAdapter(NativeIntegratedLifecycle.Economic,_accountBinding);
         else if(EnableUnifiedReadOnlyPolicy)
         {
             if(!string.IsNullOrWhiteSpace(Scp1FrozenModelEnvelope))
@@ -290,6 +290,7 @@ public class MxmCloud : Robot
                 (decimal)symbol.GetEstimatedMargin(TradeType.Sell,(double)v))).ToArray();
         decimal tick=(decimal)symbol.TickSize;
         var platform=MarketData.GetTicks(name);
+        long intervalStart=at-NativeIntegratedLifecycle.IntervalMs;
         var samples=new System.Collections.Generic.List<(long At,decimal Bid,decimal Ask)>();
         for(int i=platform.Count-1;i>=0;i--)
         {
@@ -298,10 +299,10 @@ public class MxmCloud : Robot
             if(stamp>at)continue;
             if(observation.Bid<=0d || observation.Ask<observation.Bid)break;
             samples.Add((stamp,(decimal)observation.Bid,(decimal)observation.Ask));
-            if(stamp<=at-60_000L)break;
+            if(stamp<=intervalStart)break;
         }
         if(samples.Count==0)return null;
-        bool complete=samples[^1].At<=at-60_000L && samples[^1].At>=at-90_000L &&
+        bool complete=samples[^1].At<=intervalStart && samples[^1].At>=intervalStart-30_000L &&
             samples.Zip(samples.Skip(1),(a,b)=>a.At-b.At).All(gap=>gap<=30_000L);
         var path=new NativeObservedQuotePath(samples.Min(x=>x.Bid),samples.Max(x=>x.Bid),
             samples.Min(x=>x.Ask),samples.Max(x=>x.Ask),complete);
@@ -318,10 +319,16 @@ public class MxmCloud : Robot
         hours.Reverse();
         var quote=NativeIntegratedEconomicPolicy.BuildQuote(contract,at,existing.Quote.Bid,existing.Quote.Ask,
             conversion.Bid,conversion.Ask,volumes,tick);
+        bool protectionPercentage=symbol.MinDistanceType==SymbolMinDistanceType.Percentage;
+        decimal protectionScale=protectionPercentage?1m:(decimal)symbol.PipSize;
+        var context=new NativeIntegratedMarket(hours.ToArray(),volumes,volumes.Any(v=>v.SellMargin>0m),tick,path)
+        {
+            Protection=new((decimal)symbol.MinStopLossDistance*protectionScale,
+                (decimal)symbol.MinTakeProfitDistance*protectionScale,protectionPercentage)
+        };
         return new(name,quote,contract,existing.M5,existing.M15,
             NativeIntegratedEconomicPolicy.Slippage(quote.Bid,quote.Ask,tick,false),
-            "OBSERVATIONAL_PLATFORM_MARK_AND_DIRECTIONAL_MARGIN_ESTIMATE",
-            new(hours.ToArray(),volumes,volumes.Any(v=>v.SellMargin>0m),tick,path));
+            "OBSERVATIONAL_PLATFORM_MARK_AND_DIRECTIONAL_MARGIN_ESTIMATE",context);
     }
 
     private void ObserveNative()
@@ -442,7 +449,8 @@ public class MxmCloud : Robot
             if(_unifiedPolicy is not null)
             {
                 long current=Stamp(Server.TimeInUtc);
-                long at=current/60000L*60000L+NativeIntegratedEconomicPolicy.ClockOffsetMs;
+                long spacing=EnableFullSessionObservation?NativeIntegratedLifecycle.IntervalMs:60_000L;
+                long at=current/spacing*spacing+NativeIntegratedEconomicPolicy.ClockOffsetMs;
                 if(at<=current && at>_lastUnifiedObservedAt)
                 {
                     _lastUnifiedObservedAt=at;

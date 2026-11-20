@@ -13,7 +13,10 @@ public sealed record NativeObservedQuotePath(decimal BidLow, decimal BidHigh,
 
 public sealed record NativeIntegratedMarket(
     NativeClosedMarketBar[] H1, NativeObservedVolume[] Volumes, bool ShortAllowed,
-    decimal TickSize, NativeObservedQuotePath? Path);
+    decimal TickSize, NativeObservedQuotePath? Path)
+{
+    public NativeProtectionDistances? Protection { get; init; }
+}
 
 public sealed record NativeIntegratedCandidate(string Family, int Side, decimal Stop,
     decimal Target, decimal Volatility, long DecisionBar);
@@ -23,12 +26,22 @@ public sealed record NativeIntegratedTerms(decimal Units, decimal RiskEur,
 
 public sealed record NativeIntegratedPlan(decimal Stop, decimal Target,
     decimal InitialRiskEur, decimal InitialRewardEur, decimal ProtectedLevel = 0m,
-    bool Reduced = false, string FirstBarrier = "");
+    bool Reduced = false, string FirstBarrier = "")
+{
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public NativeEntryThesis? Thesis { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public decimal? EntrySlippage { get; init; }
+}
 
 public sealed record NativeIntegratedEpisode(decimal InitialPlannedRewardEur,
     decimal PlannedRewardToRisk, decimal? RealizedReturnToPlannedRisk, string FirstObservedBarrier,
     bool Gap, bool PartialReduction, decimal CaptureOfSampledMfe,
-    decimal CommissionsEur, decimal SpreadEur, decimal SlippageEur, decimal ConversionEur);
+    decimal CommissionsEur, decimal SpreadEur, decimal SlippageEur, decimal ConversionEur)
+{
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public NativeEntryThesis? Thesis { get; init; }
+}
 
 public static class NativeIntegratedEconomicPolicy
 {
@@ -39,7 +52,7 @@ public static class NativeIntegratedEconomicPolicy
         "INTEGRATED_STRUCTURE_BUDGET", "INTEGRATED_RANDOM_MIN"
     };
     public static bool IsPolicy(string policy)
-        => Policies.Contains(policy, StringComparer.Ordinal) ||
+        => Policies.Contains(policy, StringComparer.Ordinal) || NativeIntegratedLifecycle.IsPolicy(policy) ||
            (policy.EndsWith("_ADVERSE", StringComparison.Ordinal) &&
             policy[..^8] is "INTEGRATED_FIRST_MIN" or "INTEGRATED_STRUCTURE_BUDGET");
 

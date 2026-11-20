@@ -33,13 +33,13 @@ def normalized_bars(rows):
              "Close": str(Decimal(r[5]) / PRICE_SCALE), "TickVolume": r[6]} for r in rows]
 
 
-def minute_marks(day, bids, asks):
+def minute_marks(day, bids, asks, interval=MINUTE):
     """Deterministic as-of paired marks and genuine side extrema, no market decisions."""
     side_samples = (bids, asks)
     timestamps = ([r[0] for r in bids], [r[0] for r in asks])
     need(all(all(a <= b for a, b in zip(ts, ts[1:])) for ts in timestamps),
          "INTEGRATED_TICK_CHRONOLOGY")
-    for at in range(day + FRAME_OFFSET, day + DAY, MINUTE):
+    for at in range(day + FRAME_OFFSET, day + DAY, interval):
         now = [bisect.bisect_right(ts, at) - 1 for ts in timestamps]
         if any(i < 0 or at - ts[i] > MAX_SIDE_AGE for i, ts in zip(now, timestamps)):
             continue
@@ -53,13 +53,13 @@ def minute_marks(day, bids, asks):
         extrema = []
         complete = True
         for ts, rows, i in zip(timestamps, side_samples, now):
-            start = bisect.bisect_right(ts, at - MINUTE) - 1
+            start = bisect.bisect_right(ts, at - interval) - 1
             effective_start = max(0, start)
             considered = rows[effective_start:i + 1]
             prices = [r[1] for r in considered]
             extrema.extend((str(Decimal(min(prices)) / PRICE_SCALE),
                             str(Decimal(max(prices)) / PRICE_SCALE)))
-            complete &= (start >= 0 and at - MINUTE - ts[effective_start] <= MAX_SIDE_AGE and
+            complete &= (start >= 0 and at - interval - ts[effective_start] <= MAX_SIDE_AGE and
                          all(b[0] - a[0] <= MAX_SIDE_AGE for a, b in zip(considered, considered[1:])))
         yield {"At": at, "BidAt": when[0], "AskAt": when[1],
                "Bid": str(Decimal(latest[0]) / PRICE_SCALE), "Ask": str(Decimal(latest[1]) / PRICE_SCALE),
@@ -67,7 +67,8 @@ def minute_marks(day, bids, asks):
                                 (*extrema, complete)))}
 
 
-def readback(receipt, private_key):
+def readback(receipt, private_key, interval=MINUTE):
+    need(interval in (30_000, MINUTE), "INTEGRATED_MARK_INTERVAL_UNSUPPORTED")
     run = receipt["RunId"]
     shard_metadata = {v["File"]: v for v in receipt["Shards"]}
     need(len(shard_metadata) == len(receipt["Shards"]) and
@@ -175,7 +176,7 @@ def readback(receipt, private_key):
             for side in sides:
                 count[side] += len(sides[side])
             marks.extend(minute_marks(day, prior_tail[e.BID] + sides[e.BID],
-                                     prior_tail[e.ASK] + sides[e.ASK]))
+                                     prior_tail[e.ASK] + sides[e.ASK], interval))
             prior_tail = {side: [row for row in ticks if row[0] >= day + DAY - 90_000]
                           for side, ticks in sides.items()}
         need(len(hours) == observed["SourceTickHours"] and count[e.BID] == observed["Bid"] and
@@ -188,6 +189,13 @@ def readback(receipt, private_key):
             "M5": normalized_bars(bars["M5"]), "M15": normalized_bars(bars["M15"]),
             "H1": normalized_bars(bars["H1"]), "Quotes": marks,
             "ActiveHours": len(active), "RequestedTickHours": len(hours)})
+        if interval != MINUTE and all(true_contract.HasField(field) for field in ("slDistance", "tpDistance")):
+            percentage = true_contract.distanceSetIn == e.SYMBOL_DISTANCE_IN_PERCENTAGE
+            scale = Decimal(".01") if percentage else Decimal(metadata["TickSize"])
+            market_records[-1]["Protection"] = {
+                "Stop": str(true_contract.slDistance * scale), "Target": str(true_contract.tpDistance * scale),
+                "Percentage": percentage,
+            }
     return market_records
 
 
