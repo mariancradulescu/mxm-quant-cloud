@@ -264,26 +264,40 @@ public static class NativeStructuralResearch
         object Scenario(string suffix)
         {
             var books = new Dictionary<string, object>(StringComparer.Ordinal);
-            decimal first = 0m;
+            var allNet = new Dictionary<string, decimal>(StringComparer.Ordinal);
             foreach (var variant in new[] { "CASH", "FIRST", "RANDOM", "TREND",
                 "REJECTION", "EXHAUSTION", "COMBINED", "COMBINED_RANDOM" })
             {
                 var engine = new NativeUnifiedPortfolioEngine(
                     NativeStructuralOpportunity.Prefix + variant + suffix);
                 foreach (var frame in scoped) engine.Advance(frame);
-                books.Add(variant, Book(engine, start, developmentEnd, contracts));
-                if (variant == "FIRST") first = engine.ModelSummary.ClosedNetEur;
+                var trips = engine.CompleteModelTrips;
+                var weekly = new Dictionary<string, int>(StringComparer.Ordinal);
+                for (long w = start; w < developmentEnd; w += week)
+                {
+                    var day = DateTimeOffset.FromUnixTimeMilliseconds(w).UtcDateTime;
+                    string key = System.Globalization.ISOWeek.GetYear(day) + "-W" +
+                        System.Globalization.ISOWeek.GetWeekOfYear(day).ToString("00");
+                    weekly[key] = trips.Count(t => t.CloseAt >= w && t.CloseAt < w + week);
+                }
+                // The legacy Book.Hard21 is scoped to its complete input interval.
+                // For multi-week development, ONLY the explicit weekly dictionary
+                // can establish weekly trade count; no false two-week aggregate HARD21.
+                books.Add(variant, new
+                {
+                    Financial = Book(engine, start, developmentEnd, contracts),
+                    CompletedTradesByWeek = weekly,
+                    WeeksWithHard21 = weekly.Count(x => x.Value >= 21),
+                    BothWeeksHard21 = weekly.Values.All(x => x >= 21),
+                    ByFamily = trips.GroupBy(t => t.Family).ToDictionary(g => g.Key,
+                        g => new { Trades = g.Count(), NetEur = g.Sum(t => t.NetEur) })
+                });
+                allNet.Add(variant, engine.ModelSummary.ClosedNetEur);
             }
-            var deltas = books.ToDictionary(x => x.Key, x =>
-            {
-                // Books are anonymous receipts; authoritative comparisons are
-                // computed from native complete round-trip ledger inside Book().
-                var property = x.Value.GetType().GetProperty("Ledger");
-                if (property?.GetValue(x.Value) is not LedgerSummary summary)
-                    throw new InvalidOperationException("POST415_NO_LEDGER");
-                return summary.ClosedNetEur - first;
-            });
-            return new { Books = books, IncrementVsFirstEur = deltas };
+            var deltas = allNet.ToDictionary(x => x.Key, x => x.Value - allNet["FIRST"]);
+            return new { Books = books, IncrementVsFirstEur = deltas,
+                FullBookExhaustionAblationEur = allNet["COMBINED"] - allNet["FIRST"],
+                ForecastVerification = "NOT_TRAINED_IN_THIS_MECHANISM_ONLY_DEVELOPMENT_RUN" };
         }
         return new
         {
