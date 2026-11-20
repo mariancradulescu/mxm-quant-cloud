@@ -18,7 +18,7 @@ public partial class MxmCloud
     [Parameter("Funded action model snapshot (NO ORDERS)", DefaultValue = "")]
     public string FundedActionSnapshot { get; set; } = "";
 
-    bool _fundedActionObservation;
+    string[]? fundedActionSymbols;
     readonly Dictionary<(string Symbol, NativeBarTimeframe Period), Bars> closedBarSources = new();
     long lastContextClock;
     string lastContextStatus = "";
@@ -38,7 +38,7 @@ public partial class MxmCloud
                 throw new ArgumentException("FUNDED_ACTION_MODEL_NOT_AVAILABLE");
             _unifiedPolicy = new NativeUnifiedCloudParityAdapter(NativeStructuralOpportunity.Prefix +
                 NativeFundedActionValue.Context + "_ADVERSE", _accountBinding, actionModel: model);
-            _fundedActionObservation = true;
+            fundedActionSymbols = model.SourceSymbols ?? NativeFundedActionResearch.Universe.ToArray();
         }
         catch (Exception)
         {

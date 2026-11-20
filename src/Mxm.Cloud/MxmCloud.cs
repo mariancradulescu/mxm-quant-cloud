@@ -494,14 +494,14 @@ public partial class MxmCloud : Robot
                 {
                     _lastUnifiedObservedAt=at;
                     var observations=new System.Collections.Generic.List<Ucp1MarketFrame>();
-                    var researchNames=_fundedActionObservation?NativeFundedActionResearch.Universe.ToArray():
-                        _completePolicyObservation?new[]{"EURUSD","GBPUSD","AUDUSD"}:
-                        fullSession
-                        ? new[]{"EURUSD","GBPUSD","XAUUSD","SpotBrent","US500",Symbols.Exists("AAPL")?"AAPL":"AAPL.US"}
-                        : universe.ResearchSymbols;
-                    var sourceNames=_unifiedPolicy.ActiveSymbols
-                        .Concat(researchNames)
-                        .Distinct(System.StringComparer.Ordinal).Take(16).ToArray();
+                    var researchNames = fundedActionSymbols ??
+                        (_completePolicyObservation ? new[] { "EURUSD", "GBPUSD", "AUDUSD" } :
+                            fullSession
+                                ? new[] { "EURUSD", "GBPUSD", "XAUUSD", "SpotBrent", "US500", Symbols.Exists("AAPL") ? "AAPL" : "AAPL.US" }
+                                : universe.ResearchSymbols);
+                    var sourceNames = _unifiedPolicy.ActiveSymbols.Concat(researchNames)
+                        .Distinct(System.StringComparer.Ordinal);
+                    if (fundedActionSymbols is null) sourceNames = sourceNames.Take(16);
                     foreach(string name in sourceNames)
                     {
                         try

@@ -19,6 +19,7 @@ public sealed class NativeUnifiedCloudParityAdapter
         if(NativeCompletePolicy.IsPolicy(policy)) residence=new NativeQuoteResidenceStream();
     }
     public Ucp1FrameResult Observe(Ucp1Frame frame)=>engine.Advance(residence?.Observe(frame)??frame);
+    public void UseFundedActionModel(NativeFundedActionModel snapshot, long at)=>engine.UseFundedActionModel(snapshot,at);
     public string[] ActiveSymbols=>engine.ActiveSymbols;
     public LedgerEvent[] ModelFacts=>engine.OriginalModelEvents;
     public Scp1ChoiceReceipt[] Scp1Choices=>engine.Scp1ChoiceReceipts;

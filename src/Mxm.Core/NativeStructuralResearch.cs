@@ -183,7 +183,7 @@ public static class NativeStructuralResearch
 
     internal static (object Report, decimal RealizedLedgerNet, decimal? CompleteModeledNet) DevelopmentBook(
         NativeUnifiedPortfolioEngine engine, long start, long end,
-        IReadOnlyDictionary<string, NativeObservedContractTerms> contracts)
+        IReadOnlyDictionary<string, NativeObservedContractTerms> contracts, bool includeEquityTrace = true)
     {
         var summary = engine.ModelSummary;
         var events = engine.OriginalModelEvents;
@@ -268,7 +268,7 @@ public static class NativeStructuralResearch
                 SettlementEvents = events.Where(e => e.Kind != "MARK")
                     .Select(e => e with { Quotes = Array.Empty<LedgerQuote>() }).ToArray(),
                 RealizedFragments = fragments,
-                SampledEquity = equity,
+                SampledEquity = includeEquityTrace ? equity : null,
                 LedgerReconciled = true
             },
             CompletedTradesByWeek = weekly,

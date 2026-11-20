@@ -71,6 +71,8 @@ internal static class NativeFundedActionChecks
         }
 
         CheckCompetingCapital(bar, pilot, check);
+        CheckCrossSession(pilot, check);
+        CheckHistoricalSchedule(check);
         var track = new NativeUnifiedPortfolioEngine(pilot);
         for (long at = bar + 15_000; at < bar + 900_000; at += 30_000)
             track.Advance(Observation(bar, at));
@@ -100,6 +102,129 @@ internal static class NativeFundedActionChecks
         check(learned.FundedActionReceipts.Any(x => x.Decision == "CLOSE") &&
             learned.CompleteModelTrips.Single().ExitReason == "MODEL_UNTRANSMITTED_INTEGRATED_FUNDED_ACTION_VALUE_CLOSE",
             "the calibrated hold alternative can place a native conditional close intent");
+    }
+
+    static void CheckCrossSession(string policy, Action<bool, string> check)
+    {
+        const long hour = 3_600_000;
+        const long step = NativeIntegratedLifecycle.IntervalMs;
+        long midnight = NativeFundedActionResearch.Start + NativeCompletePolicy.Day;
+        long prior = midnight - hour;
+
+        Ucp1Frame At(long clock, decimal bid = 100.60m, bool competitor = false)
+        {
+            var frame = Observation(clock < midnight ? prior : midnight, clock);
+            var original = frame.Markets[0];
+            var occupied = NativeImpulseExhaustionChecks.Reprice(original, bid, marginPerUnit: 600m);
+            var alternative = NativeImpulseExhaustionChecks.Reprice(original, 100.60m, "GBPUSD", 400m);
+            return frame with { Markets = competitor ? new[] { occupied, alternative } : new[] { occupied } };
+        }
+        var prefix = Enumerable.Range(0, (int)(hour / step)).Select(i => At(prior + 15_000 + i * step)).ToArray();
+        var later = new[] { At(midnight + 15_000, competitor: true), At(midnight + 45_000, competitor: true),
+            At(midnight + 75_000, 99.40m), At(midnight + 105_000, 99.40m) };
+        var contracts = later[0].Markets.ToDictionary(m => m.Symbol, m => m.Contract, StringComparer.Ordinal);
+        var firstWindow = new NativeFundedActionResearch.LabelWindow(prior, midnight);
+        var secondWindow = new NativeFundedActionResearch.LabelWindow(midnight, midnight + hour);
+        var frames = prefix.Concat(later).ToArray();
+        var study = NativeFundedActionResearch.ObserveLabels(frames, new[] { firstWindow, secondWindow }, "", contracts);
+        var uninterrupted = new NativeUnifiedPortfolioEngine(policy);
+        var adapter = new NativeUnifiedCloudParityAdapter(policy);
+        Ucp1FrameResult overnight = default!;
+        bool prefixParity = true;
+        foreach (var frame in prefix)
+        {
+            overnight = uninterrupted.Advance(frame);
+            prefixParity &= overnight == adapter.Observe(frame);
+        }
+        check(prefixParity, "overnight replay and Cloud adapter prefix are identical");
+        check(overnight.Held == 1 && overnight.ModelBook.UsedMarginEur == 150m && overnight.ModelBook.CashEur < 300m,
+            "an overnight hold retains the funded inventory, entry cost and reserved margin");
+        var preMidnight = uninterrupted.Checkpoint();
+        var afterMidnight = uninterrupted.Advance(later[0]);
+        var diagnostic = JsonSerializer.SerializeToElement(uninterrupted.OriginalOutcomeReport(prior, prior, prior,
+            midnight + hour, "SYNTHETIC_TEST_ONLY", includeTrace: false));
+        const string rejection = "RESERVED_MARGIN_BUDGET/GBPUSD";
+        check(afterMidnight == adapter.Observe(later[0]) && afterMidnight.Held == 1 &&
+            afterMidnight.ModelBook.UsedMarginEur == 150m &&
+            diagnostic.GetProperty("reasons").TryGetProperty(rejection, out var count) && count.GetInt32() == 1,
+            "capital reserved before midnight prevents a competing entry after midnight");
+        foreach (var frame in later.Skip(1))
+            check(uninterrupted.Advance(frame) == adapter.Observe(frame), "overnight settlement remains identical across adapters");
+        check(study.PilotBook == uninterrupted.ModelSummary && study.PilotBook.CompleteRoundTrips == 1 &&
+            study.Phases[0].Labels.Count == 0 && study.Phases[0].Counts.Single().Key.EndsWith("/RIGHT_CENSORED"),
+            "the label cutoff censors the first fork while the same pilot closes later with identical cash and ledger hash");
+
+        var nextDayLabel = study.Phases[1].Labels.Single();
+        check(nextDayLabel.Offer.Kind == NativeFundedActionValue.Close && nextDayLabel.Offer.Symbol == "EURUSD" &&
+            nextDayLabel.DeltaEur < 0m && nextDayLabel.SettledAt == later[^1].At,
+            "next-day management values the inherited position at the later common settlement");
+        var left = NativeUnifiedPortfolioEngine.Restore(preMidnight);
+        Probe(left, later[0], new() { Close = nextDayLabel.Offer.Key });
+        foreach (var frame in later.Skip(1)) left.Advance(frame);
+        check(left.CompleteModelTrips.Single().CloseAt < uninterrupted.CompleteModelTrips.Single().CloseAt,
+            "the two continuations settle on different clocks");
+        var fenced = NativeFundedActionResearch.Paired(preMidnight, nextDayLabel.Offer, later, 0, contracts, later[^1].At);
+        check(fenced.Status == "RIGHT_CENSORED" && fenced.DeltaEur is null && fenced.At == later[^2].At,
+            "an observation exactly at the cutoff cannot settle a label");
+
+        var laterMaturity = NativeFundedActionResearch.ObserveLabels(frames,
+            new[] { firstWindow with { MaturityUntil = secondWindow.Until }, secondWindow }, "", contracts);
+        var matured = laterMaturity.Phases[0].Labels.Single();
+        check(matured.SettledAt >= secondWindow.From && matured.Offer.At < secondWindow.From &&
+            laterMaturity.PilotBook == study.PilotBook,
+            "an overnight label may mature later without changing the financial trajectory");
+
+        var missingPath = later.ToArray();
+        missingPath[1] = missingPath[1] with { Markets = Array.Empty<Ucp1MarketFrame>() };
+        var unknown = NativeFundedActionResearch.Paired(preMidnight, nextDayLabel.Offer, missingPath, 0, contracts);
+        check(unknown.DeltaEur is null && unknown.Status is "UNKNOWN_PATH_OR_MARK" or "RIGHT_CENSORED",
+            "an absent held observation cannot produce an economic training value");
+
+        var trailingIntent = prefix.ToArray();
+        trailingIntent[^1] = At(midnight - 15_000, 99.40m);
+        var heldIntent = NativeFundedActionResearch.ObserveLabels(trailingIntent, new[] { firstWindow }, "", contracts);
+        var settledIntent = NativeFundedActionResearch.ObserveLabels(trailingIntent.Concat(later.Select(frame =>
+            At(frame.At, 99.40m))).ToArray(), new[] { firstWindow, secondWindow }, "", contracts);
+        check(heldIntent.PilotBook.OpenPositions == 1 && heldIntent.PilotBook.PendingIntents == 1 &&
+            settledIntent.PilotBook.CompleteRoundTrips == 1 && settledIntent.PilotBook.PendingIntents == 0,
+            "a protection intent pending before midnight settles in the inherited next-day book");
+
+        var duringEmbargo = NativeFundedActionResearch.ObserveLabels(frames, new[] { secondWindow }, "", contracts);
+        check(duringEmbargo.PilotBook == study.PilotBook && duringEmbargo.Phases[0].Labels.Single().DeltaEur == nextDayLabel.DeltaEur,
+            "ineligible clocks and embargoes preserve the full financial state");
+
+        var rolling = new NativeUnifiedPortfolioEngine(policy);
+        var rollingAdapter = new NativeUnifiedCloudParityAdapter(policy);
+        foreach (var frame in prefix)
+        {
+            rolling.Advance(frame);
+            rollingAdapter.Observe(frame);
+        }
+        var model = Fit(nextDayLabel.Offer, -.20m) with { AvailableAt = midnight };
+        var before = rolling.ModelSummary;
+        rolling.UseFundedActionModel(model, later[0].At);
+        rollingAdapter.UseFundedActionModel(model, later[0].At);
+        check(rolling.ModelSummary == before && rolling.Advance(later[0]) == rollingAdapter.Observe(later[0]),
+            "a causal model refresh preserves the funded inventory and uses the same adapter logic");
+        bool stale = false;
+        try { rolling.UseFundedActionModel(model, later[1].At); }
+        catch (ArgumentException) { stale = true; }
+        bool fromFuture = false;
+        try { rolling.UseFundedActionModel(model with { AvailableAt = later[1].At }, later[1].At); }
+        catch (ArgumentException) { fromFuture = true; }
+        check(stale && fromFuture, "a stale or contemporaneously unavailable snapshot is rejected");
+    }
+
+    static void CheckHistoricalSchedule(Action<bool, string> check)
+    {
+        long start = new DateTimeOffset(2026, 8, 17, 0, 0, 0, TimeSpan.Zero).ToUnixTimeMilliseconds();
+        long day = NativeCompletePolicy.Day, week = NativeCompletePolicy.Week;
+        long end = start + 9 * week + day;
+        var (windows, folds) = NativeFundedActionResearch.HistoricalSchedule(start + day, end);
+        check(windows.Length == 8 && folds.Length == 6 && folds[0].FitEnd == start + 2 * week &&
+            folds[0].CalibrationStart == folds[0].FitEnd && folds[0].From == start + 3 * week &&
+            folds[^1].Until == start + 9 * week && windows.All(w => w.MaturityUntil == end),
+            "historical folds use whole ISO weeks, past-only fit and calibration, and let earlier branches mature");
     }
 
     static void CheckCompetingCapital(long bar, string pilot, Action<bool, string> check)

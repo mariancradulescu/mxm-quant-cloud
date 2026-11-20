@@ -147,7 +147,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
     bool ExecutableBracketTerms => CompletePolicy || StructuralPolicy;
     bool CoherentIntegrated => integratedCalibration is not null || ExecutableBracketTerms;
     readonly NativeStructuralModels? structuralModels;
-    readonly NativeFundedActionModel? fundedActionModel;
+    NativeFundedActionModel? fundedActionModel;
     readonly List<NativeFundedActionReceipt> fundedActions = new();
     bool AdverseCompletePolicy => policy.EndsWith("_ADVERSE",StringComparison.Ordinal);
     readonly List<Scp1ChoiceReceipt> scoredChoices=new();
@@ -237,13 +237,27 @@ public sealed partial class NativeUnifiedPortfolioEngine
     public Ucp1CurvePoint[] CommonBookEquityPath=>curve.ToArray();
     public string[] ActiveSymbols=>plans.Values.Where(p=>p.OpenAt>0 || p.Integrated is not null)
         .Select(p=>p.Symbol).Distinct(StringComparer.Ordinal).ToArray();
-    public string Checkpoint()=>JsonSerializer.Serialize(new Ucp1Checkpoint(
+    public void UseFundedActionModel(NativeFundedActionModel snapshot, long nextClock)
+    {
+        snapshot.Validate();
+        if (!StructuralPolicy || !NativeFundedActionValue.IsVariant(NativeStructuralOpportunity.Variant(policy)) ||
+            snapshot.Adverse != AdverseCompletePolicy || nextClock <= previousClock ||
+            snapshot.AvailableAt >= nextClock || snapshot.AvailableAt <= (fundedActionModel?.AvailableAt ?? 0L))
+            throw new ArgumentException("FUNDED_ACTION_MODEL_UPDATE_NOT_CAUSAL");
+        fundedActionModel = snapshot;
+    }
+
+    public string Checkpoint()=>Checkpoint(includeTrace: true);
+    // Continuations need financial state and settled episodes. Prior diagnostics have no effect on decisions.
+    internal string ActionForkCheckpoint()=>Checkpoint(includeTrace: false);
+    string Checkpoint(bool includeTrace)=>JsonSerializer.Serialize(new Ucp1Checkpoint(
         Version,policy,model.Checkpoint(),broker.Checkpoint(),broker.AccountBinding,
         new(plans,StringComparer.Ordinal),new(lastSignalBar,StringComparer.Ordinal),
         previousClock,seq,proposed,admitted,openFills,expiredOpens,
         expiredCloses,closeRequests,rejections,sourceUnknownClocks,
         gapExposures,new(reasons,StringComparer.Ordinal),
-        facts.ToArray(),trips.ToArray(),curve.ToArray(),lastBrokerEvidence,
+        includeTrace ? facts.ToArray() : Array.Empty<LedgerEvent>(), trips.ToArray(),
+        includeTrace ? curve.ToArray() : Array.Empty<Ucp1CurvePoint>(), lastBrokerEvidence,
         scoreModel,scoredChoices.ToArray(),integratedCalibration?.Checkpoint(),completeModels,completeProbe)
         { StructuralModels = structuralModels, FundedActionModel = fundedActionModel,
             FundedActions = fundedActions.Count == 0 ? null : fundedActions.ToArray() });

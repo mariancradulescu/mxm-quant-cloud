@@ -19,9 +19,13 @@ public sealed record NativeFundedActionDistributions(NativeCompleteDistribution?
 public sealed record NativeFundedActionModel(long FitEnd, long AvailableAt, bool Adverse,
     Dictionary<string, NativeFundedActionDistributions> Actions)
 {
+    public string[]? SourceSymbols { get; init; }
+
     public void Validate()
     {
         if (FitEnd <= 0 || AvailableAt <= FitEnd || Actions is null ||
+            (SourceSymbols is { } symbols && (symbols.Length == 0 || symbols.Any(string.IsNullOrWhiteSpace) ||
+                symbols.Distinct(StringComparer.Ordinal).Count() != symbols.Length)) ||
             Actions.Values.SelectMany(a => new[] { a.Context, a.Pooled, a.Placebo }).OfType<NativeCompleteDistribution>()
                 .Any(d => d.UncertaintyR < 0 || d.Samples.Any(s =>
                     s.DecisionAt <= 0 || s.SettledAt <= s.DecisionAt || s.SettledAt >= FitEnd)))

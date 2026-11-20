@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 import time
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from decimal import Decimal
 from pathlib import Path
@@ -38,6 +39,37 @@ PUBLIC_DIR = Path("integrated-source-public")
 MARKER = "OWNER_INTEGRATED_FULL_SESSION_READ_ONLY_SOURCE_ONCE"
 
 
+@dataclass(frozen=True)
+class CaptureScope:
+    study: str
+    warmup: int
+    start: int
+    end: int
+    universe: tuple
+    periods: dict
+    protocol: Path
+    marker_file: Path
+    marker: str
+    request_limit: int
+
+
+ORIGINAL = CaptureScope("INTEGRATED_ECONOMIC_DISCOVERY", WARMUP, START, END, UNIVERSE, NATIVE_PERIODS,
+                        PROTOCOL, Path("ops/integrated-full-session-source-once.txt"), MARKER, 10_000)
+
+
+def utc_ms(month, day):
+    return int(datetime(2026, month, day, tzinfo=timezone.utc).timestamp()) * 1000
+
+
+FUNDED_HISTORY = CaptureScope(
+    "FUNDED_ACTION_HISTORY", utc_ms(7, 13), utc_ms(7, 27), utc_ms(10, 26),
+    UNIVERSE + (("FX", ("AUDUSD",)), ("INDEX", ("NAS100",))),
+    {**NATIVE_PERIODS, "M1": (1, DAY), "M30": (30, 4 * DAY)},
+    Path("research/FUNDED_ACTION_VALUE_HISTORICAL.md"), Path("ops/funded-action-history-source-once.txt"),
+    "OWNER_FUNDED_ACTION_HISTORY_READ_ONLY_SOURCE_ONCE", 40_000,
+)
+
+
 def digest(data):
     return hashlib.sha256(data).hexdigest()
 
@@ -57,20 +89,20 @@ def unpack(row):
     return request, response
 
 
-def validate_environment():
+def validate_environment(scope=ORIGINAL):
     need(os.environ.get("GITHUB_EVENT_NAME") == "push"
          and os.environ.get("GITHUB_REF") == "refs/heads/main"
          and os.environ.get("GITHUB_ACTOR") == "mariancradulescu"
          and os.environ.get("GITHUB_RUN_ATTEMPT") == "1"
-         and Path("ops/integrated-full-session-source-once.txt").read_text().strip() == MARKER,
+         and scope.marker_file.read_text().strip() == scope.marker,
          "INTEGRATED_OWNER_MAIN_FIRST_ATTEMPT_ONLY")
 
 
-def bars_from_page(response, period, first, last):
+def bars_from_page(response, period, first, last, periods=NATIVE_PERIODS):
     if isinstance(response, m.ProtoOAErrorRes):
         need(response.errorCode == "NO_QUOTES", "INTEGRATED_BAR_SOURCE_ERROR")
         return []
-    minutes = NATIVE_PERIODS[period][0]
+    minutes = periods[period][0]
     step = minutes * MINUTE
     need(response.period == getattr(e, period) and not response.hasMore, "INTEGRATED_BAR_PAGE_INVALID")
     rows = decode_bars(response.trendbar, first - step, last + step, minutes)
@@ -86,17 +118,17 @@ def margin_snapshot(response, volumes):
              "SellMargin": str(Decimal(r.sellMargin) / scale)} for r in response.margin]
 
 
-def collect():
-    validate_environment()
+def collect(scope=ORIGINAL):
+    validate_environment(scope)
     run = os.environ["GITHUB_RUN_ID"]
     recipient = checked_public(Path("new-source-recipient"), run)
     PUBLIC_DIR.mkdir(exist_ok=True)
     CIPHER_DIR.mkdir(exist_ok=True)
     transport = StdlibCTraderTransport()
     status = {
-        "Study": "INTEGRATED_ECONOMIC_DISCOVERY", "Status": "COLLECTING", "RunId": run,
-        "ProtocolSha256": digest(PROTOCOL.read_bytes()), "Requests": 0, "Shards": [],
-        "Warmup": WARMUP, "Start": START, "End": END, "Markets": {}, "Unavailable": {},
+        "Study": scope.study, "Status": "COLLECTING", "RunId": run,
+        "ProtocolSha256": digest(scope.protocol.read_bytes()), "Requests": 0, "Shards": [],
+        "Warmup": scope.warmup, "Start": scope.start, "End": scope.end, "Markets": {}, "Unavailable": {},
         "NewOrders": 0, "CloudActivated": False, "EconomicEvaluations": 0,
     }
     next_historical = 0.0
@@ -115,7 +147,7 @@ def collect():
     def observe(request, response_type, raw, historical=False):
         nonlocal next_historical
         require_read_only_request(request)
-        need(status["Requests"] < 10_000, "INTEGRATED_HISTORICAL_REQUEST_BUDGET")
+        need(status["Requests"] < scope.request_limit, "INTEGRATED_HISTORICAL_REQUEST_BUDGET")
         if historical:
             time.sleep(max(0, next_historical - time.monotonic()))
             next_historical = time.monotonic() + .25
@@ -145,7 +177,7 @@ def collect():
         available = {row.symbolName: row for row in roster.symbol if row.enabled}
         status["EnabledSymbols"] = len(available)
         captured = []
-        for asset_class, aliases in UNIVERSE:
+        for asset_class, aliases in scope.universe:
             name = next((alias for alias in aliases if alias in available), aliases[0])
             if name not in available:
                 status["Unavailable"][name] = "ENABLED_ALIAS_NOT_PRESENT"
@@ -187,18 +219,18 @@ def collect():
             info = status["Markets"][name]
             raw = []
             active_m5 = []
-            for period, (minutes, chunk) in NATIVE_PERIODS.items():
+            for period, (_, chunk) in scope.periods.items():
                 count = 0
-                for first in range(WARMUP, END, chunk):
-                    last = min(END, first + chunk)
+                for first in range(scope.warmup, scope.end, chunk):
+                    last = min(scope.end, first + chunk)
                     response = observe(
                         m.ProtoOAGetTrendbarsReq(ctidTraderAccountId=account, symbolId=symbol_id,
                             period=getattr(e, period), fromTimestamp=first, toTimestamp=last),
                         m.ProtoOAGetTrendbarsRes, raw, historical=True)
-                    rows = bars_from_page(response, period, first, last)
+                    rows = bars_from_page(response, period, first, last, scope.periods)
                     count += len(rows)
                     if period == "M5":
-                        active_m5.extend(row[0] for row in rows if row[0] >= START)
+                        active_m5.extend(row[0] for row in rows if row[0] >= scope.start)
                 info["Bars"][period] = count
             seal(f"{name}-bars.enc", {"Name": name, "Raw": raw})
             active_hours = {t // HOUR * HOUR for t in active_m5}
@@ -223,7 +255,7 @@ def collect():
                     return ticks(side, first, midpoint, records) + ticks(side, midpoint + 1, last, records)
                 return len(decode_side(response.tickData, first, last))
 
-            for day in range(START, END, DAY):
+            for day in range(scope.start, scope.end, DAY):
                 raw = []
                 for time_at in range(day, day + DAY, 2 * HOUR):
                     covered = [t for t in (time_at, time_at + HOUR) if t in active_hours]
@@ -252,4 +284,10 @@ def collect():
 
 
 if __name__ == "__main__":
-    collect()
+    import sys
+    if sys.argv[1:] == ["--funded-action-history"]:
+        collect(FUNDED_HISTORY)
+    elif len(sys.argv) == 1:
+        collect()
+    else:
+        raise SystemExit("Unsupported source scope")

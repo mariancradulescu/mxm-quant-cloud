@@ -2,6 +2,7 @@
 
 import bisect
 import gzip
+import hashlib
 import json
 import os
 import subprocess
@@ -14,8 +15,8 @@ from .ctrader_proto import OpenApiModelMessages_pb2 as e
 from .custody import unseal_new
 from .decode import decode_side, need
 from .integrated_market_source import (
-    CIPHER_DIR, DAY, END, HOUR, MINUTE, NATIVE_PERIODS, PROTOCOL, PUBLIC_DIR, START, WARMUP,
-    UNIVERSE, bars_from_page, digest, margin_snapshot, unpack,
+    CIPHER_DIR, DAY, END, FUNDED_HISTORY, HOUR, MINUTE, ORIGINAL, PROTOCOL, PUBLIC_DIR, START, WARMUP,
+    bars_from_page, digest, margin_snapshot, unpack,
 )
 from .native_original_openapi_product_replay import contract
 
@@ -67,7 +68,7 @@ def minute_marks(day, bids, asks, interval=MINUTE):
                                 (*extrema, complete)))}
 
 
-def readback(receipt, private_key, interval=MINUTE):
+def readback(receipt, private_key, interval=MINUTE, scope=ORIGINAL):
     need(interval in (30_000, MINUTE), "INTEGRATED_MARK_INTERVAL_UNSUPPORTED")
     run = receipt["RunId"]
     shard_metadata = {v["File"]: v for v in receipt["Shards"]}
@@ -100,7 +101,7 @@ def readback(receipt, private_key, interval=MINUTE):
     market_records = []
     for metadata in source["Markets"]:
         name = metadata["Name"]
-        aliases = next((alias for cls, alias in UNIVERSE if cls == metadata["Class"] and name in alias), ())
+        aliases = next((alias for cls, alias in scope.universe if cls == metadata["Class"] and name in alias), ())
         need(name == next((n for n in aliases if n in enabled), None), "INTEGRATED_FROZEN_SYMBOL_ALIAS")
         symbol = enabled[name]
         true_contract = details[symbol.symbolId]
@@ -112,8 +113,8 @@ def readback(receipt, private_key, interval=MINUTE):
              and metadata["TradingMode"] == true_contract.tradingMode
              and metadata["Schedule"] == [[i.startSecond, i.endSecond] for i in true_contract.schedule],
              "INTEGRATED_ORIGINAL_TERM_READBACK")
-        bars = {p: [] for p in NATIVE_PERIODS}
-        requests = {p: [] for p in NATIVE_PERIODS}
+        bars = {p: [] for p in scope.periods}
+        requests = {p: [] for p in scope.periods}
         shard = open_shard(f"{name}-bars.enc")
         need(shard["Name"] == name, "INTEGRATED_BAR_SHARD_LABEL")
         for record in shard["Raw"]:
@@ -122,17 +123,17 @@ def readback(receipt, private_key, interval=MINUTE):
                  req.symbolId == symbol.symbolId, "INTEGRATED_BAR_SOURCE_BINDING")
             period = e.ProtoOATrendbarPeriod.Name(req.period)
             requests[period].append((req.fromTimestamp, req.toTimestamp))
-            bars[period].extend(bars_from_page(res, period, req.fromTimestamp, req.toTimestamp))
-        for period, (_, chunk) in NATIVE_PERIODS.items():
-            need(requests[period] == [(y, min(END, y + chunk)) for y in range(WARMUP, END, chunk)]
+            bars[period].extend(bars_from_page(res, period, req.fromTimestamp, req.toTimestamp, scope.periods))
+        for period, (_, chunk) in scope.periods.items():
+            need(requests[period] == [(y, min(scope.end, y + chunk)) for y in range(scope.warmup, scope.end, chunk)]
                  and len(bars[period]) == observed["Bars"][period], "INTEGRATED_BAR_WINDOW_COVERAGE")
 
         marks = []
         count = {e.BID: 0, e.ASK: 0}
         prior_tail = {e.BID: [], e.ASK: []}
-        active = {r[0] // HOUR * HOUR for r in bars["M5"] if r[0] >= START}
+        active = {r[0] // HOUR * HOUR for r in bars["M5"] if r[0] >= scope.start}
         hours = set()
-        for day in range(START, END, DAY):
+        for day in range(scope.start, scope.end, DAY):
             key = f"{name}-{day}-ticks.enc"
             if key not in shard_metadata:
                 prior_tail = {e.BID: [], e.ASK: []}
@@ -189,6 +190,10 @@ def readback(receipt, private_key, interval=MINUTE):
             "M5": normalized_bars(bars["M5"]), "M15": normalized_bars(bars["M15"]),
             "H1": normalized_bars(bars["H1"]), "Quotes": marks,
             "ActiveHours": len(active), "RequestedTickHours": len(hours)})
+        additional = {p: {"Source": "PEPPERSTONE_OPEN_API_NATIVE_" + p, "Bars": normalized_bars(rows)}
+                      for p, rows in bars.items() if p not in ("M5", "M15", "H1")}
+        if additional:
+            market_records[-1]["AdditionalTimeframes"] = additional
         if interval != MINUTE and all(true_contract.HasField(field) for field in ("slDistance", "tpDistance")):
             percentage = true_contract.distanceSetIn == e.SYMBOL_DISTANCE_IN_PERCENTAGE
             scale = Decimal(".01") if percentage else Decimal(metadata["TickSize"])
@@ -197,6 +202,48 @@ def readback(receipt, private_key, interval=MINUTE):
                 "Percentage": percentage,
             }
     return market_records
+
+
+def funded_history_source(receipt, private_key, expected_run):
+    """Build a verified, private Replay input. The original ciphertext stays in custody."""
+    scope = FUNDED_HISTORY
+    need(receipt["Study"] == scope.study and receipt["RunId"] == expected_run and expected_run.isascii() and
+         expected_run.isdecimal() and receipt["NewOrders"] == 0 and not receipt["CloudActivated"] and
+         receipt["EconomicEvaluations"] == 0 and receipt["Status"] == "AUTHENTIC_READ_ONLY_SOURCE_CAPTURED" and
+         receipt["ProtocolSha256"] == digest(scope.protocol.read_bytes()) and
+         (receipt["Warmup"], receipt["Start"], receipt["End"]) == (scope.warmup, scope.start, scope.end),
+         "FUNDED_ACTION_HISTORY_SOURCE_RECEIPT_BINDING")
+    return {"Start": scope.start, "End": scope.end, "SourceRun": expected_run,
+            "ProtocolSha256": receipt["ProtocolSha256"], "ManagementIntervalMs": 30_000,
+            "Markets": readback(receipt, private_key, interval=30_000, scope=scope)}
+
+
+def funded_history_coverage():
+    receipt = json.loads((PUBLIC_DIR / "source.json").read_text())
+    key = os.environ.pop("R3_CUSTODY_PRIVATE_KEY_PEM", "").encode()
+    need(bool(key), "INTEGRATED_PROTECTED_CUSTODY_KEY_MISSING")
+    verified = funded_history_source(receipt, key, os.environ["GITHUB_RUN_ID"])
+    output = Path("funded-history-coverage")
+    output.mkdir(exist_ok=True)
+    report = output / "coverage.json"
+    with tempfile.TemporaryDirectory(prefix="funded-history-") as directory:
+        source = Path(directory) / "verified-input.json"
+        with source.open("w") as handle:
+            json.dump(verified, handle, separators=(",", ":"))
+        input_sha = hashlib_file(source)
+        subprocess.run(["dotnet", "src/Mxm.Replay/bin/Release/net8.0/Mxm.Replay.dll",
+                        "--closed-market-context-audit", str(source), str(report)], check=True)
+    (output / "receipt.json").write_text(json.dumps({
+        "SourceRun": receipt["RunId"], "ProtocolSha256": receipt["ProtocolSha256"],
+        "OriginalEncryptedShards": receipt["Shards"], "OriginalReadOnlyRequests": receipt["Requests"],
+        "VerifiedInputSha256": input_sha, "CoverageSha256": hashlib_file(report),
+        "EconomicEvaluations": 0, "OrdersSubmitted": 0, "CloudActivated": False,
+    }, indent=2) + "\n")
+
+
+def hashlib_file(path):
+    with path.open("rb") as handle:
+        return hashlib.file_digest(handle, "sha256").hexdigest()
 
 
 def main():
@@ -228,4 +275,10 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+    if sys.argv[1:] == ["--funded-action-history-coverage"]:
+        funded_history_coverage()
+    elif len(sys.argv) == 1:
+        main()
+    else:
+        raise SystemExit("Unsupported readback mode")
