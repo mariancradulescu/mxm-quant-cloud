@@ -20,6 +20,7 @@ ExecutableEconomicsChecks.Run(Check);
 CompletePolicyChecks.Run(Check);
 NativeClosedMarketContextChecks.Run(Check);
 NativeStructuralOpportunityChecks.Run(Check);
+NativeImpulseExhaustionChecks.Run(Check);
 ResearchScopeContractChecks.Run(Check);
 NativeCausalWarmupChecks.Run(Check);
 NativeResearchUniverseChecks.Run(Check);

@@ -340,7 +340,12 @@ public sealed partial class NativeUnifiedPortfolioEngine
             end.EventChainHash);
     }
 
-    public Ucp1FrameResult Advance(Ucp1Frame frame)
+    public Ucp1FrameResult Advance(Ucp1Frame frame) =>
+        Advance(frame, NativeStructuralOpportunity.Describe, NativeImpulseExhaustionResearch.Describe);
+
+    internal Ucp1FrameResult Advance(Ucp1Frame frame,
+        Func<Ucp1MarketFrame, NativeStructuralSetup?> describeLegacy,
+        Func<Ucp1MarketFrame, NativeStructuralSetup?> describeExhaustion)
     {
         if(frame is null||frame.At<=previousClock||frame.At<=0||
            frame.Markets is null||frame.Markets.Select(m=>m.Symbol)
@@ -505,7 +510,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
         bool scp1=policy.StartsWith("SCP1_",StringComparison.Ordinal);
         bool fcp1=policy.StartsWith("FCP1_",StringComparison.Ordinal);
         if(NativeIntegratedEconomicPolicy.IsPolicy(policy))
-            return AdvanceIntegrated(t,frame);
+            return AdvanceIntegrated(t, frame, describeLegacy, describeExhaustion);
         if(policy!="CASH" && policy!="SCP1_CASH" && policy!="FCP1_CASH")
         {
             var options=new List<(Ucp1DecisionSignal Signal,Ucp1MarketFrame Frame)>();
