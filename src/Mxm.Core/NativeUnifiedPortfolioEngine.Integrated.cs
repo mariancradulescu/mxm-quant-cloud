@@ -230,7 +230,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
             admitted++;
             Count("ADMITTED/" + market.Symbol);
         }
-        return RecordIntegratedFrame(at, ledger.Summary(at));
+        // The funding session may replace its ledger after an atomic intent.
+        return RecordIntegratedFrame(at, CompletePolicy ? model.Ledger.Summary(at) : ledger.Summary(at));
     }
 
     Ucp1FrameResult RecordIntegratedFrame(long at, LedgerSummary summary)

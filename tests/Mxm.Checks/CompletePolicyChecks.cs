@@ -57,6 +57,19 @@ internal static class CompletePolicyChecks
               replay.CompleteModelTrips.Single().Integrated!.CompletePolicy is not null,
               "Complete-policy Replay and observational adapter share feature timing, priced protection and settlements");
 
+        var probe=new NativeUnifiedPortfolioEngine(NativeCompletePolicy.Probe,
+            probe:new NativeCompleteProbe("EURUSD",1,at));
+        var intent=probe.Advance(lastUp);
+        check(intent.Pending==1 && intent.Held==0 && intent.ModelBook==probe.ModelSummary,
+            "The isolated training probe receives the committed pending intent from the authoritative ledger");
+        var opened=probe.Advance(positive.Observe(Frame(at+30_000L,100m)));
+        var trigger=probe.Advance(positive.Observe(Frame(at+60_000L,98m)));
+        var settled=probe.Advance(positive.Observe(Frame(at+90_000L,97.7m)));
+        check(opened.Held==1 && trigger.Held==1 && settled.ModelBook.CompleteRoundTrips==1 &&
+            probe.CompleteModelTrips.Single().NetEur==probe.ModelSummary.ClosedNetEur &&
+            probe.CompleteModelTrips.Single().Integrated!.CompletePolicy!.ScaleEur>0m,
+            "The same isolated episode reaches a real complete-label event, not a pending-state prefill exit");
+
         var observations=Enumerable.Range(1,4).SelectMany(i=>Enumerable.Range(0,4).Select(j=>
             new NativeCompleteSample("EURUSD",at-i*NativeCompletePolicy.Day+j,
                 at-i*NativeCompletePolicy.Day+j+1,new[]{0m,1m},2m))).Append(
