@@ -11,9 +11,11 @@ public sealed class NativeUnifiedCloudParityAdapter
     private readonly NativeQuoteResidenceStream? residence;
     public NativeUnifiedCloudParityAdapter(string policy="JOINT",
         
-        string brokerAccountBinding="",Scp1ScoreModel? scoreModel=null,NativeCompleteModels? models=null)
+        string brokerAccountBinding="",Scp1ScoreModel? scoreModel=null,NativeCompleteModels? models=null,
+        NativeStructuralModels? closedContextModels=null)
     {
-        engine=new NativeUnifiedPortfolioEngine(policy,brokerAccountBinding,scoreModel,models);
+        engine=new NativeUnifiedPortfolioEngine(policy,brokerAccountBinding,scoreModel,models,
+            closedContextModels:closedContextModels);
         if(NativeCompletePolicy.IsPolicy(policy)) residence=new NativeQuoteResidenceStream();
     }
     public Ucp1FrameResult Observe(Ucp1Frame frame)=>engine.Advance(residence?.Observe(frame)??frame);

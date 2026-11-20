@@ -11,6 +11,9 @@ public partial class MxmCloud
     [Parameter("Closed market context observation", DefaultValue = false)]
     public bool ObserveClosedMarketBars { get; set; }
 
+    [Parameter("Structural portfolio observation (NO ORDERS)", DefaultValue = false)]
+    public bool ObserveStructuralPortfolio { get; set; }
+
     readonly Dictionary<(string Symbol, NativeBarTimeframe Period), Bars> closedBarSources = new();
     long lastContextClock;
     string lastContextStatus = "";

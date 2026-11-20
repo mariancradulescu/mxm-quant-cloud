@@ -30,7 +30,9 @@ internal static class NativeClosedMarketContextChecks
                 "ongoing and future price mutations cannot affect the decision prefix");
             check(Platform(platform[..^1], at, boundary + 2).Status == NativeBarStatus.LatestBarMissing,
                 "the platform bar is ineligible until the collection publishes its successor");
-            check(Replay(rows, boundary - 1).Status == NativeBarStatus.CloseUnobserved &&
+            bool nativeAnchor = requirement.Timeframe is NativeBarTimeframe.H4 or NativeBarTimeframe.D1;
+            check((nativeAnchor ? Replay(rows, boundary - 1).ExpectedCloseAt < boundary :
+                    Replay(rows, boundary - 1).Status == NativeBarStatus.CloseUnobserved) &&
                 Replay(rows, at + 1).Status == NativeBarStatus.CloseUnobserved,
                 "nominal closure alone and a future quote are both insufficient");
             check(Replay(rows.Where(x => x.CloseAt != boundary).ToArray(), boundary + 2).Status == NativeBarStatus.LatestBarMissing,
@@ -45,6 +47,17 @@ internal static class NativeClosedMarketContextChecks
                 "an impossible OHLC in a verified window is rejected");
             check(Platform(platform, boundary, boundary).ExpectedCloseAt == boundary - width,
                 "at the exact boundary only independently witnessed earlier bars are eligible");
+            if (nativeAnchor)
+            {
+                long shift = 3_600_000L;
+                var shifted = rows.Select(bar => bar with { OpenAt = bar.OpenAt + shift, CloseAt = bar.CloseAt + shift }).ToArray();
+                var source = NativeClosedMarketContext.History(requirement, at + shift, boundary + shift + 2,
+                    "NATIVE_BROKER_BOUNDARY", shifted);
+                var observed = Platform(shifted.Take(platform.Length).ToArray(), at + shift, boundary + shift + 2);
+                check(source.Ready && source.ExpectedCloseAt == boundary + shift &&
+                    source.ValuesSha256() == observed.ValuesSha256(),
+                    "H4 and D1 use the broker's observed opening anchor");
+            }
         }
         check(NativeClosedMarketContext.QuoteWitness(50_000, 45_000, 50_001, 30_000) is null &&
             NativeClosedMarketContext.QuoteWitness(50_000, 19_999, 49_000, 30_000) is null &&

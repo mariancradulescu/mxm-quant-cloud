@@ -11,7 +11,7 @@ from .ctrader_proto import OpenApiMessages_pb2 as m, OpenApiModelMessages_pb2 as
 from .ctrader_transport import StdlibCTraderTransport
 from .custody import seal_new, unseal_new
 from .custody_new import checked_public
-from .decode import need
+from .decode import decode_bars, need
 from .guard import require_read_only_request
 from .hxc1_historical_readback import _source_account_matches
 from .hxc1_historical_source import decode_response, stamp
@@ -139,15 +139,35 @@ def collect():
     print("Native closed market source collected and sealed.", flush=True)
 
 
-def readback(private_key, run):
+def readback(private_key, run, native_boundaries=False):
     protocol = PROTOCOL.read_bytes()
     receipt = json.loads((OUTPUT / "source.public.json").read_text())
     cipher = (OUTPUT / "source.enc").read_bytes()
     need(receipt["SourceRun"] == run and digest(cipher) == receipt["CipherSha256"], "CLOSED_CONTEXT_CIPHER_HASH")
     plain = unseal_new(cipher, private_key, run)
     need(digest(plain) == receipt["CompressedPlainSha256"], "CLOSED_CONTEXT_PLAIN_HASH")
-    bars, report = rebuild(json.loads(gzip.decompress(plain)), json.loads(protocol), run, digest(protocol))
+    bundle, plan = json.loads(gzip.decompress(plain)), json.loads(protocol)
+    bars, report = rebuild(bundle, plan, run, digest(protocol))
     need(all(receipt[key] == value for key, value in report.items()), "CLOSED_CONTEXT_SOURCE_RECONCILIATION")
+    if native_boundaries:
+        # The original UTC page cut may cross an H4 or D1 bar. Once the raw
+        # complete page is authenticated, retain by source open time and the
+        # overall source boundary, rather than by the arbitrary chunk close.
+        _, enabled = identity(bundle["Identity"])
+        _, windows = requests(plan, enabled)
+        end = stamp(plan["end"])
+        long_bars = defaultdict(list)
+        for (name, period, first, last), wire in zip(windows, bundle["Pages"]):
+            if period not in ("H4", "D1"):
+                continue
+            _, res = unpack(wire)
+            if not isinstance(res, m.ProtoOAGetTrendbarsRes) or not res.HasField("hasMore") or res.hasMore:
+                continue
+            minutes = MINUTES[period]
+            width = minutes * 60_000
+            long_bars[(name, period)].extend(row for row in decode_bars(res.trendbar, first - width, last + width, minutes)
+                                                   if first <= row[0] < last and row[1] <= end)
+        bars.update(long_bars)
     return bars, receipt
 
 

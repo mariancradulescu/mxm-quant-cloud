@@ -62,15 +62,14 @@ public static class NativeClosedMarketContext
     public static NativeBarWindow History(NativeBarRequirement window, long at, long? witnessAt,
         string source, NativeClosedMarketBar[]? history)
         => Read(window, at, witnessAt, source, history?.Length ?? 0,
-            i => history![i].OpenAt, i => history![i]);
+            i => history![i].OpenAt, i => history![i], platform: false);
 
     public static NativeBarWindow Platform(NativeBarRequirement window, long at, long? witnessAt,
         int barCount, Func<int, long> openAt, Func<int, NativeClosedMarketBar> read)
-        // MarketData.GetBars includes a mutable tail during OnTimer. A successor must have appeared.
-        => Read(window, at, witnessAt, "CTRADER_ALGO_BARS", Math.Max(0, barCount - 1), openAt, read);
+        => Read(window, at, witnessAt, "CTRADER_ALGO_BARS", barCount, openAt, read, platform: true);
 
     static NativeBarWindow Read(NativeBarRequirement window, long at, long? witnessAt, string source,
-        int count, Func<int, long> openAt, Func<int, NativeClosedMarketBar> read)
+        int count, Func<int, long> openAt, Func<int, NativeClosedMarketBar> read, bool platform)
     {
         if (at <= 0 || window.Count <= 0 || !Enum.IsDefined(typeof(NativeBarTimeframe), window.Timeframe))
             throw new ArgumentOutOfRangeException(nameof(window));
@@ -80,25 +79,49 @@ public static class NativeClosedMarketContext
             => new(window.Timeframe, window.Count, close, witnessAt, source, status, Array.Empty<NativeClosedMarketBar>());
 
         if (count == 0) return Stop(NativeBarStatus.SourceMissing);
-        // The archived trendbar gives the nominal boundary. A same-symbol market observation
-        // from the next bucket is additionally required by the decision clock.
-        if (witnessAt is not long witness || witness < close || witness > at)
-            return Stop(NativeBarStatus.CloseUnobserved);
-        int lo = 0, hi = count;
-        while (lo < hi)
+        if (witnessAt is not long witness || witness > at) return Stop(NativeBarStatus.CloseUnobserved);
+
+        int FirstAtOrAfter(long boundary, int length)
         {
-            int pivot = lo + (hi - lo) / 2;
-            if (openAt(pivot) < close) lo = pivot + 1;
-            else hi = pivot;
+            int lo = 0, hi = length;
+            while (lo < hi)
+            {
+                int pivot = lo + (hi - lo) / 2;
+                if (openAt(pivot) < boundary) lo = pivot + 1;
+                else hi = pivot;
+            }
+            return lo;
         }
-        if (lo == 0 || openAt(lo - 1) < close - width) return Stop(NativeBarStatus.LatestBarMissing);
-        if (openAt(lo - 1) != close - width) return Stop(NativeBarStatus.InvalidBar);
-        if (lo < window.Count) return Stop(NativeBarStatus.InsufficientHistory);
+
+        int completed;
+        if (window.Timeframe is NativeBarTimeframe.H4 or NativeBarTimeframe.D1)
+        {
+            // The broker's current opening timestamp anchors this series. Read only that
+            // timestamp and require a contemporaneous tick. No mutable OHLC is inspected.
+            long lastObservableOpen = Math.Min(at - 1L, witness);
+            int active = FirstAtOrAfter(lastObservableOpen + 1L, count) - 1;
+            if (active < 0 || lastObservableOpen - openAt(active) >= width)
+                return Stop(NativeBarStatus.LatestBarMissing);
+            close = openAt(active);
+            completed = active;
+        }
+        else
+        {
+            if (witness < close) return Stop(NativeBarStatus.CloseUnobserved);
+            // GetBars during OnTimer includes a mutable tail. Exclude it even if its nominal
+            // time range has elapsed, until the platform has published a successor row.
+            completed = FirstAtOrAfter(close, platform ? count - 1 : count);
+        }
+        // The archived trendbar gives the nominal boundary. A same-symbol market observation
+        // from the next bucket is required by the decision clock.
+        if (completed == 0 || openAt(completed - 1) < close - width) return Stop(NativeBarStatus.LatestBarMissing);
+        if (openAt(completed - 1) != close - width) return Stop(NativeBarStatus.InvalidBar);
+        if (completed < window.Count) return Stop(NativeBarStatus.InsufficientHistory);
 
         var bars = new NativeClosedMarketBar[window.Count];
         for (int j = 0; j < bars.Length; j++)
         {
-            var bar = read(lo - bars.Length + j);
+            var bar = read(completed - bars.Length + j);
             long expectedOpen = close - (bars.Length - j) * width;
             if (bar.OpenAt < expectedOpen) return Stop(NativeBarStatus.MissingInterval);
             if (bar.OpenAt != expectedOpen || bar.OpenAt < 0 || bar.CloseAt != expectedOpen + width ||
