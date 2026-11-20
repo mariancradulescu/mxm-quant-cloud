@@ -30,7 +30,7 @@ public static class NativeStructuralOpportunity
     public const string Prefix = "CLOSED_MARKET_";
     public const string Compression = "COMPRESSION_RELEASE";
     public const string Rejection = "RANGE_EDGE_REJECTION";
-    public static readonly string[] Variants = { "CASH", "FIRST", "RANDOM", "TREND", "REJECTION", "POOLED", "RANK", "SELECT" };
+    public static readonly string[] Variants = { "CASH", "FIRST", "RANDOM", "TREND", "REJECTION", "POOLED", "RANK", "SELECT", "EXHAUSTION", "COMBINED", "COMBINED_RANDOM" };
 
     public static bool IsPolicy(string policy)
         => policy.StartsWith(Prefix, StringComparison.Ordinal) &&
