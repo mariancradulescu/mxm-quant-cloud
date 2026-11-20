@@ -128,11 +128,13 @@ def readback(receipt, private_key):
 
         marks = []
         count = {e.BID: 0, e.ASK: 0}
+        prior_tail = {e.BID: [], e.ASK: []}
         active = {r[0] // HOUR * HOUR for r in bars["M5"] if r[0] >= START}
         hours = set()
         for day in range(START, END, DAY):
             key = f"{name}-{day}-ticks.enc"
             if key not in shard_metadata:
+                prior_tail = {e.BID: [], e.ASK: []}
                 continue
             shard = open_shard(key)
             need(shard["Name"] == name and shard["Day"] == day, "INTEGRATED_TICK_SHARD_LABEL")
@@ -172,7 +174,10 @@ def readback(receipt, private_key):
             hours.update(requested)
             for side in sides:
                 count[side] += len(sides[side])
-            marks.extend(minute_marks(day, sides[e.BID], sides[e.ASK]))
+            marks.extend(minute_marks(day, prior_tail[e.BID] + sides[e.BID],
+                                     prior_tail[e.ASK] + sides[e.ASK]))
+            prior_tail = {side: [row for row in ticks if row[0] >= day + DAY - 90_000]
+                          for side, ticks in sides.items()}
         need(len(hours) == observed["SourceTickHours"] and count[e.BID] == observed["Bid"] and
              count[e.ASK] == observed["Ask"] and len(active) == observed["ActiveHours"],
              "INTEGRATED_TICK_COUNT_READBACK")

@@ -47,6 +47,16 @@ public sealed partial class NativeFundedSession
         return Ledger.Summary();
     }
 
+    // A single observation changes no cash, inventory or pending order facts.
+    // Retain the same validation and event chain without serializing the entire
+    // session on every minute of full-session market observation.
+    internal void RecordResearchMark(LedgerEvent mark)
+    {
+        if(Ledger.MonetaryDomain!="MODEL_REPLAY" || mark.Kind!="MARK")
+            throw new ArgumentException("MODEL_RESEARCH_MARK_ONLY");
+        Ledger.Apply(mark);
+    }
+
     // Prospective decision entrypoint: future native scoring adapters must
     // supply explicit matched EUR benchmark/cost evidence. Historical replay
     // continues to use DecideResearch, preserving original decision hashes.
