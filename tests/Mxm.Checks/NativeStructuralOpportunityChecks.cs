@@ -79,5 +79,22 @@ internal static class NativeStructuralOpportunityChecks
         check(replay.OriginalModelEvents.Where(e => e.Kind is "REQUEST_CLOSE" or "CLOSE_FILL")
             .Select(e => e.At).SequenceEqual(new[] { first + 900_000L, first + 930_000L }),
             "structural invalidation is never settled as a same-observation fill");
+
+        var features = new decimal[8];
+        var samples = Enumerable.Range(1, 4).SelectMany(day => Enumerable.Range(0, 4).Select(i =>
+            new NativeCompleteSample("EURUSD", first - NativeCompletePolicy.Day * day + i,
+                first - NativeCompletePolicy.Day * day + i + 1, features, .5m))).ToArray();
+        var empirical = new NativeCompleteDistribution(samples, false, UncertaintyR: .1m);
+        var model = new NativeStructuralModels(first - 1, new()
+        {
+            [NativeStructuralOpportunity.Compression] = new(empirical, empirical, 4)
+        });
+        string rankedPolicy = NativeStructuralOpportunity.Prefix + "SELECT";
+        var ranked = new NativeUnifiedPortfolioEngine(rankedPolicy, closedContextModels: model);
+        var rankedCloud = new NativeUnifiedCloudParityAdapter(rankedPolicy, closedContextModels: model);
+        check(ranked.Advance(seed) == rankedCloud.Observe(Frame(first, true)) && ranked.ModelSummary.PendingIntents == 1 &&
+            ranked.Advance(Frame(first + 30_000L, false)) == rankedCloud.Observe(Frame(first + 30_000L, true)) &&
+            ranked.ModelSummary.OpenPositions == 1,
+            "the same settled-past distribution admits and reprices the same observation-only fill");
     }
 }

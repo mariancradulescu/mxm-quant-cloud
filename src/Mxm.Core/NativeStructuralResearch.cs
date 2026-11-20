@@ -189,6 +189,16 @@ public static class NativeStructuralResearch
         var trainOffers = Between(start, trainEnd);
         var calOffers = Between(trainEnd, calibrationEnd);
         var evalOffers = Between(calibrationEnd, end);
+        var offerEvidence = offers.Select(offer =>
+        {
+            var frame = frames[offer.Index];
+            var market = frame.Markets.Single(m => m.Symbol == offer.Symbol);
+            return new { frame.At, offer.Symbol, offer.Signal.Family, offer.Signal.Side, offer.Signal.DecisionBar,
+                Windows = market.ClosedBars!.Windows
+                    .Where(w => NativeClosedMarketContext.Duration(w.Timeframe) <= 3_600_000L)
+                    .Select(w => new { Timeframe = w.Timeframe.ToString(), w.Source, w.RequiredBars,
+                        FirstOpenAt = w.Bars[0].OpenAt, w.ExpectedCloseAt, w.WitnessAt, ValuesSha256 = w.ValuesSha256() }) };
+        }).ToArray();
         object Scenario(string suffix)
         {
             var train = Labels(frames, trainOffers, trainEnd, suffix, contracts);
@@ -214,7 +224,7 @@ public static class NativeStructuralResearch
                 Books = books
             };
         }
-        return new { start, trainEnd, calibrationEnd, end, Census = census,
+        return new { start, trainEnd, calibrationEnd, end, Census = census, OfferEvidence = offerEvidence,
             Central = Scenario(""), Adverse = Scenario("_ADVERSE"), ExposedHistory = true,
             AssetFinancingAndDrawdownCertified = false, IndependentConfirmation = false, Orders = 0, CloudActivation = false };
     }
