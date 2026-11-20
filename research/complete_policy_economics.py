@@ -27,11 +27,11 @@ def readback():
     need(str(receipt["OriginalRun"]) == SOURCE_RUN and receipt["Completed"] and
          receipt["NativeTapeSha256"] == NATIVE_SHA and receipt["OrdersSubmitted"] == 0
          and not receipt["CloudActivated"], "COMPLETE_POLICY_SOURCE_RECEIPT_BINDING")
-    key = os.environ.pop("R3_CUSTODY_PRIVATE_KEY_PEM", "").encode()
-    need(bool(key), "COMPLETE_POLICY_CUSTODY_KEY_MISSING")
+    custody_key = os.environ.pop("R3_CUSTODY_PRIVATE_KEY_PEM", "").encode()
+    need(bool(custody_key), "COMPLETE_POLICY_CUSTODY_KEY_MISSING")
     cipher = (ENC / "native-tape.enc").read_bytes()
     need(digest(cipher) == receipt["NativeCipherSha256"], "COMPLETE_POLICY_TAPE_CIPHER_HASH")
-    plain = unseal_new(cipher, key, SOURCE_RUN)
+    plain = unseal_new(cipher, custody_key, SOURCE_RUN)
     need(digest(plain) == NATIVE_SHA, "COMPLETE_POLICY_TAPE_BYTES_HASH")
     del cipher
     tape = json.loads(plain)
@@ -48,7 +48,7 @@ def readback():
         terms = hashes[name + "-terms"]
         cipher = (ENC / (name + "-terms.enc")).read_bytes()
         need(digest(cipher) == terms["CipherSha256"], "COMPLETE_POLICY_TERMS_CIPHER_HASH")
-        plain = unseal_new(cipher, key, SOURCE_RUN)
+        plain = unseal_new(cipher, custody_key, SOURCE_RUN)
         need(digest(plain) == terms["PlainSha256"], "COMPLETE_POLICY_TERMS_PLAIN_HASH")
         messages = [unpack([x["RequestType"], x["Request"], x["ResponseType"], x["Response"]])
                     for x in json.loads(plain)]
@@ -74,8 +74,8 @@ def readback():
         # extrapolated beyond that archive's coverage to manufacture a fill.
         quotes = [q for q in quotes if 479 <= (q["At"] % 86_400_000) // 60_000 < 665]
         need(len(quotes) > 0, "COMPLETE_POLICY_NO_AUTHENTIC_QUOTE_CLOCKS")
-        for key in ("M5", "M15", "H1"):
-            need(len(market["Frames"][key]) == receipt["Counts"][name][key], "COMPLETE_POLICY_BAR_COUNT_BINDING")
+        for period in ("M5", "M15", "H1"):
+            need(len(market["Frames"][period]) == receipt["Counts"][name][period], "COMPLETE_POLICY_BAR_COUNT_BINDING")
         markets.append({"Name": name, "Class": "FX", "Contract": market["Contract"], "TickSize": str(tick),
             "Margin": margin, "ShortAllowed": True, "TradingMode": 0, "CostTermsComplete": True,
             "M5": normalized_bars(market["Frames"]["M5"]), "M15": normalized_bars(market["Frames"]["M15"]),
