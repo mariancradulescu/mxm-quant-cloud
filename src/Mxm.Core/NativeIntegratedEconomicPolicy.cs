@@ -16,6 +16,8 @@ public sealed record NativeIntegratedMarket(
     decimal TickSize, NativeObservedQuotePath? Path)
 {
     public NativeProtectionDistances? Protection { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public NativeQuoteResidence? Residence { get; init; }
 }
 
 public sealed record NativeIntegratedCandidate(string Family, int Side, decimal Stop,
@@ -31,6 +33,8 @@ public sealed record NativeIntegratedPlan(decimal Stop, decimal Target,
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public NativeEntryThesis? Thesis { get; init; }
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public NativeCompleteEntry? CompletePolicy { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public decimal? EntrySlippage { get; init; }
 }
 
@@ -41,6 +45,8 @@ public sealed record NativeIntegratedEpisode(decimal InitialPlannedRewardEur,
 {
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public NativeEntryThesis? Thesis { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public NativeCompleteEntry? CompletePolicy { get; init; }
 }
 
 public static class NativeIntegratedEconomicPolicy
@@ -52,7 +58,7 @@ public static class NativeIntegratedEconomicPolicy
         "INTEGRATED_STRUCTURE_BUDGET", "INTEGRATED_RANDOM_MIN"
     };
     public static bool IsPolicy(string policy)
-        => Policies.Contains(policy, StringComparer.Ordinal) || NativeIntegratedLifecycle.IsPolicy(policy) ||
+        => Policies.Contains(policy, StringComparer.Ordinal) || NativeIntegratedLifecycle.IsPolicy(policy) || NativeCompletePolicy.IsPolicy(policy) ||
            (policy.EndsWith("_ADVERSE", StringComparison.Ordinal) &&
             policy[..^8] is "INTEGRATED_FIRST_MIN" or "INTEGRATED_STRUCTURE_BUDGET");
 

@@ -38,6 +38,9 @@ public class MxmCloud : Robot
     public bool EnableUnifiedReadOnlyPolicy {get;set;}
     [Parameter("Full-session integrated policy observation (NO ORDERS)", DefaultValue = false)]
     public bool EnableFullSessionObservation {get;set;}
+    [Parameter("Complete policy snapshot (NO ORDERS)", DefaultValue = "")]
+    public string CompletePolicySnapshot {get;set;}="";
+    private bool _completePolicyObservation;
     [Parameter("SCP1 precommitted score snapshot (NO ORDERS)", DefaultValue = "")]
     public string Scp1FrozenModelEnvelope {get;set;}="";
     private NativeUnifiedCloudParityAdapter? _unifiedPolicy;
@@ -71,8 +74,30 @@ public class MxmCloud : Robot
         // unset key may raise LocalStorageException. Do not load any checkpoint
         // as the restart authority. Reconstruct from native broker facts.
         _fundedSession=new NativeFundedSession(_accountBinding);
+
         if(EnableFullSessionObservation)
-            _unifiedPolicy=new NativeUnifiedCloudParityAdapter(NativeIntegratedLifecycle.Economic,_accountBinding);
+        {
+            if(string.IsNullOrWhiteSpace(CompletePolicySnapshot))
+                _unifiedPolicy=new NativeUnifiedCloudParityAdapter(NativeIntegratedLifecycle.Economic,_accountBinding);
+            else
+            {
+                try
+                {
+                    var model=System.Text.Json.JsonSerializer.Deserialize<NativeCompleteModels>(CompletePolicySnapshot);
+                    if(model is null || model.AvailableAt<=0L || model.AvailableAt>=Stamp(Server.TimeInUtc) ||
+                       model.Entry is null || model.Hold is null ||
+                       model.Entry.Samples.Any(x=>x.SettledAt>=model.AvailableAt) ||
+                       model.Hold.Samples.Any(x=>x.SettledAt>=model.AvailableAt))
+                        throw new System.ArgumentException("COMPLETE_POLICY_SNAPSHOT_NOT_CAUSAL");
+                    _unifiedPolicy=new NativeUnifiedCloudParityAdapter(NativeCompletePolicy.Economic,_accountBinding,models:model);
+                    _completePolicyObservation=true;
+                }
+                catch(System.Exception)
+                {
+                    Print("Complete policy snapshot rejected. Native broker observation remains read-only.");
+                }
+            }
+        }
         else if(EnableUnifiedReadOnlyPolicy)
         {
             if(!string.IsNullOrWhiteSpace(Scp1FrozenModelEnvelope))
@@ -455,7 +480,8 @@ public class MxmCloud : Robot
                 {
                     _lastUnifiedObservedAt=at;
                     var observations=new System.Collections.Generic.List<Ucp1MarketFrame>();
-                    var researchNames=EnableFullSessionObservation
+                    var researchNames=_completePolicyObservation?new[]{"EURUSD","GBPUSD","AUDUSD"}:
+                        EnableFullSessionObservation
                         ? new[]{"EURUSD","GBPUSD","XAUUSD","SpotBrent","US500",Symbols.Exists("AAPL")?"AAPL":"AAPL.US"}
                         : universe.ResearchSymbols;
                     var sourceNames=_unifiedPolicy.ActiveSymbols

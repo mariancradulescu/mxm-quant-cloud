@@ -207,13 +207,13 @@ internal static class IntegratedEconomicReplay
         };
     }
 
-    public static int Run(string inputFile,string outputDirectory,bool coherent=false)
+    public static int Run(string inputFile,string outputDirectory,bool coherent=false,bool completePolicy=false)
     {
         using var stream=File.OpenRead(inputFile);
         var source=JsonSerializer.Deserialize<Source>(stream,Json)
             ??throw new ArgumentException("INTEGRATED_VERIFIED_SOURCE_MISSING");
-        long spacing=coherent?NativeIntegratedLifecycle.IntervalMs:60_000L;
-        if(source.Start<=0 || source.End-source.Start!=21*86400000L || source.ManagementIntervalMs!=spacing ||
+        long spacing=coherent||completePolicy?NativeIntegratedLifecycle.IntervalMs:60_000L;
+        if(source.Start<=0 || source.End-source.Start!=(completePolicy?12*NativeCompletePolicy.Week:21*86_400_000L) || source.ManagementIntervalMs!=spacing ||
            source.ProtocolSha256.Length!=64 || source.SourceRun.Length==0 ||
            !source.SourceRun.All(char.IsAsciiDigit) ||
            source.Markets.Select(x=>x.Name).Distinct(StringComparer.Ordinal).Count()!=source.Markets.Length)
@@ -223,12 +223,33 @@ internal static class IntegratedEconomicReplay
         var frames=new List<Ucp1Frame>();
         for(long at=source.Start+NativeIntegratedEconomicPolicy.ClockOffsetMs;at<source.End;at+=spacing)
         {
+            if (completePolicy)
+            {
+                long minute = at % NativeCompletePolicy.Day / 60_000L;
+                var weekday = DateTimeOffset.FromUnixTimeMilliseconds(at).UtcDateTime.DayOfWeek;
+                if (minute<479 || minute>=665 || weekday is DayOfWeek.Saturday or DayOfWeek.Sunday) continue;
+            }
             var conversion=fx.At(at);
             var observed=conversion is null?Array.Empty<Ucp1MarketFrame>():markets
                  .Select(m=>m.Frame(at,conversion)).OfType<Ucp1MarketFrame>().ToArray();
             frames.Add(new Ucp1Frame(at,observed));
         }
         var clocks=frames.ToArray();
+        if (completePolicy)
+        {
+            Directory.CreateDirectory(outputDirectory);
+            using var economy=File.Create(Path.Combine(outputDirectory,"economic.json"));
+            var completeCoverage=markets.Select(x=>new {
+                x.Source.Name,x.Source.Class,x.Source.ActiveHours,x.Source.RequestedTickHours,
+                M5=x.Source.M5.Length,M15=x.Source.M15.Length,H1=x.Source.H1.Length,
+                x.Source.Protection,x.Source.Margin,x.AcceptedMarks
+            }).ToArray();
+            var result=NativeCompletePolicyResearch.Run(clocks,source.Start,source.End,
+                source.Markets.ToDictionary(x=>x.Name,x=>x.Contract,StringComparer.Ordinal));
+            JsonSerializer.Serialize(economy,new { Study="COMPLETE_POLICY_EXECUTABLE_QUOTE_RESIDENCE",
+                source.SourceRun,source.ProtocolSha256,SourceCoverage=completeCoverage,Result=result },Json);
+            return 0;
+        }
         var diagnostic=coherent?null:ReachablePath(clocks);
         var policies=coherent?NativeIntegratedLifecycle.Policies:NativeIntegratedEconomicPolicy.Policies
             .Concat(new[]{"INTEGRATED_FIRST_MIN_ADVERSE","INTEGRATED_STRUCTURE_BUDGET_ADVERSE"}).ToArray();

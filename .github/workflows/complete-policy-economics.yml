@@ -1,0 +1,120 @@
+name: Complete-policy economic discovery
+on:
+  pull_request:
+    paths:
+      - 'src/Mxm.Core/NativeComplete*.cs'
+      - 'src/Mxm.Core/NativeUnifiedPortfolioEngine*.cs'
+      - 'src/Mxm.Replay/IntegratedEconomicReplay.cs'
+      - 'src/Mxm.Cloud/MxmCloud.cs'
+      - 'research/complete_policy_economics.py'
+      - '.github/workflows/complete-policy-economics.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ops/complete-policy-economics-once.txt'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    outputs:
+      ready: ${{ steps.marker.outputs.ready }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - name: Check frozen design and native complete-policy contract
+        run: |
+          git merge-base --is-ancestor f77ffc92af2fdba792577edb9bef2d4a831d9f4f HEAD
+          git show f77ffc92af2fdba792577edb9bef2d4a831d9f4f:research/COMPLETE_POLICY_DISCOVERY_20261120.md | cmp - research/COMPLETE_POLICY_DISCOVERY_20261120.md
+          git diff --exit-code 4ae747cb9a43b8897b2f550fc59c2ed1a846a927 -- \
+            research/CVP1_FROZEN_CONTEXT_CONTINUATION_20261117.md src/Mxm.Replay/Cvp1NativeStudy.cs \
+            research/INTEGRATED_CAUSAL_LIFECYCLE_20261120.md research/integrated_lifecycle_evaluation.py \
+            ops/cvp1-original-once.txt ops/integrated-causal-lifecycle-evaluation-once.txt
+          dotnet build src/Mxm.Replay -c Release
+          dotnet build src/Mxm.Cloud -c Release
+          dotnet run --project tests/Mxm.Checks -c Release
+          python -m py_compile research/complete_policy_economics.py research/audit_complete_policy_original.py
+      - name: Validate the separate one-time OWNER marker
+        id: marker
+        shell: bash
+        run: |
+          marker=ops/complete-policy-economics-once.txt
+          subject=OWNER_COMPLETE_POLICY_ECONOMIC_DISCOVERY_ONCE
+          echo "ready=false" >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_EVENT_NAME" == push && "$GITHUB_REF" == refs/heads/main &&
+                "$GITHUB_ACTOR" == mariancradulescu && "$GITHUB_RUN_ATTEMPT" == 1 &&
+                "$(git log -1 --format=%s)" == "$subject" &&
+                "$(git diff-tree --no-commit-id --name-status -r HEAD)" == $'A\t'"$marker" &&
+                -z "$(git log -1 --format=%H HEAD^ -- "$marker")" &&
+                "$(cat "$marker")" == "$subject" ]]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+  evaluate:
+    needs: verify
+    if: ${{ github.ref == 'refs/heads/main' && github.run_attempt == '1' && needs.verify.outputs.ready == 'true' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    environment: mxm-r3-custody-v1
+    concurrency:
+      group: mxm-complete-policy-economics
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Install existing source dependencies and build Replay
+        run: |
+          python -m pip install -r research/requirements.txt
+          dotnet build src/Mxm.Replay -c Release
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: integrated-causal-lifecycle-economic-public
+          path: original-coherence-economics
+          run-id: 44700828331
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: integrated-lifecycle-original-forensics-public
+          path: original-coherence-forensics
+          run-id: 44698833443
+          github-token: ${{ github.token }}
+      - name: Reconcile immutable original economics before any new evaluation
+        run: |
+          mkdir -p complete-policy-original
+          zip -j "$RUNNER_TEMP/economic.zip" original-coherence-economics/economic.json original-coherence-economics/receipt.json
+          zip -j "$RUNNER_TEMP/forensic.zip" original-coherence-forensics/forensics.json
+          python -m research.audit_complete_policy_original "$RUNNER_TEMP/economic.zip" "$RUNNER_TEMP/forensic.zip" complete-policy-original/phase-a.json
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: cvp1-original-lifecycle-public-receipt
+          path: complete-source-public
+          run-id: 44162043538
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: cvp1-original-pepperstone-encrypted-source
+          path: complete-source-encrypted
+          run-id: 44162043538
+          github-token: ${{ github.token }}
+      - name: Native complete-policy learning and matched EUR300 evaluation
+        run: python -m research.complete_policy_economics
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: complete-policy-economic-original-public
+          path: complete-policy-original/
+          retention-days: 90
+          if-no-files-found: error

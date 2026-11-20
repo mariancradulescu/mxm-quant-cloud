@@ -1,0 +1,191 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace Mxm.Core;
+
+public sealed record NativeQuoteResidence(decimal Mean, decimal LateChange, decimal MidDisplacement);
+public sealed record NativeCompleteSample(string Symbol, long DecisionAt, long SettledAt, decimal[] Features, decimal OutcomeR);
+public sealed record NativeCompletePrediction(decimal Mean, decimal Lower, decimal PositiveProbability,
+    decimal P10, decimal P50, decimal P90, int Observations, int Days);
+public sealed record NativeCompleteHold(long ObservedAt, long BarCloseAt, decimal[] Features, decimal ScaleEur,
+    decimal? EstimatedContinueEur, bool CloseRequested);
+public sealed record NativeCompleteEntry(decimal[] Features, decimal ScaleEur,
+    NativeCompletePrediction? Prediction, NativeCompleteHold? Hold = null);
+public sealed record NativeCompleteProbe(string Symbol, int Side, long At, bool CloseAtHoldCheckpoint = false);
+
+public sealed record NativeCompleteDistribution(NativeCompleteSample[] Samples, bool WithoutResidence,
+    decimal BiasR = 0m, decimal UncertaintyR = 0m)
+{
+    public NativeCompletePrediction? Predict(decimal[] features, long clock, decimal scale)
+    {
+        if (scale <= 0m) throw new ArgumentException("COMPLETE_POLICY_RISK_SCALE");
+        int first = WithoutResidence ? 2 : 0;
+        var ranked = Samples.Where(s => s.SettledAt < clock).Select(sample =>
+        {
+            if (sample.Features.Length != features.Length) throw new ArgumentException("COMPLETE_POLICY_FEATURE_COUNT");
+            decimal distance = 0m;
+            for (int i = first; i < features.Length; i++)
+            {
+                decimal delta = features[i] - sample.Features[i];
+                distance += delta * delta;
+            }
+            return (sample, distance);
+        }).OrderBy(v => v.distance).ThenBy(v => v.sample.DecisionAt).ThenBy(v => v.sample.Symbol, StringComparer.Ordinal);
+        var days = new Dictionary<long, int>();
+        var values = new List<(decimal Return, decimal Weight)>();
+        foreach (var (sample, distance) in ranked)
+        {
+            long day = sample.DecisionAt / NativeCompletePolicy.Day;
+            int count = days.GetValueOrDefault(day);
+            if (count >= 8) continue;
+            days[day] = count + 1;
+            values.Add(((sample.OutcomeR + BiasR) * scale, 1m / (1m + distance)));
+            if (values.Count == 48) break;
+        }
+        if (values.Count < 12 || days.Count < 4) return null;
+        decimal weight = values.Sum(x => x.Weight);
+        decimal mean = values.Sum(x => x.Return * x.Weight) / weight;
+        var ordered = values.OrderBy(x => x.Return).ToArray();
+        decimal Quantile(decimal fraction)
+        {
+            decimal sum = 0m;
+            foreach (var row in ordered)
+            {
+                sum += row.Weight;
+                if (sum >= weight * fraction) return row.Return;
+            }
+            return ordered[^1].Return;
+        }
+        return new(mean, mean - UncertaintyR * scale, values.Where(x => x.Return > 0m).Sum(x => x.Weight) / weight,
+            Quantile(.10m), Quantile(.50m), Quantile(.90m), values.Count, days.Count);
+    }
+
+    public NativeCompleteDistribution Calibrate(IEnumerable<NativeCompleteSample> observations)
+    {
+        var errors = observations.Select(row =>
+            (row.DecisionAt, Predicted: Predict(row.Features, row.DecisionAt, 1m), row.OutcomeR))
+            .Where(row => row.Predicted is not null)
+            .GroupBy(row => row.DecisionAt / NativeCompletePolicy.Day)
+            .Select(g => g.Average(row => row.OutcomeR - row.Predicted!.Mean)).ToArray();
+        if (errors.Length < 4) return this;
+        decimal mean = errors.Average();
+        decimal sampleVariance = errors.Sum(e => (e - mean) * (e - mean)) / (errors.Length - 1);
+        return this with { BiasR = mean, UncertaintyR = (decimal)Math.Sqrt((double)(sampleVariance / errors.Length)) };
+    }
+}
+
+public sealed record NativeCompleteModels(long AvailableAt, NativeCompleteDistribution? Hold,
+    NativeCompleteDistribution? Entry = null, NativeCompleteDistribution? Ablation = null);
+
+public sealed class NativeQuoteResidenceStream
+{
+    readonly Dictionary<string, Queue<LedgerQuote>> windows = new(StringComparer.Ordinal);
+
+    public Ucp1Frame Observe(Ucp1Frame frame)
+    {
+        var observed = new Ucp1MarketFrame[frame.Markets.Length];
+        for (int i = 0; i < observed.Length; i++)
+        {
+            var market = frame.Markets[i];
+            var last = market.Quote;
+            observed[i] = market;
+            if (!windows.TryGetValue(market.Symbol, out var window))
+                windows[market.Symbol] = window = new();
+            if (window.Count > 0 && last.At - window.Last().At != NativeIntegratedLifecycle.IntervalMs)
+                window.Clear();
+            if (market.Integrated is not { Path.Complete: true } evidence)
+            {
+                window.Clear();
+                continue;
+            }
+            window.Enqueue(last);
+            if (window.Count > 30) window.Dequeue();
+            if (window.Count < 30) continue;
+            var quotes = window.ToArray();
+            decimal Mid(LedgerQuote q) => (q.Bid + q.Ask) / 2m;
+            decimal anchor = quotes.Take(10).Average(Mid);
+            var states = quotes.Skip(10).Select(q => q.Bid > anchor ? 1m : q.Ask < anchor ? -1m : 0m).ToArray();
+            observed[i] = market with { Integrated = evidence with {
+                Residence = new(states.Average(), states.Skip(10).Average() - states.Take(10).Average(),
+                    Mid(last) - Mid(quotes[0]))
+            }};
+        }
+        return frame with { Markets = observed };
+    }
+}
+
+public static class NativeCompletePolicy
+{
+    public const long Day = 86_400_000L;
+    public const long Week = 7 * Day;
+    const long EntryFirst = (8 * 60 + 15) * 60_000L;
+    const long EntryLast = (10 * 60 + 30) * 60_000L;
+    const long SessionSafety = (10 * 60 + 54) * 60_000L;
+    public const string Prefix = "COMPLETE_POLICY_";
+    public const string Probe = Prefix + "PROBE";
+    public const string Economic = Prefix + "ECONOMIC";
+    public const string EconomicAdverse = Economic + "_ADVERSE";
+    public static readonly string[] Variants = { "CASH", "FIRST", "RANDOM", "LONG", "SHORT", "RANK", "ABLATION", "ECONOMIC" };
+
+    public static bool IsPolicy(string policy) => policy.StartsWith(Prefix, StringComparison.Ordinal)
+        && (Variant(policy) == "PROBE" || Variants.Contains(Variant(policy), StringComparer.Ordinal));
+
+    public static string Variant(string policy)
+        => policy[Prefix.Length..].Replace("_ADVERSE", "", StringComparison.Ordinal);
+
+    public static bool IsDecision(long at)
+        => at % 900_000L == NativeIntegratedEconomicPolicy.ClockOffsetMs &&
+           at % Day >= EntryFirst && at % Day <= EntryLast + NativeIntegratedEconomicPolicy.ClockOffsetMs;
+
+    public static bool SessionExit(long at, long opened)
+        => at / Day > opened / Day || at % Day >= SessionSafety;
+
+    static decimal[] Clip(params decimal[] values)
+        => values.Select(v => Math.Max(-4m, Math.Min(4m, v))).ToArray();
+
+    static decimal Session(long at) => (at % Day - EntryFirst) / (SessionSafety - EntryFirst);
+
+    public static decimal[] EntryFeatures(NativeQuoteResidence state, NativeIntegratedTerms terms,
+        NativeIntegratedCandidate signal, LedgerQuote quote)
+        => Clip(signal.Side * state.Mean, signal.Side * state.LateChange, signal.Side * state.MidDisplacement / signal.Volatility,
+            (quote.Ask - quote.Bid) / signal.Volatility, terms.RewardEur / terms.RiskEur, Session(quote.At));
+
+    public static decimal[] HoldFeatures(NativeQuoteResidence state, int side, decimal liquidationEur, decimal mfe, decimal risk, long at)
+        => Clip(side * state.Mean, liquidationEur / risk, mfe / risk, Session(at));
+
+    public static NativeIntegratedCandidate[] Describe(Ucp1MarketFrame market, long at)
+    {
+        if (!IsDecision(at) || market.Integrated is not { Residence: not null } context ||
+            market.M5.Length < 5 || at - market.M5[^1].CloseAt > 300_000L ||
+            market.M5[^1].CloseAt >= at || context.H1.Length == 0) return Array.Empty<NativeIntegratedCandidate>();
+        var bars = market.M5.TakeLast(5).ToArray();
+        if (bars.Any(x => x.CloseAt - x.OpenAt != 300_000L || x.High <= x.Low) ||
+            bars.Zip(bars.Skip(1)).Any(x => x.First.CloseAt != x.Second.OpenAt))
+            return Array.Empty<NativeIntegratedCandidate>();
+        var hour = context.H1[^1];
+        var q = market.Quote;
+        if (hour.CloseAt >= at || at - hour.CloseAt > 3_600_000L || hour.High <= hour.Low)
+            return Array.Empty<NativeIntegratedCandidate>();
+        decimal atr = Math.Max(context.TickSize, bars.Average(x => x.High - x.Low));
+        var recent = bars.TakeLast(3).ToArray();
+        var choices = new List<NativeIntegratedCandidate>();
+        foreach (int side in new[] { 1, -1 })
+        {
+            decimal exit = side > 0 ? q.Bid : q.Ask;
+            decimal entry = side > 0 ? q.Ask : q.Bid;
+            decimal permittedStopDistance = context.Protection is { } p
+                ? p.Stop * (p.Percentage ? exit / 100m : 1m) : 0m;
+            decimal distance = Math.Max(atr, permittedStopDistance);
+            decimal stop = side > 0 ? Math.Min(recent.Min(b => b.Low) - context.TickSize, exit - distance)
+                : Math.Max(recent.Max(b => b.High) + context.TickSize, exit + distance);
+            decimal target = side > 0 ? hour.High : hour.Low;
+            if (side * (target - entry) <= 0m) target = entry + side * (hour.High - hour.Low);
+            stop = (side > 0 ? Math.Floor(stop / context.TickSize) : Math.Ceiling(stop / context.TickSize)) * context.TickSize;
+            target = (side > 0 ? Math.Ceiling(target / context.TickSize) : Math.Floor(target / context.TickSize)) * context.TickSize;
+            if (stop > 0m && target > 0m)
+                choices.Add(new("QUOTE_RESIDENCE", side, stop, target, atr, at - NativeIntegratedEconomicPolicy.ClockOffsetMs));
+        }
+        return choices.ToArray();
+    }
+}

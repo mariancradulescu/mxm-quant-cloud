@@ -47,7 +47,11 @@ public sealed record Ucp1Checkpoint(string Version,string Policy,string Session,
     string LastBrokerEvidence,Scp1ScoreModel? Scp1Model=null,
     Scp1ChoiceReceipt[]? Scp1Choices=null,
     [property: System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
-    NativeIntegratedCalibrationState? IntegratedCalibration=null);
+    NativeIntegratedCalibrationState? IntegratedCalibration=null,
+    [property: System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    NativeCompleteModels? CompleteModels=null,
+    [property: System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    NativeCompleteProbe? CompleteProbe=null);
 public sealed record Scp1ChoiceReceipt(long At,string Symbol,string Family,int Side,
     decimal? ConditionalExpectedNetEur,decimal? AdverseLowerNetEur,
     double? FavorableProbability,string ModelMethod,string Decision);
@@ -124,6 +128,11 @@ public sealed partial class NativeUnifiedPortfolioEngine
     readonly string policy;
     readonly Scp1ScoreModel? scoreModel;
     readonly NativeIntegratedBarrierCalibration? integratedCalibration;
+    readonly NativeCompleteModels? completeModels;
+    readonly NativeCompleteProbe? completeProbe;
+    bool CompletePolicy => NativeCompletePolicy.IsPolicy(policy);
+    bool CoherentIntegrated => integratedCalibration is not null || CompletePolicy;
+    bool AdverseCompletePolicy => policy.EndsWith("_ADVERSE",StringComparison.Ordinal);
     readonly List<Scp1ChoiceReceipt> scoredChoices=new();
     readonly NativeFundedSession model;
     readonly NativeFundedSession broker;
@@ -138,7 +147,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
         closeRequests,rejections,sourceUnknownClocks,gapExposures;
     string lastBrokerEvidence="NO_BROKER_FACT_REPLAY_ONLY";
     public NativeUnifiedPortfolioEngine(string policy,string brokerBinding="",
-        Scp1ScoreModel? scoredModel=null)
+        Scp1ScoreModel? scoredModel=null,NativeCompleteModels? models=null,NativeCompleteProbe? probe=null)
     {
         if(policy is not ("JOINT" or "TRANSITION_ONLY" or "REPAIR_ONLY" or
                           "LONG" or "SHORT" or "CASH" or
@@ -151,6 +160,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
            !NativeIntegratedEconomicPolicy.IsPolicy(policy))
             throw new ArgumentException("UCP1_UNDECLARED_COMPLETE_POLICY");
         this.policy=policy;
+        completeModels=models;
+        completeProbe=probe;
         if(NativeIntegratedLifecycle.IsPolicy(policy))integratedCalibration=new();
         if((policy.StartsWith("SCP1_",StringComparison.Ordinal) ||
             policy.StartsWith("FCP1_",StringComparison.Ordinal)) &&
@@ -165,6 +176,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
     {
         if(s.Version!=Version)throw new ArgumentException("UCP1_CHECKPOINT_VERSION");
         policy=s.Policy;
+        completeModels=s.CompleteModels;
+        completeProbe=s.CompleteProbe;
         if(NativeIntegratedLifecycle.IsPolicy(policy))
             integratedCalibration=new(s.IntegratedCalibration??
                 throw new ArgumentException("INTEGRATED_CALIBRATION_CHECKPOINT_MISSING"));
@@ -201,7 +214,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
         expiredCloses,closeRequests,rejections,sourceUnknownClocks,
         gapExposures,new(reasons,StringComparer.Ordinal),
         facts.ToArray(),trips.ToArray(),curve.ToArray(),lastBrokerEvidence,
-        scoreModel,scoredChoices.ToArray(),integratedCalibration?.Checkpoint()));
+        scoreModel,scoredChoices.ToArray(),integratedCalibration?.Checkpoint(),completeModels,completeProbe));
     static string Sha(string s)=>Convert.ToHexString(SHA256.HashData(
         Encoding.UTF8.GetBytes(s))).ToLowerInvariant();
     LedgerEvent Event(string kind,long at,string id="",string sym="",int side=0,
@@ -322,6 +335,11 @@ public sealed partial class NativeUnifiedPortfolioEngine
                m.Contract is null||m.Contract.Symbol!=m.Symbol||
                m.Contract.MinimumUnits<=0||m.SlippagePerSideQuote<0))
             throw new ArgumentException("UCP1_NONCAUSAL_OBSERVATION_OR_DUPLICATE_CLOCK");
+        if(CompletePolicy)
+            frame=frame with { Markets=frame.Markets.Select(m=>m.Integrated is { } e
+                ? m with { Quote=m.Quote with {
+                    LiquidationSlippagePerSide=NativeIntegratedEconomicPolicy.Slippage(m.Quote.Bid,m.Quote.Ask,
+                        e.TickSize,AdverseCompletePolicy) } } : m).ToArray() };
         ReadBroker(frame.Broker);
         long t=frame.At;
         var by=frame.Markets.ToDictionary(m=>m.Symbol,StringComparer.Ordinal);
@@ -355,8 +373,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
             decimal px=request.Side>0?q.Ask+request.SlippagePerSide:
                 q.Bid-request.SlippagePerSide;
             var plan=plans[request.PositionId];
-            var plannedFill=integratedCalibration is null?null:CoherentFill(plan,input,model.Ledger.Summary(t),px);
-            if(plan.Integrated is not null && (integratedCalibration is null
+            var plannedFill=CoherentIntegrated?CoherentFill(plan,input,model.Ledger.Summary(t),px):null;
+            if(plan.Integrated is not null && (!CoherentIntegrated
                 ?!IntegratedFillStillAdmissible(plan,input,start,px):plannedFill is null))
             {
                 Apply(Event("MODEL_OPEN_INTENT_EXPIRED",t,request.PositionId,
@@ -395,7 +413,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
             }
         }
 
-        bool deRisk=integratedCalibration is not null && CoherentDeRisk(model.Ledger.Summary(t));
+        bool deRisk=CoherentIntegrated && CoherentDeRisk(model.Ledger.Summary(t));
         // Every held position persists across observation gaps. SIR1 can only
         // expire UNTRANSMITTED close requests, never broker orders or positions.
         foreach(var held in model.Ledger.PositionSnapshot()
@@ -406,7 +424,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 throw new InvalidOperationException("UCP1_HELD_PLAN_MISSING");
             by.TryGetValue(held.Symbol,out var input);
             var q=input?.Quote;
-            if(t-p.LastObservedAt>(integratedCalibration is null?60_000L:NativeIntegratedLifecycle.IntervalMs) ||
+            if(t-p.LastObservedAt>(CoherentIntegrated?NativeIntegratedLifecycle.IntervalMs:60_000L) ||
                (p.Integrated is not null && input?.Integrated?.Path?.Complete!=true))
             {
                 p=p with {CrossedUnknownHistory=true};
@@ -436,8 +454,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
             closeRequests+=verdict.AppliedFacts.Count(x=>x.Kind=="REQUEST_CLOSE");
             if(q is not null)
             {
-                decimal liquidation=held.Side>0?q.Bid-held.SlippagePerSide:
-                    q.Ask+held.SlippagePerSide;
+                decimal liquidation=NativeExecutableEconomics.ExitPrice(held.Side>0?q.Bid:q.Ask,
+                    held.Side,q.LiquidationSlippagePerSide??held.SlippagePerSide);
                 decimal movement=held.Side*(liquidation-
                     (held.EntryPrice??throw new InvalidOperationException("UCP1_NO_ENTRY")));
                 decimal eur=movement*held.Units*
@@ -818,7 +836,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
             SampledEquityCurve=includeTrace?curve.ToArray():Array.Empty<Ucp1CurvePoint>(),
             OriginalCSharpNativeLedgerEvents=includeTrace?facts.ToArray():Array.Empty<LedgerEvent>(),
             Scp1PredictionsAndPreselection=includeTrace?scoredChoices.ToArray():Array.Empty<Scp1ChoiceReceipt>(),
-            ScoreModelMethod=NativeIntegratedLifecycle.SelectsEconomically(policy)
+            ScoreModelMethod=CompletePolicy?"COMPLETE_POLICY_SETTLED_EUR_EMPIRICAL_DISTRIBUTION":
+                NativeIntegratedLifecycle.SelectsEconomically(policy)
                 ?"FROZEN_CHRONOLOGICAL_TARGET_FIRST_FREQUENCY_WITH_STRESSED_EUR_PAYOFF":
                 NativeIntegratedEconomicPolicy.IsPolicy(policy)
                     ?"FROZEN_CAUSAL_STRUCTURE_WITHOUT_FITTED_SCORE":scoreModel?.Method??"LEGACY_EXACT_UCP1",
