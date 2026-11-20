@@ -1,0 +1,156 @@
+name: FCP1 genuinely financed FIRST vs frozen failed-scoring negative controls
+on:
+  pull_request:
+    paths:
+      - 'src/Mxm.Core/NativeFcp1FinancedSelection.cs'
+      - 'src/Mxm.Core/NativeUnifiedPortfolioEngine.cs'
+      - 'src/Mxm.Replay/Fcp1FinancedScoreRunner.cs'
+      - 'src/Mxm.Replay/Program.cs'
+      - 'tests/Mxm.Checks/Fcp1FundedComparatorChecks.cs'
+      - 'research/FCP1_FROZEN_FIRST_FINANCE_SCORE_PORTFOLIO_20261119.md'
+      - 'research/fcp1_original_source_finance_comparison.py'
+      - '.github/workflows/fcp1-original-financed-comparison.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ops/fcp1-main-once.txt'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  native-csharp-and-frozen-source-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    outputs:
+      one: ${{ steps.owner.outputs.one }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Preimplementation hypothesis and frozen closed-study ancestry
+        run: |
+          git merge-base --is-ancestor 49ce98ac1f44a2fb99627584c87b783d9889b13c HEAD
+          git diff --exit-code 49ce98ac1f44a2fb99627584c87b783d9889b13c HEAD -- \
+            research/FCP1_FROZEN_FIRST_FINANCE_SCORE_PORTFOLIO_20261119.md
+          git diff --exit-code ba07814ab8c249832ba4eae9e7d5d188ec214ee2 -- \
+            src/Mxm.Core/NativeScp1EconomicScorer.cs \
+            src/Mxm.Replay/Scp1OriginalScoredEconomicRunner.cs \
+            research/scp1_a1_source_recovery_native_score.py \
+            research/SCP1_A1_ORIGINAL_CAUSAL_SCORING_ECONOMIC_RESULT_READBACK_20261119.md \
+            ops/scp1a1-once.txt
+          if grep -q -- '--scp1-a1-original-scored-economics' research/fcp1_original_source_finance_comparison.py; then
+            echo 'FCP1 must not invoke closed SCP1-A1 scorer' >&2
+            exit 1
+          fi
+      - name: Same authoritative native Core for Replay and Cloud
+        run: |
+          dotnet build src/Mxm.Replay -c Release
+          dotnet build src/Mxm.Cloud -c Release
+          dotnet run --project tests/Mxm.Checks -c Release
+          python -m py_compile research/fcp1_original_source_finance_comparison.py
+      - name: First addition of the distinct OWNER marker on main
+        id: owner
+        shell: bash
+        run: |
+          marker=ops/fcp1-main-once.txt
+          echo "one=false" >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_EVENT_NAME" == "push" &&
+                "$GITHUB_REF" == "refs/heads/main" &&
+                "$GITHUB_ACTOR" == "mariancradulescu" &&
+                "$GITHUB_RUN_ATTEMPT" == "1" &&
+                "$(git log -1 --format=%s)" == "OWNER_FCP1_MAIN_FINANCE_FIRST_DISTINCT_SOURCE_ONCE" &&
+                "$(git diff-tree --no-commit-id --name-status -r HEAD)" == $'A\t'"$marker" &&
+                -z "$(git log -1 --format=%H HEAD^ -- "$marker")" &&
+                "$(cat "$marker")" == "FCP1_MAIN_DISTINCT_FINANCED_FIRST_FROZEN_NEGATIVE_CONTROLS_NO_TRADING" ]]; then
+            echo "one=true" >> "$GITHUB_OUTPUT"
+          fi
+  distinct-protected-authentic-source-financed-comparison:
+    needs: native-csharp-and-frozen-source-contract
+    if: >-
+      ${{ github.ref == 'refs/heads/main' &&
+          github.run_attempt == '1' &&
+          needs.native-csharp-and-frozen-source-contract.outputs.one == 'true' }}
+    environment: mxm-r3-custody-v1
+    concurrency:
+      group: owner-fcp1-distinct-first-finance-comparison-once
+      cancel-in-progress: false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 110
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - run: dotnet build src/Mxm.Replay -c Release
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: hxc1-original-historical-encrypted-source
+          run-id: 43817213663
+          github-token: ${{ github.token }}
+          path: scp1a1-hxc1-original-source
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: cxl1-original-275-earlier-sealed-source
+          run-id: 43947388854
+          github-token: ${{ github.token }}
+          path: scp1a1-cxl1-earlier-encrypted
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: cxl1-original-275-earlier-source-coverage
+          run-id: 43947388854
+          github-token: ${{ github.token }}
+          path: scp1a1-cxl1-earlier-public
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: cxl1-original-50clock-source-encrypted
+          run-id: 43945139889
+          github-token: ${{ github.token }}
+          path: scp1a1-cxl1-pilot-encrypted
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: cxl1-original-50clock-pilot-public
+          run-id: 43945139889
+          github-token: ${{ github.token }}
+          path: scp1a1-cxl1-pilot-public
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: oei1-original-pepperstone-encrypted-custody
+          run-id: 44247979857
+          github-token: ${{ github.token }}
+          path: scp1a1-oei1-original-source
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: oei1-original-integrated-3phase-public
+          run-id: 44247979857
+          github-token: ${{ github.token }}
+          path: scp1a1-oei1-original-public
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: scp1-a1-true-source-causal-score-and-eur300-original-public
+          run-id: 44525563693
+          github-token: ${{ github.token }}
+          path: fcp1-scp1-original-public
+      - name: FCP1 reconstruct protected source and compare new distinct CSharp policies
+        run: python -m research.fcp1_original_source_finance_comparison
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: fcp1-financed-first-versus-frozen-negative-score-public
+          path: fcp1-public/
+          if-no-files-found: warn
+          retention-days: 90
