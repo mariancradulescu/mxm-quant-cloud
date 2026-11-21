@@ -70,5 +70,79 @@ class PartialRecoveryTests(unittest.TestCase):
                 self.readback(receipt, cipher)
 
 
+    def test_hour_response_vs_quote_evidence(self):
+        hour = self.fixture.base
+        terminal = [(hour, hour + source.HOUR - 1, "TERMINAL")]
+        no_quotes = [(hour, hour + source.HOUR - 1, "NO_QUOTES")]
+        quoted = recovery.classify_hour(terminal, [(hour + 15_000, 10_000_000)], hour)
+        self.assertEqual(quoted["RequestCoverage"], "COMPLETE")
+        self.assertEqual(quoted["ObservedTicks"], 1)
+        self.assertEqual(quoted["NoQuotesMilliseconds"], 0)
+        empty = recovery.classify_hour(no_quotes, [], hour)
+        self.assertEqual(empty["RequestCoverage"], "COMPLETE")
+        self.assertEqual(empty["QuoteEvidence"], "NO_QUOTES_ONLY")
+        self.assertEqual(empty["ObservedTicks"], 0)
+        self.assertEqual(empty["NoQuotesMilliseconds"], source.HOUR)
+        mixed = recovery.classify_hour(
+            [(hour, hour + source.HOUR // 2 - 1, "NO_QUOTES"),
+             (hour + source.HOUR // 2, hour + source.HOUR - 1, "TERMINAL")],
+            [(hour + source.HOUR // 2 + 15_000, 10_000_001)], hour)
+        self.assertEqual(mixed["RequestCoverage"], "COMPLETE")
+        self.assertEqual(mixed["NoQuotesMilliseconds"], source.HOUR // 2)
+        self.assertEqual(mixed["ObservedTicks"], 1)
+        partial = recovery.classify_hour(
+            [(hour, hour + source.HOUR // 2 - 1, "TERMINAL"),
+             (hour + source.HOUR // 2, hour + source.HOUR - 1, "MISSING")],
+            [(hour + 15_000, 10_000_001)], hour)
+        self.assertEqual(partial["RequestCoverage"], "PARTIAL")
+        self.assertEqual(partial["MissingMilliseconds"], source.HOUR // 2)
+        self.assertEqual(partial["ObservedTicks"], 1)
+        self.assertEqual(partial["QuoteEvidence"], "INCOMPLETE_WITH_AUTHENTIC_QUOTE")
+
+    def test_legitimate_no_quotes_on_one_or_both_sides_does_not_need_recollection(self):
+        for no_quote_sides in ((e.ASK,), (e.BID, e.ASK)):
+            with self.subTest(no_quote_sides=no_quote_sides):
+                def provider(req):
+                    if (isinstance(req, m.ProtoOAGetTickDataReq) and req.symbolId == 1
+                            and req.type in no_quote_sides):
+                        return m.ProtoOAErrorRes(ctidTraderAccountId=61, errorCode="NO_QUOTES")
+                    return self.fixture.api_response(req)
+                with tempfile.TemporaryDirectory() as directory:
+                    cipher, receipt = self.fixture.capture(directory, provider)
+                    receipt["Status"] = "SOURCE_FAILED_CLOSED"
+                    result = self.readback(receipt, cipher)
+                    row = next(x for x in result["ActiveHourCoverage"] if x["Market"] == "EXPENSIVE")
+                    self.assertEqual(row["ResponseCoverage"], "COMPLETE")
+                    self.assertFalse(row["GenuineBidAskObserved"])
+                    self.assertEqual(row["ReplayUsableMarks"], 0)
+                    for side in no_quote_sides:
+                        self.assertEqual(row["SideEvidence"]["BID" if side == e.BID else "ASK"]
+                                         ["QuoteEvidence"], "NO_QUOTES_ONLY")
+                    self.assertFalse(any(x["Market"] == "EXPENSIVE" for x in result["MissingRequests"]))
+                    self.assertIn("EXPENSIVE", result["CompleteMarketNames"])
+
+    def test_split_page_mixes_terminal_and_no_quotes_without_fake_quotes(self):
+        def provider(req):
+            if isinstance(req, m.ProtoOAGetTickDataReq) and req.symbolId == 1 and req.type == e.BID:
+                span = req.toTimestamp - req.fromTimestamp + 1
+                if span == source.HOUR:
+                    return m.ProtoOAGetTickDataRes(ctidTraderAccountId=61, hasMore=True)
+                if req.fromTimestamp == self.fixture.base:
+                    return m.ProtoOAErrorRes(ctidTraderAccountId=61, errorCode="NO_QUOTES")
+            return self.fixture.api_response(req)
+
+        with tempfile.TemporaryDirectory() as directory:
+            cipher, receipt = self.fixture.capture(directory, provider)
+            receipt["Status"] = "SOURCE_FAILED_CLOSED"
+            result = self.readback(receipt, cipher)
+            row = next(x for x in result["ActiveHourCoverage"] if x["Market"] == "EXPENSIVE")
+            self.assertEqual(row["ResponseCoverage"], "COMPLETE")
+            self.assertEqual(row["SideEvidence"]["BID"]["NoQuotesMilliseconds"], source.HOUR // 2)
+            self.assertEqual(row["SideEvidence"]["BID"]["ObservedTicks"], 1)
+            self.assertEqual(row["SideEvidence"]["ASK"]["ObservedTicks"], 1)
+            self.assertTrue(row["GenuineBidAskObserved"])
+            self.assertFalse(any(x["Market"] == "EXPENSIVE" for x in result["MissingRequests"]))
+
+
 if __name__ == "__main__":
     unittest.main()
