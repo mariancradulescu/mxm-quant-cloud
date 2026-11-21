@@ -237,6 +237,15 @@ def main():
              "FUNDED_DEVELOPMENT_MATERIALIZED_MARKET_COVERAGE")
         for item in markets:
             ref = manifest["Markets"][item["Name"]]
+            # The original decoder can carry a last authentic quote into an
+            # adjacent inactive hour. That is not an active hour in the
+            # independently authenticated activity-based source roster.
+            active = {h["HourUtcMs"] for h in manifest["ActiveHourCoverage"]
+                      if h["Market"] == item["Name"] and h["ResponseCoverage"] == "COMPLETE"}
+            need(len(active) == ref["ActiveHours"],
+                 "FUNDED_DEVELOPMENT_ACTIVE_HOUR_MANIFEST")
+            item["Quotes"] = [q for q in item["Quotes"]
+                              if (q["At"] // 3_600_000) * 3_600_000 in active]
             need(item["RequestedTickHours"] == ref["ActiveHours"] and
                  item["ActiveHours"] == ref["ActiveHours"] and
                  sum(bool(q["Path"]["Complete"]) for q in item["Quotes"]) ==
