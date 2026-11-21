@@ -10,6 +10,7 @@ import os
 import subprocess
 import tempfile
 from pathlib import Path
+from decimal import Decimal
 
 from .decode import need
 from .guard import CaptureContractError
@@ -192,9 +193,9 @@ def extract_safe_economics(private_output, input_sha, selected, original, manife
                 "BySymbolAggregate": books[variant]["BySymbol"],
                 "ComparableWeeklyNetEur": weekly[variant],
                 "DeltaVsCashEur": None if modeled is None or net[CASH] is None else
-                                  float(modeled) - float(net[CASH]),
+                                  str(Decimal(str(modeled)) - Decimal(str(net[CASH]))),
                 "DeltaVsFirstEur": None if modeled is None or net[FIRST] is None else
-                                   float(modeled) - float(net[FIRST]),
+                                   str(Decimal(str(modeled)) - Decimal(str(net[FIRST]))),
             }
         output["Scenarios"][scenario] = {
             "Policies": policies,
@@ -268,10 +269,10 @@ def main():
         need(completed.returncode == 0 and output_file.is_file(),
              "FUNDED_DEVELOPMENT_CSHARP_EVALUATION_FAILURE")
         with output_file.open() as handle:
-            economics = json.load(handle)
+            economics = json.load(handle, parse_float=Decimal)
         public = extract_safe_economics(economics, input_sha, selected, original, manifest)
         out = PUBLIC_OUT / "economic.json"
-        out.write_text(json.dumps(public, indent=2, sort_keys=True) + "\n")
+        out.write_text(json.dumps(public, indent=2, sort_keys=True, default=str) + "\n")
         (PUBLIC_OUT / "receipt.json").write_text(json.dumps({
             "Status": "AUTHENTIC_FUNDED_HISTORICAL_CONDITIONAL_CSHARP_DEVELOPMENT",
             "OriginalSourceRun": ORIGINAL_RUN, "RecoveryRun": RECOVERY_RUN,
