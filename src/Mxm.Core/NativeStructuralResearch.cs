@@ -228,6 +228,20 @@ public static class NativeStructuralResearch
             weekly.Add(key, finalCloses.Values.Count(f => f.ClosedAt >= from && f.ClosedAt < from + NativeCompletePolicy.Week));
         }
         var hard21 = weekly.ToDictionary(w => w.Key, w => w.Value >= 21, StringComparer.Ordinal);
+        // Sampled floating-equity drawdown is strictly an observed lower bound on
+        // the worst continuous intramark drawdown, never a certified maximum.
+        decimal peakSampledEquity = OwnerRiskAuthority.InitialCapitalEur;
+        decimal sampledFloatingDrawdownPercent = 0m;
+        int knownSampledEquityClocks = 0;
+        foreach (var mark in equity)
+        {
+            if (mark.EquityEur is not decimal observedEquity) continue;
+            knownSampledEquityClocks++;
+            if (observedEquity > peakSampledEquity) peakSampledEquity = observedEquity;
+            if (peakSampledEquity > 0m)
+                sampledFloatingDrawdownPercent = Math.Max(sampledFloatingDrawdownPercent,
+                    100m * (peakSampledEquity - observedEquity) / peakSampledEquity);
+        }
         bool censored = positions.Length > 0 || pending.Length > 0;
         decimal? completeModeledNet = censored ? null : realized;
         var report = new
@@ -263,6 +277,9 @@ public static class NativeStructuralResearch
                 MaxConcurrent = equity.Max(m => m.Held),
                 MaxMarginEur = equity.Max(m => m.UsedMarginEur),
                 MaxPlannedRiskEur = equity.Max(m => m.PlannedAggregateRiskEur),
+                SampledFloatingDrawdownPercent = sampledFloatingDrawdownPercent,
+                KnownSampledEquityClocks = knownSampledEquityClocks,
+                ContinuousFloatingDrawdownCertified = false,
                 Outcome = engine.OriginalOutcomeReport(start, start, start, end,
                     "CLOSED_MARKET_PROTECTED_SOURCE", includeTrace: false),
                 SettlementEvents = events.Where(e => e.Kind != "MARK")
