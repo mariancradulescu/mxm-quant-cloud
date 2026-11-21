@@ -53,12 +53,12 @@ def classify_hour(leaves, ticks, hour):
     status = ("COMPLETE" if answered == HOUR else
               "PROVIDER_ERROR" if totals["ProviderErrorMilliseconds"] else
               "PARTIAL" if answered else "MISSING")
-    evidence = ("BID_ASK_READY_INPUT_SIDE" if quote_count else
+    evidence = ("INCOMPLETE_WITH_AUTHENTIC_QUOTE" if answered < HOUR and quote_count else
+                "INCOMPLETE_NO_AUTHENTIC_QUOTE" if answered < HOUR else
+                "AUTHENTIC_QUOTES_PRESENT" if quote_count else
                 "NO_QUOTES_ONLY" if totals["NoQuotesMilliseconds"] == HOUR else
                 "EMPTY_TERMINAL_ONLY" if totals["TerminalMilliseconds"] == HOUR else
-                "MIXED_NO_QUOTE_AND_TERMINAL" if answered == HOUR else
-                "INCOMPLETE_NO_AUTHENTIC_QUOTE" if quote_count == 0 else
-                "INCOMPLETE_WITH_AUTHENTIC_QUOTE")
+                "MIXED_NO_QUOTE_AND_TERMINAL")
     return {"RequestCoverage": status, "ResponseMilliseconds": answered,
             "ObservedTicks": quote_count, "QuoteEvidence": evidence, **totals}
 
