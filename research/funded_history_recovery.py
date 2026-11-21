@@ -13,6 +13,7 @@ from .ctrader_proto import OpenApiMessages_pb2 as m
 from .ctrader_proto import OpenApiModelMessages_pb2 as e
 from .custody import unseal_new
 from .decode import decode_side, need
+from .integrated_market_readback import minute_marks
 from .guard import CaptureContractError
 from .integrated_market_source import (
     CIPHER_DIR, PUBLIC_DIR, DAY, HOUR, FUNDED_HISTORY, TICK_PAGE_MODEL,
@@ -25,6 +26,41 @@ ORIGINAL_RUN = "44824462289"
 
 def _fingerprint(record):
     return hashlib.sha256(json.dumps(record, separators=(",", ":")).encode()).hexdigest()
+
+
+def classify_hour(leaves, ticks, hour):
+    """Distinguish original-response coverage from genuine observed price evidence."""
+    end = hour + HOUR
+    totals = dict(TerminalMilliseconds=0, NoQuotesMilliseconds=0,
+                  MissingMilliseconds=0, ProviderErrorMilliseconds=0)
+    for page in leaves:
+        first, last, kind = page[:3]
+        overlap = max(0, min(last + 1, end) - max(first, hour))
+        if not overlap:
+            continue
+        metric = {"TERMINAL": "TerminalMilliseconds",
+                  "NO_QUOTES": "NoQuotesMilliseconds",
+                  "MISSING": "MissingMilliseconds",
+                  "PROVIDER_ERROR": "ProviderErrorMilliseconds"}[kind]
+        totals[metric] += overlap
+    # Every requested millisecond is attributable to exactly one leaf,
+    # whether it was answered, absent or rejected.
+    need(sum(totals.values()) == HOUR, "RECOVERY_HOUR_LEAF_PARTITION")
+    answered = totals["TerminalMilliseconds"] + totals["NoQuotesMilliseconds"]
+    quote_count = sum(hour <= row[0] < end for row in ticks)
+    need(quote_count == 0 or totals["TerminalMilliseconds"] > 0,
+         "RECOVERY_QUOTE_WITHOUT_TERMINAL_RESPONSE")
+    status = ("COMPLETE" if answered == HOUR else
+              "PROVIDER_ERROR" if totals["ProviderErrorMilliseconds"] else
+              "PARTIAL" if answered else "MISSING")
+    evidence = ("BID_ASK_READY_INPUT_SIDE" if quote_count else
+                "NO_QUOTES_ONLY" if totals["NoQuotesMilliseconds"] == HOUR else
+                "EMPTY_TERMINAL_ONLY" if totals["TerminalMilliseconds"] == HOUR else
+                "MIXED_NO_QUOTE_AND_TERMINAL" if answered == HOUR else
+                "INCOMPLETE_NO_AUTHENTIC_QUOTE" if quote_count == 0 else
+                "INCOMPLETE_WITH_AUTHENTIC_QUOTE")
+    return {"RequestCoverage": status, "ResponseMilliseconds": answered,
+            "ObservedTicks": quote_count, "QuoteEvidence": evidence, **totals}
 
 
 def scan(receipt, key, expected_run=ORIGINAL_RUN, scope=FUNDED_HISTORY, cipher_dir=None):
@@ -133,8 +169,13 @@ def scan(receipt, key, expected_run=ORIGINAL_RUN, scope=FUNDED_HISTORY, cipher_d
             need(len(active) == observed["ActiveHours"], "RECOVERY_ACTIVE_HOUR_COUNTER")
         bid_ticks = ask_ticks = 0
         completed_hours = 0
+        hours_with_both_quotes = 0
+        replay_usable_hours = set()
+        replay_usable_marks = 0
+        no_quotes_side_hours = 0
         root_requests = 0
         partial_roots = 0
+        previous_tail = {e.BID: [], e.ASK: []}
         if bar_complete:
             for day in range(scope.start, scope.end, DAY):
                 windows = list(tick_windows(day, active))
@@ -151,6 +192,7 @@ def scan(receipt, key, expected_run=ORIGINAL_RUN, scope=FUNDED_HISTORY, cipher_d
                     raw = []
                 offset = 0
                 segments = {e.BID: [], e.ASK: []}
+                daily_ticks = {e.BID: [], e.ASK: []}
 
                 def walk(side, first, last):
                     nonlocal offset, root_requests, bid_ticks, ask_ticks
@@ -183,6 +225,7 @@ def scan(receipt, key, expected_run=ORIGINAL_RUN, scope=FUNDED_HISTORY, cipher_d
                             walk(side, lo, hi)
                     else:
                         rows = decode_side(res.tickData, first, last)
+                        daily_ticks[side].extend(rows)
                         if side == e.BID:
                             bid_ticks += len(rows)
                         else:
@@ -198,21 +241,45 @@ def scan(receipt, key, expected_run=ORIGINAL_RUN, scope=FUNDED_HISTORY, cipher_d
                         by_side = {}
                         for side, side_name in ((e.BID, "BID"), (e.ASK, "ASK")):
                             leaves = [r for r in segments[side] if r[1] >= hour and r[0] < hour + HOUR]
-                            covered = sum(min(r[1], hour + HOUR-1) - max(r[0], hour) + 1
-                                          for r in leaves if r[2] in ("TERMINAL", "NO_QUOTES"))
-                            need(covered <= HOUR, "RECOVERY_TICK_LEAF_OVERLAP")
-                            errors = [r for r in leaves if r[2] == "PROVIDER_ERROR"]
-                            by_side[side_name] = ("COMPLETE" if covered == HOUR else
-                                                 "PROVIDER_ERROR" if errors else
-                                                 "PARTIAL" if covered else "MISSING")
-                        status = ("COMPLETE" if all(v == "COMPLETE" for v in by_side.values()) else "INCOMPLETE")
-                        completed_hours += status == "COMPLETE"
-                        hour_rows.append(dict(Market=name, Timeframe="TICKS", HourUtcMs=hour,
-                                              Status=status, **by_side))
+                            by_side[side_name] = classify_hour(leaves, daily_ticks[side], hour)
+                        response_complete = all(v["RequestCoverage"] == "COMPLETE" for v in by_side.values())
+                        has_both_observed = all(v["ObservedTicks"] > 0 for v in by_side.values())
+                        completed_hours += response_complete
+                        hours_with_both_quotes += has_both_observed
+                        no_quotes_side_hours += any(v["NoQuotesMilliseconds"] > 0 for v in by_side.values())
+                        hour_rows.append(dict(
+                            Market=name, Timeframe="TICKS", HourUtcMs=hour,
+                            Status="COMPLETE" if response_complete else "INCOMPLETE",
+                            ResponseCoverage="COMPLETE" if response_complete else "INCOMPLETE",
+                            GenuineBidAskObserved=has_both_observed,
+                            ReplayUsableMarks=0,
+                            BID=by_side["BID"]["RequestCoverage"],
+                            ASK=by_side["ASK"]["RequestCoverage"],
+                            SideEvidence=by_side))
                     if any(r[2] not in ("TERMINAL", "NO_QUOTES") and first <= r[0] <= last
                            for side in segments for r in segments[side]):
                         partial_roots += 1
                 need(offset == len(raw), "RECOVERY_UNEXPECTED_TICK_PACKET")
+                # Paired as-of marks require real, timely BID/ASK from the original
+                # packets and a complete 30-second carrying path. NO_QUOTES never
+                # contributes a synthetic quote or automatically becomes a gap.
+                for mark in minute_marks(day, previous_tail[e.BID] + daily_ticks[e.BID],
+                                         previous_tail[e.ASK] + daily_ticks[e.ASK],
+                                         interval=30_000):
+                    if mark["Path"]["Complete"]:
+                        mark_hour = mark["At"] // HOUR * HOUR
+                        if mark_hour in active:
+                            replay_usable_marks += 1
+                            replay_usable_hours.add(mark_hour)
+                            hour_row = next((h for h in reversed(hour_rows)
+                                             if h["Market"] == name and
+                                             h["HourUtcMs"] == mark_hour), None)
+                            need(hour_row is not None, "RECOVERY_REPLAY_MARK_HOUR_MISSING")
+                            hour_row["ReplayUsableMarks"] += 1
+                previous_tail = {
+                    side: [r for r in rows if r[0] >= day + DAY - 90_000]
+                    for side, rows in daily_ticks.items()
+                }
                 for side, side_name in ((e.BID, "BID"), (e.ASK, "ASK")):
                     for r in segments[side]:
                         if r[2] not in ("TERMINAL", "NO_QUOTES"):
@@ -238,6 +305,12 @@ def scan(receipt, key, expected_run=ORIGINAL_RUN, scope=FUNDED_HISTORY, cipher_d
         verified[name] = {"Status": "COMPLETE" if complete else "PARTIAL",
                           "Timeframes": periods, "ActiveHours": len(active) if bar_complete else None,
                           "VerifiedPairedTickHours": completed_hours,
+                          "ResponseCompleteHours": completed_hours,
+                          "HoursWithBothSidesObserved": hours_with_both_quotes,
+                          "HoursWithNoQuotesResponse": no_quotes_side_hours,
+                          "ReplayUsableHours": len(replay_usable_hours),
+                          "ReplayUsableCompletePathMarks": replay_usable_marks,
+                          "ReplayEvidenceDefinition": "PAIRED_30_SECOND_ASOF_PATH_COMPLETE_NOT_EXECUTION_CERTIFICATION",
                           "ReceiptSourceTickHours": observed["SourceTickHours"],
                           "VerifiedBidTicks": bid_ticks if bar_complete else None,
                           "VerifiedAskTicks": ask_ticks if bar_complete else None,
@@ -253,6 +326,8 @@ def scan(receipt, key, expected_run=ORIGINAL_RUN, scope=FUNDED_HISTORY, cipher_d
         "OriginalCipherShards": receipt["Shards"], "Markets": verified,
         "ActiveHourCoverage": hour_rows, "MissingRequests": gaps,
         "CompleteMarketNames": sorted(k for k, v in verified.items() if v["Status"] == "COMPLETE"),
+        "ReplayUsableMarketNames": sorted(k for k, v in verified.items()
+                                          if v["ReplayUsableCompletePathMarks"] > 0),
         "NewOpenApiRequests": 0, "EconomicEvaluations": 0,
         "OrdersSubmitted": 0, "CloudActivated": False,
     }
