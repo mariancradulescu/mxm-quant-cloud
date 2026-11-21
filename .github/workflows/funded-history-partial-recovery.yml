@@ -1,0 +1,93 @@
+name: Funded history - original partial custody readback
+on:
+  pull_request:
+    paths:
+      - 'research/funded_history_recovery.py'
+      - 'research/test_funded_history_recovery.py'
+      - 'research/funded_history_gap_plan.py'
+      - 'research/test_funded_history_gap_plan.py'
+      - 'research/FUNDED_ACTION_HISTORY_RECOVERY.md'
+      - '.github/workflows/funded-history-partial-recovery.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ops/funded-history-original-readback-once.txt'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    outputs:
+      authorized: ${{ steps.marker.outputs.authorized }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - name: Verify partial and original tick custodian fixtures
+        run: |
+          python -m unittest research.test_integrated_market_ticks research.test_funded_history_recovery research.test_funded_history_gap_plan
+          python -m py_compile research/funded_history_recovery.py research/funded_history_gap_plan.py
+      - name: Verify exact one-time OWNER readback marker
+        id: marker
+        shell: bash
+        run: |
+          echo "authorized=false" >> "$GITHUB_OUTPUT"
+          marker=ops/funded-history-original-readback-once.txt
+          subject=OWNER_FUNDED_HISTORY_ORIGINAL_PARTIAL_CUSTODY_READBACK_ONCE_44824462289
+          if [[ "$GITHUB_EVENT_NAME" == "push" &&
+                "$GITHUB_REF" == "refs/heads/main" &&
+                "$GITHUB_ACTOR" == "mariancradulescu" &&
+                "$GITHUB_RUN_ATTEMPT" == "1" &&
+                "$(git log -1 --format=%s)" == "$subject" &&
+                "$(git diff-tree --no-commit-id --name-status -r HEAD)" == $'A\t'"$marker" &&
+                -z "$(git log -1 --format=%H HEAD^ -- "$marker")" &&
+                -f "$marker" ]] &&
+             cmp -s "$marker" <(printf '%s\n' "$subject"); then
+            echo "authorized=true" >> "$GITHUB_OUTPUT"
+          fi
+  custody_readback:
+    needs: verify
+    if: ${{ github.ref == 'refs/heads/main' && github.run_attempt == '1' && needs.verify.outputs.authorized == 'true' }}
+    environment: mxm-r3-custody-v1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - name: Retrieve untouched original encrypted artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: funded-action-history-custody
+          path: integrated-sealed-source
+          run-id: 44824462289
+          github-token: ${{ github.token }}
+      - name: Retrieve untouched original public receipt
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: funded-action-history-source-public
+          path: integrated-source-public
+          run-id: 44824462289
+          github-token: ${{ github.token }}
+      - name: Verify original protobuf and publish separate partial recovery
+        run: python -m research.funded_history_recovery
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - name: Preserve separate safe verification receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: funded-action-history-recovery-public
+          path: funded-history-recovery/
+          retention-days: 90
+          if-no-files-found: error
