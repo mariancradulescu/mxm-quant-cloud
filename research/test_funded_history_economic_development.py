@@ -76,7 +76,7 @@ class AuthenticatedEconomicDevelopmentTests(unittest.TestCase):
         blobs = list(self.fixture())
         manifest = json.loads(blobs[2])
         manifest["CompleteMarketNames"].append("NAS100")
-        manifest["Markets"]["NAS100"]["Status"] = "COMPLETE"
+        manifest["Markets"]["NAS100"] = dict(manifest["Markets"]["EURUSD"], Status="COMPLETE")
         blobs[2] = data(manifest)
         receipt = json.loads(blobs[1])
         receipt["CompleteMarketNames"].append("NAS100")
@@ -94,6 +94,7 @@ class AuthenticatedEconomicDevelopmentTests(unittest.TestCase):
                    "ActiveHourCoverage": [], "MissingRequests": json.loads(blobs[3])["Requests"]}
         manifest["ActiveHourCoverage"] = []
         d.verify_original_against_manifest(original, manifest, scanned, blobs[3])
+        scanned["Markets"] = json.loads(json.dumps(manifest["Markets"]))
         scanned["Markets"]["EURUSD"]["ActiveHours"] = 99
         with self.assertRaisesRegex(CaptureContractError, "FUNDED_DEVELOPMENT_FRESH_CUSTODY_RECONCILIATION"):
             d.verify_original_against_manifest(original, manifest, scanned, blobs[3])
