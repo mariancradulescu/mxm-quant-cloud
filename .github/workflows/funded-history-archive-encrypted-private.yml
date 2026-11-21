@@ -1,0 +1,132 @@
+name: Original funded source - optional durable encrypted private archive
+on:
+  pull_request:
+    paths:
+      - 'research/funded_history_archive_verify.py'
+      - '.github/workflows/funded-history-archive-encrypted-private.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ops/funded-original-encrypted-s3-archive-once.txt'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    outputs:
+      authorized: ${{ steps.marker.outputs.authorized }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - run: |
+          python -m py_compile research/funded_history_archive_verify.py
+          python -m unittest research.test_funded_history_archive_verify -v
+      - name: Exact separately authorized future archive marker
+        id: marker
+        shell: bash
+        run: |
+          echo 'authorized=false' >> "$GITHUB_OUTPUT"
+          marker=ops/funded-original-encrypted-s3-archive-once.txt
+          subject=OWNER_FUNDED_ORIGINAL_ENCRYPTED_S3_ARCHIVE_ONCE_44824462289_44910122403
+          if [[ "$GITHUB_EVENT_NAME" == "push" &&
+                "$GITHUB_REF" == "refs/heads/main" &&
+                "$GITHUB_ACTOR" == "mariancradulescu" &&
+                "$GITHUB_RUN_ATTEMPT" == "1" &&
+                "$(git log -1 --format=%s)" == "$subject" &&
+                "$(git diff-tree --no-commit-id --name-status -r HEAD)" == $'A\t'"$marker" &&
+                -z "$(git log -1 --format=%H HEAD^ -- "$marker")" &&
+                -f "$marker" ]] &&
+             cmp -s "$marker" <(printf '%s\n' "$subject"); then
+            echo 'authorized=true' >> "$GITHUB_OUTPUT"
+          fi
+  protected-archive:
+    needs: verify
+    if: ${{ github.ref == 'refs/heads/main' && github.run_attempt == '1' && needs.verify.outputs.authorized == 'true' }}
+    environment: mxm-r3-custody-v1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt awscli
+      - name: Fetch EXACT original encrypted and public GitHub ZIPs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p encrypted-archive-zip
+          curl --fail --silent --show-error --location --retry 2 --retry-delay 2 \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H 'Accept: application/vnd.github+json' \
+            'https://api.github.com/repos/mariancradulescu/mxm-quant-cloud/actions/artifacts/14681352119/zip' \
+            -o encrypted-archive-zip/original-encrypted.zip
+          curl --fail --silent --show-error --location --retry 2 --retry-delay 2 \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H 'Accept: application/vnd.github+json' \
+            'https://api.github.com/repos/mariancradulescu/mxm-quant-cloud/actions/artifacts/14681397091/zip' \
+            -o encrypted-archive-zip/original-public.zip
+          curl --fail --silent --show-error --location --retry 2 --retry-delay 2 \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H 'Accept: application/vnd.github+json' \
+            'https://api.github.com/repos/mariancradulescu/mxm-quant-cloud/actions/artifacts/14709905618/zip' \
+            -o encrypted-archive-zip/recovery-public.zip
+      - name: SHA-256 every original ZIP and every 606 ciphertext entries
+        run: python -m research.funded_history_archive_verify
+      - name: Copy ONLY encrypted originals and public receipts into private versioned S3 Object Lock
+        shell: bash
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R3_ARCHIVE_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R3_ARCHIVE_AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.R3_ARCHIVE_AWS_REGION }}
+          R3_ARCHIVE_BUCKET: ${{ secrets.R3_ARCHIVE_BUCKET }}
+          R3_ARCHIVE_KMS_KEY_ID: ${{ secrets.R3_ARCHIVE_KMS_KEY_ID }}
+        run: |
+          set -euo pipefail
+          test -n "$AWS_ACCESS_KEY_ID"
+          test -n "$AWS_SECRET_ACCESS_KEY"
+          test -n "$AWS_DEFAULT_REGION"
+          test -n "$R3_ARCHIVE_BUCKET"
+          test -n "$R3_ARCHIVE_KMS_KEY_ID"
+          test "$(aws s3api get-bucket-versioning --bucket "$R3_ARCHIVE_BUCKET" --query Status --output text)" = Enabled
+          aws s3api get-object-lock-configuration --bucket "$R3_ARCHIVE_BUCKET" --output json |
+            jq -e '.ObjectLockConfiguration.ObjectLockEnabled == "Enabled"' >/dev/null
+          prefix='mxm-quant-cloud/original-44824462289/recovery-44910122403'
+          retain='2030-12-31T00:00:00Z'
+          for name in original-encrypted.zip original-public.zip recovery-public.zip; do
+            key="$prefix/$name"
+            if aws s3api head-object --bucket "$R3_ARCHIVE_BUCKET" --key "$key" >/dev/null 2>&1; then
+              echo 'ARCHIVE_KEY_ALREADY_EXISTS_STOP'
+              exit 1
+            fi
+            checksum="$(openssl dgst -sha256 -binary "encrypted-archive-zip/$name" | base64 -w0)"
+            aws s3api put-object --bucket "$R3_ARCHIVE_BUCKET" --key "$key" \
+              --body "encrypted-archive-zip/$name" \
+              --server-side-encryption aws:kms \
+              --ssekms-key-id "$R3_ARCHIVE_KMS_KEY_ID" \
+              --object-lock-mode GOVERNANCE --object-lock-retain-until-date "$retain" \
+              --checksum-sha256 "$checksum" >/dev/null
+            remote="$(aws s3api head-object --bucket "$R3_ARCHIVE_BUCKET" --key "$key" \
+              --checksum-mode ENABLED --query ChecksumSHA256 --output text)"
+            test "$remote" = "$checksum"
+          done
+          echo 'PRIVATE_ARCHIVE_OBJECT_LOCK_SHA256_VERIFIED'
+      - name: Publish ONLY archive hashes, never bucket, credentials or raw prices
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: funded-history-durable-archive-integrity-only
+          path: durable-archive-public/
+          retention-days: 90
+          if-no-files-found: warn
