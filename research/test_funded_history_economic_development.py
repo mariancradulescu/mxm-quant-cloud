@@ -1,5 +1,7 @@
 """Synthetic-only tests for protected materialization and C# report whitelisting."""
 import json
+import tempfile
+from pathlib import Path
 import unittest
 from unittest.mock import patch
 
@@ -140,6 +142,63 @@ class AuthenticatedEconomicDevelopmentTests(unittest.TestCase):
         self.assertIsNone(result["Scenarios"]["Adverse"]["Policies"][d.CONTEXT]["CapitalFinalEur"])
         self.assertIsNone(result["Scenarios"]["Central"]["Policies"][d.CONTEXT]["DeltaVsCashEur"])
         self.assertEqual(set(result["Scenarios"]["Central"]["Policies"]), set(d.VARIANTS))
+
+
+    def test_original_failed_market_subset_materializes_private_replay_source(self):
+        from . import integrated_market_readback as original_reader
+        from . import funded_history_recovery as recovery
+        from .ctrader_proto import OpenApiMessages_pb2 as m
+        from .ctrader_proto import OpenApiModelMessages_pb2 as e
+        from .test_integrated_market_ticks import SourceCollectionTests
+        fixture = SourceCollectionTests()
+
+        def intermittent_provider(req):
+            if isinstance(req, m.ProtoOAGetTickDataReq) and req.symbolId == 4 and req.type == e.ASK:
+                return m.ProtoOAErrorRes(ctidTraderAccountId=61, errorCode="UNKNOWN_ERROR")
+            return fixture.api_response(req)
+
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaises(SystemExit):
+                fixture.capture(directory, intermittent_provider)
+            cipher = Path(directory) / "cipher"
+            receipt = json.loads((Path(directory) / "public" / "source.json").read_bytes())
+            self.assertEqual(receipt["Status"], "SOURCE_FAILED_CLOSED")
+            with patch.object(recovery, "unseal_new", side_effect=lambda data, *_: data), \
+                 patch.object(original_reader, "unseal_new", side_effect=lambda data, *_: data), \
+                 patch.object(original_reader, "CIPHER_DIR", cipher):
+                scanned = recovery.scan(receipt, b"only-fixture",
+                                        expected_run="1234", scope=fixture.scope,
+                                        cipher_dir=cipher)
+                selected = scanned["CompleteMarketNames"]
+                markets = original_reader.readback(receipt, b"only-fixture",
+                    interval=30_000, scope=fixture.scope, include_markets=selected)
+            self.assertEqual(set(selected), set(fixture.names[:3]))
+            self.assertEqual({market["Name"] for market in markets}, set(selected))
+            self.assertTrue(all(market["RequestedTickHours"] == 1
+                                and len(market["Quotes"]) > 0 for market in markets))
+            self.assertNotIn("NO_VOLUME", {market["Name"] for market in markets})
+
+    def test_partial_original_symbol_cannot_be_materialized_as_complete(self):
+        from . import integrated_market_readback as original_reader
+        from .ctrader_proto import OpenApiMessages_pb2 as m
+        from .ctrader_proto import OpenApiModelMessages_pb2 as e
+        from .test_integrated_market_ticks import SourceCollectionTests
+        fixture = SourceCollectionTests()
+
+        def rejected(req):
+            if isinstance(req, m.ProtoOAGetTickDataReq) and req.symbolId == 4 and req.type == e.ASK:
+                return m.ProtoOAErrorRes(ctidTraderAccountId=61, errorCode="UNKNOWN_ERROR")
+            return fixture.api_response(req)
+
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaises(SystemExit):
+                fixture.capture(directory, rejected)
+            receipt = json.loads((Path(directory) / "public" / "source.json").read_bytes())
+            with patch.object(original_reader, "CIPHER_DIR", Path(directory) / "cipher"), \
+                 patch.object(original_reader, "unseal_new", side_effect=lambda data, *_: data):
+                with self.assertRaises(CaptureContractError):
+                    original_reader.readback(receipt, b"only-fixture", interval=30_000,
+                        scope=fixture.scope, include_markets=["NO_VOLUME"])
 
 
 if __name__ == "__main__":
