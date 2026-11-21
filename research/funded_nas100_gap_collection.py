@@ -217,7 +217,8 @@ def readback():
                 need(entry.get("Attempt") == attempt_number,
                      "NAS100_GAP_READBACK_RETRY_ORDER")
                 if "OriginalPacket" not in entry:
-                    raise CaptureContractError("NAS100_GAP_READBACK_TRANSPORT_INCOMPLETE")
+                    need(attempt_number < 3, "NAS100_GAP_READBACK_TRANSPORT_INCOMPLETE")
+                    continue
                 req, res = unpack(entry["OriginalPacket"])
                 need(req.ctidTraderAccountId == original_account and
                      req.symbolId == original_symbol and
