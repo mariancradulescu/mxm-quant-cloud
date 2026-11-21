@@ -15,6 +15,7 @@ from .ctrader_transport import StdlibCTraderTransport
 from .custody import seal_new, unseal_new
 from .custody_new import checked_public
 from .decode import decode_side, need
+from .guard import CaptureContractError
 from .funded_history_gap_plan import bounded_read_only_request, verify_plan_receipt
 from .funded_history_economic_development import (
     RECOVERY_RUN, SOURCE_RECEIPT_SHA256, RECOVERY_RECEIPT_SHA256, MANIFEST_SHA256,
@@ -160,6 +161,26 @@ def readback():
          and len(evidence["SealedShards"]) == len(gaps)
          and evidence["OrdersSubmitted"] == 0 and evidence["CloudActivated"] is False,
          "NAS100_GAP_ORIGINAL_LINKAGE")
+    # The original encrypted identity and symbol roster are authoritative.
+    # A new market capture cannot silently switch to a different account or NAS100 ID.
+    original_receipt = json.loads((PUBLIC_DIR / "source.json").read_bytes())
+    identity_meta = next(x for x in original_receipt["Shards"]
+                         if x["File"] == "account-contracts.enc")
+    original_cipher = (Path("integrated-sealed-source") / "account-contracts.enc").read_bytes()
+    need(digest(original_cipher) == identity_meta["CipherSha256"],
+         "NAS100_GAP_ORIGINAL_ACCOUNT_CIPHER_HASH")
+    original_compressed = unseal_new(original_cipher, key, "44824462289")
+    need(digest(original_compressed) == identity_meta["CompressedPlainSha256"],
+         "NAS100_GAP_ORIGINAL_ACCOUNT_PLAIN_HASH")
+    original_identity = json.loads(gzip.decompress(original_compressed))
+    request, response = unpack(original_identity["Identity"][0])
+    original_account = request.ctidTraderAccountId
+    roster_req, roster_res = unpack(original_identity["Identity"][2])
+    original_symbols = [s.symbolId for s in roster_res.symbol if s.symbolName == "NAS100"]
+    need(len(original_symbols) == 1 and roster_req.ctidTraderAccountId == original_account,
+         "NAS100_GAP_ORIGINAL_SYMBOL_ID")
+    original_symbol = original_symbols[0]
+
     complete = []
     missing = []
     account = None
@@ -176,25 +197,68 @@ def readback():
              "NAS100_GAP_PROVENANCE")
         if account is None:
             account, symbol = row["Account"], row["SymbolId"]
-        need((row["Account"], row["SymbolId"]) == (account, symbol),
+        need((row["Account"], row["SymbolId"]) == (account, symbol)
+             == (original_account, original_symbol),
              "NAS100_GAP_ACCOUNT_SYMBOL_INCONSISTENT")
-        # No raw prices or account identifiers are exported. Each recorded
-        # request is checked before claiming its terminal source evidence.
-        for attempt in row["RawAttempts"]:
-            if "OriginalPacket" not in attempt:
-                continue
-            req, res = unpack(attempt["OriginalPacket"])
-            need(req.ctidTraderAccountId == account and req.symbolId == symbol and
-                 isinstance(req, m.ProtoOAGetTickDataReq) and
-                 req.type == (e.BID if gaps[i]["Side"] == "BID" else e.ASK) and
-                 req.fromTimestamp >= gaps[i]["From"] and
-                 req.toTimestamp < gaps[i]["ToExclusive"],
-                 "NAS100_GAP_PACKET_SCOPE")
-            if isinstance(res, m.ProtoOAGetTickDataRes) and not res.hasMore:
-                decode_side(res.tickData, req.fromTimestamp, req.toTimestamp)
+        attempts = row["RawAttempts"]
+        index = 0
+        requested_side = e.BID if gaps[i]["Side"] == "BID" else e.ASK
+
+        def validate_tree(first, last, depth=0):
+            nonlocal index
+            need(depth <= MAX_DEPTH, "NAS100_GAP_READBACK_SPLIT_DEPTH")
+            final_response = None
+            # Every retry retains the request/response. Intermediate error codes
+            # remain separate from a subsequent genuine terminal response.
+            for attempt_number in range(1, 4):
+                need(index < len(attempts), "NAS100_GAP_READBACK_MISSING_TERMINAL")
+                entry = attempts[index]
+                index += 1
+                need(entry.get("Attempt") == attempt_number,
+                     "NAS100_GAP_READBACK_RETRY_ORDER")
+                if "OriginalPacket" not in entry:
+                    raise CaptureContractError("NAS100_GAP_READBACK_TRANSPORT_INCOMPLETE")
+                req, res = unpack(entry["OriginalPacket"])
+                need(req.ctidTraderAccountId == original_account and
+                     req.symbolId == original_symbol and
+                     isinstance(req, m.ProtoOAGetTickDataReq) and
+                     (req.type, req.fromTimestamp, req.toTimestamp) ==
+                     (requested_side, first, last),
+                     "NAS100_GAP_PACKET_SCOPE")
+                if isinstance(res, m.ProtoOAErrorRes) and res.errorCode != "NO_QUOTES":
+                    need(attempt_number < 3, "NAS100_GAP_READBACK_ERROR_UNRESOLVED")
+                    continue
+                final_response = res
+                break
+            need(final_response is not None, "NAS100_GAP_READBACK_NO_TERMINAL")
+            if isinstance(final_response, m.ProtoOAErrorRes):
+                need(final_response.errorCode == "NO_QUOTES",
+                     "NAS100_GAP_READBACK_PROVIDER_CODE")
+                return
+            need(isinstance(final_response, m.ProtoOAGetTickDataRes),
+                 "NAS100_GAP_READBACK_RESPONSE_TYPE")
+            if final_response.hasMore:
+                need(first < last, "NAS100_GAP_READBACK_SINGLE_MS_HAS_MORE")
+                for lo, hi in divided_tick_window(first, last):
+                    validate_tree(lo, hi, depth + 1)
+            else:
+                decode_side(final_response.tickData, first, last)
+
         if row["Status"] == "VERIFIED_LEAF_RESPONSES":
+            validate_tree(gaps[i]["From"], gaps[i]["ToExclusive"] - 1)
+            need(index == len(attempts), "NAS100_GAP_READBACK_EXTRA_PACKET")
             complete.append(i)
         else:
+            # Preserve every original response without claiming complete leaves.
+            for entry in attempts:
+                if "OriginalPacket" in entry:
+                    req, res = unpack(entry["OriginalPacket"])
+                    need(isinstance(req, m.ProtoOAGetTickDataReq)
+                         and req.ctidTraderAccountId == original_account
+                         and req.symbolId == original_symbol
+                         and req.type == requested_side
+                         and gaps[i]["From"] <= req.fromTimestamp <= req.toTimestamp
+                         < gaps[i]["ToExclusive"], "NAS100_GAP_PARTIAL_PACKET_SCOPE")
             missing.append(i)
     result = {"Status": "NAS100_GAP_CUSTODY_VERIFIED_PARTIAL_OR_COMPLETE",
               "SourceRun": run, "OriginalRun": "44824462289",
