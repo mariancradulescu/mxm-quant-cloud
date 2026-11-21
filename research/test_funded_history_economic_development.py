@@ -112,6 +112,8 @@ class AuthenticatedEconomicDevelopmentTests(unittest.TestCase):
                           "Financing": 0},
                 "FinancingUnverifiedTrips": 0, "UnknownPathTrips": 0,
                 "UnknownEquityClocks": 0, "MaxMarginEur": 0, "MaxPlannedRiskEur": 0,
+                "SampledFloatingDrawdownPercent": 0, "KnownSampledEquityClocks": 0,
+                "ContinuousFloatingDrawdownCertified": False,
                 "MaxConcurrent": 0, "StopRiskOverruns": 0,
                 "SettlementEvents": [{"PrivateAccountIdentity": "DO_NOT_PUBLISH"}]},
                 "CompletedTradesByWeek": {"2026-W32": 0}, "Hard21ByWeek": {"2026-W32": False},
