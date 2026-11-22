@@ -129,7 +129,13 @@ def reconcile_tick_pages(raw, account, symbol_id, windows):
     return ticks, {side_names[side]: summary for side, summary in stats.items()}
 
 
-def readback(receipt, private_key, interval=MINUTE, scope=ORIGINAL):
+def readback(receipt, private_key, interval=MINUTE, scope=ORIGINAL, include_markets=None):
+    """Original full readback or recovery-proven, explicitly selected complete subset.
+
+    Caller MUST validate all original shards with funded_history_recovery.scan
+    and the exact hash-checked recovery receipt before using the subset option.
+    The all-market original behavior remains unchanged.
+    """
     need(interval in (30_000, MINUTE), "INTEGRATED_MARK_INTERVAL_UNSUPPORTED")
     run = receipt["RunId"]
     page_model = receipt.get("TickPageModel")
@@ -168,6 +174,10 @@ def readback(receipt, private_key, interval=MINUTE, scope=ORIGINAL):
                if isinstance(q, m.ProtoOASymbolByIdReq) and isinstance(r, m.ProtoOASymbolByIdRes)}
     margins = {q.symbolId: (q, r) for q, r in pairs[3:] if isinstance(q, m.ProtoOAExpectedMarginReq)}
     market_records = []
+    selected_names = None if include_markets is None else frozenset(include_markets)
+    if selected_names is not None:
+        need(bool(selected_names) and selected_names <= set(receipt["Markets"]),
+             "INTEGRATED_RECOVERY_SELECTED_MARKET_SCOPE")
     if not legacy:
         expected_names = {next((name for name in aliases if name in available), None)
                           for _, aliases in scope.universe} - {None}
@@ -175,6 +185,8 @@ def readback(receipt, private_key, interval=MINUTE, scope=ORIGINAL):
              len(expected_names) == len(source["Markets"]), "INTEGRATED_SOURCE_ROSTER_COVERAGE")
     for metadata in source["Markets"]:
         name = metadata["Name"]
+        if selected_names is not None and name not in selected_names:
+            continue
         aliases = next((alias for cls, alias in scope.universe if cls == metadata["Class"] and name in alias), ())
         need(name == next((n for n in aliases if n in available), None), "INTEGRATED_FROZEN_SYMBOL_ALIAS")
         symbol = available[name]
@@ -283,8 +295,18 @@ def readback(receipt, private_key, interval=MINUTE, scope=ORIGINAL):
                 "Stop": str(true_contract.slDistance * scale), "Target": str(true_contract.tpDistance * scale),
                 "Percentage": percentage,
             }
-    need(opened_shards == set(shard_metadata) and raw_request_count == receipt["Requests"],
-         "INTEGRATED_CUSTODY_REQUEST_INVENTORY")
+    if selected_names is None:
+        need(opened_shards == set(shard_metadata) and raw_request_count == receipt["Requests"],
+             "INTEGRATED_CUSTODY_REQUEST_INVENTORY")
+    else:
+        expected = {"account-contracts.enc"}
+        for name in selected_names:
+            expected.add(f"{name}-bars.enc")
+            expected.update(s for s in shard_metadata
+                            if s.startswith(f"{name}-") and s.endswith("-ticks.enc"))
+        need(opened_shards == expected and
+             {m["Name"] for m in market_records} == selected_names,
+             "INTEGRATED_CUSTODY_SELECTED_SHARD_INVENTORY")
     return market_records
 
 

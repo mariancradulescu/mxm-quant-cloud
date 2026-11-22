@@ -1,0 +1,115 @@
+name: Funded historical authenticated C# conditional economics
+on:
+  pull_request:
+    paths:
+      - 'research/funded_history_economic_development.py'
+      - 'research/test_funded_history_economic_development.py'
+      - 'research/integrated_market_readback.py'
+      - 'src/Mxm.Core/NativeStructuralResearch.cs'
+      - '.github/workflows/funded-history-economic-development.yml'
+      - 'research/FUNDED_HISTORY_CSHARP_ECONOMIC_HANDOFF.md'
+  push:
+    branches: [main]
+    paths:
+      - 'ops/funded-authentic-13w-csharp-economic-once.txt'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    outputs:
+      authorized: ${{ steps.marker.outputs.authorized }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - run: python -m pip install -r research/requirements.txt
+      - name: Original source, subset decoder and conditional economic receipt tests
+        run: |
+          python -m unittest research.test_integrated_market_ticks research.test_funded_history_recovery research.test_funded_history_gap_plan research.test_funded_history_economic_development -v
+          python -m py_compile research/integrated_market_readback.py research/funded_history_economic_development.py
+      - name: Build same-core funded Replay and observation-only Cloud
+        run: |
+          dotnet build src/Mxm.Replay -c Release
+          dotnet build src/Mxm.Cloud -c Release
+          dotnet run --project tests/Mxm.Checks -c Release
+      - name: OWNER only, single new economic marker, first main attempt
+        shell: bash
+        id: marker
+        run: |
+          echo 'authorized=false' >> "$GITHUB_OUTPUT"
+          marker=ops/funded-authentic-13w-csharp-economic-once.txt
+          subject=OWNER_FUNDED_AUTHENTIC_13W_CSHARP_ECONOMIC_CONDITIONAL_ONCE_44824462289_44910122403
+          if [[ "$GITHUB_EVENT_NAME" == "push" &&
+                "$GITHUB_REF" == "refs/heads/main" &&
+                "$GITHUB_ACTOR" == "mariancradulescu" &&
+                "$GITHUB_RUN_ATTEMPT" == "1" &&
+                "$(git log -1 --format=%s)" == "$subject" &&
+                "$(git diff-tree --no-commit-id --name-status -r HEAD)" == $'A\t'"$marker" &&
+                -z "$(git log -1 --format=%H HEAD^ -- "$marker")" &&
+                -f "$marker" ]] &&
+             cmp -s "$marker" <(printf '%s\n' "$subject"); then
+            echo 'authorized=true' >> "$GITHUB_OUTPUT"
+          fi
+  protected-csharp-economics:
+    needs: verify
+    if: ${{ github.ref == 'refs/heads/main' && github.run_attempt == '1' && needs.verify.outputs.authorized == 'true' }}
+    environment: mxm-r3-custody-v1
+    concurrency:
+      group: mxm-fav-original-44824462289-conditional-economics
+      cancel-in-progress: false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - run: python -m pip install -r research/requirements.txt
+      - run: dotnet build src/Mxm.Replay -c Release
+      - name: Immutable encrypted original #14681352119 — original run #44824462289
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: funded-action-history-custody
+          path: integrated-sealed-source
+          run-id: 44824462289
+          github-token: ${{ github.token }}
+      - name: Immutable original source receipt #14681397091
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: funded-action-history-source-public
+          path: integrated-source-public
+          run-id: 44824462289
+          github-token: ${{ github.token }}
+      - name: Original verified recovery #14709905618 — run #44910122403
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: funded-action-history-recovery-public
+          path: funded-history-recovery
+          run-id: 44910122403
+          github-token: ${{ github.token }}
+      - name: One protected source materialization and financed C# evaluation
+        run: python -m research.funded_history_economic_development
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - name: Export ONLY whitelisted financial aggregates and their hashes
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: funded-authentic-13w-csharp-economic-public
+          path: funded-history-economic-public/
+          retention-days: 90
+          if-no-files-found: error
