@@ -24,9 +24,10 @@ public static class NativeGeneralOpportunity
         if (!NativeStructuralOpportunity.ContextReady(market) ||
             market.ClosedBars is not { } context ||
             market.Integrated is not { TickSize: > 0m } data ||
-            market.Quote is not { Bid: > 0m } q || q.Ask < q.Bid)
+            market.Quote.Bid <= 0m || market.Quote.Ask < market.Quote.Bid)
             return Array.Empty<NativeStructuralSetup>();
 
+        var q = market.Quote;
         var m1 = context.For(NativeBarTimeframe.M1).Bars;
         var m5 = context.For(NativeBarTimeframe.M5).Bars;
         var m15 = context.For(NativeBarTimeframe.M15).Bars;
