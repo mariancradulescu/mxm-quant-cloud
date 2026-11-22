@@ -9,6 +9,7 @@ on:
       - 'src/Mxm.Replay/**'
       - 'tests/Mxm.Checks/NativeFundedActionChecks.cs'
       - 'research/funded_history_economic_development.py'
+      - 'research/test_funded_general_state_economic_development.py'
       - 'research/GENERAL_STATE_FUNDED_ECONOMIC_PROTOCOL.md'
       - '.github/workflows/funded-general-state-economic.yml'
   push:
@@ -42,7 +43,7 @@ jobs:
       - name: Source custody and public aggregate regression
         run: |
           python -m pip install -r research/requirements.txt
-          python -m unittest research.test_funded_history_economic_development -v
+          python -m unittest research.test_funded_history_economic_development research.test_funded_general_state_economic_development -v
           python -m py_compile research/funded_history_economic_development.py
       - name: Separate OWNER one-time guarded admission
         id: owner
