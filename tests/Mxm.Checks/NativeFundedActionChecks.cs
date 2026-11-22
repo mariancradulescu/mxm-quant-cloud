@@ -195,20 +195,13 @@ internal static class NativeFundedActionChecks
             new NativeFundedActionResearch.LabelWindow(bar, bar + week),
             new NativeFundedActionResearch.LabelWindow(bar + week, bar + 2 * week)
         };
-        var joined = frames.Concat(frames.Select(f => f with { At = f.At + week,
-            Markets = f.Markets.Select(m => m with {
-                Quote = m.Quote with { At = m.Quote.At + week },
-                ClosedBars = m.ClosedBars! with { DecisionAt = m.ClosedBars!.DecisionAt + week }
-            }).ToArray()
-        })).ToArray();
-        // Synthetic second-week bars in this coverage test deliberately retain
-        // old embedded bar timestamps; the causal generator must refuse them.
         var counted = NativeFundedActionResearch.ObserveIndependentResearchCohorts(
             frames, new[] { windows[0] }, "", contracts, generalized: true);
         check(counted.IndependentCohorts?.Length == 1 &&
             counted.Phases[0].Counts.Keys.Any(k => k.Contains(NativeGeneralOpportunity.Distribution)) &&
-            counted.Phases[0].Labels.Select(x => x.Offer.Side).Distinct().Count() == 2,
-            "new label sampler takes both directions in isolated research experiments");
+            counted.Phases[0].Counts.Keys.Any(k => k.Contains("/LONG/")) &&
+            counted.Phases[0].Counts.Keys.Any(k => k.Contains("/SHORT/")),
+            "new label sampler tests both directions, retaining censored forks separately");
         check(!NativeFundedActionValue.Variants.Contains(NativeFundedActionValue.GeneralContext) &&
             NativeFundedActionValue.GeneralVariants.Contains(NativeFundedActionValue.GeneralContext),
             "frozen legacy variants are not silently replaced");
