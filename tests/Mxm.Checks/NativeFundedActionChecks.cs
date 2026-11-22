@@ -96,6 +96,7 @@ internal static class NativeFundedActionChecks
         CheckCompetingCapital(bar, pilot, check);
         CheckCrossSession(pilot, check);
         CheckHistoricalSchedule(check);
+        CheckIndependentResearchCohorts(check);
         var track = new NativeUnifiedPortfolioEngine(pilot);
         for (long at = bar + 15_000; at < bar + 900_000; at += 30_000)
             track.Advance(Observation(bar, at));
@@ -248,6 +249,60 @@ internal static class NativeFundedActionChecks
             folds[0].CalibrationStart == folds[0].FitEnd && folds[0].From == start + 3 * week &&
             folds[^1].Until == start + 9 * week && windows.All(w => w.MaturityUntil == end),
             "historical folds use whole ISO weeks, past-only fit and calibration, and let earlier branches mature");
+    }
+
+    static void CheckIndependentResearchCohorts(Action<bool, string> check)
+    {
+        // The original continuous source runner stays unchanged. Only the new
+        // explicitly chosen research sampler creates independent EUR300 pilot
+        // experiments. Financial evaluation of actual candidate policies
+        // must still carry a single book across all tested weeks.
+        const long hour = 3_600_000L;
+        long start = NativeFundedActionResearch.Start + 10 * hour;
+        long week = NativeCompletePolicy.Week;
+        Ucp1Frame[] WeekFrames(long bar) => new[]
+        {
+            Observation(bar, bar + 15_000),
+            Observation(bar, bar + 45_000),
+            Observation(bar, bar + 75_000, 99.4m),
+            Observation(bar, bar + 105_000, 99.4m)
+        };
+        var first = WeekFrames(start);
+        var second = WeekFrames(start + week);
+        var windows = new[]
+        {
+            new NativeFundedActionResearch.LabelWindow(start, start + week),
+            new NativeFundedActionResearch.LabelWindow(start + week, start + 2 * week)
+        };
+        var contracts = first[0].Markets.ToDictionary(m => m.Symbol, m => m.Contract, StringComparer.Ordinal);
+        foreach (string suffix in new[] { "", "_ADVERSE" })
+        {
+            var jointlySampled = NativeFundedActionResearch.ObserveIndependentResearchCohorts(
+                first.Concat(second).ToArray(), windows, suffix, contracts);
+            var isolatedFirst = NativeFundedActionResearch.ObserveLabels(
+                first, new[] { windows[0] }, suffix, contracts);
+            var isolatedSecond = NativeFundedActionResearch.ObserveLabels(
+                second, new[] { windows[1] }, suffix, contracts);
+            check(jointlySampled.IndependentCohorts?.Length == 2 &&
+                jointlySampled.IndependentCohorts[0].Book == isolatedFirst.PilotBook &&
+                jointlySampled.IndependentCohorts[1].Book == isolatedSecond.PilotBook,
+                "fixed research cohorts are separate actual EUR300 funding experiments");
+            check(jointlySampled.Phases[0].Labels.Count > 0 &&
+                jointlySampled.Phases[1].Labels.Count > 0 &&
+                JsonSerializer.Serialize(jointlySampled.Phases[0].Labels) ==
+                    JsonSerializer.Serialize(isolatedFirst.Phases[0].Labels) &&
+                JsonSerializer.Serialize(jointlySampled.Phases[1].Labels) ==
+                    JsonSerializer.Serialize(isolatedSecond.Phases[0].Labels) &&
+                JsonSerializer.Serialize(jointlySampled.Phases[0].Counts) ==
+                    JsonSerializer.Serialize(isolatedFirst.Phases[0].Counts) &&
+                JsonSerializer.Serialize(jointlySampled.Phases[1].Counts) ==
+                    JsonSerializer.Serialize(isolatedSecond.Phases[0].Counts),
+                "independent cohort labels, outcomes and censure equal individually verified research weeks");
+            var legacy = NativeFundedActionResearch.ObserveLabels(
+                first.Concat(second).ToArray(), windows, suffix, contracts);
+            check(legacy.IndependentCohorts is null,
+                "original continuous pilot route is unchanged and separately identifiable");
+        }
     }
 
     static void CheckCompetingCapital(long bar, string pilot, Action<bool, string> check)
