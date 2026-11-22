@@ -13,6 +13,12 @@ public sealed partial class NativeUnifiedPortfolioEngine
         Func<Ucp1MarketFrame, NativeStructuralSetup?> describeLegacy,
         Func<Ucp1MarketFrame, NativeStructuralSetup?> describeExhaustion)
     {
+        if (NativeFundedActionValue.General(variant))
+        {
+            foreach (var setup in NativeGeneralOpportunity.Describe(market))
+                yield return setup;
+            yield break;
+        }
         if (variant != "EXHAUSTION" && describeLegacy(market) is { } legacy)
             yield return legacy;
         if (((variant is "EXHAUSTION" or NativeStructuralOpportunity.Combined or NativeStructuralOpportunity.CombinedRandom) ||
@@ -38,7 +44,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
             CompletePolicy ? NativeCompletePolicy.Variant(policy) : "";
         bool competition = StructuralPolicy && NativeStructuralOpportunity.IsCompetition(variant);
         bool fundedValue = StructuralPolicy && NativeFundedActionValue.IsVariant(variant);
-        if (variant is "CASH" or NativeFundedActionValue.Cash || CompletePolicy && !NativeCompletePolicy.IsDecision(at) ||
+        if (variant is "CASH" or NativeFundedActionValue.Cash or NativeFundedActionValue.GeneralCash || CompletePolicy && !NativeCompletePolicy.IsDecision(at) ||
             ExecutableBracketTerms && completeProbe is { } probe && at != probe.At)
             return RecordIntegratedFrame(at, book);
         bool economic = NativeIntegratedLifecycle.SelectsEconomically(policy);
@@ -310,7 +316,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
         decimal committed, List<FinancedCandidate> candidates, NativeFundedActionProbe? probe)
     {
         if (probe is null && !NativeFundedActionValue.Forecasts(variant))
-            return variant == NativeFundedActionValue.Hash
+            return variant is NativeFundedActionValue.Hash or NativeFundedActionValue.GeneralHash
                 ? candidates.OrderBy(x => CompetitionOrder(frame.At, x), StringComparer.Ordinal).First()
                 : candidates[0];
 
@@ -323,6 +329,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
                     c.Terms.RewardEur / c.ReservedRiskEur,
                     (decimal)(candidates.Count - 1)
                 });
+            if (NativeFundedActionValue.General(variant) && c.Complete is { } state)
+                features = features.Concat(state.Features).ToArray();
             var offer = new NativeFundedActionOffer(NativeFundedActionValue.Enter,
                 c.Market.Symbol + "/" + c.Signal.Family + "/" + c.Signal.Side, c.Market.Symbol, c.Signal.Family,
                 c.Signal.Side, frame.At, c.ReservedRiskEur, features);
@@ -435,8 +443,9 @@ public sealed partial class NativeUnifiedPortfolioEngine
             summary.MaximumSampledDrawdown >= .30m || plan.Side * (geometry.Target - execution) <= 0m ||
             !NativeIntegratedLifecycle.ProtectionCompatible(plan.Side, geometry.Stop, geometry.Target, input))
             return null;
-        var thesis = StructuralPolicy
-            ? NativeStructuralOpportunity.AtFill(geometry.Thesis!, plan.Side, input)
+        var thesis = StructuralPolicy && NativeFundedActionValue.General(NativeStructuralOpportunity.Variant(policy))
+            ? NativeGeneralOpportunity.AtFill(geometry.Thesis!, plan.Side, input)
+            : StructuralPolicy ? NativeStructuralOpportunity.AtFill(geometry.Thesis!, plan.Side, input)
             : NativeIntegratedLifecycle.AtFill(geometry.Thesis!, plan.Side, input);
         if (thesis is null) return null;
         var terms = new NativeIntegratedTerms(plan.Units, geometry.InitialRiskEur, geometry.InitialRewardEur,
@@ -521,8 +530,10 @@ public sealed partial class NativeUnifiedPortfolioEngine
             decimal stop = NativeCausalExitResearch.AdaptivePathStop(side, plan.Entry, geometry.Stop,
                 plan.Extreme, plan.Atr);
             adaptiveStop = side * (adverse - stop) <= 0m;
-            geometry = geometry with { Thesis = StructuralPolicy
-                ? NativeStructuralOpportunity.Observe(thesis, side, plan.OpenAt, market)
+            geometry = geometry with { Thesis = StructuralPolicy &&
+                NativeFundedActionValue.General(NativeStructuralOpportunity.Variant(policy))
+                ? NativeGeneralOpportunity.Observe(thesis)
+                : StructuralPolicy ? NativeStructuralOpportunity.Observe(thesis, side, plan.OpenAt, market)
                 : NativeIntegratedLifecycle.Observe(thesis, side, plan.OpenAt, market) };
             plan = plan with { Integrated = geometry,
                 Extreme = side > 0 ? Math.Max(plan.Extreme, favorable) : Math.Min(plan.Extreme, favorable) };
