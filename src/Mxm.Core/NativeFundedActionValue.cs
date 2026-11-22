@@ -38,8 +38,8 @@ public sealed record NativeFundedActionModel(long FitEnd, long AvailableAt, bool
             return null;
         return variant switch
         {
-            NativeFundedActionValue.Pooled => model.Pooled?.Predict(new[] { 0m }, action.At, action.ScaleEur),
-            NativeFundedActionValue.Placebo => model.Placebo?.Predict(action.Features, action.At, action.ScaleEur),
+            NativeFundedActionValue.Pooled or NativeFundedActionValue.GeneralPooled => model.Pooled?.Predict(new[] { 0m }, action.At, action.ScaleEur),
+            NativeFundedActionValue.Placebo or NativeFundedActionValue.GeneralPlacebo => model.Placebo?.Predict(action.Features, action.At, action.ScaleEur),
             _ => model.Context?.Predict(action.Features, action.At, action.ScaleEur)
         };
     }
@@ -66,10 +66,26 @@ public static class NativeFundedActionValue
     internal const string WithoutExhaustion = "VALUE_NO_EXHAUSTION";
     internal const string Enter = "ENTER";
     internal const string Close = "CLOSE";
+    // Separate development family: never mutate Variants or results of the frozen
+    // historical VALUE_CONTEXT / VALUE_FIRST evaluation.
+    public const string GeneralContext = "VALUE_GENERAL";
+    public const string GeneralCash = "VALUE_GENERAL_CASH";
+    public const string GeneralFirst = "VALUE_GENERAL_FIRST";
+    public const string GeneralHash = "VALUE_GENERAL_HASH";
+    public const string GeneralPooled = "VALUE_GENERAL_POOLED";
+    public const string GeneralPlacebo = "VALUE_GENERAL_PLACEBO";
+    public const string GeneralEntryOnly = "VALUE_GENERAL_ENTRY_ONLY";
     internal static readonly string[] Variants = { Cash, First, Hash, Pooled, Placebo, EntryOnly, Context, WithoutExhaustion };
-    internal static bool IsVariant(string variant) => Variants.Contains(variant, StringComparer.Ordinal);
-    internal static bool Forecasts(string variant) => variant is Context or EntryOnly or Pooled or Placebo or WithoutExhaustion;
-    internal static bool ValuesHolding(string variant) => Forecasts(variant) && variant != EntryOnly;
+    internal static readonly string[] GeneralVariants = {
+        GeneralCash, GeneralFirst, GeneralHash, GeneralPooled,
+        GeneralPlacebo, GeneralEntryOnly, GeneralContext
+    };
+    internal static bool General(string variant) => GeneralVariants.Contains(variant, StringComparer.Ordinal);
+    internal static bool IsVariant(string variant) => Variants.Contains(variant, StringComparer.Ordinal) || General(variant);
+    internal static bool Forecasts(string variant) => variant is Context or EntryOnly or Pooled or Placebo or WithoutExhaustion
+        or GeneralContext or GeneralPooled or GeneralPlacebo or GeneralEntryOnly;
+    internal static bool ValuesHolding(string variant) =>
+        Forecasts(variant) && variant is not (EntryOnly or GeneralEntryOnly);
 
     static decimal Move(NativeBarWindow window)
         => (window.Bars[^1].Close - window.Bars[0].Open) /
