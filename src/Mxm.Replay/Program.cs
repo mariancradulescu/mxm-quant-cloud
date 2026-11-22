@@ -25,6 +25,9 @@ if(args.Length==3 && args[0]=="--funded-action-value-historical")
     return IntegratedEconomicReplay.RunFundedActionValue(args[1],args[2],historical:true);
 if(args.Length==3 && args[0]=="--funded-action-value-historical-conditional")
     return IntegratedEconomicReplay.RunFundedActionValue(args[1],args[2],historical:true,conditionalCosts:true);
+if(args.Length==3 && args[0]=="--funded-action-value-historical-independent-cohorts-conditional")
+    return IntegratedEconomicReplay.RunFundedActionValue(args[1],args[2],
+        historical:true,conditionalCosts:true,independentCohorts:true);
 
 if(args.Length==4 && args[3]=="--fcp1-financed-original-source-exploratory")
     return Fcp1FinancedScoreRunner.Run(args[0],args[1],args[2]);
