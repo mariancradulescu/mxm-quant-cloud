@@ -383,7 +383,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
     Ucp1FrameResult RecordIntegratedFrame(long at, LedgerSummary summary)
     {
         previousClock = at;
-        curve.Add(new Ucp1CurvePoint(at, summary.CashEur, summary.LiquidationEquityEur, summary.UsedMarginEur,
+        if(!researchFork) curve.Add(new Ucp1CurvePoint(at, summary.CashEur, summary.LiquidationEquityEur, summary.UsedMarginEur,
             summary.OpenPositions, summary.PendingIntents, summary.CompleteRoundTrips)
             { PlannedAggregateRiskEur=plans.Values.Sum(p=>p.RiskEur) });
         return new(policy, at, summary, proposed, admitted, openFills, trips.Count,
