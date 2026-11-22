@@ -42,6 +42,29 @@ internal static class NativeFundedActionChecks
             Probe(engine, frames[0], capture);
             var offer = capture.Available.Single();
             var settled = NativeFundedActionResearch.Paired(checkpoint, offer, frames, 0, contracts);
+            // A fork-only checkpoint must preserve every economic decision, settlement,
+            // monetary chain and completed trip while avoiding unneeded diagnostics.
+            var seed = NativeUnifiedPortfolioEngine.Restore(checkpoint);
+            var leanLabel = NativeFundedActionResearch.Paired(
+                seed.ActionForkCheckpoint(), offer, frames, 0, contracts);
+            var fullLabel = NativeFundedActionResearch.Paired(
+                seed.ActionForkCheckpoint(suppressResearchTrace: false), offer, frames, 0, contracts);
+            check(leanLabel == fullLabel && fullLabel == settled,
+                "diagnostic-free counterfactual forks preserve both funded decision outcomes");
+            var lean = NativeUnifiedPortfolioEngine.Restore(seed.ActionForkCheckpoint());
+            var full = NativeUnifiedPortfolioEngine.Restore(
+                seed.ActionForkCheckpoint(suppressResearchTrace: false));
+            foreach (var step in frames)
+                check(lean.Advance(step) == full.Advance(step),
+                    "counterfactual fork suppresses traces without changing any per-clock funded decision or chain");
+            check(lean.ModelSummary == full.ModelSummary &&
+                JsonSerializer.Serialize(lean.CompleteModelTrips) ==
+                    JsonSerializer.Serialize(full.CompleteModelTrips) &&
+                lean.CommonBookEquityPath.Length == 0 &&
+                lean.OriginalModelEvents.Length == 0 &&
+                full.CommonBookEquityPath.Length == frames.Length &&
+                full.OriginalModelEvents.Length > 0,
+                "fork numerical/trip parity holds while only redundant event and equity traces disappear");
             check(settled.DeltaEur > 0m && settled.At == frames[^1].At, "paired funded ENTER and WAIT settle at a later common flat mark");
             var truncated = NativeFundedActionResearch.Paired(checkpoint, offer, frames.Take(2).ToArray(), 0, contracts);
             check(truncated.Status == "RIGHT_CENSORED" && truncated.DeltaEur is null, "an unsettled funded branch cannot become a zero label");
