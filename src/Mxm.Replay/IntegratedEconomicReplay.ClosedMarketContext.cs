@@ -193,7 +193,7 @@ internal static partial class IntegratedEconomicReplay
     }
 
     public static int RunFundedActionValue(string inputFile, string outputFile, bool historical = false,
-        bool conditionalCosts = false)
+        bool conditionalCosts = false, bool independentCohorts = false)
     {
         using var input = File.OpenRead(inputFile);
         var inputHash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(input)).ToLowerInvariant();
@@ -211,6 +211,8 @@ internal static partial class IntegratedEconomicReplay
         var currency = markets.SingleOrDefault(m => m.Source.Name == "EURUSD")
             ?? throw new ArgumentException("FUNDED_ACTION_EUR_CONVERSION_SOURCE_MISSING");
         if (conditionalCosts && !historical) throw new ArgumentException("FUNDED_ACTION_ONLY_HISTORICAL_CONDITIONAL_COST");
+        if (independentCohorts && !historical)
+            throw new ArgumentException("FUNDED_ACTION_COHORTS_ONLY_HISTORICAL_DEVELOPMENT");
         var frames = new List<Ucp1Frame>();
         for (long at = source.Start + NativeIntegratedEconomicPolicy.ClockOffsetMs; at < source.End;
              at += NativeIntegratedLifecycle.IntervalMs)
@@ -229,7 +231,11 @@ internal static partial class IntegratedEconomicReplay
         {
             var contracts = source.Markets.ToDictionary(m => m.Name, m => m.Contract, StringComparer.Ordinal);
             result = historical
-                ? NativeFundedActionResearch.RunHistorical(frames.ToArray(), source.Start, source.End, contracts)
+                ? independentCohorts
+                    ? NativeFundedActionResearch.RunHistoricalIndependentCohorts(
+                        frames.ToArray(), source.Start, source.End, contracts)
+                    : NativeFundedActionResearch.RunHistorical(
+                        frames.ToArray(), source.Start, source.End, contracts)
                 : NativeFundedActionResearch.Run(frames.ToArray(), contracts);
         }
         else if (!historical)
