@@ -63,6 +63,8 @@ public sealed record Ucp1Checkpoint(string Version,string Policy,string Session,
     public NativeFundedActionModel? FundedActionModel { get; init; }
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public NativeFundedActionReceipt[]? FundedActions { get; init; }
+    // The financial session and event chain remain authoritative in research forks.
+    public bool ResearchFork { get; init; }
 }
 public sealed record Scp1ChoiceReceipt(long At,string Symbol,string Family,int Side,
     decimal? ConditionalExpectedNetEur,decimal? AdverseLowerNetEur,
@@ -159,6 +161,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
     readonly List<LedgerEvent> facts=new();
     readonly List<Ucp1Episode> trips=new();
     readonly List<Ucp1CurvePoint> curve=new();
+    readonly bool researchFork;
     long previousClock=-1,seq;
     int proposed,admitted,openFills,expiredOpens,expiredCloses,
         closeRequests,rejections,sourceUnknownClocks,gapExposures;
@@ -197,6 +200,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
     }
     private NativeUnifiedPortfolioEngine(Ucp1Checkpoint s)
     {
+        researchFork=s.ResearchFork;
         if(s.Version!=Version)throw new ArgumentException("UCP1_CHECKPOINT_VERSION");
         policy=s.Policy;
         completeModels=s.CompleteModels;
@@ -248,9 +252,11 @@ public sealed partial class NativeUnifiedPortfolioEngine
     }
 
     public string Checkpoint()=>Checkpoint(includeTrace: true);
-    // Continuations need financial state and settled episodes. Prior diagnostics have no effect on decisions.
-    internal string ActionForkCheckpoint()=>Checkpoint(includeTrace: false);
-    string Checkpoint(bool includeTrace)=>JsonSerializer.Serialize(new Ucp1Checkpoint(
+    // Counterfactual forks need financial state and completed trips, not diagnostic traces.
+    // Opt-out enables exact monetary/event-chain parity tests against full-trace forks.
+    internal string ActionForkCheckpoint(bool suppressResearchTrace=true)
+        =>Checkpoint(includeTrace: false, asResearchFork: suppressResearchTrace);
+    string Checkpoint(bool includeTrace, bool asResearchFork=false)=>JsonSerializer.Serialize(new Ucp1Checkpoint(
         Version,policy,model.Checkpoint(),broker.Checkpoint(),broker.AccountBinding,
         new(plans,StringComparer.Ordinal),new(lastSignalBar,StringComparer.Ordinal),
         previousClock,seq,proposed,admitted,openFills,expiredOpens,
@@ -260,7 +266,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
         includeTrace ? curve.ToArray() : Array.Empty<Ucp1CurvePoint>(), lastBrokerEvidence,
         scoreModel,scoredChoices.ToArray(),integratedCalibration?.Checkpoint(),completeModels,completeProbe)
         { StructuralModels = structuralModels, FundedActionModel = fundedActionModel,
-            FundedActions = fundedActions.Count == 0 ? null : fundedActions.ToArray() });
+            FundedActions = fundedActions.Count == 0 ? null : fundedActions.ToArray(),
+            ResearchFork = researchFork || asResearchFork });
     static string Sha(string s)=>Convert.ToHexString(SHA256.HashData(
         Encoding.UTF8.GetBytes(s))).ToLowerInvariant();
     LedgerEvent Event(string kind,long at,string id="",string sym="",int side=0,
@@ -279,7 +286,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
         if(e.Kind=="MARK" && NativeIntegratedEconomicPolicy.IsPolicy(policy))
             model.RecordResearchMark(e);
         else model.ApplyResearchFacts(new[]{e});
-        facts.Add(e);
+        if(!researchFork) facts.Add(e);
     }
     static decimal Fee(LedgerQuote q,decimal units)
         =>Math.Max(q.ExitFeePerUnit*units,q.ExitFeeFloor);
@@ -363,7 +370,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
         }
         previousClock=t;
         var end=model.Ledger.Summary(t);
-        curve.Add(new Ucp1CurvePoint(t,end.CashEur,end.LiquidationEquityEur,
+        if(!researchFork) curve.Add(new Ucp1CurvePoint(t,end.CashEur,end.LiquidationEquityEur,
             end.UsedMarginEur,end.OpenPositions,end.PendingIntents,
             end.CompleteRoundTrips));
         return new(policy,t,end,proposed,admitted,openFills,trips.Count,
@@ -505,7 +512,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
             var verdict=NativeSimulatedCloseLifecycle.Advance(model,state,
                 new NativeModelCloseObservation(t,q,direction,integratedManages?0:t-1,
                     instruction,p.Integrated is not null,integratedManages));
-            facts.AddRange(verdict.AppliedFacts);
+            if(!researchFork) facts.AddRange(verdict.AppliedFacts);
             expiredCloses+=verdict.AppliedFacts.Count(x=>
                 x.Kind=="MODEL_CLOSE_INTENT_EXPIRED");
             closeRequests+=verdict.AppliedFacts.Count(x=>x.Kind=="REQUEST_CLOSE");
@@ -795,7 +802,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
                                 offer.CalibratedThrough,entry.LatencyMs,
                                 "NATIVE_CONDITIONAL_SELECTION",entry.EvidenceHash,
                                 Array.Empty<LedgerQuote>());
-                            facts.Add(fact);
+                            if(!researchFork) facts.Add(fact);
                             plans[chosen.Id]=local[chosen.Id];
                             admitted++;
                         }
@@ -810,7 +817,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
         }
         previousClock=t;
         var end=model.Ledger.Summary(t);
-        curve.Add(new Ucp1CurvePoint(t,end.CashEur,end.LiquidationEquityEur,
+        if(!researchFork) curve.Add(new Ucp1CurvePoint(t,end.CashEur,end.LiquidationEquityEur,
             end.UsedMarginEur,end.OpenPositions,end.PendingIntents,
             end.CompleteRoundTrips));
         return new(policy,t,end,proposed,admitted,openFills,trips.Count,
