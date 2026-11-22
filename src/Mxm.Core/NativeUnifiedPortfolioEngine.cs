@@ -64,6 +64,7 @@ public sealed record Ucp1Checkpoint(string Version,string Policy,string Session,
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public NativeFundedActionReceipt[]? FundedActions { get; init; }
     // The financial session and event chain remain authoritative in research forks.
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
     public bool ResearchFork { get; init; }
 }
 public sealed record Scp1ChoiceReceipt(long At,string Symbol,string Family,int Side,
