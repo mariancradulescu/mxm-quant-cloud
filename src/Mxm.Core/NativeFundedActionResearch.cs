@@ -25,7 +25,9 @@ public static class NativeFundedActionResearch
     }
     internal sealed record LabelWindow(long From, long Until, long? MaturityUntil = null);
     internal sealed record LabelPhase(LabelWindow Window, List<Label> Labels, Dictionary<string, int> Counts);
-    internal sealed record LabelObservation(LabelPhase[] Phases, LedgerSummary PilotBook);
+    internal sealed record ResearchCohort(long From, long Until, LedgerSummary Book);
+    internal sealed record LabelObservation(LabelPhase[] Phases, LedgerSummary PilotBook,
+        ResearchCohort[]? IndependentCohorts = null);
     internal sealed record EvaluationFold(long FitEnd, long CalibrationStart, long From, long Until);
 
     static NativeUnifiedPortfolioEngine Pilot(string suffix)
@@ -113,6 +115,62 @@ public static class NativeFundedActionResearch
             }
         }
         return new(phases, engine.ModelSummary);
+    }
+
+    // NEW, distinct development mode only: fixed chronological Monday-to-Monday
+    // research cohorts start from separately funded EUR300 pilot experiments.
+    // Their cash/PNL MUST NEVER be summed, promoted or represented as the
+    // continuous EUR300 economic portfolio. Each actual tested policy remains
+    // a single uninterrupted funded book in Evaluate().
+    // Historical as-of quotes and the identical counterfactual fill engine
+    // continue to determine every research label. An exhausted pilot in one
+    // research week cannot erase the future weeks' available market actions.
+    internal static LabelObservation ObserveIndependentResearchCohorts(
+        Ucp1Frame[] frames, LabelWindow[] windows, string suffix,
+        IReadOnlyDictionary<string, NativeObservedContractTerms> contracts)
+    {
+        if (frames.Length == 0 || windows.Length == 0 ||
+            windows.Any(w => w.From >= w.Until || w.MaturityUntil < w.Until) ||
+            windows.Zip(windows.Skip(1)).Any(pair => pair.First.Until > pair.Second.From))
+            throw new ArgumentException("FUNDED_ACTION_COHORT_WINDOW_INVALID");
+
+        var phases = windows.Select(w => new LabelPhase(w, new(), new(StringComparer.Ordinal))).ToArray();
+        var cohorts = new List<ResearchCohort>(phases.Length);
+        int next = 0;
+        foreach (var phase in phases)
+        {
+            // Ex-ante fixed observation cohort, not a backtest reset or
+            // portfolio replenishment. The cohort never carries its debt
+            // or cash into the next week's research observation schedule.
+            var pilot = Pilot(suffix);
+            while (next < frames.Length && frames[next].At < phase.Window.From) next++;
+            int i = next;
+            for (; i < frames.Length && frames[i].At < phase.Window.Until; i++)
+            {
+                var frame = frames[i];
+                if (frame.At % Hour != NativeIntegratedEconomicPolicy.ClockOffsetMs ||
+                    !frame.Markets.Any(NativeStructuralOpportunity.ContextReady))
+                {
+                    pilot.Advance(frame);
+                    continue;
+                }
+                string checkpoint = pilot.ActionForkCheckpoint();
+                var probe = new NativeFundedActionProbe();
+                Observe(pilot, frame, probe);
+                foreach (var kind in probe.Available.GroupBy(o => o.Kind))
+                {
+                    var offer = kind.OrderBy(ProbeOrder, StringComparer.Ordinal).First();
+                    var (delta, settled, status) = Paired(checkpoint, offer, frames, i, contracts,
+                        phase.Window.MaturityUntil ?? phase.Window.Until);
+                    string key = offer.Group + "/" + status;
+                    phase.Counts[key] = phase.Counts.GetValueOrDefault(key) + 1;
+                    if (delta is decimal value) phase.Labels.Add(new(offer, settled, value));
+                }
+            }
+            cohorts.Add(new(phase.Window.From, phase.Window.Until, pilot.ModelSummary));
+            next = i;
+        }
+        return new(phases, cohorts[^1].Book, cohorts.ToArray());
     }
 
     static string ProbeOrder(NativeFundedActionOffer o)
@@ -236,6 +294,17 @@ public static class NativeFundedActionResearch
         return (windows, folds);
     }
 
+    // The previously executed RunHistorical remains frozen. This separately
+    // named development path changes the research sampling experiment only.
+    public static object RunHistoricalIndependentCohorts(Ucp1Frame[] frames, long start, long end,
+        IReadOnlyDictionary<string, NativeObservedContractTerms> contracts)
+    {
+        if (start < Week || start % Day != 0 || end % Day != 0 || !CompleteClock(frames, start, end))
+            throw new ArgumentException("FUNDED_ACTION_HISTORICAL_COHORT_CALENDAR");
+        var (windows, folds) = HistoricalSchedule(start, end);
+        return Evaluate(frames, windows, folds, contracts, prospective: false, independentCohorts: true);
+    }
+
     public static object RunHistorical(Ucp1Frame[] frames, long start, long end,
         IReadOnlyDictionary<string, NativeObservedContractTerms> contracts)
     {
@@ -246,7 +315,8 @@ public static class NativeFundedActionResearch
     }
 
     static object Evaluate(Ucp1Frame[] frames, LabelWindow[] windows, EvaluationFold[] folds,
-        IReadOnlyDictionary<string, NativeObservedContractTerms> contracts, bool prospective)
+        IReadOnlyDictionary<string, NativeObservedContractTerms> contracts, bool prospective,
+        bool independentCohorts = false)
     {
         long evaluationStart = folds[0].From, evaluationEnd = folds[^1].Until;
         var cases = frames.Where(f => f.At >= evaluationStart && f.At < evaluationEnd).ToArray();
@@ -262,7 +332,9 @@ public static class NativeFundedActionResearch
 
         object Scenario(string suffix)
         {
-            var observed = ObserveLabels(frames, windows, suffix, contracts);
+            var observed = independentCohorts
+                ? ObserveIndependentResearchCohorts(frames, windows, suffix, contracts)
+                : ObserveLabels(frames, windows, suffix, contracts);
             var labels = observed.Phases.SelectMany(p => p.Labels).ToArray();
             var models = folds.Select(fold =>
             {
@@ -317,7 +389,13 @@ public static class NativeFundedActionResearch
             }).ToArray() : null;
             return new
             {
-                Pilot = observed.PilotBook,
+                // In the new mode there is deliberately NO single continuous
+                // research pilot. Only evaluated policies have continuous books.
+                Pilot = independentCohorts ? (object?)null : observed.PilotBook,
+                ResearchSampling = independentCohorts
+                    ? "FIXED_WEEKLY_INDEPENDENT_EUR300_LABEL_EXPERIMENTS_NOT_PORTFOLIO_PNL"
+                    : "CONTINUOUS_FIRST_PILOT",
+                IndependentResearchCohorts = observed.IndependentCohorts,
                 LabelCoverage = observed.Phases.Select(p => new { p.Window, p.Counts }),
                 Training = prospective ? observed.Phases[0].Counts : null,
                 Calibration = prospective ? observed.Phases[1].Counts : null,
