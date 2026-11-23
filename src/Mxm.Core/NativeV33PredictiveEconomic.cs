@@ -194,7 +194,7 @@ public static class NativeV33PredictiveEconomic
             decimal mean=denom>0 ?(.5m*baseline.Mean+.5m*weighted/denom):baseline.Mean;
             decimal var=Math.Max(1m,baseline.Variance);
             decimal err=(decimal)Math.Sqrt((double)(var/Math.Max(1,baseline.N)));
-            decimal radius=2.5m*err;
+            decimal radius=3.05m*err; // preregistered one-sided familywise Bonferroni 21
             string regime=chosen.Any(f=>f.Channel>=10)?"HIGHER_TF":
                 chosen.Any(f=>f.Channel>=4)?"MULTISCALE":"SHORT_TF_ONLY";
             return new(Clip(mean,2000m),mean-radius,mean+radius,
