@@ -166,6 +166,7 @@ def aggregate_original(receipt, sealed_dir, private_pem):
          "ORIGINAL_SHARD_SET_CHANGED")
     roster_rows = next(x for x in source if x["kind"] == "ROSTER")
     ids = _roster(_load_sealed(roster_rows, sealed_dir, private_pem))
+    print("P05_SOURCE_ROSTER_DECRYPT_AND_BIND_SUCCESS", flush=True)
     inspected = 0
     for metadata in source:
         if metadata["kind"] == "CONTRACTS":
@@ -173,6 +174,7 @@ def aggregate_original(receipt, sealed_dir, private_pem):
             data = _load_sealed(metadata, sealed_dir, private_pem)
             need(len(data) > 0, "EMPTY_CONTRACT_SOURCE")
             inspected += 1
+    print("P05_SOURCE_CONTRACT_SHARDS_VERIFIED_" + str(inspected), flush=True)
     completed = []
     by_horizon = {tf: {
         "symbolCountWithRawBarsAndCostProxy": 0,
@@ -231,6 +233,8 @@ def aggregate_original(receipt, sealed_dir, private_pem):
                 by_week_range[tf][k].update(d["hindsightRangeOnly"][k])
                 by_week_oc[tf][k].update(d["hindsightAbsoluteOpenCloseOnly"][k])
         completed.append(symbol)
+        if len(completed) % 8 == 0:
+            print("P05_SOURCE_MARKETS_VERIFIED_" + str(len(completed)), flush=True)
     need(len(completed) == receipt["marketProbesCompleted"] == 48, "SOURCE_COMPLETENESS")
     horizons = {}
     for tf, data in by_horizon.items():
@@ -314,7 +318,14 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except Exception:
-        # No decrypted protobuf, account or secret in exception trace / logs.
-        print("P05_SOURCE_READBACK_FAILED_DETAIL_WITHHELD")
+    except Exception as exc:
+        # Only our STATIC, source-independent validation error codes may print.
+        # Never log decrypted source, account IDs, paths, key, market values,
+        # exception messages from a library, traceback or private attributes.
+        msg = str(exc)
+        allowed = (isinstance(exc, ValueError)
+                   and msg.startswith("P05_READBACK_")
+                   and all(ch in "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_" for ch in msg))
+        print("P05_SOURCE_READBACK_FAILED_" + (msg if allowed else type(exc).__name__),
+              flush=True)
         raise SystemExit(1)
