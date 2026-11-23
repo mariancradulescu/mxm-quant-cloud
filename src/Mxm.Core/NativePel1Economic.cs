@@ -31,12 +31,12 @@ public static class NativePel1Economic
     }
     sealed class MarketDay
     {
-        public required Pel1Market Source;public required Tick[] Ticks;
-        public required long[][] M5;
+        public Pel1Market Source=null!;public Tick[] Ticks=Array.Empty<Tick>();
+        public long[][] M5=Array.Empty<long[]>();
     }
     sealed class Book
     {
-        public required string Policy;public required decimal Stress;
+        public string Policy="";public decimal Stress;
         public NativeFundedLedger Ledger=new(1000);
         public Dictionary<string,Position> Held=new(StringComparer.Ordinal);
         public Dictionary<string,Position> Pending=new(StringComparer.Ordinal);
