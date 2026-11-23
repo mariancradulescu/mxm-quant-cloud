@@ -100,7 +100,7 @@ def _bars_from_original(rows):
         decoded = decode_bars(res.trendbar, lo, hi, 0)
         for row in decoded:
             t, _, op, high, low, close, tickvol = row
-            if not (a <= t <= b and t + minutes * 60000 <= SOURCE_END_MS):
+            if not (a <= t <= b and t <= SOURCE_END_MS):
                 continue
             need(low > 0 and low <= op <= high and low <= close <= high
                  and tickvol >= 0, "BAD_BAR_GEOMETRY")
@@ -179,6 +179,10 @@ def aggregate_original(receipt, sealed_dir, private_pem):
     by_horizon = {tf: {
         "symbolCountWithRawBarsAndCostProxy": 0,
         "rawClosedBarCount": 0,
+        "rawCollectorReportedBarCount": 0,
+        "rawCountMismatchFrames": 0,
+        "originalBarsNotCertifiedInMismatchFrames": 0,
+        "formingBarsDiscardedFromEconomics": 0,
         "hindsightRangeBarCounts": {str(k): 0 for k in MULTIPLIERS},
         "hindsightOpenCloseBarCounts": {str(k): 0 for k in MULTIPLIERS},
         "weeksWithData": set(),
@@ -218,10 +222,21 @@ def aggregate_original(receipt, sealed_dir, private_pem):
         margin = float(margin_str)
         for tf, (_, minutes) in PERIODS.items():
             originals = list(bars.get(tf, {}).values())
-            need(len(originals) == public["timeframes"][tf]["bars"], "RAW_BAR_COUNT_MISMATCH")
-            # Legitimate duplicates/gaps are never filled.
-            d = upper_bound_diagnostic(originals, spread, margin, minutes)
             agg = by_horizon[tf]
+            expected = public["timeframes"][tf]["bars"]
+            # Original collector retained some bars not yet closed at source
+            # cutoff, because its decode_bars(..., period_minutes=0) labels
+            # the second timestamp as the OPEN, not the market close.
+            # Count those in provenance, NEVER in a causal/economic test.
+            if len(originals) != expected:
+                agg["rawCountMismatchFrames"] += 1
+                agg["originalBarsNotCertifiedInMismatchFrames"] += expected
+                continue  # fail-closed for this symbol/timeframe, not all markets
+            closed = [row for row in originals
+                      if row[0] + minutes * 60000 <= SOURCE_END_MS]
+            agg["rawCollectorReportedBarCount"] += len(originals)
+            agg["formingBarsDiscardedFromEconomics"] += len(originals) - len(closed)
+            d = upper_bound_diagnostic(closed, spread, margin, minutes)
             agg["rawClosedBarCount"] += d["barCount"]
             agg["weeksWithData"].update(d["observedWeekKeys"])
             if spread is not None and d["barCount"]:
@@ -241,6 +256,10 @@ def aggregate_original(receipt, sealed_dir, private_pem):
         keys = sorted(data["weeksWithData"])
         horizons[tf] = {
             "authenticClosedBars": data["rawClosedBarCount"],
+            "originalCollectorBarsVerified": data["rawCollectorReportedBarCount"],
+            "formingBarsExcludedAsNotClosed": data["formingBarsDiscardedFromEconomics"],
+            "symbolTimeframesSkippedOnCountMismatch": data["rawCountMismatchFrames"],
+            "originalPublicBarCountInUncertainFrames": data["originalBarsNotCertifiedInMismatchFrames"],
             "symbolsWithBarsAndPartialVariableCost": data["symbolCountWithRawBarsAndCostProxy"],
             "weeksWithAnyBarsNotEligibleCertified": len(keys),
             "hindsightRangeBarsExceedSpreadProxy": data["hindsightRangeBarCounts"],
@@ -257,9 +276,10 @@ def aggregate_original(receipt, sealed_dir, private_pem):
             "causallyDetectableFinancedTrades": None,
             "allInNetEUR": None,
         }
-        need(data["rawClosedBarCount"] ==
+        need(data["rawCollectorReportedBarCount"] +
+             data["originalBarsNotCertifiedInMismatchFrames"] ==
              sum(s["timeframes"][tf]["bars"] for s in receipt["marketCoverage"].values()),
-             "TOTAL_BAR_COUNTS_MISMATCH")
+             "TOTAL_BAR_ACCOUNTING_MISMATCH")
     return {
         "schema": "MXM_P05_ORIGINAL_AUTHENTIC_DECRYPTED_COST_FRONTIER_V32",
         "sourceRunId": RUN,
@@ -293,6 +313,7 @@ def aggregate_original(receipt, sealed_dir, private_pem):
         "ordersSubmitted": 0,
         "cloudActivated": False,
         "verdict": "P05_PARTIAL_MATHEMATICAL_BOUND_NO_EXECUTABLE_NET",
+        "rawReadbackUncertainFrames": sum(x["rawCountMismatchFrames"] for x in by_horizon.values()),
     }
 
 
