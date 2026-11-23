@@ -334,7 +334,7 @@ public static class NativeV33PredictiveEconomic
             var fragments=Ledger.ClosedFragments();
             var completed=fragments.Where(x=>x.CompletesRoundTrip).ToArray();
             var expected=completed.Length;
-            if(expected!=summary.CompleteRoundTrips||completed.Sum(x=>x.NetEur)!=summary.ClosedNetEur)
+            if(expected!=summary.CompleteRoundTrips||fragments.Sum(x=>x.NetEur)!=summary.ClosedNetEur)
                 throw new InvalidOperationException("V33_EXISTING_LEDGER_CLOSED_CASH_IDENTITY");
             var byWeek=completed.GroupBy(x=>Week(x.ClosedAt)).OrderBy(g=>g.Key)
                 .Select(g=>new {Week=g.Key,Completed=g.Count(),NET_EUR=g.Sum(x=>x.NetEur),
