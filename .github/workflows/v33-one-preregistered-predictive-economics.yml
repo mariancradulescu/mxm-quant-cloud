@@ -1,0 +1,128 @@
+name: V3.3 ONE causal predictive EUR300 economics existing sealed originals
+on:
+  pull_request:
+    paths:
+      - 'src/Mxm.Core/NativeV33PredictiveEconomic.cs'
+      - 'src/Mxm.Replay/Program.cs'
+      - 'research/v33_one_integrated_execute.py'
+      - 'research/V33_SINGLE_PREDICTIVE_ECONOMIC_PROTOCOL_20261123.md'
+      - '.github/workflows/v33-one-preregistered-predictive-economics.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ops/v33-preregistered-integrated-once.txt'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    outputs:
+      authorized: ${{ steps.owner.outputs.authorized }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - run: python -m pip install -r research/requirements.txt
+      - name: Verify native C# financial ledger and unified replay build
+        run: dotnet build src/Mxm.Replay -c Release
+      - name: Validate original source adapter without broker or custody
+        run: python -m py_compile research/v32_unified_source_adapter.py research/v33_one_integrated_execute.py
+      - run: python -m unittest research.test_v32_unified_source -v
+      - name: Exact owner/main first-addition-only signal without secrets
+        id: owner
+        shell: bash
+        run: |
+          echo 'authorized=false' >> "$GITHUB_OUTPUT"
+          subject=OWNER_V33_ONE_CAUSAL_PREDICTIVE_EUR300_ONCE_20261123
+          marker=ops/v33-preregistered-integrated-once.txt
+          if [[ "$GITHUB_EVENT_NAME" == "push" &&
+                "$GITHUB_REF" == "refs/heads/main" &&
+                "$GITHUB_ACTOR" == "mariancradulescu" &&
+                "$GITHUB_RUN_ATTEMPT" == "1" &&
+                "$(git log -1 --format=%s)" == "$subject" &&
+                "$(git diff-tree --no-commit-id --name-status -r HEAD)" == $'A\t'"$marker" &&
+                -z "$(git log -1 --format=%H HEAD^ -- "$marker")" &&
+                -f "$marker" ]] &&
+              cmp -s "$marker" <(printf '%s\n' "$subject"); then
+            echo 'authorized=true' >> "$GITHUB_OUTPUT"
+          fi
+  integrated-portfolio-economics:
+    needs: verify
+    if: needs.verify.outputs.authorized == 'true'
+    environment: mxm-r3-custody-v1
+    concurrency:
+      group: mxm-v33-one-preregistered-300eur-authentic-originals
+      cancel-in-progress: false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 160
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - run: python -m pip install -r research/requirements.txt
+      - run: dotnet build src/Mxm.Replay -c Release
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: sealed-source
+          run-id: 41724643418
+          github-token: ${{ github.token }}
+          path: bdp-source
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: sealed-source
+          run-id: 41735441128
+          github-token: ${{ github.token }}
+          path: aip-source
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: hxc1-original-historical-encrypted-source
+          run-id: 43817213663
+          github-token: ${{ github.token }}
+          path: mde1-hxc1-source
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: xmh2-complete-274day-m15-encrypted-source
+          run-id: 44352570167
+          github-token: ${{ github.token }}
+          path: mde1-xmh2-source
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: p05-new-live-readonly-authentic-source-sealed
+          run-id: 45134137836
+          github-token: ${{ github.token }}
+          path: p05-sealed
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: p05-new-live-readonly-aggregate-public
+          run-id: 45134137836
+          github-token: ${{ github.token }}
+          path: p05-public
+      - name: One protected source reconciliation and complete native economic replay
+        run: python -m research.v33_one_integrated_execute
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - name: Publish one source-authenticated native economic package (no raw OHLC)
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: v33-one-preregistered-causal-native-full-economic-result
+          path: v33-one-integrated-public/
+          retention-days: 90
+          if-no-files-found: error

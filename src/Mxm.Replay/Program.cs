@@ -1,6 +1,20 @@
 using System.Text.Json;
 using System.Security.Cryptography;
 
+if(args.Length==4 && args[2]=="--v33-one-predictive-integrated-economic")
+{
+    var v33Json=new JsonSerializerOptions {
+        NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString,
+        WriteIndented=true
+    };
+    var v33Source=JsonSerializer.Deserialize<Mxm.Core.V32Tape>(
+        File.ReadAllText(args[0]),v33Json)
+        ?? throw new ArgumentException("V33_ORIGINAL_SOURCE_MISSING");
+    var v33Result=Mxm.Core.NativeV33PredictiveEconomic.Evaluate(v33Source,args[3]);
+    File.WriteAllText(args[1],JsonSerializer.Serialize(v33Result,v33Json));
+    return 0;
+}
+
 if(args.Length==3 && args[2]=="--v32-unified-integrated-development")
 {
     var options=new JsonSerializerOptions {
