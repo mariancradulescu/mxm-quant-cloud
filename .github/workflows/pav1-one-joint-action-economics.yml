@@ -1,0 +1,135 @@
+name: PAV1 ONE joint sequential action-value EUR300 pending-aware economics
+on:
+  pull_request:
+    paths:
+      - 'src/Mxm.Core/NativePav1JointActionEconomic.cs'
+      - 'src/Mxm.Core/NativePendingCapitalGate.cs'
+      - 'tests/Mxm.Checks/NativePendingCapitalGateChecks.cs'
+      - 'tests/Mxm.Checks/Program.cs'
+      - 'src/Mxm.Replay/Program.cs'
+      - 'research/pav1_one_integrated_execute.py'
+      - 'research/test_pav1_no_secret_contract.py'
+      - 'research/PAV1_SINGLE_PENDING_AWARE_ACTION_VALUE_PROTOCOL_20261123.md'
+      - '.github/workflows/pav1-one-joint-action-economics.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ops/pav1-one-joint-action-once.txt'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    outputs:
+      authorized: ${{ steps.owner.outputs.authorized }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - run: python -m pip install -r research/requirements.txt
+      - name: Verify native C# financial ledger and unified replay build
+        run: dotnet build src/Mxm.Replay -c Release
+      - name: Validate original source adapter without broker or custody
+        run: python -m py_compile research/v32_unified_source_adapter.py research/pav1_one_integrated_execute.py
+      - run: python -m unittest research.test_v32_unified_source -v
+      - run: dotnet run -c Release --project tests/Mxm.Checks
+      - name: PAV1 synthetic action-value accounting and no-order test
+        run: python -m unittest research.test_pav1_no_secret_contract -v
+      - name: Exact owner/main first-addition-only signal without secrets
+        id: owner
+        shell: bash
+        run: |
+          echo 'authorized=false' >> "$GITHUB_OUTPUT"
+          subject=OWNER_PAV1_JOINT_ACTION_EUR300_ONCE_20261123
+          marker=ops/pav1-one-joint-action-once.txt
+          if [[ "$GITHUB_EVENT_NAME" == "push" &&
+                "$GITHUB_REF" == "refs/heads/main" &&
+                "$GITHUB_ACTOR" == "mariancradulescu" &&
+                "$GITHUB_RUN_ATTEMPT" == "1" &&
+                "$(git log -1 --format=%s)" == "$subject" &&
+                "$(git diff-tree --no-commit-id --name-status -r HEAD)" == $'A\t'"$marker" &&
+                -z "$(git log -1 --format=%H HEAD^ -- "$marker")" &&
+                -f "$marker" ]] &&
+              cmp -s "$marker" <(printf '%s\n' "$subject"); then
+            echo 'authorized=true' >> "$GITHUB_OUTPUT"
+          fi
+  integrated-portfolio-economics:
+    needs: verify
+    if: needs.verify.outputs.authorized == 'true'
+    environment: mxm-r3-custody-v1
+    concurrency:
+      group: mxm-pav1-one-preregistered-300eur-authentic-originals
+      cancel-in-progress: false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 160
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - run: python -m pip install -r research/requirements.txt
+      - run: dotnet build src/Mxm.Replay -c Release
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: sealed-source
+          run-id: 41724643418
+          github-token: ${{ github.token }}
+          path: bdp-source
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: sealed-source
+          run-id: 41735441128
+          github-token: ${{ github.token }}
+          path: aip-source
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: hxc1-original-historical-encrypted-source
+          run-id: 43817213663
+          github-token: ${{ github.token }}
+          path: mde1-hxc1-source
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: xmh2-complete-274day-m15-encrypted-source
+          run-id: 44352570167
+          github-token: ${{ github.token }}
+          path: mde1-xmh2-source
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: p05-new-live-readonly-authentic-source-sealed
+          run-id: 45134137836
+          github-token: ${{ github.token }}
+          path: p05-sealed
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: p05-new-live-readonly-aggregate-public
+          run-id: 45134137836
+          github-token: ${{ github.token }}
+          path: p05-public
+      - name: One protected source reconciliation and complete native economic replay
+        run: python -m research.pav1_one_integrated_execute
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - name: Publish one source-authenticated native economic package (no raw OHLC)
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pav1-one-joint-action-pending-finance-complete-economic-result
+          path: pav1-one-integrated-public/
+          retention-days: 90
+          if-no-files-found: error
