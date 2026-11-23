@@ -57,7 +57,7 @@ public static class NativeV32UnifiedEconomic
                 {
                     if(b.OpenAt<=prev || b.Open<=0 || b.Low<=0 || b.High<Math.Max(b.Open,b.Close)||
                        b.Low>Math.Min(b.Open,b.Close)||b.TickVolume<0 ||
-                       b.OpenAt%width!=0)throw new ArgumentException("V32_ORIGINAL_PRICE_CLOCK_OR_GEOMETRY");
+                       b.OpenAt<0)throw new ArgumentException("V32_ORIGINAL_PRICE_CLOCK_OR_GEOMETRY");
                     prev=b.OpenAt;
                 }
             }
