@@ -64,7 +64,7 @@ def main():
         need(len(result["Books"])==12,"SINGLE_PROGRAM_BOOKS_INCOMPLETE")
         expected={(policy,str(factor)) for policy in
                   ("JOINT_RESIDUAL","PAIRED_NO_CONVERGENCE","SINGLE_EURUSD","CASH")
-                  for factor in ("1.0","1.5","2.0")}
+                  for factor in ("1","1.5","2")}
         actual={(b["Policy"],str(Decimal(str(b["Factor"])))) for b in result["Books"]}
         need(actual==expected,"ORIGINAL_COMPARATOR_MISMATCH")
         # Independent arithmetic verification only. C# is the sole economic
