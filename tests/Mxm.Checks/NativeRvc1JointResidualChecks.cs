@@ -14,12 +14,12 @@ public static class NativeRvc1JointResidualChecks
         => new(at,price,price+spread,price-spread,price,volume);
     static V32Terms Terms(string symbol)=>new(symbol,"USD",
         1000m,1000m,1000m,100000m,2,0L,2,0L,
-        null,0,0,0m,0m,4,24,0,3,20m,.1m,1793577600000L,false);
-    static V32Tape Synthetic(bool removeSecondMarketClose=false)
+        null,0,0,1m,-1m,4,24,1320,3,20m,.1m,1793577600000L,false);
+    static V32Tape Synthetic(bool removeSecondMarketClose=false,long? signalOverride=null)
     {
-        long signal=Start+50*H1;
+        long signal=signalOverride??Start+50*H1;
         var aH=new List<V32Bar>();var bH=new List<V32Bar>();
-        for(int i=0;i<54;i++)
+        for(int i=0;i<82;i++)
         {
             decimal close=i%2==0?1.10025m:1.09975m;
             aH.Add(Bar(Start+i*H1,close,.0005m));
@@ -93,5 +93,28 @@ public static class NativeRvc1JointResidualChecks
             missing.GetProperty("FinalOpenPositions").GetInt32()==2 &&
             missing.GetProperty("Incomplete").GetBoolean(),
             "RVC1 unilateral missing genuine market forbids filled close and claims unknown");
+        // Genuine broker charge at 22:00 UTC on the SAME calendar date
+        // (21:45 entry, 22:05 modeled close). No overnight-midnight shortcut.
+        long rollover=Start+69*H1+45*60000L;
+        var funded=new[]{
+            new Rvc1OriginalFunding("EURUSD",false,0,1793577600000L,true),
+            new Rvc1OriginalFunding("GBPUSD",false,0,1793577600000L,true)
+        };
+        using var roll=JsonDocument.Parse(JsonSerializer.Serialize(
+            NativeRvc1JointResidualEconomic.Evaluate(
+                Synthetic(signalOverride:rollover),new string('b',64),funded)));
+        var rollPrimary=Policy(roll.RootElement,"JOINT_RESIDUAL",1m);
+        check(rollPrimary.GetProperty("CompletePairs").GetInt32()==1 &&
+            rollPrimary.GetProperty("ClosedFragments").EnumerateArray()
+                .Any(x=>x.GetProperty("FinancingEur").GetDecimal()!=0m),
+            "RVC1 same-day true rollover charges original authenticated per-leg swaps");
+        using var missingSwap=JsonDocument.Parse(JsonSerializer.Serialize(
+            NativeRvc1JointResidualEconomic.Evaluate(
+                Synthetic(signalOverride:rollover),new string('b',64))));
+        var unknownSwap=Policy(missingSwap.RootElement,"JOINT_RESIDUAL",1m);
+        check(unknownSwap.GetProperty("CompletePairs").GetInt32()==0 &&
+            unknownSwap.GetProperty("UnknownFunding").GetBoolean() &&
+            unknownSwap.GetProperty("FinalOpenPositions").GetInt32()==2,
+            "RVC1 missing exact original swap contract is UNKNOWN, never free financing");
     }
 }
