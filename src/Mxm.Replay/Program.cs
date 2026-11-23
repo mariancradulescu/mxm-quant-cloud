@@ -1,6 +1,22 @@
 using System.Text.Json;
 using System.Security.Cryptography;
 
+// PEL1: new single Core economic programme, authentic CVP1 custody replay.
+// Replay only parses an already-verified private tape and serializes Core.
+if(args.Length==4 && args[2]=="--pel1-one-passive-limit-economic")
+{
+    var options=new JsonSerializerOptions {
+        NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString,
+        WriteIndented=true
+    };
+    var source=JsonSerializer.Deserialize<Mxm.Core.Pel1Tape>(
+        File.ReadAllText(args[0]),options)
+        ?? throw new ArgumentException("PEL1_VERIFIED_ORIGINAL_SOURCE_MISSING");
+    var result=Mxm.Core.NativePel1Economic.Evaluate(source,args[3]);
+    File.WriteAllText(args[1],JsonSerializer.Serialize(result,options));
+    return 0;
+}
+
 if(args.Length==4 && args[2]=="--pav1-joint-action-value")
 {
     var options=new JsonSerializerOptions {
