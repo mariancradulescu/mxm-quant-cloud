@@ -1,0 +1,110 @@
+name: PEL1 ONE native EUR300 passive liquidity original conditional economics
+on:
+  pull_request:
+    paths:
+      - 'research/PEL1_FROZEN_PASSIVE_LIQUIDITY_20261123.md'
+      - 'research/PEL1_PRESOURCE_LIMIT_LEDGER_INTERFACE_20261123.md'
+      - 'src/Mxm.Core/NativeFundedLedger.cs'
+      - 'src/Mxm.Core/NativePel1Economic.cs'
+      - 'src/Mxm.Replay/Program.cs'
+      - 'research/pel1_one_execution.py'
+      - 'tests/Mxm.Checks/NativePel1SafetyChecks.cs'
+      - 'tests/Mxm.Checks/Program.cs'
+      - '.github/workflows/pel1-one-passive-liquidity-economics.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ops/pel1-one-passive-economic-once.txt'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    outputs:
+      authorized: ${{ steps.owner.outputs.authorized }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - name: C# build existing Core and Replay, no broker
+        run: dotnet build src/Mxm.Replay -c Release
+      - name: Run full native checks incl model-only quote-bound limit lifecycle
+        run: dotnet run --project tests/Mxm.Checks -c Release
+      - name: Source adapter syntax only, never run in PR
+        run: python -m py_compile research/pel1_one_execution.py
+      - name: Verify PEL1 protocol was frozen before native implementation
+        run: |
+          git fetch --depth=1 origin 30bb4ddb2aa427e26d6e02456f5ac442e67bb6c9
+          git show 30bb4ddb2aa427e26d6e02456f5ac442e67bb6c9:research/PEL1_FROZEN_PASSIVE_LIQUIDITY_20261123.md > /tmp/pel1-frozen-protocol
+          cmp -s /tmp/pel1-frozen-protocol research/PEL1_FROZEN_PASSIVE_LIQUIDITY_20261123.md
+          git fetch --depth=1 origin 3dc2a6cb2dd77de69cd3fe1c0099d6db4988e534
+          git show 3dc2a6cb2dd77de69cd3fe1c0099d6db4988e534:research/PEL1_PRESOURCE_LIMIT_LEDGER_INTERFACE_20261123.md > /tmp/pel1-frozen-interface
+          cmp -s /tmp/pel1-frozen-interface research/PEL1_PRESOURCE_LIMIT_LEDGER_INTERFACE_20261123.md
+      - name: Exact first-addition-only owner/main original trigger
+        id: owner
+        shell: bash
+        run: |
+          echo 'authorized=false' >> "$GITHUB_OUTPUT"
+          subject=OWNER_PEL1_PASSIVE_LIQUIDITY_NATIVE_EUR300_ONCE_20261123
+          marker=ops/pel1-one-passive-economic-once.txt
+          if [[ "$GITHUB_EVENT_NAME" == "push" &&
+                "$GITHUB_REF" == "refs/heads/main" &&
+                "$GITHUB_ACTOR" == "mariancradulescu" &&
+                "$GITHUB_RUN_ATTEMPT" == "1" &&
+                "$(git log -1 --format=%s)" == "$subject" &&
+                "$(git diff-tree --no-commit-id --name-status -r HEAD)" == $'A\t'"$marker" &&
+                -z "$(git log -1 --format=%H HEAD^ -- "$marker")" &&
+                -f "$marker" ]] &&
+              cmp -s "$marker" <(printf '%s\n' "$subject"); then
+            echo 'authorized=true' >> "$GITHUB_OUTPUT"
+          fi
+  integrated-custody-economic:
+    needs: verify
+    if: needs.verify.outputs.authorized == 'true'
+    environment: mxm-r3-custody-v1
+    concurrency:
+      group: mxm-pel1-one-exposed-authentic-cvp1-csharp-economic
+      cancel-in-progress: false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 160
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - run: python -m pip install -r research/requirements.txt
+      - run: dotnet build src/Mxm.Replay -c Release
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: cvp1-original-pepperstone-encrypted-source
+          run-id: 44162043538
+          github-token: ${{ github.token }}
+          path: cvp1-original-source
+      - name: Recover ORIGINAL sealed CVP1 and execute ONE shared C# Core programme
+        run: python -m research.pel1_one_execution
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - name: Publish aggregate-only PEL1 public original, never original quote tape
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pel1-one-native-original-authentic-development-economic-public
+          path: pel1-public/
+          retention-days: 90
+          if-no-files-found: error
