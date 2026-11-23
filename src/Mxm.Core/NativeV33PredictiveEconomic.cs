@@ -305,7 +305,8 @@ public static class NativeV33PredictiveEconomic
         public readonly Dictionary<string,int> SideByPosition=new(StringComparer.Ordinal);
         public readonly List<(long at,decimal? equity,decimal? margin,decimal dd)> Equity=new();
         public long Seq;
-        public int Evaluated,Proposed,Accepted,Financed,Completed,Reductions,RightCensored;
+        public int Evaluated,Proposed,Accepted,Financed,Reductions;
+        public int RightCensored=0;
         public decimal SumMarginPeak,SumRiskPeak;
         public bool MissingFloatingMarks;
         public Book(string policy,decimal mult){Policy=policy;Multiplier=mult;}
@@ -380,10 +381,10 @@ public static class NativeV33PredictiveEconomic
     {
         if(book.Pending.ContainsKey(pos.Market.Source.Symbol))return;
         string reason=units<pos.Units?"MODEL_UNTRANSMITTED_INTEGRATED_FAVORABLE_REDUCTION":why;
-        book.Ledger.Apply(book.Fact(at+100,"REQUEST_CLOSE",q,pos.Id,pos.Side,units,reason:reason));
+        book.Ledger.Apply(book.Fact(at+500,"REQUEST_CLOSE",q,pos.Id,pos.Side,units,reason:reason));
         book.Pending[pos.Market.Source.Symbol]=new Pending{Id=pos.Id,Kind="CLOSE",
             Market=pos.Market,Side=pos.Side,Units=units,Slippage=pos.Slippage,
-            RequestedAt=at+100,Width=width,Why=reason};
+            RequestedAt=at+500,Width=width,Why=reason};
         book.Count(units<pos.Units?"REDUCE_REQUEST":"CLOSE_REQUEST");
     }
     static decimal? ExpectedNet(V32Terms t,LedgerQuote q,int side,decimal units,
@@ -438,6 +439,8 @@ public static class NativeV33PredictiveEconomic
         var summary=book.Ledger.Summary();
         decimal eq=summary.LiquidationEquityEur??summary.CashEur;
         if(eq<=0m||summary.MaximumSampledDrawdown>=.245m){reason="EQUITY_KILL";return false;}
+        if(book.Held.Count>0 && summary.LiquidationEquityEur is null)
+        {reason="HOLDING_MARK_UNKNOWN";return false;}
         if(book.Held.ContainsKey(o.Market.Source.Symbol)||
            book.Pending.ContainsKey(o.Market.Source.Symbol))
         {reason="SAME_SYMBOL_OCCUPIED";return false;}
@@ -703,7 +706,7 @@ public static class NativeV33PredictiveEconomic
             Schema=Version,InputRuns=input.SourceRuns,
             OriginalSourceProtocolSha256=input.ProtocolSha256,
             PreregisteredNewProtocolSha256=frozenProtocolSha256,
-            SourceCoverage=markets.Select(x=>x.Coverage()).OrderBy(x=>x.Symbol).ToArray(),
+            SourceCoverage=markets.OrderBy(x=>x.Source.Symbol,StringComparer.Ordinal).Select(x=>x.Coverage()).ToArray(),
             GenuineMarketClocks=events.Length,
             Results=books.Select(b=>b.Receipt(events.First().At,events.Last().At)).ToArray(),
             CashBenchmarkEur=0,AllResultsDevelopmentExposed=true,
