@@ -110,6 +110,13 @@ def _bars_from_original(rows):
     return next(iter(symbol_ids)), by_period
 
 
+def closed_at_source_cutoff(rows, period_minutes):
+    """Raw original bars are not necessarily closed: only these are causal."""
+    need(period_minutes > 0, "INVALID_BAR_DURATION")
+    return [row for row in rows
+            if row[0] + period_minutes * 60000 <= SOURCE_END_MS]
+
+
 def _iso_week(t):
     d = datetime.fromtimestamp(t / 1000, tz=timezone.utc).isocalendar()
     return "%04d-W%02d" % (d.year, d.week)
@@ -232,8 +239,7 @@ def aggregate_original(receipt, sealed_dir, private_pem):
                 agg["rawCountMismatchFrames"] += 1
                 agg["originalBarsNotCertifiedInMismatchFrames"] += expected
                 continue  # fail-closed for this symbol/timeframe, not all markets
-            closed = [row for row in originals
-                      if row[0] + minutes * 60000 <= SOURCE_END_MS]
+            closed = closed_at_source_cutoff(originals, minutes)
             agg["rawCollectorReportedBarCount"] += len(originals)
             agg["formingBarsDiscardedFromEconomics"] += len(originals) - len(closed)
             d = upper_bound_diagnostic(closed, spread, margin, minutes)
