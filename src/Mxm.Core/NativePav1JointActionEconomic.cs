@@ -603,42 +603,40 @@ public static class NativePav1JointActionEconomic
         if(xx<=0m||yy<=0m)return 1m;
         return Math.Min(1m,Math.Abs(xy)/(decimal)Math.Sqrt((double)(xx*yy)));
     }
-    static bool Fundable(Book book,Offer o,out decimal units,out string reason)
+    static NativePendingCapitalGate.Commitment[] HeldCapital(Book book)=>
+        book.Held.Values.Select(p=>new NativePendingCapitalGate.Commitment(
+            p.Id,p.Market.Source.Symbol,p.Units,
+            p.Market.Source.Terms!.MarginMinimumEur!.Value/
+                p.Market.Source.Terms.MinimumUnits!.Value,
+            p.ReservedRisk,Group(p.Market.Source.Symbol),false)).ToArray();
+    static NativePendingCapitalGate.Commitment[] PendingOpenCapital(Book book)=>
+        book.Pending.Values.Where(x=>x.Kind=="OPEN").Select(x=>
+            new NativePendingCapitalGate.Commitment(x.Id,x.Market.Source.Symbol,
+                x.Units,x.MarginPerUnit,x.ReservedRisk,
+                Group(x.Market.Source.Symbol),true)).ToArray();
+    static bool Fundable(Book book,Offer offer,out decimal units,out string reason,
+        out NativePendingCapitalGate.Admission admission)
     {
-        units=0m;reason="RISK";
-        var terms=o.Market.Source.Terms!;
+        units=0m;
         var summary=book.Ledger.Summary();
-        decimal eq=summary.LiquidationEquityEur??summary.CashEur;
-        if(eq<=0m||summary.MaximumSampledDrawdown>=.245m){reason="EQUITY_KILL";return false;}
-        if(book.Held.Count>0 && summary.LiquidationEquityEur is null)
-        {reason="HOLDING_MARK_UNKNOWN";return false;}
-        if(book.Held.ContainsKey(o.Market.Source.Symbol)||
-           book.Pending.ContainsKey(o.Market.Source.Symbol))
-        {reason="SAME_SYMBOL_OCCUPIED";return false;}
-        decimal min=terms.MinimumUnits!.Value,max=terms.MaximumUnits!.Value,step=terms.StepUnits!.Value;
-        decimal risk=RiskAtStop(o,min),perUnit=risk/min;
-        decimal marginUnit=terms.MarginMinimumEur!.Value/min;
-        decimal reserved=book.Held.Values.Sum(x=>x.ReservedRisk);
-        // Correlation: conservative double-count same-class stop exposure.
-        string group=Group(o.Market.Source.Symbol);
+        var terms=offer.Market.Source.Terms!;
+        decimal min=terms.MinimumUnits!.Value;
+        decimal perUnit=RiskAtStop(offer,min)/min;
         decimal correlated=book.Held.Values.Sum(p=>
-            p.ReservedRisk*Math.Max(RecentAbsoluteCorrelation(o.Market,p.Market,o.Quote.At),
-                Group(p.Market.Source.Symbol)==group?0.5m:0m));
-        decimal remainingRisk=Math.Min(RiskPerTrade*eq,
-            AggregateStopRisk*eq-reserved-.5m*correlated);
-        decimal usedMargin=book.Held.Values.Sum(x=>x.Units*
-            x.Market.Source.Terms!.MarginMinimumEur!.Value/
-            x.Market.Source.Terms.MinimumUnits!.Value);
-        decimal remainMargin=MaximumMargin*eq-usedMargin;
-        if(perUnit<=0||marginUnit<=0||remainingRisk<perUnit*min)
-        {reason="STOP_RISK_BUDGET";return false;}
-        if(remainMargin<=marginUnit*min){reason="MARGIN_BUDGET";return false;}
-        decimal maxRisk=remainingRisk/perUnit,maxMargin=remainMargin/marginUnit;
-        decimal upper=Math.Min(max,Math.Min(maxRisk,maxMargin));
-        if(upper<min){reason="LEGAL_VOLUME";return false;}
-        units=Math.Min(upper,min+Math.Floor((upper-min)/step)*step);
-        if(units<min){reason="LEGAL_STEP";return false;}
-        reason="ACCEPT";return true;
+            p.ReservedRisk*Math.Max(RecentAbsoluteCorrelation(offer.Market,p.Market,
+                offer.Quote.At),Group(p.Market.Source.Symbol)==
+                    Group(offer.Market.Source.Symbol)?.5m:0m))+
+            book.Pending.Values.Where(x=>x.Kind=="OPEN").Sum(x=>x.ReservedRisk);
+        var proposal=new NativePendingCapitalGate.Proposal(
+            offer.Market.Source.Symbol,Group(offer.Market.Source.Symbol),
+            min,terms.StepUnits!.Value,terms.MaximumUnits!.Value,
+            terms.MarginMinimumEur!.Value/min,perUnit,.5m*correlated);
+        admission=NativePendingCapitalGate.Assess(summary.LiquidationEquityEur,
+            summary.LiquidationEquityEur is not null &&
+                summary.MaximumSampledDrawdown<.245m,
+            HeldCapital(book),PendingOpenCapital(book),proposal);
+        units=admission.Units;reason=admission.Status;
+        return admission.IsFinanceable;
     }
     static void OpenRequest(Book book,Offer o,decimal units,long now)
     {
@@ -858,7 +856,7 @@ public static class NativePav1JointActionEconomic
                         .ThenBy(x=>x.Market.Source.Symbol,StringComparer.Ordinal);
                 foreach(var offer in ranked)
                 {
-                    if(!Fundable(book,offer,out var units,out var reason))
+                    if(!Fundable(book,offer,out var units,out var reason,out var admission))
                     {book.Reject(reason);continue;}
                     string sym=offer.Market.Source.Symbol;
                     string id=book.Id("POSITION");
@@ -875,7 +873,11 @@ public static class NativePav1JointActionEconomic
                     catch(ArgumentException){book.Reject("HELD_MARK_UNKNOWN");continue;}
                     book.Pending[sym]=new Pending{Id=id,Kind="OPEN",Market=offer.Market,
                         Side=offer.Side,Units=units,Slippage=offer.Slippage,
-                        Atr=offer.Atr,Width=width,RequestedAt=now+700+book.Pending.Count};
+                        Atr=offer.Atr,ReservedRisk=admission.NewRiskEur,
+                        MarginPerUnit=offer.Market.Source.Terms!.MarginMinimumEur!.Value/
+                            offer.Market.Source.Terms.MinimumUnits!.Value,
+                        Width=width,RequestedAt=now+700+book.Pending.Count};
+                    book.CaptureCapital(now,"REQUEST_OPEN",id,admission);
                     book.Accepted++;book.Count("ALLOCATE_REQUEST");
                     book.SourceByPosition[id]=(offer.Tf,offer.Estimate.Regime);
                     string ctx=offer.Estimate.Regime;
