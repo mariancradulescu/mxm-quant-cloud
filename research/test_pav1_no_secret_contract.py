@@ -28,9 +28,10 @@ class NativePav1SafetyContract(unittest.TestCase):
                  "--pav1-joint-action-value", "f" * 64],
                 check=True, capture_output=True, text=True, timeout=120)
             got = json.loads(dst.read_text())
-            self.assertEqual(got["Schema"], "PAV1_COMPLETE_POSITION_NET_FUNDED_EUR300_DEV")
+            self.assertEqual(got["Schema"], "PAV1_JOINT_BELLMAN_ACTION_VALUE_EUR300_DEV")
             self.assertEqual(len(got["Results"]), 21)
-            self.assertTrue(got["TargetIsCompletedPositionNetEUR"])
+            self.assertFalse(got["TargetIsCompletedPositionNetEUR"])
+            self.assertTrue(got["IsCausalSequentialActionValue"])
             self.assertTrue(got["NoFixedPredictionHorizon"])
             self.assertFalse(got["HistoricalExecutablePricesCertified"])
             self.assertFalse(got["HARD21Certified"])
