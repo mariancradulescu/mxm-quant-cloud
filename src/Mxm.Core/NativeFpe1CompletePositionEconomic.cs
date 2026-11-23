@@ -418,19 +418,28 @@ public static class NativeFpe1CompletePositionEconomic
                 .ToDictionary(g=>g.Key,g=>g.ToArray(),StringComparer.Ordinal);
             var fragmentsByWeek=fragments.GroupBy(x=>Week(x.ClosedAt))
                 .ToDictionary(g=>g.Key,g=>g.ToArray(),StringComparer.Ordinal);
-            var byWeek=sourceWeeks.OrderBy(g=>g.Key,StringComparer.Ordinal)
-                .Select(g=>{
-                    var items=completedByWeek.TryGetValue(g.Key,out var done)
+            // Include all realized closing weeks; genuine decision-clock weeks
+            // remain visible even with zero closes. Never drop source-gap weeks.
+            var weeks=sourceWeeks.Keys.Union(fragmentsByWeek.Keys,StringComparer.Ordinal)
+                .Union(completedByWeek.Keys,StringComparer.Ordinal)
+                .OrderBy(x=>x,StringComparer.Ordinal).ToArray();
+            var byWeek=weeks.Select(week=>{
+                    var items=completedByWeek.TryGetValue(week,out var done)
                         ? done:fullTrips.Take(0).ToArray();
-                    var realized=fragmentsByWeek.TryGetValue(g.Key,out var partial)
+                    var realized=fragmentsByWeek.TryGetValue(week,out var partial)
                         ? partial:Array.Empty<LedgerClosedFragment>();
-                    return new{Week=g.Key,GenuineDecisionEvents=g.Value,
+                    return new{Week=week,GenuineDecisionEvents=sourceWeeks.GetValueOrDefault(week),
                         Completed=items.Length,ClosedFragments=realized.Length,
                         NET_EUR=realized.Sum(x=>x.NetEur),
                         CompletedLifecycleNET_EUR=items.Sum(x=>x.NetEur),
                         HARD21Mathematical=items.Length>=21,EligibilityOfficial=false};
                 }).ToArray();
-            if(byWeek.Sum(x=>x.NET_EUR)!=summary.ClosedNetEur)
+            // Decimal FX/conversion values can round in the 28th place when
+            // grouped per week instead of monotonically applied in event order.
+            // Use EXACTLY existing funded-ledger EUR cash identity tolerance.
+            // The displayed NET values themselves are never rounded or changed.
+            decimal weeklyReconciliationGap=byWeek.Sum(x=>x.NET_EUR)-summary.ClosedNetEur;
+            if(Math.Abs(weeklyReconciliationGap)>.000000001m)
                 throw new InvalidOperationException("FPE1_WEEKLY_REALIZED_EUR_IDENTITY");
             var trades=fragments.Select(x=>new{
                 x.PositionId,x.Symbol,x.OpenedAt,x.ClosedAt,
@@ -497,7 +506,10 @@ public static class NativeFpe1CompletePositionEconomic
                     x.ClosedAt<1793577600000L?"EXPOSED_AUDIT_13W":"EXPOSED_EXTENSION")
                     .OrderBy(g=>g.Key).Select(g=>new{Phase=g.Key,
                         Trips=g.Count(x=>x.CompletesRoundTrip),NET_EUR=g.Sum(x=>x.NetEur)}).ToArray(),
-                Weekly=byWeek,AllModeledLedgerFragments=trades,
+                Weekly=byWeek,
+                WeeklyReconciliationGapEur=weeklyReconciliationGap,
+                WeeklyCashIdentityToleranceEur=.000000001m,
+                AllModeledLedgerFragments=trades,
                 AllCompletedPositionLifecycles=fullTrips,
                 FixedDecisionTapeCostDiagnostic=Multiplier==1m?new{
                     Scope="FIXED_FRAGMENT_REVALUATION_NOT_REFINANCED_PORTFOLIO",
