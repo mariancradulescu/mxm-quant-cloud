@@ -6,6 +6,7 @@ on:
       - 'ops/p05-live-readonly-authorized-once.txt'
       - 'ops/p05-original-readback-once.txt'
       - 'ops/p05-original-readback-recovery-once.txt'
+      - 'ops/p05-original-readback-final-once.txt'
 permissions:
   contents: read
   actions: read
@@ -122,7 +123,8 @@ jobs:
       github.actor == 'mariancradulescu' &&
       github.run_attempt == '1' &&
       (github.event.head_commit.message == 'OWNER_P05_ORIGINAL_READBACK_COST_FRONTIER_20261123' ||
-       github.event.head_commit.message == 'OWNER_P05_ORIGINAL_READBACK_RECOVERY_20261123')
+       github.event.head_commit.message == 'OWNER_P05_ORIGINAL_READBACK_RECOVERY_20261123' ||
+       github.event.head_commit.message == 'OWNER_P05_ORIGINAL_READBACK_FINAL_20261123')
     environment: mxm-r3-custody-v1
     permissions:
       contents: read
@@ -156,6 +158,8 @@ jobs:
               marker=ops/p05-original-readback-once.txt ;;
             OWNER_P05_ORIGINAL_READBACK_RECOVERY_20261123)
               marker=ops/p05-original-readback-recovery-once.txt ;;
+            OWNER_P05_ORIGINAL_READBACK_FINAL_20261123)
+              marker=ops/p05-original-readback-final-once.txt ;;
             *) exit 0 ;;
           esac
           if [[ "$GITHUB_REF" == "refs/heads/main" &&
