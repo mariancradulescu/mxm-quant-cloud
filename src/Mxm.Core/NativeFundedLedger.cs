@@ -137,6 +137,47 @@ public sealed partial class NativeFundedLedger
                 decimal margin=state.Positions.Values.Sum(p=>Math.Max(p.MarginPerUnit,Quote(quotes,p.Symbol,e.At).MarginPerUnit)*p.Units)+Math.Max(e.MarginPerUnit,entryQuote.MarginPerUnit)*e.Units;
                 if(projected<=margin || projected<=0)throw new InvalidOperationException("NATIVE_LEDGER_UNFINANCED_MODEL_FILL");
                 state=state with {CashEur=state.CashEur-e.FeeEur};state.Positions.Add(e.PositionId,position);state.Pending.Remove(e.PositionId);break;
+            // PEL1 forward-only model quote-bound limit fill. NO existing market
+            // fill semantics or historical event family is changed. Source Core
+            // must prove two independent post-intent quote crosses before calling.
+            case "MODEL_LIMIT_OPEN_FILL":
+                if(!state.Pending.TryGetValue(e.PositionId,out var limitIntent) ||
+                    limitIntent.Kind!="REQUEST_OPEN" ||
+                    limitIntent.Reason!="NATIVE_CONDITIONAL_SELECTION" ||
+                    !limitIntent.Quotes.Any(q=>q.Symbol==e.Symbol) ||
+                    limitIntent.Symbol!=e.Symbol || limitIntent.Side!=e.Side ||
+                    limitIntent.Units!=e.Units || e.At<limitIntent.At+limitIntent.LatencyMs ||
+                    e.ExecutionPrice!=limitIntent.ExecutionPrice ||
+                    e.ExecutionPrice<=0m || e.FeeEur<0m || e.MarginPerUnit<=0m ||
+                    e.SlippagePerSide<0m)
+                    throw new ArgumentException("MODEL_LIMIT_OPEN_INTENT_OR_FROZEN_PRICE");
+                var initialLimitQuote=limitIntent.Quotes.Single(q=>q.Symbol==e.Symbol);
+                if(!(e.Side>0? limitIntent.ExecutionPrice<initialLimitQuote.Ask:
+                    limitIntent.ExecutionPrice>initialLimitQuote.Bid))
+                    throw new ArgumentException("MODEL_LIMIT_MUST_BE_NONMARKETABLE_AT_REQUEST");
+                var currentLimitQuote=Quote(quotes,e.Symbol,e.At);
+                decimal limitDebit=e.Side>0?
+                    limitIntent.ExecutionPrice-currentLimitQuote.Ask:
+                    currentLimitQuote.Bid-limitIntent.ExecutionPrice;
+                if(limitDebit<0m || e.SlippagePerSide!=limitDebit ||
+                    Math.Abs(e.FeeEur-Fee(currentLimitQuote,e.Units))>.000000001m)
+                    throw new ArgumentException("MODEL_LIMIT_NO_EXECUTABLE_QUOTE_CROSS");
+                var limitPosition=new LedgerPosition(
+                    e.PositionId,e.Symbol,e.Side,e.Units,e.ExecutionPrice,
+                    e.At,e.FeeEur,e.MarginPerUnit,e.SlippagePerSide,
+                    currentLimitQuote,0m);
+                decimal limitProjected=Equity(quotes,e.At)-e.FeeEur+
+                    Floating(limitPosition,currentLimitQuote);
+                decimal limitHeldMargin=state.Positions.Values.Sum(p=>
+                    Math.Max(p.MarginPerUnit,Quote(quotes,p.Symbol,e.At).MarginPerUnit)*p.Units);
+                decimal limitMargin=limitHeldMargin+
+                    Math.Max(e.MarginPerUnit,currentLimitQuote.MarginPerUnit)*e.Units;
+                if(limitProjected<=limitMargin || limitProjected<=0m)
+                    throw new InvalidOperationException("MODEL_LIMIT_FUNDED_EQUITY_REJECT");
+                state=state with {CashEur=state.CashEur-e.FeeEur};
+                state.Positions.Add(e.PositionId,limitPosition);
+                state.Pending.Remove(e.PositionId);
+                break;
             case "CLOSE_FILL":
                 if(!state.Positions.TryGetValue(e.PositionId,out var closedPosition) || !state.Pending.TryGetValue(e.PositionId,out var close) ||
                     close.Kind!="REQUEST_CLOSE" || close.Symbol!=e.Symbol || e.At<close.At+close.LatencyMs || e.Units<=0 || e.Units>closedPosition.Units || e.FeeEur<0)
