@@ -81,6 +81,7 @@ def execute(destination):
     proof=[]
     duplicated=defaultdict(int)
     excluded=defaultdict(int)
+    conflicting=set()
 
     def add(symbol,tf,items):
         need(tf in DURATION,"FRAME_UNRECOGNIZED")
@@ -91,10 +92,17 @@ def execute(destination):
             data=(at,int(x[2]),int(x[3]),int(x[4]),int(x[5]),int(x[6]))
             need(data[3]>0 and data[3]<=min(data[1],data[4])<=max(data[1],data[4])<=data[2],
                  "RAW_OHLC_GEOMETRY")
+            key=(symbol,tf,at)
+            if key in conflicting:continue
             old=bars[symbol][tf].get(at)
             if old is not None:
-                need(old==data,"OVERLAPPING_RAW_SOURCE_CONFLICT")
-                duplicated[tf]+=1
+                if old!=data:
+                    # Never choose one of two inconsistent authenticated bars
+                    # merely because a particular archive was processed first.
+                    bars[symbol][tf].pop(at)
+                    conflicting.add(key)
+                    excluded["CONFLICT_"+tf]+=1
+                else:duplicated[tf]+=1
             else:bars[symbol][tf][at]=data
 
     for source in json.loads(Path("research/hrc1_protocol.json").read_text())["source"]:
@@ -188,4 +196,5 @@ def execute(destination):
     return dict(SourceRuns=SOURCE_RUNS,SourceProof=proof,ProtocolSha256=protocol_sha,
         Markets=len(markets),Coverage={s:{tf:len(z) for tf,z in f.items()}
             for s,f in sorted(bars.items())},IdenticalOverlaps=dict(duplicated),
-        OmittedUnclosedBars=dict(excluded),BrokerRequests=0,Orders=0,CloudActivated=False)
+        OmittedUnclosedBars=dict(excluded),ConflictExcludedClocks=len(conflicting),
+        BrokerRequests=0,Orders=0,CloudActivated=False)
