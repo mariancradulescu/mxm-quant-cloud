@@ -3,7 +3,7 @@ import unittest
 
 from research.p05_source_economic_gate import (
     PERIODS, RUN, SOURCE_END_MS, SOURCE_FIRST_MS,
-    upper_bound_diagnostic, _iso_week,
+    upper_bound_diagnostic, _iso_week, closed_at_source_cutoff,
 )
 
 
@@ -45,6 +45,16 @@ class SourceEconomicGateTests(unittest.TestCase):
             upper_bound_diagnostic([], -1, 15, 15)
         with self.assertRaises(ValueError):
             upper_bound_diagnostic([], 2, None, 15)
+
+    def test_original_collector_bars_can_be_forming_at_end(self):
+        raw = [
+            (SOURCE_END_MS - 900000, SOURCE_END_MS - 900000, 100, 110, 90, 105, 10),
+            (SOURCE_END_MS - 300000, SOURCE_END_MS - 300000, 100, 111, 90, 108, 20),
+        ]
+        accepted = closed_at_source_cutoff(raw, 15)
+        self.assertEqual(len(raw), 2)
+        self.assertEqual(len(accepted), 1)
+        self.assertEqual(accepted[0][0], SOURCE_END_MS - 900000)
 
     def test_iso_week_monday_utc(self):
         self.assertEqual(_iso_week(1787616000000), "2026-W35")
