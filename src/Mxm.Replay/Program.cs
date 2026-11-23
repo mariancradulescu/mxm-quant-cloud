@@ -1,6 +1,19 @@
 using System.Text.Json;
 using System.Security.Cryptography;
 
+if(args.Length==3 && args[2]=="--v32-unified-integrated-development")
+{
+    var options=new JsonSerializerOptions {
+        NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString,
+        WriteIndented=true
+    };
+    var tape=JsonSerializer.Deserialize<Mxm.Core.V32Tape>(File.ReadAllText(args[0]),options)
+        ?? throw new ArgumentException("V32_MISSING_ORIGINAL_SOURCE");
+    var result=Mxm.Core.NativeV32UnifiedEconomic.Evaluate(tape);
+    File.WriteAllText(args[1],JsonSerializer.Serialize(result,options));
+    return 0;
+}
+
 if(args.Length==3 && args[0]=="--integrated-original")
     return IntegratedEconomicReplay.Run(args[1],args[2]);
 
