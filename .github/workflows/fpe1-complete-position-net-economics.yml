@@ -5,8 +5,9 @@ on:
       - 'src/Mxm.Core/NativeFpe1CompletePositionEconomic.cs'
       - 'src/Mxm.Replay/Program.cs'
       - 'research/fpe1_one_integrated_execute.py'
+      - 'research/test_fpe1_no_secret_contract.py'
       - 'research/FPE1_COMPLETE_POSITION_ECONOMIC_PROTOCOL_20261123.md'
-      - '.github/workflows/fpe1-one-preregistered-complete-position-economics.yml'
+      - '.github/workflows/fpe1-complete-position-net-economics.yml'
   push:
     branches: [main]
     paths:
@@ -37,6 +38,8 @@ jobs:
       - name: Validate original source adapter without broker or custody
         run: python -m py_compile research/v32_unified_source_adapter.py research/fpe1_one_integrated_execute.py
       - run: python -m unittest research.test_v32_unified_source -v
+      - name: FPE1 synthetic closed-position accounting and no-order test
+        run: python -m unittest research.test_fpe1_no_secret_contract -v
       - name: Exact owner/main first-addition-only signal without secrets
         id: owner
         shell: bash
