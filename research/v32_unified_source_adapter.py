@@ -134,6 +134,26 @@ def execute(destination):
             res.ParseFromString(base64.b64decode(entry["res"],validate=True))
             lights={int(s.symbolId):s for s in res.symbol}
     need(bool(assets) and bool(lights),"P05_ASSET_ROSTER_INCOMPLETE")
+    # The P05 market shard contains a deliberately REDUCED public-safe
+    # contract snapshot; the original separately encrypted CONTRACTS shards
+    # retain minCommissionAsset and the complete tariff. Reconcile exactly
+    # those original protobuf fields before creating native EUR cost inputs.
+    full_contracts={}
+    for shard in p["sources"]:
+        if shard["kind"]!="CONTRACTS":continue
+        original=_load_sealed(shard,sealed,key)
+        for item in original:
+            if item.get("resType")!="ProtoOASymbolByIdRes":continue
+            detail=m.ProtoOASymbolByIdRes()
+            detail.ParseFromString(base64.b64decode(item["res"],validate=True))
+            need(detail.IsInitialized(),"P05_CONTRACT_PROTO")
+            for c in detail.symbol:
+                sid=int(c.symbolId)
+                need(sid in lights,"P05_CONTRACT_NOT_IN_ROSTER")
+                if sid in full_contracts:
+                    need(c==full_contracts[sid],"P05_CONTRACT_CONFLICT")
+                full_contracts[sid]=c
+    need(len(full_contracts)>=48,"P05_FULL_CONTRACT_RECOVERY_INCOMPLETE")
     for shard in p["sources"]:
         packet=_load_sealed(shard,sealed,key)
         if shard["kind"]!="MARKET":continue
@@ -145,7 +165,8 @@ def execute(destination):
         need(bool(quote),"P05_QUOTE_ASSET_MISSING")
         samples=[x["medianSpreadBps"] for x in pub["bidAsk"].values()
                  if x["medianSpreadBps"] is not None and x["medianSpreadBps"]>0]
-        contracts[sym]=term(sym,packet[0]["contract"],quote,
+        need(sid in full_contracts,"P05_SELECTED_ORIGINAL_CONTRACT_MISSING")
+        contracts[sym]=term(sym,full_contracts[sid],quote,
             pub["currentMinMarginEur"],max(samples) if samples else None,END,assets)
         for tf,values in series.items():
             need(len(values)==pub["timeframes"][tf]["bars"],"P05_ORIGINAL_BAR_COUNT")
