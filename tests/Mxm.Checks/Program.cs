@@ -5,6 +5,7 @@ NativePostFillCapitalGuardChecks.Run(Check);
 NativeRvc1JointResidualChecks.Run(Check);
 MonetaryRecoveryChecks.Run(Check);
 NativePerformanceScorecardChecks.Run(Check);
+NativeJointOpportunityEvidenceChecks.Run(Check);
 NativeSystemicOpportunityCensusChecks.Run(Check);
 Mvo1NativeChecks.Run(Check);
 NativeAuthorityBoundaryChecks.Run(Check);
