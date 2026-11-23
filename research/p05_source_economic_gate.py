@@ -20,7 +20,7 @@ from .ctrader_proto import OpenApiMessages_pb2 as m, OpenApiModelMessages_pb2 as
 from .decode import decode_bars
 
 RUN = "45134137836"
-SOURCE_FIRST_MS = 1724457600000  # UTC 2026-08-24T00:00:00
+SOURCE_FIRST_MS = 1787529600000  # UTC 2026-08-24T00:00:00
 SOURCE_END_MS = 1795392000000    # UTC 2026-11-23T00:00:00
 PERIODS = {"M15": (int(e.M15), 15), "M30": (int(e.M30), 30),
            "H1": (int(e.H1), 60), "H4": (int(e.H4), 240),
