@@ -256,6 +256,13 @@ public static class NativeV32UnifiedEconomic
             Units=p.Units,Slippage=p.Slippage,At=at+100,Reason=why};
         b.CloseActions++;b.Action("CLOSE_REQUEST");
     }
+    static void ExpireUnfilled(Book b,Intent intent,long at,string reason)
+    {
+        b.Money.Apply(Event(b,at+100,"MODEL_OPEN_INTENT_EXPIRED",null,intent.Id,
+            intent.Signal.Side,intent.Units,reason:reason,
+            symbol:intent.Signal.Market.Source.Symbol));
+        b.Pending=null;b.Censored++;b.Action("CENSORED_UNFILLED");
+    }
     public static object Evaluate(V32Tape input)
     {
         if(!input.DevelopmentOnly || input.ProtocolSha256.Length!=64 ||
@@ -333,11 +340,25 @@ public static class NativeV32UnifiedEconomic
                 }
                 if(b.Pending is {Kind:"OPEN"} intent)
                 {
-                    if(!intent.Signal.Market.At.TryGetValue(t,out var bar))continue;
+                    if(!intent.Signal.Market.At.TryGetValue(t,out var bar))
+                    {
+                        if(t-intent.At>M15+1000)
+                            ExpireUnfilled(b,intent,t,"MODEL_UNTRANSMITTED_OPEN_RESPONSE_WINDOW_EXPIRED");
+                        continue;
+                    }
                     var quote=MakeQuote(intent.Signal.Market,bar,b.Factor,fx,out _);
-                    if(quote is null){b.RejectCost++;b.UnknownMarks++;continue;}
+                    if(quote is null)
+                    {
+                        b.RejectCost++;b.UnknownMarks++;
+                        ExpireUnfilled(b,intent,t,"MODEL_UNTRANSMITTED_OPEN_FUNDED_FILL_REJECTED");
+                        continue;
+                    }
                     b.Money.Apply(Event(b,t,"MARK",quote));
-                    if(t-intent.At>M15+1000){b.Censored++;continue;}
+                    if(t-intent.At>M15+1000)
+                    {
+                        ExpireUnfilled(b,intent,t,"MODEL_UNTRANSMITTED_OPEN_RESPONSE_WINDOW_EXPIRED");
+                        continue;
+                    }
                     decimal price=NativeExecutableEconomics.EntryPrice(quote,intent.Signal.Side,intent.Slippage);
                     try
                     {
