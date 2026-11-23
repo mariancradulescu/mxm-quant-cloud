@@ -49,7 +49,7 @@ public static class NativeRvc1JointResidualEconomic
         public long Seq,LastAt;
         public int Decisions,PairOffers,FinancedPairs,CompletePairs,CompleteLegs,
             Waits,Holds,ReductionsUnavailable,CloseActions,TemporarySuspensions,
-            HardStops,OrphanEvents,NoEvidence,MarginRejects,UnknownMarks;
+            HardStops,OrphanEvents,MarginRejects,UnknownMarks;
         public decimal PeakHeldPendingMargin,PeakHeldPendingRisk;
         public readonly Dictionary<string,int> Rejects=new(StringComparer.Ordinal);
         public readonly Dictionary<string,int> CompleteWeeks=new(StringComparer.Ordinal);
@@ -108,7 +108,7 @@ public static class NativeRvc1JointResidualEconomic
                 PeakHeldPendingStopRiskEur=PeakHeldPendingRisk,
                 Decisions,PairOffers,FinancedPairs,CompletePairs,CompleteLegs,
                 Waits,Holds,ReductionsUnavailable,CloseActions,TemporarySuspensions,
-                HardStops,OrphanEvents,NoEvidence,MarginRejects,UnknownMarks,
+                HardStops,OrphanEvents,MarginRejects,UnknownMarks,
                 Irreversible,Incomplete,UnknownFunding,RejectReasons=Rejects,
                 Weekly=allWeeks.Select(w=>new{
                     Week=w,SourceClocks=SourceWeeks.GetValueOrDefault(w),
@@ -196,9 +196,11 @@ public static class NativeRvc1JointResidualEconomic
         if(fxWedge>=1m)return null;
         try
         {
+            decimal? minimumFeeFx=terms.MinimumCommissionAsset switch {
+                null=>null,"USD"=>fx,"EUR"=>1m,_=>null};
             var attributed=NativeBrokerContractCosts.Quote(terms,
                 new NativeMarketCostContext(now.OpenAt,bid,ask,fx*(1-fxWedge),
-                    fx*(1+fxWedge),fx,fx,t.MarginMinimumEur.Value,
+                    fx*(1+fxWedge),fx,minimumFeeFx,t.MarginMinimumEur.Value,
                     terms.MinimumUnits,slip));
             return attributed.Quote with {
                 ExitFeePerUnit=attributed.Quote.ExitFeePerUnit*factor,
@@ -475,6 +477,8 @@ public static class NativeRvc1JointResidualEconomic
         if(book.Pair is not null)
         {
             book.Holds++;
+            // A one-minimum-unit leg cannot be reduced while preserving
+            // original-account legal minimum volume. Never invent a partial.
             if(book.Held.Count>0)book.ReductionsUnavailable++;
             return;
         }
