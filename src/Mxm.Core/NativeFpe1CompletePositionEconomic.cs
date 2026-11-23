@@ -348,6 +348,7 @@ public static class NativeFpe1CompletePositionEconomic
         public readonly Dictionary<string,int> Context=new(StringComparer.Ordinal);
         public readonly Dictionary<string,int> RiskGroup=new(StringComparer.Ordinal);
         public readonly Dictionary<string,int> SideByPosition=new(StringComparer.Ordinal);
+        public readonly Dictionary<string,decimal> InitialRiskByPosition=new(StringComparer.Ordinal);
         public readonly Dictionary<string,(string BaseTimeframe,string Regime)> SourceByPosition=new(StringComparer.Ordinal);
         public readonly List<(long at,decimal? equity,decimal? margin,decimal dd)> Equity=new();
         public long Seq;
@@ -389,6 +390,23 @@ public static class NativeFpe1CompletePositionEconomic
             var fragments=Ledger.ClosedFragments();
             var completed=fragments.Where(x=>x.CompletesRoundTrip).ToArray();
             var expected=completed.Length;
+            var fullTrips=fragments.GroupBy(x=>x.PositionId,StringComparer.Ordinal)
+                .Where(g=>g.Any(x=>x.CompletesRoundTrip))
+                .Select(g=>new{
+                    PositionId=g.Key,Symbol=g.First().Symbol,
+                    Side=SideByPosition.GetValueOrDefault(g.Key),
+                    OpenedAt=g.Min(x=>x.OpenedAt),ClosedAt=g.Max(x=>x.ClosedAt),
+                    GrossEur=g.Sum(x=>x.GrossEur),
+                    SpreadEur=g.Sum(x=>x.SpreadEur??0m),
+                    SlippageEur=g.Sum(x=>x.SlippageEur??0m),
+                    ConversionEur=g.Sum(x=>x.ConversionEur??0m),
+                    CommissionsEur=g.Sum(x=>x.CommissionsEur),
+                    FinancingEur=g.Sum(x=>x.FinancingEur),
+                    NetEur=g.Sum(x=>x.NetEur),
+                    InitialStopRiskEur=InitialRiskByPosition.GetValueOrDefault(g.Key)
+                }).ToArray();
+            if(fullTrips.Length!=expected)
+                throw new InvalidOperationException("FPE1_COMPLETED_TRIP_GROUP_IDENTITY");
             // Fixed execution tape, no change in trade decisions, timing or units.
             // This remains a component-level approximation, NOT refinanced NET.
             decimal FixedCost(decimal multiplier)=>fragments.Sum(x=>
@@ -396,16 +414,24 @@ public static class NativeFpe1CompletePositionEconomic
                 (x.ConversionEur??0m)+x.CommissionsEur+x.FinancingEur));
             if(expected!=summary.CompleteRoundTrips||fragments.Sum(x=>x.NetEur)!=summary.ClosedNetEur)
                 throw new InvalidOperationException("FPE1_EXISTING_LEDGER_CLOSED_CASH_IDENTITY");
-            var completedByWeek=completed.GroupBy(x=>Week(x.ClosedAt))
+            var completedByWeek=fullTrips.GroupBy(x=>Week(x.ClosedAt))
+                .ToDictionary(g=>g.Key,g=>g.ToArray(),StringComparer.Ordinal);
+            var fragmentsByWeek=fragments.GroupBy(x=>Week(x.ClosedAt))
                 .ToDictionary(g=>g.Key,g=>g.ToArray(),StringComparer.Ordinal);
             var byWeek=sourceWeeks.OrderBy(g=>g.Key,StringComparer.Ordinal)
                 .Select(g=>{
-                    var items=completedByWeek.TryGetValue(g.Key,out var observed)
-                        ? observed:Array.Empty<LedgerClosedFragment>();
+                    var items=completedByWeek.TryGetValue(g.Key,out var done)
+                        ? done:fullTrips.Take(0).ToArray();
+                    var realized=fragmentsByWeek.TryGetValue(g.Key,out var partial)
+                        ? partial:Array.Empty<LedgerClosedFragment>();
                     return new{Week=g.Key,GenuineDecisionEvents=g.Value,
-                        Completed=items.Length,NET_EUR=items.Sum(x=>x.NetEur),
+                        Completed=items.Length,ClosedFragments=realized.Length,
+                        NET_EUR=realized.Sum(x=>x.NetEur),
+                        CompletedLifecycleNET_EUR=items.Sum(x=>x.NetEur),
                         HARD21Mathematical=items.Length>=21,EligibilityOfficial=false};
                 }).ToArray();
+            if(byWeek.Sum(x=>x.NET_EUR)!=summary.ClosedNetEur)
+                throw new InvalidOperationException("FPE1_WEEKLY_REALIZED_EUR_IDENTITY");
             var trades=fragments.Select(x=>new{
                 x.PositionId,x.Symbol,x.OpenedAt,x.ClosedAt,
                 Week=Week(x.ClosedAt),Side=SideByPosition.GetValueOrDefault(x.PositionId),
@@ -423,6 +449,35 @@ public static class NativeFpe1CompletePositionEconomic
                 IntrabarDDCertified=false,HistoricalNETCertified=false,
                 Evaluated,Proposed,Accepted,Financed,Completed=expected,Reductions,
                 Rejected=Rejections.Values.Sum(),RejectReasons=Rejections,
+                DominantRejectReasons=Rejections.OrderByDescending(x=>x.Value)
+                    .ThenBy(x=>x.Key,StringComparer.Ordinal)
+                    .Take(15).Select(x=>new{Reason=x.Key,Count=x.Value}).ToArray(),
+                CompletedLifecycleStatistics=new{
+                    Count=fullTrips.Length,
+                    ExpectancyEur=fullTrips.Length>0?(decimal?)fullTrips.Average(x=>x.NetEur):null,
+                    WinRatePercent=fullTrips.Length>0?(decimal?)(100m*
+                        fullTrips.Count(x=>x.NetEur>0m)/fullTrips.Length):null,
+                    ProfitFactor=fullTrips.Any(x=>x.NetEur<0m)?
+                        (decimal?)(fullTrips.Where(x=>x.NetEur>0m).Sum(x=>x.NetEur)/
+                            -fullTrips.Where(x=>x.NetEur<0m).Sum(x=>x.NetEur)):null,
+                    WorstTripEur=fullTrips.Length>0?(decimal?)fullTrips.Min(x=>x.NetEur):null,
+                    BestTripEur=fullTrips.Length>0?(decimal?)fullTrips.Max(x=>x.NetEur):null,
+                    AverageDurationMinutes=fullTrips.Length>0?(decimal?)
+                        fullTrips.Average(x=>(decimal)(x.ClosedAt-x.OpenedAt)/Minute):null,
+                    ObservedMfeMaeCertified=false,
+                    NetRMultipleDistribution=fullTrips.Select(x=>new{
+                        x.PositionId,x.NetEur,x.InitialStopRiskEur,
+                        R=x.InitialStopRiskEur>0m?(decimal?)(x.NetEur/x.InitialStopRiskEur):null
+                    }).ToArray()
+                },
+                CostTotals=new{
+                    SpreadEur=fragments.Sum(x=>x.SpreadEur??0m),
+                    SlippageEur=fragments.Sum(x=>x.SlippageEur??0m),
+                    ConversionEur=fragments.Sum(x=>x.ConversionEur??0m),
+                    CommissionsEur=fragments.Sum(x=>x.CommissionsEur),
+                    FinancingEur=fragments.Sum(x=>x.FinancingEur),
+                    ReportedGrossEur=fragments.Sum(x=>x.GrossEur)
+                },
                 RightCensored=Held.Count+Pending.Count+RightCensored,
                 MaximumConcurrentHeld=Equity.Count>0?MaxConcurrentHeld:0,
                 UncertainFloatingMarks=MissingFloatingMarks,
@@ -443,6 +498,7 @@ public static class NativeFpe1CompletePositionEconomic
                     .OrderBy(g=>g.Key).Select(g=>new{Phase=g.Key,
                         Trips=g.Count(x=>x.CompletesRoundTrip),NET_EUR=g.Sum(x=>x.NetEur)}).ToArray(),
                 Weekly=byWeek,AllModeledLedgerFragments=trades,
+                AllCompletedPositionLifecycles=fullTrips,
                 FixedDecisionTapeCostDiagnostic=Multiplier==1m?new{
                     Scope="FIXED_FRAGMENT_REVALUATION_NOT_REFINANCED_PORTFOLIO",
                     ApproximateCostComponentOnly=true,
@@ -698,6 +754,7 @@ public static class NativeFpe1CompletePositionEconomic
                                     2m*Fee(q,intent.Units)};
                             book.Held[sym]=p;
                             book.Financed++;book.SideByPosition[intent.Id]=intent.Side;
+                            book.InitialRiskByPosition[intent.Id]=p.ReservedRisk;
                             book.MaxConcurrentHeld=Math.Max(book.MaxConcurrentHeld,book.Held.Count);
                             book.Count("OPEN_FILL");
                         }
