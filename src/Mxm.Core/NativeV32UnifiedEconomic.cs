@@ -75,26 +75,26 @@ public static class NativeV32UnifiedEconomic
     sealed record Signal(Market Market,int Side,decimal Atr,decimal Strength,string Regime,string Context);
     sealed class Position
     {
-        public required Signal Signal;
-        public required string Id;
-        public required decimal Units;
-        public required decimal Entry;
-        public required decimal Stop;
-        public required decimal Target;
-        public required decimal Best;
-        public required decimal Slippage;
-        public required long OpenAt;
-        public required long LastMark;
+        public Signal Signal;
+        public string Id;
+        public decimal Units;
+        public decimal Entry;
+        public decimal Stop;
+        public decimal Target;
+        public decimal Best;
+        public decimal Slippage;
+        public long OpenAt;
+        public long LastMark;
         public string ExitReason="";
     }
     sealed class Intent
     {
-        public required string Kind;
-        public required Signal Signal;
-        public required string Id;
-        public required decimal Units;
-        public required decimal Slippage;
-        public required long At;
+        public string Kind;
+        public Signal Signal;
+        public string Id;
+        public decimal Units;
+        public decimal Slippage;
+        public long At;
         public string Reason="";
     }
     sealed class Book
