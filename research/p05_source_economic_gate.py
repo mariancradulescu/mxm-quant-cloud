@@ -207,7 +207,9 @@ def aggregate_original(receipt, sealed_dir, private_pem):
         commission = all(contract.get(k) is not None for k in c_fields)
         commission_available += int(commission)
         swap_pair_present += int(contract.get("swapLong") is not None and contract.get("swapShort") is not None)
-        spread = public["observedFixedClockMedianSpreadBps"]
+        sampled_spread = public["observedFixedClockMedianSpreadBps"]
+        # A zero/negative sampled spread is not evidence of free execution.
+        spread = sampled_spread if sampled_spread is not None and sampled_spread > 0 else None
         quote_pair_available += int(spread is not None)
         margin_str = public["currentMinMarginEur"]
         need(margin_str is not None, "MARKET_MARGIN_MISSING")
@@ -262,7 +264,11 @@ def aggregate_original(receipt, sealed_dir, private_pem):
         "sampledSymbols": len(completed),
         "currentMinimumMarginUnder210Sample": sum(
             float(row["currentMinMarginEur"]) < 210 for row in receipt["marketCoverage"].values()),
-        "symbolsWithFixedClockSpreadProxy": quote_pair_available,
+        "symbolsWithPositiveFixedClockSpreadProxy": quote_pair_available,
+        "zeroOrInvalidFixedClockSpreadNotPromoted": sum(
+            x["observedFixedClockMedianSpreadBps"] is not None and
+            x["observedFixedClockMedianSpreadBps"] <= 0
+            for x in receipt["marketCoverage"].values()),
         "symbolsWithExplicitCommissionWireTerms": commission_available,
         "symbolsWithSwapPairWireValues": swap_pair_present,
         "symbolsWithAllInHistoricalCostEurCertified": 0,
@@ -300,7 +306,7 @@ def main():
     args.output.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
     print("P05_ORIGINAL_ECONOMIC_BOUNDS " + json.dumps({
         "originalSealedShardsVerified": result["originalSealedShardsVerified"],
-        "costProxyMarkets": result["symbolsWithFixedClockSpreadProxy"],
+        "costProxyMarkets": result["symbolsWithPositiveFixedClockSpreadProxy"],
         "eligibleWeeks": None, "NET": None, "HARD21": "UNKNOWN",
         "DD": None, "orders": 0, "brokerRequests": 0}, sort_keys=True))
 
