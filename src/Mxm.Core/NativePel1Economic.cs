@@ -344,9 +344,8 @@ public static class NativePel1Economic
             if(book.Policy=="TAKER"||book.Policy=="FILL_TIME_TAKER")
             {
                 // This fully financed comparison crosses at same real mark.
-                requested=NativeExecutableEconomics.EntryPrice(q,p.Side,
-                    ExitSlippage(m.Source,q,book.Stress));
-                slack=ExitSlippage(m.Source,q,book.Stress);
+                requested=NativeExecutableEconomics.EntryPrice(q,p.Side,p.Slip);
+                slack=p.Slip;
             }
             else if(slack<0)continue;
             if(book.IrreversibleStop||book.Held.ContainsKey(p.Symbol))continue;
@@ -402,6 +401,7 @@ public static class NativePel1Economic
                 day.Ticks[Before(day.Ticks,now)].Ask;
             decimal units=m.Contract.MinimumUnits;
             Position p=New(m,q,side,range,limit,units,now);
+            p.Slip=ExitSlippage(m,q,book.Stress);
             p.Id="PEL1-"+book.Policy+"-"+book.Stress+"-"+m.Name+"-"+now;
             var offer=new NativePendingCapitalGate.Proposal(
                 m.Name,"FX",units,m.Contract.VolumeStepUnits,m.Contract.MaximumUnits,
@@ -413,7 +413,8 @@ public static class NativePel1Economic
             // Strict minimum-only source programme; volume is legal, never
             // scaled up to manufacture HARD21.
             book.Ledger.Apply(book.Fact(now+33,"REQUEST_OPEN",p,qa,
-                p.Limit,0m,q.MarginPerUnit,0m));
+                p.Limit,0m,q.MarginPerUnit,
+                book.Policy=="PASSIVE"?0m:p.Slip));
             book.Pending.Add(p.Symbol,p);book.Requests++;
         }
     }
