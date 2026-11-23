@@ -753,6 +753,30 @@ public static class NativePav1JointActionEconomic
                                 reason:"MODEL_UNTRANSMITTED_OPEN_RESPONSE_WINDOW_EXPIRED",sym:sym));
                             book.Pending.Remove(sym);book.Reject("LATE_FILL_CENSORED");continue;
                         }
+                        // The original pending reservation is still live.
+                        // Recheck new FX/spread and current equity without
+                        // double-counting the pending units as held as well.
+                        var currentPending=PendingOpenCapital(book)
+                            .Select(x=>x.PositionId!=intent.Id?x:x with {
+                                ReservedStopRiskEur=Math.Max(x.ReservedStopRiskEur,
+                                    intent.Atr*intent.Units*q.EurDebit+
+                                    (q.Ask-q.Bid+2m*intent.Slippage)*
+                                         intent.Units*q.EurDebit+
+                                    2m*Fee(q,intent.Units)),
+                                MarginPerUnit=Math.Max(x.MarginPerUnit,q.MarginPerUnit)
+                            }).ToArray();
+                        var fillEquity=book.Ledger.Summary().LiquidationEquityEur;
+                        if(!NativePendingCapitalGate.RevalidatePendingFill(fillEquity,
+                            fillEquity is not null,HeldCapital(book),currentPending,intent.Id))
+                        {
+                            book.Ledger.Apply(book.Fact(now+200,"MODEL_OPEN_INTENT_EXPIRED",
+                                null,intent.Id,intent.Side,intent.Units,
+                                reason:"MODEL_UNTRANSMITTED_OPEN_FUNDED_FILL_REJECTED",sym:sym));
+                            book.Pending.Remove(sym);
+                            book.Reject("PENDING_FILL_RESERVE_INSUFFICIENT");
+                            book.CaptureCapital(now,"REJECT_PENDING_FILL_CAPITAL",intent.Id);
+                            continue;
+                        }
                         decimal entry=Price(q,intent.Side,intent.Slippage,true);
                         decimal perMargin=intent.Market.Source.Terms!.MarginMinimumEur!.Value/
                             intent.Market.Source.Terms.MinimumUnits!.Value;
@@ -764,9 +788,8 @@ public static class NativePav1JointActionEconomic
                                 Units=intent.Units,Entry=entry,Stop=entry-intent.Side*2m*intent.Atr,
                                 Target=entry,Best=entry,Atr=intent.Atr,
                                 Slippage=intent.Slippage,OpenAt=now,LastFinancingAt=now,
-                                ReservedRisk=2m*intent.Atr*intent.Units*q.EurDebit+
-                                    (q.Ask-q.Bid+2m*intent.Slippage)*intent.Units*q.EurDebit+
-                                    2m*Fee(q,intent.Units)};
+                                ReservedRisk=currentPending.Single(x=>x.PositionId==intent.Id)
+                                    .ReservedStopRiskEur};
                             book.Held[sym]=p;
                             book.Financed++;book.SideByPosition[intent.Id]=intent.Side;
                             book.InitialRiskByPosition[intent.Id]=p.ReservedRisk;
@@ -781,6 +804,7 @@ public static class NativePav1JointActionEconomic
                             book.Reject("BROKER_LEDGER_FINANCING_REJECT");
                         }
                         book.Pending.Remove(sym);
+                        book.CaptureCapital(now,"OPEN_FILL_OR_REJECT",intent.Id);
                     }
                     else if(intent.Kind=="CLOSE" && book.Held.TryGetValue(sym,out var held))
                     {
@@ -798,6 +822,7 @@ public static class NativePav1JointActionEconomic
                             book.Reductions++;book.Count("REDUCE_FILL");
                         }
                         book.Pending.Remove(sym);
+                        book.CaptureCapital(now,"CLOSE_OR_REDUCE_FILL",intent.Id);
                     }
                 }
                 // Existing held positions are managed on genuinely completed bars.
