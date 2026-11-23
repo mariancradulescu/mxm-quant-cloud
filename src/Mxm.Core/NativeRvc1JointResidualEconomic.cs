@@ -36,7 +36,8 @@ public static class NativeRvc1JointResidualEconomic
     {
         public string Symbol="",Id="";
         public int Side;public decimal Units,Margin,StopRisk,EntryPrice,StopPrice,Slip;
-        public long OpenedAt;public bool RequestedClose,FundingBooked;
+        public long OpenedAt;public bool RequestedClose;
+        public decimal AccruedFundingEur;
     }
     sealed class PairState
     {
@@ -355,7 +356,6 @@ public static class NativeRvc1JointResidualEconomic
         out decimal amount)
     {
         amount=0m;
-        if(leg.FundingBooked)return true;
         var t=market.Terms;
         if(t is null)return false;
         // Funding is assessed at the broker's actual SWAP CLOCK, not at
@@ -365,7 +365,11 @@ public static class NativeRvc1JointResidualEconomic
            chargeMinute<0||chargeMinute>=1440)return false;
         long firstCharge=(leg.OpenedAt/DAY)*DAY+chargeMinute*60000L;
         if(firstCharge<=leg.OpenedAt)firstCharge+=DAY;
-        if(firstCharge>closeTime){amount=0m;return true;}
+        if(firstCharge>closeTime)
+        {
+            amount=-leg.AccruedFundingEur;
+            return true;
+        }
         if(!originalFunds.TryGetValue(market.Symbol,out var authentic) ||
            !authentic.OriginalBrokerAuthenticated ||
            authentic.ObservedAtUtcMs!=t.ObservedAtUtcMs ||
@@ -386,7 +390,11 @@ public static class NativeRvc1JointResidualEconomic
         decimal? result=NativeBrokerContractCosts.SignedFinancing(original,
             leg.OpenedAt,closeTime,leg.Side,leg.Units,quote.EurCredit,quote.EurDebit);
         if(result is null)return false;
-        amount=result.Value;
+        // Stress debit and credit asymmetrically. Historical contract rates
+        // are only as-of; no historic tariff continuity is claimed.
+        decimal stressed=result.Value<0m?result.Value*book.Factor:
+            result.Value/book.Factor;
+        amount=stressed-leg.AccruedFundingEur;
         return true;
     }
     static void SettleClose(Book book,LedgerQuote[] quotes,V32Market e,V32Market g,
@@ -407,12 +415,12 @@ public static class NativeRvc1JointResidualEconomic
             var quote=q[leg.Symbol];
             if(!FundingCost(book,leg.Symbol=="EURUSD"?e:g,leg,quote,t,originalFunds,out var financing))
                 throw new InvalidOperationException("RVC1_FINANCING_PREFLIGHT_DIVERGED");
-            if(!leg.FundingBooked)
+            if(financing!=0m)
             {
-                if(financing!=0m)
-                    book.Ledger.Apply(book.Event(t+200,"FINANCING",leg,quotes,financing:financing,
-                        reason:"CONDITIONAL_BROKER_COST_ORIGINAL_TERMS"));
-                leg.FundingBooked=true;
+                book.Ledger.Apply(book.Event(t+200,"FINANCING",leg,quotes,
+                    financing:financing,
+                    reason:"CONDITIONAL_BROKER_COST_ORIGINAL_TERMS"));
+                leg.AccruedFundingEur+=financing;
             }
             decimal exit=NativeExecutableEconomics.ExitPrice(
                 leg.Side>0?quote.Bid:quote.Ask,leg.Side,leg.Slip);
@@ -476,6 +484,26 @@ public static class NativeRvc1JointResidualEconomic
         if(book.Policy=="CASH")return;
         book.Ledger.Apply(book.Event(t+10,"MARK",null,quotes));
         book.UpdateExposure(quotes);
+        if(quotes.Length==2)
+        {
+            var current=quotes.ToDictionary(x=>x.Symbol,x=>x,StringComparer.Ordinal);
+            // Recognize the exact original swap-clock cash cost as soon as
+            // a genuinely subsequent market mark exists. Do not defer it to
+            // an eventual successful exit and understate floating DD.
+            foreach(var leg in book.Held.Values)
+            {
+                if(!FundingCost(book,leg.Symbol=="EURUSD"?e:g,leg,
+                    current[leg.Symbol],t,originalFunds,out var delta))
+                {book.Incomplete=true;book.UnknownFunding=true;
+                    book.Reject("MARKED_EQUITY_FUNDING_UNKNOWN");continue;}
+                if(delta!=0m)
+                {
+                    book.Ledger.Apply(book.Event(t+20,"FINANCING",leg,quotes,
+                        financing:delta,reason:"BROKER_SWAP_CLOCK_MODELED_CONDITIONAL"));
+                    leg.AccruedFundingEur+=delta;
+                }
+            }
+        }
         if(quotes.Length<2)
         {
             book.TemporarySuspensions++;
