@@ -305,6 +305,7 @@ public static class NativeV33PredictiveEconomic
         public readonly Dictionary<string,int> SideByPosition=new(StringComparer.Ordinal);
         public readonly List<(long at,decimal? equity,decimal? margin,decimal dd)> Equity=new();
         public long Seq;
+        public long LastEventAt=-1;
         public int Evaluated,Proposed,Accepted,Financed,Reductions;
         public int RightCensored=0;
         public decimal SumMarginPeak,SumRiskPeak;
@@ -317,9 +318,17 @@ public static class NativeV33PredictiveEconomic
             decimal units=0,decimal price=0,decimal fee=0,decimal margin=0,
             decimal slip=0,long available=0,long calibrated=0,long latency=100,
             string reason="MODELED_ONLY",decimal financing=0,string sym="")
-            =>new(Id(kind),at,kind,pos,q?.Symbol??sym,side,units,price,fee,margin,slip,
-                available,calibrated,latency,reason,Evidence,
+        {
+            // Multi-position ACCOUNT chronology: same-clock funding, reductions
+            // and other intents cannot reverse the ledger's monetary clock.
+            // Millisecond ordering is strictly within the real next-bar gap,
+            // and never moves a price or feature backward or into the future.
+            long eventAt=Math.Max(at,LastEventAt+1L);
+            LastEventAt=eventAt;
+            return new(Id(kind),eventAt,kind,pos,q?.Symbol??sym,side,units,price,
+                fee,margin,slip,available,calibrated,latency,reason,Evidence,
                 q is null?Array.Empty<LedgerQuote>():new[]{q},financing);
+        }
         public void Observe(long now)
         {
             var s=Ledger.Summary();
@@ -564,6 +573,7 @@ public static class NativeV33PredictiveEconomic
                         var sorted=book.Held.Keys.Select(k=>quotes[k]).ToArray();
                         book.Ledger.Apply(new LedgerEvent(book.Id("MARK"),now,"MARK","", "",0,0m,
                             0m,0m,0m,0m,now,now,100,"ASOF_CONDITIONAL_MODEL",Evidence,sorted));
+                        book.LastEventAt=now;
                         book.Observe(now);
                     }
                     else{book.MissingFloatingMarks=true;book.Count("HOLDING_MARK_UNKNOWN");}
