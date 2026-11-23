@@ -10,6 +10,7 @@ from .ctrader_proto import OpenApiMessages_pb2 as m
 from .ctrader_transport import (
     StdlibCTraderTransport, ProtoMessage, encode_envelope, TransportError
 )
+from .p05_safe_transport import P05ReadOnlyTransport, check_outbound_frame
 from .guard import CaptureContractError, require_read_only_request, ALLOWED
 
 DENIED = (
@@ -49,7 +50,7 @@ class ReadOnlyWireChecks(unittest.TestCase):
             with self.subTest(name=name):
                 with self.assertRaises(CaptureContractError):
                     require_read_only_request(order)
-                t = StdlibCTraderTransport()
+                t = P05ReadOnlyTransport()
                 def must_not_connect():
                     self.fail("BLOCKED REQUEST MUST NEVER CONNECT")
                 t.connect = must_not_connect
@@ -63,15 +64,18 @@ class ReadOnlyWireChecks(unittest.TestCase):
 
     def test_raw_envelope_cannot_bypass_encoding(self):
         order = m.ProtoOANewOrderReq()
-        raw = ProtoMessage(payloadType=order.payloadType, payload=order.SerializeToString())
-        with self.assertRaises(TransportError):
-            encode_envelope(raw)
+        raw = ProtoMessage(payloadType=order.payloadType, payload=order.SerializePartialToString())
+        # The original formatter is frozen; the NEW collector rejects the
+        # frame at the final socket boundary instead.
+        wire = encode_envelope(raw)
+        with self.assertRaises(CaptureContractError):
+            check_outbound_frame(wire)
 
     def test_direct_raw_frame_cannot_reach_socket(self):
         order = m.ProtoOANewOrderReq()
-        raw = ProtoMessage(payloadType=order.payloadType, payload=order.SerializeToString()).SerializeToString()
+        raw = ProtoMessage(payloadType=order.payloadType, payload=order.SerializePartialToString()).SerializeToString()
         frame = struct.pack("!I", len(raw)) + raw
-        t = StdlibCTraderTransport()
+        t = P05ReadOnlyTransport()
         spy = SpySocket()
         t._sock = spy
         with self.assertRaises(CaptureContractError):
@@ -84,14 +88,14 @@ class ReadOnlyWireChecks(unittest.TestCase):
         data = encode_envelope(req)
         self.assertGreater(len(data), 4)
         self.assertEqual(len(data)-4, struct.unpack("!I", data[:4])[0])
-        t = StdlibCTraderTransport()
+        t = P05ReadOnlyTransport()
         spy = SpySocket()
         t._sock = spy
         t._send_bytes(data)
         self.assertEqual(len(spy.sent), 1)
 
     def test_unknown_and_invalid_raw_frame_fail_closed(self):
-        t = StdlibCTraderTransport()
+        t = P05ReadOnlyTransport()
         spy = SpySocket()
         t._sock = spy
         for raw in (b"", b"xxxx", b"\x00\x00\x00\x02xx"):
