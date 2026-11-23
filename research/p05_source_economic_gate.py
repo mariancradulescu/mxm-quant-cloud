@@ -216,7 +216,7 @@ def aggregate_original(receipt, sealed_dir, private_pem):
         margin = float(margin_str)
         for tf, (_, minutes) in PERIODS.items():
             originals = list(bars.get(tf, {}).values())
-            assert len(originals) == public["timeframes"][tf]["bars"], "P05_RAW_BAR_COUNT_MISMATCH"
+            need(len(originals) == public["timeframes"][tf]["bars"], "RAW_BAR_COUNT_MISMATCH")
             # Legitimate duplicates/gaps are never filled.
             d = upper_bound_diagnostic(originals, spread, margin, minutes)
             agg = by_horizon[tf]
