@@ -18,6 +18,7 @@ public static class NativePav1JointActionEconomic
     const decimal Capital=300m, RiskPerTrade=.015m, AggregateStopRisk=.05m,
         MaximumMargin=.70m, ModelFXWedge=.00025m, FundingBpsPerDay=5m;
     const int Prior=64;
+    const decimal Discount=.96m, CapitalChargePerEvent=.00002m, DownsideCharge=.5m;
     static readonly string Evidence=new string('b',64);
     static readonly decimal[] Multipliers={1m,1.5m,2m};
     static readonly string[] Policies={"CASH","FIRST","ACTION_VALUE","NO_CAPITAL_CHARGE","NO_DOWNSIDE","LONG","SHORT"};
@@ -46,21 +47,22 @@ public static class NativePav1JointActionEconomic
         }
         public decimal Variance=>N>1?Math.Max(0m,M2/(N-1)):0m;
     }
-    sealed record Feature(int Channel,int Bin);
-
-    // Unfinanced shadow observations are not completed legal portfolio trades.
-    sealed class Shadow
+    sealed record Feature(int Channel,decimal Value);
+    sealed record Estimate(decimal MeanStepEur,decimal DownsideStepEur,
+        decimal ErrorEur,int Matured,int ActiveChannels,string Regime);
+    sealed record PriorTransition(long At,string Tf,decimal Open,Feature[] Features);
+    sealed class OnlineCovariance
     {
-        public int Side,Contrary;
-        public string Tf="";
-        public long LastAt,Width,OpenAt;
-        public decimal Atr,Units,Entry,Best,Stop,Slippage;
-        public bool Opened;
-        public Feature[] Features=Array.Empty<Feature>();
-        public LedgerQuote? EntryQuote;
+        public int N;
+        public decimal X,Y,X2,XY;
+        public void Add(decimal x,decimal y){N++;X+=x;Y+=y;X2+=x*x;XY+=x*y;}
+        public decimal Effect(decimal current)
+        {
+            if(N<2)return 0m;
+            decimal d=X2-X*X/N+Prior;
+            return d>0m?(XY-X*Y/N)/d*(current-X/N):0m;
+        }
     }
-    sealed record Estimate(decimal MeanNetEur,decimal ErrorNetEur,
-        int Matured,int ActiveChannels,int M1Channels,string Regime);
     sealed record Offer(StudyMarket Market,int Side,string Tf,Estimate Estimate,
         decimal Atr,decimal MeanNetEur,decimal LowerNetEur,decimal RiskEur,
         decimal SuggestedUnits,LedgerQuote Quote,decimal Slippage);
@@ -71,11 +73,11 @@ public static class NativePav1JointActionEconomic
         public readonly Dictionary<string,V32Bar[]> Bars;
         public readonly Dictionary<string,Dictionary<long,int>> Index=new(StringComparer.Ordinal);
         public readonly Dictionary<long,BarEvent> Events=new();
-        public readonly Dictionary<int,Shadow> Shadows=new();
-        readonly Dictionary<(int,int,int),Moments> cells=new();
-        readonly Moments longNet=new(),shortNet=new();
-        public int ShadowRightCensored,ShadowClosed;
-        public int LabelsMatured=>longNet.N+shortNet.N;
+        readonly Dictionary<(int Side,int Channel),OnlineCovariance> cells=new();
+        readonly Moments longReturn=new(),shortReturn=new(),longDown=new(),shortDown=new();
+        PriorTransition? previous;
+        public int SourceGapTransitions;
+        public int LabelsMatured=>longReturn.N+shortReturn.N;
         public long M1FeatureClocks, M5FeatureClocks;
         public StudyMarket(V32Market source)
         {
@@ -135,15 +137,12 @@ public static class NativePav1JointActionEconomic
                    bars.Zip(bars.Skip(1)).Any(p=>p.Second.OpenAt-p.First.OpenAt!=w))
                     continue;
                 decimal range=Math.Max(.00000001m,bars.Average(x=>x.High-x.Low));
-                decimal normalized=(bars[^1].Close-bars[^2].Close)/range;
-                int bucket=normalized>.25m?1:normalized<-.25m?-1:0;
-                output.Add(new(2*j,bucket));
+                decimal relative=(bars[^1].Close-bars[^2].Close)/range;
+                output.Add(new(2*j,Clip(relative,3m)));
                 decimal prior=(bars[0].TickVolume+bars[1].TickVolume+bars[2].TickVolume)/3m;
-                if(prior>0)
-                {
-                    decimal volume=bars[^1].TickVolume/prior;
-                    output.Add(new(2*j+1,volume>1.2m?1:volume<.8m?-1:0));
-                }
+                if(prior>0m)
+                    output.Add(new(2*j+1,
+                        Clip((bars[^1].TickVolume-prior)/prior,3m)));
             }
             if(output.Any(x=>x.Channel<2))M1FeatureClocks++;
             if(output.Any(x=>x.Channel is 2 or 3))M5FeatureClocks++;
@@ -162,90 +161,57 @@ public static class NativePav1JointActionEconomic
             return x.Length==8?Math.Max(.000000001m,x.Average(b=>b.High-b.Low)):0m;
         }
 
-        void AddComplete(int side,Feature[] features,decimal completeNet)
-        {
-            (side>0?longNet:shortNet).Add(completeNet);ShadowClosed++;
-            foreach(var f in features)
-            {
-                var key=(side,f.Channel,f.Bin);
-                if(!cells.TryGetValue(key,out var m)){m=new Moments();cells.Add(key,m);}
-                m.Add(completeNet);
-            }
-        }
         public Estimate? Predict(Feature[] features,string policy,int side)
         {
-            var baseNet=side>0?longNet:shortNet;
-            if(baseNet.N<2)return null;
-            var chosen=features.Where(f=>policy!="NO_VOLUME"||f.Channel%2==0)
-                .Where(f=>policy!="NO_HIGHER_TF"||f.Channel<6).ToArray();
-            decimal n=0m,weighted=0m;
-            foreach(var f in chosen)
-            {
-                if(!cells.TryGetValue((side,f.Channel,f.Bin),out var cell)||cell.N<2)continue;
-                decimal w=(decimal)cell.N/(cell.N+Prior);
-                n+=w;weighted+=w*cell.Mean;
-            }
-            decimal expected=n>0m?(baseNet.Mean+weighted/n)/2m:baseNet.Mean;
-            decimal error=(decimal)Math.Sqrt((double)((baseNet.Variance+.000001m)/baseNet.N));
-            string regime=chosen.Any(f=>f.Channel>=10)?"HIGHER_TF":
-                chosen.Any(f=>f.Channel>=4)?"MULTISCALE":"SHORT_TF_ONLY";
-            return new(expected,error,baseNet.N,chosen.Length,
-                chosen.Count(f=>f.Channel<2),regime);
+            var baseline=side>0?longReturn:shortReturn;
+            if(baseline.N<Prior)return null;
+            decimal correction=0m;
+            foreach(var f in features)
+                if(cells.TryGetValue((side,f.Channel),out var c))
+                    correction+=c.Effect(f.Value);
+            decimal sd=(decimal)Math.Sqrt((double)(baseline.Variance+.000001m));
+            decimal expected=Clip(baseline.Mean+correction,2m*sd);
+            decimal uncertainty=sd/(decimal)Math.Sqrt(baseline.N);
+            var down=side>0?longDown:shortDown;
+            string regime=features.Any(f=>f.Channel>=10)?"HIGHER_TF":
+                features.Any(f=>f.Channel>=4)?"MULTISCALE":"SHORT_TF_ONLY";
+            return new(expected,down.Mean,uncertainty,baseline.N,
+                features.Length,regime);
         }
-        // Always process AFTER same-clock funded choices, so a just-observed
-        // exit cannot enter its own entry decision.
-        public void StepShadow(BarEvent e,Feature[] features,LedgerQuote? quote,decimal slip)
+        // Mature only AFTER current-clock decisions. Reward is incremental
+        // model-open-to-model-open EUR from genuinely consecutive observations,
+        // with no fixed target horizon and no synthetic funding trade label.
+        public void MatureEconomicTransition(BarEvent evt,Feature[] features,LedgerQuote? quote)
         {
-            foreach(int side in new[]{1,-1})
+            if(previous is { } old && evt.At>old.At)
             {
-                if(Shadows.TryGetValue(side,out var p))
+                if(quote is not null && old.Tf==evt.Tf &&
+                   evt.At-old.At==Width(evt.Tf) && Source.Terms?.MinimumUnits is >0m)
                 {
-                    if(e.Tf!=p.Tf||e.At!=p.LastAt+p.Width||quote is null)
-                    {Shadows.Remove(side);ShadowRightCensored++;continue;}
-                    if(!p.Opened)
+                    decimal units=Source.Terms.MinimumUnits.Value;
+                    foreach(int side in new[]{1,-1})
                     {
-                        p.Entry=Price(quote,side,slip,true);
-                        p.EntryQuote=quote;p.Slippage=slip;
-                        p.OpenAt=e.At;p.LastAt=e.At;p.Opened=true;
-                        p.Best=p.Entry;p.Stop=p.Entry-side*2m*p.Atr;
-                        continue;
+                        decimal quoteProfit=side*units*(evt.Bar.Open-old.Open);
+                        decimal gain=quoteProfit*(quoteProfit>=0m?
+                            quote.EurCredit:quote.EurDebit);
+                        (side>0?longReturn:shortReturn).Add(gain);
+                        (side>0?longDown:shortDown).Add(Math.Max(0m,-gain));
+                        foreach(var f in old.Features)
+                        {
+                            var key=(side,f.Channel);
+                            if(!cells.TryGetValue(key,out var c))
+                            {c=new OnlineCovariance();cells.Add(key,c);}
+                            c.Add(f.Value,gain);
+                        }
                     }
-                    var h=Closed(p.Tf,e.At,3);
-                    if(h.Length<3||h[^1].OpenAt+p.Width!=e.At||
-                       h[^1].OpenAt-h[^2].OpenAt!=p.Width)
-                    {Shadows.Remove(side);ShadowRightCensored++;continue;}
-                    decimal closed=h[^1].Close;
-                    p.Best=side>0?Math.Max(p.Best,closed):Math.Min(p.Best,closed);
-                    decimal trail=p.Best-side*2m*p.Atr;
-                    p.Stop=side>0?Math.Max(p.Stop,trail):Math.Min(p.Stop,trail);
-                    p.Contrary=side*(h[^1].Close-h[^2].Close)<0m?p.Contrary+1:0;
-                    if(side*(closed-p.Stop)<=0m||p.Contrary>=2)
-                    {
-                        decimal outPrice=Price(quote,side,p.Slippage,false);
-                        decimal raw=side*p.Units*(outPrice-p.Entry);
-                        decimal converted=raw*(raw>=0m?quote.EurCredit:quote.EurDebit);
-                        decimal fees=Fee(p.EntryQuote!,p.Units)+Fee(quote,p.Units);
-                        decimal days=Math.Floor((e.At-p.OpenAt)/(decimal)Day);
-                        decimal funding=days*p.Entry*p.Units*quote.EurDebit*
-                            FundingBpsPerDay/10000m;
-                        AddComplete(side,p.Features,converted-fees-funding);
-                        Shadows.Remove(side);
-                    }
-                    else p.LastAt=e.At;
                 }
-                if(!Shadows.ContainsKey(side)&&features.Length>0&&quote is not null&&
-                   Ready(e)&&Source.Terms?.MinimumUnits is >0)
-                {
-                    decimal atr=Atr(e);
-                    if(atr>0m)Shadows[side]=new Shadow{Side=side,Tf=e.Tf,
-                        LastAt=e.At,Width=Width(e.Tf),Atr=atr,
-                        Units=Source.Terms.MinimumUnits.Value,Features=features.ToArray()};
-                }
+                else SourceGapTransitions++;
             }
+            previous=new(evt.At,evt.Tf,evt.Bar.Open,features.ToArray());
         }
         public object Coverage()=>new{
-            Source.Symbol,LabelsMatured,ShadowClosed,ShadowRightCensored,
-            UnfinancedOpenOrPending=Shadows.Count,M1FeatureClocks,M5FeatureClocks,
+            Source.Symbol,LabelsMatured,SourceGapTransitions,
+            EconomicTransitionLabelsAreUnfinanced=true,M1FeatureClocks,M5FeatureClocks,
             Timeframes=Bars.ToDictionary(k=>k.Key,k=>new{
                 Count=k.Value.Length,First=k.Value.Length>0?(long?)k.Value[0].OpenAt:null,
                 Last=k.Value.Length>0?(long?)k.Value[^1].OpenAt:null}),
@@ -323,7 +289,7 @@ public static class NativePav1JointActionEconomic
         public StudyMarket Market=null!;
         public int Side;
         public decimal Units, Entry, Stop, Target, Best, Atr, Slippage, ReservedRisk;
-        public int Contrary;
+        public decimal LastActionValue;
         public long OpenAt,LastFinancingAt;
     }
     sealed class Pending
@@ -332,7 +298,7 @@ public static class NativePav1JointActionEconomic
         public string Kind="";
         public StudyMarket Market=null!;
         public int Side;
-        public decimal Units,Slippage,Atr;
+        public decimal Units,Slippage,Atr,ReservedRisk,MarginPerUnit;
         public long RequestedAt,Width;
         public string Why="";
     }
@@ -909,7 +875,7 @@ public static class NativePav1JointActionEconomic
             {
                 var f=features.GetValueOrDefault(evt.Market.Source.Symbol)??Array.Empty<Feature>();
                 var quote=Quote(evt.Market,evt.Bar,1m,fx,out var sl);
-                evt.Market.StepShadow(evt,f,quote,sl);
+                evt.Market.MatureEconomicTransition(evt,f,quote);
             }
         }
         return new{
@@ -918,7 +884,8 @@ public static class NativePav1JointActionEconomic
             PreregisteredNewProtocolSha256=frozenProtocolSha256,
             SourceCoverage=markets.OrderBy(x=>x.Source.Symbol,StringComparer.Ordinal).Select(x=>x.Coverage()).ToArray(),
             GenuineMarketClocks=events.Length,UnfinancedLearningLabels=true,
-            TargetIsCompletedPositionNetEUR=true,NoFixedPredictionHorizon=true,
+            TargetIsCompletedPositionNetEUR=false,IsCausalSequentialActionValue=true,
+            NoFixedPredictionHorizon=true,
             Results=books.Select(b=>b.Receipt(sourceWeeks)).ToArray(),
             CashBenchmarkEur=0,AllResultsDevelopmentExposed=true,
             HistoricalTariffContinuity=false,HistoricalExecutablePricesCertified=false,
