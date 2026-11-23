@@ -192,9 +192,14 @@ public static class NativeV32UnifiedEconomic
         decimal? feeFx=c.MinimumCommissionAsset is null?null:Fx(c.MinimumCommissionAsset,fx,bar.OpenAt);
         try{
             var cost=new NativeMarketCostContext(bar.OpenAt,bid,ask,
-                route.Value*(1-ModelFxWedge),route.Value*(1+ModelFxWedge),
+                route.Value*(1-ModelFxWedge*k),route.Value*(1+ModelFxWedge*k),
                 usd.Value,feeFx,c.MarginMinimumEur.Value,c.MinimumUnits.Value,slip);
-            return NativeBrokerContractCosts.Quote(actual,cost).Quote with{LiquidationSlippagePerSide=slip};
+            var original=NativeBrokerContractCosts.Quote(actual,cost).Quote;
+            return original with {
+                ExitFeePerUnit=original.ExitFeePerUnit*k,
+                ExitFeeFloor=original.ExitFeeFloor*k,
+                LiquidationSlippagePerSide=slip
+            };
         }catch(ArgumentException){return null;}catch(InvalidOperationException){return null;}
     }
     static Signal? Predict(Market m,long at,string policy)
@@ -291,7 +296,7 @@ public static class NativeV32UnifiedEconomic
                     if(t/Day>held.LastMark/Day)
                     {
                         decimal notional=held.Entry*held.Units*(quote.EurCredit+quote.EurDebit)/2;
-                        decimal funding=-notional*ModelFundingBpsPerDay*(t/Day-held.LastMark/Day)/10000m;
+                        decimal funding=-notional*ModelFundingBpsPerDay*b.Factor*(t/Day-held.LastMark/Day)/10000m;
                         b.Money.Apply(Event(b,t+10,"FINANCING",quote,held.Id,held.Signal.Side,financing:funding));
                     }
                     if(t-held.LastMark>M15)b.UnknownMarks++;
@@ -400,7 +405,7 @@ public static class NativeV32UnifiedEconomic
             Schema=Version,input.SourceRuns,input.ProtocolSha256,
             Inputs=coverage,SourceMarkets=input.Markets.Length,
             DevelopmentOnly=true,PriceFills="MODEL_ONLY_NEXT_AUTHENTIC_M15_BAR_OPEN_NOT_OBSERVED_BID_ASK",
-            Costs="ORIGINAL_CURRENT_CONTRACT_FIELDS_AND_QUOTE_SPREAD_WITH_ESTIMATED_FX_SLIPPAGE_SWAP",
+            Costs="CURRENT_CONTRACT_FEES_AND_ESTIMATED_SPREAD_SLIPPAGE_FX_SWAP_STRESSED_TOGETHER_X1_X1_5_X2_NOT_HISTORICALLY_CERTIFIED",
             ModelFundingBpsPerDay,ModelFxWedge,
             Results=books.Select(b=>b.Receipt()).ToArray(),
             AllInHistoricalCostCertified=false,IndependentConfirmation=false,
