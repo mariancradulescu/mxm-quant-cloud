@@ -1,3 +1,6 @@
+using System.Text.Json;
+using System.Security.Cryptography;
+
 if(args.Length==3 && args[2]=="--v32-unified-integrated-development")
 {
     var options=new JsonSerializerOptions {
@@ -10,9 +13,6 @@ if(args.Length==3 && args[2]=="--v32-unified-integrated-development")
     File.WriteAllText(args[1],JsonSerializer.Serialize(result,options));
     return 0;
 }
-
-using System.Text.Json;
-using System.Security.Cryptography;
 
 if(args.Length==3 && args[0]=="--integrated-original")
     return IntegratedEconomicReplay.Run(args[1],args[2]);
