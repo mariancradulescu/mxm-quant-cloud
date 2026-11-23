@@ -432,6 +432,36 @@ public static class NativeV33PredictiveEconomic
         return new(market,side,evt.Tf,model,atr,meanNet,lowerNet,
             0m,units,q,slippage);
     }
+    static decimal RecentAbsoluteCorrelation(StudyMarket candidate,StudyMarket held,long asOf)
+    {
+        const int window=16;
+        var x=candidate.Closed("M15",asOf,window+1);
+        var y=held.Closed("M15",asOf,window+1);
+        if(x.Length<window+1||y.Length<window+1)
+            return 1m; // unknown correlation is never assumed safely zero
+        for(int i=0;i<x.Length;i++)
+        {
+            if(x[i].OpenAt!=y[i].OpenAt||x[i].Open<=0m||y[i].Open<=0m)
+                return 1m;
+        }
+        decimal meanX=0m,meanY=0m;
+        var a=new decimal[window];var b=new decimal[window];
+        for(int i=0;i<window;i++)
+        {
+            a[i]=(x[i+1].Close-x[i+1].Open)/x[i+1].Open;
+            b[i]=(y[i+1].Close-y[i+1].Open)/y[i+1].Open;
+            meanX+=a[i];meanY+=b[i];
+        }
+        meanX/=window;meanY/=window;
+        decimal xx=0m,yy=0m,xy=0m;
+        for(int i=0;i<window;i++)
+        {
+            decimal u=a[i]-meanX,v=b[i]-meanY;
+            xx+=u*u;yy+=v*v;xy+=u*v;
+        }
+        if(xx<=0m||yy<=0m)return 1m;
+        return Math.Min(1m,Math.Abs(xy)/(decimal)Math.Sqrt((double)(xx*yy)));
+    }
     static bool Fundable(Book book,Offer o,out decimal units,out string reason)
     {
         units=0m;reason="RISK";
@@ -450,10 +480,11 @@ public static class NativeV33PredictiveEconomic
         decimal reserved=book.Held.Values.Sum(x=>x.ReservedRisk);
         // Correlation: conservative double-count same-class stop exposure.
         string group=Group(o.Market.Source.Symbol);
-        decimal same=book.Held.Values.Where(x=>Group(x.Market.Source.Symbol)==group)
-            .Sum(x=>x.ReservedRisk);
-        decimal remainingRisk=Math.Min(RiskPerTrade*eq-reserved*.0m,
-            AggregateStopRisk*eq-reserved-0.5m*same);
+        decimal correlated=book.Held.Values.Sum(p=>
+            p.ReservedRisk*Math.Max(RecentAbsoluteCorrelation(o.Market,p.Market,o.Quote.At),
+                Group(p.Market.Source.Symbol)==group?0.5m:0m));
+        decimal remainingRisk=Math.Min(RiskPerTrade*eq,
+            AggregateStopRisk*eq-reserved-.5m*correlated);
         decimal usedMargin=book.Held.Values.Sum(x=>x.Units*
             x.Market.Source.Terms!.MarginMinimumEur!.Value/
             x.Market.Source.Terms.MinimumUnits!.Value);
