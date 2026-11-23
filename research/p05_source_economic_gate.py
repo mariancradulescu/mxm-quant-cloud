@@ -91,7 +91,7 @@ def _bars_from_original(rows):
         need(int(request.period) in PERIOD_BY_ID, "UNKNOWN_TIMEFRAME")
         name, minutes = PERIOD_BY_ID[int(request.period)]
         a, b = int(request.fromTimestamp), int(request.toTimestamp)
-        need(a < b and SOURCE_FIRST_MS <= a < SOURCE_END_MS, "OUTSIDE_ORIGINAL_RANGE")
+        need(a <= b and SOURCE_FIRST_MS <= a < SOURCE_END_MS, "OUTSIDE_ORIGINAL_RANGE")
         need((not res.HasField("symbolId") or res.symbolId == request.symbolId)
              and int(res.period) == int(request.period), "HISTORY_RESPONSE_MISMATCH")
         # Original collector admitted a +/- one-period broker boundary candle.
