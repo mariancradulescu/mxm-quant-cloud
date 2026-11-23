@@ -26,8 +26,8 @@ public static class NativePel1Economic
     {
         public string Id="",Symbol="";public int Side;public decimal Units,MarginPerUnit,Risk;
         public decimal Limit,Range,Entry,Stop,TickSize,Slip;
-        public long RequestedAt,OpenedAt,ExpiresAt,FirstCrossAt;
-        public bool LimitConfirmed,CloseRequested;public string LastReason="";
+        public long RequestedAt,OpenedAt,ExpiresAt;
+        public bool CloseRequested;public string LastReason="";
     }
     sealed class MarketDay
     {
@@ -261,6 +261,15 @@ public static class NativePel1Economic
         foreach(var p in book.Held.Values.Where(x=>x.CloseRequested).ToArray())
         {
             if(!quotes.TryGetValue(p.Symbol,out var q)){book.Incomplete=true;continue;}
+            // A position surviving beyond its opening UTC day has potential
+            // broker funding and unobserved interval risk. Without actual
+            // reconciled financing evidence it cannot settle as zero-swap NET.
+            if(p.OpenedAt/DayMs!=now/DayMs)
+            {
+                book.Incomplete=true;
+                book.Reject("OVERNIGHT_FINANCING_UNATTESTED");
+                continue;
+            }
             long closedAt=book.At(now+5);
             decimal slip=ExitSlippage(days.Single(x=>x.Source.Name==p.Symbol).Source,q,book.Stress);
             decimal exit=NativeExecutableEconomics.ExitPrice(p.Side>0?q.Bid:q.Ask,p.Side,slip);
