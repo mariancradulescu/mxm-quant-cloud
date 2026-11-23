@@ -7,6 +7,12 @@ using System.Globalization;
 
 namespace Mxm.Core;
 
+public sealed record Rvc1OriginalFunding(
+    string Symbol,bool? ChargeSwapAtWeekends,int? SkipSwapPeriods,
+    long ObservedAtUtcMs,bool OriginalBrokerAuthenticated);
+public sealed record Rvc1OriginalInput(
+    V32Tape Tape,Rvc1OriginalFunding[] Funding);
+
 // RVC1: a new, frozen, native Core joint FX residual INVENTORY experiment.
 // Historical bars/cost models are CONDITIONAL, never certified broker fills.
 // Entirely observation-only, no broker requests, no order methods or secrets.
@@ -345,13 +351,19 @@ public static class NativeRvc1JointResidualEconomic
         book.UpdateExposure(quotes);
     }
     static bool FundingCost(Book book,V32Market market,Leg leg,LedgerQuote quote,
-        long closeTime,out decimal amount)
+        long closeTime,IReadOnlyDictionary<string,Rvc1OriginalFunding> originalFunds,
+        out decimal amount)
     {
         amount=0m;
         if(leg.FundingBooked)return true;
         var t=market.Terms;
         if(t is null)return false;
         if(leg.OpenedAt/DAY==closeTime/DAY)return true;
+        if(!originalFunds.TryGetValue(market.Symbol,out var authentic) ||
+           !authentic.OriginalBrokerAuthenticated ||
+           authentic.ObservedAtUtcMs!=t.ObservedAtUtcMs ||
+           authentic.ChargeSwapAtWeekends is null ||
+           authentic.SkipSwapPeriods is null)return false;
         if(t.MinimumUnits is null||t.StepUnits is null||t.MaximumUnits is null||
            t.LotUnits is null||t.CommissionType is null||t.PreciseRateWire is null||
            t.MinimumCommissionType is null||t.PreciseMinimumWire is null||
@@ -362,7 +374,8 @@ public static class NativeRvc1JointResidualEconomic
             t.MinimumCommissionType.Value,t.PreciseMinimumWire.Value,
             t.MinimumCommissionAsset,t.PnlConversionFeeBps.Value,t.SwapCalculationType,
             t.LongSwap,t.ShortSwap,t.PipPosition,t.SwapPeriodHours,
-            t.SwapTimeUtcMinute,t.TripleSwapWeekday,null,null,true,false);
+            t.SwapTimeUtcMinute,t.TripleSwapWeekday,
+            authentic.ChargeSwapAtWeekends,authentic.SkipSwapPeriods,true,false);
         decimal? result=NativeBrokerContractCosts.SignedFinancing(original,
             leg.OpenedAt,closeTime,leg.Side,leg.Units,quote.EurCredit,quote.EurDebit);
         if(result is null)return false;
@@ -370,7 +383,7 @@ public static class NativeRvc1JointResidualEconomic
         return true;
     }
     static void SettleClose(Book book,LedgerQuote[] quotes,V32Market e,V32Market g,
-        long t)
+        long t,IReadOnlyDictionary<string,Rvc1OriginalFunding> originalFunds)
     {
         if(book.Held.Count==0)return;
         if(quotes.Length<2){book.TemporarySuspensions++;return;}
@@ -378,14 +391,14 @@ public static class NativeRvc1JointResidualEconomic
         // Never partially settle a supposedly hedged pair when another leg
         // has unknown financing; retain both actual Held capital and risk.
         foreach(var l in book.Held.Values.Where(x=>x.RequestedClose))
-            if(!FundingCost(book,l.Symbol=="EURUSD"?e:g,l,q[l.Symbol],t,out _))
+            if(!FundingCost(book,l.Symbol=="EURUSD"?e:g,l,q[l.Symbol],t,originalFunds,out _))
             {book.Incomplete=true;book.UnknownFunding=true;
                 book.Reject("ROLLOVER_CONTRACT_UNKNOWN");return;}
         foreach(var leg in book.Held.Values.ToArray())
         {
             if(!leg.RequestedClose)continue;
             var quote=q[leg.Symbol];
-            if(!FundingCost(book,leg.Symbol=="EURUSD"?e:g,leg,quote,t,out var financing))
+            if(!FundingCost(book,leg.Symbol=="EURUSD"?e:g,leg,quote,t,originalFunds,out var financing))
                 throw new InvalidOperationException("RVC1_FINANCING_PREFLIGHT_DIVERGED");
             if(!leg.FundingBooked)
             {
@@ -450,7 +463,8 @@ public static class NativeRvc1JointResidualEconomic
         return false;
     }
     static void Advance(Book book,long t,LedgerQuote[] quotes,Reading? reading,
-        V32Market e,V32Market g)
+        V32Market e,V32Market g,
+        IReadOnlyDictionary<string,Rvc1OriginalFunding> originalFunds)
     {
         if(book.Policy=="CASH")return;
         book.Ledger.Apply(book.Event(t+10,"MARK",null,quotes));
@@ -475,7 +489,7 @@ public static class NativeRvc1JointResidualEconomic
         // Prior CLOSE request must reach a LATER authentic M5 open.
         if(book.Held.Values.Any(x=>x.RequestedClose))
         {
-            SettleClose(book,quotes,e,g,t+50);
+            SettleClose(book,quotes,e,g,t+50,originalFunds);
             if(book.Held.Values.Any(x=>x.RequestedClose))return;
         }
         if(book.Pending.Count>0)
@@ -501,13 +515,21 @@ public static class NativeRvc1JointResidualEconomic
         decimal slipE=(qe.Ask-qe.Bid)/2m,slipG=(qg.Ask-qg.Bid)/2m;
         SubmitNew(book,reading,e,g,quotes,new[]{slipE,slipG},t+150);
     }
-    public static object Evaluate(V32Tape tape,string frozenProtocolSha256)
+    public static object Evaluate(V32Tape tape,string frozenProtocolSha256,
+        Rvc1OriginalFunding[]? funding=null)
     {
         if(tape is null||!tape.DevelopmentOnly||
            frozenProtocolSha256.Length!=64||
            tape.Markets.Count(x=>x.Symbol=="EURUSD")!=1||
            tape.Markets.Count(x=>x.Symbol=="GBPUSD")!=1)
             throw new ArgumentException("RVC1_AUTHENTIC_SOURCE_AND_FROZEN_SCOPE_REQUIRED");
+        var originalFunds=(funding??Array.Empty<Rvc1OriginalFunding>())
+            .ToDictionary(x=>x.Symbol,x=>x,StringComparer.Ordinal);
+        if(originalFunds.Values.Any(x=>x.Symbol is not ("EURUSD" or "GBPUSD") ||
+            x.ObservedAtUtcMs<=0 ||
+            !x.OriginalBrokerAuthenticated ||
+            x.SkipSwapPeriods is <0))
+            throw new ArgumentException("RVC1_FUNDING_SOURCE_AUTHENTICITY_INVALID");
         var e=tape.Markets.Single(x=>x.Symbol=="EURUSD");
         var g=tape.Markets.Single(x=>x.Symbol=="GBPUSD");
         var e5=Bars(e,"M5").ToDictionary(x=>x.OpenAt);
@@ -544,7 +566,7 @@ public static class NativeRvc1JointResidualEconomic
                     if(x is not null&&y is not null)
                         marks=new[]{x,y};
                 }
-                Advance(book,t,marks,reading,e,g);
+                Advance(book,t,marks,reading,e,g,originalFunds);
             }
         }
         return new {
@@ -553,6 +575,8 @@ public static class NativeRvc1JointResidualEconomic
             SourceDisclosure="PREVIOUSLY_EXPOSED_AUTHENTIC_BARS_CONDITIONAL_COSTS",
             EarliestCommonM5=dates[0],LatestCommonM5=dates[^1],
             CommonM5Clocks=dates.Length,CommonISOWeeks=weeks.Count,
+            AuthenticatedOriginalFundingFields=originalFunds.Count,
+            FundingQuoteTimesCertifiedForHistory=false,
             Books=books.Select(x=>x.Receipt(weeks.ToArray())).ToArray(),
             CashBenchmarkEur=0,ActualBrokerFillsCertified=false,
             HistoricalAllInCostsCertified=false,IntrabarDDCertified=false,
