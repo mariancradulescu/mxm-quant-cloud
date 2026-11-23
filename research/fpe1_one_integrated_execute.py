@@ -38,10 +38,10 @@ def run():
                    "JsonException","StackOverflowException","IOException")
             raw=code.stderr or ""
             kind=next((t for t in types if re.search(
-                r"\\b(?:System\\.)?"+t+r"\\b",raw)), "UNKNOWN")
+                r"\b(?:System\.)?"+t+r"\b",raw)), "UNKNOWN")
             approved=re.findall(
-                r"\\b(?:FPE1|V32|NATIVE_LEDGER|NATIVE_COST|MODEL)_"
-                r"[A-Z0-9_]{3,90}\\b",raw)
+                r"\b(?:FPE1|V32|NATIVE_LEDGER|NATIVE_COST|MODEL)_"
+                r"[A-Z0-9_]{3,90}\b",raw)
             marker=approved[0] if approved else "NO_SAFE_DOMAIN_CODE"
             exit_category="SIGNAL" if code.returncode<0 else (
                 "NO_RECEIPT" if code.returncode==0 else "NONZERO")
