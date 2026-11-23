@@ -45,7 +45,8 @@ class EconomicScreenChecks(unittest.TestCase):
     def test_report_uses_unknown_not_zero(self):
         md = summary(self.report)
         self.assertIn("NET EUR/%: UNKNOWN",md)
-        self.assertIn("NONE_NOT_A_STRATEGY","NONE_NOT_A_STRATEGY")  # literal guard against generated controls
+        self.assertIn("No new Open API calls", md)
+        self.assertNotIn("HARD21: PASS", md)
 
 if __name__ == "__main__":
     unittest.main()
