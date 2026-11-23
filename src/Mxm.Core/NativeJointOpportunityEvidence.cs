@@ -88,6 +88,10 @@ public static class NativeJointOpportunityEvidence
         if(closed.Count>entry.RequiredLegs)
             throw new ArgumentException("JOINT_DIAGNOSTIC_MORE_LEGS_THAN_OPENED");
         bool complete=closed.Count==entry.RequiredLegs;
+        // Any mark AFTER witnessed final close is hindsight data, not
+        // favorable/adverse excursion for the original held episode.
+        if(complete&&marks.Any(x=>x.ObservedAt>closed.Max(y=>y.ClosedAt)))
+            throw new ArgumentException("JOINT_DIAGNOSTIC_POSTCLOSE_MARK_HINDSIGHT");
         if(complete && (exitCause is null ||
              closed.Any(x=>x.ClosedAt<entry.FillAt)))
             throw new ArgumentException("JOINT_DIAGNOSTIC_EXIT_PROVENANCE_REQUIRED");
