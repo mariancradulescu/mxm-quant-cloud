@@ -7,6 +7,9 @@ on:
       - 'research/test_p05_readonly_wire.py'
       - 'research/p05_live_source.py'
       - 'research/test_p05_live_source.py'
+      - 'research/p05_source_economic_gate.py'
+      - 'research/test_p05_source_economic_gate.py'
+      - '.github/workflows/p05-live-readonly-source.yml'
       - '.github/workflows/p05-main-security-verify.yml'
   pull_request:
     paths:
@@ -14,6 +17,9 @@ on:
       - 'research/test_p05_readonly_wire.py'
       - 'research/p05_live_source.py'
       - 'research/test_p05_live_source.py'
+      - 'research/p05_source_economic_gate.py'
+      - 'research/test_p05_source_economic_gate.py'
+      - '.github/workflows/p05-live-readonly-source.yml'
       - '.github/workflows/p05-main-security-verify.yml'
 permissions:
   contents: read
@@ -29,5 +35,5 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install -r research/requirements.txt
-      - run: python -m unittest research.test_p05_readonly_wire research.test_p05_live_source -v
-      - run: python -m py_compile research/p05_safe_transport.py research/p05_live_source.py
+      - run: python -m unittest research.test_p05_readonly_wire research.test_p05_live_source research.test_p05_source_economic_gate -v
+      - run: python -m py_compile research/p05_safe_transport.py research/p05_live_source.py research/p05_source_economic_gate.py
