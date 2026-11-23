@@ -341,7 +341,7 @@ public static class NativePel1Economic
             int first=-1,second=-1;
             for(int z=i;z>=0&&ticks[z].At>=p.RequestedAt&&z>i-2000;z--)
             {
-                if(ticks[z].Valid && ticks[z].At>p.RequestedAt &&
+                if(ticks[z].Valid && ticks[z].At>p.RequestedAt+100L &&
                     (p.Side>0?ticks[z].Ask<=p.Limit-p.TickSize:
                          ticks[z].Bid>=p.Limit+p.TickSize))
                 {
@@ -352,12 +352,16 @@ public static class NativePel1Economic
                 else if(second>=0)break;
             }
             bool crossed=first>=0&&TwoQuoteLimitCross(p.Side>0,p.Limit,p.TickSize,
-                p.RequestedAt,ticks[first].At,ticks[second].At,
+                p.RequestedAt+100L,ticks[first].At,ticks[second].At,
                 ticks[first].Bid,ticks[first].Ask,ticks[second].Bid,ticks[second].Ask);
             if(book.Policy=="TAKER")crossed=true;
             if(!crossed)continue;
             var original=AsOf(ticks,now);
-            if(original is null)continue;
+            // A market entry needs a genuinely NEW observed quote event
+            // after the 100ms model latency; an old as-of quote is a mark,
+            // NOT evidence that a later conditional fill was executable.
+            if(original is null || original.At<=p.RequestedAt+100L)
+            {book.Reject("MODEL_FILL_NO_FRESH_POSTINTENT_TICK");continue;}
             decimal requested=p.Limit;
             decimal currentPrice=p.Side>0?q.Ask:q.Bid;
             decimal slack=p.Side>0?requested-q.Ask:q.Bid-requested;
