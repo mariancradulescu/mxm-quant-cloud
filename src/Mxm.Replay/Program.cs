@@ -1,6 +1,22 @@
 using System.Text.Json;
 using System.Security.Cryptography;
 
+// RVC1: ONE new read-only multi-asset joint residual economic Core programme.
+// The input must already be cryptographically verified original source.
+if(args.Length==4 && args[2]=="--rvc1-frozen-joint-fx-residual-economic")
+{
+    var options=new JsonSerializerOptions{
+        NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString,
+        WriteIndented=true
+    };
+    var source=JsonSerializer.Deserialize<Mxm.Core.V32Tape>(
+        File.ReadAllText(args[0]),options)
+        ?? throw new ArgumentException("RVC1_ORIGINAL_V32_TAPE_ABSENT");
+    var result=Mxm.Core.NativeRvc1JointResidualEconomic.Evaluate(source,args[3]);
+    File.WriteAllText(args[1],JsonSerializer.Serialize(result,options));
+    return 0;
+}
+
 if(args.Length==4 && args[2]=="--pav1-joint-action-value")
 {
     var options=new JsonSerializerOptions {
