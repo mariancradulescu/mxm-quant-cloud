@@ -30,7 +30,24 @@ def run():
             "dotnet","run","--no-build","-c","Release","--project","src/Mxm.Replay","--",
             str(tape),str(result),"--fpe1-complete-position-economic",sha],
             capture_output=True,text=True,timeout=9300)
-        need(code.returncode==0 and result.is_file(),"NATIVE_CAUSAL_EUR300_EXECUTION_FAILED")
+        if code.returncode!=0 or not result.is_file():
+            # Never print raw stderr or private market source: allowlisted error only.
+            import re
+            types=("ArgumentException","InvalidOperationException","OutOfMemoryException",
+                   "OverflowException","DivideByZeroException","KeyNotFoundException",
+                   "JsonException","StackOverflowException","IOException")
+            raw=code.stderr or ""
+            kind=next((t for t in types if re.search(
+                r"\b(?:System\.)?"+t+r"\b",raw)), "UNKNOWN")
+            approved=re.findall(
+                r"\b(?:FPE1|V32|NATIVE_LEDGER|NATIVE_COST|MODEL)_"
+                r"[A-Z0-9_]{3,90}\b",raw)
+            marker=approved[0] if approved else "NO_SAFE_DOMAIN_CODE"
+            exit_category="SIGNAL" if code.returncode<0 else (
+                "NO_RECEIPT" if code.returncode==0 else "NONZERO")
+            print("FPE1_NATIVE_TECHNICAL_FAILURE_EXIT_"+exit_category+
+                  "_TYPE_"+kind+"_MARKER_"+marker,flush=True)
+            need(False,"NATIVE_CAUSAL_EUR300_EXECUTION_FAILED")
         obj=json.loads(result.read_text())
         need(obj.get("Schema")=="FPE1_COMPLETE_POSITION_NET_FUNDED_EUR300_DEV"
              and obj.get("PreregisteredNewProtocolSha256")==sha
