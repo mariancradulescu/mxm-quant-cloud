@@ -68,7 +68,8 @@ public static class NativeJointOpportunityEvidenceChecks
             NativeJointExitCause.Convergence,true)),
             "Zero/unknown financial risk cannot produce an inflated RR or R");
         var distribution=NativeJointOpportunityEvidence.Distribution(
-            new[]{full,partial,unknownFinance});
+            new[]{full,partial with {EpisodeId="PAIR-B"},
+                unknownFinance with {EpisodeId="PAIR-C"}});
         check(distribution is not null &&
             distribution.ToString()!.Contains("INSUFFICIENT_SETTLED_EPISODES"),
             "Three synthetic episodes cannot be misadvertised as stable win probability");
