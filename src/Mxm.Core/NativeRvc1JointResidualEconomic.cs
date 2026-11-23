@@ -93,9 +93,18 @@ public static class NativeRvc1JointResidualEconomic
         public object Receipt(string[] allWeeks)
         {
             var summary=Ledger.Summary();var fragments=Ledger.ClosedFragments();
+            var openRemaining=Ledger.PositionSnapshot();
+            decimal entryDebt=openRemaining.Sum(x=>x.EntryFeeRemaining+x.EntryConversionRemaining);
+            decimal unbookedFinance=openRemaining.Sum(x=>x.FinancingRemaining);
+            decimal expectedCash=Capital+summary.ClosedNetEur-entryDebt+unbookedFinance;
+            if(Math.Abs(expectedCash-summary.CashEur)>.000000001m)
+                throw new InvalidOperationException("RVC1_COMMON_BOOK_CASH_IDENTITY");
             return new{
                 Policy,Factor,StartingCapitalEUR=Capital,
                 ClosingCashEur=summary.CashEur,
+                RemainingOpenEntryFeeDebtEur=entryDebt,
+                RemainingOpenFinancingEur=unbookedFinance,
+                NativeReconciledCashEur=expectedCash,
                 ClosingLiquidationEquityEur=summary.LiquidationEquityEur,
                 ClosedNetEUR=summary.ClosedNetEur,
                 FinalOpenPositions=summary.OpenPositions,
@@ -392,6 +401,9 @@ public static class NativeRvc1JointResidualEconomic
                 margin:quote.MarginPerUnit,reason:"RVC1_JOINT_RISK_OR_RESIDUAL"));
             book.Held.Remove(leg.Symbol);
             book.CompleteLegs++;
+            var closed=book.Ledger.ClosedFragments().Last();
+            string week=Week(closed.ClosedAt);
+            book.NetWeeks[week]=book.NetWeeks.GetValueOrDefault(week)+closed.NetEur;
         }
         // A matched pair contributes a single completion only after
         // every leg is closed and no pending id remains.
@@ -400,14 +412,11 @@ public static class NativeRvc1JointResidualEconomic
             if(!book.Pair.Orphaned)
             {
                 book.CompletePairs++;
-                var fragments=book.Ledger.ClosedFragments();
-                // Per-cycle grouping key is frozen entry event, not summing
-                // unrelated portfolios.
-                var cycle=fragments.Where(x=>x.PositionId.Contains(
-                    "/"+book.Pair.RequestedAt+"/",StringComparison.Ordinal)).ToArray();
+                // Paired cycle is one complete trip only when ALL legs
+                // close; weekly NET is attributed to exact closing fragments
+                // even for orphan legs, never implicitly dropped.
                 var w=Week(t);
                 book.CompleteWeeks[w]=book.CompleteWeeks.GetValueOrDefault(w)+1;
-                book.NetWeeks[w]=book.NetWeeks.GetValueOrDefault(w)+cycle.Sum(x=>x.NetEur);
             }
             book.Pair=null;
         }
