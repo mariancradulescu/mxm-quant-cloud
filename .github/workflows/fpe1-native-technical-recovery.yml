@@ -1,4 +1,4 @@
-name: FPE1 bounded native failure recovery no retuning original run 45182099552
+name: FPE1 bounded weekly-report cash reconciliation no retuning original FPE1
 on:
   pull_request:
     paths:
@@ -11,7 +11,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'ops/fpe1-native-technical-recovery-once.txt'
+      - 'ops/fpe1-weekly-report-recovery-once.txt'
 permissions:
   contents: read
   actions: read
@@ -45,8 +45,8 @@ jobs:
         shell: bash
         run: |
           echo 'authorized=false' >> "$GITHUB_OUTPUT"
-          subject=OWNER_FPE1_NATIVE_TECH_RECOVERY_ONCE_20261123
-          marker=ops/fpe1-native-technical-recovery-once.txt
+          subject=OWNER_FPE1_WEEKLY_REPORT_RECOVERY_ONCE_20261123
+          marker=ops/fpe1-weekly-report-recovery-once.txt
           if [[ "$GITHUB_EVENT_NAME" == "push" &&
                 "$GITHUB_REF" == "refs/heads/main" &&
                 "$GITHUB_ACTOR" == "mariancradulescu" &&
@@ -125,7 +125,7 @@ jobs:
       - name: Publish one source-authenticated native economic package (no raw OHLC)
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: fpe1-bounded-technical-recovery-position-net-result
+          name: fpe1-bounded-weekly-report-recovery-position-net-result
           path: fpe1-one-integrated-public/
           retention-days: 90
           if-no-files-found: error
