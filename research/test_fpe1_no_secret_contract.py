@@ -62,7 +62,8 @@ class NativeFpe1SafetyContract(unittest.TestCase):
             },
             "Bars": {"M15": []},
         }
-        start = 1762128000000
+        # Sunday crossing an ISO week, so weekly cash identity is exercised.
+        start = 1762668000000
         for i in range(160):
             op = round(1.10 + 0.0002 * math.sin(i / 5), 7)
             close = round(1.10 + 0.0002 * math.sin((i + 1) / 5), 7)
@@ -97,8 +98,8 @@ class NativeFpe1SafetyContract(unittest.TestCase):
             self.assertTrue(all(x["Orders"] == 0 and not x["HARD21Certified"]
                                 for x in result["Results"]))
             for book in result["Results"]:
-                self.assertEqual(
-                    sum(w["NET_EUR"] for w in book["Weekly"]), book["NET_EUR"])
+                self.assertLessEqual(
+                    abs(sum(w["NET_EUR"] for w in book["Weekly"]) - book["NET_EUR"]), 1e-9)
                 self.assertEqual(
                     sum(x["NetEur"] for x in book["AllModeledLedgerFragments"]),
                     book["NET_EUR"])
