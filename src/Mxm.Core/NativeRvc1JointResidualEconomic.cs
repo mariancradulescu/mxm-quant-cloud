@@ -143,7 +143,8 @@ public static class NativeRvc1JointResidualEconomic
         if(!mE.TryGetValue(decisionTime-M15,out var e) ||
            !mG.TryGetValue(decisionTime-M15,out var g) ||
            !Valid(e)||!Valid(g))return null;
-        int ie=LastClosed(hE,decisionTime,H1),ig=LastClosed(hG,decisionTime,H1);
+        // Do not mix the present decision M15 close into its H1 reference.
+        int ie=LastClosed(hE,decisionTime-1,H1),ig=LastClosed(hG,decisionTime-1,H1);
         if(ie<47||ig<47)return null;
         var ratios=new double[48];long prev=-1;
         for(int j=0;j<48;j++)
@@ -210,7 +211,7 @@ public static class NativeRvc1JointResidualEconomic
         int side,double sigma,double entryZ,decimal slip)
     {
         var units=market.Terms!.MinimumUnits!.Value;
-        decimal displacement=(decimal)Math.Min(1d,(StopSigma-(decimal)Math.Min(3d,Math.Abs(entryZ)))*(decimal)sigma);
+        decimal displacement=Math.Max(0m,StopSigma-(decimal)Math.Abs(entryZ))*(decimal)sigma;
         decimal adverseMove=quote.Ask*displacement;
         decimal risk=(adverseMove+2m*(quote.Ask-quote.Bid+slip))*units*quote.EurDebit+
             2m*Fee(quote,units);
@@ -233,6 +234,8 @@ public static class NativeRvc1JointResidualEconomic
         decimal[] slips,long t)
     {
         int sign=reading.Signal;if(sign==0){book.Waits++;return;}
+        if(Math.Abs(reading.Z)>=3d)
+        {book.Reject("ALREADY_BEYOND_ENTRY_FROZEN_ADVERSE_BARRIER");return;}
         if(!EligibleNewBook(book,quotes)){book.Waits++;return;}
         var q=quotes.ToDictionary(x=>x.Symbol,x=>x,StringComparer.Ordinal);
         var ledgerSummary=book.Ledger.Summary();
@@ -293,6 +296,7 @@ public static class NativeRvc1JointResidualEconomic
         }
         if(book.Held.Count==0)book.Pair=null;
         else{book.OrphanEvents++;book.Incomplete=true;
+            if(book.Pair is not null)book.Pair.Orphaned=true;
             RequestClose(book,quotes,t+700,"RVC1_ORPHAN_PROTECTIVE_CLOSE");}
         book.Reject(reason);
     }
@@ -356,12 +360,18 @@ public static class NativeRvc1JointResidualEconomic
         if(book.Held.Count==0)return;
         if(quotes.Length<2){book.TemporarySuspensions++;return;}
         var q=quotes.ToDictionary(x=>x.Symbol,x=>x,StringComparer.Ordinal);
+        // Never partially settle a supposedly hedged pair when another leg
+        // has unknown financing; retain both actual Held capital and risk.
+        foreach(var l in book.Held.Values.Where(x=>x.RequestedClose))
+            if(!FundingCost(book,l.Symbol=="EURUSD"?e:g,l,q[l.Symbol],t,out _))
+            {book.Incomplete=true;book.UnknownFunding=true;
+                book.Reject("ROLLOVER_CONTRACT_UNKNOWN");return;}
         foreach(var leg in book.Held.Values.ToArray())
         {
             if(!leg.RequestedClose)continue;
             var quote=q[leg.Symbol];
             if(!FundingCost(book,leg.Symbol=="EURUSD"?e:g,leg,quote,t,out var financing))
-            {book.Incomplete=true;book.UnknownFunding=true;book.Reject("ROLLOVER_CONTRACT_UNKNOWN");continue;}
+                throw new InvalidOperationException("RVC1_FINANCING_PREFLIGHT_DIVERGED");
             if(!leg.FundingBooked)
             {
                 if(financing!=0m)
@@ -430,6 +440,12 @@ public static class NativeRvc1JointResidualEconomic
         if(book.Policy=="CASH")return;
         book.Ledger.Apply(book.Event(t+10,"MARK",null,quotes));
         book.UpdateExposure(quotes);
+        if(quotes.Length<2)
+        {
+            book.TemporarySuspensions++;
+            if(book.Pair is not null){book.Incomplete=true;book.UnknownMarks++;}
+            return;
+        }
         var summary=book.Ledger.Summary();
         if(summary.MaximumSampledDrawdown>=IrreversibleDd&&!book.Irreversible)
         {book.Irreversible=true;book.HardStops++;}
@@ -478,26 +494,29 @@ public static class NativeRvc1JointResidualEconomic
         var he=Bars(e,"H1");var hg=Bars(g,"H1");
         if(e5.Count==0||g5.Count==0||me.Count==0||mg.Count==0||he.Length==0||hg.Length==0)
             throw new ArgumentException("RVC1_GENUINE_M5_M15_H1_COVERAGE_MISSING");
-        var dates=e5.Keys.Intersect(g5.Keys).OrderBy(x=>x).ToArray();
+        var dates=e5.Keys.Union(g5.Keys).OrderBy(x=>x).ToArray();
         if(dates.Length==0)throw new ArgumentException("RVC1_SOURCE_WITHOUT_COMMON_CLOCK");
-        var weeks=new List<string>();var from=dates[0]/(7*DAY)*7*DAY;
-        for(long d=from;d<=dates[^1];d+=7*DAY)weeks.Add(Week(d));
-        weeks=weeks.Distinct().OrderBy(x=>x,StringComparer.Ordinal).ToList();
+        var weeks=new List<string>();
+        DateTime first=DateTimeOffset.FromUnixTimeMilliseconds(dates[0]).UtcDateTime.Date;
+        DateTime last=DateTimeOffset.FromUnixTimeMilliseconds(dates[^1]).UtcDateTime.Date;
+        first=first.AddDays(-((7+(int)first.DayOfWeek-1)%7));
+        for(var day=first;day<=last;day=day.AddDays(7))
+            weeks.Add(Week(new DateTimeOffset(day,TimeSpan.Zero).ToUnixTimeMilliseconds()));
         var books=(from factor in Factors from policy in Policies
             select new Book(policy,factor)).ToArray();
         foreach(var t in dates)
         {
-            var a=e5[t];var b=g5[t];
-            bool good=Valid(a)&&Valid(b);
-            Reading? reading=t%M15==0 ? Read(he,hg,me,mg,t):null;
+            bool good=e5.TryGetValue(t,out var a)&&g5.TryGetValue(t,out var b)&&
+                a is not null&&b is not null&&Valid(a)&&Valid(b);
+            Reading? reading=good&&t%M15==0 ? Read(he,hg,me,mg,t):null;
             foreach(var book in books)
             {
                 if(book.Policy=="CASH")continue;
                 LedgerQuote[] marks=Array.Empty<LedgerQuote>();
                 if(good)
                 {
-                    var x=Quote(e,a,a,book.Factor,out _);
-                    var y=Quote(g,b,a,book.Factor,out _);
+                    var x=Quote(e,a!,a!,book.Factor,out _);
+                    var y=Quote(g,b!,a!,book.Factor,out _);
                     if(x is not null&&y is not null)
                         marks=new[]{x,y};
                 }
