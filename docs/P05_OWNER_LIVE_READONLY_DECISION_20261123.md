@@ -1,0 +1,10 @@
+# P05 OWNER 2026-11-23 — narrowly scoped authenticated LIVE read-only source
+
+Owner amended sections 2.1 and 20.4 of the new mandate, allowing the existing original Pepperstone LIVE cTrader OAuth connection ONLY for reading authenticated market history and contract data. Token with SCOPE_TRADE is NOT authority to trade.
+
+- This security-only change does not modify original research/ctrader_transport.py, guard.py or any frozen closed study or receipt.
+- New P05ReadOnlyTransport verifies the explicit original 11-message read-only allowlist again at the actual socket boundary, including raw prebuilt frames. No order/create/amend/cancel/close protobuf can transmit via this collector; tests fail before network.
+- New collector reads original bound account only, full nonarchived roster plus all currently visible contract details/margins, then *pre-priced-outcome* broker-category and minimum-margin selection for at most 48 sampled symbols M15/M30/H1/H4/D1 from 2026-08-24 to 2026-11-23, plus fixed-time historical BID/ASK. Raw original request/response messages go only to existing recipient-sealed custody artifacts, public output only aggregates and SHA-256. The 48 are NOT the final universe or an exclusion of other instruments.
+- Requires first-addition exact immutable owner authorization marker, positive offline security tests, same workflow attempt, original existing GitHub protected environments, no secrets read outside job, no refresh, no CLI run, no Cloud or LIVE/DEMO orders. No collection is implied by a test success.
+- An earlier authorized attempt on research branch #45133559488 passed offline checks, but the protected custody recipient failed **before runner allocation**, and collect was SKIPPED. This limited/main workflow change is solely to use the existing protected main execution boundary; it is NOT a restart or rerun of any closed economic study. Preserve the failed new attempt.
+- Previous preliminary research and DECISIONS.md remain in open Draft PR #423; DO NOT automatically merge it. New P05 source cost/move and common EUR300 HARD21/DD remain NOT_DEMONSTRATED until authentic observations and economic evaluation exist.
