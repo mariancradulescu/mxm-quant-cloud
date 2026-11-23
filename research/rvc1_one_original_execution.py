@@ -75,9 +75,17 @@ def main():
                       for f in b["ClosedFragments"]),Decimal(0))
             actual_net=Decimal(str(b["ClosedNetEUR"]))
             cash=Decimal(str(b["ClosingCashEur"]))
+            expected_cash=(Decimal(300)+actual_net-
+                Decimal(str(b["RemainingOpenEntryFeeDebtEur"]))+
+                Decimal(str(b["RemainingOpenFinancingEur"])))
+            weekly=sum((Decimal(str(w["NET_EUR"])) for w in b["Weekly"]),
+                       Decimal(0))
             need(abs(sums-actual_net)<Decimal(".000000001") and
-                 abs(cash-Decimal(300)-actual_net)<Decimal(".000000001"),
-                 "NATIVE_LEDGER_CASH_FRAGMENT_IDENTITY")
+                 abs(cash-expected_cash)<Decimal(".000000001") and
+                 abs(weekly-actual_net)<Decimal(".000000001") and
+                 abs(cash-Decimal(str(b["NativeReconciledCashEur"]))<
+                     Decimal(".000000001")),
+                 "NATIVE_LEDGER_CASH_FRAGMENT_AND_WEEK_IDENTITY")
             pub={k:v for k,v in b.items() if k not in ("ClosedFragments",)}
             pub["FragmentCount"]=len(b["ClosedFragments"])
             pub["HistoricalFillProof"]=False
