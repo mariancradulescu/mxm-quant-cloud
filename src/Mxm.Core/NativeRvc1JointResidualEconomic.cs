@@ -358,7 +358,14 @@ public static class NativeRvc1JointResidualEconomic
         if(leg.FundingBooked)return true;
         var t=market.Terms;
         if(t is null)return false;
-        if(leg.OpenedAt/DAY==closeTime/DAY)return true;
+        // Funding is assessed at the broker's actual SWAP CLOCK, not at
+        // UTC midnight: a same-calendar-day position can cross 22:00 UTC.
+        if(t.SwapPeriodHours!=24 ||
+           t.SwapTimeUtcMinute is not int chargeMinute ||
+           chargeMinute<0||chargeMinute>=1440)return false;
+        long firstCharge=(leg.OpenedAt/DAY)*DAY+chargeMinute*60000L;
+        if(firstCharge<=leg.OpenedAt)firstCharge+=DAY;
+        if(firstCharge>closeTime){amount=0m;return true;}
         if(!originalFunds.TryGetValue(market.Symbol,out var authentic) ||
            !authentic.OriginalBrokerAuthenticated ||
            authentic.ObservedAtUtcMs!=t.ObservedAtUtcMs ||
