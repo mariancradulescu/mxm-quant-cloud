@@ -9,10 +9,11 @@ if(args.Length==4 && args[2]=="--rvc1-frozen-joint-fx-residual-economic")
         NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString,
         WriteIndented=true
     };
-    var source=JsonSerializer.Deserialize<Mxm.Core.V32Tape>(
+    var source=JsonSerializer.Deserialize<Mxm.Core.Rvc1OriginalInput>(
         File.ReadAllText(args[0]),options)
-        ?? throw new ArgumentException("RVC1_ORIGINAL_V32_TAPE_ABSENT");
-    var result=Mxm.Core.NativeRvc1JointResidualEconomic.Evaluate(source,args[3]);
+        ?? throw new ArgumentException("RVC1_ORIGINAL_SOURCE_AND_SWAP_SCHEDULE_ABSENT");
+    var result=Mxm.Core.NativeRvc1JointResidualEconomic.Evaluate(
+        source.Tape,args[3],source.Funding);
     File.WriteAllText(args[1],JsonSerializer.Serialize(result,options));
     return 0;
 }
