@@ -26,7 +26,7 @@ public static class NativePel1Economic
     {
         public string Id="",Symbol="";public int Side;public decimal Units,MarginPerUnit,Risk;
         public decimal Limit,Range,Entry,Stop,TickSize,Slip;
-        public long RequestedAt,OpenedAt,ExpiresAt;
+        public long RequestedAt,OpenedAt,ExpiresAt,CloseRequestedAt;
         public bool CloseRequested;public string LastReason="";
     }
     sealed class MarketDay
@@ -250,7 +250,7 @@ public static class NativePel1Economic
         if(p.CloseRequested)return;
         book.Ledger.Apply(book.Fact(clock,"REQUEST_CLOSE",p,quotes,
             reason:"MODEL_UNTRANSMITTED_"+reason));
-        p.CloseRequested=true;p.LastReason=reason;
+        p.CloseRequested=true;p.CloseRequestedAt=clock;p.LastReason=reason;
     }
     static void Cancel(Book book,Position p,long clock,string reason)
     {
@@ -279,6 +279,14 @@ public static class NativePel1Economic
             {
                 book.Incomplete=true;
                 book.Reject("OVERNIGHT_FINANCING_UNATTESTED");
+                continue;
+            }
+            var marketDay=days.Single(x=>x.Source.Name==p.Symbol);
+            var actualAfterClose=AsOf(marketDay.Ticks,now);
+            if(actualAfterClose is null ||
+                actualAfterClose.At<=p.CloseRequestedAt+100L)
+            {
+                book.Reject("MODEL_CLOSE_NO_FRESH_POSTINTENT_TICK");
                 continue;
             }
             long closedAt=book.At(now+5);
