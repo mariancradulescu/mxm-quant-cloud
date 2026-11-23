@@ -12,3 +12,5 @@ Economic acceptance requires continuous common capital, all broker costs, funded
 Source document (no reexecution): original public aggregate `economic.json` SHA256 `31eeee228e017fb6d9b29d22430ec4a5a1ae2dc66f485aae96cef46c9e05b858` verified against original `receipt.json/OutputSha256`. Source evaluation period 2026-08-10 to 2026-10-26 UTC, 11 complete ISO weeks. Historical financial terms are partly conditional; maximal *continuous* intrabar DD, full broker parity, source-confirmed fills and independent results are NOT_AVAILABLE. Other section-18 diagnostics not proven by this source are NOT_AVAILABLE rather than 0.
 
 Every new method must be preregistered, compared with matched CASH/trivial/random after spread x1/x1.5/x2, and reported under frozen split in `DECISIONS.md`. Nothing here authorizes LIVE/DEMO orders or Cloud.
+
+| 2026-11-23 | P0.5 NEW owner LIVE read-only source | `.github/workflows/p05-live-readonly-source.yml` guarded, separate | NOT_AVAILABLE (no model outcomes) | NOT_AVAILABLE | NOT_AVAILABLE | NOT_AVAILABLE | NOT_AVAILABLE | SOURCE REQUEST PREPARED, not independent confirmation or profitability |

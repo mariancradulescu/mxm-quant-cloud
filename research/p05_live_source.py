@@ -256,6 +256,23 @@ def main():
                     "validAsOfPairs":len(paired),
                     "medianSpreadBps":round(median(paired),6) if paired else None,
                     "spreadAllInCertified":False}
+            sampled=[v["medianSpreadBps"] for v in stats["bidAsk"].values()
+                     if v["medianSpreadBps"] is not None]
+            if sampled:
+                typical_spread=median(sampled)
+                stats["observedFixedClockMedianSpreadBps"]=round(typical_spread,6)
+                for period in stats["timeframes"].values():
+                    amplitude=period["medianIntrabarRangeBpsNotRealizedProfit"]
+                    if amplitude and amplitude>0:
+                        period["sampledSpreadOnlyToMedianRangePercentByMultiplier"]={
+                            str(k):round(100*k*typical_spread/amplitude,4)
+                            for k in (1,1.5,2)}
+                    else:
+                        period["sampledSpreadOnlyToMedianRangePercentByMultiplier"]=None
+            else:
+                stats["observedFixedClockMedianSpreadBps"]=None
+            # This is only spread-vs-observable bar amplitude, never a completed
+            # all-in EUR trade or mathematically excluded horizon.
             capture(f"p05-market-{idx:03d}",source,{"kind":"MARKET","ordinal":idx})
             report["marketCoverage"][row["symbolName"]]=stats
             report["marketProbesCompleted"]=idx
