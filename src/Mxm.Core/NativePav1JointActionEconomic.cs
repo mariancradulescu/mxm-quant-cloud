@@ -527,12 +527,25 @@ public static class NativePav1JointActionEconomic
     static decimal RiskAtStop(Offer offer,decimal units)
     {
         var q=offer.Quote;
-        decimal risk=2m*offer.Atr*units*q.EurDebit+
+        decimal adversePrice=offer.Atr+offer.Estimate.DownsideStepEur/
+            Math.Max(.00000001m,offer.SuggestedUnits*q.EurDebit);
+        decimal risk=adversePrice*units*q.EurDebit+
             (q.Ask-q.Bid+2m*offer.Slippage)*units*q.EurDebit+
             2m*Fee(q,units);
         return Math.Max(0m,risk);
     }
 
+    static decimal ContinuationValue(Estimate estimate,decimal marginEur,
+        string policy,decimal heldFraction=1m)
+    {
+        decimal occupancy=policy=="NO_CAPITAL_CHARGE"?0m:
+            marginEur*CapitalChargePerEvent;
+        decimal downside=policy=="NO_DOWNSIDE"?0m:
+            estimate.DownsideStepEur*DownsideCharge*heldFraction;
+        // Discounted action reward of HOLD versus freeing all margin now.
+        return (heldFraction*estimate.MeanStepEur-occupancy-downside)/
+            (1m-Discount);
+    }
     static Offer? Score(StudyMarket market,BarEvent e,Feature[] features,
         string policy,decimal factor,Dictionary<string,(decimal,long)> fx,Book book,int side)
     {
@@ -540,25 +553,25 @@ public static class NativePav1JointActionEconomic
         if(policy=="LONG"&&side<0||policy=="SHORT"&&side>0||
            policy=="FIRST"&&side<0)return null;
         var q=Quote(market,e.Bar,factor,fx,out var slip);
-        var reference=Quote(market,e.Bar,1m,fx,out var refSlip);
-        if(q is null||reference is null)
-        {book.Reject("COST_FX_CONTRACT_UNKNOWN");return null;}
-        decimal units=market.Source.Terms!.MinimumUnits!.Value,atr=market.Atr(e);
-        if(atr<=0m){book.Reject("ATR_UNKNOWN");return null;}
+        if(q is null){book.Reject("CONTRACT_COST_FX_UNKNOWN");return null;}
+        var terms=market.Source.Terms!;
+        decimal units=terms.MinimumUnits!.Value;
         var model=market.Predict(features,policy,side);
         if(model is null&&policy!="FIRST")
-        {book.Reject("NO_COMPLETED_LIFECYCLE_LABEL");return null;}
-        decimal baseCost=(reference.Ask-reference.Bid+2m*refSlip)*units*reference.EurDebit+
-            2m*Fee(reference,units);
-        decimal policyCost=(q.Ask-q.Bid+2m*slip)*units*q.EurDebit+2m*Fee(q,units);
-        decimal net=(model?.MeanNetEur??0m)-Math.Max(0m,policyCost-baseCost);
-        if(policy!="FIRST"&&net<=0m)
-        {book.Reject("COMPLETE_LIFECYCLE_NET_NONPOSITIVE");return null;}
+        {book.Reject("ACTION_VALUE_CAUSAL_SUPPORT_MISSING");return null;}
+        decimal atr=market.Atr(e);
+        if(atr<=0m){book.Reject("REALIZED_DOWNSIDE_UNKNOWN");return null;}
+        decimal roundtrip=(q.Ask-q.Bid+2m*slip)*units*q.EurDebit+
+            2m*Fee(q,units);
+        decimal actionNet=model is null?-roundtrip:
+            ContinuationValue(model,terms.MarginMinimumEur!.Value,policy)-roundtrip;
+        decimal lower=actionNet-(model?.ErrorEur??0m)*1.64m/(1m-Discount);
+        if(policy!="FIRST"&&lower<=0m)
+        {book.Reject("ADVERSE_ACTION_VALUE_NONPOSITIVE");return null;}
         book.Proposed++;
         return new(market,side,e.Tf,
-            model??new Estimate(0m,0m,0,0,0,"FINANCE_FIRST"),
-            atr,net,net-1.64m*(model?.ErrorNetEur??0m),
-            0m,units,q,slip);
+            model??new Estimate(0m,0m,0m,0,0,"FINANCE_FIRST"),
+            atr,actionNet,lower,0m,units,q,slip);
     }
     static decimal RecentAbsoluteCorrelation(StudyMarket candidate,StudyMarket held,long asOf)
     {
@@ -841,7 +854,7 @@ public static class NativePav1JointActionEconomic
                 var ranked=book.Policy=="FIRST"?
                     offered.OrderBy(x=>x.Market.Source.Symbol,StringComparer.Ordinal)
                         .ThenBy(x=>x.Side):
-                    offered.OrderByDescending(x=>x.MeanNetEur)
+                    offered.OrderByDescending(x=>x.LowerNetEur)
                         .ThenBy(x=>x.Market.Source.Symbol,StringComparer.Ordinal);
                 foreach(var offer in ranked)
                 {
