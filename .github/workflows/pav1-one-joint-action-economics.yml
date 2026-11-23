@@ -2,12 +2,15 @@ name: PAV1 ONE joint sequential action-value EUR300 pending-aware economics
 on:
   pull_request:
     paths:
-      - 'src/Mxm.Core/NativeFpe1CompletePositionEconomic.cs'
+      - 'src/Mxm.Core/NativePav1JointActionEconomic.cs'
+      - 'src/Mxm.Core/NativePendingCapitalGate.cs'
+      - 'tests/Mxm.Checks/NativePendingCapitalGateChecks.cs'
+      - 'tests/Mxm.Checks/Program.cs'
       - 'src/Mxm.Replay/Program.cs'
       - 'research/pav1_one_integrated_execute.py'
       - 'research/test_pav1_no_secret_contract.py'
       - 'research/PAV1_SINGLE_PENDING_AWARE_ACTION_VALUE_PROTOCOL_20261123.md'
-      - '.github/workflows/pav1-complete-position-net-economics.yml'
+      - '.github/workflows/pav1-one-joint-action-economics.yml'
   push:
     branches: [main]
     paths:
@@ -39,7 +42,7 @@ jobs:
         run: python -m py_compile research/v32_unified_source_adapter.py research/pav1_one_integrated_execute.py
       - run: python -m unittest research.test_v32_unified_source -v
       - run: dotnet run -c Release --project tests/Mxm.Checks
-      - name: PAV1 synthetic closed-position accounting and no-order test
+      - name: PAV1 synthetic action-value accounting and no-order test
         run: python -m unittest research.test_pav1_no_secret_contract -v
       - name: Exact owner/main first-addition-only signal without secrets
         id: owner
