@@ -28,7 +28,7 @@ def get(c,n):
     return getattr(c,n) if c.HasField(n) else None
 
 def term(symbol,row,quote,margin,spread,stamp,assets=None):
-    c=row.get("contract",row)
+    c=row.get("contract",row) if isinstance(row,dict) else row
     def units(name):
         x=get(c,name)
         return str(x/100) if x is not None else None
