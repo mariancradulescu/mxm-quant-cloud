@@ -303,6 +303,7 @@ public static class NativeV33PredictiveEconomic
         public readonly Dictionary<string,int> Context=new(StringComparer.Ordinal);
         public readonly Dictionary<string,int> RiskGroup=new(StringComparer.Ordinal);
         public readonly Dictionary<string,int> SideByPosition=new(StringComparer.Ordinal);
+        public readonly Dictionary<string,(string BaseTimeframe,string Regime)> SourceByPosition=new(StringComparer.Ordinal);
         public readonly List<(long at,decimal? equity,decimal? margin,decimal dd)> Equity=new();
         public long Seq;
         public long LastEventAt=-1;
@@ -375,8 +376,22 @@ public static class NativeV33PredictiveEconomic
                 RightCensored=Held.Count+Pending.Count+RightCensored,
                 MaximumConcurrentHeld=Equity.Count>0?MaxConcurrentHeld:0,
                 UncertainFloatingMarks=MissingFloatingMarks,
-                Counters,Context,BySymbol=completed.GroupBy(x=>x.Symbol).OrderBy(g=>g.Key)
-                    .Select(g=>new{Symbol=g.Key,Trips=g.Count(),NET_EUR=g.Sum(x=>x.NetEur)}).ToArray(),
+                Counters,Context,
+                BySymbol=fragments.GroupBy(x=>x.Symbol).OrderBy(g=>g.Key)
+                    .Select(g=>new{Symbol=g.Key,Trips=g.Count(x=>x.CompletesRoundTrip),
+                        NET_EUR=g.Sum(x=>x.NetEur),GrossEUR=g.Sum(x=>x.GrossEur)}).ToArray(),
+                ByBaseTimeframe=fragments.GroupBy(x=>SourceByPosition.TryGetValue(x.PositionId,out var m)?m.BaseTimeframe:"UNKNOWN")
+                    .OrderBy(g=>g.Key).Select(g=>new{Timeframe=g.Key,Trips=g.Count(x=>x.CompletesRoundTrip),
+                        NET_EUR=g.Sum(x=>x.NetEur),GrossEUR=g.Sum(x=>x.GrossEur)}).ToArray(),
+                ByAdmissionRegime=fragments.GroupBy(x=>SourceByPosition.TryGetValue(x.PositionId,out var m)?m.Regime:"UNKNOWN")
+                    .OrderBy(g=>g.Key).Select(g=>new{Regime=g.Key,Trips=g.Count(x=>x.CompletesRoundTrip),
+                        NET_EUR=g.Sum(x=>x.NetEur),GrossEUR=g.Sum(x=>x.GrossEur)}).ToArray(),
+                ByDevelopmentPhase=fragments.GroupBy(x=>
+                    x.ClosedAt<1777852800000L?"DEVELOPMENT_26W":
+                    x.ClosedAt<1785715200000L?"SELECTION_13W":
+                    x.ClosedAt<1793577600000L?"EXPOSED_AUDIT_13W":"EXPOSED_EXTENSION")
+                    .OrderBy(g=>g.Key).Select(g=>new{Phase=g.Key,
+                        Trips=g.Count(x=>x.CompletesRoundTrip),NET_EUR=g.Sum(x=>x.NetEur)}).ToArray(),
                 Weekly=byWeek,AllModeledLedgerFragments=trades,
                 CashEventHash=summary.EventChainHash,
                 RemainingHeld=Held.Keys.OrderBy(x=>x).ToArray(),
@@ -749,6 +764,7 @@ public static class NativeV33PredictiveEconomic
                         Side=offer.Side,Units=units,Slippage=offer.Slippage,
                         Atr=offer.Atr,Width=width,RequestedAt=now+700+book.Pending.Count};
                     book.Accepted++;book.Count("ALLOCATE_REQUEST");
+                    book.SourceByPosition[id]=(offer.Tf,offer.Estimate.Regime);
                     string ctx=offer.Estimate.Regime;
                     book.Context[ctx]=book.Context.GetValueOrDefault(ctx)+1;
                 }
