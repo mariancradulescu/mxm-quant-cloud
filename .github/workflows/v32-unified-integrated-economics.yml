@@ -6,6 +6,7 @@ on:
       - 'src/Mxm.Replay/Program.cs'
       - 'research/v32_unified_source_adapter.py'
       - 'research/v32_unified_execute.py'
+      - 'research/test_v32_unified_source.py'
       - 'research/V32_UNIFIED_ECONOMIC_PROTOCOL_20261123.md'
       - '.github/workflows/v32-unified-integrated-economics.yml'
   push:
@@ -13,6 +14,7 @@ on:
     paths:
       - 'ops/v32-integrated-authentic-once.txt'
       - 'ops/v32-integrated-recovery-once.txt'
+      - 'ops/v32-integrated-contract-fix-once.txt'
 permissions:
   contents: read
   actions: read
@@ -38,6 +40,7 @@ jobs:
         run: dotnet build src/Mxm.Replay -c Release
       - name: Validate original source adapter without broker or custody
         run: python -m py_compile research/v32_unified_source_adapter.py research/v32_unified_execute.py
+      - run: python -m unittest research.test_v32_unified_source -v
       - name: Exact owner/main first-addition-only signal without secrets
         id: owner
         shell: bash
@@ -49,6 +52,8 @@ jobs:
               marker=ops/v32-integrated-authentic-once.txt ;;
             OWNER_V32_INTEGRATED_RECOVERY_ONCE_20261123)
               marker=ops/v32-integrated-recovery-once.txt ;;
+            OWNER_V32_INTEGRATED_CONTRACT_FIX_ONCE_20261123)
+              marker=ops/v32-integrated-contract-fix-once.txt ;;
             *) exit 0 ;;
           esac
           if [[ "$GITHUB_EVENT_NAME" == "push" &&
