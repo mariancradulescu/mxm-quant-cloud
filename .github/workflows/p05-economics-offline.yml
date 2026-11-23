@@ -1,0 +1,35 @@
+name: P0.5 breadth and cost diagnostics - offline source-only
+on:
+  push:
+    paths:
+      - 'research/p05_economic_screen.py'
+      - 'research/test_p05_economic_screen.py'
+      - '.github/workflows/p05-economics-offline.yml'
+  pull_request:
+    paths:
+      - 'research/p05_economic_screen.py'
+      - 'research/test_p05_economic_screen.py'
+      - '.github/workflows/p05-economics-offline.yml'
+permissions:
+  contents: read
+jobs:
+  proof-of-coverage:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Verify original-source breadth, arithmetic and non-claims
+        run: python -m unittest research.test_p05_economic_screen -v
+      - name: Recompute source-based preliminary economics with NO broker calls
+        run: python -m research.p05_economic_screen
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: p05-offline-breadth-economic-source-receipt
+          path: p05-public/
+          retention-days: 30
+          if-no-files-found: error
