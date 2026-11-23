@@ -2,6 +2,7 @@ using Mxm.Core;
 var passed = 0;
 NativePendingCapitalGateChecks.Run(Check);
 NativePostFillCapitalGuardChecks.Run(Check);
+NativePel1SafetyChecks.Run(Check);
 MonetaryRecoveryChecks.Run(Check);
 NativePerformanceScorecardChecks.Run(Check);
 NativeSystemicOpportunityCensusChecks.Run(Check);
