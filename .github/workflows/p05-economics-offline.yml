@@ -4,11 +4,17 @@ on:
     paths:
       - 'research/p05_economic_screen.py'
       - 'research/test_p05_economic_screen.py'
+      - 'research/test_p05_readonly_wire.py'
+      - 'research/ctrader_transport.py'
+      - 'research/guard.py'
       - '.github/workflows/p05-economics-offline.yml'
   pull_request:
     paths:
       - 'research/p05_economic_screen.py'
       - 'research/test_p05_economic_screen.py'
+      - 'research/test_p05_readonly_wire.py'
+      - 'research/ctrader_transport.py'
+      - 'research/guard.py'
       - '.github/workflows/p05-economics-offline.yml'
 permissions:
   contents: read
@@ -24,7 +30,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Verify original-source breadth, arithmetic and non-claims
-        run: python -m unittest research.test_p05_economic_screen -v
+        run: python -m unittest research.test_p05_economic_screen research.test_p05_readonly_wire -v
       - name: Recompute source-based preliminary economics with NO broker calls
         run: python -m research.p05_economic_screen
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
