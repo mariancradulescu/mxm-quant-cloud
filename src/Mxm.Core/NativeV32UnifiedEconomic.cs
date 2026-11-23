@@ -75,8 +75,8 @@ public static class NativeV32UnifiedEconomic
     sealed record Signal(Market Market,int Side,decimal Atr,decimal Strength,string Regime,string Context);
     sealed class Position
     {
-        public Signal Signal;
-        public string Id;
+        public Signal Signal=null!;
+        public string Id=string.Empty;
         public decimal Units;
         public decimal Entry;
         public decimal Stop;
@@ -89,9 +89,9 @@ public static class NativeV32UnifiedEconomic
     }
     sealed class Intent
     {
-        public string Kind;
-        public Signal Signal;
-        public string Id;
+        public string Kind=string.Empty;
+        public Signal Signal=null!;
+        public string Id=string.Empty;
         public decimal Units;
         public decimal Slippage;
         public long At;
@@ -106,7 +106,7 @@ public static class NativeV32UnifiedEconomic
         public Intent? Pending;
         public long Seq;
         public int Proposed,Admitted,RejectCost,RejectRisk,RejectMargin,UnknownMarks,
-            Censored,HoldActions,CloseActions,WaitActions,ReduceActions;
+            Censored,HoldActions,CloseActions,WaitActions,ReduceActions=0;
         public readonly Dictionary<string,int> Regimes=new(StringComparer.Ordinal);
         public readonly Dictionary<string,int> Contexts=new(StringComparer.Ordinal);
         public readonly Dictionary<string,int> Actions=new(StringComparer.Ordinal);
