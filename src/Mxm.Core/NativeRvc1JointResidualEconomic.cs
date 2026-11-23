@@ -367,8 +367,9 @@ public static class NativeRvc1JointResidualEconomic
         if(firstCharge<=leg.OpenedAt)firstCharge+=DAY;
         if(firstCharge>closeTime)
         {
-            amount=-leg.AccruedFundingEur;
-            return true;
+            if(leg.AccruedFundingEur!=0m)
+                throw new InvalidOperationException("RVC1_NO_CHARGE_BUT_FINANCING_ALREADY_ACCRUED");
+            amount=0m;return true;
         }
         if(!originalFunds.TryGetValue(market.Symbol,out var authentic) ||
            !authentic.OriginalBrokerAuthenticated ||
