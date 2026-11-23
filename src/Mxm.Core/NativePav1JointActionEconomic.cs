@@ -323,6 +323,8 @@ public static class NativePav1JointActionEconomic
         public int RightCensored=0;
         public decimal SumMarginPeak,SumRiskPeak;
         public bool MissingFloatingMarks;
+        public readonly List<object> CapitalEventWitnesses=new();
+        public decimal PeakReservedHeldPlusPendingMarginEur;
         public Book(string policy,decimal mult){Policy=policy;Multiplier=mult;}
         public string Id(string action)=>"PAV1/"+Policy+"/"+Multiplier.ToString(CultureInfo.InvariantCulture)+"/"+action+"/"+(++Seq);
         public void Count(string key)=>Counters[key]=Counters.GetValueOrDefault(key)+1;
@@ -341,6 +343,28 @@ public static class NativePav1JointActionEconomic
             return new(Id(kind),eventAt,kind,pos,q?.Symbol??sym,side,units,price,
                 fee,margin,slip,available,calibrated,latency,reason,Evidence,
                 q is null?Array.Empty<LedgerQuote>():new[]{q},financing);
+        }
+        public void CaptureCapital(long at,string action,string id,
+            NativePendingCapitalGate.Admission? admission=null)
+        {
+            var equity=Ledger.Summary().LiquidationEquityEur;
+            decimal held=Held.Values.Sum(x=>x.Units*
+                x.Market.Source.Terms!.MarginMinimumEur!.Value/
+                x.Market.Source.Terms.MinimumUnits!.Value);
+            decimal pending=Pending.Values.Where(x=>x.Kind=="OPEN")
+                .Sum(x=>x.Units*x.MarginPerUnit);
+            PeakReservedHeldPlusPendingMarginEur=Math.Max(
+                PeakReservedHeldPlusPendingMarginEur,held+pending);
+            CapitalEventWitnesses.Add(new {
+                At=at,Action=action,PositionId=id,
+                ObservedLiquidationEquityEur=equity,
+                HeldMarginEur=held,PendingOpenMarginEur=pending,
+                ReservedTotalMarginEur=held+pending,
+                LimitMarginEur=equity is decimal q? q*.70m:(decimal?)null,
+                HeldStopRiskEur=Held.Values.Sum(x=>x.ReservedRisk),
+                PendingOpenStopRiskEur=Pending.Values.Where(x=>x.Kind=="OPEN")
+                    .Sum(x=>x.ReservedRisk),Admission=admission
+            });
         }
         public void Observe(long now)
         {
@@ -420,6 +444,8 @@ public static class NativePav1JointActionEconomic
                 EndCashEur=summary.CashEur,EndMarkedEquityEur=summary.LiquidationEquityEur,
                 EndMarginEur=summary.UsedMarginEur,
                 PeakSampledMarginEur=SumMarginPeak,PeakReservedStopRiskEur=SumRiskPeak,
+                PeakHeldPlusPendingReservationEur=PeakReservedHeldPlusPendingMarginEur,
+                CapitalEvents=CapitalEventWitnesses,
                 SampledDDPercent=summary.MaximumSampledDrawdown*100m,
                 IntrabarDDCertified=false,HistoricalNETCertified=false,
                 Evaluated,Proposed,Accepted,Financed,Completed=expected,Reductions,
