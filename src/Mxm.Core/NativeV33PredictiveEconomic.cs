@@ -655,6 +655,14 @@ public static class NativeV33PredictiveEconomic
                 }
                 if(book.Ledger.Summary().MaximumSampledDrawdown>=.245m)
                 {book.Count("RISK_PAUSE");continue;}
+                if(book.Held.Keys.Any(sym=>!observed.ContainsKey(sym)||!quotes.ContainsKey(sym)))
+                {
+                    // No same-clock executable-side model witness for at least
+                    // one held risk. Never use stale equity to underwrite a
+                    // fresh position from a different market.
+                    book.Reject("PORTFOLIO_HOLDING_CLOCK_UNKNOWN");
+                    continue;
+                }
                 var offered=new List<Offer>();
                 foreach(var evt in active)
                 {
