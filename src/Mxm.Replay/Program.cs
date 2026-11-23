@@ -1,6 +1,20 @@
 using System.Text.Json;
 using System.Security.Cryptography;
 
+if(args.Length==4 && args[2]=="--fpe1-complete-position-economic")
+{
+    var options=new JsonSerializerOptions {
+        NumberHandling=System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString,
+        WriteIndented=true
+    };
+    var source=JsonSerializer.Deserialize<Mxm.Core.V32Tape>(
+        File.ReadAllText(args[0]),options)
+        ?? throw new ArgumentException("FPE1_AUTHENTIC_SOURCE_MISSING");
+    var result=Mxm.Core.NativeFpe1CompletePositionEconomic.Evaluate(source,args[3]);
+    File.WriteAllText(args[1],JsonSerializer.Serialize(result,options));
+    return 0;
+}
+
 if(args.Length==4 && args[2]=="--v33-one-predictive-integrated-economic")
 {
     var v33Json=new JsonSerializerOptions {
