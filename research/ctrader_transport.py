@@ -63,18 +63,22 @@ def extract_payload(envelope: Any):
 
 
 def encode_envelope(message: Any, client_msg_id: str | None = None) -> bytes:
+    # The last outbound serialization boundary also fails CLOSED. A caller may
+    # possess an OAuth token with trading scope, but no order-changing request
+    # can be serialized here, including via a prebuilt protobuf envelope.
     if isinstance(message, ProtoMessage):
-        envelope = message
-    else:
-        payload_type = getattr(message, "payloadType", None)
-        if payload_type is None:
-            raise TransportError(f"message {type(message).__name__} has no payloadType")
-        envelope = ProtoMessage(
-            payloadType=int(payload_type),
-            payload=message.SerializeToString(),
-        )
-        if client_msg_id:
-            envelope.clientMsgId = client_msg_id
+        raise TransportError("RAW_ENVELOPE_SEND_FORBIDDEN")
+    if type(message) is not ProtoHeartbeatEvent:
+        require_read_only_request(message)
+    payload_type = getattr(message, "payloadType", None)
+    if payload_type is None:
+        raise TransportError("INVALID_OUTBOUND_PROTO")
+    envelope = ProtoMessage(
+        payloadType=int(payload_type),
+        payload=message.SerializeToString(),
+    )
+    if client_msg_id:
+        envelope.clientMsgId = client_msg_id
     raw = envelope.SerializeToString()
     if len(raw) > MAX_FRAME_BYTES:
         raise TransportError(f"protobuf frame too large: {len(raw)} bytes")
@@ -240,6 +244,20 @@ class StdlibCTraderTransport:
         return self._sock
 
     def _send_bytes(self, payload: bytes) -> None:
+        # Enforce the same whitelist at the ACTUAL socket boundary. This stops
+        # direct raw-frame injections even if encode_envelope() is bypassed.
+        if not isinstance(payload, bytes) or len(payload) < 5:
+            raise TransportError("OUTBOUND_FRAME_INVALID")
+        length = struct.unpack("!I", payload[:4])[0]
+        if length != len(payload) - 4 or length > MAX_FRAME_BYTES:
+            raise TransportError("OUTBOUND_FRAME_INVALID")
+        try:
+            envelope = decode_envelope(payload[4:])
+            message = extract_payload(envelope)
+        except Exception:
+            raise TransportError("OUTBOUND_FRAME_INVALID") from None
+        if type(message) is not ProtoHeartbeatEvent:
+            require_read_only_request(message)
         sock = self._require_connected()
         try:
             sock.sendall(payload)
