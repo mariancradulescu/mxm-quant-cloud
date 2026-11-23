@@ -520,8 +520,9 @@ public static class NativeRvc1JointResidualEconomic
             select new Book(policy,factor)).ToArray();
         foreach(var t in dates)
         {
-            bool good=e5.TryGetValue(t,out var a)&&g5.TryGetValue(t,out var b)&&
-                a is not null&&b is not null&&Valid(a)&&Valid(b);
+            bool hasE=e5.TryGetValue(t,out var a);
+            bool hasG=g5.TryGetValue(t,out var b);
+            bool good=hasE&&hasG&&a is not null&&b is not null&&Valid(a)&&Valid(b);
             Reading? reading=good&&t%M15==0 ? Read(he,hg,me,mg,t):null;
             foreach(var book in books)
             {
