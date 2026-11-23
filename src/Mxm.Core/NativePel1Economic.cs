@@ -206,11 +206,22 @@ public static class NativePel1Economic
             decimal extra=(multiplier-1m)*(quote.Ask-quote.Bid)/2m;
             decimal bid=quote.Bid-extra,ask=quote.Ask+extra;
             if(bid<=0m||eur.Bid<=0||eur.Ask<eur.Bid)return null;
-            var q=NativeBrokerContractCosts.Quote(market.Contract,
+            var attribution=NativeBrokerContractCosts.Quote(market.Contract,
                 new NativeMarketCostContext(at,bid,ask,1m/eur.Ask,
                     1m/eur.Bid,1m/eur.Bid,null,
                     market.MinMargin,market.Contract.MinimumUnits,0m));
-            return q.Quote with {
+            var q=attribution.Quote;
+            decimal fxCenter=(q.EurCredit+q.EurDebit)/2m;
+            decimal fxHalfWedge=multiplier*(q.EurDebit-q.EurCredit)/2m;
+            if(fxCenter-fxHalfWedge<=0m)return null;
+            // Stress ALL independent cost contributions: observed spread,
+            // conservative entry/exit slippage, fee schedule and FX wedge.
+            // Funding is never silently assigned zero across rollovers.
+            return q with {
+                EurCredit=fxCenter-fxHalfWedge,
+                EurDebit=fxCenter+fxHalfWedge,
+                ExitFeePerUnit=q.ExitFeePerUnit*multiplier,
+                ExitFeeFloor=q.ExitFeeFloor*multiplier,
                 LiquidationSlippagePerSide=Math.Max(market.TickSize,
                     (ask-bid)*.25m*multiplier)
             };
@@ -350,6 +361,7 @@ public static class NativePel1Economic
             decimal requested=p.Limit;
             decimal currentPrice=p.Side>0?q.Ask:q.Bid;
             decimal slack=p.Side>0?requested-q.Ask:q.Bid-requested;
+            if(book.Policy=="FILL_TIME_TAKER"&&slack<0m)continue;
             if(book.Policy=="TAKER"||book.Policy=="FILL_TIME_TAKER")
             {
                 // This fully financed comparison crosses at same real mark.
@@ -394,7 +406,7 @@ public static class NativePel1Economic
             if(prev is null||prev[1]>now)continue;
             var priorBars=day.M5.Where(x=>x[1]<=now).TakeLast(20).ToArray();
             if(priorBars.Length<20||priorBars.Zip(priorBars.Skip(1))
-                .Any(x=>x.First[1]>x.Second[0])){book.Reject("M5_WARMUP_GAP");continue;}
+                .Any(x=>x.First[1]!=x.Second[0])){book.Reject("M5_WARMUP_GAP");continue;}
             decimal range=Math.Max(m.TickSize,(prev[3]-prev[4])/100000m);
             int side=LastClosedSide(prev);
             if(side==0)continue;
