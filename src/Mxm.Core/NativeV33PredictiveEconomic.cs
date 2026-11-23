@@ -328,7 +328,7 @@ public static class NativeV33PredictiveEconomic
             SumMarginPeak=Math.Max(SumMarginPeak,s.UsedMarginEur??0m);
             SumRiskPeak=Math.Max(SumRiskPeak,Held.Values.Sum(x=>x.ReservedRisk));
         }
-        public object Receipt(long start,long end)
+        public object Receipt(Dictionary<string,int> sourceWeeks)
         {
             var summary=Ledger.Summary();
             var fragments=Ledger.ClosedFragments();
@@ -336,9 +336,16 @@ public static class NativeV33PredictiveEconomic
             var expected=completed.Length;
             if(expected!=summary.CompleteRoundTrips||fragments.Sum(x=>x.NetEur)!=summary.ClosedNetEur)
                 throw new InvalidOperationException("V33_EXISTING_LEDGER_CLOSED_CASH_IDENTITY");
-            var byWeek=completed.GroupBy(x=>Week(x.ClosedAt)).OrderBy(g=>g.Key)
-                .Select(g=>new {Week=g.Key,Completed=g.Count(),NET_EUR=g.Sum(x=>x.NetEur),
-                    HARD21Mathematical=g.Count()>=21,EligibilityOfficial=false}).ToArray();
+            var completedByWeek=completed.GroupBy(x=>Week(x.ClosedAt))
+                .ToDictionary(g=>g.Key,g=>g.ToArray(),StringComparer.Ordinal);
+            var byWeek=sourceWeeks.OrderBy(g=>g.Key,StringComparer.Ordinal)
+                .Select(g=>{
+                    var items=completedByWeek.TryGetValue(g.Key,out var observed)
+                        ? observed:Array.Empty<LedgerClosedFragment>();
+                    return new{Week=g.Key,GenuineDecisionEvents=g.Value,
+                        Completed=items.Length,NET_EUR=items.Sum(x=>x.NetEur),
+                        HARD21Mathematical=items.Length>=21,EligibilityOfficial=false};
+                }).ToArray();
             var trades=fragments.Select(x=>new{
                 x.PositionId,x.Symbol,x.OpenedAt,x.ClosedAt,
                 Week=Week(x.ClosedAt),Side=SideByPosition.GetValueOrDefault(x.PositionId),
@@ -521,6 +528,8 @@ public static class NativeV33PredictiveEconomic
         var events=markets.SelectMany(m=>m.Events.Values)
             .OrderBy(e=>e.At).ThenBy(e=>e.Market.Source.Symbol,StringComparer.Ordinal).ToArray();
         var fx=new Dictionary<string,(decimal,long)>(StringComparer.Ordinal);
+        var sourceWeeks=events.GroupBy(e=>Week(e.At))
+            .ToDictionary(g=>g.Key,g=>g.Count(),StringComparer.Ordinal);
         var books=Multipliers.SelectMany(m=>Policies.Select(p=>new Book(p,m))).ToArray();
         // At every decision clock train ONLY fully matured earlier outcomes.
         foreach(var clock in events.GroupBy(e=>e.At))
@@ -747,7 +756,7 @@ public static class NativeV33PredictiveEconomic
             PreregisteredNewProtocolSha256=frozenProtocolSha256,
             SourceCoverage=markets.OrderBy(x=>x.Source.Symbol,StringComparer.Ordinal).Select(x=>x.Coverage()).ToArray(),
             GenuineMarketClocks=events.Length,
-            Results=books.Select(b=>b.Receipt(events.First().At,events.Last().At)).ToArray(),
+            Results=books.Select(b=>b.Receipt(sourceWeeks)).ToArray(),
             CashBenchmarkEur=0,AllResultsDevelopmentExposed=true,
             HistoricalTariffContinuity=false,HistoricalExecutablePricesCertified=false,
             IntrabarDDCertified=false,HARD21Certified=false,IndependentConfirmation=false,
