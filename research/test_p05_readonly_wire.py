@@ -58,8 +58,12 @@ class ReadOnlyWireChecks(unittest.TestCase):
                     t.request(order)
                 with self.assertRaises(CaptureContractError):
                     t.request_batch([order])
+                # Original serializer remains immutable for legacy parity.
+                # The NEW transport verifies even a prebuilt partial raw frame.
+                raw = ProtoMessage(payloadType=order.payloadType,
+                                   payload=order.SerializePartialToString())
                 with self.assertRaises(CaptureContractError):
-                    encode_envelope(order)
+                    check_outbound_frame(encode_envelope(raw))
         self.assertGreaterEqual(seen, 4, "expected native trading request message definitions")
 
     def test_raw_envelope_cannot_bypass_encoding(self):
