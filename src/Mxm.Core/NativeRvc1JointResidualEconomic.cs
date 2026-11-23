@@ -142,7 +142,9 @@ public static class NativeRvc1JointResidualEconomic
     {
         if(!mE.TryGetValue(decisionTime-M15,out var e) ||
            !mG.TryGetValue(decisionTime-M15,out var g) ||
-           !Valid(e)||!Valid(g))return null;
+           !mE.TryGetValue(decisionTime-2*M15,out var prevE) ||
+           !mG.TryGetValue(decisionTime-2*M15,out var prevG) ||
+           !Valid(e)||!Valid(g)||!Valid(prevE)||!Valid(prevG))return null;
         // Do not mix the present decision M15 close into its H1 reference.
         int ie=LastClosed(hE,decisionTime-1,H1),ig=LastClosed(hG,decisionTime-1,H1);
         if(ie<47||ig<47)return null;
@@ -304,6 +306,8 @@ public static class NativeRvc1JointResidualEconomic
     {
         if(book.Pair is null||book.Pending.Count==0||t<=book.Pair.RequestedAt+1000)
             return;
+        if(t>book.Pair.RequestedAt+2*M5)
+        {ExpireOpen(book,quotes,t,"PENDING_EXPIRED_ON_GENUINE_NEW_M5_CLOCK");return;}
         if(quotes.Length<2){book.TemporarySuspensions++;return;}
         var q=quotes.ToDictionary(x=>x.Symbol,x=>x,StringComparer.Ordinal);
         var current=book.Ledger.Summary().LiquidationEquityEur;
@@ -451,6 +455,12 @@ public static class NativeRvc1JointResidualEconomic
         {book.Irreversible=true;book.HardStops++;}
         if(summary.LiquidationEquityEur is null)
         {book.UnknownMarks++;book.Incomplete=true;book.TemporarySuspensions++;return;}
+        // An original pending request is never allowed to fill after an
+        // unobserved long gap. The model only expires on a genuinely later
+        // source clock, preserving the original censored funding history.
+        if(book.Pending.Count>0 && book.Pair is not null &&
+            t>book.Pair.RequestedAt+2*M5)
+            ExpireOpen(book,quotes,t+20,"PENDING_POSTGAP_EXPIRED");
         // Prior CLOSE request must reach a LATER authentic M5 open.
         if(book.Held.Values.Any(x=>x.RequestedClose))
         {
