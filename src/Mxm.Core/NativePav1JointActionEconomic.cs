@@ -785,7 +785,9 @@ public static class NativePav1JointActionEconomic
                             book.Ledger.Apply(book.Fact(now+200,"OPEN_FILL",q,intent.Id,intent.Side,
                                 intent.Units,entry,Fee(q,intent.Units),perMargin,intent.Slippage));
                             var p=new Position{Id=intent.Id,Market=intent.Market,Side=intent.Side,
-                                Units=intent.Units,Entry=entry,Stop=entry-intent.Side*2m*intent.Atr,
+                                Units=intent.Units,Entry=entry,
+                                Stop=entry-intent.Side*intent.ReservedRisk/
+                                    Math.Max(.00000001m,intent.Units*q.EurDebit),
                                 Target=entry,Best=entry,Atr=intent.Atr,
                                 Slippage=intent.Slippage,OpenAt=now,LastFinancingAt=now,
                                 ReservedRisk=currentPending.Single(x=>x.PositionId==intent.Id)
@@ -841,26 +843,33 @@ public static class NativePav1JointActionEconomic
                         position.LastFinancingAt+=days*Day;
                     }
 
-                    var history=position.Market.Closed(evt.Tf,now,3);
-                    if(history.Length<3)continue;
+                    var history=position.Market.Closed(evt.Tf,now,2);
+                    if(history.Length<2)continue;
                     decimal last=history[^1].Close;
-                    position.Best=position.Side>0?Math.Max(position.Best,last):
-                        Math.Min(position.Best,last);
-                    decimal trail=position.Best-position.Side*2m*position.Atr;
-                    position.Stop=position.Side>0?Math.Max(position.Stop,trail):
-                        Math.Min(position.Stop,trail);
-                    bool stop=position.Side*(last-position.Stop)<=0m;
-                    position.Contrary=position.Side*(history[^1].Close-history[^2].Close)<0m?
-                        position.Contrary+1:0;
-                    bool invalid=position.Contrary>=2;
+                    bool riskLossObserved=position.Side*(last-position.Stop)<=0m;
                     var feature=features.GetValueOrDefault(sym);
                     var continuation=feature is null?null:
                         position.Market.Predict(feature,book.Policy,position.Side);
-                    bool equityProtect=book.Ledger.Summary().MaximumSampledDrawdown>=.245m;
+                    var summary=book.Ledger.Summary();
+                    decimal used=book.Held.Values.Sum(x=>x.Units*
+                        x.Market.Source.Terms!.MarginMinimumEur!.Value/
+                        x.Market.Source.Terms.MinimumUnits!.Value)+
+                        book.Pending.Values.Where(x=>x.Kind=="OPEN")
+                            .Sum(x=>x.Units*x.MarginPerUnit);
+                    bool equityProtect=summary.MaximumSampledDrawdown>=.245m;
+                    bool marginPressure=summary.LiquidationEquityEur is decimal eq &&
+                        used>=.70m*eq;
+                    decimal economicValue=continuation is null?decimal.MinValue:
+                        ContinuationValue(continuation,
+                            position.Units*q.MarginPerUnit,
+                            book.Policy,position.Units/
+                                position.Market.Source.Terms!.MinimumUnits!.Value);
+                    position.LastActionValue=economicValue;
                     string? reason=equityProtect?"PORTFOLIO_DD_GUARD":
-                        stop?"COMPLETED_BAR_TRAILING_RISK":
-                        invalid?"TWO_COMPLETED_CONTRARY_BARS":null;
-
+                        marginPressure?"HELD_PLUS_PENDING_MARGIN_PRESSURE":
+                        riskLossObserved?"OBSERVED_ECONOMIC_RISK_BUDGET_BREACH":
+                        continuation is null?"ACTION_VALUE_SUPPORT_EXPIRED":
+                        economicValue<=0m?"CLOSE_DOMINATES_HOLD":null;
                     if(reason is not null)
                     {
                         CloseRequest(book,position,q,now,position.Units,reason,Width(evt.Tf));
@@ -870,12 +879,17 @@ public static class NativePav1JointActionEconomic
                     // risk headroom uncertainty while expected continuation weakens.
                     decimal min=position.Market.Source.Terms?.MinimumUnits??decimal.MaxValue;
                     decimal step=position.Market.Source.Terms?.StepUnits??decimal.MaxValue;
-                    decimal cut=step>0m?Math.Floor(position.Units/2m/step)*step:0m;
-                    bool legal=cut>=min&&position.Units-cut>=min;
+                    decimal remain=step>0m && position.Units/2m>=min?
+                        min+Math.Floor((position.Units/2m-min)/step)*step:position.Units;
+                    decimal cut=position.Units-remain;
+                    bool legal=cut>=min&&remain>=min&&step>0m&&
+                        (cut-min)%step==0m&&(remain-min)%step==0m;
+                    decimal meanStep=continuation?.MeanStepEur??0m;
+                    decimal uncertainty=continuation?.ErrorEur??decimal.MaxValue;
                     if(legal&&continuation is not null&&
-                       continuation.MeanNetEur<continuation.ErrorNetEur)
+                       economicValue>0m&&meanStep<=uncertainty)
                     {
-                        CloseRequest(book,position,q,now,cut,"WEAK_CONTINUATION_REDUCE",Width(evt.Tf));
+                        CloseRequest(book,position,q,now,cut,"REDUCE_DOMINATES_FULL_HOLD_CAPITAL_RELEASE",Width(evt.Tf));
                         continue;
                     }
                     book.Count("HOLD");
