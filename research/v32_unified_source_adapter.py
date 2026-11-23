@@ -105,11 +105,13 @@ def execute(destination):
                 else:duplicated[tf]+=1
             else:bars[symbol][tf][at]=data
 
+    print("V32_STAGE_ANNUAL_START",flush=True)
     for source in json.loads(Path("research/hrc1_protocol.json").read_text())["source"]:
         b,raw,audit=old_recover(Path(source["folder"]),source["run"],source["hash"],
                                 source["schema"],source["protocol"])
         need(audit["rawAccountAndBarsReconstructed"],"ANNUAL_ORIGINAL_PROOF")
         proof.append(dict(sourceRun=str(source["run"]),originalRows=sum(map(len,b["bars"].values()))))
+        print("V32_STAGE_ANNUAL_ORIGINAL_VERIFIED_"+str(source["run"]),flush=True)
         samples=spread_samples(b)
         for sym,items in b["bars"].items():
             add(sym,"M5",items)
@@ -117,9 +119,11 @@ def execute(destination):
             contracts[sym]=term(sym,meta,meta["quoteAsset"],
                 meta["currentMinMarginEur"],samples.get(sym),1793577600000)
 
+    print("V32_STAGE_ANNUAL_DONE",flush=True)
     for run in (XMH_RUN,HXC_RUN):
         m15,bundle,readback,sha=_one_original(run,key)
         need(readback["rawRequestsRebuilt"]>0,"M15_ORIGINAL_PROOF")
+        print("V32_STAGE_HISTORIC_VERIFIED_"+run,flush=True)
         proof.append(dict(sourceRun=run,ciphertextSha256=sha))
         for sym,items in m15.items():add(sym,"M15",items)
         if run==HXC_RUN:
@@ -127,11 +131,13 @@ def execute(destination):
                 sym,tf=tag.split("/")
                 if tf in ("M1","H1"):add(sym,tf,items)
 
+    print("V32_STAGE_HISTORIC_DONE",flush=True)
     p=json.loads(Path("p05-public/receipt.json").read_text())
     need(str(p["runId"])==P05_RUN and len(p["sources"])==76,"P05_RUN_BINDING")
     sealed=Path("p05-sealed")
     roster=_load_sealed(next(e for e in p["sources"] if e["kind"]=="ROSTER"),sealed,key)
     names=_roster(roster);assets={};lights={}
+    print("V32_STAGE_P05_ROSTER_VERIFIED",flush=True)
     for entry in roster:
         if entry.get("resType")=="ProtoOAAssetListRes":
             res=m.ProtoOAAssetListRes()
@@ -162,6 +168,7 @@ def execute(destination):
                     need(c==full_contracts[sid],"P05_CONTRACT_CONFLICT")
                 full_contracts[sid]=c
     need(len(full_contracts)>=48,"P05_FULL_CONTRACT_RECOVERY_INCOMPLETE")
+    print("V32_STAGE_P05_CONTRACTS_RECOVERED",flush=True)
     for shard in p["sources"]:
         packet=_load_sealed(shard,sealed,key)
         if shard["kind"]!="MARKET":continue
@@ -180,6 +187,7 @@ def execute(destination):
             need(len(values)==pub["timeframes"][tf]["bars"],"P05_ORIGINAL_BAR_COUNT")
             add(sym,tf,values.values())
     proof.append(dict(sourceRun=P05_RUN,originalShards=76))
+    print("V32_STAGE_P05_MARKETS_RECOVERED",flush=True)
     need(len(bars)>=48,"BROAD_SOURCE_UNIVERSE_MISSING")
 
     markets=[]
@@ -190,6 +198,7 @@ def execute(destination):
                  Low=str(l/100000),Close=str(c/100000),TickVolume=v)
                  for _,(t,o,h,l,c,v) in sorted(vals.items())]
         markets.append(dict(Symbol=symbol,Terms=contracts.get(symbol),Bars=marketbars))
+    print("V32_STAGE_PRIVATE_TAPE_READY",flush=True)
     destination.write_text(json.dumps(dict(SourceRuns=SOURCE_RUNS,
         ProtocolSha256=protocol_sha,PriceNormalization="ORIGINAL_PROTOWIRE_1E5_NO_SYNTHETIC_BAR",
         DevelopmentOnly=True,Markets=markets),separators=(",",":")))
