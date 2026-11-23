@@ -27,15 +27,18 @@ def run():
         tape=Path(temp)/"authenticated-originals-private.json"
         economic=Path(temp)/"one-native-eur300-private-output.json"
         provenance=build_private_input(tape)
+        print("V32_STAGE_AUTHENTIC_SOURCES_JOINED",flush=True)
         need(set(provenance["SourceRuns"])==EXPECTED and provenance["Markets"]>=48,
              "INTEGRATED_SOURCE_BINDING")
         private_sha=hashlib.sha256(tape.read_bytes()).hexdigest()
+        print("V32_STAGE_NATIVE_CSHARP_START",flush=True)
         result=subprocess.run(["dotnet","run","--no-build","--project",
             "src/Mxm.Replay","-c","Release","--",str(tape),str(economic),
             "--v32-unified-integrated-development"],
             text=True,capture_output=True,timeout=5400)
         need(result.returncode==0 and economic.is_file(),"NATIVE_CSHARP_ECONOMIC_REPLAY_FAILED")
         native=json.loads(economic.read_text())
+        print("V32_STAGE_NATIVE_ECONOMIC_REPORT_READY",flush=True)
         need(native.get("Schema")=="V32_INTEGRATED_EUR300_NATIVE_DEVELOPMENT"
              and set(native["SourceRuns"])==EXPECTED
              and native.get("ModelOrders")==0
@@ -92,7 +95,12 @@ def run():
 
 if __name__=="__main__":
     try:run()
-    except Exception:
-        # Suppress exception detail: it may contain decrypted original tape paths/values.
-        print("V32_PROTECTED_NATIVE_SOURCE_OR_REPLAY_FAILURE_DETAIL_WITHHELD",flush=True)
+    except Exception as exc:
+        # Never print private bar, identity, FX, underlying library exception message or trace.
+        msg=str(exc)
+        allowed=(isinstance(exc,ValueError) and
+                 (msg.startswith("V32_SOURCE_") or msg.startswith("V32_UNIFIED_")) and
+                 all(c in "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_" for c in msg))
+        safe=msg if allowed else type(exc).__name__
+        print("V32_PROTECTED_FAILURE_"+safe,flush=True)
         raise SystemExit(1)

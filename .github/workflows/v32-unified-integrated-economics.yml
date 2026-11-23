@@ -12,6 +12,7 @@ on:
     branches: [main]
     paths:
       - 'ops/v32-integrated-authentic-once.txt'
+      - 'ops/v32-integrated-recovery-once.txt'
 permissions:
   contents: read
   actions: read
@@ -42,8 +43,14 @@ jobs:
         shell: bash
         run: |
           echo 'authorized=false' >> "$GITHUB_OUTPUT"
-          marker=ops/v32-integrated-authentic-once.txt
-          subject=OWNER_V32_INTEGRATED_AUTHENTIC_ECONOMICS_ONCE_20261123
+          subject="$(git log -1 --format=%s)"
+          case "$subject" in
+            OWNER_V32_INTEGRATED_AUTHENTIC_ECONOMICS_ONCE_20261123)
+              marker=ops/v32-integrated-authentic-once.txt ;;
+            OWNER_V32_INTEGRATED_RECOVERY_ONCE_20261123)
+              marker=ops/v32-integrated-recovery-once.txt ;;
+            *) exit 0 ;;
+          esac
           if [[ "$GITHUB_EVENT_NAME" == "push" &&
                 "$GITHUB_REF" == "refs/heads/main" &&
                 "$GITHUB_ACTOR" == "mariancradulescu" &&
