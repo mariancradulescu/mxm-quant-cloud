@@ -11,6 +11,53 @@ import hashlib
 import json
 import subprocess
 import tempfile
+import base64
+import os
+from .p05_source_economic_gate import _load_sealed,_roster,SOURCE_END_MS
+from .ctrader_proto import OpenApiMessages_pb2 as pb
+
+def recovered_official_funding(original_tape):
+    """Reuse exact source-verified P05 ProtoOASymbol contract rows, no OAuth.
+
+    Never assign estimated missing charge-weekend or skip-swap fields.
+    """
+    pem=os.environ.get("R3_CUSTODY_PRIVATE_KEY_PEM","").encode()
+    need(bool(pem.strip()),"EXISTING_CUSTODY_KEY_REQUIRED")
+    receipt=json.loads(Path("p05-public/receipt.json").read_text())
+    need(str(receipt["runId"])=="45134137836" and
+         len(receipt["sources"])==76,"P05_ORIGINAL_SOURCE_BINDING")
+    shards=Path("p05-sealed")
+    roster_packet=_load_sealed(
+        next(q for q in receipt["sources"] if q["kind"]=="ROSTER"),shards,pem)
+    symbols=_roster(roster_packet)
+    expected={m["Symbol"]:int(m["Terms"]["ObservedAtUtcMs"])
+              for m in original_tape["Markets"] if m["Symbol"] in
+              ("EURUSD","GBPUSD") and m.get("Terms") is not None}
+    recovered={}
+    for shard in receipt["sources"]:
+        if shard["kind"]!="CONTRACTS":continue
+        for record in _load_sealed(shard,shards,pem):
+            if record.get("resType")!="ProtoOASymbolByIdRes":continue
+            decoded=pb.ProtoOASymbolByIdRes()
+            decoded.ParseFromString(base64.b64decode(record["res"],validate=True))
+            need(decoded.IsInitialized(),"ORIGINAL_COST_PROTO_INCOMPLETE")
+            for c in decoded.symbol:
+                symbol=symbols.get(int(c.symbolId))
+                if symbol not in expected:continue
+                if expected[symbol]!=SOURCE_END_MS:continue
+                weekend=(bool(c.chargeSwapAtWeekends)
+                         if c.HasField("chargeSwapAtWeekends") else None)
+                skip=(int(c.skipSWAPPeriods)
+                      if c.HasField("skipSWAPPeriods") else None)
+                fact=dict(Symbol=symbol,ChargeSwapAtWeekends=weekend,
+                    SkipSwapPeriods=skip,ObservedAtUtcMs=SOURCE_END_MS,
+                    OriginalBrokerAuthenticated=True)
+                need(symbol not in recovered or recovered[symbol]==fact,
+                     "ORIGINAL_CONTRACT_SWAP_FIELD_CONFLICT")
+                recovered[symbol]=fact
+    # All missing fields remain absent or explicit NULL, never zero by default.
+    return list(recovered.values())
+
 from decimal import Decimal
 from pathlib import Path
 from .v32_unified_source_adapter import execute as source_only
@@ -27,6 +74,7 @@ def main():
     with tempfile.TemporaryDirectory(prefix="mxm-rvc1-original-") as folder:
         workspace=Path(folder)
         raw=workspace/"verified-source.json"
+        private_input=workspace/"original-rvc1-input.json"
         native=workspace/"rvc1-private-economic.json"
         receipt=source_only(raw)  # CUSTODY + RAW BAR IDENTITY ONLY; no old model
         need(receipt.get("BrokerRequests")==0 and
@@ -41,9 +89,13 @@ def main():
             if market["Symbol"] not in ("EURUSD","GBPUSD"): continue
             need(all(k in market["Bars"] and len(market["Bars"][k])>=48
                 for k in ("M5","M15","H1")),"ORIGINAL_CLOSED_CONTEXT_MISSING")
+        funding=recovered_official_funding(source)
+        private_input.write_text(json.dumps(dict(Tape=source,Funding=funding),
+                                             separators=(",",":")))
+        private_input.chmod(0o600)
         process=subprocess.run([
             "dotnet","run","--project","src/Mxm.Replay","--no-build",
-            "-c","Release","--",str(raw),str(native),
+            "-c","Release","--",str(private_input),str(native),
             "--rvc1-frozen-joint-fx-residual-economic",frozen_hash
         ],capture_output=True,text=True,timeout=8500)
         need(process.returncode==0,
@@ -104,6 +156,8 @@ def main():
             "CommonM5SourceClocks":result["CommonM5Clocks"],
             "AllSourceISOWeeks":result["CommonISOWeeks"],
             "CurrentTermCostsOnly":True,
+            "RecoveredSwapScheduleSymbols":sorted(x["Symbol"] for x in funding),
+            "BrokerHistoricalSwapContinuityCertified":False,
             "AllHistoricalPeriodsAlreadyExposed":True,
             "TrueBrokerOrders":0,"CloudEnabled":False,
             "IndependenceOrHistoricalFillCertification":False,
