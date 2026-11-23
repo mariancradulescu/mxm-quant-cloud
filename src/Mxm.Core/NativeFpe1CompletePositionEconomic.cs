@@ -13,7 +13,7 @@ namespace Mxm.Core;
 // financial simulator and NO broker order/Cloud API exists in this code.
 public static class NativeFpe1CompletePositionEconomic
 {
-    public const string Version="FPE1_ONE_CAUSAL_PREDICTIVE_FUNDED_EUR300_DEV";
+    public const string Version="FPE1_COMPLETE_POSITION_NET_FUNDED_EUR300_DEV";
     const long Minute=60_000, Day=86_400_000;
     const decimal Capital=300m, RiskPerTrade=.015m, AggregateStopRisk=.05m,
         MaximumMargin=.70m, ModelFXWedge=.00025m, FundingBpsPerDay=5m;
