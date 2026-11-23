@@ -30,8 +30,9 @@ public static class NativeFundedActionResearch
         ResearchCohort[]? IndependentCohorts = null);
     internal sealed record EvaluationFold(long FitEnd, long CalibrationStart, long From, long Until);
 
-    static NativeUnifiedPortfolioEngine Pilot(string suffix)
-        => new(NativeStructuralOpportunity.Prefix + NativeFundedActionValue.First + suffix);
+    static NativeUnifiedPortfolioEngine Pilot(string suffix, bool generalized = false)
+        => new(NativeStructuralOpportunity.Prefix +
+            (generalized ? NativeFundedActionValue.GeneralFirst : NativeFundedActionValue.First) + suffix);
 
     static Ucp1FrameResult Observe(NativeUnifiedPortfolioEngine engine, Ucp1Frame frame, NativeFundedActionProbe probe)
         => engine.Advance(frame, NativeStructuralOpportunity.Describe, NativeImpulseExhaustionResearch.Describe, probe);
@@ -127,7 +128,8 @@ public static class NativeFundedActionResearch
     // research week cannot erase the future weeks' available market actions.
     internal static LabelObservation ObserveIndependentResearchCohorts(
         Ucp1Frame[] frames, LabelWindow[] windows, string suffix,
-        IReadOnlyDictionary<string, NativeObservedContractTerms> contracts)
+        IReadOnlyDictionary<string, NativeObservedContractTerms> contracts,
+        bool generalized = false)
     {
         if (frames.Length == 0 || windows.Length == 0 ||
             windows.Any(w => w.From >= w.Until || w.MaturityUntil < w.Until) ||
@@ -142,7 +144,7 @@ public static class NativeFundedActionResearch
             // Ex-ante fixed observation cohort, not a backtest reset or
             // portfolio replenishment. The cohort never carries its debt
             // or cash into the next week's research observation schedule.
-            var pilot = Pilot(suffix);
+            var pilot = Pilot(suffix, generalized);
             while (next < frames.Length && frames[next].At < phase.Window.From) next++;
             int i = next;
             for (; i < frames.Length && frames[i].At < phase.Window.Until; i++)
@@ -157,9 +159,16 @@ public static class NativeFundedActionResearch
                 string checkpoint = pilot.ActionForkCheckpoint();
                 var probe = new NativeFundedActionProbe();
                 Observe(pilot, frame, probe);
-                foreach (var kind in probe.Available.GroupBy(o => o.Kind))
+                // Only the new general study samples a deterministic candidate
+                // per direction and action kind. Existing original/cohort paths
+                // retain their exact earlier one-per-kind sampling semantics.
+                var sampled = generalized
+                    ? probe.Available.GroupBy(o => (o.Kind, o.Side))
+                        .Select(g => g.OrderBy(ProbeOrder, StringComparer.Ordinal).First())
+                    : probe.Available.GroupBy(o => o.Kind)
+                        .Select(g => g.OrderBy(ProbeOrder, StringComparer.Ordinal).First());
+                foreach (var offer in sampled)
                 {
-                    var offer = kind.OrderBy(ProbeOrder, StringComparer.Ordinal).First();
                     var (delta, settled, status) = Paired(checkpoint, offer, frames, i, contracts,
                         phase.Window.MaturityUntil ?? phase.Window.Until);
                     string key = offer.Group + "/" + status;
@@ -305,6 +314,18 @@ public static class NativeFundedActionResearch
         return Evaluate(frames, windows, folds, contracts, prospective: false, independentCohorts: true);
     }
 
+    // Newly registered, non-structural, bidirectional hypothesis. The original
+    // RunHistorical and the post-#421 cohort run are not modified or rerun.
+    public static object RunHistoricalGeneral(Ucp1Frame[] frames, long start, long end,
+        IReadOnlyDictionary<string, NativeObservedContractTerms> contracts)
+    {
+        if (start < Week || start % Day != 0 || end % Day != 0 || !CompleteClock(frames, start, end))
+            throw new ArgumentException("FUNDED_GENERAL_HISTORICAL_CALENDAR");
+        var (windows, folds) = HistoricalSchedule(start, end);
+        return Evaluate(frames, windows, folds, contracts, prospective: false,
+            independentCohorts: true, generalized: true);
+    }
+
     public static object RunHistorical(Ucp1Frame[] frames, long start, long end,
         IReadOnlyDictionary<string, NativeObservedContractTerms> contracts)
     {
@@ -316,8 +337,10 @@ public static class NativeFundedActionResearch
 
     static object Evaluate(Ucp1Frame[] frames, LabelWindow[] windows, EvaluationFold[] folds,
         IReadOnlyDictionary<string, NativeObservedContractTerms> contracts, bool prospective,
-        bool independentCohorts = false)
+        bool independentCohorts = false, bool generalized = false)
     {
+        if (generalized && !independentCohorts)
+            throw new ArgumentException("FUNDED_GENERAL_REQUIRES_RESEARCH_COHORTS");
         long evaluationStart = folds[0].From, evaluationEnd = folds[^1].Until;
         var cases = frames.Where(f => f.At >= evaluationStart && f.At < evaluationEnd).ToArray();
         var weeks = cases.GroupBy(f => (f.At - evaluationStart) / Week).Select(g => new
@@ -333,7 +356,7 @@ public static class NativeFundedActionResearch
         object Scenario(string suffix)
         {
             var observed = independentCohorts
-                ? ObserveIndependentResearchCohorts(frames, windows, suffix, contracts)
+                ? ObserveIndependentResearchCohorts(frames, windows, suffix, contracts, generalized)
                 : ObserveLabels(frames, windows, suffix, contracts);
             var labels = observed.Phases.SelectMany(p => p.Labels).ToArray();
             var models = folds.Select(fold =>
@@ -351,7 +374,8 @@ public static class NativeFundedActionResearch
             var books = new Dictionary<string, object>(StringComparer.Ordinal);
             var net = new Dictionary<string, decimal?>(StringComparer.Ordinal);
             var weekly = new Dictionary<string, decimal?[]>(StringComparer.Ordinal);
-            foreach (string variant in NativeFundedActionValue.Variants)
+            foreach (string variant in generalized ? NativeFundedActionValue.GeneralVariants :
+                NativeFundedActionValue.Variants)
             {
                 var engine = new NativeUnifiedPortfolioEngine(NativeStructuralOpportunity.Prefix + variant + suffix);
                 int next = 0;
@@ -374,12 +398,18 @@ public static class NativeFundedActionResearch
                 weekly.Add(variant, WeeklyNet(engine, evaluationStart, evaluationEnd, contracts));
             }
 
-            var variants = new[] { NativeFundedActionValue.Context, NativeFundedActionValue.Pooled, NativeFundedActionValue.Placebo };
+            var variants = generalized
+                ? new[] { NativeFundedActionValue.GeneralContext, NativeFundedActionValue.GeneralPooled,
+                    NativeFundedActionValue.GeneralPlacebo }
+                : new[] { NativeFundedActionValue.Context, NativeFundedActionValue.Pooled, NativeFundedActionValue.Placebo };
+            string context = generalized ? NativeFundedActionValue.GeneralContext : NativeFundedActionValue.Context;
+            string cash = generalized ? NativeFundedActionValue.GeneralCash : NativeFundedActionValue.Cash;
+            string first = generalized ? NativeFundedActionValue.GeneralFirst : NativeFundedActionValue.First;
             object Forecasts(ScoredLabel[] rows) => variants.ToDictionary(v => v, v => Metrics(rows, v));
             var common = test.Where(x => variants.All(v => x.Model.Predict(v, x.Label.Offer) is not null)).ToArray();
-            var primary = new[] { NativeFundedActionValue.Cash, NativeFundedActionValue.First }.Select(v =>
+            var primary = new[] { cash, first }.Select(v =>
             {
-                var deltas = weekly[NativeFundedActionValue.Context].Zip(weekly[v], (context, control) => context - control).ToArray();
+                var deltas = weekly[context].Zip(weekly[v], (contextNet, control) => contextNet - control).ToArray();
                 return (Control: v, Deltas: deltas, P: prospective ? SignFlipProbability(deltas) : null);
             }).OrderBy(x => x.P ?? decimal.MaxValue).ToArray();
             var holm = primary.All(x => x.P.HasValue) ? primary.Select((x, i) => new
@@ -392,8 +422,9 @@ public static class NativeFundedActionResearch
                 // In the new mode there is deliberately NO single continuous
                 // research pilot. Only evaluated policies have continuous books.
                 Pilot = independentCohorts ? (object?)null : observed.PilotBook,
-                ResearchSampling = independentCohorts
-                    ? "FIXED_WEEKLY_INDEPENDENT_EUR300_LABEL_EXPERIMENTS_NOT_PORTFOLIO_PNL"
+                ResearchSampling = generalized
+                    ? "GENERAL_BIDIRECTIONAL_DETERMINISTIC_DIRECTION_SAMPLING_IN_INDEPENDENT_LABEL_COHORTS_NOT_PNL"
+                    : independentCohorts ? "FIXED_WEEKLY_INDEPENDENT_EUR300_LABEL_EXPERIMENTS_NOT_PORTFOLIO_PNL"
                     : "CONTINUOUS_FIRST_PILOT",
                 IndependentResearchCohorts = observed.IndependentCohorts,
                 LabelCoverage = observed.Phases.Select(p => new { p.Window, p.Counts }),
@@ -410,14 +441,15 @@ public static class NativeFundedActionResearch
                     ? "M15_H1_ALIGNED" : "M15_H1_OTHER").ToDictionary(g => g.Key, g => Forecasts(g.ToArray())),
                 Books = books, CompleteModeledNetEur = net, CompleteComparableWeeklyNetEur = weekly,
                 PrimaryAdverseComparisons = suffix == "_ADVERSE" ? holm : null,
-                ContextMinusControlsEur = net.Where(x => x.Key != NativeFundedActionValue.Context)
-                    .ToDictionary(x => x.Key, x => net[NativeFundedActionValue.Context] - x.Value)
+                ContextMinusControlsEur = net.Where(x => x.Key != context)
+                    .ToDictionary(x => x.Key, x => net[context] - x.Value)
             };
         }
 
         return new
         {
-            Evidence = prospective ? "PROSPECTIVE_RESEARCH" : "HISTORICAL_DEVELOPMENT",
+            Evidence = generalized ? "GENERAL_STATE_HISTORICAL_DEVELOPMENT_EXPOSED" :
+                prospective ? "PROSPECTIVE_RESEARCH" : "HISTORICAL_DEVELOPMENT",
             SourceStart = frames[0].At - NativeIntegratedEconomicPolicy.ClockOffsetMs,
             SourceEnd = frames[^1].At + NativeIntegratedLifecycle.IntervalMs - NativeIntegratedEconomicPolicy.ClockOffsetMs,
             EvaluationStart = evaluationStart, End = evaluationEnd,

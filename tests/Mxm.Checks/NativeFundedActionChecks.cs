@@ -97,6 +97,7 @@ internal static class NativeFundedActionChecks
         CheckCrossSession(pilot, check);
         CheckHistoricalSchedule(check);
         CheckIndependentResearchCohorts(check);
+        CheckGeneralState(check);
         var track = new NativeUnifiedPortfolioEngine(pilot);
         for (long at = bar + 15_000; at < bar + 900_000; at += 30_000)
             track.Advance(Observation(bar, at));
@@ -126,6 +127,84 @@ internal static class NativeFundedActionChecks
         check(learned.FundedActionReceipts.Any(x => x.Decision == "CLOSE") &&
             learned.CompleteModelTrips.Single().ExitReason == "MODEL_UNTRANSMITTED_INTEGRATED_FUNDED_ACTION_VALUE_CLOSE",
             "the calibrated hold alternative can place a native conditional close intent");
+    }
+
+    static void CheckGeneralState(Action<bool, string> check)
+    {
+        long bar = NativeFundedActionResearch.Start + 10 * 3_600_000L;
+        var frames = new[] { Observation(bar, bar + 15_000),
+            Observation(bar, bar + 45_000),
+            Observation(bar, bar + 75_000, 99.4m),
+            Observation(bar, bar + 105_000, 99.4m) };
+        var market = frames[0].Markets[0];
+        var fresh = NativeGeneralOpportunity.Describe(market);
+        check(fresh.Count(x => x.Signal.Family == NativeGeneralOpportunity.Distribution) == 2 &&
+            fresh.Any(x => x.Signal.Family == NativeGeneralOpportunity.Distribution && x.Signal.Side == 1) &&
+            fresh.Any(x => x.Signal.Family == NativeGeneralOpportunity.Distribution && x.Signal.Side == -1) &&
+            fresh.All(x => NativeIntegratedLifecycle.ProtectionCompatible(
+                x.Signal.Side, x.Signal.Stop, x.Signal.Target, market)),
+            "general closed-state generator has both LONG and SHORT without detector trigger");
+        var futureContext = market with
+        {
+            ClosedBars = market.ClosedBars! with { DecisionAt = market.Quote.At + 30_000 }
+        };
+        check(NativeGeneralOpportunity.Describe(futureContext).Length == 0 &&
+            NativeGeneralOpportunity.Describe(market with { ClosedBars = null }).Length == 0,
+            "the general generator refuses future context and missing closed bars");
+
+        const string basePolicy = NativeStructuralOpportunity.Prefix;
+        var first = new NativeUnifiedPortfolioEngine(basePolicy + NativeFundedActionValue.GeneralFirst);
+        var capture = new NativeFundedActionProbe();
+        string initial = first.ActionForkCheckpoint();
+        Probe(first, frames[0], capture);
+        check(capture.Available.Count(x => x.Kind == NativeFundedActionValue.Enter &&
+                x.Family == NativeGeneralOpportunity.Distribution) == 2 &&
+            capture.Available.Select(x => x.Side).Distinct().Count() == 2,
+            "new funded offer path preserves both directions before the common allocator");
+        var longOffer = capture.Available.First(x => x.Kind == NativeFundedActionValue.Enter &&
+            x.Family == NativeGeneralOpportunity.Distribution && x.Side == 1);
+        var contracts = frames[0].Markets.ToDictionary(x => x.Symbol, x => x.Contract, StringComparer.Ordinal);
+        var label = NativeFundedActionResearch.Paired(initial, longOffer, frames, 0, contracts);
+        check(label.Status == "SETTLED" && label.DeltaEur is not null && label.At > longOffer.At,
+            "general ENTER versus WAIT uses future observed conditional fills and a common settled book");
+
+        foreach (var suffix in new[] { "", "_ADVERSE" })
+        {
+            string policy = basePolicy + NativeFundedActionValue.GeneralContext + suffix;
+            var model = Fit(longOffer, .25m, adverse: suffix.Length > 0);
+            var core = new NativeUnifiedPortfolioEngine(policy, actionModel: model);
+            var cloud = new NativeUnifiedCloudParityAdapter(policy, actionModel: model);
+            foreach (var frame in frames)
+                check(core.Advance(frame) == cloud.Observe(frame),
+                    "general state policy reuses authoritative Core and observation-only Cloud finance");
+            check(core.ModelSummary.OrdersEnabled == false &&
+                core.ModelSummary.CompleteRoundTrips <= 1,
+                "general policy never submits broker orders or creates a second portfolio");
+
+            var noEdge = new NativeUnifiedPortfolioEngine(policy,
+                actionModel: Fit(longOffer, -.25m, adverse: suffix.Length > 0));
+            noEdge.Advance(frames[0]);
+            check(noEdge.ModelSummary.PendingIntents == 0 &&
+                noEdge.FundedActionReceipts.Any(x => x.Decision == "WAIT_NONPOSITIVE"),
+                "negative uncertainty-adjusted general value abstains without forced HARD21 trades");
+        }
+
+        long week = NativeCompletePolicy.Week;
+        var windows = new[]
+        {
+            new NativeFundedActionResearch.LabelWindow(bar, bar + week),
+            new NativeFundedActionResearch.LabelWindow(bar + week, bar + 2 * week)
+        };
+        var counted = NativeFundedActionResearch.ObserveIndependentResearchCohorts(
+            frames, new[] { windows[0] }, "", contracts, generalized: true);
+        check(counted.IndependentCohorts?.Length == 1 &&
+            counted.Phases[0].Counts.Keys.Any(k => k.Contains(NativeGeneralOpportunity.Distribution)) &&
+            counted.Phases[0].Counts.Keys.Any(k => k.Contains("/LONG/")) &&
+            counted.Phases[0].Counts.Keys.Any(k => k.Contains("/SHORT/")),
+            "new label sampler tests both directions, retaining censored forks separately");
+        check(!NativeFundedActionValue.Variants.Contains(NativeFundedActionValue.GeneralContext) &&
+            NativeFundedActionValue.GeneralVariants.Contains(NativeFundedActionValue.GeneralContext),
+            "frozen legacy variants are not silently replaced");
     }
 
     static void CheckCrossSession(string policy, Action<bool, string> check)

@@ -193,7 +193,7 @@ internal static partial class IntegratedEconomicReplay
     }
 
     public static int RunFundedActionValue(string inputFile, string outputFile, bool historical = false,
-        bool conditionalCosts = false, bool independentCohorts = false)
+        bool conditionalCosts = false, bool independentCohorts = false, bool generalized = false)
     {
         using var input = File.OpenRead(inputFile);
         var inputHash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(input)).ToLowerInvariant();
@@ -213,6 +213,8 @@ internal static partial class IntegratedEconomicReplay
         if (conditionalCosts && !historical) throw new ArgumentException("FUNDED_ACTION_ONLY_HISTORICAL_CONDITIONAL_COST");
         if (independentCohorts && !historical)
             throw new ArgumentException("FUNDED_ACTION_COHORTS_ONLY_HISTORICAL_DEVELOPMENT");
+        if (generalized && !(historical && independentCohorts && conditionalCosts))
+            throw new ArgumentException("FUNDED_GENERAL_ONLY_HISTORICAL_CONDITIONAL_COHORTS");
         var frames = new List<Ucp1Frame>();
         for (long at = source.Start + NativeIntegratedEconomicPolicy.ClockOffsetMs; at < source.End;
              at += NativeIntegratedLifecycle.IntervalMs)
@@ -231,10 +233,13 @@ internal static partial class IntegratedEconomicReplay
         {
             var contracts = source.Markets.ToDictionary(m => m.Name, m => m.Contract, StringComparer.Ordinal);
             result = historical
-                ? independentCohorts
-                    ? NativeFundedActionResearch.RunHistoricalIndependentCohorts(
+                ? generalized
+                    ? NativeFundedActionResearch.RunHistoricalGeneral(
                         frames.ToArray(), source.Start, source.End, contracts)
-                    : NativeFundedActionResearch.RunHistorical(
+                    : independentCohorts
+                        ? NativeFundedActionResearch.RunHistoricalIndependentCohorts(
+                            frames.ToArray(), source.Start, source.End, contracts)
+                        : NativeFundedActionResearch.RunHistorical(
                         frames.ToArray(), source.Start, source.End, contracts)
                 : NativeFundedActionResearch.Run(frames.ToArray(), contracts);
         }
@@ -244,6 +249,8 @@ internal static partial class IntegratedEconomicReplay
         using var output = File.Create(outputFile);
         JsonSerializer.Serialize(output, new { source.SourceRun, source.ProtocolSha256, InputSha256 = inputHash,
             source.Start, source.End,
+            ResearchMechanism = generalized ? "GENERAL_CLOSED_STATE_BIDIRECTIONAL_NEW_RESEARCH_NOT_ORIGINAL_RUN" :
+                "EXACT_LEGACY_FUNDED_ACTION_RESEARCH",
             CostEvidence = conditionalCosts ? "CONDITIONAL_COST_MODEL_FIXED_ORIGINAL_BROKER_SNAPSHOT" : "OBSERVED_TERMS_AS_OF_DECISION",
             BrokerNetCertified = false, IndependentConfirmation = false,
             Status = anyFundedInput ? "FINANCED_POLICY_DEVELOPMENT" : "NO_CAUSALLY_FINANCEABLE_INPUT",

@@ -26,6 +26,7 @@ MANIFEST_SHA256 = "e35cfc1d9988f6dc166a7f27349fefedb64fc1f251358761a69dd44e72ae8
 GAP_SHA256 = "03ea1a9d06bdcb7e028c77fa9e360ab36e1dae2b451dc8cc76c16c57091af8b0"
 RECOVERY_DIR = Path("funded-history-recovery")
 PUBLIC_OUT = Path("funded-history-economic-public")
+GENERAL_PUBLIC_OUT = Path("funded-general-state-economic-public")
 PROTOCOL = Path("research/FUNDED_ACTION_VALUE_HISTORICAL.md")
 EVALUATOR = Path("src/Mxm.Replay/bin/Release/net8.0/Mxm.Replay.dll")
 VARIANTS = ("VALUE_CASH", "VALUE_FIRST", "VALUE_HASH", "VALUE_POOLED", "VALUE_PLACEBO",
@@ -33,6 +34,12 @@ VARIANTS = ("VALUE_CASH", "VALUE_FIRST", "VALUE_HASH", "VALUE_POOLED", "VALUE_PL
 FIRST = "VALUE_FIRST"
 CASH = "VALUE_CASH"
 CONTEXT = "VALUE_CONTEXT"
+GENERAL_VARIANTS = ("VALUE_GENERAL_CASH", "VALUE_GENERAL_FIRST", "VALUE_GENERAL_HASH",
+                    "VALUE_GENERAL_POOLED", "VALUE_GENERAL_PLACEBO",
+                    "VALUE_GENERAL_ENTRY_ONLY", "VALUE_GENERAL")
+GENERAL_FIRST = "VALUE_GENERAL_FIRST"
+GENERAL_CASH = "VALUE_GENERAL_CASH"
+GENERAL_CONTEXT = "VALUE_GENERAL"
 
 
 def sha256(data):
@@ -108,7 +115,7 @@ def _as_number(row, key):
     return value if isinstance(value, (int, float, str)) or value is None else None
 
 
-def extract_safe_economics(private_output, input_sha, selected, original, manifest):
+def extract_safe_economics(private_output, input_sha, selected, original, manifest, *, generalized=False):
     """Whitelist only group-level economic fields, never snapshots or trade events."""
     need(private_output["SourceRun"] == ORIGINAL_RUN
          and private_output["InputSha256"].lower() == input_sha.lower()
@@ -118,6 +125,10 @@ def extract_safe_economics(private_output, input_sha, selected, original, manife
          and (private_output["Start"], private_output["End"]) ==
          (FUNDED_HISTORY.start, FUNDED_HISTORY.end),
          "FUNDED_DEVELOPMENT_CSHARP_SOURCE_BINDING")
+    if generalized:
+        need(private_output.get("ResearchMechanism") ==
+             "GENERAL_CLOSED_STATE_BIDIRECTIONAL_NEW_RESEARCH_NOT_ORIGINAL_RUN",
+             "FUNDED_GENERAL_ISOLATED_MODEL_KIND")
     result = private_output.get("Result")
     status = private_output.get("Status")
     need(status in ("FINANCED_POLICY_DEVELOPMENT", "NO_CAUSALLY_FINANCEABLE_INPUT"),
@@ -143,21 +154,25 @@ def extract_safe_economics(private_output, input_sha, selected, original, manife
     if status != "FINANCED_POLICY_DEVELOPMENT":
         need(result is None, "FUNDED_DEVELOPMENT_UNEXPECTED_NONFINANCED_RESULT")
         return output
-    need(result is not None and result["Evidence"] == "HISTORICAL_DEVELOPMENT"
+    need(result is not None and result["Evidence"] ==
+         ("GENERAL_STATE_HISTORICAL_DEVELOPMENT_EXPOSED" if generalized else "HISTORICAL_DEVELOPMENT")
          and result["IndependentConfirmation"] is False
          and result["Orders"] == 0 and result["CloudActivation"] is False,
          "FUNDED_DEVELOPMENT_CSHARP_HISTORICAL_REPORT")
     output["EvaluationStart"] = result["EvaluationStart"]
     output["EvaluationEnd"] = result["End"]
+    variants = GENERAL_VARIANTS if generalized else VARIANTS
+    cash_key = GENERAL_CASH if generalized else CASH
+    first_key = GENERAL_FIRST if generalized else FIRST
     for scenario in ("Central", "Adverse"):
         source = result[scenario]
         books = source["Books"]
         net = source["CompleteModeledNetEur"]
         weekly = source["CompleteComparableWeeklyNetEur"]
-        need(set(books) == set(VARIANTS) == set(net) == set(weekly),
+        need(set(books) == set(variants) == set(net) == set(weekly),
              "FUNDED_DEVELOPMENT_FINANCED_CONTROLS_MISSING")
         policies = {}
-        for variant in VARIANTS:
+        for variant in variants:
             book = books[variant]["Book"]
             fin = book["Financial"]
             boundary = fin["Boundary"]
@@ -192,10 +207,10 @@ def extract_safe_economics(private_output, input_sha, selected, original, manife
                 "ByFamily": book["ByFamily"],
                 "BySymbolAggregate": books[variant]["BySymbol"],
                 "ComparableWeeklyNetEur": weekly[variant],
-                "DeltaVsCashEur": None if modeled is None or net[CASH] is None else
-                                  str(Decimal(str(modeled)) - Decimal(str(net[CASH]))),
-                "DeltaVsFirstEur": None if modeled is None or net[FIRST] is None else
-                                   str(Decimal(str(modeled)) - Decimal(str(net[FIRST]))),
+                "DeltaVsCashEur": None if modeled is None or net[cash_key] is None else
+                                  str(Decimal(str(modeled)) - Decimal(str(net[cash_key]))),
+                "DeltaVsFirstEur": None if modeled is None or net[first_key] is None else
+                                   str(Decimal(str(modeled)) - Decimal(str(net[first_key]))),
             }
         output["Scenarios"][scenario] = {
             "Policies": policies,
@@ -210,7 +225,7 @@ def extract_safe_economics(private_output, input_sha, selected, original, manife
     return output
 
 
-def main():
+def main(*, generalized=False):
     need(os.environ.get("GITHUB_EVENT_NAME") == "push"
          and os.environ.get("GITHUB_REF") == "refs/heads/main"
          and os.environ.get("GITHUB_ACTOR") == "mariancradulescu"
@@ -224,7 +239,8 @@ def main():
         original_bytes, receipt_bytes, manifest_bytes, gap_bytes)
     key = os.environ.pop("R3_CUSTODY_PRIVATE_KEY_PEM", "").encode()
     need(bool(key), "FUNDED_DEVELOPMENT_CUSTODY_KEY_MISSING")
-    PUBLIC_OUT.mkdir(exist_ok=True)
+    public_dir = GENERAL_PUBLIC_OUT if generalized else PUBLIC_OUT
+    public_dir.mkdir(exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="funded-private-economic-") as directory:
         private = Path(directory)
         scanned = scan(original, key)
@@ -263,18 +279,22 @@ def main():
         output_file = private / "full-funded-economics.json"
         with (private / "private-run-log").open("w") as logs:
             completed = subprocess.run(
-                ["dotnet", str(EVALUATOR), "--funded-action-value-historical-conditional",
+                ["dotnet", str(EVALUATOR),
+                 "--funded-general-state-historical-independent-cohorts-conditional"
+                 if generalized else "--funded-action-value-historical-conditional",
                  str(src), str(output_file)], stdout=logs, stderr=subprocess.STDOUT,
                 check=False, timeout=19_500)
         need(completed.returncode == 0 and output_file.is_file(),
              "FUNDED_DEVELOPMENT_CSHARP_EVALUATION_FAILURE")
         with output_file.open() as handle:
             economics = json.load(handle, parse_float=Decimal)
-        public = extract_safe_economics(economics, input_sha, selected, original, manifest)
-        out = PUBLIC_OUT / "economic.json"
+        public = extract_safe_economics(economics, input_sha, selected, original, manifest,
+                                       generalized=generalized)
+        out = public_dir / "economic.json"
         out.write_text(json.dumps(public, indent=2, sort_keys=True, default=str) + "\n")
-        (PUBLIC_OUT / "receipt.json").write_text(json.dumps({
-            "Status": "AUTHENTIC_FUNDED_HISTORICAL_CONDITIONAL_CSHARP_DEVELOPMENT",
+        (public_dir / "receipt.json").write_text(json.dumps({
+            "Status": "AUTHENTIC_GENERAL_STATE_FUNDED_CONDITIONAL_CSHARP_DEVELOPMENT"
+                      if generalized else "AUTHENTIC_FUNDED_HISTORICAL_CONDITIONAL_CSHARP_DEVELOPMENT",
             "OriginalSourceRun": ORIGINAL_RUN, "RecoveryRun": RECOVERY_RUN,
             "EvaluationRun": os.environ["GITHUB_RUN_ID"],
             "InputSha256": input_sha,
@@ -288,7 +308,8 @@ def main():
             "OrdersSubmitted": 0, "CloudActivated": False,
             "IndependentConfirmation": False, "BrokerNetCertified": False,
         }, indent=2, sort_keys=True) + "\n")
-    print("FUNDED_HISTORICAL_CSHARP_COMPLETE", len(selected), "PRIVATE_INPUT_AND_AGGREGATE_RECEIPTS_ONLY")
+    print("FUNDED_GENERAL_STATE_CSHARP_COMPLETE" if generalized else "FUNDED_HISTORICAL_CSHARP_COMPLETE",
+          len(selected), "PRIVATE_INPUT_AND_AGGREGATE_RECEIPTS_ONLY")
 
 
 def file_sha(path):
@@ -297,12 +318,14 @@ def file_sha(path):
 
 
 if __name__ == "__main__":
+    generalized = os.environ.get("MXM_GENERAL_STATE_RESEARCH") == "1"
+    public_dir = GENERAL_PUBLIC_OUT if generalized else PUBLIC_OUT
     try:
-        main()
+        main(generalized=generalized)
     except Exception as exc:
-        PUBLIC_OUT.mkdir(exist_ok=True)
+        public_dir.mkdir(exist_ok=True)
         code = str(exc) if isinstance(exc, CaptureContractError) and str(exc).startswith("FUNDED_") else type(exc).__name__
-        (PUBLIC_OUT / "failure.json").write_text(json.dumps({
+        (public_dir / "failure.json").write_text(json.dumps({
             "Status": "FUNDED_HISTORICAL_DEVELOPMENT_FAILED_CLOSED",
             "FailureCode": code, "OriginalRun": ORIGINAL_RUN,
             "NewOpenApiRequests": 0, "OrdersSubmitted": 0, "CloudActivated": False,
