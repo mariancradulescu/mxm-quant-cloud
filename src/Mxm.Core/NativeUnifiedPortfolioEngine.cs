@@ -266,6 +266,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
         if(s.Scp1Choices is not null)scoredChoices.AddRange(s.Scp1Choices);
         model=NativeFundedSession.Restore(s.Session,"UCP1_MODEL_EUR300_"+policy);
         fundingReserves?.ValidateHeldBinding(model.Ledger.PositionSnapshot());
+        if(fundingReserves is not null)model.Ledger.RecoverFundingDirections(s.Events);
         broker=NativeFundedSession.Restore(s.BrokerSession,s.BrokerBinding);
         foreach(var p in s.Plans)plans.Add(p.Key,p.Value);
         foreach(var p in s.LastSignalBar)lastSignalBar.Add(p.Key,p.Value);
