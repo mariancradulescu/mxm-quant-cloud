@@ -599,9 +599,13 @@ public sealed partial class NativeUnifiedPortfolioEngine
         decimal gross = parts.Sum(f => f.GrossEur);
         decimal net = parts.Sum(f => f.NetEur);
         decimal r = net / geometry.InitialRiskEur;
+        // CPE1 closed at genuine later price even if original swap cannot be
+        // priced. In that state hypothetical cash is not a financially proven
+        // NET or realized R. Legacy closed experiments remain unchanged.
+        decimal? disclosedR=Cpe1&&plan.FinancingUnknown?null:r;
         return trip with { Units = parts.Sum(f => f.Units), GrossEur = gross, NetEur = net,
-            EntryRiskEur = geometry.InitialRiskEur, R = r, Integrated = new(
-                geometry.InitialRewardEur, geometry.InitialRewardEur / geometry.InitialRiskEur, r,
+            EntryRiskEur = geometry.InitialRiskEur, R = disclosedR, Integrated = new(
+                geometry.InitialRewardEur, geometry.InitialRewardEur / geometry.InitialRiskEur, disclosedR,
                 geometry.FirstBarrier == "" ? "UNOBSERVED_BEFORE_OTHER_EXIT" : geometry.FirstBarrier,
                 trip.CrossedUnknownHistory, geometry.Reduced, trip.SampledMfeEur > 0m ? gross / trip.SampledMfeEur : 0m,
                 parts.Sum(f => f.CommissionsEur), parts.Sum(f => f.SpreadEur ?? 0m),
