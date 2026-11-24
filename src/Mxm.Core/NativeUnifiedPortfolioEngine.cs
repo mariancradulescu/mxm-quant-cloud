@@ -505,7 +505,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 throw new InvalidOperationException("UCP1_HELD_PLAN_MISSING");
             by.TryGetValue(held.Symbol,out var input);
             var q=input?.Quote;
-            if(t-p.LastObservedAt>(CoherentIntegrated?NativeIntegratedLifecycle.IntervalMs:60_000L) ||
+            if(t-p.LastObservedAt>(Cpe1?300000L:CoherentIntegrated?NativeIntegratedLifecycle.IntervalMs:60_000L) ||
                (p.Integrated is not null && input?.Integrated?.Path?.Complete!=true))
             {
                 p=p with {CrossedUnknownHistory=true};
