@@ -680,7 +680,7 @@ def use(matrix_only=False,reconcile_published=False):
         output.update(public,officialEvidence=inventory)
         if reconcile_published:
             reference=Path("published-eur/native-eur-public.json").read_bytes()
-            need(source.digest(reference)=="df9a9499fde9911928b110c79aef2b89ba448beb8fbd815c57f",
+            need(source.digest(reference)=="df9a9499bbe3899019d1df5b9911928b110c79aef2b89ba448beb8fbd815c57f",
                  "OFFICIAL_EUR_PUBLISHED_RECEIPT_HASH")
             expected={b["Policy"]:b["EventTraceSha256"] for b in json.loads(reference)["Books"]}
             matched={b["Policy"]:b["EventTraceSha256"] for b in output["Books"]}==expected
