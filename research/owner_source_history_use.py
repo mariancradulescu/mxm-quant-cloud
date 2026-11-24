@@ -40,7 +40,7 @@ def verified_original(folder, key):
     return original["packets"], receipt
 
 
-def inspect_bars(request, reply, available_at):
+def inspect_bars(request, reply, available_at, closed_through=None):
     """Keep exact, public-safe diagnostics and use only in-window closed rows."""
     duration = source.PERIODS[models.ProtoOATrendbarPeriod.Name(request.period)] * 60_000
     start, end = request.fromTimestamp, request.toTimestamp
@@ -81,7 +81,7 @@ def inspect_bars(request, reply, available_at):
         except (IndexError, TypeError, ValueError, OverflowError):
             errors["BAR_DECODE_EXCEPTION"] += 1
             continue
-        if stamp + duration > min(end + 1, available_at):
+        if stamp + duration > min(closed_through if closed_through is not None else end + 1, available_at):
             omissions["CLOSE_AFTER_CUTOFF"] += 1
             continue
         row[1] = stamp + duration
@@ -203,23 +203,27 @@ def older_bars(categories):
     return archive_input(str(bdp["run"]), {s: {"M5": rows} for s, rows in original["bars"].items()}, categories), proof
 
 
-def main():
-    key = os.environ["R3_CUSTODY_PRIVATE_KEY_PEM"].encode()
-    packets, receipt = verified_original(Path("original-source-history"), key)
-    contracts, timeframe, latest = extract(packets, receipt)
-    categories = {c["Symbol"]: c["Category"] for c in contracts}
-    annual, proof = older_bars(categories)
+def run_native(contracts, archives):
     with tempfile.TemporaryDirectory(prefix="mxm-history-use-") as temp:
         path = Path(temp)
         inputs = path / "protected-input.json"
-        inputs.write_bytes(source.canonical(dict(Contracts=contracts, Archives=[annual, latest])))
+        inputs.write_bytes(source.canonical(dict(Contracts=contracts, Archives=archives)))
         report = path / "result.json"
         environment = dict(os.environ)
         environment.pop("R3_CUSTODY_PRIVATE_KEY_PEM", None)
         subprocess.run(["dotnet", "src/Mxm.Replay/bin/Release/net8.0/Mxm.Replay.dll",
                         str(inputs), str(report), "--owner-source-history-use"], env=environment,
                        check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        public = json.loads(report.read_text())
+        return json.loads(report.read_text())
+
+
+def main():
+    key = os.environ["R3_CUSTODY_PRIVATE_KEY_PEM"].encode()
+    packets, receipt = verified_original(Path("original-source-history"), key)
+    contracts, timeframe, latest = extract(packets, receipt)
+    categories = {c["Symbol"]: c["Category"] for c in contracts}
+    annual, proof = older_bars(categories)
+    public = run_native(contracts, [annual, latest])
     public.update(originalRunId=SOURCE_RUN, originalArtifactId=14920674158,
         originalPlaintextSha256=PLAIN_SHA, originalReceiptSha256=RECEIPT_SHA,
         originalCiphertextSha256=CIPHER_SHA, originalPacketCount=len(packets), annualReadback=proof,
