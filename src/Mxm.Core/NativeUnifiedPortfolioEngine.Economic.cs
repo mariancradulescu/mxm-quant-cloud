@@ -171,7 +171,14 @@ public sealed partial class NativeUnifiedPortfolioEngine
             q.LiquidationSlippagePerSide??intent.SlippagePerSide);
         if(bracket.RiskEur<=0m||bracket.RewardEur<=0m)return null;
         var held=Cpe1Commitments(false);
-        var pending=Cpe1Commitments(true);
+        // The pending intent must be REPRICED at the actual next witnessed
+        // fill. Never pass its stale admission risk or stale minimum margin
+        // into postfill Held+Pending projected-equity verification.
+        var pending=Cpe1Commitments(true)
+            .Select(x=>x.PositionId==plan.Id ?
+                x with {ReservedStopRiskEur=bracket.RiskEur,
+                        MarginPerUnit=Math.Max(x.MarginPerUnit,q.MarginPerUnit)}
+                : x).ToArray();
         if(!NativePendingCapitalGate.RevalidatePendingFill(
             current.LiquidationEquityEur,current.UsedMarginEur is not null,
             held,pending,plan.Id))return null;
