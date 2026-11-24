@@ -116,6 +116,19 @@ internal static class OwnerOfficialEur
         if(last!=audit.Summary())throw new InvalidOperationException("OFFICIAL_EUR_LEDGER_REPLAY");
         var trips=engine.CompleteModelTrips;
         var settled=engine.ReconciledModelEpisodes;
+        var closedMoney=settled.Select(closed=>
+        {
+            var trip=trips.Single(t=>t.PositionId==closed.PositionId);
+            var fragments=audit.ReconciledFragments(trip.PositionId,closed.AvailableAt);
+            var net=fragments.Sum(f=>f.NetEur);
+            if(net!=closed.Evidence.ClosedNetEur)throw new InvalidOperationException("OFFICIAL_EUR_CLOSED_NET_MISMATCH");
+            return new {trip.Symbol,trip.Family,trip.Side,trip.OpenAt,trip.CloseAt,closed.AvailableAt,
+                GrossEur=fragments.Sum(f=>f.Original.GrossEur),NetEur=net,
+                CommissionEur=fragments.Sum(f=>f.Original.CommissionsEur),
+                SpreadEur=fragments.Sum(f=>f.Original.SpreadEur),
+                ConversionEur=fragments.Sum(f=>f.Original.ConversionEur),
+                SignedFundingEur=fragments.Sum(f=>f.SignedLateFundingEur-f.Original.FinancingEur)};
+        }).ToArray();
         var candidates=engine.EurOpportunityReceipts;
         var final=curve.LastOrDefault();
         decimal? conditionalNet=trips.Length>0&&settled.Length==trips.Length&&
@@ -125,6 +138,8 @@ internal static class OwnerOfficialEur
             Policy=policy,InitialCapitalEur=OwnerRiskAuthority.InitialCapitalEur,
             MoneyEvidence="CONDITIONAL_MODEL_ON_AUTHENTIC_OFFICIAL_QUOTES",
             CompleteEpisodes=trips.Length,ReconciledEpisodes=settled.Length,
+            ReconciledClosedEpisodeMoney=closedMoney,
+            NetOfReconciledClosedEpisodesEur=closedMoney.Length>0?closedMoney.Sum(x=>x.NetEur):(decimal?)null,
             GrossOnCompletedEur=trips.Length>0?trips.Sum(t=>t.EconomicEvidence?.ClosedGrossEur):(decimal?)null,
             ConditionalClosedNetEur=conditionalNet,BrokerCertifiedNetEur=(decimal?)null,
             ClosingCashEur=last.CashEur,ClosingLiquidationEquityEur=last.LiquidationEquityEur,

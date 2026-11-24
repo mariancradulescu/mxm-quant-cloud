@@ -658,9 +658,10 @@ def market_matrix(work,key,inventory,authenticated,today):
                 authenticInputs=list(proof["SourceRuns"])+matrix["reusedRecentRuns"])
 
 
-def use(matrix_only=False):
+def use(matrix_only=False,reconcile_published=False):
     key=os.environ["R3_CUSTODY_PRIVATE_KEY_PEM"].encode()
-    original,public=unpack_original(OUT,key,os.environ["GITHUB_RUN_ID"])
+    run="45478379270" if reconcile_published else os.environ["GITHUB_RUN_ID"]
+    original,public=unpack_original(OUT,key,run)
     inputs,inventory,tape=extract_input(original)
     with tempfile.TemporaryDirectory(prefix="official-eur-") as tmp:
         work=Path(tmp)
@@ -677,6 +678,17 @@ def use(matrix_only=False):
                         str(source_path),str(result_path),"--owner-official-eur"],env=environment,check=True)
         output=json.loads(result_path.read_text())
         output.update(public,officialEvidence=inventory)
+        if reconcile_published:
+            reference=Path("published-eur/native-eur-public.json").read_bytes()
+            need(source.digest(reference)=="df9a9499fde9911928b110c79aef2b89ba448beb8fbd815c57f",
+                 "OFFICIAL_EUR_PUBLISHED_RECEIPT_HASH")
+            expected={b["Policy"]:b["EventTraceSha256"] for b in json.loads(reference)["Books"]}
+            matched={b["Policy"]:b["EventTraceSha256"] for b in output["Books"]}==expected
+            need(matched,"OFFICIAL_EUR_PUBLISHED_EVENT_TRACE_MISMATCH")
+            output.update(originalEconomicDecisionTraceVerified=True,readbackRunId=os.environ["GITHUB_RUN_ID"],
+                          newBrokerRequests=0,newOrders=0)
+            (OUT/"native-eur-settlement-public.json").write_bytes(source.canonical(output)+b"\n")
+            return
         (OUT/"native-eur-public.json").write_bytes(source.canonical(output)+b"\n")
 
 
@@ -692,6 +704,8 @@ if __name__=="__main__":
             use()
         elif sys.argv[1:]==["--matrix"]:
             use(matrix_only=True)
+        elif sys.argv[1:]==["--reconcile-published"]:
+            use(reconcile_published=True)
         else:
             need(not sys.argv[1:],"OFFICIAL_EUR_MODE")
             capture()

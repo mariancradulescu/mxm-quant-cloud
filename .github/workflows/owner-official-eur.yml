@@ -13,6 +13,7 @@ on:
     branches: [main]
     paths:
       - 'ops/owner-official-eur-once.txt'
+      - 'ops/owner-official-eur-settlement-readback.txt'
 permissions:
   contents: read
   actions: read
@@ -22,6 +23,7 @@ jobs:
     timeout-minutes: 12
     outputs:
       authorized: ${{ steps.scope.outputs.authorized }}
+      settlement_only: ${{ steps.scope.outputs.settlement_only }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -42,16 +44,25 @@ jobs:
         shell: bash
         run: |
           echo 'authorized=false' >> "$GITHUB_OUTPUT"
+          echo 'settlement_only=false' >> "$GITHUB_OUTPUT"
           [[ "$GITHUB_EVENT_NAME" == "push" ]] || exit 0
           marker=ops/owner-official-eur-once.txt
           subject=OWNER_OFFICIAL_EUR_CONTINUITY_20261124
+          if [[ "$(git log -1 --format=%s)" == OWNER_OFFICIAL_EUR_SETTLEMENT_READBACK_20261124 ]]; then
+            marker=ops/owner-official-eur-settlement-readback.txt
+            subject=OWNER_OFFICIAL_EUR_SETTLEMENT_READBACK_20261124
+          fi
           [[ "$GITHUB_REF" == "refs/heads/main" && "$GITHUB_RUN_ATTEMPT" == "1" &&
              "$GITHUB_ACTOR" == "mariancradulescu" &&
              "$(git log -1 --format=%s)" == "$subject" &&
              "$(git diff-tree --no-commit-id --name-status -r HEAD)" == $'A\t'"$marker" &&
              -z "$(git log -1 --format=%H HEAD^ -- "$marker")" ]]
           cmp -s "$marker" <(printf '%s\n' "$subject")
-          echo 'authorized=true' >> "$GITHUB_OUTPUT"
+          if [[ "$marker" == ops/owner-official-eur-settlement-readback.txt ]]; then
+            echo 'settlement_only=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'authorized=true' >> "$GITHUB_OUTPUT"
+          fi
   recipient:
     needs: verify
     if: needs.verify.outputs.authorized == 'true'
@@ -255,5 +266,45 @@ jobs:
         with:
           name: official-simulator-version-and-entry
           path: official-simulator/
+          retention-days: 90
+          if-no-files-found: error
+  reconcile-published:
+    needs: verify
+    if: needs.verify.outputs.settlement_only == 'true'
+    environment: mxm-r3-custody-v1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - run: python -m pip install -r research/requirements.txt
+      - run: dotnet build src/Mxm.Replay -c Release
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: official-eur-sealed-and-receipt
+          path: official-eur
+          run-id: 45478379270
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: official-native-eur-public
+          path: published-eur
+          run-id: 45478379270
+          github-token: ${{ github.token }}
+      - name: Reconcile published monetary flows against the unchanged event traces
+        run: python -m research.owner_official_eur_source --reconcile-published
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: official-eur-closed-settlement-public
+          path: official-eur/native-eur-settlement-public.json
           retention-days: 90
           if-no-files-found: error
