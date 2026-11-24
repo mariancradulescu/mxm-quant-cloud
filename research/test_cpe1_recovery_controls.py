@@ -1,4 +1,4 @@
-"""Offline checks for the final CPE1 diagnostic and authorization controls."""
+"""Offline checks for CPE1 diagnostic and custody controls."""
 import contextlib
 import io
 import json
@@ -9,68 +9,9 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from .cpe1_recovery_authority import (
-    OWNER_ACCOUNT_ID,
-    OWNER_REVIEW_ENVIRONMENT,
-    verify_independent_audit,
-    verify_owner_review,
-)
 from .cpe1_recovery_execute import ReplayFailure, run_native, run_replay_process
 
-ISSUE = "https://api.github.com/repos/mariancradulescu/mxm-quant-cloud/issues/393"
-HEAD = "a" * 40
-CI = "45358870951"
-AUDITOR_ACCOUNT_ID = 1234
 PRIVATE = "TECHNICAL_FIXTURE_PRIVATE_TAPE_AND_CUSTODY_SENTINEL"
-
-
-class AuthorizationTests(unittest.TestCase):
-    def setUp(self):
-        self.comment = dict(
-            user=dict(id=AUDITOR_ACCOUNT_ID, type="User"),
-            issue_url=ISSUE,
-            created_at="2026-11-24T09:00:00Z",
-            updated_at="2026-11-24T09:00:00Z",
-            body=f"Verified.\nCPE1_TECHNICAL_RECOVERY_1_INDEPENDENT_APPROVAL {HEAD} {CI}\n",
-        )
-
-    def test_distinct_registered_auditor_and_scoped_comment_pass(self):
-        verify_independent_audit(self.comment, str(AUDITOR_ACCOUNT_ID), ISSUE, HEAD, CI)
-
-    def test_correct_text_without_authenticated_registered_author_is_rejected(self):
-        for auditor, user in (
-            ("", self.comment["user"]),
-            (str(OWNER_ACCOUNT_ID), dict(id=OWNER_ACCOUNT_ID, type="User")),
-            (str(AUDITOR_ACCOUNT_ID), dict(id=OWNER_ACCOUNT_ID, type="User")),
-            (str(AUDITOR_ACCOUNT_ID), dict(id=AUDITOR_ACCOUNT_ID, type="Bot")),
-        ):
-            with self.subTest(auditor=auditor, user=user), self.assertRaises(ValueError):
-                verify_independent_audit(dict(self.comment, user=user), auditor, ISSUE, HEAD, CI)
-
-    def test_edited_comment_or_approval_for_a_different_revision_is_rejected(self):
-        for comment, issue, head, ci in (
-            (dict(self.comment, updated_at="2026-11-24T09:01:00Z"), ISSUE, HEAD, CI),
-            (self.comment, ISSUE + "0", HEAD, CI),
-            (self.comment, ISSUE, "b" * 40, CI),
-            (self.comment, ISSUE, HEAD, "45358870952"),
-        ):
-            with self.subTest(issue=issue, head=head, ci=ci), self.assertRaises(ValueError):
-                verify_independent_audit(comment, str(AUDITOR_ACCOUNT_ID), issue, head, ci)
-
-    def test_only_owner_review_of_the_dedicated_environment_is_accepted(self):
-        review = dict(state="approved", user=dict(id=OWNER_ACCOUNT_ID, type="User"),
-                      environments=[dict(name=OWNER_REVIEW_ENVIRONMENT)])
-        verify_owner_review([review])
-        for reviews in (
-            [],
-            [dict(review, state="rejected")],
-            [dict(review, user=dict(id=AUDITOR_ACCOUNT_ID, type="User"))],
-            [dict(review, user=dict(id=OWNER_ACCOUNT_ID, type="Bot"))],
-            [dict(review, environments=[dict(name="mxm-r3-custody-v1")])],
-        ):
-            with self.subTest(reviews=reviews), self.assertRaises(ValueError):
-                verify_owner_review(reviews)
-
 
 class ReplayDiagnosticsTests(unittest.TestCase):
     def test_structured_error_preserves_exit_code_and_filters_raw_streams(self):

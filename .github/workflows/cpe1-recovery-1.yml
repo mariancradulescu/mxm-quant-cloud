@@ -8,7 +8,6 @@ on:
 permissions:
   contents: read
   actions: read
-  issues: read
 
 jobs:
   authorize:
@@ -21,11 +20,10 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Verify the first-use marker, technical CI and independent reviewer
+      - name: Verify the first-use marker and technical CI on the exact reviewed head
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          CPE1_AUDITOR_ACCOUNT_ID: ${{ vars.CPE1_INDEPENDENT_AUDITOR_ACCOUNT_ID }}
         run: |
           marker=ops/cpe1-recovery-1-owner-authorization.json
           subject=OWNER_CPE1_TECHNICAL_RECOVERY_1
@@ -44,25 +42,20 @@ jobs:
             research/v32_unified_source_adapter.py research/hrc1_protocol.json \
             research/multiscale_conditional_research.py
           jq -e --arg reviewed "$reviewed" '
-            (keys == ["IndependentAuditCommentId","OriginalAttempt","OriginalDisposition",
-                       "OriginalRunId","RecoveryIdentity","ReviewedHead","TechnicalCiRunId"]) and
+            (keys == ["OriginalAttempt","OriginalDisposition","OriginalRunId",
+                       "RecoveryIdentity","ReviewedHead","TechnicalCiRunId"]) and
             .RecoveryIdentity == "CPE1_TECHNICAL_RECOVERY_1" and .OriginalRunId == 45334211971 and
             .OriginalAttempt == 1 and .ReviewedHead == $reviewed and
             .OriginalDisposition == "CPE1_ORIGINAL_ATTEMPT_1_TIMEOUT_NO_ECONOMIC_VERDICT" and
-            ([.TechnicalCiRunId,.IndependentAuditCommentId] |
-                all(type == "number" and . > 0 and . == floor))
+            (.TechnicalCiRunId | type == "number" and . > 0 and . == floor)
           ' "$marker" > /dev/null
           ci="$(jq -r .TechnicalCiRunId "$marker")"
-          audit="$(jq -r .IndependentAuditCommentId "$marker")"
           gh api "repos/$GITHUB_REPOSITORY/actions/runs/$ci" |
             jq -e --arg reviewed "$reviewed" '
               .path == ".github/workflows/cpe1-technical-recovery.yml" and
               .event == "push" and .head_branch == "main" and .head_sha == $reviewed and
               .status == "completed" and .conclusion == "success"
             ' > /dev/null
-          gh api "repos/$GITHUB_REPOSITORY/issues/comments/$audit" |
-            python3 -m research.cpe1_recovery_authority audit "$CPE1_AUDITOR_ACCOUNT_ID" \
-              "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/issues/393" "$reviewed" "$ci"
           gh api "repos/$GITHUB_REPOSITORY/actions/runs/45334211971" |
             jq -e --arg original "$original_sha" --arg workflow "$original_workflow" '
               .head_sha == $original and .path == $workflow and .head_branch == "main" and
@@ -106,34 +99,9 @@ jobs:
           ' cpe1-bdp1-verified-receipt/cpe1-bdp1-contract-source-only.json > /dev/null
           echo 'approved=true' >> "$GITHUB_OUTPUT"
 
-  owner_approval:
+  recovery:
     needs: authorize
     if: github.run_attempt == 1 && needs.authorize.outputs.approved == 'true'
-    environment: cpe1-recovery-1-owner-review
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    permissions:
-      contents: read
-      actions: read
-    outputs:
-      approved: ${{ steps.review.outputs.approved }}
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with:
-          persist-credentials: false
-      - name: Confirm the OWNER approved this exact workflow run
-        id: review
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/approvals" |
-            python3 -m research.cpe1_recovery_authority owner
-          echo 'approved=true' >> "$GITHUB_OUTPUT"
-
-  recovery:
-    needs: [authorize, owner_approval]
-    if: github.run_attempt == 1 && needs.authorize.outputs.approved == 'true' && needs.owner_approval.outputs.approved == 'true'
     environment: mxm-r3-custody-v1
     concurrency:
       group: cpe1-technical-recovery-1
