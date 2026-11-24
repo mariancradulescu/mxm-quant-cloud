@@ -211,7 +211,12 @@ internal static class Cpe1OriginalIntegratedRunner
                verify.CompleteRoundTrips!=summary.CompleteRoundTrips)
                 throw new InvalidOperationException("CPE1_ORIGINAL_NATIVE_EVENT_CHAIN_EUR300_RECONCILIATION");
             var curve=x.Engine.CommonBookEquityPath;
-            var score=NativePerformanceScorecard.Calculate(
+            // The shared scorecard explicitly rejects negative free margin.
+            // Preserve such an observed funding breach as UNKNOWN scorecard,
+            // rather than silently clamp free capital to zero.
+            bool validScorecardMarks=!curve.Any(p=>p.EquityEur is decimal eq &&
+                p.UsedMarginEur is decimal margin && eq-margin<0m);
+            var score=validScorecardMarks?NativePerformanceScorecard.Calculate(
                 new NativeEconomicScorecardInput(
                     x.Policy,
                     reconciled.ClosedFragments(),
@@ -225,7 +230,7 @@ internal static class Cpe1OriginalIntegratedRunner
                             frozenSha)).ToArray(),
                     weeks.ToArray(),300m,
                     certifiedModelBook?(decimal?)nominalNet:null,
-                    0m,certifiedModelBook,false,false));
+                    0m,certifiedModelBook,false,false)):null;
             var report=x.Engine.OriginalOutcomeReport(first,first+(last-first)/3,
                 first+2*(last-first)/3,last,Sha(payload.Tape.ProtocolSha256),false);
             return new {
@@ -249,6 +254,8 @@ internal static class Cpe1OriginalIntegratedRunner
                 summary.HistoryEvidenceIncomplete,summary.EventChainHash,
                 IndependentFundedLedgerEventChainReconciled=true,
                 NativeEconomicScorecard=score,
+                NativeScorecardUnqualifiedNegativeFreeMargin=!validScorecardMarks,
+                UnreconciledHistoricalFinancing=x.Engine.Cpe1UnreconciledFunding,
                 GrossMeanPerCompleted=trips.Length>0?(decimal?)gross/trips.Length:null,
                 MeanGrossR=trips.Any(p=>p.EconomicEvidence?.RealizedGrossR is not null)?
                     (decimal?)trips.Where(p=>p.EconomicEvidence?.RealizedGrossR is not null)
