@@ -35,6 +35,7 @@ public sealed record Ucp1Episode(string PositionId,string Symbol,string Family,
     public NativeIntegratedEpisode? Integrated { get; init; }
     // Prospective CPE1: one economic episode, fully financed model or censored.
     public NativeJointOpportunityEpisodeEvidence? EconomicEvidence { get; init; }
+    public NativeJointOpportunityEntry? EconomicEntry { get; init; }
 }
 public sealed record Ucp1CurvePoint(long At,decimal CashEur,decimal? EquityEur,
     decimal? UsedMarginEur,int Held,int Pending,int Completed)
@@ -476,8 +477,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
                     Integrated=plannedFill??p.Integrated,
                     EconomicEntry=Cpe1 ? new NativeJointOpportunityEntry(request.PositionId,
                         request.At,t,request.EvidenceHash,
-                        p.Family,1,(plannedFill??p.Integrated)!.InitialRewardEur,
-                        (plannedFill??p.Integrated)!.InitialRiskEur,
+                        p.Family,1,p.Integrated!.InitialRewardEur,
+                        p.Integrated!.InitialRiskEur,
                         request.Side*request.Units*px,request.Units*q.MarginPerUnit,true) : p.EconomicEntry};
                 openFills++;
             }
@@ -571,7 +572,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
                     close.GrossEur,p.RiskEur,p.RiskEur>0?close.NetEur/p.RiskEur:null,
                     p.MfeEur,p.MaeEur,close.Reason,p.CrossedUnknownHistory);
                 if(Cpe1)
-                    trip=trip with {EconomicEvidence=Cpe1CompleteEpisode(p,held,close)};
+                    trip=trip with {EconomicEntry=p.EconomicEntry,
+                        EconomicEvidence=Cpe1CompleteEpisode(p,held,close)};
                 trips.Add(p.Integrated is null?trip:CompleteIntegrated(trip,p));
                 plans.Remove(held.Id);
             }
