@@ -28,7 +28,8 @@ public sealed record NativeFundingCapital(decimal PostedFinancingEur,
     decimal MaximumSampledFundingAdjustedDrawdown);
 
 // Carries funding evidence and reserves. All actual cash changes are applied
-// through the existing FINANCING event in the portfolio's one funded ledger.
+// through FINANCING for active exposure and CLOSED_FUNDING_SETTLEMENT for
+// an ended exposure, in the portfolio's one funded ledger.
 internal sealed class NativePortfolioFunding
 {
     readonly Dictionary<(string PositionId,long From),NativeFundingExposure> windows=new();
@@ -73,7 +74,9 @@ internal sealed class NativePortfolioFunding
                proof.AvailableAt>at || !ValidHash(proof.SourceSha256) ||
                (proof.ExactSignedEur.HasValue==proof.MaximumTotalDebitEur.HasValue) ||
                proof.MaximumTotalDebitEur is <0m ||
-               (proof.ExactSignedEur.HasValue && proof.AvailableAt<proof.ThroughInclusive))
+               (proof.ExactSignedEur.HasValue && proof.AvailableAt<proof.ThroughInclusive) ||
+               (window.ClosedAt is not null && window.ExactInLedger &&
+                proof.ExactSignedEur!=window.BookedSignedEur))
                 throw new ArgumentException("FUNDING_EVIDENCE_CLOCK_EXPOSURE_OR_AMOUNT");
         }
     }
@@ -91,25 +94,19 @@ internal sealed class NativePortfolioFunding
                     windows[key]=window with {ExactInLedger=false,AdditionalDebitCeilingEur=null,EvidenceSha256=null};
                 continue;
             }
+            // A settled closed exposure is a durable idempotence tombstone.
+            // Validate has already rejected contradictory replacement evidence.
+            if(window.ClosedAt is not null && window.ExactInLedger)continue;
             if(proof.ExactSignedEur is decimal exact)
             {
                 var delta=exact-window.BookedSignedEur;
-                if(window.ClosedAt is null && delta!=0m)
+                if(delta!=0m)
                 {
                     post(window,delta,proof);
                     postedFinancingEur+=delta;
                 }
-                if(window.ClosedAt is null || delta==0m)
-                {
-                    if(window.ClosedAt is not null)windows.Remove(key);
-                    else windows[key]=window with {BookedSignedEur=exact,ExactInLedger=true,
-                        AdditionalDebitCeilingEur=0m,EvidenceSha256=proof.SourceSha256};
-                    continue;
-                }
-                // The closed fragment retains its posted cash. A later exact
-                // amount can bound its unpaid amount without rewriting fills.
-                windows[key]=window with {AdditionalDebitCeilingEur=Math.Max(0m,-delta),
-                    EvidenceSha256=proof.SourceSha256};
+                windows[key]=window with {BookedSignedEur=exact,ExactInLedger=true,
+                    AdditionalDebitCeilingEur=0m,EvidenceSha256=proof.SourceSha256};
                 continue;
             }
             // The cap refers to total signed financing for this window. Any
@@ -129,7 +126,7 @@ internal sealed class NativePortfolioFunding
     {
         var active=windows.Single(x=>x.Key.PositionId==id&&x.Value.ClosedAt is null);
         var w=active.Value;
-        if(w.ExactInLedger)windows.Remove(active.Key);
+        if(at<=w.FromExclusive && w.ExactInLedger)windows.Remove(active.Key);
         else windows[active.Key]=w with {ClosedAt=at};
         decimal remaining=w.Units-closedUnits;
         if(remaining>0m)Open(id,w.Symbol,w.Side,remaining,at);
