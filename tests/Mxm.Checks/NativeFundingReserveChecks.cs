@@ -147,8 +147,8 @@ internal static class NativeFundingReserveChecks
         var repeated=Step(Observation(7,100.95m,offer:null) with {FundingEvidence=new[]{proof}});
         check(repeated.ModelBook.CashEur==settled.ModelBook.CashEur &&
             engine.OriginalModelEvents.Count(x=>x.Kind=="CLOSED_FUNDING_SETTLEMENT")==1 &&
-            engine.OriginalModelEvents.Single(x=>x.Kind=="CLOSE_FILL")==original &&
-            engine.CompleteModelTrips.Single()==episode,
+            JsonSerializer.Serialize(engine.OriginalModelEvents.Single(x=>x.Kind=="CLOSE_FILL"))==JsonSerializer.Serialize(original) &&
+            JsonSerializer.Serialize(engine.CompleteModelTrips.Single())==JsonSerializer.Serialize(episode),
             "Repeated proof after checkpoint neither double books nor rewrites original close or episode");
         var before=engine.Checkpoint();
         try
