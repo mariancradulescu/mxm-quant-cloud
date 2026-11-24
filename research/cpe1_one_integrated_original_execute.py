@@ -54,6 +54,21 @@ def recover_original_contract_swap(tape=None):
         # the original BDP1 economic source tariff observation.
         stamp=1793577600000
         if expected[symbol]!=stamp: continue
+        # BDP1 contract_snapshot historically omitted swapRollover3Days
+        # (and the V32 tape does not carry weekend/skip). Restore all supported
+        # funding fields from the authenticated protobuf, not from defaults.
+        # Do not mutate the shared adapter or any closed study's inputs.
+        if tape is not None:
+            terms=next(m["Terms"] for m in tape["Markets"] if m["Symbol"]==symbol)
+            mapping={"SwapPeriodHours":"swapPeriod","SwapTimeUtcMinute":"swapTime",
+                     "SwapCalculationType":"swapCalculationType","PipPosition":"pipPosition",
+                     "TripleSwapWeekday":"swapRollover3Days","LongSwap":"swapLong",
+                     "ShortSwap":"swapShort"}
+            for key,field in mapping.items():
+                raw=getattr(contract,field) if contract.HasField(field) else None
+                before=terms.get(key)
+                need(before is None or before==raw,"BDP1_EXISTING_TARIFF_FIELD_MISMATCH_"+symbol+"_"+key)
+                terms[key]=raw
         weekend=bool(contract.chargeSwapAtWeekends) if contract.HasField(
             "chargeSwapAtWeekends") else None
         skip=int(contract.skipSWAPPeriods) if contract.HasField(
