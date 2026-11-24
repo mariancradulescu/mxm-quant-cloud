@@ -479,7 +479,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
                     q.Ask-q.Bid+2m*request.SlippagePerSide)*request.Units*q.EurDebit);
                 var entry=px;
                 plans[request.PositionId]=p with {OpenAt=t,Entry=entry,
-                    Units=request.Units,RiskEur=plannedFill?.Thesis?.StressedRiskAtFillEur??risk,Extreme=entry,
+                    Units=request.Units,RiskEur=Cpe1&&plannedFill is not null?
+                        plannedFill.InitialRiskEur:plannedFill?.Thesis?.StressedRiskAtFillEur??risk,Extreme=entry,
                     Stop=p.Integrated?.Stop??entry-request.Side*1.5m*p.Atr,LastObservedAt=t,
                     Integrated=plannedFill??p.Integrated,
                     EconomicEntry=Cpe1 ? new NativeJointOpportunityEntry(request.PositionId,
