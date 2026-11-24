@@ -18,11 +18,17 @@ public sealed record Ucp1MarketFrame(
 {
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public NativeBarContext? ClosedBars { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public NativeFundingOfferEvidence[]? FundingOffers { get; init; }
 }
 public sealed record Ucp1BrokerFrame(BrokerIdentitySnapshot Identity,
     decimal? AccountCashEur,string AccountType);
 public sealed record Ucp1Frame(long At,Ucp1MarketFrame[] Markets,
-    Ucp1BrokerFrame? Broker=null,decimal? IntermarketBreadth=null);
+    Ucp1BrokerFrame? Broker=null,decimal? IntermarketBreadth=null)
+{
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public NativeAccruedFundingEvidence[]? FundingEvidence { get; init; }
+}
 public sealed record Ucp1DecisionSignal(string Symbol,string Family,int Side,
     decimal Atr,decimal Equilibrium,decimal ExpectedMove,long LastCompletedM5At);
 public sealed record Ucp1Episode(string PositionId,string Symbol,string Family,
@@ -42,6 +48,8 @@ public sealed record Ucp1CurvePoint(long At,decimal CashEur,decimal? EquityEur,
 {
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public decimal? PlannedAggregateRiskEur { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public NativeFundingCapital? FundingCapital { get; init; }
 }
 public sealed record Ucp1Checkpoint(string Version,string Policy,string Session,
     string BrokerSession,string BrokerBinding,Dictionary<string,Ucp1Plan> Plans,
@@ -72,6 +80,8 @@ public sealed record Ucp1Checkpoint(string Version,string Policy,string Session,
     // CPE1 only: persistent UNKNOWN historical swap liability, not zero debt.
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
     public bool Cpe1UnreconciledFunding { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public NativeFundingCheckpoint? AccruedFunding { get; init; }
 }
 public sealed record Scp1ChoiceReceipt(long At,string Symbol,string Family,int Side,
     decimal? ConditionalExpectedNetEur,decimal? AdverseLowerNetEur,
@@ -92,7 +102,11 @@ public sealed record Ucp1Plan(string Id,string Symbol,string Family,int Side,
 public sealed record Ucp1FrameResult(string Policy,long At,
     LedgerSummary ModelBook,int Proposed,int Admitted,int OpenFills,
     int CloseFills,int Pending,int Held,string BrokerStatus,
-    string ModelEventChain,bool OrdersSubmitted=false,bool CloudActivated=false);
+    string ModelEventChain,bool OrdersSubmitted=false,bool CloudActivated=false)
+{
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public NativeFundingCapital? FundingCapital { get; init; }
+}
 
 public static class Ucp1CausalSignals
 {
@@ -179,6 +193,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
     readonly List<Ucp1Episode> trips=new();
     readonly List<Ucp1CurvePoint> curve=new();
     readonly bool researchFork;
+    readonly NativePortfolioFunding? fundingReserves;
     bool cpe1UnreconciledFunding;
     long previousClock=-1,seq;
     int proposed,admitted,openFills,expiredOpens,expiredCloses,
@@ -186,7 +201,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
     string lastBrokerEvidence="NO_BROKER_FACT_REPLAY_ONLY";
     public NativeUnifiedPortfolioEngine(string policy,string brokerBinding="",
         Scp1ScoreModel? scoredModel=null,NativeCompleteModels? models=null,NativeCompleteProbe? probe=null,
-        NativeStructuralModels? closedContextModels=null, NativeFundedActionModel? actionModel=null)
+        NativeStructuralModels? closedContextModels=null, NativeFundedActionModel? actionModel=null,
+        bool reserveAccruedFunding=false)
     {
         if(policy is not ("JOINT" or "TRANSITION_ONLY" or "REPAIR_ONLY" or
                           "LONG" or "SHORT" or "CASH" or
@@ -200,6 +216,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
            !NativeIntegratedEconomicPolicy.IsPolicy(policy))
             throw new ArgumentException("UCP1_UNDECLARED_COMPLETE_POLICY");
         this.policy=policy;
+        if(reserveAccruedFunding&&!Cpe1)throw new ArgumentException("FUNDING_RESERVES_REQUIRE_CPE1_LIFECYCLE");
+        if(reserveAccruedFunding)fundingReserves=new();
         completeModels=models;
         completeProbe=probe;
         structuralModels=closedContextModels;
@@ -222,6 +240,11 @@ public sealed partial class NativeUnifiedPortfolioEngine
         researchFork=s.ResearchFork;
         if(s.Version!=Version)throw new ArgumentException("UCP1_CHECKPOINT_VERSION");
         policy=s.Policy;
+        if(s.AccruedFunding is not null)
+        {
+            if(!Cpe1)throw new ArgumentException("FUNDING_RESERVES_REQUIRE_CPE1_LIFECYCLE");
+            fundingReserves=new(s.AccruedFunding);
+        }
         completeModels=s.CompleteModels;
         completeProbe=s.CompleteProbe;
         structuralModels=s.StructuralModels;
@@ -236,6 +259,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
         scoreModel=s.Scp1Model;
         if(s.Scp1Choices is not null)scoredChoices.AddRange(s.Scp1Choices);
         model=NativeFundedSession.Restore(s.Session,"UCP1_MODEL_EUR300_"+policy);
+        fundingReserves?.ValidateHeldBinding(model.Ledger.PositionSnapshot());
         broker=NativeFundedSession.Restore(s.BrokerSession,s.BrokerBinding);
         foreach(var p in s.Plans)plans.Add(p.Key,p.Value);
         foreach(var p in s.LastSignalBar)lastSignalBar.Add(p.Key,p.Value);
@@ -291,7 +315,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
         { StructuralModels = structuralModels, FundedActionModel = fundedActionModel,
             FundedActions = fundedActions.Count == 0 ? null : fundedActions.ToArray(),
             ResearchFork = researchFork || asResearchFork,
-            Cpe1UnreconciledFunding=cpe1UnreconciledFunding });
+            Cpe1UnreconciledFunding=cpe1UnreconciledFunding,
+            AccruedFunding=fundingReserves?.Checkpoint() });
     static string Sha(string s)=>Convert.ToHexString(SHA256.HashData(
         Encoding.UTF8.GetBytes(s))).ToLowerInvariant();
     LedgerEvent Event(string kind,long at,string id="",string sym="",int side=0,
@@ -424,8 +449,10 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 ? m with { Quote=m.Quote with {
                     LiquidationSlippagePerSide=NativeIntegratedEconomicPolicy.Slippage(m.Quote.Bid,m.Quote.Ask,
                         e.TickSize,AdverseCompletePolicy) } } : m).ToArray() };
-        ReadBroker(frame.Broker);
         long t=frame.At;
+        var fundingEvidence=frame.FundingEvidence??Array.Empty<NativeAccruedFundingEvidence>();
+        fundingReserves?.Validate(t,fundingEvidence);
+        ReadBroker(frame.Broker);
         var by=frame.Markets.ToDictionary(m=>m.Symbol,StringComparer.Ordinal);
         var quotes=frame.Markets.OrderBy(x=>x.Symbol,StringComparer.Ordinal)
             .Select(x=>x.Quote).ToArray();
@@ -439,7 +466,21 @@ public sealed partial class NativeUnifiedPortfolioEngine
         }
         // CPE1: book already-held financing at this observed clock BEFORE
         // revalidating any pending OPEN. Unknown funding cannot fund new risk.
-        if(Cpe1)
+        if(fundingReserves is not null)
+        {
+            fundingReserves.Observe(fundingEvidence,(window,delta,proof)=>
+                Apply(Event("FINANCING",t,window.PositionId,window.Symbol,window.Side,
+                    window.Units,reason:"SUPPORTED_ACCRUED_FUNDING_MODEL_SETTLEMENT",
+                    quotes:quotes,financing:delta) with {EvidenceHash=proof.SourceSha256,
+                        AvailableAt=proof.AvailableAt,CalibratedThrough=proof.ThroughInclusive,LatencyMs=0}));
+            foreach(var held in model.Ledger.PositionSnapshot())
+            {
+                var unknown=fundingReserves.IsOutstanding(held.Id);
+                plans[held.Id]=plans[held.Id] with {FinancingUnknown=unknown};
+                cpe1UnreconciledFunding|=unknown;
+            }
+        }
+        else if(Cpe1)
         {
             foreach(var held in model.Ledger.PositionSnapshot())
             {
@@ -470,7 +511,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
             decimal px=request.Side>0?q.Ask+request.SlippagePerSide:
                 q.Bid-request.SlippagePerSide;
             var plan=plans[request.PositionId];
-            var plannedFill=Cpe1?Cpe1RecheckFill(plan,request,model.Ledger.Summary(t),input,px):
+            var plannedFill=Cpe1?Cpe1RecheckFill(plan,request,model.Ledger.Summary(t),input,px,frame):
                 CoherentIntegrated?CoherentFill(plan,input,model.Ledger.Summary(t),px):null;
             if(plan.Integrated is not null && (Cpe1 ? plannedFill is null :
                 !CoherentIntegrated
@@ -506,6 +547,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
                         request.Side*request.Units*px,request.Units*q.MarginPerUnit,true)
                         { AdmissionProjectedRewardEur=p.Integrated!.InitialRewardEur,
                           AdmissionReservedRiskEur=p.Integrated!.InitialRiskEur } : p.EconomicEntry};
+                fundingReserves?.Open(request.PositionId,request.Symbol,request.Side,request.Units,t);
                 openFills++;
             }
             catch(InvalidOperationException e) when(e.Message is
@@ -568,6 +610,9 @@ public sealed partial class NativeUnifiedPortfolioEngine
                     Cpe1?2*300000L:NativeSimulatedCloseLifecycle.ModelCloseResponseWindowMs,
                     ownedModelLedger:Cpe1);
             if(!researchFork) facts.AddRange(verdict.AppliedFacts);
+            if(fundingReserves is not null)
+                foreach(var fact in verdict.AppliedFacts.Where(x=>x.Kind=="CLOSE_FILL"))
+                    fundingReserves.Close(held.Id,fact.Units,t);
             expiredCloses+=verdict.AppliedFacts.Count(x=>
                 x.Kind=="MODEL_CLOSE_INTENT_EXPIRED");
             closeRequests+=verdict.AppliedFacts.Count(x=>x.Kind=="REQUEST_CLOSE");

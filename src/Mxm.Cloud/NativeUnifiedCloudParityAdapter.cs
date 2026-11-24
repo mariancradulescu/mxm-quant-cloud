@@ -12,10 +12,12 @@ public sealed class NativeUnifiedCloudParityAdapter
     public NativeUnifiedCloudParityAdapter(string policy="JOINT",
         
         string brokerAccountBinding="",Scp1ScoreModel? scoreModel=null,NativeCompleteModels? models=null,
-        NativeStructuralModels? closedContextModels=null, NativeFundedActionModel? actionModel=null)
+        NativeStructuralModels? closedContextModels=null, NativeFundedActionModel? actionModel=null,
+        bool reserveAccruedFunding=false)
     {
         engine=new NativeUnifiedPortfolioEngine(policy,brokerAccountBinding,scoreModel,models,
-            closedContextModels:closedContextModels, actionModel:actionModel);
+            closedContextModels:closedContextModels, actionModel:actionModel,
+            reserveAccruedFunding:reserveAccruedFunding);
         if(NativeCompletePolicy.IsPolicy(policy)) residence=new NativeQuoteResidenceStream();
     }
     public Ucp1FrameResult Observe(Ucp1Frame frame)=>engine.Advance(residence?.Observe(frame)??frame);
