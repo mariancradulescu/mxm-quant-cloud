@@ -13,6 +13,7 @@ NativePerformanceScorecardChecks.Run(Check);
 NativeJointOpportunityEvidenceChecks.Run(Check);
 Cpe1IntegratedEconomicChecks.Run(Check);
 NativeFundingReserveChecks.Run(Check);
+NativeEurPortfolioChecks.Run(Check);
 Cpe1OwnedLedgerChecks.Run(Check);
 NativeSystemicOpportunityCensusChecks.Run(Check);
 Mvo1NativeChecks.Run(Check);

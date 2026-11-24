@@ -3,6 +3,8 @@ using System.Security.Cryptography;
 
 if(args is [var historyUseInput,var historyUseOutput,"--owner-source-history-use"])
     return OwnerSourceHistoryUse.Run(historyUseInput,historyUseOutput);
+if(args is [var officialEurInput,var officialEurOutput,"--owner-official-eur"])
+    return OwnerOfficialEur.Run(officialEurInput,officialEurOutput);
 
 if(args is [var auditSourceFile, var auditOriginalFile, var auditOutputFile, "--cpe1-funding-source-audit"])
     return Cpe1OriginalIntegratedRunner.AuditFundingSource(auditSourceFile,auditOriginalFile,auditOutputFile);

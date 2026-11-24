@@ -86,6 +86,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
         if(!cpe1History.TryGetValue(episode.Family,out var history))
             cpe1History.Add(episode.Family,history=new(fundingReserves is not null));
         history.Add(episode,reconciled.Evidence);
+        if(fundingReserves is not null)RememberEurOutcome(episode,reconciled);
     }
 
     static bool Cpe1Usable(Ucp1MarketFrame m,long at)
@@ -137,6 +138,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
     Ucp1FrameResult AdvanceCpe1(long at,Ucp1Frame frame,
         List<(Ucp1DecisionSignal Signal,Ucp1MarketFrame Frame)> options)
     {
+        if(OwnerEur)return AdvanceEur(at,frame,options);
         var book=model.Ledger.Summary(at);
         var financial=Cpe1FundingCapital(book,frame);
         var equity=financial is null?book.LiquidationEquityEur:financial.DemonstrableEquityEur;
@@ -191,7 +193,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
             // Causal evidence refers only to previously COMPLETED episodes,
             // never to still-Held future outcomes or this candidate's payoff.
             var history=cpe1History.GetValueOrDefault(signal.Family);
-            var lower=history?.LowerObservedGross();
+            var lower=fundingReserves is null?history?.LowerObservedGross():null;
+            NativeEurPayoff? netProjection=null;
             // One declared initial learning phase: use affordable minimum
             // trades until 20 uncensored whole episodes become observable.
             // Calibration trades are REAL modeled P/L, not free shadow labels.
@@ -208,12 +211,16 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 decimal fullRoundTripCost=Math.Max(0m,-
                     NativeExecutableEconomics.EstimateNet(q,q,signal.Side,
                         units,entered,liquidationSide,slip));
-                if(lower is not >0m || lower.Value*bracket.RiskEur-
-                    fullRoundTripCost-debit<=0m)
+                if(fundingReserves is not null)
+                    netProjection=EurPayoff(signal.Family,signal.Side,risk,fullRoundTripCost+debit);
+                bool superior=fundingReserves is null
+                    ?lower is >0m && lower.Value*bracket.RiskEur-fullRoundTripCost-debit>0m
+                    :netProjection is {GrossLowerEur:>0m,NetLowerEur:>0m};
+                if(!superior)
                 {Count("CPE1_WAIT_GROSS_OR_CASH_LOWER_NOT_POSITIVE");continue;}
             }
-            decimal score=Cpe1Economic && lower.HasValue?
-                lower.Value*bracket.RiskEur-debit:reward/risk;
+            decimal score=netProjection?.NetLowerEur??(Cpe1Economic && lower.HasValue?
+                lower.Value*bracket.RiskEur-debit:reward/risk);
             candidates.Add((signal,market,
                 new NativeIntegratedPlan(levels.Stop,levels.Target,
                     risk,reward)
@@ -256,6 +263,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
         var q=observed.Quote;
         if((fundingReserves is null&&cpe1UnreconciledFunding) || q.At-intent.At>300000L)
             return null; // No late fill after a missing M5 source clock.
+        if(OwnerEur && EurMargin(observed,plan.Side,plan.Units,q.At) is null)return null;
         var carriedDebit=fundingReserves is null?0m:
             NativePortfolioFunding.OfferDebit(observed,plan.Side,plan.Units,q.At);
         if(carriedDebit is not decimal debit)return null;
@@ -365,6 +373,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
         decimal displacement=side*(bars[^1].Close-bars[0].Close);
         if(displacement<0m && side*(bars[^1].Close-plan.Equilibrium)<=0m)
             return (plan,new("INTEGRATED_CPE1_M15_THESIS_INVALIDATION",position.Units));
+        if(fundingReserves is not null)
+            return (plan,ManageFundedTarget(plan,position,market,sidePrice,displacement));
         if(policy=="CPE1_SIMPLE")
         {
             if(side*(sidePrice-geometry.Target)>=0m)
