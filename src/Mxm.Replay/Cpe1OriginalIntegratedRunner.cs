@@ -44,12 +44,12 @@ internal static class Cpe1OriginalIntegratedRunner
             =>new(b.OpenAt,b.OpenAt+width,b.Open,b.High,b.Low,b.Close,b.TickVolume);
         public void Advance(long t)
         {
-            while(next5<M5Bars.Length && M5Bars[next5].OpenAt+M5<=t)
+            while(next5<M5Bars.Length && M5Bars[next5].OpenAt+M5<t)
             {
                 SeenM5.Add(Bar(M5Bars[next5++],M5));
                 if(SeenM5.Count>5)SeenM5.RemoveAt(0);
             }
-            while(next15<M15Bars.Length && M15Bars[next15].OpenAt+M15<=t)
+            while(next15<M15Bars.Length && M15Bars[next15].OpenAt+M15<t)
             {
                 SeenM15.Add(Bar(M15Bars[next15++],M15));
                 if(SeenM15.Count>3)SeenM15.RemoveAt(0);
