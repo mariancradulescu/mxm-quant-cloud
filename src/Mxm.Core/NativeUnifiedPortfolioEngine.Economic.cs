@@ -230,33 +230,9 @@ public sealed partial class NativeUnifiedPortfolioEngine
     Ucp1Plan Cpe1AccrueOrMarkFunding(Ucp1Plan plan,LedgerPosition held,
         Ucp1MarketFrame market,Ucp1Frame frame)
     {
-        var contract=market.Contract;
-        var q=market.Quote;
         long at=frame.At;
-        long day=86400000L;
-        bool intradayKnown=false;
-        if(contract.SwapPeriodHours==24 &&
-           contract.SwapTimeUtcMinute is int minute && minute>=0&&minute<1440)
-        {
-            long first=(held.EntryAt/day)*day+minute*60000L;
-            if(first<=held.EntryAt)first+=day;
-            intradayKnown=first>at;
-        }
-        decimal? accumulated=null;
-        if(intradayKnown)accumulated=0m;
-        else
-        {
-            try
-            {
-                accumulated=contract.OriginalBrokerAuthenticated?
-                    NativeBrokerContractCosts.SignedFinancing(contract,held.EntryAt,
-                        at,held.Side,held.Units,q.EurCredit,q.EurDebit):
-                    NativeBrokerContractCosts.SignedFinancingCurrentAlgo(contract,
-                        held.EntryAt,at,held.Side,held.Units,q.EurCredit,q.EurDebit);
-            }
-            catch(ArgumentException){accumulated=null;}
-            catch(InvalidOperationException){accumulated=null;}
-        }
+        decimal? accumulated=Cpe1ObservedFunding(market.Contract,market.Quote,
+            held.EntryAt,held.Side,held.Units,at);
         if(accumulated is not decimal known)
         {
             Count("CPE1_FINANCING_UNKNOWN_RISK_STILL_HELD");
@@ -272,6 +248,29 @@ public sealed partial class NativeUnifiedPortfolioEngine
         // Once ANY historical funding leg was unknown, that liability is
         // never silently restored by a later as-of quote or price update.
         return plan with {BookedFinancingEur=known};
+    }
+
+    internal static decimal? Cpe1ObservedFunding(NativeObservedContractTerms contract,
+        LedgerQuote quote,long entryAt,int side,decimal units,long at)
+    {
+        long day=86400000L;
+        if(contract.SwapPeriodHours==24 &&
+           contract.SwapTimeUtcMinute is int minute && minute>=0&&minute<1440)
+        {
+            long first=(entryAt/day)*day+minute*60000L;
+            if(first<=entryAt)first+=day;
+            if(first>at)return 0m;
+        }
+        try
+        {
+            return contract.OriginalBrokerAuthenticated?
+                NativeBrokerContractCosts.SignedFinancing(contract,entryAt,
+                    at,side,units,quote.EurCredit,quote.EurDebit):
+                NativeBrokerContractCosts.SignedFinancingCurrentAlgo(contract,
+                    entryAt,at,side,units,quote.EurCredit,quote.EurDebit);
+        }
+        catch(ArgumentException){return null;}
+        catch(InvalidOperationException){return null;}
     }
 
     (Ucp1Plan,NativeModelCloseInstruction?) Cpe1Manage(
