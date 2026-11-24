@@ -195,7 +195,7 @@ internal static class Cpe1OriginalIntegratedRunner
             // Per-episode claims REQUIRE original contract financing to have
             // been authenticated and every roll accounted. Censored positions
             // are NOT silently marked at a future hypothetical exit.
-            bool certifiedModelBook=flat&&financeKnown &&
+            bool completeConditionalModelBook=flat&&financeKnown &&
                 !summary.HistoryEvidenceIncomplete&&
                 summary.LiquidationEquityEur is not null;
             // Identical original Core events, replayed through the EXISTING
@@ -229,8 +229,8 @@ internal static class Cpe1OriginalIntegratedRunner
                             p.EconomicEntry.DecisionAt,
                             frozenSha)).ToArray(),
                     weeks.ToArray(),300m,
-                    certifiedModelBook?(decimal?)nominalNet:null,
-                    0m,certifiedModelBook,false,false)):null;
+                    completeConditionalModelBook?(decimal?)nominalNet:null,
+                    0m,completeConditionalModelBook,false,false)):null;
             var report=x.Engine.OriginalOutcomeReport(first,first+(last-first)/3,
                 first+2*(last-first)/3,last,Sha(payload.Tape.ProtocolSha256),false);
             return new {
@@ -238,8 +238,11 @@ internal static class Cpe1OriginalIntegratedRunner
                 SourceWeeks=weeks.Count,
                 ConditionalClosedGrossEur=gross,
                 ConditionalClosedNetBeforeUnknownFinancingEur=nominalNet,
-                FinanciallyKnownClosedNetEur=financeKnown?(decimal?)nominalNet:null,
-                NetPortfolioCertifiedEur=certifiedModelBook?(decimal?)nominalNet:null,
+                ClosedConditionalModelNetEurWhenFundingFieldsAvailable=financeKnown?
+                    (decimal?)nominalNet:null,
+                FullyClosedReconciledConditionalModelNetEur=completeConditionalModelBook?
+                    (decimal?)nominalNet:null,
+                HistoricalBrokerNetCertified=false,
                 Completed=trips.Length,
                 GrossWinnerCount=trips.Count(p=>p.GrossEur>0m),
                 ClosedUnknownFinancing=trips.Count(p=>p.EconomicEvidence?.ConditionalNetKnown!=true),
