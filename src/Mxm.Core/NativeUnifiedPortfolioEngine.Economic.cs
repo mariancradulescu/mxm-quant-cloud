@@ -403,7 +403,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
             side*(geometry.Target-sidePrice))*position.Units*q.EurCredit;
         decimal remainingLoss=Math.Max(0m,
             side*(sidePrice-geometry.Stop))*position.Units*q.EurDebit;
-        decimal futureExitCost=Fee(q,position.Units);
+        decimal futureExitCost=Fee(q,position.Units,-position.Side);
         var carriedDebit=fundingReserves is null?0m:
             NativePortfolioFunding.OfferDebit(market,side,position.Units,frame.At);
         if(carriedDebit is not decimal debit)return (plan,null);

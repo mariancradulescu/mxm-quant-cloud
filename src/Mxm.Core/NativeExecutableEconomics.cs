@@ -18,7 +18,7 @@ public static class NativeExecutableEconomics
         decimal exit = ExitPrice(exitSide, side, exitSlippage);
         decimal movement = side * units * (exit - entry);
         return NativeFundedLedger.ConvertQuote(exitQuote, movement) -
-            NativeFundedLedger.Fee(entryQuote, units) - NativeFundedLedger.Fee(exitQuote, units);
+            NativeFundedLedger.Fee(entryQuote,units,side)-NativeFundedLedger.Fee(exitQuote,units,-side);
     }
 
     public static NativeExecutableBracket Bracket(LedgerQuote quote, int side, decimal units,

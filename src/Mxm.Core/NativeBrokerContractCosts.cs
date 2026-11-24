@@ -148,6 +148,10 @@ public static class NativeBrokerContractCosts
         long? holdingOpenedAt=null,int? side=null,bool executionIsBuy=true)
         =>Price(c,q,holdingOpenedAt,side,executionIsBuy,true);
 
+    public static NativeCostAttribution QuoteBothDirections(
+        NativeObservedContractTerms c,NativeMarketCostContext q)
+        =>Price(c,q,null,null,true,true,bothDirections:true);
+
     // cTrader Algo Symbol fields have NOT been cryptographically authenticated
     // against the original Pepperstone Open API account contract. Never set the
     // original-account flag to true just to obtain a conditional research price.
@@ -167,7 +171,7 @@ public static class NativeBrokerContractCosts
 
     private static NativeCostAttribution Price(NativeObservedContractTerms c,
         NativeMarketCostContext q,long? holdingOpenedAt,int? side,
-        bool executionIsBuy,bool requireOriginalBroker)
+        bool executionIsBuy,bool requireOriginalBroker,bool bothDirections=false)
     {
         Validate(c,q.Units,requireOriginalBroker);
         if(q.AtUtcMs<=0 || q.Bid<=0 || q.Ask<q.Bid ||
@@ -196,6 +200,8 @@ public static class NativeBrokerContractCosts
         decimal perUnit=CommissionPerUnit(c,executablePrice,q.QuoteDebitToEur,q.UsdToEur);
         var ledgerQuote=new LedgerQuote(c.Symbol,q.AtUtcMs,q.Bid,q.Ask,
             credit,debit,perUnit,floor,q.MarginRequirementEur/q.Units);
+        if(bothDirections && (c.CommissionType is 1 or 3) && c.PreciseRateWire>0)
+            ledgerQuote=ledgerQuote with {SellFeePerUnit=CommissionPerUnit(c,q.Bid,q.QuoteDebitToEur,q.UsdToEur)};
         decimal fee=Math.Max(perUnit*q.Units,floor);
         decimal spread=(q.Ask-q.Bid)*q.Units*((credit+debit)/2m);
         decimal? funding=null;
@@ -235,9 +241,8 @@ public static class NativeBrokerContractCosts
         if(c.SwapPeriodHours!=24 || c.SwapTimeUtcMinute is not int minute ||
            minute<0 || minute>=1440 || c.ChargeSwapAtWeekends is not bool weekends)
             return null;
-        long day=86400000L, chargeMinute=minute*60000L;
-        long first=(openedAt/day)*day+chargeMinute;
-        if(first<=openedAt)first+=day;
+        long day=86400000L;
+        long first=NextScheduledSwapCharge(c,openedAt)!.Value;
         if(first>closedAt)return 0m; // known intraday no rollover charge
         if(c.SwapCalculationType!=0 || c.PipPosition is not int pip ||
            c.TripleSwapWeekday is not int triple || triple<1 || triple>7 ||
@@ -260,6 +265,18 @@ public static class NativeBrokerContractCosts
             signed+=charge*(charge>=0?quoteCreditToEur:quoteDebitToEur);
         }
         return signed;
+    }
+
+    public static long? NextScheduledSwapCharge(NativeObservedContractTerms terms,long fromExclusive)
+    {
+        if(fromExclusive<0||terms.SwapPeriodHours is not int hours||hours<=0||24%hours!=0||
+            terms.SwapTimeUtcMinute is not (>=0 and <1440))return null;
+        long interval=hours*3_600_000L;
+        long dayStart=fromExclusive/86_400_000L*86_400_000L;
+        long first=dayStart+terms.SwapTimeUtcMinute.Value*60_000L;
+        if(first>fromExclusive)return first;
+        long next=first+((fromExclusive-first)/interval+1)*interval;
+        return next<dayStart+86_400_000L?next:first+86_400_000L;
     }
 
     // Reuse the EXISTING native money ledger's FINANCING event; research facts

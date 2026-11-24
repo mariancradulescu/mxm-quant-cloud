@@ -11,7 +11,8 @@ internal static class OwnerOfficialEur
         Dictionary<string,long[][]> Bars,int? TradingMode,bool? ShortAllowed,long? VerifiedManagementClock,
         string ContractSha256,long? LastContractChange,bool? AccountSwapFree,long? LeverageId);
     internal sealed record Clock(long At,Market[] Markets);
-    internal sealed record Input(Clock[] Frames,long StreamStart,long StreamEnd,bool ContinuousSessionObserved);
+    internal sealed record Input(Clock[] Frames,long StreamStart,long StreamEnd,bool ContinuousSessionObserved,
+        string? FirstCalibrationCheckpoint=null);
 
     static NativeClosedMarketBar[] Bars(Market m,string period,long width,long at)
         =>(m.Bars.GetValueOrDefault(period)??Array.Empty<long[]>()).Select(r=>
@@ -25,13 +26,8 @@ internal static class OwnerOfficialEur
     // period in hours. No source rate is used when a charge can occur.
     internal static bool NoScheduledCharge(Market m,long from,long through)
     {
-        if(m.AccountSwapFree is not false || m.Contract.SwapPeriodHours is not int hours ||
-            hours<=0||24%hours!=0||m.Contract.SwapTimeUtcMinute is not (>=0 and <1440))return false;
-        long width=hours*3_600_000L;
-        long phase=(m.Contract.SwapTimeUtcMinute!.Value*60_000L)%width;
-        long next=(from-phase)/width*width+phase;
-        if(next<=from)next+=width;
-        return next>through;
+        return m.AccountSwapFree is false&&
+            NativeBrokerContractCosts.NextScheduledSwapCharge(m.Contract,from) is long next&&next>through;
     }
 
     static Ucp1MarketFrame? MarketFrame(Input input,Market market,long at)
@@ -51,7 +47,7 @@ internal static class OwnerOfficialEur
             var usd=Route("USD")?.DebitToEur??0m;
             var minimumFee=market.MinimumFeeAsset is {Length:>0} f?Route(f)?.DebitToEur:null;
             decimal marginPerUnit=margins.Max(x=>x.MarginEur/x.Units);
-            var quote=NativeBrokerContractCosts.Quote(c,new(at,market.Bid,market.Ask,conversion.CreditToEur,
+            var quote=NativeBrokerContractCosts.QuoteBothDirections(c,new(at,market.Bid,market.Ask,conversion.CreditToEur,
                 conversion.DebitToEur,usd,minimumFee,marginPerUnit*c.MinimumUnits,c.MinimumUnits,0m));
             var active=margins.Where(m=>market.TradingMode==0 && (m.Side>0||market.ShortAllowed is true)).ToArray();
             var offers=input.ContinuousSessionObserved && at>=input.StreamStart && market.VerifiedManagementClock is long next &&
@@ -95,6 +91,13 @@ internal static class OwnerOfficialEur
     {
         var engine=new NativeUnifiedPortfolioEngine(policy);
         var parity=new Mxm.Cloud.NativeUnifiedCloudParityAdapter(policy);
+        if(policy==NativeUnifiedPortfolioEngine.EurRank&&input.FirstCalibrationCheckpoint is { } checkpoint)
+        {
+            engine.CalibrateEurRankFrom(NativeUnifiedPortfolioEngine.Restore(checkpoint));
+            var reference=new Mxm.Cloud.NativeUnifiedCloudParityAdapter();
+            reference.Restore(checkpoint);
+            parity.CalibrateEurRankFrom(reference);
+        }
         var curve=new List<Ucp1FrameResult>();
         for(int i=0;i<input.Frames.Length;i++)
         {

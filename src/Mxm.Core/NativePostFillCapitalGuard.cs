@@ -49,9 +49,8 @@ public static class NativePostFillCapitalGuard
                x.ReservedStopRiskEur<0m))
             throw new ArgumentException("POST_FILL_DUPLICATE_OR_UNVERIFIED_RESERVE");
         decimal equity=currentMarkedEquityEur??0m;
-        decimal entryFee=Math.Max(currentQuote.ExitFeeFloor,
-            currentQuote.ExitFeePerUnit*proposal[0].Units);
-        decimal exitFee=entryFee;
+        decimal entryFee=NativeFundedLedger.Fee(currentQuote,proposal[0].Units,side);
+        decimal exitFee=NativeFundedLedger.Fee(currentQuote,proposal[0].Units,-side);
         decimal entry=NativeExecutableEconomics.EntryPrice(currentQuote,side,entrySlippage);
         decimal exit=NativeExecutableEconomics.ExitPrice(
             side>0?currentQuote.Bid:currentQuote.Ask,side,entrySlippage);

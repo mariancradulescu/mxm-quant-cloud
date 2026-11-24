@@ -30,8 +30,6 @@ public sealed record Ucp1Frame(long At,Ucp1MarketFrame[] Markets,
 {
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public NativeAccruedFundingEvidence[]? FundingEvidence { get; init; }
-    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
-    public bool EurCalibration { get; init; }
 }
 public sealed record Ucp1DecisionSignal(string Symbol,string Family,int Side,
     decimal Atr,decimal Equilibrium,decimal ExpectedMove,long LastCompletedM5At);
@@ -88,6 +86,8 @@ public sealed record Ucp1Checkpoint(string Version,string Policy,string Session,
     public bool Cpe1UnreconciledFunding { get; init; }
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public NativeFundingCheckpoint? AccruedFunding { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public NativeEurCalibration? EurCalibration { get; init; }
 }
 public sealed record Scp1ChoiceReceipt(long At,string Symbol,string Family,int Side,
     decimal? ConditionalExpectedNetEur,decimal? AdverseLowerNetEur,
@@ -279,6 +279,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
         foreach(var p in s.Reasons)reasons.Add(p.Key,p.Value);
         facts.AddRange(s.Events);trips.AddRange(s.Trips);curve.AddRange(s.Curve);
         cpe1UnreconciledFunding=s.Cpe1UnreconciledFunding;
+        if(s.EurCalibration is { } calibration)RestoreEurCalibration(calibration);
         previousClock=s.LastAt;seq=s.Sequence;
         if(Cpe1)
             foreach(var trip in trips)RememberCpe1Episode(trip,previousClock);
@@ -335,7 +336,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
             FundedActions = fundedActions.Count == 0 ? null : fundedActions.ToArray(),
             ResearchFork = researchFork || asResearchFork,
             Cpe1UnreconciledFunding=cpe1UnreconciledFunding,
-            AccruedFunding=fundingReserves?.Checkpoint() });
+            AccruedFunding=fundingReserves?.Checkpoint(), EurCalibration=eurCalibration });
     static string Sha(string s)=>Convert.ToHexString(SHA256.HashData(
         Encoding.UTF8.GetBytes(s))).ToLowerInvariant();
     LedgerEvent Event(string kind,long at,string id="",string sym="",int side=0,
@@ -357,8 +358,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
         else model.ApplyResearchFacts(new[]{e});
         if(!researchFork) facts.Add(e);
     }
-    static decimal Fee(LedgerQuote q,decimal units)
-        =>Math.Max(q.ExitFeePerUnit*units,q.ExitFeeFloor);
+    static decimal Fee(LedgerQuote q,decimal units,int executionSide=1)
+        =>NativeFundedLedger.Fee(q,units,executionSide);
     static string Week(long at)
     {
         var d=DateTimeOffset.FromUnixTimeMilliseconds(at).UtcDateTime;
@@ -456,6 +457,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
         NativeFundedActionProbe? actionProbe = null)
     {
         if(frame is null||frame.At<=previousClock||frame.At<=0||
+           frame.At<=(eurCalibration?.ObservationThrough??-1L)||
            frame.Markets is null||frame.Markets.Select(m=>m.Symbol)
                .Distinct(StringComparer.Ordinal).Count()!=frame.Markets.Length||
            frame.Markets.Any(m=>m.Symbol!=m.Quote.Symbol||
@@ -554,7 +556,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
             try
             {
                 Apply(Event("OPEN_FILL",t,request.PositionId,request.Symbol,
-                    request.Side,request.Units,px,Fee(q,request.Units),
+                    request.Side,request.Units,px,Fee(q,request.Units,request.Side),
                     q.MarginPerUnit,request.SlippagePerSide,
                     "LATER_AUTHENTIC_QUOTE_CONDITIONAL_MODEL_FILL"));
                 var p=plans[request.PositionId];
