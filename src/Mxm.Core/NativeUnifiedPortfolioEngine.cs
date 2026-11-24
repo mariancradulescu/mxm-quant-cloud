@@ -434,6 +434,19 @@ public sealed partial class NativeUnifiedPortfolioEngine
             sourceUnknownClocks++;
             Count("UNKNOWN_HELD_LIQUIDATION_EQUITY_NO_NEW_ENTRY");
         }
+        // CPE1: book already-held financing at this observed clock BEFORE
+        // revalidating any pending OPEN. Unknown funding cannot fund new risk.
+        if(Cpe1)
+        {
+            foreach(var held in model.Ledger.PositionSnapshot())
+            {
+                if(held.EntryAt>=t || !by.TryGetValue(held.Symbol,out var observed))
+                    continue;
+                var financed=Cpe1AccrueOrMarkFunding(plans[held.Id],held,observed,frame);
+                plans[held.Id]=financed;
+                if(financed.FinancingUnknown)cpe1UnreconciledFunding=true;
+            }
+        }
         // Handle outstanding OPEN decisions first. A REQUEST is NOT a fill.
         foreach(var request in model.Ledger.PendingSnapshot()
             .Where(x=>x.Kind=="REQUEST_OPEN")
@@ -485,9 +498,11 @@ public sealed partial class NativeUnifiedPortfolioEngine
                     Integrated=plannedFill??p.Integrated,
                     EconomicEntry=Cpe1 ? new NativeJointOpportunityEntry(request.PositionId,
                         request.At,t,request.EvidenceHash,
-                        p.Family,1,p.Integrated!.InitialRewardEur,
-                        p.Integrated!.InitialRiskEur,
-                        request.Side*request.Units*px,request.Units*q.MarginPerUnit,true) : p.EconomicEntry};
+                        p.Family,1,plannedFill!.InitialRewardEur,
+                        plannedFill!.InitialRiskEur,
+                        request.Side*request.Units*px,request.Units*q.MarginPerUnit,true)
+                        { AdmissionProjectedRewardEur=p.Integrated!.InitialRewardEur,
+                          AdmissionReservedRiskEur=p.Integrated!.InitialRiskEur } : p.EconomicEntry};
                 openFills++;
             }
             catch(InvalidOperationException e) when(e.Message is
@@ -513,8 +528,12 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 throw new InvalidOperationException("UCP1_HELD_PLAN_MISSING");
             by.TryGetValue(held.Symbol,out var input);
             var q=input?.Quote;
-            if(t-p.LastObservedAt>(Cpe1?300000L:CoherentIntegrated?NativeIntegratedLifecycle.IntervalMs:60_000L) ||
-               (p.Integrated is not null && input?.Integrated?.Path?.Complete!=true))
+            // CPE1's witnessed M5 stream has no legacy Integrated.Path.
+            // Missing quotes or elapsed M5 clocks are actual gaps, not the
+            // absence of a path that the frozen CPE1 input never requires.
+            if(Cpe1 ? (q is null || t-p.LastObservedAt>300000L) :
+               (t-p.LastObservedAt>(CoherentIntegrated?NativeIntegratedLifecycle.IntervalMs:60_000L) ||
+                (p.Integrated is not null && input?.Integrated?.Path?.Complete!=true)))
             {
                 p=p with {CrossedUnknownHistory=true};
                 gapExposures++;
@@ -527,11 +546,6 @@ public sealed partial class NativeUnifiedPortfolioEngine
                     direction=m15[1].Close-m15[0].Close;
             }
             NativeModelCloseInstruction? instruction=null;
-            if(Cpe1 && input is not null)
-            {
-                p=Cpe1AccrueOrMarkFunding(p,held,input,frame);
-                if(p.FinancingUnknown)cpe1UnreconciledFunding=true;
-            }
             if(p.Integrated is not null && input is not null)
             {
                 (p,instruction)=Cpe1?Cpe1Manage(p,held,input,frame):
@@ -553,6 +567,14 @@ public sealed partial class NativeUnifiedPortfolioEngine
             expiredCloses+=verdict.AppliedFacts.Count(x=>
                 x.Kind=="MODEL_CLOSE_INTENT_EXPIRED");
             closeRequests+=verdict.AppliedFacts.Count(x=>x.Kind=="REQUEST_CLOSE");
+            if(Cpe1)
+            {
+                foreach(var fact in verdict.AppliedFacts.Where(x=>x.Kind is "REQUEST_CLOSE" or "CLOSE_FILL"))
+                    Count("CPE1_"+(fact.Units<held.Units?"REDUCE_":"CLOSE_")+fact.Kind);
+                if(q is not null && instruction is null &&
+                   !verdict.AppliedFacts.Any(x=>x.Kind is "REQUEST_CLOSE" or "CLOSE_FILL"))
+                    Count("CPE1_OBSERVED_HOLD_NO_NEW_CLOSE_EVENT");
+            }
             if(q is not null)
             {
                 decimal liquidation=NativeExecutableEconomics.ExitPrice(held.Side>0?q.Bid:q.Ask,

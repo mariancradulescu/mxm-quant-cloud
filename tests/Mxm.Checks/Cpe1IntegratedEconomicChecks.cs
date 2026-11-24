@@ -58,11 +58,42 @@ internal static class Cpe1IntegratedEconomicChecks
             "CPE1 one real funded episode contains projected EUR reward and loss before fill");
         return e;
     }
+    static Ucp1MarketFrame Named(Ucp1MarketFrame market,string symbol,decimal? margin=null)
+        =>market with {Symbol=symbol,Contract=market.Contract with {Symbol=symbol},
+            Quote=market.Quote with {Symbol=symbol,MarginPerUnit=margin??market.Quote.MarginPerUnit}};
+
+    static void SharedCapital(long origin,Action<bool,string> check,bool rejectSecondFill)
+    {
+        var e=new NativeUnifiedPortfolioEngine("CPE1_ECONOMIC");
+        var at=origin+M5;
+        e.Advance(Frame(origin,at,100.95m,false));
+        var second=Frame(origin,at+M5,100.95m,false);
+        e.Advance(second with {Markets=new[]{second.Markets[0],Named(second.Markets[0],"GBPUSD")}});
+        check(e.ModelSummary.OpenPositions==1&&e.ModelSummary.PendingIntents==1,
+            "CPE1 shared EUR300 holds EURUSD and reserves concurrent GBPUSD OPEN");
+        var third=Frame(origin,at+2*M5,100.95m,false);
+        e.Advance(third with {Markets=new[]{third.Markets[0],
+            Named(third.Markets[0],"GBPUSD",rejectSecondFill?250m:null)}});
+        check(e.ModelSummary.OpenPositions==(rejectSecondFill?1:2)&&e.ModelSummary.PendingIntents==0,
+            rejectSecondFill?"CPE1 repriced GBPUSD fill rejected against shared Held+Pending equity":
+            "CPE1 EURUSD and GBPUSD concurrently funded by one ledger");
+    }
+
     public static void Run(Action<bool,string> check)
     {
         long baseAt=new DateTimeOffset(2026,11,23,14,0,0,
             TimeSpan.Zero).ToUnixTimeMilliseconds();
         var normal=Cycle(baseAt,false,check);
+        var settled=normal.CompleteModelTrips.Single();
+        check(!settled.CrossedUnknownHistory &&
+            settled.EconomicEvidence is {MarkCoverageComplete:true},
+            "CPE1 continuous M5 evidence is not falsely censored by absent legacy path");
+        check(settled.EconomicEntry is {AdmissionReservedRiskEur:>0m,AdmissionProjectedRewardEur:>0m} &&
+            settled.EconomicEntry.ReservedRiskEur==settled.EntryRiskEur &&
+            settled.EconomicEvidence!.ReservedRiskEur==settled.EntryRiskEur,
+            "CPE1 admission geometry preserved and R uses revalidated fill risk");
+        SharedCapital(baseAt,check,false);
+        SharedCapital(baseAt,check,true);
         check(normal.CompleteModelTrips.Single().EconomicEvidence!.ConditionalNetKnown,
             "CPE1 same-day known original swap schedule and finance produce conditional net");
         var cash=new NativeUnifiedPortfolioEngine("CPE1_CASH");
