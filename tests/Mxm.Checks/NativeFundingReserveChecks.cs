@@ -112,6 +112,98 @@ internal static class NativeFundingReserveChecks
             "Repeated cumulative funding evidence and restore yield one settled debit and exact ledger reconciliation");
     }
 
+    static void LateExactSettlement(Action<bool,string> check,decimal amount)
+    {
+        var engine=Engine();
+        var adapter=new NativeUnifiedCloudParityAdapter("CPE1_ECONOMIC",reserveAccruedFunding:true);
+        Ucp1FrameResult Step(Ucp1Frame frame)
+        {
+            var result=engine.Advance(frame);
+            check(result==adapter.Observe(frame) &&
+                JsonSerializer.Serialize(engine.OriginalModelEvents)==JsonSerializer.Serialize(adapter.ModelFacts),
+                "Late funding Core/Cloud adapter parity");
+            return result;
+        }
+        Step(Observation(1,100.95m));
+        Step(Observation(2,100.95m));
+        var fill=engine.OriginalModelEvents.Single(x=>x.Kind=="OPEN_FILL");
+        Step(Observation(3,100.11m));
+        var flat=Step(Observation(4,100.10m));
+        var original=engine.OriginalModelEvents.Single(x=>x.Kind=="CLOSE_FILL");
+        var episode=engine.CompleteModelTrips.Single();
+        check(flat.FundingCapital?.OutstandingClosedWindows==1,"Late funding obligation survives close");
+        engine=NativeUnifiedPortfolioEngine.Restore(engine.Checkpoint());
+        adapter.Restore(adapter.Checkpoint());
+        var proof=Evidence(fill,4,6,exact:amount);
+        var settled=Step(Observation(6,100.95m,offer:null) with {FundingEvidence=new[]{proof}});
+        check(settled.FundingCapital is {OutstandingClosedWindows:0,OutstandingDebitCeilingEur:0m} &&
+            settled.FundingCapital.PostedFinancingEur==amount &&
+            settled.FundingCapital.ReconciledClosedModelNetEur==flat.ModelBook.ClosedNetEur+amount &&
+            settled.ModelBook.CashEur==flat.ModelBook.CashEur+amount &&
+            settled.ModelBook.CompleteRoundTrips==flat.ModelBook.CompleteRoundTrips,
+            "Late exact debit or credit settles the obligation once in the common cash ledger");
+        engine=NativeUnifiedPortfolioEngine.Restore(engine.Checkpoint());
+        adapter.Restore(adapter.Checkpoint());
+        var repeated=Step(Observation(7,100.95m,offer:null) with {FundingEvidence=new[]{proof}});
+        check(repeated.ModelBook.CashEur==settled.ModelBook.CashEur &&
+            engine.OriginalModelEvents.Count(x=>x.Kind=="CLOSED_FUNDING_SETTLEMENT")==1 &&
+            JsonSerializer.Serialize(engine.OriginalModelEvents.Single(x=>x.Kind=="CLOSE_FILL"))==JsonSerializer.Serialize(original) &&
+            JsonSerializer.Serialize(engine.CompleteModelTrips.Single())==JsonSerializer.Serialize(episode),
+            "Repeated proof after checkpoint neither double books nor rewrites original close or episode");
+        var before=engine.Checkpoint();
+        try
+        {
+            engine.Advance(Observation(8,100.95m,offer:null) with
+                {FundingEvidence=new[]{proof with {ExactSignedEur=amount+1m}}});
+            check(false,"Conflicting settled funding evidence must fail");
+        }
+        catch(ArgumentException)
+        {
+            check(engine.Checkpoint()==before,"Conflicting settled evidence leaves state unchanged");
+        }
+        var audit=new NativeFundedLedger();
+        foreach(var fact in engine.OriginalModelEvents)
+        {
+            audit.Apply(fact);
+            audit=NativeFundedLedger.Restore(audit.Checkpoint());
+            audit.Apply(fact);
+        }
+        var adjustment=audit.ClosedFundingSettlements().Single();
+        var posted=engine.OriginalModelEvents.Single(x=>x.Kind=="CLOSED_FUNDING_SETTLEMENT");
+        foreach(var forged in new[]{posted with {EventId=posted.EventId+"/duplicate",At=Clock(7)},
+            posted with {EventId=posted.EventId+"/shifted",At=Clock(7),FundingFromExclusive=fill.At+1}})
+        {
+            var saved=audit.Checkpoint();
+            try
+            {
+                audit.Apply(forged);
+                check(false,"Alternate event id cannot settle a closed window twice");
+            }
+            catch(ArgumentException)
+            {
+                check(audit.Checkpoint()==saved,"Duplicate window rejection leaves restored ledger unchanged");
+            }
+        }
+        // Even the first posting cannot shorten the closed exposure.
+        var clean=new NativeFundedLedger();
+        foreach(var fact in engine.OriginalModelEvents.TakeWhile(x=>x.EventId!=posted.EventId))clean.Apply(fact);
+        var cleanSaved=clean.Checkpoint();
+        try
+        {
+            clean.Apply(posted with {EventId=posted.EventId+"/first-shifted",FundingFromExclusive=fill.At+1});
+            check(false,"First closed settlement must match canonical exposure start");
+        }
+        catch(ArgumentException)
+        {
+            check(clean.Checkpoint()==cleanSaved,"Noncanonical first settlement leaves ledger unchanged");
+        }
+        check(audit.Summary()==engine.ModelSummary &&
+            adjustment.PositionId==fill.PositionId && adjustment.SignedDeltaEur==amount &&
+            adjustment.ThroughInclusive==Clock(4) && adjustment.PostedAt==Clock(6) &&
+            audit.ClosedFragments().Single().NetEur==flat.ModelBook.ClosedNetEur,
+            "Independent ledger restart and idempotence preserve separate closed funding settlement");
+    }
+
     static void PartialExposure(Action<bool,string> check)
     {
         var funding=new NativePortfolioFunding();
@@ -153,6 +245,8 @@ internal static class NativeFundingReserveChecks
     {
         BoundedAfterClose(check);
         ConfirmedSettlement(check);
+        LateExactSettlement(check,-.40m);
+        LateExactSettlement(check,.25m);
         PartialExposure(check);
         InsufficientOfferCoverage(check);
     }

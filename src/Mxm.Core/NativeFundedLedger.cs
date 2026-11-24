@@ -17,6 +17,8 @@ public sealed record LedgerEvent(string EventId,long At,string Kind,string Posit
 {
     [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)]
     public decimal? ObservedExitSlippagePerSide { get; init; }
+    [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)]
+    public long? FundingFromExclusive { get; init; }
 }
 public sealed record LedgerPosition(string Id,string Symbol,int Side,decimal Units,decimal? EntryPrice,long EntryAt,
     decimal EntryFeeRemaining,decimal MarginPerUnit,decimal SlippagePerSide,LedgerQuote? EntryQuote,decimal FinancingRemaining,
@@ -24,11 +26,18 @@ public sealed record LedgerPosition(string Id,string Symbol,int Side,decimal Uni
 public sealed record LedgerClosedFragment(string PositionId,string Symbol,long OpenedAt,long ClosedAt,decimal Units,
     decimal GrossEur,decimal? SpreadEur,decimal? SlippageEur,decimal? ConversionEur,decimal CommissionsEur,
     decimal FinancingEur,decimal NetEur,bool CompletesRoundTrip,string Reason);
+public sealed record LedgerClosedFundingSettlement(string EventId,string PositionId,string Symbol,int Side,
+    decimal Units,long FromExclusive,long ThroughInclusive,long AvailableAt,long PostedAt,
+    decimal SignedDeltaEur,string EvidenceHash);
 public sealed record LedgerState(string Version,decimal InitialCashEur,decimal CashEur,long Clock,decimal ObservedPeakEur,
     decimal MaximumSampledDrawdown,bool HistoryEvidenceIncomplete,Dictionary<string,LedgerQuote> Quotes,
     Dictionary<string,LedgerPosition> Positions,Dictionary<string,LedgerEvent> Pending,
     Dictionary<string,string> AppliedEventHashes,HashSet<string> UsedPositionIds,List<LedgerClosedFragment> Closed,
-    string EventChainHash,string MonetaryDomain="MODEL_REPLAY");
+    string EventChainHash,string MonetaryDomain="MODEL_REPLAY")
+{
+    [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)]
+    public List<LedgerClosedFundingSettlement>? ClosedFunding { get; init; }
+}
 public sealed record LedgerSummary(decimal CashEur,decimal? LiquidationEquityEur,decimal? UsedMarginEur,
     decimal? FreeMarginEur,decimal ObservedPeakEur,decimal MaximumSampledDrawdown,int OpenPositions,int PendingIntents,
     int CompleteRoundTrips,decimal ClosedNetEur,bool HistoryEvidenceIncomplete,string EventChainHash,
@@ -101,6 +110,7 @@ public sealed partial class NativeFundedLedger
             closedNetEur+=settlement.NetEur;
             if(settlement.CompletesRoundTrip)completeRoundTrips++;
         }
+        closedNetEur+=state.ClosedFunding?.Sum(x=>x.SignedDeltaEur)??0m;
     }
     public void Apply(LedgerEvent e)=>Apply(e,validateSummary:false);
 
@@ -146,6 +156,9 @@ public sealed partial class NativeFundedLedger
         }
         // Validate and calculate before mutating monetary/position state.
         LedgerClosedFragment? settlement=null;
+        LedgerClosedFundingSettlement? closedFunding=null;
+        if(e.Kind!="CLOSED_FUNDING_SETTLEMENT" && e.FundingFromExclusive.HasValue)
+            throw new ArgumentException("NATIVE_LEDGER_UNEXPECTED_FUNDING_WINDOW");
         switch(e.Kind)
         {
             case "REQUEST_OPEN":
@@ -255,11 +268,49 @@ public sealed partial class NativeFundedLedger
                 if(!state.Positions.TryGetValue(e.PositionId,out var financed))throw new ArgumentException("NATIVE_LEDGER_FINANCING_POSITION");
                 state.Positions[e.PositionId]=financed with {FinancingRemaining=financed.FinancingRemaining+e.SignedFinancingEur};
                 state=state with {CashEur=state.CashEur+e.SignedFinancingEur};break;
+            case "CLOSED_FUNDING_SETTLEMENT":
+                if(e.FundingFromExclusive is not long from || from<0 || e.CalibratedThrough<=from ||
+                    e.AvailableAt<e.CalibratedThrough || e.AvailableAt>e.At || e.Units<=0m ||
+                    e.Side is not (-1 or 1) || e.SignedFinancingEur==0m ||
+                    e.ExecutionPrice!=0m || e.FeeEur!=0m || e.MarginPerUnit!=0m ||
+                    e.SlippagePerSide!=0m || e.LatencyMs!=0 ||
+                    e.Reason!="SUPPORTED_CLOSED_EXPOSURE_FUNDING_SETTLEMENT" ||
+                    !state.Closed.Any(x=>x.PositionId==e.PositionId && x.Symbol==e.Symbol &&
+                        x.OpenedAt<=from && x.ClosedAt==e.CalibratedThrough) ||
+                    (state.ClosedFunding?.Any(x=>x.PositionId==e.PositionId &&
+                        (x.FromExclusive==from || x.ThroughInclusive==e.CalibratedThrough))??false))
+                    throw new ArgumentException("NATIVE_LEDGER_CLOSED_FUNDING_WINDOW");
+                // An ended exposure starts at the original entry or the
+                // immediately preceding reduction. A caller cannot rename or
+                // shorten a settled window to create a second cash debit.
+                var closing=state.Closed.Single(x=>x.PositionId==e.PositionId &&
+                    x.Symbol==e.Symbol && x.ClosedAt==e.CalibratedThrough);
+                long canonicalFrom=state.Closed.Where(x=>x.PositionId==e.PositionId &&
+                    x.ClosedAt<e.CalibratedThrough).Select(x=>x.ClosedAt)
+                    .DefaultIfEmpty(closing.OpenedAt).Max();
+                if(from!=canonicalFrom)
+                    throw new ArgumentException("NATIVE_LEDGER_CLOSED_FUNDING_START");
+                // The window covers the pre-reduction exposure, not just the
+                // units closed by the first fill. Later fills and remaining
+                // units reconstruct that exposure without altering any fill.
+                decimal exposureUnits=state.Closed.Where(x=>x.PositionId==e.PositionId &&
+                    x.Symbol==e.Symbol && x.ClosedAt>=e.CalibratedThrough).Sum(x=>x.Units);
+                if(state.Positions.TryGetValue(e.PositionId,out var remainder))
+                {
+                    if(remainder.Symbol!=e.Symbol || remainder.Side!=e.Side)
+                        throw new ArgumentException("NATIVE_LEDGER_CLOSED_FUNDING_BINDING");
+                    exposureUnits+=remainder.Units;
+                }
+                if(exposureUnits!=e.Units)
+                    throw new ArgumentException("NATIVE_LEDGER_CLOSED_FUNDING_UNITS");
+                closedFunding=new(e.EventId,e.PositionId,e.Symbol,e.Side,e.Units,from,
+                    e.CalibratedThrough,e.AvailableAt,e.At,e.SignedFinancingEur,e.EvidenceHash);
+                state=state with {CashEur=state.CashEur+e.SignedFinancingEur};break;
             case "MARK":break;
             default:throw new ArgumentException("NATIVE_LEDGER_UNKNOWN_EVENT");
         }
         state=state with {Quotes=quotes,Clock=e.At,EventChainHash=Hash(state.EventChainHash+hash)};
-        if(e.Kind is "MARK" or "OPEN_FILL" or "CLOSE_FILL" or "FINANCING")
+        if(e.Kind is "MARK" or "OPEN_FILL" or "CLOSE_FILL" or "FINANCING" or "CLOSED_FUNDING_SETTLEMENT")
         {
             try
             {
@@ -268,12 +319,20 @@ public sealed partial class NativeFundedLedger
             }
             catch(InvalidOperationException){state=state with {HistoryEvidenceIncomplete=true};}
         }
-        decimal settledNet=settlement is null?closedNetEur:closedNetEur+settlement.NetEur;
+        decimal settledNet=closedNetEur+(settlement?.NetEur??0m)+(closedFunding?.SignedDeltaEur??0m);
         Reconcile(settledNet);
         if(validateSummary)_=Summary();
         state.AppliedEventHashes.Add(e.EventId,hash);
         if(e.Kind=="REQUEST_OPEN")state.UsedPositionIds.Add(e.PositionId);
         if(settlement is not null)AppendSettlement(settlement,settledNet);
+        if(closedFunding is not null)
+        {
+            var adjustments=state.ClosedFunding is null?new List<LedgerClosedFundingSettlement>():
+                new List<LedgerClosedFundingSettlement>(state.ClosedFunding);
+            adjustments.Add(closedFunding);
+            state=state with {ClosedFunding=adjustments};
+            closedNetEur=settledNet;
+        }
     }
     public LedgerSummary Summary(long? observedAt=null)
     {
@@ -288,6 +347,8 @@ public sealed partial class NativeFundedLedger
     }
     internal LedgerPosition[] PositionSnapshot()=>state.Positions.Values.ToArray();
     public LedgerClosedFragment[] ClosedFragments()=>state.Closed.ToArray();
+    public LedgerClosedFundingSettlement[] ClosedFundingSettlements()=>
+        state.ClosedFunding?.ToArray()??Array.Empty<LedgerClosedFundingSettlement>();
     internal LedgerClosedFragment LastClosedRoundTrip(string positionId)
         =>state.Closed.Last(x=>x.PositionId==positionId&&x.CompletesRoundTrip);
     internal LedgerClosedFragment[] ClosedFragments(string positionId)
