@@ -84,6 +84,10 @@ fills. Do not promote methods merely for mathematical novelty or promise profit.
 OWNER does not choose algorithms/instruments or repeat technical approvals.
 DIRECTOR executes, AUDITOR independently verifies, OWNER decides. Continue
 existing infrastructure, original source custody and immutable receipts.
+The DIRECTOR performs authorized GitHub operations through the existing access.
+The independent auditor verifies GitHub evidence in the dedicated conversation.
+The OWNER sets objectives, constraints and authorization scope and receives
+results. Existing platform and custody protections govern execution.
 Final product remains ONE native autonomous cTrader Cloud/Android C# cBot,
 ONE initial EUR300, robust positive NET, system HARD21, maximum 30% DD
 including floating, and >=12 months genuinely independent confirmation.

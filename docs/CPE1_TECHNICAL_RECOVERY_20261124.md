@@ -35,14 +35,8 @@ Recovery logs emit `EPM1` records as source and financing authentication begin, 
 
 ## Authorization for a single recovery
 
-1. Review the technical PR and its CI artifact. Obtain independent verification of the exact recovery implementation before proceeding.
-2. Integrate the changes and verify successful technical parity on the resulting `main` head. The OWNER enrolls the independent reviewer's distinct numeric GitHub account ID in the repository Actions variable `CPE1_INDEPENDENT_AUDITOR_ACCOUNT_ID`. The independent reviewer posts a new comment on [Issue #393](https://github.com/mariancradulescu/mxm-quant-cloud/issues/393) with the exact reviewed SHA and CI run ID. GitHub's comment author ID must match the enrolled account. The shared repository account and copied or edited comments are ineligible.
-
-   ```text
-   CPE1_TECHNICAL_RECOVERY_1_INDEPENDENT_APPROVAL <main-head-sha> <technical-ci-run-id>
-   ```
-
-3. After the final audit and explicit OWNER decision, the single-file commit on that same `main` adds `ops/cpe1-recovery-1-owner-authorization.json` with subject `OWNER_CPE1_TECHNICAL_RECOVERY_1`. Replace the sample values with the verified head SHA, technical CI run ID and independent audit comment ID.
+1. The independent auditor checks the GitHub evidence in the dedicated audit conversation. The OWNER accepted the technical recovery and authorized autonomous execution on 2026-11-24.
+2. The DIRECTOR verifies successful technical parity and reads back the benchmark artifact on the exact final `main` head. Using the existing authorized GitHub account, the DIRECTOR adds `ops/cpe1-recovery-1-owner-authorization.json` in a single-file commit on that head with subject `OWNER_CPE1_TECHNICAL_RECOVERY_1`.
 
    ```json
    {
@@ -51,11 +45,9 @@ Recovery logs emit `EPM1` records as source and financing authentication begin, 
      "OriginalAttempt": 1,
      "OriginalDisposition": "CPE1_ORIGINAL_ATTEMPT_1_TIMEOUT_NO_ECONOMIC_VERDICT",
      "ReviewedHead": "<main-head-sha>",
-     "TechnicalCiRunId": 1,
-     "IndependentAuditCommentId": 1
+     "TechnicalCiRunId": 1
    }
    ```
 
-4. Before the marker is added, the OWNER configures the secret-free GitHub environment `cpe1-recovery-1-owner-review` for `main` with `mariancradulescu` as the required reviewer and administrator bypass disabled. Allow the OWNER to review the run initiated by their marker. The OWNER approves this exact workflow run in GitHub's deployment review. The workflow reads the approval from GitHub and requires the OWNER account ID `322088485` for that environment. It fails closed if the environment has no recorded approval. Only the OWNER should hold credentials that can approve the environment. The DIRECTOR's repository workflow and marker writes do not provide an approval record.
-5. `cpe1-recovery-1.yml` validates the first use of the recovery marker, exact reviewed head, green technical CI, independent reviewer, original timeout disposition and BDP1 authenticated preflight. After the OWNER review, the protected job loads the original sealed BDP1, AIP1, HXC1, XMH2 and P05 sources and uses the same source/funding bridge, frozen configuration and 8,400-second native timeout. It retains EUR300 shared within each book, the same controls, HARD21 accounting and the existing drawdown rules. Admission is limited to the first attempt. The job runs in historical Replay with zero broker writes, LIVE/DEMO orders or Cloud activation.
-6. Check live EPM1 records in the recovery job. A completed, reconciled result is published under `cpe1-technical-recovery-1-authentic-csharp-eur300`. The separate receipt links the run ID, original attempt, authorization and review. A failed recovery has a diagnostic log and no economic verdict.
+3. `cpe1-recovery-1.yml` validates the authenticated GitHub actor, first use of the marker on `main`, exact reviewed head, green technical CI, frozen protocol, original timeout disposition and BDP1 authenticated preflight. The existing `mxm-r3-custody-v1` protection governs the recovery job's access to the sealed BDP1, AIP1, HXC1, XMH2 and P05 sources. Replay uses the same source/funding bridge, frozen configuration and 8,400-second native timeout. It retains EUR300 shared within each book, HARD21 accounting and the existing drawdown rules. Admission is limited to the first attempt. The job runs in historical Replay with zero broker writes, LIVE/DEMO orders or Cloud activation.
+4. The DIRECTOR follows EPM1 in the recovery job. A completed, reconciled result is published under `cpe1-technical-recovery-1-authentic-csharp-eur300`. The receipt links the recovery run, original attempt and exact technical authorization. A failed recovery has a diagnostic log and no economic verdict.

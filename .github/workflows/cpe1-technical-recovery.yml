@@ -48,7 +48,7 @@ jobs:
         run: dotnet run --project tests/Mxm.Checks -c Release
       - name: Compile recovery bridge
         run: python -m py_compile research/cpe1_recovery_execute.py research/cpe1_one_integrated_original_execute.py
-      - name: Verify replay error handling, live progress and separate approval authorities
+      - name: Verify replay error handling and live progress
         run: |
           dotnet build src/Mxm.Replay -c Release
           python -m unittest research.test_cpe1_recovery_controls -v
