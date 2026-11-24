@@ -469,10 +469,13 @@ public sealed partial class NativeUnifiedPortfolioEngine
         if(fundingReserves is not null)
         {
             fundingReserves.Observe(fundingEvidence,(window,delta,proof)=>
-                Apply(Event("FINANCING",t,window.PositionId,window.Symbol,window.Side,
-                    window.Units,reason:"SUPPORTED_ACCRUED_FUNDING_MODEL_SETTLEMENT",
+                Apply(Event(window.ClosedAt is null?"FINANCING":"CLOSED_FUNDING_SETTLEMENT",
+                    t,window.PositionId,window.Symbol,window.Side,
+                    window.Units,reason:window.ClosedAt is null?
+                        "SUPPORTED_ACCRUED_FUNDING_MODEL_SETTLEMENT":"SUPPORTED_CLOSED_EXPOSURE_FUNDING_SETTLEMENT",
                     quotes:quotes,financing:delta) with {EvidenceHash=proof.SourceSha256,
-                        AvailableAt=proof.AvailableAt,CalibratedThrough=proof.ThroughInclusive,LatencyMs=0}));
+                        AvailableAt=proof.AvailableAt,CalibratedThrough=proof.ThroughInclusive,LatencyMs=0,
+                        FundingFromExclusive=window.ClosedAt is null?null:window.FromExclusive}));
             foreach(var held in model.Ledger.PositionSnapshot())
             {
                 var unknown=fundingReserves.IsOutstanding(held.Id);
