@@ -13,7 +13,7 @@ using Mxm.Core;
 // economic engine, no fake BID/ASK history. All 2025-26 data are EXPOSED.
 internal sealed record Cpe1SourceInput(V32Tape Tape,Rvc1OriginalFunding[] Funding);
 
-internal static class Cpe1OriginalIntegratedRunner
+internal static partial class Cpe1OriginalIntegratedRunner
 {
     const long M5=300000L,M15=900000L;
     static readonly decimal[] Stress={1m,1.5m,2m};
@@ -118,6 +118,28 @@ internal static class Cpe1OriginalIntegratedRunner
         catch(InvalidOperationException){return null;}
     }
 
+    static Ucp1Frame SourceFrame(long at, V32Bar conversion, decimal multiplier,
+        KeyValuePair<string,(Source Source,NativeObservedContractTerms Contract)>[] orderedContracts,
+        Dictionary<string,int> unknownQuotes)
+    {
+        var frames=new List<Ucp1MarketFrame>();
+        foreach(var (symbol, (source, contract)) in orderedContracts)
+        {
+            if(!source.OpenM5.TryGetValue(at,out var bar))continue;
+            var quote=ModeledQuote(bar,source.Market.Terms!,contract,
+                conversion,multiplier,out var slip);
+            if(quote is null)
+            {
+                unknownQuotes[symbol]=unknownQuotes.GetValueOrDefault(symbol)+1;
+                continue;
+            }
+            frames.Add(new Ucp1MarketFrame(symbol,quote,contract,
+                source.ClosedM5,source.ClosedM15,slip,
+                "GENUINE_CLOSED_BARS_CONDITIONAL_CURRENT_CONTRACT_M5_OPEN"));
+        }
+        return new Ucp1Frame(at,frames.ToArray());
+    }
+
     public static int Run(string sourceFile,string outputFile,string frozenSha,
         Cpe1ReplayProgress? progress=null)
     {
@@ -165,24 +187,7 @@ internal static class Cpe1OriginalIntegratedRunner
             }
             else foreach(var group in groups)
             {
-                var multiplier=group[0].Stress;
-                var frames=new List<Ucp1MarketFrame>();
-                foreach(var pair in orderedContracts)
-                {
-                    var source=pair.Value.Source;
-                    if(!source.OpenM5.TryGetValue(t,out var bar))continue;
-                    var quote=ModeledQuote(bar,source.Market.Terms!,pair.Value.Item2,
-                        conversion,multiplier,out var slip);
-                    if(quote is null)
-                    {
-                        unknownQuotes[pair.Key]=unknownQuotes.GetValueOrDefault(pair.Key)+1;
-                        continue;
-                    }
-                    frames.Add(new Ucp1MarketFrame(pair.Key,quote,pair.Value.Item2,
-                        source.ClosedM5,source.ClosedM15,slip,
-                        "GENUINE_CLOSED_BARS_CONDITIONAL_CURRENT_CONTRACT_M5_OPEN"));
-                }
-                var frame=new Ucp1Frame(t,frames.ToArray());
+                var frame=SourceFrame(t,conversion,group[0].Stress,orderedContracts,unknownQuotes);
                 foreach(var book in group)book.Engine.Advance(frame);
             }
             progress?.Report("ADVANCE_SOURCE_CLOCKS",i+1,times.Length,force:i==0);

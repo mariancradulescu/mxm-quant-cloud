@@ -1,6 +1,9 @@
 using System.Text.Json;
 using System.Security.Cryptography;
 
+if(args is [var auditSourceFile, var auditOriginalFile, var auditOutputFile, "--cpe1-funding-source-audit"])
+    return Cpe1OriginalIntegratedRunner.AuditFundingSource(auditSourceFile,auditOriginalFile,auditOutputFile);
+
 // CPE1: read-only source -> SAME native UCP1 funded decision cycle.
 if(args.Length==4 && args[2]=="--cpe1-one-unified-financed-economics")
     return Cpe1OriginalIntegratedRunner.Run(args[0],args[1],args[3]);
