@@ -271,20 +271,25 @@ public partial class MxmCloud : Robot
         long minWire=checked((long)decimal.Round((decimal)market.MinCommission*100000000m,0));
         int convBps=checked((int)System.Math.Round(
             market.PnLConversionFeeRate*10000d));
-        int triple=market.Swap3DaysRollover.HasValue
+        int? triple=market.Swap3DaysRollover.HasValue
             ?(market.Swap3DaysRollover.Value==System.DayOfWeek.Sunday?7:
-                (int)market.Swap3DaysRollover.Value):3;
-        // The cTrader Algo Symbol API does not expose all original account
-        // rollover semantics here. The 22:00 UTC/skip/weekend assumptions
-        // are an explicit CONDITIONAL SIMULATION ONLY; not actual funding.
+                (int)market.Swap3DaysRollover.Value):null;
+        int? swapType=market.SwapCalculationType switch
+        {
+            SymbolSwapCalculationType.Pips=>0,
+            SymbolSwapCalculationType.Percentage=>1,
+            _=>null
+        };
+        // Algo exposes the current literal rates. Charge time, period, weekend
+        // behavior and skip rules stay unknown until an applicable source proves them.
         var terms=new NativeObservedContractTerms(name,market.QuoteAsset.Name,
             clock,minimum,(decimal)market.VolumeInUnitsStep,
             (decimal)market.VolumeInUnitsMax,(decimal)market.LotSize,
             feeType,commissionWire,(int)market.MinCommissionType+1,
             minWire,minimumAsset,convBps,
-            market.SwapCalculationType==SymbolSwapCalculationType.Pips?0:1,
+            swapType,
             (decimal)market.SwapLong,(decimal)market.SwapShort,pipPosition,
-            24,1320,triple,false,0,false,false);
+            null,null,triple,null,null,false,false);
         var usdFx=NativeBrokerContractCosts.RequiresUsdCommissionRate(terms)
             ?(_integratedResearch || _unifiedPolicy is not null?(credit+debit)/2m:(decimal)AssetConverter.Convert(1d,"USD",Account.Asset)):0m;
         decimal? minAssetFx=minWire>0 && terms.MinimumCommissionType==1 &&

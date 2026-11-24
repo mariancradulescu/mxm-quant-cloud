@@ -144,8 +144,7 @@ public static class NativeSimulatedCloseLifecycle
                     ?pending.Units:held.Units;
                 if(units<=0m || units>held.Units)
                     throw new ArgumentException("INTEGRATED_REDUCTION_VOLUME");
-                decimal fee=Math.Max(quote.ExitFeePerUnit*units,
-                    quote.ExitFeeFloor);
+                decimal fee=NativeFundedLedger.Fee(quote,units,-held.Side);
                 var close=Fact("CLOSE_FILL",held,at,exitPrice,fee,
                     held.SlippagePerSide,pending.Reason,
                     latency:pending.LatencyMs,units:units)

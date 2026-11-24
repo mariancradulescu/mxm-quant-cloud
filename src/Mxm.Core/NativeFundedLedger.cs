@@ -9,6 +9,8 @@ public sealed record LedgerQuote(string Symbol,long At,decimal Bid,decimal Ask,d
 {
     [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)]
     public decimal? LiquidationSlippagePerSide { get; init; }
+    [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)]
+    public decimal? SellFeePerUnit { get; init; }
 }
 public sealed record LedgerEvent(string EventId,long At,string Kind,string PositionId,string Symbol,int Side,
     decimal Units,decimal ExecutionPrice,decimal FeeEur,decimal MarginPerUnit,decimal SlippagePerSide,
@@ -79,7 +81,8 @@ public sealed partial class NativeFundedLedger
         return x;
     }
     static string Hash(string s)=>Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(s))).ToLowerInvariant();
-    internal static decimal Fee(LedgerQuote q,decimal units)=>Math.Max(q.ExitFeePerUnit*units,q.ExitFeeFloor);
+    internal static decimal Fee(LedgerQuote q,decimal units,int executionSide=1)
+        =>Math.Max((executionSide<0?(q.SellFeePerUnit??q.ExitFeePerUnit):q.ExitFeePerUnit)*units,q.ExitFeeFloor);
     internal static decimal ConvertQuote(LedgerQuote q,decimal amount)=>amount*(amount>=0?q.EurCredit:q.EurDebit);
     LedgerQuote Quote(Dictionary<string,LedgerQuote> quotes,string symbol,long at)
     {
@@ -92,7 +95,8 @@ public sealed partial class NativeFundedLedger
         if(p.MonetaryDomain!="MODEL_REPLAY")throw new InvalidOperationException("BROKER_FLOATING_AND_EXIT_COST_EVIDENCE_NOT_SUPPLIED");
         decimal liquidation=NativeExecutableEconomics.ExitPrice(p.Side>0?q.Bid:q.Ask,p.Side,
             q.LiquidationSlippagePerSide??p.SlippagePerSide);
-        return ConvertQuote(q,p.Side*p.Units*(liquidation-(p.EntryPrice??throw new InvalidOperationException("ENTRY_BASIS_UNKNOWN"))))-Fee(q,p.Units);
+        return ConvertQuote(q,p.Side*p.Units*(liquidation-(p.EntryPrice??throw new InvalidOperationException("ENTRY_BASIS_UNKNOWN"))))-
+            Fee(q,p.Units,-p.Side);
     }
     decimal Equity(Dictionary<string,LedgerQuote> quotes,long at)=>state.CashEur+
         state.Positions.Values.Sum(p=>Floating(p,Quote(quotes,p.Symbol,at)));
@@ -201,7 +205,8 @@ public sealed partial class NativeFundedLedger
         foreach(var q in e.Quotes)
         {
             if(string.IsNullOrWhiteSpace(q.Symbol) || q.At>e.At || e.At-q.At>maximumStalenessMs || q.Bid<=0 || q.Ask<q.Bid ||
-                q.EurCredit<=0 || q.EurDebit<q.EurCredit || q.ExitFeePerUnit<0 || q.ExitFeeFloor<0 || q.MarginPerUnit<=0 || q.LiquidationSlippagePerSide is <0m ||
+                q.EurCredit<=0 || q.EurDebit<q.EurCredit || q.ExitFeePerUnit<0 || q.SellFeePerUnit is <0m ||
+                q.ExitFeeFloor<0 || q.MarginPerUnit<=0 || q.LiquidationSlippagePerSide is <0m ||
                 (quotes.TryGetValue(q.Symbol,out var old) && (q.At<old.At || q.At==old.At && q!=old)))
                 throw new ArgumentException("NATIVE_LEDGER_QUOTE_CONTRACT");
             quotes[q.Symbol]=q;
@@ -240,7 +245,7 @@ public sealed partial class NativeFundedLedger
                     throw new ArgumentException("NATIVE_LEDGER_OPEN_FILL");
                 var entryQuote=Quote(quotes,e.Symbol,e.At);
                 decimal expectedPrice=NativeExecutableEconomics.EntryPrice(entryQuote,e.Side,e.SlippagePerSide);
-                if(e.ExecutionPrice!=expectedPrice || Math.Abs(e.FeeEur-Fee(entryQuote,e.Units))>.000000001m)
+                if(e.ExecutionPrice!=expectedPrice || Math.Abs(e.FeeEur-Fee(entryQuote,e.Units,e.Side))>.000000001m)
                     throw new ArgumentException("NATIVE_LEDGER_MODELED_FILL_COST_BINDING");
                 var position=new LedgerPosition(e.PositionId,e.Symbol,e.Side,e.Units,e.ExecutionPrice,e.At,e.FeeEur,
                     e.MarginPerUnit,e.SlippagePerSide,entryQuote,0);
@@ -259,7 +264,7 @@ public sealed partial class NativeFundedLedger
                 if(exitSlippage<0)throw new ArgumentException("NATIVE_LEDGER_MODELED_EXIT_SLIPPAGE");
                 decimal outPrice=NativeExecutableEconomics.ExitPrice(closedPosition.Side>0?q.Bid:q.Ask,
                     closedPosition.Side,exitSlippage);
-                if(e.ExecutionPrice!=outPrice || Math.Abs(e.FeeEur-Fee(q,e.Units))>.000000001m)
+                if(e.ExecutionPrice!=outPrice || Math.Abs(e.FeeEur-Fee(q,e.Units,-closedPosition.Side))>.000000001m)
                     throw new ArgumentException("NATIVE_LEDGER_MODELED_EXIT_COST_BINDING");
                 decimal fraction=e.Units/closedPosition.Units,entryFee=closedPosition.EntryFeeRemaining*fraction,finance=closedPosition.FinancingRemaining*fraction;
                 decimal converted=ConvertQuote(q,closedPosition.Side*e.Units*(outPrice-(closedPosition.EntryPrice??throw new InvalidOperationException("ENTRY_BASIS_UNKNOWN"))));

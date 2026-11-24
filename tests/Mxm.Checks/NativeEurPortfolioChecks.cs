@@ -49,6 +49,24 @@ internal static class NativeEurPortfolioChecks
         var restored=NativeUnifiedPortfolioEngine.Restore(first.Checkpoint());
         check(restored.ModelSummary==first.ModelSummary,"EUR checkpoint retains common funded book");
         LateNetChangesRanking(check);
+        ContractClocksAndDirectionalCosts(check);
+    }
+
+    static void ContractClocksAndDirectionalCosts(Action<bool,string> check)
+    {
+        var c=OfficialShape(1,1).Markets[0].Contract with
+            {CommissionType=3,PreciseRateWire=10_000,SwapPeriodHours=6,SwapTimeUtcMinute=240};
+        var quote=NativeBrokerContractCosts.QuoteBothDirections(c,
+            new(Origin,100m,101m,1m,1m,1m,null,1m,1m,0m)).Quote;
+        check(quote is {ExitFeePerUnit:.101m,SellFeePerUnit:.100m} &&
+            NativeExecutableEconomics.EstimateNet(quote,quote,1,1m,101m,100m,0m)==-1.201m &&
+            NativeExecutableEconomics.EstimateNet(quote,quote,-1,1m,100m,101m,0m)==-1.201m,
+            "Official proportional commission uses the witnessed bid on sells and ask on buys");
+        long midnight=Origin/86_400_000L*86_400_000L;
+        check(NativeBrokerContractCosts.NextScheduledSwapCharge(c,midnight+23*3_600_000L)==
+            midnight+28*3_600_000L&&NativeBrokerContractCosts.NextScheduledSwapCharge(
+                c with {SwapTimeUtcMinute=null},Origin) is null,
+            "Rollover respects the first charge hour and preserves an absent official clock");
     }
 
     static void LateNetChangesRanking(Action<bool,string> check)

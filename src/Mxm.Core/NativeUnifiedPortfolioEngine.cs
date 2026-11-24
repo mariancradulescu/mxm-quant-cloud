@@ -358,8 +358,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
         else model.ApplyResearchFacts(new[]{e});
         if(!researchFork) facts.Add(e);
     }
-    static decimal Fee(LedgerQuote q,decimal units)
-        =>Math.Max(q.ExitFeePerUnit*units,q.ExitFeeFloor);
+    static decimal Fee(LedgerQuote q,decimal units,int executionSide=1)
+        =>NativeFundedLedger.Fee(q,units,executionSide);
     static string Week(long at)
     {
         var d=DateTimeOffset.FromUnixTimeMilliseconds(at).UtcDateTime;
@@ -556,7 +556,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
             try
             {
                 Apply(Event("OPEN_FILL",t,request.PositionId,request.Symbol,
-                    request.Side,request.Units,px,Fee(q,request.Units),
+                    request.Side,request.Units,px,Fee(q,request.Units,request.Side),
                     q.MarginPerUnit,request.SlippagePerSide,
                     "LATER_AUTHENTIC_QUOTE_CONDITIONAL_MODEL_FILL"));
                 var p=plans[request.PositionId];
