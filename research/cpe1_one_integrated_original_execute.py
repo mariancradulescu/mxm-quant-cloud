@@ -7,6 +7,7 @@ import hashlib
 import json
 import os
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 from .v32_unified_source_adapter import execute as original_source_only
@@ -19,7 +20,7 @@ FROZEN_COMMIT="3d38ee366b5de285b5a928478fa46616093d6b94"
 def need(ok,code):
     if not ok: raise ValueError("CPE1_"+code)
 
-def recover_original_contract_swap(tape):
+def recover_original_contract_swap(tape=None):
     """Actual authenticated BDP1 ProtoOASymbolByIdRes per original read-only account.
 
     P05 has NO EURUSD/GBPUSD contract; never claim otherwise, do not assign
@@ -32,9 +33,15 @@ def recover_original_contract_swap(tape):
         source["schema"],source["protocol"])
     need(proof["rawAccountAndBarsReconstructed"] and proof["newBrokerRequests"]==0,
          "BDP1_RAW_ORIGINAL_ACCOUNT_NOT_VERIFIED")
-    expected={m["Symbol"]:int(m["Terms"]["ObservedAtUtcMs"])
-              for m in tape["Markets"] if m.get("Terms")}
+    expected=({m["Symbol"]:int(m["Terms"]["ObservedAtUtcMs"])
+               for m in tape["Markets"] if m.get("Terms")} if tape is not None
+              else {s:1793577600000 for s in ("EURUSD","GBPUSD")})
     observed=[]
+    required=("swapPeriod","swapTime","chargeSwapAtWeekends","skipSWAPPeriods",
+              "swapCalculationType","pipPosition","swapRollover3Days","swapLong","swapShort")
+    diagnostics={s:{"Status":"ORIGINAL_CONTRACT_OR_TARIFF_BINDING_UNAVAILABLE",
+                    "MissingFields":list(required)}
+                 for s in ("EURUSD","GBPUSD")}
     for symbol,metadata in original["symbols"].items():
         if symbol not in expected:continue
         req,response=decoded[metadata["contractRawIndex"]]
@@ -54,9 +61,38 @@ def recover_original_contract_swap(tape):
         observed.append(dict(Symbol=symbol,ChargeSwapAtWeekends=weekend,
             SkipSwapPeriods=skip,ObservedAtUtcMs=stamp,
             OriginalBrokerAuthenticated=True))
-    need(set(x["Symbol"] for x in observed).issuperset({"EURUSD","GBPUSD"}),
-         "EURUSD_GBPUSD_OFFICIAL_CONTRACT_PROVENANCE_UNAVAILABLE")
-    return observed
+        if symbol in diagnostics:
+            missing=[f for f in required if not contract.HasField(f)]
+            supported=(not missing and int(contract.swapPeriod)==24 and
+                       int(contract.swapCalculationType)==0 and
+                       0<=int(contract.swapTime)<1440 and
+                       int(contract.skipSWAPPeriods)>=0 and
+                       1<=int(contract.swapRollover3Days)<=7)
+            diagnostics[symbol]={"Status":"COMPLETE_SUPPORTED_CURRENT_SCHEDULE" if supported
+                else "UNKNOWN_OR_UNSUPPORTED_CURRENT_SCHEDULE",
+                "MissingFields":missing,
+                "Fields":{f:getattr(contract,f) if contract.HasField(f) else None
+                          for f in required},
+                "OriginalBrokerAuthenticated":True,"ObservedAtUtcMs":stamp}
+    return observed,dict(Source=proof,Symbols=diagnostics,
+        HistoricalTariffContinuityCertified=False,HistoricalBrokerNetCertified=False,
+        BrokerRequests=0,Orders=0,CloudActivated=False,ClosedModelsCalled=0)
+
+def preflight_bdp1():
+    target=Path("cpe1-bdp1-preflight")
+    target.mkdir(exist_ok=True)
+    path=target/"cpe1-bdp1-contract-source-only.json"
+    try:
+        _,report=recover_original_contract_swap()
+        report["Scope"]="ORIGINAL_BDP1_SOURCE_ONLY_NO_ECONOMIC_ENGINE"
+        path.write_text(json.dumps(report,indent=2,sort_keys=True)+"\n")
+    except Exception as exc:
+        # No raw broker records, account identifier, decrypted archive or
+        # environment value may be exported even on failed authentication.
+        path.write_text(json.dumps(dict(Scope="BDP1_SOURCE_ONLY",
+            Status="AUTHENTIC_SOURCE_RECOVERY_FAILED",ErrorType=type(exc).__name__,
+            BrokerRequests=0,Orders=0,CloudActivated=False))+"\n")
+        raise RuntimeError("CPE1_BDP1_PREFLIGHT_SOURCE_RECOVERY_FAILED") from None
 
 def main():
     PUBLIC.mkdir(exist_ok=True)
@@ -72,7 +108,7 @@ def main():
              custody["CloudActivated"] is False,
              "ORIGINAL_SOURCE_ONLY_AUTHORITY_VIOLATED")
         tape=json.loads(sealed_bridge.read_text())
-        funding=recover_original_contract_swap(tape)
+        funding,funding_audit=recover_original_contract_swap(tape)
         private_input.write_text(json.dumps(dict(Tape=tape,Funding=funding),
                                             separators=(",",":")))
         private_input.chmod(0o600)
@@ -101,6 +137,7 @@ def main():
             NativeOriginalWholeFileSha256=original_sha,
             OriginalBrokerRequests=0,SubmittedBrokerOrders=0,
             CloudActivated=False,OldStudiesRerun=0,
+            OriginalBdp1FundingFieldAudit=funding_audit,
             OfficialRecoveredSwap={
                 "AttemptedOriginalSource":"BDP1_AUTHENTIC_PROTO_OA_SYMBOL_BY_ID",
                 "EURUSD":next((x for x in funding if x["Symbol"]=="EURUSD"),None),
@@ -115,4 +152,9 @@ def main():
         print("CPE1_ORIGINAL_EXPOSED_SOURCE_COMMON_CSHARP_ECONOMIC_RESULT_COMPLETE",flush=True)
 
 if __name__=="__main__":
-    main()
+    if sys.argv[1:]==["--preflight-bdp1"]:
+        preflight_bdp1()
+    elif not sys.argv[1:]:
+        main()
+    else:
+        raise ValueError("CPE1_UNKNOWN_ARGUMENT")

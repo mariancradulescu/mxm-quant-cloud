@@ -268,6 +268,9 @@ internal static class Cpe1OriginalIntegratedRunner
                 ExitReasons=trips.GroupBy(p=>p.ExitReason)
                     .ToDictionary(g=>g.Key,g=>g.Count()),
                 IndividualEpisodes=trips,
+                PartialReductionAvailability=x.Policy=="CPE1_CASH"?"NOT_APPLICABLE":
+                    "NOT_LEGAL_AT_FROZEN_MINIMUM_ENTRY_UNITS",
+                ConditionalFullEngineReportNetIncludesUnverifiedFunding=!financeKnown,
                 ConditionalFullEngineReport=report
             };
         }).ToArray();

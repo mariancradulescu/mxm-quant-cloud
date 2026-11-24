@@ -207,7 +207,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
         long at=frame.At;
         long day=86400000L;
         bool intradayKnown=false;
-        if(contract.SwapTimeUtcMinute is int minute && minute>=0&&minute<1440)
+        if(contract.SwapPeriodHours==24 &&
+           contract.SwapTimeUtcMinute is int minute && minute>=0&&minute<1440)
         {
             long first=(held.EntryAt/day)*day+minute*60000L;
             if(first<=held.EntryAt)first+=day;

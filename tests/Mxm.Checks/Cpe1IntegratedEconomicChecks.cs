@@ -94,6 +94,17 @@ internal static class Cpe1IntegratedEconomicChecks
             "CPE1 admission geometry preserved and R uses revalidated fill risk");
         SharedCapital(baseAt,check,false);
         SharedCapital(baseAt,check,true);
+        var replay=new NativeUnifiedPortfolioEngine("CPE1_ECONOMIC");
+        var adapter=new Mxm.Cloud.NativeUnifiedCloudParityAdapter("CPE1_ECONOMIC");
+        var clock=baseAt+M5;
+        foreach(var sample in new[]{100.95m,100.95m,100.11m,100.10m})
+        {
+            var frame=Frame(baseAt,clock,sample,false);
+            check(replay.Advance(frame)==adapter.Observe(frame) &&
+                replay.ModelSummary==adapter.ModelBook,
+                "CPE1 exact identical frame Core/Cloud observation parity (no Cloud runtime)");
+            clock+=M5;
+        }
         check(normal.CompleteModelTrips.Single().EconomicEvidence!.ConditionalNetKnown,
             "CPE1 same-day known original swap schedule and finance produce conditional net");
         var cash=new NativeUnifiedPortfolioEngine("CPE1_CASH");
