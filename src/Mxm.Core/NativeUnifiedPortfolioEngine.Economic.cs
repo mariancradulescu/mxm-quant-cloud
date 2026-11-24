@@ -123,8 +123,18 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 && !x.CrossedUnknownHistory)<20;
             if(Cpe1Economic&&!calibration)
             {
+                // First justify recurrent GROSS advantage, then compare its
+                // pessimistic EUR lower bound to the FULL conditional round
+                // trip CASH alternative. No retuning by spread; same frozen
+                // risk and mandatory transaction costs for every offered leg.
+                decimal entered=NativeExecutableEconomics.EntryPrice(q,
+                    signal.Side,slip);
+                decimal liquidationSide=signal.Side>0?q.Bid:q.Ask;
+                decimal fullRoundTripCost=Math.Max(0m,-
+                    NativeExecutableEconomics.EstimateNet(q,q,signal.Side,
+                        units,entered,liquidationSide,slip));
                 if(lower is not >0m || lower.Value*bracket.RiskEur-
-                    Fee(q,units)*2m<=0m)
+                    fullRoundTripCost<=0m)
                 {Count("CPE1_WAIT_GROSS_OR_CASH_LOWER_NOT_POSITIVE");continue;}
             }
             decimal score=Cpe1Economic && lower.HasValue?
