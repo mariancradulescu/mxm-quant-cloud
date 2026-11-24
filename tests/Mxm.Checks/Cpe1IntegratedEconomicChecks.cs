@@ -17,12 +17,16 @@ internal static class Cpe1IntegratedEconomicChecks
             24,1320,3,unknownSwap?(bool?)null:false,
             unknownSwap?(int?)null:0,true,false);
         decimal[] samples={100m,100.1m,100.2m,100.3m,100.9m};
+        // Advance each synthetic source bar as its clock closes, never
+        // reuse frozen historical context at an unrelated future mark.
+        long next5=Math.Max(0L,(t-(origin+M5))/M5)*M5;
+        long next15=Math.Max(0L,(t-(origin+M5))/M15)*M15;
         var bars=samples.Select((v,i)=>new NativeClosedMarketBar(
-            origin-(5-i)*M5,origin-(4-i)*M5,
+            origin-(5-i)*M5+next5,origin-(4-i)*M5+next5,
             v,v+.02m,v-.02m,v,100)).ToArray();
         var f15=new decimal[]{99.5m,100m,100.6m}.Select((v,i)=>
-            new NativeClosedMarketBar(origin-(3-i)*M15,
-                origin-(2-i)*M15,v,v+.03m,v-.03m,v,100)).ToArray();
+            new NativeClosedMarketBar(origin-(3-i)*M15+next15,
+                origin-(2-i)*M15+next15,v,v+.03m,v-.03m,v,100)).ToArray();
         var q=new LedgerQuote("EURUSD",t,bid,bid+.01m,
             1m,1m,.001m,.0001m,1m);
         return new Ucp1Frame(t,new[]{new Ucp1MarketFrame("EURUSD",q,c,
