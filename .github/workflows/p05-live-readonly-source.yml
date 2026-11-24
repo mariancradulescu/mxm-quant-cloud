@@ -35,7 +35,7 @@ jobs:
       - name: Prove no order, cancel, amend, close, or raw envelope can reach socket
         run: |
           python -m unittest research.test_p05_readonly_wire research.test_p05_live_source research.test_funding_provenance_point_source -v
-          python -m py_compile research/p05_live_source.py research/p05_safe_transport.py
+          python -m py_compile research/p05_live_source.py research/p05_safe_transport.py research/funding_provenance_point_source.py
       - name: OWNER exact first-addition admission, no secret reads
         shell: bash
         id: gate
@@ -54,8 +54,8 @@ jobs:
             echo 'authorized=true' >> "$GITHUB_OUTPUT"
           fi
       - name: Authorize only a new source point capture, never an economic evaluation
-        id: funding_gate
         shell: bash
+        id: funding_gate
         run: |
           echo 'authorized=false' >> "$GITHUB_OUTPUT"
           marker=ops/funding-provenance-point-observation-once.txt
@@ -64,164 +64,7 @@ jobs:
                 "$GITHUB_REF" == "refs/heads/main" &&
                 "$GITHUB_RUN_ATTEMPT" == "1" &&
                 "$(git log -1 --format=%s)" == "$subject" &&
-                "$(git diff-tree --no-commit-id --name-status -r HEAD)" ==     needs: preflight
-    if: ${{ needs.preflight.outputs.authorized == 'true' }}
-    environment: mxm-r3-custody-v1
-    runs-on: ubuntu-24.04
-    timeout-minutes: 12
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with:
-          persist-credentials: false
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
-        with:
-          python-version: '3.12'
-      - run: python -m pip install -r research/requirements.txt
-      - name: Derive public source recipient from existing installed custody key
-        run: python -m research.custody_new
-        env:
-          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: p05-new-source-recipient-public
-          path: new-recipient-output/
-          retention-days: 2
-          if-no-files-found: error
-  collect:
-    needs: [preflight,recipient]
-    if: ${{ needs.preflight.outputs.authorized == 'true' }}
-    environment: mxm-r3-pepperstone-v1
-    concurrency:
-      group: mxm-existing-oauth-read-only
-      cancel-in-progress: false
-    runs-on: ubuntu-24.04
-    timeout-minutes: 160
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with:
-          persist-credentials: false
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
-        with:
-          python-version: '3.12'
-      - run: python -m pip install -r research/requirements.txt
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: p05-new-source-recipient-public
-          path: new-source-recipient
-      - name: Exact bound original Pepperstone LIVE read-only history and contracts
-        run: python -m research.p05_live_source
-        env:
-          R3_CTRADER_CLIENT_ID: ${{ secrets.R3_CTRADER_CLIENT_ID }}
-          R3_CTRADER_CLIENT_SECRET: ${{ secrets.R3_CTRADER_CLIENT_SECRET }}
-          R3_CTRADER_ACCESS_TOKEN: ${{ secrets.R3_CTRADER_ACCESS_TOKEN }}
-      - name: Preserve new original sealed protobuf receipts only
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: p05-new-live-readonly-authentic-source-sealed
-          path: p05-new-live-sealed/
-          retention-days: 90
-          if-no-files-found: warn
-      - name: Publish sanitized coverage and partial economic aggregate
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: p05-new-live-readonly-aggregate-public
-          path: p05-new-live-public/
-          retention-days: 90
-          if-no-files-found: warn
-
-  original-source-economic-readback:
-    # New use of original sealed 45134137836, not a new broker collection.
-    needs: preflight
-    if: >-
-      github.event_name == 'push' &&
-      github.ref == 'refs/heads/main' &&
-      github.actor == 'mariancradulescu' &&
-      github.run_attempt == '1' &&
-      (github.event.head_commit.message == 'OWNER_P05_ORIGINAL_READBACK_COST_FRONTIER_20261123' ||
-       github.event.head_commit.message == 'OWNER_P05_ORIGINAL_READBACK_RECOVERY_20261123' ||
-       github.event.head_commit.message == 'OWNER_P05_ORIGINAL_READBACK_FINAL_20261123')
-    environment: mxm-r3-custody-v1
-    permissions:
-      contents: read
-      actions: read
-    concurrency:
-      group: mxm-p05-45134137836-original-cost-frontier-once
-      cancel-in-progress: false
-    runs-on: ubuntu-24.04
-    timeout-minutes: 35
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with:
-          fetch-depth: 2
-          persist-credentials: false
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
-        with:
-          python-version: '3.12'
-      - run: python -m pip install -r research/requirements.txt
-      - name: Verify own original-readback logic with synthetic source
-        run: |
-          python -m unittest research.test_p05_source_economic_gate -v
-          python -m py_compile research/p05_source_economic_gate.py
-      - name: First-addition-only owner marker, no private key access
-        id: gate
-        shell: bash
-        run: |
-          echo 'authorized=false' >> "$GITHUB_OUTPUT"
-          subject="$(git log -1 --format=%s)"
-          case "$subject" in
-            OWNER_P05_ORIGINAL_READBACK_COST_FRONTIER_20261123)
-              marker=ops/p05-original-readback-once.txt ;;
-            OWNER_P05_ORIGINAL_READBACK_RECOVERY_20261123)
-              marker=ops/p05-original-readback-recovery-once.txt ;;
-            OWNER_P05_ORIGINAL_READBACK_FINAL_20261123)
-              marker=ops/p05-original-readback-final-once.txt ;;
-            *) exit 0 ;;
-          esac
-          if [[ "$GITHUB_REF" == "refs/heads/main" &&
-                "$GITHUB_RUN_ATTEMPT" == "1" &&
-                "$(git log -1 --format=%s)" == "$subject" &&
                 "$(git diff-tree --no-commit-id --name-status -r HEAD)" == $'A\t'"$marker" &&
-                -z "$(git log -1 --format=%H HEAD^ -- "$marker")" &&
-                -f "$marker" ]] &&
-             cmp -s "$marker" <(printf '%s\n' "$subject"); then
-            echo 'authorized=true' >> "$GITHUB_OUTPUT"
-          fi
-      - name: Download original 45134137836 sealed source
-        if: steps.gate.outputs.authorized == 'true'
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: p05-new-live-readonly-authentic-source-sealed
-          run-id: 45134137836
-          github-token: ${{ github.token }}
-          path: p05-original-sealed
-      - name: Download original 45134137836 public receipt
-        if: steps.gate.outputs.authorized == 'true'
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: p05-new-live-readonly-aggregate-public
-          run-id: 45134137836
-          github-token: ${{ github.token }}
-          path: p05-original-public
-      - name: Decrypt source in protected memory and publish aggregate diagnostic only
-        if: steps.gate.outputs.authorized == 'true'
-        run: |
-          python -m research.p05_source_economic_gate \
-            --receipt p05-original-public/receipt.json \
-            --sealed-dir p05-original-sealed \
-            --output p05-original-economic-aggregate.json
-        env:
-          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
-      - name: Upload aggregate-only original source frontier
-        if: steps.gate.outputs.authorized == 'true'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: p05-original-source-mathematical-cost-frontier-public
-          path: p05-original-economic-aggregate.json
-          retention-days: 90
-          if-no-files-found: error
-A\t'"$marker" &&
                 -z "$(git log -1 --format=%H HEAD^ -- "$marker")" &&
                 -f "$marker" ]] &&
               cmp -s "$marker" <(printf '%s\n' "$subject"); then
