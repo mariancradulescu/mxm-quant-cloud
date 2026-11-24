@@ -1,0 +1,259 @@
+name: OWNER official EUR portfolio evidence
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/owner-official-eur.yml'
+      - 'research/owner_official_eur_source.py'
+      - 'research/test_owner_official_eur_source.py'
+      - 'research/OFFICIAL_NATIVE_EUR_PROTOCOL_20261124.md'
+      - 'src/Mxm.Core/NativeUnifiedPortfolioEngine*'
+      - 'src/Mxm.Replay/OwnerOfficialEur.cs'
+      - 'tests/Mxm.Checks/NativeEurPortfolioChecks.cs'
+  push:
+    branches: [main]
+    paths:
+      - 'ops/owner-official-eur-once.txt'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    outputs:
+      authorized: ${{ steps.scope.outputs.authorized }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - run: python -m unittest research.test_owner_official_eur_source research.test_p05_readonly_wire -v
+      - run: dotnet build src/Mxm.Replay -c Release
+      - run: dotnet run --project tests/Mxm.Checks -c Release
+      - name: Validate the single prospective collection authorization
+        id: scope
+        shell: bash
+        run: |
+          echo 'authorized=false' >> "$GITHUB_OUTPUT"
+          [[ "$GITHUB_EVENT_NAME" == "push" ]] || exit 0
+          marker=ops/owner-official-eur-once.txt
+          subject=OWNER_OFFICIAL_EUR_CONTINUITY_20261124
+          [[ "$GITHUB_REF" == "refs/heads/main" && "$GITHUB_RUN_ATTEMPT" == "1" &&
+             "$GITHUB_ACTOR" == "mariancradulescu" &&
+             "$(git log -1 --format=%s)" == "$subject" &&
+             "$(git diff-tree --no-commit-id --name-status -r HEAD)" == $'A\t'"$marker" &&
+             -z "$(git log -1 --format=%H HEAD^ -- "$marker")" ]]
+          cmp -s "$marker" <(printf '%s\n' "$subject")
+          echo 'authorized=true' >> "$GITHUB_OUTPUT"
+  recipient:
+    needs: verify
+    if: needs.verify.outputs.authorized == 'true'
+    environment: mxm-r3-custody-v1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - run: python -m research.custody_new
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: official-eur-recipient
+          path: new-recipient-output/
+          retention-days: 2
+          if-no-files-found: error
+  official-source:
+    needs: [verify, recipient]
+    if: needs.verify.outputs.authorized == 'true'
+    environment: mxm-r3-pepperstone-v1
+    concurrency:
+      group: mxm-existing-oauth-read-only
+      cancel-in-progress: false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 34
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: official-eur-recipient
+          path: official-recipient
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: source-history-public-receipt
+          path: original-source-history
+          run-id: 45396314675
+          github-token: ${{ github.token }}
+      - name: Collect official read-only market and contract observations
+        run: python -m research.owner_official_eur_source
+        env:
+          R3_CTRADER_CLIENT_ID: ${{ secrets.R3_CTRADER_CLIENT_ID }}
+          R3_CTRADER_CLIENT_SECRET: ${{ secrets.R3_CTRADER_CLIENT_SECRET }}
+          R3_CTRADER_ACCESS_TOKEN: ${{ secrets.R3_CTRADER_ACCESS_TOKEN }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: official-eur-sealed-and-receipt
+          path: official-eur/
+          retention-days: 90
+          if-no-files-found: error
+  use:
+    needs: [verify, official-source]
+    if: needs.verify.outputs.authorized == 'true'
+    environment: mxm-r3-custody-v1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - run: dotnet build src/Mxm.Replay -c Release
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: official-eur-sealed-and-receipt
+          path: official-eur
+      - name: Exercise three separate funded EUR ledgers on original observations
+        run: python -m research.owner_official_eur_source --readback
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: official-native-eur-public
+          path: official-eur/native-eur-public.json
+          retention-days: 90
+          if-no-files-found: error
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: source-history-original-sealed
+          path: original-source-history
+          run-id: 45396314675
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: source-history-public-receipt
+          path: original-source-history
+          run-id: 45396314675
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: owner-history-extension-sealed-and-receipt
+          path: previous-extension
+          run-id: 45409527714
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: sealed-source
+          path: bdp-source
+          run-id: 41724643418
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: sealed-source
+          path: aip-source
+          run-id: 41735441128
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: hxc1-original-historical-encrypted-source
+          path: mde1-hxc1-source
+          run-id: 43817213663
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: xmh2-complete-274day-m15-encrypted-source
+          path: mde1-xmh2-source
+          run-id: 44352570167
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: p05-new-live-readonly-authentic-source-sealed
+          path: p05-sealed
+          run-id: 45134137836
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: p05-new-live-readonly-aggregate-public
+          path: p05-public
+          run-id: 45134137836
+          github-token: ${{ github.token }}
+      - name: Align seven timeframes across the original official archives
+        run: python -m research.owner_official_eur_source --matrix
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: official-eur-coverage-matrix
+          path: |
+            official-eur/universe-evidence-matrix.json
+            official-eur/coverage-public.json
+          retention-days: 90
+          if-no-files-found: error
+  official-cli:
+    needs: verify
+    if: needs.verify.outputs.authorized == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: ctrader-cli-5101-readonly-receipt
+          path: verified-cli-package
+          run-id: 45406845961
+          github-token: ${{ github.token }}
+      - name: Test the official simulator entry point and installed version
+        shell: bash
+        run: |
+          mkdir -p official-simulator
+          spotware_image=ghcr.io/spotware/ctrader-console:5.10.6
+          docker pull "$spotware_image"
+          docker image inspect "$spotware_image" --format '{{index .RepoDigests 0}}' > official-simulator/image-digest.txt
+          algo=Mxm.Cloud.ctrader-cli-5101.algo
+          test -s "verified-cli-package/$algo"
+          sha256sum "verified-cli-package/$algo" > official-simulator/algo-sha256.txt
+          official_cli() {
+            docker run --rm -v "$GITHUB_WORKSPACE/verified-cli-package:/algo:ro" "$spotware_image" "$@"
+          }
+          official_cli --version | tee official-simulator/version.txt
+          official_cli metadata "/algo/$algo" > official-simulator/metadata.txt
+          for mode in m1 ticks; do
+            set +e
+            timeout 60s docker run --rm -v "$GITHUB_WORKSPACE/verified-cli-package:/algo:ro" "$spotware_image" \
+              backtest "/algo/$algo" --symbol=EURUSD --period=m5 --data-mode="$mode" \
+              --start=19/11/2025 --end=20/11/2025 --balance=300 --broker=Pepperstone \
+              > "official-simulator/backtest-${mode}.txt" 2>&1
+            result=$?
+            set -e
+            printf '%s %s\n' "$mode" "$result" >> official-simulator/status.txt
+          done
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: official-simulator-version-and-entry
+          path: official-simulator/
+          retention-days: 90
+          if-no-files-found: error

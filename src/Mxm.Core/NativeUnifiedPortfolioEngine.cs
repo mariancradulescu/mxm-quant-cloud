@@ -20,6 +20,8 @@ public sealed record Ucp1MarketFrame(
     public NativeBarContext? ClosedBars { get; init; }
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public NativeFundingOfferEvidence[]? FundingOffers { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public NativeEurMarginObservation[]? EurMargins { get; init; }
 }
 public sealed record Ucp1BrokerFrame(BrokerIdentitySnapshot Identity,
     decimal? AccountCashEur,string AccountType);
@@ -28,6 +30,8 @@ public sealed record Ucp1Frame(long At,Ucp1MarketFrame[] Markets,
 {
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public NativeAccruedFundingEvidence[]? FundingEvidence { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool EurCalibration { get; init; }
 }
 public sealed record Ucp1DecisionSignal(string Symbol,string Family,int Side,
     decimal Atr,decimal Equilibrium,decimal ExpectedMove,long LastCompletedM5At);
@@ -179,7 +183,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
     readonly NativeIntegratedBarrierCalibration? integratedCalibration;
     readonly NativeCompleteModels? completeModels;
     readonly NativeCompleteProbe? completeProbe;
-    bool Cpe1 => policy is "CPE1_ECONOMIC" or "CPE1_SIMPLE" or "CPE1_CASH";
+    bool OwnerEur => policy is EurFirst or EurRank or EurCash;
+    bool Cpe1 => OwnerEur || policy is "CPE1_ECONOMIC" or "CPE1_SIMPLE" or "CPE1_CASH";
     bool Cpe1Economic => policy=="CPE1_ECONOMIC";
     bool CompletePolicy => NativeCompletePolicy.IsPolicy(policy);
     bool StructuralPolicy => NativeStructuralOpportunity.IsPolicy(policy);
@@ -212,7 +217,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
     {
         if(policy is not ("JOINT" or "TRANSITION_ONLY" or "REPAIR_ONLY" or
                           "LONG" or "SHORT" or "CASH" or
-                          "CPE1_ECONOMIC" or "CPE1_SIMPLE" or "CPE1_CASH" or
+                          "CPE1_ECONOMIC" or "CPE1_SIMPLE" or "CPE1_CASH" or EurFirst or EurRank or EurCash or
                           "SCP1_FIRST" or "SCP1_SCORE" or
                           "SCP1_MARGINAL" or "SCP1_ABSTAIN" or
                           "SCP1_LONG" or "SCP1_SHORT" or "SCP1_CASH" or
@@ -223,7 +228,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
             throw new ArgumentException("UCP1_UNDECLARED_COMPLETE_POLICY");
         this.policy=policy;
         if(reserveAccruedFunding&&!Cpe1)throw new ArgumentException("FUNDING_RESERVES_REQUIRE_CPE1_LIFECYCLE");
-        if(reserveAccruedFunding)fundingReserves=new();
+        if(reserveAccruedFunding||OwnerEur)fundingReserves=new();
         completeModels=models;
         completeProbe=probe;
         structuralModels=closedContextModels;
@@ -251,6 +256,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
             if(!Cpe1)throw new ArgumentException("FUNDING_RESERVES_REQUIRE_CPE1_LIFECYCLE");
             fundingReserves=new(s.AccruedFunding);
         }
+        else if(OwnerEur)throw new ArgumentException("EUR_FUNDING_CHECKPOINT_REQUIRED");
         completeModels=s.CompleteModels;
         completeProbe=s.CompleteProbe;
         structuralModels=s.StructuralModels;
@@ -290,6 +296,9 @@ public sealed partial class NativeUnifiedPortfolioEngine
     public Scp1ChoiceReceipt[] Scp1ChoiceReceipts=>scoredChoices.ToArray();
     public NativeIntegratedCalibrationState? IntegratedCalibration()=>integratedCalibration?.Checkpoint();
     public Ucp1Episode[] CompleteModelTrips=>trips.ToArray();
+    public NativeEurOpportunity[] EurOpportunityReceipts=>eurOpportunities.ToArray();
+    public NativeFundingExposure[] FundingExposureSnapshot()=>
+        fundingReserves?.Checkpoint().Exposures??Array.Empty<NativeFundingExposure>();
     public Ucp1ReconciledEpisode[] ReconciledModelEpisodes=>trips
         .Select(trip=>ReconcileCpe1Episode(trip,previousClock)).OfType<Ucp1ReconciledEpisode>()
         .OrderBy(trip=>trip.AvailableAt).ThenBy(trip=>trip.PositionId,StringComparer.Ordinal).ToArray();
