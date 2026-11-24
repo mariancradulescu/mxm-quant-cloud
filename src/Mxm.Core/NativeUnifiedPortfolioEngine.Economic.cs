@@ -12,6 +12,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
     static bool Cpe1Usable(Ucp1MarketFrame m,long at)
         => m.M5.Length>=5 && m.M15.Length>=3 &&
            m.M5[^1].CloseAt<at && m.M15[^1].CloseAt<at &&
+           at-m.M5[^1].CloseAt<=300000L &&
+           at-m.M15[^1].CloseAt<=900000L &&
            m.Contract.MinimumUnits>0m && m.Contract.VolumeStepUnits>0m &&
            m.Contract.MaximumUnits>=m.Contract.MinimumUnits &&
            m.Quote.MarginPerUnit>0m &&
@@ -70,7 +72,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
         List<(Ucp1DecisionSignal Signal,Ucp1MarketFrame Frame)> options)
     {
         var book=model.Ledger.Summary(at);
-        if(policy=="CPE1_CASH" || book.LiquidationEquityEur is not >0m ||
+        if(policy=="CPE1_CASH" || cpe1UnreconciledFunding ||
+           book.LiquidationEquityEur is not >0m ||
            book.MaximumSampledDrawdown>=.28m)
             return RecordIntegratedFrame(at,book);
         var held=Cpe1Commitments(false);
@@ -161,6 +164,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
            plan.Side*(prior.Target-execution)<=0m)
             return null;
         var q=observed.Quote;
+        if(cpe1UnreconciledFunding || q.At-intent.At>300000L)
+            return null; // No late fill after a missing M5 source clock.
         var bracket=NativeExecutableEconomics.Bracket(q,plan.Side,plan.Units,
             prior.Stop,prior.Target,intent.SlippagePerSide,
             q.LiquidationSlippagePerSide??intent.SlippagePerSide);
