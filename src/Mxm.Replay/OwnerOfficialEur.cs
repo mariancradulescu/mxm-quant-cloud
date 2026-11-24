@@ -11,7 +11,8 @@ internal static class OwnerOfficialEur
         Dictionary<string,long[][]> Bars,int? TradingMode,bool? ShortAllowed,long? VerifiedManagementClock,
         string ContractSha256,long? LastContractChange,bool? AccountSwapFree,long? LeverageId);
     internal sealed record Clock(long At,Market[] Markets);
-    internal sealed record Input(Clock[] Frames,long StreamStart,long StreamEnd,bool ContinuousSessionObserved);
+    internal sealed record Input(Clock[] Frames,long StreamStart,long StreamEnd,bool ContinuousSessionObserved,
+        string? FirstCalibrationCheckpoint=null);
 
     static NativeClosedMarketBar[] Bars(Market m,string period,long width,long at)
         =>(m.Bars.GetValueOrDefault(period)??Array.Empty<long[]>()).Select(r=>
@@ -95,6 +96,13 @@ internal static class OwnerOfficialEur
     {
         var engine=new NativeUnifiedPortfolioEngine(policy);
         var parity=new Mxm.Cloud.NativeUnifiedCloudParityAdapter(policy);
+        if(policy==NativeUnifiedPortfolioEngine.EurRank&&input.FirstCalibrationCheckpoint is { } checkpoint)
+        {
+            engine.CalibrateEurRankFrom(NativeUnifiedPortfolioEngine.Restore(checkpoint));
+            var reference=new Mxm.Cloud.NativeUnifiedCloudParityAdapter();
+            reference.Restore(checkpoint);
+            parity.CalibrateEurRankFrom(reference);
+        }
         var curve=new List<Ucp1FrameResult>();
         for(int i=0;i<input.Frames.Length;i++)
         {
