@@ -192,6 +192,40 @@ class ReadbackJournal:
             return None,rec["availableAt"],NO_RESPONSE
         return decode(rec["resType"],rec["res"]),rec["availableAt"],ATTEMPTED
 
+def packet_summary(packets):
+    # Public transport evidence only; never expose account IDs, raw deals,
+    # labels, comments, monetary amounts or arbitrary provider error text.
+    output=[]
+    known_codes=set(model.ProtoOAErrorCode.keys())
+    expected={"ProtoOATraderReq":"ProtoOATraderRes",
+        "ProtoOAAssetListReq":"ProtoOAAssetListRes",
+        "ProtoOADealListReq":"ProtoOADealListRes",
+        "ProtoOASymbolsListReq":"ProtoOASymbolsListRes",
+        "ProtoOASymbolByIdReq":"ProtoOASymbolByIdRes",
+        "ProtoOAExpectedMarginReq":"ProtoOAExpectedMarginRes",
+        "ProtoOAGetTrendbarsReq":"ProtoOAGetTrendbarsRes"}
+    for index,rec in enumerate(packets,1):
+        q=decode(rec["reqType"],rec["req"])
+        r=decode(rec["resType"],rec["res"]) if rec["res"] is not None else None
+        details={}
+        for name in ("fromTimestamp","toTimestamp","period","maxRows"):
+            if name in q.DESCRIPTOR.fields_by_name and q.HasField(name):
+                details[name]=getattr(q,name)
+        if "symbolId" in q.DESCRIPTOR.fields_by_name:
+            value=q.symbolId
+            details["symbolId"]=value if isinstance(value,int) else list(value)
+        code=getattr(r,"errorCode",None)
+        row=dict(sequence=index,requestType=rec["reqType"],responseType=rec["resType"],
+                 requestAt=rec["requestAt"],availableAt=rec["availableAt"],scope=details,
+                 requestSha256=digest(base64.b64decode(rec["req"])),
+                 responseSha256=digest(base64.b64decode(rec["res"])) if r is not None else None,
+                 expectedResponse=(rec["resType"]==expected.get(rec["reqType"]) and r is not None
+                    and r.IsInitialized() and getattr(r,"ctidTraderAccountId",None)==q.ctidTraderAccountId),
+                 providerErrorCode=code if code in known_codes else None,
+                 otherProviderErrorCodeSha256=digest(str(code).encode()) if code and code not in known_codes else None)
+        output.append(row)
+    return output
+
 def matching(r,cls,account):
     return type(r) is cls and r.IsInitialized() and r.ctidTraderAccountId==account
 
@@ -350,6 +384,8 @@ def source_main():
         report["requestCount"]=len(j.packets)
         report["responsesReceived"]=sum(p["res"] is not None for p in j.packets)
         report["responseMissingCount"]=sum(p["res"] is None for p in j.packets)
+        report["requestJournal"]=packet_summary(j.packets)
+        report["unexpectedOrMissingResponses"]=sum(not p["expectedResponse"] for p in report["requestJournal"])
         raw=canonical(dict(runId=rid,packets=j.packets,report=report))
         cipher=seal_new(raw,recipient,rid)
         OUT.mkdir(exist_ok=False)
@@ -379,6 +415,8 @@ def readback_main():
     report.update(runId=rid,requestCount=len(packets),
                   responsesReceived=sum(p["res"] is not None for p in packets),
                   responseMissingCount=sum(p["res"] is None for p in packets))
+    report["requestJournal"]=packet_summary(packets)
+    report["unexpectedOrMissingResponses"]=sum(not p["expectedResponse"] for p in report["requestJournal"])
     need(j.index==len(packets) and report==original["report"] and
          receipt==dict(report,originalSha256=digest(raw),ciphertextSha256=digest(cipher)),
          "HISTORY_READBACK_REPORT_MISMATCH")
