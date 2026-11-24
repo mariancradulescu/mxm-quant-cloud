@@ -14,7 +14,7 @@ The five archived authenticated 2026 sources in #45376822819 do not attest 2025 
 
 ## Implementation and remaining gate
 
-The new point collector uses original account authentication, P05 socket guard, existing sealed custody, roster name/ID and EUR identity checks, per-request sent/received UTC times and original request/response protobuf. It does not infer validity intervals or emit NativeFundingOfferEvidence/NativeAccruedFundingEvidence. It is a bounded source-only entrypoint; collection must be wired to an explicitly authorized existing protected read-only job. Offline tests are not authentic observations. No marker or economic authorization added by this change.
+The new point collector uses original account authentication, P05 socket guard, existing sealed custody, roster name/ID and EUR identity checks, per-request sent/received UTC times and original request/response protobuf. It does not infer validity intervals or emit NativeFundingOfferEvidence/NativeAccruedFundingEvidence. It is a bounded source-only entrypoint; collection is wired into the existing P05 workflow under a distinct first-addition marker and reuses the existing protected recipient and read-only environments. Offline tests are not authentic observations. No marker or economic authorization added by this change.
 
 Required before a point may become funding evidence:
 1. Original sealed packet readback under custody; hash actual bytes, parse protobuf; reconcile account commitment, exact symbol, clocks and trusted source identity. Reject substituted packet, wrong account, side/volume, stale/future/missing clock and unsupported interval. Public receipt alone is not evidence.
@@ -22,7 +22,7 @@ Required before a point may become funding evidence:
 3. Convert to exact signed EUR or a supported exposure-specific maximum, then bind to the position ID, direction, volume, actual accrual window and availability clock in the common C# engine. No adapter output if evidence incomplete. Reconcile FINANCING, Held + Pending, CLOSE_FILL, closed outstanding liabilities and capital, including checkpoint and post-close cases.
 4. NativePortfolioFunding currently validates only hash format, not source/account. Further, Observe retains a nonzero late exact delta for a closed window as a debit ceiling; NativeFundedLedger FINANCING requires an existing held position. This needs an auditable closed-position reconciliation path, not a claim of complete NET on the basis of a known bound. Never rewrite old CLOSE_FILL or erase unresolved debt.
 
-Prospective collection may use the same read-only collector repeatedly under a separately audited source-only cadence, but must preserve gaps as gaps. No need to wait 53 weeks for DEVELOPMENT work. Confirmation remains separate.
+Prospective collection can extend this same read-only entrypoint under a separately audited source-only cadence, but must preserve gaps as gaps. No need to wait 53 weeks for DEVELOPMENT work. Confirmation remains separate.
 
 ## Immutable episode readback
 
