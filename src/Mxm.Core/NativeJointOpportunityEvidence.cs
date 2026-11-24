@@ -19,7 +19,14 @@ public sealed record NativeJointOpportunityEntry(
     string SourceEvidenceHash, string EconomicThesis,
     int RequiredLegs,decimal ProjectedRewardEur,decimal ReservedRiskEur,
     decimal ResidualUsdNotional,decimal ReservedMarginEur,
-    bool FullyFundableAtEntry);
+    bool FullyFundableAtEntry)
+{
+    // CPE1 records admission geometry separately from revalidated fill geometry.
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public decimal? AdmissionProjectedRewardEur { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public decimal? AdmissionReservedRiskEur { get; init; }
+}
 
 public sealed record NativeJointOpportunityMark(
     long ObservedAt,long SourceClosedAt,
