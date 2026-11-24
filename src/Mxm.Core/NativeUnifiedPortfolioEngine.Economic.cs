@@ -292,7 +292,18 @@ public sealed partial class NativeUnifiedPortfolioEngine
         var history=trips.Where(x=>x.Family==plan.Family &&
             !x.CrossedUnknownHistory&&x.EconomicEvidence is {
                 CompletePair:true,ConditionalNetKnown:true}).ToArray();
-        if(history.Length<20)return (plan,null);
+        if(history.Length<20)
+        {
+            // Before any calibrated same-family outcome distribution exists,
+            // HOLD a continuing witness, but close a realized prior price
+            // objective only when newly CLOSED M15 confirms the original
+            // directional impulse has stalled. This is NOT a fixed time exit
+            // or a blind cap at the static target.
+            if(side*(sidePrice-geometry.Target)>=0m && displacement<=0m)
+                return (plan,new("INTEGRATED_CPE1_OBSERVED_CONTINUATION_FAILURE",
+                    position.Units));
+            return (plan,null);
+        }
         decimal probability=(decimal)history.Count(x=>x.GrossEur>0m)/history.Length;
         decimal remainingReward=Math.Max(0m,
             side*(geometry.Target-sidePrice))*position.Units*q.EurCredit;
