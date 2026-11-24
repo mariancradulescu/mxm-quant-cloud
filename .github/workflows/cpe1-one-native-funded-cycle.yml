@@ -66,6 +66,47 @@ jobs:
               cmp -s "$marker" <(printf '%s\n' "$subject"); then
             echo 'authorized=true' >> "$GITHUB_OUTPUT"
           fi
+      - name: Require authenticated main source-only preflight before original economics
+        if: steps.owner.outputs.authorized == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/45332935228" > /tmp/cpe1-bdp1-main-run.json
+          jq -e '.conclusion == "success" and .status == "completed" and
+            .head_sha == "2aad3af4b77df07add399ccda618a276a4a36db5" and
+            .head_branch == "main" and .event == "push" and
+            .path == ".github/workflows/cpe1-bdp1-source-only-preflight.yml" and
+            .actor.login == "mariancradulescu" and .run_attempt == 1' /tmp/cpe1-bdp1-main-run.json
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        if: steps.owner.outputs.authorized == 'true'
+        with:
+          name: cpe1-bdp1-authentic-contract-source-only-preflight-main
+          run-id: 45332935228
+          github-token: ${{ github.token }}
+          path: cpe1-bdp1-verified-receipt
+      - name: Validate authenticated source-only receipt, retain unknown swap fields
+        if: steps.owner.outputs.authorized == 'true'
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=json.loads(Path("cpe1-bdp1-verified-receipt/cpe1-bdp1-contract-source-only.json").read_text())
+          assert p["Scope"]=="ORIGINAL_BDP1_SOURCE_ONLY_NO_ECONOMIC_ENGINE"
+          assert p["Source"]["sourceRunId"]==41724643418
+          assert p["Source"]["ciphertextSha256"]=="e47ba7204ca7e07e7bb523ede8a8171f49b216cad09914142ed548839660a370"
+          assert p["Source"]["rawAccountAndBarsReconstructed"] is True
+          assert p["BrokerRequests"]==p["Orders"]==p["ClosedModelsCalled"]==0
+          assert p["CloudActivated"] is False
+          assert p["HistoricalTariffContinuityCertified"] is False
+          assert p["HistoricalBrokerNetCertified"] is False
+          assert set(p["Symbols"])=={"EURUSD","GBPUSD"}
+          for v in p["Symbols"].values():
+              assert v["OriginalBrokerAuthenticated"] is True
+              assert v["Status"] in ("COMPLETE_SUPPORTED_CURRENT_SCHEDULE","UNKNOWN_OR_UNSUPPORTED_CURRENT_SCHEDULE")
+              assert set(v["MissingFields"])=={k for k,val in v["Fields"].items() if val is None}
+          print("CPE1_MAIN_SOURCE_ONLY_RECEIPT_VERIFIED")
+          PY
   # BDP1 custody preflight is isolated on main in
   # cpe1-bdp1-source-only-preflight.yml; never access protected custody from PR.
   original-native-economic:
