@@ -57,5 +57,18 @@ class SourceHistoryUniverseChecks(unittest.TestCase):
         self.assertEqual(j.index,1)
         self.assertNotEqual(s.ATTEMPTED,s.UNCOLLECTED)
 
+    def test_public_journal_excludes_account_and_raw_deal_data(self):
+        q=m.ProtoOADealListReq(ctidTraderAccountId=987654321,fromTimestamp=s.START,
+                              toTimestamp=s.START,maxRows=1)
+        r=m.ProtoOADealListRes(ctidTraderAccountId=987654321,hasMore=False)
+        rec=dict(reqType=type(q).__name__,req=s.encode(q),requestAt=1,availableAt=2,
+                 resType=type(r).__name__,res=s.encode(r))
+        report=s.packet_summary([rec])
+        self.assertTrue(report[0]["expectedResponse"])
+        self.assertEqual(report[0]["scope"]["fromTimestamp"],s.START)
+        self.assertNotIn("987654321",str(report))
+        self.assertNotIn(rec["req"],str(report))
+        self.assertNotIn(rec["res"],str(report))
+
 if __name__=="__main__":
     unittest.main()
