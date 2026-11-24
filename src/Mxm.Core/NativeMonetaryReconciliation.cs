@@ -95,7 +95,9 @@ public sealed partial class NativeFundedLedger
                 decimal fraction=f.Units/p.Units,entryFee=p.EntryFeeRemaining*fraction,entryConversion=p.EntryConversionRemaining*fraction,funding=p.FinancingRemaining*fraction;
                 bool complete=f.Units==p.Units;decimal net=gross-commission-entryFee-conversion-entryConversion+funding;
                 // Actual spread/slippage decomposition is unknown, never zero.
-                state.Closed.Add(new(p.Id,p.Symbol,p.EntryAt,f.At,f.Units,gross,null,null,conversion+entryConversion,commission+entryFee,-funding,net,complete,"ATTRIBUTED_"+f.Domain));
+                AppendSettlement(new(p.Id,p.Symbol,p.EntryAt,f.At,f.Units,gross,null,null,
+                    conversion+entryConversion,commission+entryFee,-funding,net,complete,
+                    "ATTRIBUTED_"+f.Domain),closedNetEur+net);
                 if(complete)state.Positions.Remove(p.Id);
                 else state.Positions[p.Id]=p with {Units=p.Units-f.Units,EntryFeeRemaining=p.EntryFeeRemaining-entryFee,EntryConversionRemaining=p.EntryConversionRemaining-entryConversion,FinancingRemaining=p.FinancingRemaining-funding};
                 state=state with {CashEur=state.CashEur+gross-commission-conversion};

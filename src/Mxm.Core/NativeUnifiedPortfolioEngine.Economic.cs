@@ -9,6 +9,53 @@ namespace Mxm.Core;
 // The two predeclared modes use identical causal M5/M15 candidate generators.
 public sealed partial class NativeUnifiedPortfolioEngine
 {
+    readonly Dictionary<string,Cpe1FamilyHistory> cpe1History=new(StringComparer.Ordinal);
+
+    sealed class Cpe1FamilyHistory
+    {
+        readonly List<decimal> grossReturns=new();
+        readonly HashSet<long> closeDays=new();
+        decimal? lowerBound;
+        bool returnsChanged;
+        public int Settled { get; private set; }
+        public int Winners { get; private set; }
+
+        public void Add(Ucp1Episode episode,NativeJointOpportunityEpisodeEvidence evidence)
+        {
+            Settled++;
+            if(episode.GrossEur>0m)Winners++;
+            if(evidence.RealizedGrossR is not decimal grossR)return;
+            grossReturns.Add(grossR);
+            closeDays.Add(episode.CloseAt/86400000L);
+            returnsChanged=true;
+        }
+
+        public decimal? LowerObservedGross()
+        {
+            if(grossReturns.Count<20 || closeDays.Count<3)return null;
+            if(returnsChanged)
+            {
+                // Retain exactly the frozen two-pass calculation in close
+                // order. Only a newly completed eligible episode invalidates it.
+                decimal mean=grossReturns.Average();
+                double sampleVariance=grossReturns.Select(v=>Math.Pow((double)(v-mean),2))
+                    .Sum()/(grossReturns.Count-1);
+                lowerBound=mean-1.645m*(decimal)Math.Sqrt(sampleVariance/grossReturns.Count);
+                returnsChanged=false;
+            }
+            return lowerBound;
+        }
+    }
+
+    void RememberCpe1Episode(Ucp1Episode episode)
+    {
+        if(episode.CrossedUnknownHistory || episode.EconomicEvidence is not
+           {CompletePair:true,ConditionalNetKnown:true} evidence)return;
+        if(!cpe1History.TryGetValue(episode.Family,out var history))
+            cpe1History.Add(episode.Family,history=new());
+        history.Add(episode,evidence);
+    }
+
     static bool Cpe1Usable(Ucp1MarketFrame m,long at)
         => m.M5.Length>=5 && m.M15.Length>=3 &&
            m.M5[^1].CloseAt<at && m.M15[^1].CloseAt<at &&
@@ -51,23 +98,6 @@ public sealed partial class NativeUnifiedPortfolioEngine
             "CPE1_SINGLE_ECONOMIC_EPISODE",pending)).ToArray();
     }
 
-    static decimal? Cpe1LowerObservedGross(
-        Ucp1Episode[] known,string family)
-    {
-        var a=known.Where(x=>x.Family==family &&
-            !x.CrossedUnknownHistory&&x.EconomicEvidence is {
-                CompletePair:true,ConditionalNetKnown:true,RealizedGrossR:not null})
-            .ToArray();
-        if(a.Length<20 || a.Select(x=>x.CloseAt/86400000L).Distinct().Count()<3)
-            return null;
-        // Descriptive one-sided sampling bound. Sequential reuse and market
-        // dependence forbid an independent statistical certification.
-        var values=a.Select(x=>x.EconomicEvidence!.RealizedGrossR!.Value).ToArray();
-        decimal mean=values.Average();
-        double sampleVariance=values.Select(v=>Math.Pow((double)(v-mean),2)).Sum()/(values.Length-1);
-        return mean-1.645m*(decimal)(Math.Sqrt(sampleVariance/values.Length));
-    }
-
     Ucp1FrameResult AdvanceCpe1(long at,Ucp1Frame frame,
         List<(Ucp1DecisionSignal Signal,Ucp1MarketFrame Frame)> options)
     {
@@ -89,9 +119,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
         foreach(var (signal,market) in options.OrderBy(x=>x.Frame.Symbol,StringComparer.Ordinal)
             .ThenBy(x=>x.Signal.Family,StringComparer.Ordinal))
         {
-            if(!Cpe1Usable(market,at) || !Cpe1Levels(signal,market).HasValue)
+            if(!Cpe1Usable(market,at) || Cpe1Levels(signal,market) is not { } levels)
                 continue;
-            var levels=Cpe1Levels(signal,market)!.Value;
             decimal units=market.Contract.MinimumUnits;
             decimal slip=market.SlippagePerSideQuote;
             var q=market.Quote;
@@ -114,13 +143,12 @@ public sealed partial class NativeUnifiedPortfolioEngine
             }
             // Causal evidence refers only to previously COMPLETED episodes,
             // never to still-Held future outcomes or this candidate's payoff.
-            var lower=Cpe1LowerObservedGross(trips.ToArray(),signal.Family);
+            var history=cpe1History.GetValueOrDefault(signal.Family);
+            var lower=history?.LowerObservedGross();
             // One declared initial learning phase: use affordable minimum
             // trades until 20 uncensored whole episodes become observable.
             // Calibration trades are REAL modeled P/L, not free shadow labels.
-            bool calibration=trips.Count(x=>x.Family==signal.Family &&
-                x.EconomicEvidence is {CompletePair:true,ConditionalNetKnown:true}
-                && !x.CrossedUnknownHistory)<20;
+            bool calibration=(history?.Settled??0)<20;
             if(Cpe1Economic&&!calibration)
             {
                 // First justify recurrent GROSS advantage, then compare its
@@ -290,10 +318,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
         // current witnessed executable price, not an already-earned gain.
         // Prior outcome probability is diagnostic unless enough previous
         // settled non-gap same-family episodes are present.
-        var history=trips.Where(x=>x.Family==plan.Family &&
-            !x.CrossedUnknownHistory&&x.EconomicEvidence is {
-                CompletePair:true,ConditionalNetKnown:true}).ToArray();
-        if(history.Length<20)
+        var history=cpe1History.GetValueOrDefault(plan.Family);
+        if(history is null || history.Settled<20)
         {
             // Before any calibrated same-family outcome distribution exists,
             // HOLD a continuing witness, but close a realized prior price
@@ -305,7 +331,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
                     position.Units));
             return (plan,null);
         }
-        decimal probability=(decimal)history.Count(x=>x.GrossEur>0m)/history.Length;
+        decimal probability=(decimal)history.Winners/history.Settled;
         decimal remainingReward=Math.Max(0m,
             side*(geometry.Target-sidePrice))*position.Units*q.EurCredit;
         decimal remainingLoss=Math.Max(0m,
@@ -328,10 +354,10 @@ public sealed partial class NativeUnifiedPortfolioEngine
     }
 
     NativeJointOpportunityEpisodeEvidence? Cpe1CompleteEpisode(
-        Ucp1Plan plan,LedgerPosition held,LedgerClosedFragment finalPart)
+        Ucp1Plan plan,LedgerPosition held,LedgerClosedFragment finalPart,
+        LedgerClosedFragment[] parts)
     {
         if(plan.EconomicEntry is null)return null;
-        var parts=model.Ledger.ClosedFragments().Where(x=>x.PositionId==held.Id).ToArray();
         decimal gross=parts.Sum(x=>x.GrossEur);
         decimal net=parts.Sum(x=>x.NetEur);
         var reason=finalPart.Reason;

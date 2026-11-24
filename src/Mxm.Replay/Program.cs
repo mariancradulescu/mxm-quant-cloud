@@ -4,6 +4,8 @@ using System.Security.Cryptography;
 // CPE1: read-only source -> SAME native UCP1 funded decision cycle.
 if(args.Length==4 && args[2]=="--cpe1-one-unified-financed-economics")
     return Cpe1OriginalIntegratedRunner.Run(args[0],args[1],args[3]);
+if(args.Length==4 && args[2]=="--cpe1-recovery-native-funded-economics")
+    return Cpe1OriginalIntegratedRunner.Run(args[0],args[1],args[3],new Cpe1ReplayProgress());
 
 // RVC1: ONE new read-only multi-asset joint residual economic Core programme.
 // The input must already be cryptographically verified original source.

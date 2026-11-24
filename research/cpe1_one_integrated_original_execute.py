@@ -110,7 +110,22 @@ def preflight_bdp1():
         raise RuntimeError("CPE1_BDP1_PREFLIGHT_SOURCE_RECOVERY_FAILED") from None
 
 def main():
-    PUBLIC.mkdir(exist_ok=True)
+    execute(PUBLIC, run_original_native)
+    print("CPE1_ORIGINAL_EXPOSED_SOURCE_COMMON_CSHARP_ECONOMIC_RESULT_COMPLETE",flush=True)
+
+
+def run_original_native(private_input, native, protocol_sha):
+    run=subprocess.run(["dotnet","run","--project","src/Mxm.Replay",
+        "--no-build","-c","Release","--",
+        str(private_input),str(native),
+        "--cpe1-one-unified-financed-economics",protocol_sha],
+        capture_output=True,text=True,timeout=8400)
+    need(run.returncode==0,"ONE_NATIVE_CPE1_ECONOMIC_ENGINE_FAILED_" +
+         run.stderr[-900:].replace("\n"," "))
+
+
+def execute(public, run_native, report_stage=None, recovery=None):
+    public.mkdir(exist_ok=True)
     need(PROTOCOL.is_file(),"PRECOMMITTED_PROTOCOL_MISSING")
     protocol_sha=hashlib.sha256(PROTOCOL.read_bytes()).hexdigest()
     with tempfile.TemporaryDirectory(prefix="cpe1-genuine-causal-") as tmp:
@@ -118,22 +133,24 @@ def main():
         sealed_bridge=folder/"original-source-only.json"
         private_input=folder/"input-CPE1-accounts.json"
         native=folder/"native-cpe1-integrated-result.json"
+        if report_stage:
+            report_stage("AUTHENTICATE_ORIGINAL_SOURCES")
         custody=original_source_only(sealed_bridge)
         need(custody["BrokerRequests"]==0 and custody["Orders"]==0 and
              custody["CloudActivated"] is False,
              "ORIGINAL_SOURCE_ONLY_AUTHORITY_VIOLATED")
         tape=json.loads(sealed_bridge.read_text())
+        if report_stage:
+            report_stage("AUTHENTICATE_ORIGINAL_FUNDING")
         funding,funding_audit=recover_original_contract_swap(tape)
         private_input.write_text(json.dumps(dict(Tape=tape,Funding=funding),
                                             separators=(",",":")))
         private_input.chmod(0o600)
-        run=subprocess.run(["dotnet","run","--project","src/Mxm.Replay",
-            "--no-build","-c","Release","--",
-            str(private_input),str(native),
-            "--cpe1-one-unified-financed-economics",protocol_sha],
-            capture_output=True,text=True,timeout=8400)
-        need(run.returncode==0,"ONE_NATIVE_CPE1_ECONOMIC_ENGINE_FAILED_" +
-             run.stderr[-900:].replace("\n"," "))
+        if report_stage:
+            report_stage("START_NATIVE_REPLAY")
+        run_native(private_input, native, protocol_sha)
+        if report_stage:
+            report_stage("VERIFY_AND_WRITE_VERDICT")
         need(native.is_file(),"NATIVE_CPE1_EVIDENCE_MISSING")
         data=native.read_bytes()
         original_sha=hashlib.sha256(data).hexdigest()
@@ -161,10 +178,13 @@ def main():
             HistoricalBrokerFillsCertified=False,
             FutureIndependentConfirmation=False,
             Qualifier="DEVELOPMENT_ONLY_RESULT_AFTER_ONLY_ONE_PRECOMMITTED_RUN")
-        (PUBLIC/"cpe1-source-and-funding-receipt.json").write_text(
+        if recovery is not None:
+            receipt["TechnicalRecovery"]=recovery
+        (public/"cpe1-source-and-funding-receipt.json").write_text(
             json.dumps(receipt,indent=2,sort_keys=True)+"\n")
-        (PUBLIC/"cpe1-original-one-economic.json").write_bytes(data)
-        print("CPE1_ORIGINAL_EXPOSED_SOURCE_COMMON_CSHARP_ECONOMIC_RESULT_COMPLETE",flush=True)
+        name=("cpe1-original-one-economic.json" if recovery is None else
+              "cpe1-recovery-1-economic.json")
+        (public/name).write_bytes(data)
 
 if __name__=="__main__":
     if sys.argv[1:]==["--preflight-bdp1"]:

@@ -47,6 +47,13 @@ public sealed partial class NativeFundedSession
         return Ledger.Summary();
     }
 
+    internal void ApplyOwnedResearchFact(LedgerEvent fact)
+    {
+        if(Ledger.MonetaryDomain!="MODEL_REPLAY")
+            throw new ArgumentException("RESEARCH_CANNOT_MUTATE_BROKER_BOOK");
+        Ledger.ApplyOwnedResearchFact(fact);
+    }
+
     // A single observation changes no cash, inventory or pending order facts.
     // Retain the same validation and event chain without serializing the entire
     // session on every minute of full-session market observation.

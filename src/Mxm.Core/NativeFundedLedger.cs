@@ -43,6 +43,8 @@ public sealed partial class NativeFundedLedger
     static readonly JsonSerializerOptions Options=new(){NumberHandling=JsonNumberHandling.AllowReadingFromString};
     LedgerState state=new(Version,OwnerRiskAuthority.InitialCapitalEur,OwnerRiskAuthority.InitialCapitalEur,-1,OwnerRiskAuthority.InitialCapitalEur,0,false,new(),new(),new(),new(),new(),new(),new string('0',64));
     readonly long maximumStalenessMs;
+    decimal closedNetEur;
+    int completeRoundTrips;
     public NativeFundedLedger(long maximumStalenessMs=1000)
     {
         if(maximumStalenessMs<0)throw new ArgumentException("NATIVE_LEDGER_STALENESS");
@@ -76,19 +78,58 @@ public sealed partial class NativeFundedLedger
     }
     decimal Equity(Dictionary<string,LedgerQuote> quotes,long at)=>state.CashEur+
         state.Positions.Values.Sum(p=>Floating(p,Quote(quotes,p.Symbol,at)));
-    void Reconcile()
+    void Reconcile(decimal? settlementNetEur=null)
     {
-        decimal expected=state.InitialCashEur+state.Closed.Sum(t=>t.NetEur)-state.Positions.Values.Sum(p=>p.EntryFeeRemaining+p.EntryConversionRemaining)+
+        decimal expected=state.InitialCashEur+(settlementNetEur??closedNetEur)-state.Positions.Values.Sum(p=>p.EntryFeeRemaining+p.EntryConversionRemaining)+
             state.Positions.Values.Sum(p=>p.FinancingRemaining);
         if(Math.Abs(expected-state.CashEur)>.000000001m)throw new InvalidOperationException("NATIVE_LEDGER_CASH_IDENTITY");
     }
-    public void Apply(LedgerEvent e)
+
+    void AppendSettlement(LedgerClosedFragment settlement,decimal settledNet)
+    {
+        state.Closed.Add(settlement);
+        closedNetEur=settledNet;
+        if(settlement.CompletesRoundTrip)completeRoundTrips++;
+    }
+
+    void RebuildSettlementTotals()
+    {
+        closedNetEur=0m;
+        completeRoundTrips=0;
+        foreach(var settlement in state.Closed)
+        {
+            closedNetEur+=settlement.NetEur;
+            if(settlement.CompletesRoundTrip)completeRoundTrips++;
+        }
+    }
+    public void Apply(LedgerEvent e)=>Apply(e,validateSummary:false);
+
+    // The engine owns this model book. Stage only mutable live exposure;
+    // the event identities and settlements are appended after validation.
+    internal void ApplyOwnedResearchFact(LedgerEvent fact)
+    {
+        var previous=state;
+        if(fact.Kind!="MARK")
+            state=state with {
+                Positions=new(state.Positions,StringComparer.Ordinal),
+                Pending=new(state.Pending,StringComparer.Ordinal)
+            };
+        try {Apply(fact,validateSummary:true);}
+        catch
+        {
+            state=previous;
+            throw;
+        }
+    }
+
+    void Apply(LedgerEvent e,bool validateSummary)
     {
         if(state.MonetaryDomain!="MODEL_REPLAY")throw new InvalidOperationException("EXECUTION_DOMAIN_MISMATCH_NO_MODEL_FILL_ON_RECOVERED_BOOK");
         string hash=Hash(JsonSerializer.Serialize(e));
         if(state.AppliedEventHashes.TryGetValue(e.EventId,out var seen))
         {
             if(seen!=hash)throw new InvalidOperationException("NATIVE_LEDGER_CONFLICTING_EVENT");
+            if(validateSummary)_=Summary();
             return;
         }
         if(string.IsNullOrWhiteSpace(e.EventId) || e.At<0 || e.At<state.Clock || e.EvidenceHash.Length!=64 ||
@@ -104,6 +145,7 @@ public sealed partial class NativeFundedLedger
             quotes[q.Symbol]=q;
         }
         // Validate and calculate before mutating monetary/position state.
+        LedgerClosedFragment? settlement=null;
         switch(e.Kind)
         {
             case "REQUEST_OPEN":
@@ -116,7 +158,7 @@ public sealed partial class NativeFundedLedger
                 // No broker/trading certificate follows from this research path.
                 try { _=Equity(quotes,e.At); }
                 catch(InvalidOperationException) { throw new ArgumentException("NATIVE_LEDGER_CURRENT_HOLDING_MARK_UNKNOWN"); }
-                state.Pending.Add(e.PositionId,e);state.UsedPositionIds.Add(e.PositionId);break;
+                state.Pending.Add(e.PositionId,e);break;
             case "REQUEST_CLOSE":
                 if(!state.Positions.TryGetValue(e.PositionId,out var closePosition) || closePosition.Symbol!=e.Symbol ||
                     e.LatencyMs<=0 || state.Pending.ContainsKey(e.PositionId))
@@ -159,7 +201,7 @@ public sealed partial class NativeFundedLedger
                 if(conversion<-.000000001m)throw new InvalidOperationException("NATIVE_LEDGER_CONVERSION_COST");
                 conversion=Math.Max(0,conversion);decimal net=converted-entryFee-e.FeeEur+finance;
                 bool complete=e.Units==closedPosition.Units;
-                state.Closed.Add(new(closedPosition.Id,closedPosition.Symbol,closedPosition.EntryAt,e.At,e.Units,gross,spread,slip,conversion,entryFee+e.FeeEur,-finance,net,complete,e.Reason));
+                settlement=new(closedPosition.Id,closedPosition.Symbol,closedPosition.EntryAt,e.At,e.Units,gross,spread,slip,conversion,entryFee+e.FeeEur,-finance,net,complete,e.Reason);
                 state=state with {CashEur=state.CashEur+converted-e.FeeEur};
                 if(complete){state.Positions.Remove(closedPosition.Id);state.Pending.Remove(closedPosition.Id);}
                 else
@@ -217,7 +259,6 @@ public sealed partial class NativeFundedLedger
             default:throw new ArgumentException("NATIVE_LEDGER_UNKNOWN_EVENT");
         }
         state=state with {Quotes=quotes,Clock=e.At,EventChainHash=Hash(state.EventChainHash+hash)};
-        state.AppliedEventHashes.Add(e.EventId,hash);
         if(e.Kind is "MARK" or "OPEN_FILL" or "CLOSE_FILL" or "FINANCING")
         {
             try
@@ -227,7 +268,12 @@ public sealed partial class NativeFundedLedger
             }
             catch(InvalidOperationException){state=state with {HistoryEvidenceIncomplete=true};}
         }
-        Reconcile();
+        decimal settledNet=settlement is null?closedNetEur:closedNetEur+settlement.NetEur;
+        Reconcile(settledNet);
+        if(validateSummary)_=Summary();
+        state.AppliedEventHashes.Add(e.EventId,hash);
+        if(e.Kind=="REQUEST_OPEN")state.UsedPositionIds.Add(e.PositionId);
+        if(settlement is not null)AppendSettlement(settlement,settledNet);
     }
     public LedgerSummary Summary(long? observedAt=null)
     {
@@ -237,11 +283,15 @@ public sealed partial class NativeFundedLedger
         try {equity=Equity(state.Quotes,valuationClock);margin=state.Positions.Values.Sum(p=>p.Units*Math.Max(p.MarginPerUnit,Quote(state.Quotes,p.Symbol,valuationClock).MarginPerUnit));}
         catch(InvalidOperationException){}
         return new(state.CashEur,equity,margin,equity-margin,state.ObservedPeakEur,state.MaximumSampledDrawdown,
-            state.Positions.Count,state.Pending.Count,state.Closed.Count(t=>t.CompletesRoundTrip),state.Closed.Sum(t=>t.NetEur),
+            state.Positions.Count,state.Pending.Count,completeRoundTrips,closedNetEur,
             state.HistoryEvidenceIncomplete,state.EventChainHash);
     }
     internal LedgerPosition[] PositionSnapshot()=>state.Positions.Values.ToArray();
     public LedgerClosedFragment[] ClosedFragments()=>state.Closed.ToArray();
+    internal LedgerClosedFragment LastClosedRoundTrip(string positionId)
+        =>state.Closed.Last(x=>x.PositionId==positionId&&x.CompletesRoundTrip);
+    internal LedgerClosedFragment[] ClosedFragments(string positionId)
+        =>state.Closed.Where(x=>x.PositionId==positionId).ToArray();
     public string Checkpoint()
     {
         string payload=JsonSerializer.Serialize(state);return JsonSerializer.Serialize(new {Payload=payload,Sha256=Hash(payload),MaximumStalenessMs=maximumStalenessMs});
@@ -259,7 +309,10 @@ public sealed partial class NativeFundedLedger
         if(restored.MonetaryDomain is not ("MODEL_REPLAY" or "BROKER_EXECUTION_FACT" or "FROZEN_MODELED_SETTLEMENT"))
             throw new ArgumentException("NATIVE_LEDGER_CHECKPOINT_MONETARY_DOMAIN");
         foreach(var key in restored.Positions.Keys.ToArray())restored.Positions[key]=restored.Positions[key] with {MonetaryDomain=restored.Positions[key].MonetaryDomain??"MODEL_REPLAY"};
-        var ledger=new NativeFundedLedger(root.GetProperty("MaximumStalenessMs").GetInt64()){state=restored};ledger.Reconcile();return ledger;
+        var ledger=new NativeFundedLedger(root.GetProperty("MaximumStalenessMs").GetInt64()){state=restored};
+        ledger.RebuildSettlementTotals();
+        ledger.Reconcile();
+        return ledger;
     }
     public static object ReceiveFacts(LedgerEvent[] events)
     {

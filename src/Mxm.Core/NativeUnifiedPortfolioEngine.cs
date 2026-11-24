@@ -241,6 +241,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
         foreach(var p in s.LastSignalBar)lastSignalBar.Add(p.Key,p.Value);
         foreach(var p in s.Reasons)reasons.Add(p.Key,p.Value);
         facts.AddRange(s.Events);trips.AddRange(s.Trips);curve.AddRange(s.Curve);
+        if(Cpe1)
+            foreach(var trip in trips)RememberCpe1Episode(trip);
         cpe1UnreconciledFunding=s.Cpe1UnreconciledFunding;
         previousClock=s.LastAt;seq=s.Sequence;
         proposed=s.Proposed;admitted=s.Admitted;openFills=s.OpenFills;
@@ -305,7 +307,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
     void Count(string s){reasons[s]=reasons.GetValueOrDefault(s)+1;}
     void Apply(LedgerEvent e)
     {
-        if(e.Kind=="MARK" && NativeIntegratedEconomicPolicy.IsPolicy(policy))
+        if(Cpe1)model.ApplyOwnedResearchFact(e);
+        else if(e.Kind=="MARK" && NativeIntegratedEconomicPolicy.IsPolicy(policy))
             model.RecordResearchMark(e);
         else model.ApplyResearchFacts(new[]{e});
         if(!researchFork) facts.Add(e);
@@ -562,7 +565,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
             var verdict=NativeSimulatedCloseLifecycle.Advance(model,state,
                 new NativeModelCloseObservation(t,q,direction,integratedManages?0:t-1,
                     instruction,p.Integrated is not null,integratedManages),
-                    Cpe1?2*300000L:NativeSimulatedCloseLifecycle.ModelCloseResponseWindowMs);
+                    Cpe1?2*300000L:NativeSimulatedCloseLifecycle.ModelCloseResponseWindowMs,
+                    ownedModelLedger:Cpe1);
             if(!researchFork) facts.AddRange(verdict.AppliedFacts);
             expiredCloses+=verdict.AppliedFacts.Count(x=>
                 x.Kind=="MODEL_CLOSE_INTENT_EXPIRED");
@@ -598,16 +602,22 @@ public sealed partial class NativeUnifiedPortfolioEngine
             plans[held.Id]=p;
             if(verdict.ModelPositionClosed)
             {
-                var close=model.Ledger.ClosedFragments()
-                    .Last(x=>x.PositionId==held.Id&&x.CompletesRoundTrip);
+                var close=model.Ledger.LastClosedRoundTrip(held.Id);
                 var trip=new Ucp1Episode(held.Id,held.Symbol,p.Family,held.Side,
                     p.OpenAt,close.ClosedAt,held.Units,close.NetEur,
                     close.GrossEur,p.RiskEur,p.RiskEur>0?close.NetEur/p.RiskEur:null,
                     p.MfeEur,p.MaeEur,close.Reason,p.CrossedUnknownHistory);
-                if(Cpe1)
-                    trip=trip with {EconomicEntry=p.EconomicEntry,
-                        EconomicEvidence=Cpe1CompleteEpisode(p,held,close)};
-                trips.Add(p.Integrated is null?trip:CompleteIntegrated(trip,p));
+                if(p.Integrated is { } geometry)
+                {
+                    var parts=Cpe1&&!geometry.Reduced?new[]{close}:
+                        model.Ledger.ClosedFragments(held.Id);
+                    if(Cpe1)
+                        trip=trip with {EconomicEntry=p.EconomicEntry,
+                            EconomicEvidence=Cpe1CompleteEpisode(p,held,close,parts)};
+                    trip=CompleteIntegrated(trip,p,parts);
+                }
+                trips.Add(trip);
+                if(Cpe1)RememberCpe1Episode(trip);
                 plans.Remove(held.Id);
             }
         }

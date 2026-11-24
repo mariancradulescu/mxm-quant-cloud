@@ -29,7 +29,10 @@ internal static class Cpe1OriginalIntegratedRunner
         public readonly V32Market Market;
         public readonly V32Bar[] M5Bars,M15Bars;
         public readonly Dictionary<long,V32Bar> OpenM5;
-        public readonly List<NativeClosedMarketBar> SeenM5=new(),SeenM15=new();
+        readonly List<NativeClosedMarketBar> seenM5=new(),seenM15=new();
+        NativeClosedMarketBar[]? closedM5,closedM15;
+        public NativeClosedMarketBar[] ClosedM5=>closedM5??=seenM5.ToArray();
+        public NativeClosedMarketBar[] ClosedM15=>closedM15??=seenM15.ToArray();
         int next5,next15;
         public Source(V32Market market)
         {
@@ -46,13 +49,15 @@ internal static class Cpe1OriginalIntegratedRunner
         {
             while(next5<M5Bars.Length && M5Bars[next5].OpenAt+M5<t)
             {
-                SeenM5.Add(Bar(M5Bars[next5++],M5));
-                if(SeenM5.Count>5)SeenM5.RemoveAt(0);
+                seenM5.Add(Bar(M5Bars[next5++],M5));
+                if(seenM5.Count>5)seenM5.RemoveAt(0);
+                closedM5=null;
             }
             while(next15<M15Bars.Length && M15Bars[next15].OpenAt+M15<t)
             {
-                SeenM15.Add(Bar(M15Bars[next15++],M15));
-                if(SeenM15.Count>3)SeenM15.RemoveAt(0);
+                seenM15.Add(Bar(M15Bars[next15++],M15));
+                if(seenM15.Count>3)seenM15.RemoveAt(0);
+                closedM15=null;
             }
         }
     }
@@ -113,8 +118,10 @@ internal static class Cpe1OriginalIntegratedRunner
         catch(InvalidOperationException){return null;}
     }
 
-    public static int Run(string sourceFile,string outputFile,string frozenSha)
+    public static int Run(string sourceFile,string outputFile,string frozenSha,
+        Cpe1ReplayProgress? progress=null)
     {
+        progress?.Report("READ_NATIVE_INPUT");
         if(frozenSha.Length!=64)throw new ArgumentException("CPE1_PROTOCOL_HASH");
         var payload=JsonSerializer.Deserialize<Cpe1SourceInput>(
             File.ReadAllText(sourceFile),Json)
@@ -138,24 +145,29 @@ internal static class Cpe1OriginalIntegratedRunner
         var times=sources.Values.SelectMany(x=>x.M5Bars.Select(b=>b.OpenAt))
             .Distinct().OrderBy(x=>x).ToArray();
         if(times.Length<500)throw new ArgumentException("CPE1_SOURCE_TIMESTAMPS_INSUFFICIENT");
-        var books=(from stress in Stress from policy in Policies
-            select new {Stress=stress,Policy=policy,
+        var groups=Stress.Select(stress=>Policies.Select(policy=>
+            new {Stress=stress,Policy=policy,
                 Engine=new NativeUnifiedPortfolioEngine(policy)})
-            .ToArray();
+            .ToArray()).ToArray();
+        var books=groups.SelectMany(x=>x).ToArray();
+        var orderedContracts=contracts.OrderBy(x=>x.Key,StringComparer.Ordinal).ToArray();
         var unknownQuotes=new Dictionary<string,int>(StringComparer.Ordinal);
         var first=times[0];var last=times[^1];
-        foreach(long t in times)
+        progress?.Report("ADVANCE_SOURCE_CLOCKS",0,times.Length,force:true);
+        for(int i=0;i<times.Length;i++)
         {
+            long t=times[i];
             foreach(var source in sources.Values)source.Advance(t);
             if(!sources["EURUSD"].OpenM5.TryGetValue(t,out var conversion))
             {
-                foreach(var book in books) book.Engine.Advance(new Ucp1Frame(t,Array.Empty<Ucp1MarketFrame>()));
-                continue;
+                var emptyFrame=new Ucp1Frame(t,Array.Empty<Ucp1MarketFrame>());
+                foreach(var book in books)book.Engine.Advance(emptyFrame);
             }
-            foreach(var multiplier in Stress)
+            else foreach(var group in groups)
             {
+                var multiplier=group[0].Stress;
                 var frames=new List<Ucp1MarketFrame>();
-                foreach(var pair in contracts.OrderBy(x=>x.Key,StringComparer.Ordinal))
+                foreach(var pair in orderedContracts)
                 {
                     var source=pair.Value.Source;
                     if(!source.OpenM5.TryGetValue(t,out var bar))continue;
@@ -167,13 +179,13 @@ internal static class Cpe1OriginalIntegratedRunner
                         continue;
                     }
                     frames.Add(new Ucp1MarketFrame(pair.Key,quote,pair.Value.Item2,
-                        source.SeenM5.ToArray(),source.SeenM15.ToArray(),slip,
+                        source.ClosedM5,source.ClosedM15,slip,
                         "GENUINE_CLOSED_BARS_CONDITIONAL_CURRENT_CONTRACT_M5_OPEN"));
                 }
                 var frame=new Ucp1Frame(t,frames.ToArray());
-                foreach(var book in books.Where(x=>x.Stress==multiplier))
-                    book.Engine.Advance(frame);
+                foreach(var book in group)book.Engine.Advance(frame);
             }
+            progress?.Report("ADVANCE_SOURCE_CLOCKS",i+1,times.Length,force:i==0);
         }
         string Week(long t)
         {
@@ -185,7 +197,8 @@ internal static class Cpe1OriginalIntegratedRunner
             day<=DateTimeOffset.FromUnixTimeMilliseconds(last).UtcDateTime.Date;
             day=day.AddDays(1))
             weeks.Add(Week(new DateTimeOffset(day,TimeSpan.Zero).ToUnixTimeMilliseconds()));
-        var reports=books.Select(x=>{
+        var reports=books.Select((x,index)=>{
+            int book=index+1;
             var trips=x.Engine.CompleteModelTrips;
             var summary=x.Engine.ModelSummary;
             bool financeKnown=trips.All(p=>p.EconomicEvidence?.ConditionalNetKnown==true);
@@ -201,8 +214,13 @@ internal static class Cpe1OriginalIntegratedRunner
             // Identical original Core events, replayed through the EXISTING
             // native funded ledger; never a competing capital-account model.
             var reconciled=new NativeFundedLedger();
-            foreach(var evt in x.Engine.OriginalModelEvents)
-                reconciled.Apply(evt);
+            var events=x.Engine.OriginalModelEvents;
+            progress?.Report("RECONCILE_BOOK_EVENTS",0,events.Length,book,force:true);
+            for(int i=0;i<events.Length;i++)
+            {
+                reconciled.Apply(events[i]);
+                progress?.Report("RECONCILE_BOOK_EVENTS",i+1,events.Length,book);
+            }
             var verify=reconciled.Summary();
             if(verify.CashEur!=summary.CashEur ||
                verify.EventChainHash!=summary.EventChainHash ||
@@ -210,6 +228,7 @@ internal static class Cpe1OriginalIntegratedRunner
                verify.PendingIntents!=summary.PendingIntents ||
                verify.CompleteRoundTrips!=summary.CompleteRoundTrips)
                 throw new InvalidOperationException("CPE1_ORIGINAL_NATIVE_EVENT_CHAIN_EUR300_RECONCILIATION");
+            progress?.Report("SCORE_AND_REPORT_BOOK",0,1,book,force:true);
             var curve=x.Engine.CommonBookEquityPath;
             // The shared scorecard explicitly rejects negative free margin.
             // Preserve such an observed funding breach as UNKNOWN scorecard,
@@ -233,7 +252,9 @@ internal static class Cpe1OriginalIntegratedRunner
                     0m,completeConditionalModelBook,false,false)):null;
             var report=x.Engine.OriginalOutcomeReport(first,first+(last-first)/3,
                 first+2*(last-first)/3,last,Sha(payload.Tape.ProtocolSha256),false);
-            return new {
+            var completedByWeek=trips.GroupBy(p=>Week(p.CloseAt))
+                .ToDictionary(g=>g.Key,g=>g.Count(),StringComparer.Ordinal);
+            var bookReport=new {
                 x.Policy,x.Stress,
                 SourceWeeks=weeks.Count,
                 ConditionalClosedGrossEur=gross,
@@ -248,9 +269,9 @@ internal static class Cpe1OriginalIntegratedRunner
                 ClosedUnknownFinancing=trips.Count(p=>p.EconomicEvidence?.ConditionalNetKnown!=true),
                 ProjectedRewardRiskMissing=trips.Count(p=>p.EconomicEvidence is null),
                 CompletedByWeek=weeks.OrderBy(w=>w,StringComparer.Ordinal)
-                    .ToDictionary(w=>w,w=>trips.Count(p=>Week(p.CloseAt)==w)),
+                    .ToDictionary(w=>w,w=>completedByWeek.GetValueOrDefault(w)),
                 AllEligibleWeeksHARD21=weeks.Count>0&&weeks.All(w=>
-                    trips.Count(p=>Week(p.CloseAt)==w)>=21),
+                    completedByWeek.GetValueOrDefault(w)>=21),
                 CashEur=summary.CashEur,EquityEur=summary.LiquidationEquityEur,
                 SampledDd=summary.MaximumSampledDrawdown,
                 Held=summary.OpenPositions,Pending=summary.PendingIntents,
@@ -273,6 +294,8 @@ internal static class Cpe1OriginalIntegratedRunner
                 ConditionalFullEngineReportNetIncludesUnverifiedFunding=!financeKnown,
                 ConditionalFullEngineReport=report
             };
+            progress?.Report("SCORE_AND_REPORT_BOOK",1,1,book);
+            return bookReport;
         }).ToArray();
         var receipt=new {
             Study="CPE1_ONE_IN_EXISTING_NATIVE_UCP1_COMPLETE_CYCLE",
@@ -288,7 +311,9 @@ internal static class Cpe1OriginalIntegratedRunner
             HistoricalCostContinuityCertified=false,IntrabarDdCertified=false,
             TradingQualification="DEVELOPMENT_EXPOSED_ONLY_NO_BROKER_CERTIFICATION"
         };
+        progress?.Report("WRITE_NATIVE_RECEIPT",0,1,force:true);
         File.WriteAllText(outputFile,JsonSerializer.Serialize(receipt,Json)+"\n");
+        progress?.Report("WRITE_NATIVE_RECEIPT",1,1);
         return 0;
     }
 }
