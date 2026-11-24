@@ -16,7 +16,11 @@ public sealed record NativeFundingOfferEvidence(string Symbol,int Side,decimal U
 
 public sealed record NativeFundingExposure(string PositionId,string Symbol,int Side,
     decimal Units,long FromExclusive,decimal BookedSignedEur,bool ExactInLedger,
-    decimal? AdditionalDebitCeilingEur,long? ClosedAt,string? EvidenceSha256);
+    decimal? AdditionalDebitCeilingEur,long? ClosedAt,string? EvidenceSha256)
+{
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public long? ExactObservedAt { get; init; }
+}
 
 public sealed record NativeFundingCheckpoint(NativeFundingExposure[] Exposures,
     decimal PostedFinancingEur,decimal MaximumSampledFundingAdjustedDrawdown);
@@ -26,6 +30,8 @@ public sealed record NativeFundingCapital(decimal PostedFinancingEur,
     decimal? DemonstrableEquityEur,decimal? HeldMarginEur,decimal PendingOpenMarginEur,
     decimal? DemonstrableFreeMarginEur,decimal? ReconciledClosedModelNetEur,
     decimal MaximumSampledFundingAdjustedDrawdown);
+
+internal sealed record NativeObservedFundingRate(string Unit,decimal Long,decimal Short);
 
 // Carries funding evidence and reserves. All actual cash changes are applied
 // through FINANCING for active exposure and CLOSED_FUNDING_SETTLEMENT for
@@ -81,7 +87,7 @@ internal sealed class NativePortfolioFunding
         }
     }
 
-    public void Observe(NativeAccruedFundingEvidence[] evidence,
+    public void Observe(long at,NativeAccruedFundingEvidence[] evidence,
         Action<NativeFundingExposure,decimal,NativeAccruedFundingEvidence> post)
     {
         var byWindow=evidence.ToDictionary(p=>(p.PositionId,p.FromExclusive));
@@ -102,11 +108,12 @@ internal sealed class NativePortfolioFunding
                 var delta=exact-window.BookedSignedEur;
                 if(delta!=0m)
                 {
+                    decimal postedTotal=postedFinancingEur+delta;
                     post(window,delta,proof);
-                    postedFinancingEur+=delta;
+                    postedFinancingEur=postedTotal;
                 }
                 windows[key]=window with {BookedSignedEur=exact,ExactInLedger=true,
-                    AdditionalDebitCeilingEur=0m,EvidenceSha256=proof.SourceSha256};
+                    AdditionalDebitCeilingEur=0m,EvidenceSha256=proof.SourceSha256,ExactObservedAt=at};
                 continue;
             }
             // The cap refers to total signed financing for this window. Any
@@ -121,6 +128,14 @@ internal sealed class NativePortfolioFunding
         =>windows.Add((id,at),new(id,symbol,side,units,at,0m,true,0m,null,null));
 
     public bool IsOutstanding(string id)=>windows.Values.Any(x=>x.PositionId==id&&!x.ExactInLedger);
+
+    public long? ClosedReconciliationAt(string id,long closedAt,long legacyKnowledgeAt)
+    {
+        var exposures=windows.Values.Where(w=>w.PositionId==id).ToArray();
+        if(exposures.Any(w=>w.ClosedAt is null || !w.ExactInLedger))return null;
+        long lastEvidence=exposures.Select(w=>w.ExactObservedAt??legacyKnowledgeAt).DefaultIfEmpty(closedAt).Max();
+        return Math.Max(closedAt,lastEvidence);
+    }
 
     public void Close(string id,decimal closedUnits,long at)
     {
@@ -158,5 +173,19 @@ internal sealed class NativePortfolioFunding
             f.NextScheduledManagementAt>=at+300000L && f.CoveredThrough>=f.NextScheduledManagementAt &&
             f.MaximumDebitEur>=0m && ValidHash(f.SourceSha256)).Take(2).ToArray();
         return offers is {Length:1}?offers[0].MaximumDebitEur:null;
+    }
+
+    // Normalize the observed quote of a rate, without assigning a period of
+    // effectiveness or creating an offer. Percent rates still need the
+    // original rollover bid, charge calendar, conversion and deposit rounding.
+    internal static NativeObservedFundingRate? InterpretObservedPoint(int? kind,decimal? longRate,
+        decimal? shortRate,int? pipPosition,int? digits)
+    {
+        if(longRate is not decimal buy || shortRate is not decimal sell)return null;
+        if(kind==1)return new("ANNUAL_PERCENT_OF_NOTIONAL",buy,sell);
+        int? position=kind switch {0=>pipPosition,2=>digits,_=>null};
+        if(position is not (>=0 and <=18))return null;
+        decimal one=NativeBrokerContractCosts.Pip(position.Value);
+        return new("QUOTE_CURRENCY_PER_UNIT_PER_ROLLOVER",buy*one,sell*one);
     }
 }

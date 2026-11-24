@@ -43,6 +43,8 @@ public sealed record Ucp1Episode(string PositionId,string Symbol,string Family,
     public NativeJointOpportunityEpisodeEvidence? EconomicEvidence { get; init; }
     public NativeJointOpportunityEntry? EconomicEntry { get; init; }
 }
+public sealed record Ucp1ReconciledEpisode(string PositionId,long AvailableAt,
+    NativeJointOpportunityEpisodeEvidence Evidence);
 public sealed record Ucp1CurvePoint(long At,decimal CashEur,decimal? EquityEur,
     decimal? UsedMarginEur,int Held,int Pending,int Completed)
 {
@@ -111,10 +113,14 @@ public sealed record Ucp1FrameResult(string Policy,long At,
 public static class Ucp1CausalSignals
 {
     public static Ucp1DecisionSignal[] Describe(Ucp1MarketFrame m,long at)
+        =>Describe(m.Symbol,m.M5,m.M15,at);
+
+    internal static Ucp1DecisionSignal[] Describe(string symbol,NativeClosedMarketBar[] m5,
+        NativeClosedMarketBar[] m15,long at)
     {
-        var x=(m.M5??Array.Empty<NativeClosedMarketBar>())
+        var x=(m5??Array.Empty<NativeClosedMarketBar>())
             .Where(p=>p.CloseAt<at).TakeLast(5).ToArray();
-        var z=(m.M15??Array.Empty<NativeClosedMarketBar>())
+        var z=(m15??Array.Empty<NativeClosedMarketBar>())
             .Where(p=>p.CloseAt<at).TakeLast(3).ToArray();
         if(x.Length!=5||z.Length!=3 ||
            x.Any(t=>t.Open<=0 ||t.Close<=0||t.High<t.Low||
@@ -138,11 +144,11 @@ public static class Ucp1CausalSignals
         decimal priorLow=x.Take(4).Min(p=>p.Low);
         var list=new List<Ucp1DecisionSignal>();
         if(x[^1].Close>priorHigh && slope15>0)
-            list.Add(new(m.Symbol,"RANGE_TRANSITION",1,atr,
+            list.Add(new(symbol,"RANGE_TRANSITION",1,atr,
                 z.Average(p=>p.Close),Math.Max(atr,x[^1].Close-priorLow),
                 x[^1].CloseAt));
         else if(x[^1].Close<priorLow && slope15<0)
-            list.Add(new(m.Symbol,"RANGE_TRANSITION",-1,atr,
+            list.Add(new(symbol,"RANGE_TRANSITION",-1,atr,
                 z.Average(p=>p.Close),Math.Max(atr,priorHigh-x[^1].Close),
                 x[^1].CloseAt));
         // Prior 3-bar directional displacement followed by first opposite
@@ -150,11 +156,11 @@ public static class Ucp1CausalSignals
         decimal priorMove=x[^2].Close-x[0].Close;
         decimal repair=x[^1].Close-x[^2].Close;
         if(priorMove>atr && repair<0 && slope15>0)
-            list.Add(new(m.Symbol,"EQUILIBRIUM_REPAIR",-1,atr,
+            list.Add(new(symbol,"EQUILIBRIUM_REPAIR",-1,atr,
                 z.Average(p=>p.Close),Math.Max(atr,Math.Abs(priorMove)),
                 x[^1].CloseAt));
         else if(priorMove< -atr && repair>0 && slope15<0)
-            list.Add(new(m.Symbol,"EQUILIBRIUM_REPAIR",1,atr,
+            list.Add(new(symbol,"EQUILIBRIUM_REPAIR",1,atr,
                 z.Average(p=>p.Close),Math.Max(atr,Math.Abs(priorMove)),
                 x[^1].CloseAt));
         return list.ToArray();
@@ -265,10 +271,10 @@ public sealed partial class NativeUnifiedPortfolioEngine
         foreach(var p in s.LastSignalBar)lastSignalBar.Add(p.Key,p.Value);
         foreach(var p in s.Reasons)reasons.Add(p.Key,p.Value);
         facts.AddRange(s.Events);trips.AddRange(s.Trips);curve.AddRange(s.Curve);
-        if(Cpe1)
-            foreach(var trip in trips)RememberCpe1Episode(trip);
         cpe1UnreconciledFunding=s.Cpe1UnreconciledFunding;
         previousClock=s.LastAt;seq=s.Sequence;
+        if(Cpe1)
+            foreach(var trip in trips)RememberCpe1Episode(trip,previousClock);
         proposed=s.Proposed;admitted=s.Admitted;openFills=s.OpenFills;
         expiredOpens=s.ExpiredOpens;expiredCloses=s.ExpiredCloses;
         closeRequests=s.CloseRequests;rejections=s.Rejections;
@@ -283,6 +289,9 @@ public sealed partial class NativeUnifiedPortfolioEngine
     public Scp1ChoiceReceipt[] Scp1ChoiceReceipts=>scoredChoices.ToArray();
     public NativeIntegratedCalibrationState? IntegratedCalibration()=>integratedCalibration?.Checkpoint();
     public Ucp1Episode[] CompleteModelTrips=>trips.ToArray();
+    public Ucp1ReconciledEpisode[] ReconciledModelEpisodes=>trips
+        .Select(trip=>ReconcileCpe1Episode(trip,previousClock)).OfType<Ucp1ReconciledEpisode>()
+        .OrderBy(trip=>trip.AvailableAt).ThenBy(trip=>trip.PositionId,StringComparer.Ordinal).ToArray();
     public bool Cpe1UnreconciledFunding=>cpe1UnreconciledFunding;
     public NativeFundedActionReceipt[] FundedActionReceipts=>fundedActions.ToArray();
     public Ucp1CurvePoint[] CommonBookEquityPath=>curve.ToArray();
@@ -468,7 +477,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
         // revalidating any pending OPEN. Unknown funding cannot fund new risk.
         if(fundingReserves is not null)
         {
-            fundingReserves.Observe(fundingEvidence,(window,delta,proof)=>
+            fundingReserves.Observe(t,fundingEvidence,(window,delta,proof)=>
                 Apply(Event(window.ClosedAt is null?"FINANCING":"CLOSED_FUNDING_SETTLEMENT",
                     t,window.PositionId,window.Symbol,window.Side,
                     window.Units,reason:window.ClosedAt is null?
@@ -476,6 +485,10 @@ public sealed partial class NativeUnifiedPortfolioEngine
                     quotes:quotes,financing:delta) with {EvidenceHash=proof.SourceSha256,
                         AvailableAt=proof.AvailableAt,CalibratedThrough=proof.ThroughInclusive,LatencyMs=0,
                         FundingFromExclusive=window.ClosedAt is null?null:window.FromExclusive}));
+            foreach(var id in fundingEvidence.Where(proof=>proof.ExactSignedEur.HasValue)
+                .Select(proof=>proof.PositionId).Distinct(StringComparer.Ordinal))
+                if(trips.Find(trip=>trip.PositionId==id) is { } completed)
+                    RememberCpe1Episode(completed,t);
             foreach(var held in model.Ledger.PositionSnapshot())
             {
                 var unknown=fundingReserves.IsOutstanding(held.Id);
@@ -665,7 +678,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
                     trip=CompleteIntegrated(trip,p,parts);
                 }
                 trips.Add(trip);
-                if(Cpe1)RememberCpe1Episode(trip);
+                if(Cpe1)RememberCpe1Episode(trip,t);
                 plans.Remove(held.Id);
             }
         }

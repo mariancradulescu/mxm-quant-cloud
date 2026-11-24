@@ -29,6 +29,10 @@ public sealed record LedgerClosedFragment(string PositionId,string Symbol,long O
 public sealed record LedgerClosedFundingSettlement(string EventId,string PositionId,string Symbol,int Side,
     decimal Units,long FromExclusive,long ThroughInclusive,long AvailableAt,long PostedAt,
     decimal SignedDeltaEur,string EvidenceHash);
+public sealed record LedgerReconciledFragment(LedgerClosedFragment Original,decimal SignedLateFundingEur)
+{
+    public decimal NetEur => Original.NetEur+SignedLateFundingEur;
+}
 public sealed record LedgerState(string Version,decimal InitialCashEur,decimal CashEur,long Clock,decimal ObservedPeakEur,
     decimal MaximumSampledDrawdown,bool HistoryEvidenceIncomplete,Dictionary<string,LedgerQuote> Quotes,
     Dictionary<string,LedgerPosition> Positions,Dictionary<string,LedgerEvent> Pending,
@@ -37,6 +41,8 @@ public sealed record LedgerState(string Version,decimal InitialCashEur,decimal C
 {
     [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)]
     public List<LedgerClosedFundingSettlement>? ClosedFunding { get; init; }
+    [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)]
+    public Dictionary<string,int>? ClosedModelPositionSides { get; init; }
 }
 public sealed record LedgerSummary(decimal CashEur,decimal? LiquidationEquityEur,decimal? UsedMarginEur,
     decimal? FreeMarginEur,decimal ObservedPeakEur,decimal MaximumSampledDrawdown,int OpenPositions,int PendingIntents,
@@ -53,6 +59,7 @@ public sealed partial class NativeFundedLedger
     LedgerState state=new(Version,OwnerRiskAuthority.InitialCapitalEur,OwnerRiskAuthority.InitialCapitalEur,-1,OwnerRiskAuthority.InitialCapitalEur,0,false,new(),new(),new(),new(),new(),new(),new string('0',64));
     readonly long maximumStalenessMs;
     decimal closedNetEur;
+    decimal heldLateFundingEur;
     int completeRoundTrips;
     public NativeFundedLedger(long maximumStalenessMs=1000)
     {
@@ -87,10 +94,10 @@ public sealed partial class NativeFundedLedger
     }
     decimal Equity(Dictionary<string,LedgerQuote> quotes,long at)=>state.CashEur+
         state.Positions.Values.Sum(p=>Floating(p,Quote(quotes,p.Symbol,at)));
-    void Reconcile(decimal? settlementNetEur=null)
+    void Reconcile(decimal? settlementNetEur=null,decimal? heldLateFunding=null)
     {
         decimal expected=state.InitialCashEur+(settlementNetEur??closedNetEur)-state.Positions.Values.Sum(p=>p.EntryFeeRemaining+p.EntryConversionRemaining)+
-            state.Positions.Values.Sum(p=>p.FinancingRemaining);
+            state.Positions.Values.Sum(p=>p.FinancingRemaining)+(heldLateFunding??heldLateFundingEur);
         if(Math.Abs(expected-state.CashEur)>.000000001m)throw new InvalidOperationException("NATIVE_LEDGER_CASH_IDENTITY");
     }
 
@@ -101,6 +108,14 @@ public sealed partial class NativeFundedLedger
         if(settlement.CompletesRoundTrip)completeRoundTrips++;
     }
 
+    decimal ClosedUnitsSince(LedgerClosedFundingSettlement funding)
+        =>state.Closed.Where(f=>f.PositionId==funding.PositionId && f.ClosedAt>=funding.ThroughInclusive)
+            .Sum(f=>f.Units);
+
+    static decimal AllocatedFunding(LedgerClosedFundingSettlement funding,decimal closedUnits)
+        =>closedUnits==funding.Units?funding.SignedDeltaEur:
+            funding.SignedDeltaEur*(closedUnits/funding.Units);
+
     void RebuildSettlementTotals()
     {
         closedNetEur=0m;
@@ -110,9 +125,27 @@ public sealed partial class NativeFundedLedger
             closedNetEur+=settlement.NetEur;
             if(settlement.CompletesRoundTrip)completeRoundTrips++;
         }
-        closedNetEur+=state.ClosedFunding?.Sum(x=>x.SignedDeltaEur)??0m;
+        heldLateFundingEur=0m;
+        if(state.ClosedFunding is null)return;
+        foreach(var funding in state.ClosedFunding)
+        {
+            decimal closed=AllocatedFunding(funding,ClosedUnitsSince(funding));
+            closedNetEur+=closed;
+            heldLateFundingEur+=funding.SignedDeltaEur-closed;
+        }
     }
-    public void Apply(LedgerEvent e)=>Apply(e,validateSummary:false);
+    public void Apply(LedgerEvent e)
+    {
+        if(e.Kind=="CLOSED_FUNDING_SETTLEMENT")
+        {
+            var previous=state;
+            try {Apply(e,validateSummary:false);}
+            catch {state=previous;throw;}
+        }
+        else if(e.Kind=="CLOSE_FILL" && state.ClosedFunding?.Any(f=>f.PositionId==e.PositionId)==true)
+            ApplyOwnedResearchFact(e);
+        else Apply(e,validateSummary:false);
+    }
 
     // The engine owns this model book. Stage only mutable live exposure;
     // the event identities and settlements are appended after validation.
@@ -157,6 +190,8 @@ public sealed partial class NativeFundedLedger
         // Validate and calculate before mutating monetary/position state.
         LedgerClosedFragment? settlement=null;
         LedgerClosedFundingSettlement? closedFunding=null;
+        int originalSide=0;
+        decimal realizedLateFunding=0m,heldFundingAfter=heldLateFundingEur;
         if(e.Kind!="CLOSED_FUNDING_SETTLEMENT" && e.FundingFromExclusive.HasValue)
             throw new ArgumentException("NATIVE_LEDGER_UNEXPECTED_FUNDING_WINDOW");
         switch(e.Kind)
@@ -215,6 +250,15 @@ public sealed partial class NativeFundedLedger
                 conversion=Math.Max(0,conversion);decimal net=converted-entryFee-e.FeeEur+finance;
                 bool complete=e.Units==closedPosition.Units;
                 settlement=new(closedPosition.Id,closedPosition.Symbol,closedPosition.EntryAt,e.At,e.Units,gross,spread,slip,conversion,entryFee+e.FeeEur,-finance,net,complete,e.Reason);
+                originalSide=closedPosition.Side;
+                if(state.ClosedFunding is not null)
+                    foreach(var priorFunding in state.ClosedFunding.Where(f=>f.PositionId==e.PositionId))
+                    {
+                        decimal unitsAlreadyClosed=ClosedUnitsSince(priorFunding);
+                        realizedLateFunding+=AllocatedFunding(priorFunding,unitsAlreadyClosed+e.Units)-
+                            AllocatedFunding(priorFunding,unitsAlreadyClosed);
+                    }
+                heldFundingAfter-=realizedLateFunding;
                 state=state with {CashEur=state.CashEur+converted-e.FeeEur};
                 if(complete){state.Positions.Remove(closedPosition.Id);state.Pending.Remove(closedPosition.Id);}
                 else
@@ -295,16 +339,18 @@ public sealed partial class NativeFundedLedger
                 // units reconstruct that exposure without altering any fill.
                 decimal exposureUnits=state.Closed.Where(x=>x.PositionId==e.PositionId &&
                     x.Symbol==e.Symbol && x.ClosedAt>=e.CalibratedThrough).Sum(x=>x.Units);
-                if(state.Positions.TryGetValue(e.PositionId,out var remainder))
-                {
-                    if(remainder.Symbol!=e.Symbol || remainder.Side!=e.Side)
-                        throw new ArgumentException("NATIVE_LEDGER_CLOSED_FUNDING_BINDING");
-                    exposureUnits+=remainder.Units;
-                }
+                state.Positions.TryGetValue(e.PositionId,out var remainder);
+                int? side=state.ClosedModelPositionSides?.GetValueOrDefault(e.PositionId);
+                if((side is >0 or <0 ? side : remainder?.Side)!=e.Side ||
+                    (remainder is not null && (remainder.Symbol!=e.Symbol || remainder.Side!=e.Side)))
+                    throw new ArgumentException("NATIVE_LEDGER_CLOSED_FUNDING_BINDING");
+                exposureUnits+=remainder?.Units??0m;
                 if(exposureUnits!=e.Units)
                     throw new ArgumentException("NATIVE_LEDGER_CLOSED_FUNDING_UNITS");
                 closedFunding=new(e.EventId,e.PositionId,e.Symbol,e.Side,e.Units,from,
                     e.CalibratedThrough,e.AvailableAt,e.At,e.SignedFinancingEur,e.EvidenceHash);
+                realizedLateFunding=AllocatedFunding(closedFunding,exposureUnits-(remainder?.Units??0m));
+                heldFundingAfter+=e.SignedFinancingEur-realizedLateFunding;
                 state=state with {CashEur=state.CashEur+e.SignedFinancingEur};break;
             case "MARK":break;
             default:throw new ArgumentException("NATIVE_LEDGER_UNKNOWN_EVENT");
@@ -319,20 +365,27 @@ public sealed partial class NativeFundedLedger
             }
             catch(InvalidOperationException){state=state with {HistoryEvidenceIncomplete=true};}
         }
-        decimal settledNet=closedNetEur+(settlement?.NetEur??0m)+(closedFunding?.SignedDeltaEur??0m);
-        Reconcile(settledNet);
+        decimal settledNet=closedNetEur+(settlement?.NetEur??0m)+realizedLateFunding;
+        Reconcile(settledNet,heldFundingAfter);
         if(validateSummary)_=Summary();
         state.AppliedEventHashes.Add(e.EventId,hash);
         if(e.Kind=="REQUEST_OPEN")state.UsedPositionIds.Add(e.PositionId);
-        if(settlement is not null)AppendSettlement(settlement,settledNet);
+        if(settlement is not null)
+        {
+            AppendSettlement(settlement,settledNet);
+            if(state.ClosedModelPositionSides is null)
+                state=state with {ClosedModelPositionSides=new(StringComparer.Ordinal)};
+            state.ClosedModelPositionSides.TryAdd(settlement.PositionId,originalSide);
+        }
         if(closedFunding is not null)
         {
             var adjustments=state.ClosedFunding is null?new List<LedgerClosedFundingSettlement>():
                 new List<LedgerClosedFundingSettlement>(state.ClosedFunding);
             adjustments.Add(closedFunding);
             state=state with {ClosedFunding=adjustments};
-            closedNetEur=settledNet;
         }
+        closedNetEur=settledNet;
+        heldLateFundingEur=heldFundingAfter;
     }
     public LedgerSummary Summary(long? observedAt=null)
     {
@@ -349,6 +402,26 @@ public sealed partial class NativeFundedLedger
     public LedgerClosedFragment[] ClosedFragments()=>state.Closed.ToArray();
     public LedgerClosedFundingSettlement[] ClosedFundingSettlements()=>
         state.ClosedFunding?.ToArray()??Array.Empty<LedgerClosedFundingSettlement>();
+    public LedgerReconciledFragment[] ReconciledFragments(string positionId,long asOf)
+    {
+        var parts=state.Closed.Where(f=>f.PositionId==positionId && f.ClosedAt<=asOf).ToArray();
+        var funding=state.ClosedFunding?.Where(f=>f.PositionId==positionId && f.PostedAt<=asOf).ToArray();
+        var reconciled=parts.Select(f=>new LedgerReconciledFragment(f,0m)).ToArray();
+        if(funding is null)return reconciled;
+        foreach(var adjustment in funding)
+        {
+            decimal units=0m,priorShare=0m;
+            for(int i=0;i<parts.Length;i++)
+            {
+                if(parts[i].ClosedAt<adjustment.ThroughInclusive)continue;
+                units+=parts[i].Units;
+                decimal share=AllocatedFunding(adjustment,units);
+                reconciled[i]=reconciled[i] with {SignedLateFundingEur=reconciled[i].SignedLateFundingEur+share-priorShare};
+                priorShare=share;
+            }
+        }
+        return reconciled;
+    }
     internal LedgerClosedFragment LastClosedRoundTrip(string positionId)
         =>state.Closed.Last(x=>x.PositionId==positionId&&x.CompletesRoundTrip);
     internal LedgerClosedFragment[] ClosedFragments(string positionId)

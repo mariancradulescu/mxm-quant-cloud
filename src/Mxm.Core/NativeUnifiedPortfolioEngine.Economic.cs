@@ -10,9 +10,11 @@ namespace Mxm.Core;
 public sealed partial class NativeUnifiedPortfolioEngine
 {
     readonly Dictionary<string,Cpe1FamilyHistory> cpe1History=new(StringComparer.Ordinal);
+    readonly HashSet<string> cpe1ScoredEpisodes=new(StringComparer.Ordinal);
 
     sealed class Cpe1FamilyHistory
     {
+        readonly bool fundingAware;
         readonly List<decimal> grossReturns=new();
         readonly HashSet<long> closeDays=new();
         decimal? lowerBound;
@@ -20,10 +22,12 @@ public sealed partial class NativeUnifiedPortfolioEngine
         public int Settled { get; private set; }
         public int Winners { get; private set; }
 
+        public Cpe1FamilyHistory(bool fundingAware)=>this.fundingAware=fundingAware;
+
         public void Add(Ucp1Episode episode,NativeJointOpportunityEpisodeEvidence evidence)
         {
             Settled++;
-            if(episode.GrossEur>0m)Winners++;
+            if((fundingAware?evidence.ClosedGrossEur:episode.GrossEur)>0m)Winners++;
             if(evidence.RealizedGrossR is not decimal grossR)return;
             grossReturns.Add(grossR);
             closeDays.Add(episode.CloseAt/86400000L);
@@ -38,7 +42,10 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 // Retain exactly the frozen two-pass calculation in close
                 // order. Only a newly completed eligible episode invalidates it.
                 decimal mean=grossReturns.Average();
-                double sampleVariance=grossReturns.Select(v=>Math.Pow((double)(v-mean),2))
+                // Late outcomes can arrive in another order than their closes.
+                // Use the same numerical order when rebuilding from a checkpoint.
+                IEnumerable<decimal> samples=fundingAware?grossReturns.OrderBy(value=>value):grossReturns;
+                double sampleVariance=samples.Select(v=>Math.Pow((double)(v-mean),2))
                     .Sum()/(grossReturns.Count-1);
                 lowerBound=mean-1.645m*(decimal)Math.Sqrt(sampleVariance/grossReturns.Count);
                 returnsChanged=false;
@@ -47,13 +54,38 @@ public sealed partial class NativeUnifiedPortfolioEngine
         }
     }
 
-    void RememberCpe1Episode(Ucp1Episode episode)
+    Ucp1ReconciledEpisode? ReconcileCpe1Episode(Ucp1Episode episode,long at)
     {
-        if(episode.CrossedUnknownHistory || episode.EconomicEvidence is not
-           {CompletePair:true,ConditionalNetKnown:true} evidence)return;
+        if(episode.EconomicEvidence is not {CompletePair:true} evidence || episode.CloseAt>at)
+            return null;
+        if(fundingReserves is null)
+            return evidence.ConditionalNetKnown?new(episode.PositionId,episode.CloseAt,evidence):null;
+
+        long legacyKnowledgeAt=evidence.ConditionalNetKnown?episode.CloseAt:at;
+        long? availableAt=fundingReserves.ClosedReconciliationAt(episode.PositionId,episode.CloseAt,legacyKnowledgeAt);
+        if(availableAt is null || availableAt>at)return null;
+        var ledger=model.Ledger;
+        var parts=ledger.ReconciledFragments(episode.PositionId,at);
+        if(parts.Length==0 || !parts[^1].Original.CompletesRoundTrip)return null;
+        decimal net=parts.Sum(part=>part.NetEur);
+        return new Ucp1ReconciledEpisode(episode.PositionId,availableAt.Value,evidence with
+        {
+            ConditionalNetKnown=true,
+            ClosedNetEur=net,
+            RealizedNetR=net/evidence.ReservedRiskEur,
+            EvidenceStatus=evidence.MarkCoverageComplete?"COMPLETE_CONDITIONAL_MODELED_EPISODE":
+                "COMPLETE_CASH_BUT_SAMPLE_MARKS_INCOMPLETE"
+        });
+    }
+
+    void RememberCpe1Episode(Ucp1Episode episode,long at)
+    {
+        if(episode.CrossedUnknownHistory || cpe1ScoredEpisodes.Contains(episode.PositionId) ||
+           ReconcileCpe1Episode(episode,at) is not { } reconciled)return;
+        cpe1ScoredEpisodes.Add(episode.PositionId);
         if(!cpe1History.TryGetValue(episode.Family,out var history))
-            cpe1History.Add(episode.Family,history=new());
-        history.Add(episode,evidence);
+            cpe1History.Add(episode.Family,history=new(fundingReserves is not null));
+        history.Add(episode,reconciled.Evidence);
     }
 
     static bool Cpe1Usable(Ucp1MarketFrame m,long at)
