@@ -33,6 +33,8 @@ public sealed record Ucp1Episode(string PositionId,string Symbol,string Family,
 {
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public NativeIntegratedEpisode? Integrated { get; init; }
+    // Prospective CPE1: one economic episode, fully financed model or censored.
+    public NativeJointOpportunityEpisodeEvidence? EconomicEvidence { get; init; }
 }
 public sealed record Ucp1CurvePoint(long At,decimal CashEur,decimal? EquityEur,
     decimal? UsedMarginEur,int Held,int Pending,int Completed)
@@ -74,7 +76,15 @@ public sealed record Ucp1Plan(string Id,string Symbol,string Family,int Side,
     decimal Atr,decimal Equilibrium,decimal RiskEur,
     decimal Stop,decimal Extreme,long OpenAt,decimal Entry,
     decimal Units,decimal MfeEur,decimal MaeEur,long LastObservedAt,
-    bool CrossedUnknownHistory,NativeIntegratedPlan? Integrated=null);
+    bool CrossedUnknownHistory,NativeIntegratedPlan? Integrated=null)
+{
+    // Saved inside the already existing Ucp1Checkpoint.Plans, not a parallel book.
+    public NativeJointOpportunityEntry? EconomicEntry { get; init; }
+    public NativeJointOpportunityMark[] EconomicMarks { get; init; }=Array.Empty<NativeJointOpportunityMark>();
+    public bool FinancingUnknown { get; init; }
+    public decimal BookedFinancingEur { get; init; }
+    public long LastEconomicM15 { get; init; }
+}
 public sealed record Ucp1FrameResult(string Policy,long At,
     LedgerSummary ModelBook,int Proposed,int Admitted,int OpenFills,
     int CloseFills,int Pending,int Held,string BrokerStatus,
@@ -145,6 +155,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
     readonly NativeIntegratedBarrierCalibration? integratedCalibration;
     readonly NativeCompleteModels? completeModels;
     readonly NativeCompleteProbe? completeProbe;
+    bool Cpe1 => policy is "CPE1_ECONOMIC" or "CPE1_SIMPLE" or "CPE1_CASH";
+    bool Cpe1Economic => policy=="CPE1_ECONOMIC";
     bool CompletePolicy => NativeCompletePolicy.IsPolicy(policy);
     bool StructuralPolicy => NativeStructuralOpportunity.IsPolicy(policy);
     bool ExecutableBracketTerms => CompletePolicy || StructuralPolicy;
@@ -173,6 +185,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
     {
         if(policy is not ("JOINT" or "TRANSITION_ONLY" or "REPAIR_ONLY" or
                           "LONG" or "SHORT" or "CASH" or
+                          "CPE1_ECONOMIC" or "CPE1_SIMPLE" or "CPE1_CASH" or
                           "SCP1_FIRST" or "SCP1_SCORE" or
                           "SCP1_MARGINAL" or "SCP1_ABSTAIN" or
                           "SCP1_LONG" or "SCP1_SHORT" or "SCP1_CASH" or
@@ -274,12 +287,12 @@ public sealed partial class NativeUnifiedPortfolioEngine
     LedgerEvent Event(string kind,long at,string id="",string sym="",int side=0,
         decimal units=0,decimal price=0,decimal fee=0,decimal margin=0,
         decimal slip=0,string reason="UCP1_MODEL_UNTRANSMITTED",
-        LedgerQuote[]? quotes=null)
+        LedgerQuote[]? quotes=null,decimal financing=0m)
     {
         string eventId="UCP1/"+policy+"/"+(++seq)+"/"+kind+"/"+at;
         return new(eventId,at,kind,id,sym,side,units,price,fee,margin,
             slip,Math.Max(0,at-1),Math.Max(0,at-2),Latency,
-            reason,Sha(eventId),quotes??Array.Empty<LedgerQuote>());
+            reason,Sha(eventId),quotes??Array.Empty<LedgerQuote>(),financing);
     }
     void Count(string s){reasons[s]=reasons.GetValueOrDefault(s)+1;}
     void Apply(LedgerEvent e)
@@ -433,8 +446,10 @@ public sealed partial class NativeUnifiedPortfolioEngine
             decimal px=request.Side>0?q.Ask+request.SlippagePerSide:
                 q.Bid-request.SlippagePerSide;
             var plan=plans[request.PositionId];
-            var plannedFill=CoherentIntegrated?CoherentFill(plan,input,model.Ledger.Summary(t),px):null;
-            if(plan.Integrated is not null && (!CoherentIntegrated
+            var plannedFill=Cpe1?Cpe1RecheckFill(plan,request,model.Ledger.Summary(t),input,px):
+                CoherentIntegrated?CoherentFill(plan,input,model.Ledger.Summary(t),px):null;
+            if(plan.Integrated is not null && (Cpe1 ? plannedFill is null :
+                !CoherentIntegrated
                 ?!IntegratedFillStillAdmissible(plan,input,start,px):plannedFill is null))
             {
                 Apply(Event("MODEL_OPEN_INTENT_EXPIRED",t,request.PositionId,
@@ -458,7 +473,12 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 plans[request.PositionId]=p with {OpenAt=t,Entry=entry,
                     Units=request.Units,RiskEur=plannedFill?.Thesis?.StressedRiskAtFillEur??risk,Extreme=entry,
                     Stop=p.Integrated?.Stop??entry-request.Side*1.5m*p.Atr,LastObservedAt=t,
-                    Integrated=plannedFill??p.Integrated};
+                    Integrated=plannedFill??p.Integrated,
+                    EconomicEntry=Cpe1 ? new NativeJointOpportunityEntry(request.PositionId,
+                        request.At,t,request.EvidenceHash,
+                        p.Family,1,(plannedFill??p.Integrated)!.InitialRewardEur,
+                        (plannedFill??p.Integrated)!.InitialRiskEur,
+                        request.Side*request.Units*px,request.Units*q.MarginPerUnit,true) : p.EconomicEntry};
                 openFills++;
             }
             catch(InvalidOperationException e) when(e.Message is
@@ -498,9 +518,12 @@ public sealed partial class NativeUnifiedPortfolioEngine
                     direction=m15[1].Close-m15[0].Close;
             }
             NativeModelCloseInstruction? instruction=null;
+            if(Cpe1 && input is not null)
+                p=Cpe1AccrueOrMarkFunding(p,held,input,frame);
             if(p.Integrated is not null && input is not null)
             {
-                (p,instruction)=ManageIntegrated(p,held,input,deRisk);
+                (p,instruction)=Cpe1?Cpe1Manage(p,held,input,frame):
+                    ManageIntegrated(p,held,input,deRisk);
                 if (instruction is null && StructuralPolicy &&
                     NativeFundedActionValue.IsVariant(NativeStructuralOpportunity.Variant(policy)))
                     (p,instruction)=ManageFundedAction(p,held,input,frame,actionProbe);
@@ -509,7 +532,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 p.Family=="EQUILIBRIUM_REPAIR"?"STRUCT":"ADAPT",
                 new NativeExitSeed(p.Atr,p.Equilibrium),p.Stop,p.Extreme,
                 p.LastObservedAt);
-            bool integratedManages=p.Integrated?.Thesis is not null;
+            bool integratedManages=Cpe1||p.Integrated?.Thesis is not null;
             var verdict=NativeSimulatedCloseLifecycle.Advance(model,state,
                 new NativeModelCloseObservation(t,q,direction,integratedManages?0:t-1,
                     instruction,p.Integrated is not null,integratedManages));
@@ -546,6 +569,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
                     p.OpenAt,close.ClosedAt,held.Units,close.NetEur,
                     close.GrossEur,p.RiskEur,p.RiskEur>0?close.NetEur/p.RiskEur:null,
                     p.MfeEur,p.MaeEur,close.Reason,p.CrossedUnknownHistory);
+                if(Cpe1)
+                    trip=trip with {EconomicEvidence=Cpe1CompleteEpisode(p,held,close)};
                 trips.Add(p.Integrated is null?trip:CompleteIntegrated(trip,p));
                 plans.Remove(held.Id);
             }
@@ -587,11 +612,12 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 // SCP1 never removes an alternative of the same instrument
                 // before the learned economic selection. UCP1 exact closed
                 // model retains its original Take(1) unchanged.
-                foreach(var s in scp1||fcp1?choices:choices.Take(1))
+                foreach(var s in scp1||fcp1||Cpe1?choices:choices.Take(1))
                     options.Add((s,m));
             }
             proposed+=options.Count;
             if(fcp1)return AdvanceFcp1(t,frame,options);
+            if(Cpe1)return AdvanceCpe1(t,frame,options);
             var ledger=model.Ledger;
             var summary=ledger.Summary(t);
             // Held position with REQUEST_CLOSE retains its booked exposure
