@@ -169,6 +169,34 @@ internal static class NativeFundingReserveChecks
             audit.Apply(fact);
         }
         var adjustment=audit.ClosedFundingSettlements().Single();
+        var posted=engine.OriginalModelEvents.Single(x=>x.Kind=="CLOSED_FUNDING_SETTLEMENT");
+        foreach(var forged in new[]{posted with {EventId=posted.EventId+"/duplicate",At=Clock(7)},
+            posted with {EventId=posted.EventId+"/shifted",At=Clock(7),FundingFromExclusive=fill.At+1}})
+        {
+            var saved=audit.Checkpoint();
+            try
+            {
+                audit.Apply(forged);
+                check(false,"Alternate event id cannot settle a closed window twice");
+            }
+            catch(ArgumentException)
+            {
+                check(audit.Checkpoint()==saved,"Duplicate window rejection leaves restored ledger unchanged");
+            }
+        }
+        // Even the first posting cannot shorten the closed exposure.
+        var clean=new NativeFundedLedger();
+        foreach(var fact in engine.OriginalModelEvents.TakeWhile(x=>x.EventId!=posted.EventId))clean.Apply(fact);
+        var cleanSaved=clean.Checkpoint();
+        try
+        {
+            clean.Apply(posted with {EventId=posted.EventId+"/first-shifted",FundingFromExclusive=fill.At+1});
+            check(false,"First closed settlement must match canonical exposure start");
+        }
+        catch(ArgumentException)
+        {
+            check(clean.Checkpoint()==cleanSaved,"Noncanonical first settlement leaves ledger unchanged");
+        }
         check(audit.Summary()==engine.ModelSummary &&
             adjustment.PositionId==fill.PositionId && adjustment.SignedDeltaEur==amount &&
             adjustment.ThroughInclusive==Clock(4) && adjustment.PostedAt==Clock(6) &&
