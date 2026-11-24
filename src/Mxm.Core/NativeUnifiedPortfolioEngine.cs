@@ -431,7 +431,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
             .Where(x=>x.Kind=="REQUEST_OPEN")
             .OrderBy(x=>x.PositionId,StringComparer.Ordinal).ToArray())
         {
-            if(t-request.At>ResponseWindow)
+            if(t-request.At>(Cpe1?2*300000L:ResponseWindow))
             {
                 Apply(Event("MODEL_OPEN_INTENT_EXPIRED",t,request.PositionId,
                     request.Symbol,request.Side,request.Units,
@@ -535,7 +535,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
             bool integratedManages=Cpe1||p.Integrated?.Thesis is not null;
             var verdict=NativeSimulatedCloseLifecycle.Advance(model,state,
                 new NativeModelCloseObservation(t,q,direction,integratedManages?0:t-1,
-                    instruction,p.Integrated is not null,integratedManages));
+                    instruction,p.Integrated is not null,integratedManages),
+                    Cpe1?2*300000L:NativeSimulatedCloseLifecycle.ModelCloseResponseWindowMs);
             if(!researchFork) facts.AddRange(verdict.AppliedFacts);
             expiredCloses+=verdict.AppliedFacts.Count(x=>
                 x.Kind=="MODEL_CLOSE_INTENT_EXPIRED");
@@ -927,7 +928,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
             SampledEquityCurve=includeTrace?curve.ToArray():Array.Empty<Ucp1CurvePoint>(),
             OriginalCSharpNativeLedgerEvents=includeTrace?facts.ToArray():Array.Empty<LedgerEvent>(),
             Scp1PredictionsAndPreselection=includeTrace?scoredChoices.ToArray():Array.Empty<Scp1ChoiceReceipt>(),
-            ScoreModelMethod=StructuralPolicy
+            ScoreModelMethod=Cpe1?"CPE1_CAUSAL_COMPLETED_GROSS_EUR_R_COST_AND_HOLD_VALUE":
+                StructuralPolicy
                 ? "CLOSED_MARKET_STRUCTURAL_AND_COMPLETE_POLICY_VALUE"
                 : CompletePolicy?"COMPLETE_POLICY_SETTLED_EUR_EMPIRICAL_DISTRIBUTION":
                 NativeIntegratedLifecycle.SelectsEconomically(policy)
