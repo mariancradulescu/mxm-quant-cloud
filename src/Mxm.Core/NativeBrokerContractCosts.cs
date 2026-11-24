@@ -106,7 +106,7 @@ public static class NativeBrokerContractCosts
 
     const decimal Million = 1000000m;
     const decimal Wire = 100000000m;
-    static decimal Pip(int position)
+    internal static decimal Pip(int position)
     {
         if(position<0 || position>18)
             throw new ArgumentException("NATIVE_COST_PIP_POSITION_INVALID");

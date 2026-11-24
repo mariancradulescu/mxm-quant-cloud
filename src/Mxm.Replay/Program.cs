@@ -1,6 +1,9 @@
 using System.Text.Json;
 using System.Security.Cryptography;
 
+if(args is [var historyUseInput,var historyUseOutput,"--owner-source-history-use"])
+    return OwnerSourceHistoryUse.Run(historyUseInput,historyUseOutput);
+
 if(args is [var auditSourceFile, var auditOriginalFile, var auditOutputFile, "--cpe1-funding-source-audit"])
     return Cpe1OriginalIntegratedRunner.AuditFundingSource(auditSourceFile,auditOriginalFile,auditOutputFile);
 

@@ -26,6 +26,7 @@ public sealed class NativeUnifiedCloudParityAdapter
     public LedgerEvent[] ModelFacts=>engine.OriginalModelEvents;
     public Scp1ChoiceReceipt[] Scp1Choices=>engine.Scp1ChoiceReceipts;
     public LedgerSummary ModelBook=>engine.ModelSummary;
+    public Ucp1ReconciledEpisode[] ReconciledModelEpisodes=>engine.ReconciledModelEpisodes;
     public NativeFundedActionReceipt[] FundedActions=>engine.FundedActionReceipts;
     public string Checkpoint()=>engine.Checkpoint();
     public void Restore(string checkpoint)
