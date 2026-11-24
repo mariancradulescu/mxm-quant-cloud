@@ -31,18 +31,18 @@ python -m research.cpe1_recovery_benchmark
 
 The second command compares native result files byte for byte and compares digests of per-frame decisions, ordered ledger facts, settlement fragments and complete checkpoints. It covers Held + Pending and a rejected repriced fill, known nonzero financing, unknown swap with a protective close, observation gaps, and restart before and after causal family calibration. GitHub CI also runs the native accounting and recovery suite. All these checks have a technical scope.
 
-Recovery logs emit `EPM1` records as source and financing authentication begin, as C# finishes source clocks and each book's ledger reconciliation, and as the report is written. Initial and terminal records for each measured phase are flushed immediately. The runner emits intermediate records while it is completing work. The ordinary native result serialization contains no progress fields.
+Recovery logs emit `EPM1` records as source and financing authentication begin, as C# finishes source clocks and each book's ledger reconciliation, and as the report is written. Initial and terminal records for each measured phase are flushed immediately. Python relays validated progress from the running child process. On failure it logs the native stage, diagnostic code and subprocess exit code. On timeout it reports the last live stage and terminates the child. The private stderr capture is ephemeral. The ordinary native result serialization contains no progress fields.
 
 ## Authorization for a single recovery
 
 1. Review the technical PR and its CI artifact. Obtain independent verification of the exact recovery implementation before proceeding.
-2. Integrate the audited changes and verify a successful `CPE1 technical recovery parity` run on the resulting `main` head. Record that SHA and the run ID in the independent approval on [Issue #393](https://github.com/mariancradulescu/mxm-quant-cloud/issues/393) with the following line.
+2. Integrate the changes and verify successful technical parity on the resulting `main` head. The OWNER enrolls the independent reviewer's distinct numeric GitHub account ID in the repository Actions variable `CPE1_INDEPENDENT_AUDITOR_ACCOUNT_ID`. The independent reviewer posts a new comment on [Issue #393](https://github.com/mariancradulescu/mxm-quant-cloud/issues/393) with the exact reviewed SHA and CI run ID. GitHub's comment author ID must match the enrolled account. The shared repository account and copied or edited comments are ineligible.
 
    ```text
    CPE1_TECHNICAL_RECOVERY_1_INDEPENDENT_APPROVAL <main-head-sha> <technical-ci-run-id>
    ```
 
-3. The OWNER adds `ops/cpe1-recovery-1-owner-authorization.json` in a single-file commit on that same `main`, with subject `OWNER_CPE1_TECHNICAL_RECOVERY_1`. Replace the sample values for the head SHA, technical CI run and independent audit comment with the verified values.
+3. After the final audit and explicit OWNER decision, the single-file commit on that same `main` adds `ops/cpe1-recovery-1-owner-authorization.json` with subject `OWNER_CPE1_TECHNICAL_RECOVERY_1`. Replace the sample values with the verified head SHA, technical CI run ID and independent audit comment ID.
 
    ```json
    {
@@ -56,5 +56,6 @@ Recovery logs emit `EPM1` records as source and financing authentication begin, 
    }
    ```
 
-4. `cpe1-recovery-1.yml` validates the first use of the recovery marker, the exact reviewed head, green technical CI, independent review, original timeout disposition and the same BDP1 authenticated preflight. Its protected step loads the original sealed BDP1, AIP1, HXC1, XMH2 and P05 sources and uses the same source/funding bridge, frozen configuration and 8,400-second native timeout. It retains EUR300 shared within each book, the same controls, HARD21 accounting and the existing drawdown rules. The only execution is the first attempt of this specific recovery. Broker writes, LIVE/DEMO orders and Cloud activation remain disabled.
-5. Check live EPM1 records in the recovery job. A completed, reconciled result is published under `cpe1-technical-recovery-1-authentic-csharp-eur300`. The separate receipt links the run ID, original attempt, authorization and review. If recovery fails, the job records the failure and has no economic verdict.
+4. Before the marker is added, the OWNER configures the secret-free GitHub environment `cpe1-recovery-1-owner-review` for `main` with `mariancradulescu` as the required reviewer and administrator bypass disabled. Allow the OWNER to review the run initiated by their marker. The OWNER approves this exact workflow run in GitHub's deployment review. The workflow reads the approval from GitHub and requires the OWNER account ID `322088485` for that environment. It fails closed if the environment has no recorded approval. Only the OWNER should hold credentials that can approve the environment. The DIRECTOR's repository workflow and marker writes do not provide an approval record.
+5. `cpe1-recovery-1.yml` validates the first use of the recovery marker, exact reviewed head, green technical CI, independent reviewer, original timeout disposition and BDP1 authenticated preflight. After the OWNER review, the protected job loads the original sealed BDP1, AIP1, HXC1, XMH2 and P05 sources and uses the same source/funding bridge, frozen configuration and 8,400-second native timeout. It retains EUR300 shared within each book, the same controls, HARD21 accounting and the existing drawdown rules. Admission is limited to the first attempt. The job runs in historical Replay with zero broker writes, LIVE/DEMO orders or Cloud activation.
+6. Check live EPM1 records in the recovery job. A completed, reconciled result is published under `cpe1-technical-recovery-1-authentic-csharp-eur300`. The separate receipt links the run ID, original attempt, authorization and review. A failed recovery has a diagnostic log and no economic verdict.

@@ -4,13 +4,18 @@ Only bounded generated fixtures are available here. This does not read custody,
 dispatch Actions or produce an authenticated economic result.
 """
 import argparse
+import contextlib
 import hashlib
+import io
 import json
+import os
 import shutil
 import subprocess
 import tempfile
 import time
 from pathlib import Path
+
+from .cpe1_recovery_execute import run_replay_process
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE = "cf6d830ee8c8c9866332af3cd96ac9f7ac22987d"
@@ -172,17 +177,22 @@ def build(dotnet, directory, project):
 
 
 def replay(dotnet, directory, source, target, *, candidate=False):
-    command = ("--cpe1-recovery-native-funded-economics" if candidate else
-               "--cpe1-one-unified-financed-economics")
+    mode = ("--cpe1-recovery-native-funded-economics" if candidate else
+            "--cpe1-one-unified-financed-economics")
+    command = [dotnet, str(directory / REPLAY), str(source), str(target), mode, "0"*64]
     started = time.perf_counter()
-    process = run([dotnet, str(directory / REPLAY), str(source), str(target),
-                   command, "0"*64], directory,
-                  stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    if candidate:
+        with contextlib.redirect_stdout(io.StringIO()) as captured:
+            run_replay_process(command, os.environ, 480)
+        progress = [json.loads(line.removeprefix(PROGRESS_PREFIX))
+                    for line in captured.getvalue().splitlines()]
+        profile = None
+    else:
+        process = run(command, directory, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        profile = next((json.loads(line.removeprefix(PROFILE_PREFIX))
+                        for line in process.stderr.splitlines() if line.startswith(PROFILE_PREFIX)), None)
+        progress = []
     elapsed = time.perf_counter() - started
-    profile = next((json.loads(line.removeprefix(PROFILE_PREFIX))
-                    for line in process.stderr.splitlines() if line.startswith(PROFILE_PREFIX)), None)
-    progress = [json.loads(line.removeprefix(PROGRESS_PREFIX))
-                for line in process.stdout.splitlines() if line.startswith(PROGRESS_PREFIX)]
     return elapsed, hashlib.sha256(target.read_bytes()).hexdigest(), profile, progress
 
 

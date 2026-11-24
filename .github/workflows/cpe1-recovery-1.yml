@@ -21,10 +21,11 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Verify a first-use OWNER marker, technical CI and independent review
+      - name: Verify the first-use marker, technical CI and independent reviewer
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
+          CPE1_AUDITOR_ACCOUNT_ID: ${{ vars.CPE1_INDEPENDENT_AUDITOR_ACCOUNT_ID }}
         run: |
           marker=ops/cpe1-recovery-1-owner-authorization.json
           subject=OWNER_CPE1_TECHNICAL_RECOVERY_1
@@ -32,7 +33,8 @@ jobs:
           original_workflow=.github/workflows/cpe1-one-native-funded-cycle.yml
           protocol=research/CPE1_FROZEN_CAUSAL_FINANCED_PAYOFF_CYCLE_20261124.md
           [[ "$GITHUB_EVENT_NAME" == push && "$GITHUB_REF" == refs/heads/main &&
-             "$GITHUB_ACTOR" == mariancradulescu && "$GITHUB_RUN_ATTEMPT" == 1 &&
+             "$GITHUB_ACTOR" == mariancradulescu && "$GITHUB_ACTOR_ID" == 322088485 &&
+             "$GITHUB_RUN_ATTEMPT" == 1 &&
              "$(git log -1 --format=%s)" == "$subject" &&
              "$(git diff-tree --no-commit-id --name-status -r HEAD)" == $'A\t'"$marker" &&
              -z "$(git log -1 --format=%H HEAD^ -- "$marker")" && -f "$marker" ]]
@@ -59,10 +61,8 @@ jobs:
               .status == "completed" and .conclusion == "success"
             ' > /dev/null
           gh api "repos/$GITHUB_REPOSITORY/issues/comments/$audit" |
-            jq -er --arg coordination "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/issues/393" '
-              select(.issue_url == $coordination) | .body
-            ' | tr -d '\r' |
-            grep -Fx "CPE1_TECHNICAL_RECOVERY_1_INDEPENDENT_APPROVAL $reviewed $ci" > /dev/null
+            python3 -m research.cpe1_recovery_authority audit "$CPE1_AUDITOR_ACCOUNT_ID" \
+              "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/issues/393" "$reviewed" "$ci"
           gh api "repos/$GITHUB_REPOSITORY/actions/runs/45334211971" |
             jq -e --arg original "$original_sha" --arg workflow "$original_workflow" '
               .head_sha == $original and .path == $workflow and .head_branch == "main" and
@@ -106,9 +106,34 @@ jobs:
           ' cpe1-bdp1-verified-receipt/cpe1-bdp1-contract-source-only.json > /dev/null
           echo 'approved=true' >> "$GITHUB_OUTPUT"
 
-  recovery:
+  owner_approval:
     needs: authorize
     if: github.run_attempt == 1 && needs.authorize.outputs.approved == 'true'
+    environment: cpe1-recovery-1-owner-review
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      approved: ${{ steps.review.outputs.approved }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Confirm the OWNER approved this exact workflow run
+        id: review
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/approvals" |
+            python3 -m research.cpe1_recovery_authority owner
+          echo 'approved=true' >> "$GITHUB_OUTPUT"
+
+  recovery:
+    needs: [authorize, owner_approval]
+    if: github.run_attempt == 1 && needs.authorize.outputs.approved == 'true' && needs.owner_approval.outputs.approved == 'true'
     environment: mxm-r3-custody-v1
     concurrency:
       group: cpe1-technical-recovery-1
