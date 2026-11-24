@@ -50,9 +50,11 @@ public static class NativeSimulatedCloseLifecycle
     }
 
     public static NativeModelCloseStep Advance(NativeFundedSession session,
-        NativeModelCloseProtection protection,NativeModelCloseObservation observation)
+        NativeModelCloseProtection protection,NativeModelCloseObservation observation,
+        long responseWindowMs=ModelCloseResponseWindowMs)
     {
-        if(session is null || protection is null || observation is null ||
+        if(responseWindowMs<=0L||responseWindowMs>600000L ||
+           session is null || protection is null || observation is null ||
            session.Ledger.MonetaryDomain!="MODEL_REPLAY" ||
            string.IsNullOrWhiteSpace(protection.PositionId) ||
            protection.Policy is not ("VOL" or "STRUCT" or "ADAPT") ||
@@ -109,7 +111,7 @@ public static class NativeSimulatedCloseLifecycle
             return new(protection,"NON_SIR1_INTENT_PRESERVED_NO_MODEL_RECONCILIATION",
                 facts.ToArray(),session.Ledger.Summary(at),false);
 
-        if(pending is not null && at-pending.At>ModelCloseResponseWindowMs)
+        if(pending is not null && at-pending.At>responseWindowMs)
         {
             Apply(Fact("MODEL_CLOSE_INTENT_EXPIRED",held,at,
                 reason:"MODEL_UNTRANSMITTED_CLOSE_RESPONSE_WINDOW_EXPIRED",
