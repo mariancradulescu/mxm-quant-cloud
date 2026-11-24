@@ -1,0 +1,204 @@
+name: CPE1 technical recovery 1
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ops/cpe1-recovery-1-owner-authorization.json'
+
+permissions:
+  contents: read
+  actions: read
+  issues: read
+
+jobs:
+  authorize:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    outputs:
+      approved: ${{ steps.receipt.outputs.approved }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify the first-use marker, technical CI and independent reviewer
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CPE1_AUDITOR_ACCOUNT_ID: ${{ vars.CPE1_INDEPENDENT_AUDITOR_ACCOUNT_ID }}
+        run: |
+          marker=ops/cpe1-recovery-1-owner-authorization.json
+          subject=OWNER_CPE1_TECHNICAL_RECOVERY_1
+          original_sha=cf6d830ee8c8c9866332af3cd96ac9f7ac22987d
+          original_workflow=.github/workflows/cpe1-one-native-funded-cycle.yml
+          protocol=research/CPE1_FROZEN_CAUSAL_FINANCED_PAYOFF_CYCLE_20261124.md
+          [[ "$GITHUB_EVENT_NAME" == push && "$GITHUB_REF" == refs/heads/main &&
+             "$GITHUB_ACTOR" == mariancradulescu && "$GITHUB_ACTOR_ID" == 322088485 &&
+             "$GITHUB_RUN_ATTEMPT" == 1 &&
+             "$(git log -1 --format=%s)" == "$subject" &&
+             "$(git diff-tree --no-commit-id --name-status -r HEAD)" == $'A\t'"$marker" &&
+             -z "$(git log -1 --format=%H HEAD^ -- "$marker")" && -f "$marker" ]]
+          reviewed="$(git rev-parse HEAD^)"
+          git diff --exit-code "$original_sha" "$reviewed" -- "$protocol" "$original_workflow" \
+            ops/cpe1-one-original-exposed-economics-20261124.txt \
+            research/v32_unified_source_adapter.py research/hrc1_protocol.json \
+            research/multiscale_conditional_research.py
+          jq -e --arg reviewed "$reviewed" '
+            (keys == ["IndependentAuditCommentId","OriginalAttempt","OriginalDisposition",
+                       "OriginalRunId","RecoveryIdentity","ReviewedHead","TechnicalCiRunId"]) and
+            .RecoveryIdentity == "CPE1_TECHNICAL_RECOVERY_1" and .OriginalRunId == 45334211971 and
+            .OriginalAttempt == 1 and .ReviewedHead == $reviewed and
+            .OriginalDisposition == "CPE1_ORIGINAL_ATTEMPT_1_TIMEOUT_NO_ECONOMIC_VERDICT" and
+            ([.TechnicalCiRunId,.IndependentAuditCommentId] |
+                all(type == "number" and . > 0 and . == floor))
+          ' "$marker" > /dev/null
+          ci="$(jq -r .TechnicalCiRunId "$marker")"
+          audit="$(jq -r .IndependentAuditCommentId "$marker")"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$ci" |
+            jq -e --arg reviewed "$reviewed" '
+              .path == ".github/workflows/cpe1-technical-recovery.yml" and
+              .event == "push" and .head_branch == "main" and .head_sha == $reviewed and
+              .status == "completed" and .conclusion == "success"
+            ' > /dev/null
+          gh api "repos/$GITHUB_REPOSITORY/issues/comments/$audit" |
+            python3 -m research.cpe1_recovery_authority audit "$CPE1_AUDITOR_ACCOUNT_ID" \
+              "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/issues/393" "$reviewed" "$ci"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/45334211971" |
+            jq -e --arg original "$original_sha" --arg workflow "$original_workflow" '
+              .head_sha == $original and .path == $workflow and .head_branch == "main" and
+              .event == "push" and .run_attempt == 1 and
+              .status == "completed" and .conclusion == "failure"
+            ' > /dev/null
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/45334211971/artifacts" |
+            jq -e '.total_count == 0' > /dev/null
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/45332935228" |
+            jq -e '
+              .conclusion == "success" and .status == "completed" and
+              .head_sha == "2aad3af4b77df07add399ccda618a276a4a36db5" and
+              .head_branch == "main" and .event == "push" and
+              .path == ".github/workflows/cpe1-bdp1-source-only-preflight.yml" and
+              .actor.login == "mariancradulescu" and .run_attempt == 1
+            ' > /dev/null
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: cpe1-bdp1-authentic-contract-source-only-preflight-main
+          run-id: 45332935228
+          github-token: ${{ github.token }}
+          path: cpe1-bdp1-verified-receipt
+      - name: Validate the same BDP1 receipt used by the original attempt
+        id: receipt
+        run: |
+          jq -e '
+            .Scope == "ORIGINAL_BDP1_SOURCE_ONLY_NO_ECONOMIC_ENGINE" and
+            .Source.sourceRunId == 41724643418 and
+            .Source.ciphertextSha256 == "e47ba7204ca7e07e7bb523ede8a8171f49b216cad09914142ed548839660a370" and
+            .Source.rawAccountAndBarsReconstructed == true and
+            .BrokerRequests == 0 and .Orders == 0 and .ClosedModelsCalled == 0 and
+            .CloudActivated == false and .HistoricalTariffContinuityCertified == false and
+            .HistoricalBrokerNetCertified == false and
+            (.Symbols | keys == ["EURUSD","GBPUSD"]) and
+            all(.Symbols[];
+              .OriginalBrokerAuthenticated == true and
+              (.Status == "COMPLETE_SUPPORTED_CURRENT_SCHEDULE" or
+               .Status == "UNKNOWN_OR_UNSUPPORTED_CURRENT_SCHEDULE") and
+              ((.MissingFields | sort) == ([.Fields | to_entries[] |
+                 select(.value == null) | .key] | sort)))
+          ' cpe1-bdp1-verified-receipt/cpe1-bdp1-contract-source-only.json > /dev/null
+          echo 'approved=true' >> "$GITHUB_OUTPUT"
+
+  owner_approval:
+    needs: authorize
+    if: github.run_attempt == 1 && needs.authorize.outputs.approved == 'true'
+    environment: cpe1-recovery-1-owner-review
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      approved: ${{ steps.review.outputs.approved }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Confirm the OWNER approved this exact workflow run
+        id: review
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/approvals" |
+            python3 -m research.cpe1_recovery_authority owner
+          echo 'approved=true' >> "$GITHUB_OUTPUT"
+
+  recovery:
+    needs: [authorize, owner_approval]
+    if: github.run_attempt == 1 && needs.authorize.outputs.approved == 'true' && needs.owner_approval.outputs.approved == 'true'
+    environment: mxm-r3-custody-v1
+    concurrency:
+      group: cpe1-technical-recovery-1
+      cancel-in-progress: false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 160
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - run: python -m pip install -r research/requirements.txt
+      - run: dotnet build src/Mxm.Replay -c Release
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: sealed-source
+          run-id: 41724643418
+          github-token: ${{ github.token }}
+          path: bdp-source
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: sealed-source
+          run-id: 41735441128
+          github-token: ${{ github.token }}
+          path: aip-source
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: hxc1-original-historical-encrypted-source
+          run-id: 43817213663
+          github-token: ${{ github.token }}
+          path: mde1-hxc1-source
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: xmh2-complete-274day-m15-encrypted-source
+          run-id: 44352570167
+          github-token: ${{ github.token }}
+          path: mde1-xmh2-source
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: p05-new-live-readonly-authentic-source-sealed
+          run-id: 45134137836
+          github-token: ${{ github.token }}
+          path: p05-sealed
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: p05-new-live-readonly-aggregate-public
+          run-id: 45134137836
+          github-token: ${{ github.token }}
+          path: p05-public
+      - name: CPE1 recovery with live EPM1 from the native Replay process
+        run: python -m research.cpe1_recovery_execute
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - name: Publish the separate recovery receipt after successful reconciliation
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cpe1-technical-recovery-1-authentic-csharp-eur300
+          path: cpe1-recovery-public/
+          retention-days: 90
+          if-no-files-found: error

@@ -10,7 +10,7 @@ internal static class Cpe1IntegratedEconomicChecks
     const long M5=300000L,M15=900000L;
     static NativeClosedMarketBar B(long at,long w,decimal close)
         =>new(at,at+w,close,close+.02m,close-.02m,close,5);
-    static Ucp1Frame Frame(long origin,long t,decimal bid,bool unknownSwap)
+    internal static Ucp1Frame Frame(long origin,long t,decimal bid,bool unknownSwap)
     {
         var c=new NativeObservedContractTerms("EURUSD","USD",origin-1000,
             1m,1m,2m,100m,2,0,2,0,null,0,0,0m,0m,4,
@@ -58,7 +58,7 @@ internal static class Cpe1IntegratedEconomicChecks
             "CPE1 one real funded episode contains projected EUR reward and loss before fill");
         return e;
     }
-    static Ucp1MarketFrame Named(Ucp1MarketFrame market,string symbol,decimal? margin=null)
+    internal static Ucp1MarketFrame Named(Ucp1MarketFrame market,string symbol,decimal? margin=null)
         =>market with {Symbol=symbol,Contract=market.Contract with {Symbol=symbol},
             Quote=market.Quote with {Symbol=symbol,MarginPerUnit=margin??market.Quote.MarginPerUnit}};
 

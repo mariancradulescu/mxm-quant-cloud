@@ -52,6 +52,11 @@ public static class NativeSimulatedCloseLifecycle
     public static NativeModelCloseStep Advance(NativeFundedSession session,
         NativeModelCloseProtection protection,NativeModelCloseObservation observation,
         long responseWindowMs=ModelCloseResponseWindowMs)
+        =>Advance(session,protection,observation,responseWindowMs,ownedModelLedger:false);
+
+    internal static NativeModelCloseStep Advance(NativeFundedSession session,
+        NativeModelCloseProtection protection,NativeModelCloseObservation observation,
+        long responseWindowMs,bool ownedModelLedger)
     {
         if(responseWindowMs<=0L||responseWindowMs>600000L ||
            session is null || protection is null || observation is null ||
@@ -90,7 +95,8 @@ public static class NativeSimulatedCloseLifecycle
         var facts=new List<LedgerEvent>();
         void Apply(LedgerEvent e)
         {
-            if(e.Kind=="MARK" && observation.FullSessionMark)session.RecordResearchMark(e);
+            if(ownedModelLedger)session.ApplyOwnedResearchFact(e);
+            else if(e.Kind=="MARK" && observation.FullSessionMark)session.RecordResearchMark(e);
             else session.ApplyResearchFacts(new[]{e});
             facts.Add(e);
         }

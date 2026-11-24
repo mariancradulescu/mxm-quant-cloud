@@ -54,6 +54,7 @@ public sealed partial class NativeFundedLedger
             UsedPositionIds=closed.Select(x=>x.PositionId).ToHashSet(StringComparer.Ordinal),
             AppliedEventHashes=hashes,EventChainHash=chain,MonetaryDomain="BROKER_EXECUTION_FACT"
         };
+        ledger.RebuildSettlementTotals();
         ledger.Reconcile();
         return ledger;
     }

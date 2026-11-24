@@ -1,0 +1,65 @@
+name: CPE1 technical recovery parity
+on:
+  pull_request:
+    paths:
+      - 'src/Mxm.Core/**'
+      - 'src/Mxm.Replay/**'
+      - 'tests/Mxm.Checks/**'
+      - 'research/cpe1*.py'
+      - 'research/test_cpe1_recovery_controls.py'
+      - '.github/workflows/cpe1-technical-recovery.yml'
+      - '.github/workflows/cpe1-recovery-1.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/Mxm.Core/**'
+      - 'src/Mxm.Replay/**'
+      - 'tests/Mxm.Checks/**'
+      - 'research/cpe1*.py'
+      - 'research/test_cpe1_recovery_controls.py'
+      - '.github/workflows/cpe1-technical-recovery.yml'
+      - '.github/workflows/cpe1-recovery-1.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  parity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - name: Verify frozen protocol and original marker
+        run: |
+          git diff --exit-code cf6d830ee8c8c9866332af3cd96ac9f7ac22987d HEAD -- \
+            research/CPE1_FROZEN_CAUSAL_FINANCED_PAYOFF_CYCLE_20261124.md \
+            ops/cpe1-one-original-exposed-economics-20261124.txt \
+            .github/workflows/cpe1-one-native-funded-cycle.yml
+      - name: Run native accounting and recovery checks
+        run: dotnet run --project tests/Mxm.Checks -c Release
+      - name: Compile recovery bridge
+        run: python -m py_compile research/cpe1_recovery_execute.py research/cpe1_one_integrated_original_execute.py
+      - name: Verify replay error handling, live progress and separate approval authorities
+        run: |
+          dotnet build src/Mxm.Replay -c Release
+          python -m unittest research.test_cpe1_recovery_controls -v
+      - name: Compare the failed-run engine with the recovery engine on technical fixtures
+        shell: bash
+        run: |
+          set -o pipefail
+          python -m research.cpe1_recovery_benchmark | tee cpe1-technical-parity.jsonl
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cpe1-technical-parity-and-benchmark
+          path: cpe1-technical-parity.jsonl
+          if-no-files-found: error
+          retention-days: 90

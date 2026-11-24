@@ -1,4 +1,9 @@
 using Mxm.Core;
+if (args is ["--cpe1-technical-parity"])
+{
+    Cpe1RecoveryParityChecks.WriteTrace();
+    return;
+}
 var passed = 0;
 NativePendingCapitalGateChecks.Run(Check);
 NativePostFillCapitalGuardChecks.Run(Check);
@@ -7,6 +12,7 @@ MonetaryRecoveryChecks.Run(Check);
 NativePerformanceScorecardChecks.Run(Check);
 NativeJointOpportunityEvidenceChecks.Run(Check);
 Cpe1IntegratedEconomicChecks.Run(Check);
+Cpe1OwnedLedgerChecks.Run(Check);
 NativeSystemicOpportunityCensusChecks.Run(Check);
 Mvo1NativeChecks.Run(Check);
 NativeAuthorityBoundaryChecks.Run(Check);

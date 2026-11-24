@@ -592,10 +592,9 @@ public sealed partial class NativeUnifiedPortfolioEngine
         return (plan, null);
     }
 
-    Ucp1Episode CompleteIntegrated(Ucp1Episode trip, Ucp1Plan plan)
+    Ucp1Episode CompleteIntegrated(Ucp1Episode trip, Ucp1Plan plan, LedgerClosedFragment[] parts)
     {
         var geometry = plan.Integrated!;
-        var parts = model.Ledger.ClosedFragments().Where(f => f.PositionId == trip.PositionId).ToArray();
         decimal gross = parts.Sum(f => f.GrossEur);
         decimal net = parts.Sum(f => f.NetEur);
         decimal r = net / geometry.InitialRiskEur;
