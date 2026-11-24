@@ -83,7 +83,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
         return (stop,target);
     }
 
-    NativePendingCapitalGate.Commitment[] Cpe1Commitments(bool pending)
+    NativePendingCapitalGate.Commitment[] Cpe1Commitments(bool pending,Ucp1Frame? frame=null)
     {
         var ledger=model.Ledger;
         var items=pending?ledger.PendingSnapshot()
@@ -92,27 +92,35 @@ public sealed partial class NativeUnifiedPortfolioEngine
             ledger.PositionSnapshot().Select(x=>
                 (Id:x.Id,Symbol:x.Symbol,Units:x.Units,Margin:x.MarginPerUnit)).ToArray();
         return items.Select(x=>new NativePendingCapitalGate.Commitment(
-            x.Id,x.Symbol,x.Units,x.Margin,
+            x.Id,x.Symbol,x.Units,Math.Max(x.Margin,(fundingReserves is null?null:
+                frame?.Markets.FirstOrDefault(m=>m.Symbol==x.Symbol)?.Quote.MarginPerUnit)??0m),
             plans.TryGetValue(x.Id,out var p)?
                 Math.Max(0m,p.RiskEur):0m,
             "CPE1_SINGLE_ECONOMIC_EPISODE",pending)).ToArray();
     }
 
+    NativeFundingCapital? Cpe1FundingCapital(LedgerSummary book,Ucp1Frame? frame)
+        =>fundingReserves?.Capital(book,Cpe1Commitments(true,frame).Sum(x=>x.MarginEur));
+
     Ucp1FrameResult AdvanceCpe1(long at,Ucp1Frame frame,
         List<(Ucp1DecisionSignal Signal,Ucp1MarketFrame Frame)> options)
     {
         var book=model.Ledger.Summary(at);
-        if(policy=="CPE1_CASH" || cpe1UnreconciledFunding ||
-           book.LiquidationEquityEur is not >0m ||
-           book.MaximumSampledDrawdown>=.28m)
-            return RecordIntegratedFrame(at,book);
-        var held=Cpe1Commitments(false);
-        var pending=Cpe1Commitments(true);
-        if(held.Length+pending.Length>=2 || held.Any(x=>
-            plans.TryGetValue(x.PositionId,out var p)&&p.FinancingUnknown))
+        var financial=Cpe1FundingCapital(book,frame);
+        var equity=financial is null?book.LiquidationEquityEur:financial.DemonstrableEquityEur;
+        if(financial is {OutstandingDebitCeilingEur:null})
+            Count("ACCRUED_FUNDING_UNBOUNDED");
+        if(policy=="CPE1_CASH" || (fundingReserves is null&&cpe1UnreconciledFunding) ||
+           equity is not >0m ||
+           (financial?.MaximumSampledFundingAdjustedDrawdown??book.MaximumSampledDrawdown)>=.28m)
+            return RecordIntegratedFrame(at,book,frame);
+        var held=Cpe1Commitments(false,frame);
+        var pending=Cpe1Commitments(true,frame);
+        if(held.Length+pending.Length>=2 || (fundingReserves is null && held.Any(x=>
+            plans.TryGetValue(x.PositionId,out var p)&&p.FinancingUnknown)))
         {
             Count("CPE1_HELD_OR_PENDING_CAPACITY_OR_UNKNOWN_FINANCE");
-            return RecordIntegratedFrame(at,book);
+            return RecordIntegratedFrame(at,book,frame);
         }
         var candidates=new List<(Ucp1DecisionSignal Signal,Ucp1MarketFrame Market,
             NativeIntegratedPlan Geometry,decimal Units,decimal Score)>();
@@ -122,21 +130,28 @@ public sealed partial class NativeUnifiedPortfolioEngine
             if(!Cpe1Usable(market,at) || Cpe1Levels(signal,market) is not { } levels)
                 continue;
             decimal units=market.Contract.MinimumUnits;
+            var carriedDebit=fundingReserves is null?0m:NativePortfolioFunding.OfferDebit(market,signal.Side,units,at);
+            if(carriedDebit is not decimal debit)
+            {
+                Count("ENTRY_FUNDING_CEILING_UNAVAILABLE");
+                continue;
+            }
             decimal slip=market.SlippagePerSideQuote;
             var q=market.Quote;
             var bracket=NativeExecutableEconomics.Bracket(
                 q,signal.Side,units,levels.Stop,levels.Target,slip,slip);
-            if(bracket.RiskEur<=0m || bracket.RewardEur<=0m ||
+            decimal risk=bracket.RiskEur+debit,reward=bracket.RewardEur-debit;
+            if(bracket.RiskEur<=0m || reward<=0m ||
                signal.Side*(bracket.Entry-levels.Stop)<=0m)
             {
                 Count("CPE1_NO_FINANCIALLY_POSITIVE_PRICE_GEOMETRY");
                 continue;
             }
-            var gate=NativePendingCapitalGate.Assess(book.LiquidationEquityEur,
+            var gate=NativePendingCapitalGate.Assess(equity,
                 book.UsedMarginEur is not null,held,pending,
                 new NativePendingCapitalGate.Proposal(market.Symbol,
                     "CPE1_SINGLE_ECONOMIC_EPISODE",units,market.Contract.VolumeStepUnits,
-                    units,q.MarginPerUnit,bracket.RiskEur/units));
+                    units,q.MarginPerUnit,risk/units));
             if(!gate.IsFinanceable)
             {
                 Count("CPE1_HELD_PENDING_"+gate.Status);continue;
@@ -162,20 +177,20 @@ public sealed partial class NativeUnifiedPortfolioEngine
                     NativeExecutableEconomics.EstimateNet(q,q,signal.Side,
                         units,entered,liquidationSide,slip));
                 if(lower is not >0m || lower.Value*bracket.RiskEur-
-                    fullRoundTripCost<=0m)
+                    fullRoundTripCost-debit<=0m)
                 {Count("CPE1_WAIT_GROSS_OR_CASH_LOWER_NOT_POSITIVE");continue;}
             }
             decimal score=Cpe1Economic && lower.HasValue?
-                lower.Value*bracket.RiskEur:bracket.RewardEur/bracket.RiskEur;
+                lower.Value*bracket.RiskEur-debit:reward/risk;
             candidates.Add((signal,market,
                 new NativeIntegratedPlan(levels.Stop,levels.Target,
-                    bracket.RiskEur,bracket.RewardEur)
+                    risk,reward)
                     {EntrySlippage=slip},units,score));
         }
         if(candidates.Count==0)
         {
             Count("CPE1_WAIT_NO_FINANCEABLE_EDGE");
-            return RecordIntegratedFrame(at,book);
+            return RecordIntegratedFrame(at,book,frame);
         }
         var chosen=Cpe1Economic?
             candidates.OrderByDescending(x=>x.Score)
@@ -183,48 +198,58 @@ public sealed partial class NativeUnifiedPortfolioEngine
             candidates[0];
         var s=chosen.Signal;var m=chosen.Market;
         string id="UCP1/"+policy+"/"+m.Symbol+"/"+s.Family+"/"+at;
-        Apply(Event("REQUEST_OPEN",at,id,m.Symbol,s.Side,chosen.Units,
+        var request=Event("REQUEST_OPEN",at,id,m.Symbol,s.Side,chosen.Units,
             margin:m.Quote.MarginPerUnit,slip:m.SlippagePerSideQuote,
-            reason:"NATIVE_CONDITIONAL_SELECTION"));
+            reason:"NATIVE_CONDITIONAL_SELECTION");
+        Apply(fundingReserves is null?request:
+            request with {AvailableAt=at,CalibratedThrough=s.LastCompletedM5At});
         plans.Add(id,new Ucp1Plan(id,m.Symbol,s.Family,s.Side,s.Atr,s.Equilibrium,
             chosen.Geometry.InitialRiskEur,chosen.Geometry.Stop,0m,0L,0m,
             chosen.Units,0m,0m,0L,false,chosen.Geometry));
         admitted++;Count("CPE1_EUR_REWARD_RISK_FUNDED_PENDING");
-        return RecordIntegratedFrame(at,model.Ledger.Summary(at));
+        return RecordIntegratedFrame(at,model.Ledger.Summary(at),frame);
     }
 
     NativeIntegratedPlan? Cpe1RecheckFill(Ucp1Plan plan,LedgerEvent intent,
-        LedgerSummary current,Ucp1MarketFrame observed,decimal execution)
+        LedgerSummary current,Ucp1MarketFrame observed,decimal execution,Ucp1Frame frame)
     {
-        if(plan.Integrated is not { } prior || current.LiquidationEquityEur is not >0m ||
-           current.MaximumSampledDrawdown>=.28m || !Cpe1Usable(observed,observed.Quote.At) ||
+        var financial=Cpe1FundingCapital(current,frame);
+        var equity=financial is null?current.LiquidationEquityEur:financial.DemonstrableEquityEur;
+        if(plan.Integrated is not { } prior || equity is not >0m ||
+           (financial?.MaximumSampledFundingAdjustedDrawdown??current.MaximumSampledDrawdown)>=.28m ||
+           !Cpe1Usable(observed,observed.Quote.At) ||
            plan.Side*(execution-prior.Stop)<=0m ||
            plan.Side*(prior.Target-execution)<=0m)
             return null;
         var q=observed.Quote;
-        if(cpe1UnreconciledFunding || q.At-intent.At>300000L)
+        if((fundingReserves is null&&cpe1UnreconciledFunding) || q.At-intent.At>300000L)
             return null; // No late fill after a missing M5 source clock.
+        var carriedDebit=fundingReserves is null?0m:
+            NativePortfolioFunding.OfferDebit(observed,plan.Side,plan.Units,q.At);
+        if(carriedDebit is not decimal debit)return null;
         var bracket=NativeExecutableEconomics.Bracket(q,plan.Side,plan.Units,
             prior.Stop,prior.Target,intent.SlippagePerSide,
             q.LiquidationSlippagePerSide??intent.SlippagePerSide);
-        if(bracket.RiskEur<=0m||bracket.RewardEur<=0m)return null;
-        var held=Cpe1Commitments(false);
+        var risk=bracket.RiskEur+debit;
+        var reward=bracket.RewardEur-debit;
+        if(bracket.RiskEur<=0m||reward<=0m)return null;
+        var held=Cpe1Commitments(false,frame);
         // The pending intent must be REPRICED at the actual next witnessed
         // fill. Never pass its stale admission risk or stale minimum margin
         // into postfill Held+Pending projected-equity verification.
-        var pending=Cpe1Commitments(true)
+        var pending=Cpe1Commitments(true,frame)
             .Select(x=>x.PositionId==plan.Id ?
-                x with {ReservedStopRiskEur=bracket.RiskEur,
+                x with {ReservedStopRiskEur=risk,
                         MarginPerUnit=Math.Max(x.MarginPerUnit,q.MarginPerUnit)}
                 : x).ToArray();
         if(!NativePendingCapitalGate.RevalidatePendingFill(
-            current.LiquidationEquityEur,current.UsedMarginEur is not null,
+            equity,current.UsedMarginEur is not null,
             held,pending,plan.Id))return null;
-        var guard=NativePostFillCapitalGuard.Assess(current.LiquidationEquityEur,
-            held,pending,plan.Id,plan.Side,q,intent.SlippagePerSide);
-        if(!guard.Allowed)return null;
-        return prior with {InitialRiskEur=bracket.RiskEur,
-            InitialRewardEur=bracket.RewardEur};
+        var guard=NativePostFillCapitalGuard.Assess(equity,
+            held,pending,plan.Id,plan.Side,q,intent.SlippagePerSide,debit);
+        if(!guard.Allowed || (fundingReserves is not null && guard.ProjectedPostFillLiquidationEquityEur <
+            current.ObservedPeakEur*(1m-OwnerRiskAuthority.MaximumSystemDrawdown)))return null;
+        return prior with {InitialRiskEur=risk,InitialRewardEur=reward};
     }
 
     Ucp1Plan Cpe1AccrueOrMarkFunding(Ucp1Plan plan,LedgerPosition held,
@@ -293,7 +318,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 new NativeJointOpportunityMark(frame.At,closed,gross,
                     q.EurCredit>0m&&q.EurDebit>=q.EurCredit)).ToArray()};
         }
-        if(model.Ledger.Summary(frame.At).MaximumSampledDrawdown>=.28m)
+        var book=model.Ledger.Summary(frame.At);
+        if((Cpe1FundingCapital(book,frame)?.MaximumSampledFundingAdjustedDrawdown??book.MaximumSampledDrawdown)>=.28m)
             return (plan,new("INTEGRATED_CPE1_GLOBAL_DD_PROTECTION",position.Units));
         if(side*(sidePrice-geometry.Stop)<=0m)
             return (plan,new("INTEGRATED_CPE1_OBSERVED_STRUCTURAL_STOP",position.Units));
@@ -336,8 +362,11 @@ public sealed partial class NativeUnifiedPortfolioEngine
         decimal remainingLoss=Math.Max(0m,
             side*(sidePrice-geometry.Stop))*position.Units*q.EurDebit;
         decimal futureExitCost=Fee(q,position.Units);
+        var carriedDebit=fundingReserves is null?0m:
+            NativePortfolioFunding.OfferDebit(market,side,position.Units,frame.At);
+        if(carriedDebit is not decimal debit)return (plan,null);
         decimal incrementalValue=probability*remainingReward-
-            (1m-probability)*remainingLoss-futureExitCost;
+            (1m-probability)*remainingLoss-futureExitCost-debit;
         if(incrementalValue<=0m)
             return (plan,new("INTEGRATED_CPE1_CONTINUATION_WORSE_THAN_CASH",position.Units));
         // Legal proportional release of booked risk only if remaining volume

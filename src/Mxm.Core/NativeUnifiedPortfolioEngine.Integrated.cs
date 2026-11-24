@@ -388,14 +388,16 @@ public sealed partial class NativeUnifiedPortfolioEngine
             close ? new("INTEGRATED_FUNDED_ACTION_VALUE_CLOSE", position.Units) : null);
     }
 
-    Ucp1FrameResult RecordIntegratedFrame(long at, LedgerSummary summary)
+    Ucp1FrameResult RecordIntegratedFrame(long at, LedgerSummary summary,Ucp1Frame? frame=null)
     {
         previousClock = at;
+        var financial=Cpe1FundingCapital(summary,frame);
         if(!researchFork) curve.Add(new Ucp1CurvePoint(at, summary.CashEur, summary.LiquidationEquityEur, summary.UsedMarginEur,
             summary.OpenPositions, summary.PendingIntents, summary.CompleteRoundTrips)
-            { PlannedAggregateRiskEur=plans.Values.Sum(p=>p.RiskEur) });
+            { PlannedAggregateRiskEur=plans.Values.Sum(p=>p.RiskEur),FundingCapital=financial });
         return new(policy, at, summary, proposed, admitted, openFills, trips.Count,
-            summary.PendingIntents, summary.OpenPositions, lastBrokerEvidence, summary.EventChainHash);
+            summary.PendingIntents, summary.OpenPositions, lastBrokerEvidence, summary.EventChainHash)
+            {FundingCapital=financial};
     }
 
     bool IntegratedFillStillAdmissible(Ucp1Plan plan, Ucp1MarketFrame input, LedgerSummary summary, decimal execution)
