@@ -198,6 +198,34 @@ internal static class Cpe1OriginalIntegratedRunner
             bool certifiedModelBook=flat&&financeKnown &&
                 !summary.HistoryEvidenceIncomplete&&
                 summary.LiquidationEquityEur is not null;
+            // Identical original Core events, replayed through the EXISTING
+            // native funded ledger; never a competing capital-account model.
+            var reconciled=new NativeFundedLedger();
+            foreach(var evt in x.Engine.OriginalModelEvents)
+                reconciled.Apply(evt);
+            var verify=reconciled.Summary();
+            if(verify.CashEur!=summary.CashEur ||
+               verify.EventChainHash!=summary.EventChainHash ||
+               verify.OpenPositions!=summary.OpenPositions ||
+               verify.PendingIntents!=summary.PendingIntents ||
+               verify.CompleteRoundTrips!=summary.CompleteRoundTrips)
+                throw new InvalidOperationException("CPE1_ORIGINAL_NATIVE_EVENT_CHAIN_EUR300_RECONCILIATION");
+            var curve=x.Engine.CommonBookEquityPath;
+            var score=NativePerformanceScorecard.Calculate(
+                new NativeEconomicScorecardInput(
+                    x.Policy,
+                    reconciled.ClosedFragments(),
+                    curve.Select(p=>new NativeEconomicMark(p.At,p.EquityEur,
+                        p.UsedMarginEur,p.EquityEur-p.UsedMarginEur,p.Held,
+                        p.EquityEur is not null&&p.UsedMarginEur is not null)).ToArray(),
+                    trips.Where(p=>p.EconomicEvidence is {ReservedRiskEur:>0m})
+                        .Select(p=>new NativeEntryRisk(p.PositionId,
+                            p.EconomicEvidence!.ReservedRiskEur,
+                            p.EconomicEvidence.DurationMs is null?p.OpenAt-1:p.OpenAt-1,
+                            frozenSha)).ToArray(),
+                    weeks.ToArray(),300m,
+                    certifiedModelBook?(decimal?)nominalNet:null,
+                    0m,certifiedModelBook,false,false));
             var report=x.Engine.OriginalOutcomeReport(first,first+(last-first)/3,
                 first+2*(last-first)/3,last,Sha(payload.Tape.ProtocolSha256),false);
             return new {
@@ -219,6 +247,12 @@ internal static class Cpe1OriginalIntegratedRunner
                 SampledDd=summary.MaximumSampledDrawdown,
                 Held=summary.OpenPositions,Pending=summary.PendingIntents,
                 summary.HistoryEvidenceIncomplete,summary.EventChainHash,
+                IndependentFundedLedgerEventChainReconciled=true,
+                NativeEconomicScorecard=score,
+                GrossMeanPerCompleted=trips.Length>0?(decimal?)gross/trips.Length:null,
+                MeanGrossR=trips.Any(p=>p.EconomicEvidence?.RealizedGrossR is not null)?
+                    (decimal?)trips.Where(p=>p.EconomicEvidence?.RealizedGrossR is not null)
+                        .Average(p=>p.EconomicEvidence!.RealizedGrossR!.Value):null,
                 EntryReasons=trips.GroupBy(p=>p.Family)
                     .ToDictionary(g=>g.Key,g=>g.Count()),
                 ExitReasons=trips.GroupBy(p=>p.ExitReason)
