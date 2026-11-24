@@ -69,6 +69,9 @@ public sealed record Ucp1Checkpoint(string Version,string Policy,string Session,
     // The financial session and event chain remain authoritative in research forks.
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
     public bool ResearchFork { get; init; }
+    // CPE1 only: persistent UNKNOWN historical swap liability, not zero debt.
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool Cpe1UnreconciledFunding { get; init; }
 }
 public sealed record Scp1ChoiceReceipt(long At,string Symbol,string Family,int Side,
     decimal? ConditionalExpectedNetEur,decimal? AdverseLowerNetEur,
@@ -176,6 +179,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
     readonly List<Ucp1Episode> trips=new();
     readonly List<Ucp1CurvePoint> curve=new();
     readonly bool researchFork;
+    bool cpe1UnreconciledFunding;
     long previousClock=-1,seq;
     int proposed,admitted,openFills,expiredOpens,expiredCloses,
         closeRequests,rejections,sourceUnknownClocks,gapExposures;
@@ -237,6 +241,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
         foreach(var p in s.LastSignalBar)lastSignalBar.Add(p.Key,p.Value);
         foreach(var p in s.Reasons)reasons.Add(p.Key,p.Value);
         facts.AddRange(s.Events);trips.AddRange(s.Trips);curve.AddRange(s.Curve);
+        cpe1UnreconciledFunding=s.Cpe1UnreconciledFunding;
         previousClock=s.LastAt;seq=s.Sequence;
         proposed=s.Proposed;admitted=s.Admitted;openFills=s.OpenFills;
         expiredOpens=s.ExpiredOpens;expiredCloses=s.ExpiredCloses;
@@ -252,6 +257,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
     public Scp1ChoiceReceipt[] Scp1ChoiceReceipts=>scoredChoices.ToArray();
     public NativeIntegratedCalibrationState? IntegratedCalibration()=>integratedCalibration?.Checkpoint();
     public Ucp1Episode[] CompleteModelTrips=>trips.ToArray();
+    public bool Cpe1UnreconciledFunding=>cpe1UnreconciledFunding;
     public NativeFundedActionReceipt[] FundedActionReceipts=>fundedActions.ToArray();
     public Ucp1CurvePoint[] CommonBookEquityPath=>curve.ToArray();
     public string[] ActiveSymbols=>plans.Values.Where(p=>p.OpenAt>0 || p.Integrated is not null)
@@ -282,7 +288,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
         scoreModel,scoredChoices.ToArray(),integratedCalibration?.Checkpoint(),completeModels,completeProbe)
         { StructuralModels = structuralModels, FundedActionModel = fundedActionModel,
             FundedActions = fundedActions.Count == 0 ? null : fundedActions.ToArray(),
-            ResearchFork = researchFork || asResearchFork });
+            ResearchFork = researchFork || asResearchFork,
+            Cpe1UnreconciledFunding=cpe1UnreconciledFunding });
     static string Sha(string s)=>Convert.ToHexString(SHA256.HashData(
         Encoding.UTF8.GetBytes(s))).ToLowerInvariant();
     LedgerEvent Event(string kind,long at,string id="",string sym="",int side=0,
@@ -520,7 +527,10 @@ public sealed partial class NativeUnifiedPortfolioEngine
             }
             NativeModelCloseInstruction? instruction=null;
             if(Cpe1 && input is not null)
+            {
                 p=Cpe1AccrueOrMarkFunding(p,held,input,frame);
+                if(p.FinancingUnknown)cpe1UnreconciledFunding=true;
+            }
             if(p.Integrated is not null && input is not null)
             {
                 (p,instruction)=Cpe1?Cpe1Manage(p,held,input,frame):
