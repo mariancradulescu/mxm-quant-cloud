@@ -218,10 +218,10 @@ internal static class Cpe1OriginalIntegratedRunner
                     curve.Select(p=>new NativeEconomicMark(p.At,p.EquityEur,
                         p.UsedMarginEur,p.EquityEur-p.UsedMarginEur,p.Held,
                         p.EquityEur is not null&&p.UsedMarginEur is not null)).ToArray(),
-                    trips.Where(p=>p.EconomicEvidence is {ReservedRiskEur:>0m})
+                    trips.Where(p=>p.EconomicEntry is {ReservedRiskEur:>0m})
                         .Select(p=>new NativeEntryRisk(p.PositionId,
-                            p.EconomicEvidence!.ReservedRiskEur,
-                            p.EconomicEvidence.DurationMs is null?p.OpenAt-1:p.OpenAt-1,
+                            p.EconomicEntry!.ReservedRiskEur,
+                            p.EconomicEntry.DecisionAt,
                             frozenSha)).ToArray(),
                     weeks.ToArray(),300m,
                     certifiedModelBook?(decimal?)nominalNet:null,
