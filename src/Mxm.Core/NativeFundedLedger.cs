@@ -278,8 +278,18 @@ public sealed partial class NativeFundedLedger
                     !state.Closed.Any(x=>x.PositionId==e.PositionId && x.Symbol==e.Symbol &&
                         x.OpenedAt<=from && x.ClosedAt==e.CalibratedThrough) ||
                     (state.ClosedFunding?.Any(x=>x.PositionId==e.PositionId &&
-                        x.FromExclusive==from)??false))
+                        (x.FromExclusive==from || x.ThroughInclusive==e.CalibratedThrough))??false))
                     throw new ArgumentException("NATIVE_LEDGER_CLOSED_FUNDING_WINDOW");
+                // An ended exposure starts at the original entry or the
+                // immediately preceding reduction. A caller cannot rename or
+                // shorten a settled window to create a second cash debit.
+                var closing=state.Closed.Single(x=>x.PositionId==e.PositionId &&
+                    x.Symbol==e.Symbol && x.ClosedAt==e.CalibratedThrough);
+                long canonicalFrom=state.Closed.Where(x=>x.PositionId==e.PositionId &&
+                    x.ClosedAt<e.CalibratedThrough).Select(x=>x.ClosedAt)
+                    .DefaultIfEmpty(closing.OpenedAt).Max();
+                if(from!=canonicalFrom)
+                    throw new ArgumentException("NATIVE_LEDGER_CLOSED_FUNDING_START");
                 // The window covers the pre-reduction exposure, not just the
                 // units closed by the first fill. Later fills and remaining
                 // units reconstruct that exposure without altering any fill.
