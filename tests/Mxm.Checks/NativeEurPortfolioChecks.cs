@@ -141,6 +141,7 @@ internal static class NativeEurPortfolioChecks
             NativeConditionalRollover.MarketBid(bid with {Complete=false},charge,-1m) is null,
             "Conditional rollover rejects post-charge and incomplete witnesses");
         AdaptiveEstimatorCausality(check);
+        PredictiveCalibrationCausality(check);
         LateNetChangesRanking(check);
         ContractClocksAndDirectionalCosts(check);
         GeneralEurChoosesFundedCombination(check);
@@ -196,6 +197,55 @@ internal static class NativeEurPortfolioChecks
         check(local.Payoff("FAMILY",1,Context(0),cut+Step,2m,.40m)==
               local.Payoff("FAMILY",1,alternate,cut+Step,2m,.40m),
             "Local adaptive ablation uses no unregistered H1 feature or regime signal");
+    }
+
+    static void PredictiveCalibrationCausality(Action<bool,string> check)
+    {
+        const long day=86_400_000L;
+        long start=Origin-Origin%day-day*18;
+        NativeEurDecisionContext Context(bool high)=>new("S","CLASS",180,
+            Array.Empty<NativeEurBarState>(),0m,.10m,true)
+            {
+                MarketState=Enumerable.Repeat<decimal?>(.1m,16).ToArray(),
+                RelativeVolatility=Enumerable.Repeat<decimal?>(high ? .03m : .001m,7).ToArray()
+            };
+        var rows=Enumerable.Range(0,224).Select(i=>
+        {
+            long decision=start+i/16*day+i%16*Step+15_000;
+            bool high=i%2==0;
+            decimal gross=high?-.7m:1.2m;
+            return new NativeEurCalibrationOutcome("v2-"+i,"FAMILY",1,decision+Step,decision+Step+1,gross,gross-.2m,1m)
+                {DecisionAt=decision,Context=Context(high)};
+        }).ToArray();
+        long cut=start+15*day;
+        var set=new NativeEurCalibration(cut,Proof,rows);
+        var model=NativeEurAdaptiveEstimator.Fit(set,true,true,true);
+        var low=model.Payoff("FAMILY",1,Context(false),cut+Step,2m,.4m);
+        var high=model.Payoff("FAMILY",1,Context(true),cut+Step,2m,.4m);
+        check(low?.PredictiveEvidence is {ValidationDays:>=2} && high?.PredictiveEvidence is not null &&
+            low.NetMeanEur>high.NetMeanEur &&
+            low.PredictiveEvidence.ConditionalNetPositiveFraction>high.PredictiveEvidence.ConditionalNetPositiveFraction,
+            "Predictive EUR conditions monetary forecasts and positive probabilities on observed relative volatility");
+        check(low?.PredictiveEvidence is { } evidence &&
+            evidence.NetIndividualP10Eur<=evidence.NetIndividualP90Eur &&
+            evidence.NetMeanStandardErrorEur>=0m&&evidence.EffectiveDays<=evidence.ValidationDays+1m&&
+            low.NetMeanEur<=low.GrossMeanEur-.4m,
+            "Predictive EUR separates individual residual dispersion from clustered mean uncertainty and executable cost floor");
+        var future=rows[^1] with {PositionId="v2-future",AvailableAt=cut+Step,GrossEur=999m,NetEur=998m};
+        var same=NativeEurAdaptiveEstimator.Fit(set with {Outcomes=rows.Append(future).ToArray()},true,true,true);
+        check(low==same.Payoff("FAMILY",1,Context(false),cut+Step,2m,.4m)&&
+            model.Payoff("FAMILY",1,Context(false),cut,2m,.4m) is null,
+            "Predictive EUR never uses future outcomes or its own calibration clock");
+        var adverse=model.Payoff("FAMILY",1,Context(false),cut+Step,2m,.4m,new(3,-.2,-.3,.02,.03));
+        var favorable=model.Payoff("FAMILY",1,Context(false),cut+Step,2m,.4m,new(3,.2,.3,.02,.03));
+        check(adverse is not null&&favorable is not null&&low is not null&&
+            adverse.NetMeanEur<low.NetMeanEur&&favorable.NetMeanEur>low.NetMeanEur&&
+            adverse.PredictiveEvidence!.ConditionalNetPositiveFraction<=low.PredictiveEvidence!.ConditionalNetPositiveFraction&&
+            adverse.PredictiveEvidence.FeedbackDays==3,
+            "Predictive EUR applies signed reconciled feedback and recomputes conditional evidence");
+        var thin=NativeEurAdaptiveEstimator.Fit(set with {Outcomes=rows.Take(32).ToArray()},true,true);
+        check(thin.Payoff("FAMILY",1,Context(false),cut+Step,2m,.4m) is null,
+            "Predictive EUR does not substitute in-sample residuals when out-of-time support is absent");
     }
 
     static void GeneralEurChoosesFundedCombination(Action<bool,string> check)

@@ -36,13 +36,22 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
     public bool UseRealizedForecastFeedback { get; init; }
 
+    // New research-only context and calibration, opt-in to preserve historical studies.
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool CaptureVolatilityContext { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool UsePredictiveCalibration { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool UseEconomicEstimatorObjective { get; init; }
+
     internal string GeometryIdentity => FormattableString.Invariant(
         $"{UseAvailableContext}/{DistributionTargetRanges:G29}/{StopReserveMultiplier:G29}") +
         (ModeledStopLatencyMs is long latency ? FormattableString.Invariant($"/Trade/{latency}") : "") +
         (ObserveIntentExecutionOnTicks?"/TICK_INTENTS":"") +
         (IncludeRecoveredStructure?"/RANGE_TRANSITION+EQUILIBRIUM_REPAIR":"") +
         (ModelFundingAtPriorClosedSessionQuote?"/CLOSED_SESSION_FUNDING":"") +
-        (ObserveFamilyDirectionsOnClosedBars?"/CLOSED_BAR_FAMILY_DIRECTION_OBSERVATION":"");
+        (ObserveFamilyDirectionsOnClosedBars?"/CLOSED_BAR_FAMILY_DIRECTION_OBSERVATION":"") +
+        (CaptureVolatilityContext?"/CLOSED_BAR_RELATIVE_VOLATILITY_V2":"");
 
     internal void Verify()
     {
@@ -53,6 +62,8 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
             UseExtendedLocalPayoff&&!UseRecoveredLocalPayoff ||
             ObserveFamilyDirectionsOnClosedBars&&!LearnFromOpportunityEpisodes||
             UseAdaptivePayoff&&!UseRecoveredLocalPayoff||
+            UsePredictiveCalibration&&(!UseAdaptivePayoff||!CaptureVolatilityContext||!UseExtendedLocalPayoff)||
+            UseEconomicEstimatorObjective&&!UsePredictiveCalibration||
             (UseAdaptiveAllocation||UseAdaptiveManagement||UseRealizedForecastFeedback)&&!UseAdaptivePayoff)
             throw new ArgumentException("EUR_REGISTERED_DEVELOPMENT_PROFILE");
     }

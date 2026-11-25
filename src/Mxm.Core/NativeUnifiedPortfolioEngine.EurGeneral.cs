@@ -98,6 +98,22 @@ public sealed partial class NativeUnifiedPortfolioEngine
         return state;
     }
 
+    // Mean closed-bar true range relative to the preceding close; no forming bar.
+    // Preserve missingness and avoid treating absolute points across assets as comparable.
+    static decimal?[] DescribeRelativeVolatility(Ucp1MarketFrame market,long at)
+    {
+        return NativeClosedMarketContext.CoverageWindows.Select(r=>
+        {
+            var w=ObservedWindow(market,r.Timeframe,at);
+            if(w is null||w.Bars.Take(w.Bars.Length-1).Any(b=>b.Close<=0m))return (decimal?)null;
+            return w.Bars.Skip(1).Select((bar,i)=>
+            {
+                decimal prior=w.Bars[i].Close;
+                return Math.Max(bar.High-bar.Low,Math.Max(Math.Abs(bar.High-prior),Math.Abs(bar.Low-prior)))/prior;
+            }).Average();
+        }).ToArray();
+    }
+
     static string ProbeKey(NativeEurOpportunity offer)
     {
         var key = FormattableString.Invariant($"{offer.At}|{offer.Symbol}|{offer.Family}|{offer.Side}|{offer.Units:G29}");
