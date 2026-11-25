@@ -24,6 +24,20 @@ public sealed partial class NativeUnifiedPortfolioEngine
 
         public Cpe1FamilyHistory(bool fundingAware)=>this.fundingAware=fundingAware;
 
+        public Cpe1FamilyHistory(Cpe1FamilyResearchState state)
+        {
+            fundingAware=state.FundingAware;
+            grossReturns.AddRange(state.GrossReturns);
+            closeDays.UnionWith(state.CloseDays);
+            lowerBound=state.LowerBound;
+            returnsChanged=state.ReturnsChanged;
+            Settled=state.Settled;
+            Winners=state.Winners;
+        }
+
+        public Cpe1FamilyResearchState ResearchState(string family)=>new(family,fundingAware,
+            grossReturns.ToArray(),closeDays.ToArray(),lowerBound,returnsChanged,Settled,Winners);
+
         public void Add(Ucp1Episode episode,NativeJointOpportunityEpisodeEvidence evidence)
         {
             Settled++;
