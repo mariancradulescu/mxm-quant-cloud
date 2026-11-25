@@ -1,0 +1,239 @@
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+using Mxm.Core;
+
+internal static partial class IntegratedEconomicReplay
+{
+    sealed record EerHop(string Symbol,string BaseAsset,string QuoteAsset);
+    sealed record EerTape(string Name,SourceQuote[] Quotes,DatedRolloverQuote[] FundingQuotes);
+    sealed record EerMarket(SourceMarket Market,long TermsAcquiredAt,long[]? ScheduledClocks);
+    sealed record EerInput(long Start,long FitEnd,long End,string ProtocolSha256,string EngineRevision,
+        long SourceAcquiredAt,EerMarket[] Markets,EerTape[] Tapes,
+        Dictionary<string,EerHop[]> Routes);
+    sealed class EerStream
+    {
+        public EerMarket Source;
+        public Dictionary<string,int> Counts=new(StringComparer.Ordinal);
+        public EerStream(EerMarket source){Source=source;}
+        public void Count(string reason)=>Counts[reason]=Counts.GetValueOrDefault(reason)+1;
+        public long? Next(long at)
+        {
+            if(Source.ScheduledClocks is not { } schedule)return null;
+            int i=Array.BinarySearch(schedule,at);
+            if(i<0)return null;
+            return i+1<schedule.Length?schedule[i+1]:null;
+        }
+    }
+    static string EerHash(string text)=>Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text))).ToLowerInvariant();
+
+    sealed class EerEvidence
+    {
+        public EerInput Input;
+        readonly Dictionary<string,Dictionary<long,SourceQuote>> tape;
+        readonly Dictionary<string,Dictionary<long,DatedRolloverQuote>> funding;
+        public EerEvidence(EerInput input)
+        {
+            Input=input;
+            tape=input.Tapes.ToDictionary(m=>m.Name,m=>m.Quotes.ToDictionary(q=>q.At),StringComparer.Ordinal);
+            funding=input.Tapes.ToDictionary(m=>m.Name,m=>m.FundingQuotes.ToDictionary(q=>q.At),StringComparer.Ordinal);
+        }
+        public SourceQuote? At(string name,long at)=>tape.GetValueOrDefault(name)?.GetValueOrDefault(at);
+        public DatedRolloverQuote? FundingAt(string name,long at)=>funding.GetValueOrDefault(name)?.GetValueOrDefault(at);
+        public NativeOriginalFxRate? ConversionAt(string asset,long at,bool charge)
+        {
+            if(asset=="EUR")return new(1m,1m,Array.Empty<string>());
+            if(!Input.Routes.TryGetValue(asset,out var route)||route.Length is <1 or >4)return null;
+            decimal credit=1m,debit=1m; string current=asset;
+            var visited=new HashSet<string>(StringComparer.Ordinal){current};
+            var hops=new List<NativeOriginalFxHop>();
+            foreach(var h in route)
+            {
+                decimal bid,ask;
+                if(charge)
+                {
+                    var q=FundingAt(h.Symbol,at);
+                    if(q is not {RequestedCoverage:true,Bid:>0m,Ask:>0m,BidAt:>0L,AskAt:>0L} ||
+                       q.BidAt>at||q.AskAt>at||at-q.BidAt>7_200_000L||at-q.AskAt>7_200_000L||q.Ask<q.Bid)return null;
+                    bid=q.Bid.Value;ask=q.Ask.Value;
+                }
+                else
+                {
+                    var q=At(h.Symbol,at);
+                    if(q is null||!Fresh(q,at,30_000L))return null;
+                    bid=q.Bid;ask=q.Ask;
+                    hops.Add(new(h.Symbol,h.BaseAsset,h.QuoteAsset,Math.Min(q.BidAt,q.AskAt),bid,ask,true));
+                }
+                if(string.IsNullOrWhiteSpace(h.BaseAsset)||string.IsNullOrWhiteSpace(h.QuoteAsset)||h.BaseAsset==h.QuoteAsset)return null;
+                if(h.BaseAsset==current){credit*=bid;debit*=ask;current=h.QuoteAsset;}
+                else if(h.QuoteAsset==current){credit/=ask;debit/=bid;current=h.BaseAsset;}
+                else return null;
+                if(!visited.Add(current))return null;
+            }
+            if(current!="EUR"||credit<=0m||debit<credit)return null;
+            return charge?new(credit,debit,route.Select(h=>h.Symbol).ToArray()):
+                NativeBrokerContractCosts.ComposeCausalQuoteToEur(asset,at,hops);
+        }
+        public NativeObservedRolloverQuote Charge(string name,string asset,long at)
+        {
+            var q=FundingAt(name,at);
+            decimal? bid=q is {RequestedCoverage:true,Bid:>0m,BidAt:>0L}&&q.BidAt<=at&&at-q.BidAt<=7_200_000L?q.Bid:null;
+            return new(bid,ConversionAt(asset,at,true));
+        }
+        public Ucp1MarketFrame? Frame(EerStream stream,long at,string scenario,decimal stress)
+        {
+            var m=stream.Source.Market;
+            if(stream.Source.ScheduledClocks is null){stream.Count("UNKNOWN_OFFICIAL_SCHEDULE");return null;}
+            long? next=stream.Next(at);
+            if(next is null){stream.Count("SCHEDULE_CLOSED_OR_END");return null;}
+            var q=At(m.Name,at);
+            if(q is null||!Fresh(q,at,30_000L)){stream.Count("OPEN_SCHEDULE_MISSING_QUOTE");return null;}
+            if(m.DatedDevelopment is not { } t||t.TradingMode!=0||m.EnabledAtCapture!=true)
+            {stream.Count("CONTRACT_OR_TRADING_MODE");return null;}
+            if(t.Margin.Length==0){stream.Count("MISSING_MARGIN");return null;}
+            var c=t.Contract;
+            var fx=ConversionAt(c.QuoteAsset,at,false);
+            if(fx is null){stream.Count("MISSING_QUOTE_CONVERSION");return null;}
+            var usd=ConversionAt("USD",at,false);
+            var minFee=c.MinimumCommissionAsset is { } a?ConversionAt(a,at,false):null;
+            decimal perUnit=t.Margin.Where(x=>x.Units>0m).Select(x=>Math.Max(x.BuyMargin,x.SellMargin)/x.Units).DefaultIfEmpty().Max();
+            if(perUnit<=0m){stream.Count("NONPOSITIVE_MARGIN");return null;}
+            decimal slip=(q.Ask-q.Bid)*stress;
+            LedgerQuote quote;
+            try
+            {
+                quote=NativeBrokerContractCosts.QuoteBothDirections(c,new(at,q.Bid,q.Ask,fx.CreditToEur,fx.DebitToEur,
+                    usd?.DebitToEur??0m,minFee?.DebitToEur,perUnit*c.MinimumUnits,c.MinimumUnits,slip)).Quote
+                    with {LiquidationSlippagePerSide=slip};
+            }
+            catch(ArgumentException){stream.Count("COMMISSION_OR_VOLUME_ROUTE_UNSUPPORTED");return null;}
+            var margins=t.Margin.SelectMany(x=>new[]{
+                new NativeEurMarginObservation(1,x.Units,x.BuyMargin,c.ObservedAtUtcMs,t.Digest),
+                new NativeEurMarginObservation(-1,x.Units,x.SellMargin,c.ObservedAtUtcMs,t.Digest)})
+                .Where(x=>x.MarginEur>0m&&(x.Side>0||t.ShortAllowed)).ToArray();
+            var offers=new List<NativeFundingOfferEvidence>();
+            foreach(var x in margins)
+            {
+                decimal? amount;
+                try {amount=Financing(t,at,next.Value,x.Side,x.Units,_=>new(q.Bid,fx));}
+                catch(ArgumentException){amount=null;}
+                if(amount is decimal debit)offers.Add(new(m.Name,x.Side,x.Units,c.ObservedAtUtcMs,c.ObservedAtUtcMs,
+                    next.Value,next.Value,Math.Max(0m,-debit),EerHash(scenario+"|"+t.Digest+"|"+at+"|"+next.Value)) {ScenarioId=scenario});
+            }
+            if(offers.Count==0)stream.Count("UNKNOWN_SCENARIO_CARRY");
+            else stream.Count(next.Value>at+EurStep?"CLOSURE_CARRY_RESERVED":"CARRY_RESERVED");
+            var context=DatedEurContext(m,q);
+            foreach(var w in context.Windows)stream.Count(w.Timeframe+"_"+w.Status);
+            stream.Count("MONETARY_FRAME");
+            return new(m.Name,quote,c,context.For(NativeBarTimeframe.M5).Bars,context.For(NativeBarTimeframe.M15).Bars,
+                slip,"AUTHENTIC_QUOTES_EXPLICIT_RETROSPECTIVE_TERMS_SCENARIO")
+                {ClosedBars=context,OfficialAssetClass=m.OfficialAssetClass,EurDatedMarginScenario=true,
+                 EurMargins=margins,FundingOffers=offers.ToArray()};
+        }
+        public void Advance(NativeUnifiedPortfolioEngine book,Ucp1Frame frame,
+            Dictionary<string,EerStream> markets,string scenario)
+        {
+            var evidence=new List<NativeAccruedFundingEvidence>();
+            foreach(var x in book.FundingExposureSnapshot().Where(x=>x.ClosedAt is null||!x.ExactInLedger))
+            {
+                long through=x.ClosedAt??frame.At;
+                if(through<=x.FromExclusive||markets[x.Symbol].Source.Market.DatedDevelopment is not { } terms)continue;
+                decimal? accrued;
+                try {accrued=Financing(terms,x.FromExclusive,through,x.Side,x.Units,
+                    charge=>Charge(x.Symbol,terms.Contract.QuoteAsset,charge));}
+                catch(ArgumentException){accrued=null;}
+                if(accrued is decimal amount)
+                    evidence.Add(new(x.PositionId,x.Symbol,x.Side,x.Units,x.FromExclusive,through,frame.At,null,null,
+                        EerHash(scenario+"|"+terms.Digest+"|"+x.PositionId+"|"+x.FromExclusive+"|"+through))
+                        {ScenarioId=scenario,ConditionalSignedEur=amount,SourceAcquiredAt=Input.SourceAcquiredAt});
+            }
+            book.Advance(frame with {FundingEvidence=evidence.ToArray()});
+        }
+    }
+
+    static object EerBook(string policy,NativeUnifiedPortfolioEngine book,long start,long end,NativeEurCalibration? calibration)
+    {
+        var trips=book.CompleteModelTrips;
+        var reconciled=book.ReconciledModelEpisodes.ToDictionary(x=>x.PositionId,StringComparer.Ordinal);
+        var used=calibration?.Outcomes.Select(x=>x.PositionId).ToHashSet(StringComparer.Ordinal);
+        var curve=book.CommonBookEquityPath;
+        var risk=curve.Where(x=>x.FundingCapital?.ConditionalEquityEur is >0m)
+            .Where(x=>x.UsedMarginEur.HasValue).Select(x=>(x.UsedMarginEur!.Value+x.FundingCapital!.PendingOpenMarginEur)/x.FundingCapital.ConditionalEquityEur!.Value).ToArray();
+        return new {Base=DatedEurReport(policy,book,start,end,calibration),
+            DaysWithClosed=trips.Select(x=>x.CloseAt/86_400_000L).Distinct().Count(),
+            MaximumObservedHeldPendingEquityFraction=risk.Length==0?(decimal?)null:risk.Max(),
+            ModeledClocksWithMarginOver70Percent=risk.Count(x=>x>.70m),
+            CalibrationExcluded=used is null?null:trips.Where(x=>!used.Contains(x.PositionId)).Select(x=>new
+            {
+                x.PositionId,x.Symbol,x.Family,x.Side,x.OpenAt,x.CloseAt,x.Units,x.CrossedUnknownHistory,
+                GrossEur=x.EconomicEvidence?.ClosedGrossEur??x.GrossEur,
+                NetEur=reconciled.TryGetValue(x.PositionId,out var rec)?rec.Evidence.ClosedNetEur:null
+            }).ToArray(),
+            Episodes=trips.Select(x=>new {x.PositionId,x.Symbol,x.Family,x.Side,x.OpenAt,x.CloseAt,x.Units,x.CrossedUnknownHistory,
+                GrossEur=x.EconomicEvidence?.ClosedGrossEur??x.GrossEur,
+                ReconciledNetEur=reconciled.TryGetValue(x.PositionId,out var rec)?rec.Evidence.ClosedNetEur:null}).ToArray()};
+    }
+
+    public static int RunEer1(string inputPath,string reportPath,string calibrationFolder)
+    {
+        var raw=File.ReadAllBytes(inputPath);
+        var input=JsonSerializer.Deserialize<EerInput>(raw,Json)??throw new ArgumentException("EER1_INPUT");
+        long start=new DateTimeOffset(2026,10,26,0,0,0,TimeSpan.Zero).ToUnixTimeMilliseconds();
+        if(input.Start!=start||input.FitEnd!=start+14*86_400_000L||input.End!=start+28*86_400_000L||
+            input.ProtocolSha256.Length!=64||input.EngineRevision.Length!=40||input.SourceAcquiredAt<input.End)
+            throw new ArgumentException("EER1_PROTOCOL_BINDING");
+        string manifest=Convert.ToHexString(SHA256.HashData(raw)).ToLowerInvariant();
+        var source=new EerEvidence(input);
+        var names=new[]{NativeUnifiedPortfolioEngine.EurFirst,NativeUnifiedPortfolioEngine.EurRank,
+            NativeUnifiedPortfolioEngine.EurContextRank,NativeUnifiedPortfolioEngine.EurCash};
+        var results=new List<object>();
+        foreach(var stress in new[]{0m,.5m,1m})
+        {
+            string label=stress==0m?"S0":stress==.5m?"S1":"S2";
+            string id=EerHash(input.ProtocolSha256+"|"+input.EngineRevision+"|"+manifest+"|"+label);
+            var streams=input.Markets.Select(x=>new EerStream(x)).ToDictionary(x=>x.Source.Market.Name,StringComparer.Ordinal);
+            var fit=new NativeUnifiedPortfolioEngine(NativeUnifiedPortfolioEngine.EurFirst,fundingScenarioId:id);
+            var books=names.ToDictionary(x=>x,x=>new NativeUnifiedPortfolioEngine(x,fundingScenarioId:id));
+            NativeEurCalibration? calibration=null;
+            int matchedFit=0,matchedComparison=0;
+            for(long at=input.Start+EurOffset;at<input.End;at+=EurStep)
+            {
+                var frames=streams.Values.Select(x=>source.Frame(x,at,id,stress)).OfType<Ucp1MarketFrame>().ToArray();
+                var frame=new Ucp1Frame(at,frames);
+                if(at<input.FitEnd)
+                {if(frames.Length>=2)matchedFit++;source.Advance(fit,frame,streams,id);}
+                else
+                {
+                    if(calibration is null)
+                    {
+                        calibration=NativeUnifiedPortfolioEngine.Restore(fit.Checkpoint()).ExportEurCalibration();
+                        if(calibration.ObservationThrough>=at||calibration.Outcomes.Any(x=>x.AvailableAt>=at))throw new ArgumentException("EER1_FUTURE_CALIBRATION");
+                        books[NativeUnifiedPortfolioEngine.EurRank].LoadEurCalibration(calibration);
+                        books[NativeUnifiedPortfolioEngine.EurContextRank].LoadEurCalibration(calibration);
+                    }
+                    if(frames.Length>=2)matchedComparison++;
+                    foreach(var b in books.Values)source.Advance(b,frame,streams,id);
+                }
+                if((at-EurOffset-input.Start)%86_400_000L==0)
+                    Console.WriteLine("EER1 "+label+" day "+((at-input.Start)/86_400_000L+1)+" / 28");
+            }
+            if(calibration is null)throw new ArgumentException("EER1_EMPTY_FIT");
+            File.WriteAllText(Path.Combine(calibrationFolder,label+"-calibration.json"),JsonSerializer.Serialize(calibration,Json));
+            results.Add(new {Stress=label,SlippagePerSideSpreadMultiple=stress,ScenarioId=id,
+                FitClocksWithAtLeastTwo=matchedFit,ComparisonClocksWithAtLeastTwo=matchedComparison,
+                MarketEvidence=streams.Values.Select(x=>new {x.Source.Market.Name,x.Source.Market.OfficialAssetClass,x.Source.TermsAcquiredAt,x.Counts}).ToArray(),
+                Fit=EerBook(NativeUnifiedPortfolioEngine.EurFirst,fit,input.Start,input.FitEnd,calibration),
+                Books=names.Select(n=>EerBook(n,books[n],input.FitEnd,input.End,null)).ToArray(),
+                CalibrationEpisodes=calibration.Outcomes.Length,
+                CalibrationDays=calibration.Outcomes.Select(x=>x.ClosedAt/86_400_000L).Distinct().Count(),
+                CalibrationCells=calibration.Outcomes.GroupBy(x=>new {x.Family,x.Side,Symbol=x.Context?.Symbol,Class=x.Context?.AssetClass})
+                    .Select(g=>new {g.Key,Episodes=g.Count(),Days=g.Select(x=>x.ClosedAt/86_400_000L).Distinct().Count(),
+                        GrossEur=g.Sum(x=>x.GrossEur),NetEur=g.Sum(x=>x.NetEur)}).ToArray()});
+            File.WriteAllText(reportPath,JsonSerializer.Serialize(new {Purpose="EER1_EXTENDED_EXPOSED_CONDITIONAL_DEVELOPMENT",
+                ManifestSha256=manifest,input.ProtocolSha256,input.EngineRevision,input.SourceAcquiredAt,input.Start,input.FitEnd,input.End,
+                Results=results,BrokerNetCertified=false,IndependentConfirmation=false,ContinuousDrawdownCertified=false,
+                Hard21Certified=false,Orders=0,CloudActivated=false},Json));
+        }
+        return 0;
+    }
+}
