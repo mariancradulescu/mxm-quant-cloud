@@ -19,6 +19,7 @@ internal static partial class IntegratedEconomicReplay
         long InitialFitFrom,long[] TestBoundaries,decimal[] Stresses,HistoricalFit[] Calibrations,HistoricalTrial[] Trials)
     {
         public HistoricalStopWitness? StopWitness { get; init; }
+        public bool ArchivedSampledQuotes { get; init; }
         public Dictionary<string,string[]>? TrialGroups { get; init; }
         public HistoricalFundingWitness[]? FundingWitnesses { get; init; }
     }
@@ -76,11 +77,13 @@ internal static partial class IntegratedEconomicReplay
             protection=protectionDirectory is null?null:new EerProtectionTape(protectionDirectory);
         bool explain=protection is not null;
         if(explain!=protocol.Calibrations.Any(p=>p.Profile.ModeledStopLatencyMs is not null)||
-            explain!=(protocol.StopWitness is not null))throw new ArgumentException("HISTORICAL_PROTECTION_SOURCE_REQUIRED");
+            (!protocol.ArchivedSampledQuotes&&explain!=(protocol.StopWitness is not null))||
+            (protocol.ArchivedSampledQuotes&&(!explain||protocol.StopWitness is not null)))
+            throw new ArgumentException("HISTORICAL_PROTECTION_SOURCE_REQUIRED");
         if(protocol.Calibrations.Any(p=>p.Profile.ModelFundingAtPriorClosedSessionQuote) &&
             (protocol.FundingWitnesses is not { Length:>0 } || input.Markets.Any(m=>m.ClosedRolloverClocks is null)))
             throw new ArgumentException("HISTORICAL_ROLLOVER_SCENARIO_REQUIRES_DATED_SESSION_EVIDENCE");
-        var stopWitness=protection?.AuditWitness(protocol.StopWitness!);
+        var stopWitness=protocol.StopWitness is { } registeredWitness?protection!.AuditWitness(registeredWitness):null;
         var fundingWitnesses=protocol.FundingWitnesses?.Select(witness=>
         {
             var market=input.Markets.Single(m=>m.Market.Name==witness.Symbol);

@@ -1,0 +1,356 @@
+name: OWNER funded EUR research on recovered history and additional instruments
+on:
+  pull_request:
+    paths:
+      - 'research/eur_authentic_expansion_1.json'
+      - 'research/owner_eur_authentic_expansion.py'
+      - '.github/workflows/owner-eur-authentic-expansion.yml'
+  push:
+    branches: [main]
+    paths: ['research/eur_authentic_expansion_1_execution.json']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  technical:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - run: python -m pip install -r research/requirements.txt
+      - run: python -m research.owner_eur_authentic_expansion --help
+      - run: dotnet build src/Mxm.Replay -c Release
+      - run: python -m unittest research.test_owner_eur_checkpoint research.test_merge_eur_scenarios
+  evidence:
+    needs: technical
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.actor == 'mariancradulescu'
+    strategy:
+      fail-fast: false
+      matrix:
+        scope: [Earlier, Breadth]
+        scenario: [0, 1, 2]
+    environment: mxm-r3-custody-v1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 350
+    env:
+      MXM_ECONOMIC_SCENARIO_INDEX: ${{ matrix.scenario }}
+      MXM_ECONOMIC_RECEIPT_DIRECTORY: window-receipts
+      MXM_ECONOMIC_BOUNDED_NEIGHBORS: 1
+      MXM_ECONOMIC_PAIRED_DISTRIBUTION: 1
+      MXM_ECONOMIC_REUSE_FRAMES: 1
+      CHECKPOINT_PREFIX: eur-expansion-checkpoint-${{ matrix.scope }}-${{ matrix.scenario }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - run: python -m unittest research.test_official_symbol_calendar research.test_owner_eer1_source
+      - run: dotnet build src/Mxm.Replay -c Release
+      - name: Pin exact original artifact identity and archive digest
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/"$GITHUB_REPOSITORY"/actions/artifacts/15000522105 > /tmp/eer1-artifact.json
+          python -c 'import json; a=json.load(open("/tmp/eer1-artifact.json")); assert a["id"]==15000522105 and a["workflow_run"]["id"]==45555613548 and a["size_in_bytes"]==233873730 and a["digest"]=="sha256:107b2bc43e6ff25a5799e253b0ab6ee718ad5b88ef3bb3211d84ad6c20b87a5b" and not a["expired"]'
+          gh api repos/"$GITHUB_REPOSITORY"/actions/artifacts/15000522105/zip > /tmp/eer1-original.zip
+          echo '107b2bc43e6ff25a5799e253b0ab6ee718ad5b88ef3bb3211d84ad6c20b87a5b  /tmp/eer1-original.zip' | sha256sum -c -
+          unzip -q /tmp/eer1-original.zip -d eer1-source
+          rm /tmp/eer1-original.zip
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        if: matrix.scope == 'Breadth'
+        with:
+          name: owner-eur-conditional-source-verified
+          path: pilot-source
+          run-id: 45552716026
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        if: matrix.scope == 'Breadth'
+        with:
+          name: source-history-public-receipt
+          path: original-source-history
+          run-id: 45396314675
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        if: matrix.scope == 'Breadth'
+        with:
+          name: source-history-original-sealed
+          path: original-source-history
+          run-id: 45396314675
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        if: matrix.scope == 'Breadth'
+        with:
+          name: owner-history-extension-sealed-and-receipt
+          path: previous-extension
+          run-id: 45409527714
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        if: matrix.scope == 'Breadth'
+        with:
+          name: sealed-source
+          path: bdp-source
+          run-id: 41724643418
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        if: matrix.scope == 'Breadth'
+        with:
+          name: sealed-source
+          path: aip-source
+          run-id: 41735441128
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        if: matrix.scope == 'Breadth'
+        with:
+          name: hxc1-original-historical-encrypted-source
+          path: mde1-hxc1-source
+          run-id: 43817213663
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        if: matrix.scope == 'Breadth'
+        with:
+          name: xmh2-complete-274day-m15-encrypted-source
+          path: mde1-xmh2-source
+          run-id: 44352570167
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        if: matrix.scope == 'Breadth'
+        with:
+          name: p05-new-live-readonly-authentic-source-sealed
+          path: p05-sealed
+          run-id: 45134137836
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        if: matrix.scope == 'Breadth'
+        with:
+          name: p05-new-live-readonly-aggregate-public
+          path: p05-public
+          run-id: 45134137836
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        if: matrix.scope == 'Breadth'
+        with:
+          name: owner-eur-gap-official-original
+          path: prior-gap
+          run-id: 45541671931
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        if: matrix.scope == 'Breadth'
+        with:
+          name: owner-eur-rollover-official-original
+          path: prior-rollover
+          run-id: 45549613144
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        if: matrix.scope == 'Breadth'
+        with:
+          name: integrated-full-session-custody
+          path: integrated-sealed-source
+          run-id: 44687919474
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        if: matrix.scope == 'Breadth'
+        with:
+          name: integrated-full-session-source-public
+          path: integrated-source-public
+          run-id: 44687919474
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        if: matrix.scope == 'Breadth'
+        with:
+          name: closed-market-original-ciphertext
+          path: closed-market-source
+          run-id: 44733062339
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        if: matrix.scope == 'Breadth'
+        with:
+          name: closed-market-original-source-public
+          path: closed-market-source
+          run-id: 44733062339
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        if: matrix.scope == 'Breadth'
+        with:
+          name: hxc1-original-historical-encrypted-source
+          path: hxc1-original
+          run-id: 43817213663
+          github-token: ${{ github.token }}
+      - name: Verify the frozen historical window archives
+        if: matrix.scope == 'Earlier'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PYSOURCE'
+          import hashlib, json, os, subprocess, zipfile
+          from pathlib import Path
+          p=Path("research/eur_authentic_expansion_1.json")
+          marker=json.loads(Path("research/eur_authentic_expansion_1_execution.json").read_bytes())
+          assert marker["ProtocolSha256"]==hashlib.sha256(p.read_bytes()).hexdigest()
+          for a in json.loads(p.read_bytes())["Earlier"]["Archives"]:
+              repo=os.environ["GITHUB_REPOSITORY"]
+              response=subprocess.check_output(["gh","api",f"repos/{repo}/actions/artifacts/{a['Artifact']}"])
+              meta=json.loads(response)
+              assert meta["workflow_run"]["id"]==a["Run"] and meta["digest"]=="sha256:"+a["ArchiveSha256"]
+              dst=Path(a["Folder"])
+              dst.mkdir()
+              tmp=dst/"original.zip"
+              with tmp.open("xb") as out:
+                  subprocess.run(["gh","api",f"repos/{repo}/actions/artifacts/{a['Artifact']}/zip"],check=True,stdout=out)
+              assert hashlib.sha256(tmp.read_bytes()).hexdigest()==a["ArchiveSha256"]
+              with zipfile.ZipFile(tmp) as z:
+                  for member in ("receipt.json","packets.sealed"):
+                      (dst/member).write_bytes(z.read(member))
+              tmp.unlink()
+          PYSOURCE
+      - name: Verify registration and frozen native engine
+        run: |
+          python - <<'PYREG'
+          import hashlib, json
+          from pathlib import Path
+          marker=json.loads(Path("research/eur_authentic_expansion_1_execution.json").read_bytes())
+          raw=Path("research/eur_authentic_expansion_1.json").read_bytes()
+          assert json.loads(raw)["Study"]==marker["Study"] and hashlib.sha256(raw).hexdigest()==marker["ProtocolSha256"]
+          PYREG
+      - name: Recover encrypted checkpoints from an earlier attempt
+        id: resume
+        if: github.run_attempt > 1
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p window-receipts
+          gh api --paginate "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?per_page=100" \
+            --jq '.artifacts[] | select(.expired == false) | .name' > "$RUNNER_TEMP/checkpoint-artifacts.txt"
+          for phase in 1 2 3; do
+            name="$CHECKPOINT_PREFIX-$phase"
+            if grep -Fxq "$name" "$RUNNER_TEMP/checkpoint-artifacts.txt"; then
+              gh run download "$GITHUB_RUN_ID" --name "$name" --dir "checkpoints/$phase"
+              find "checkpoints/$phase" -name '*.json' -type f -exec cp {} window-receipts/ \;
+              echo "phase$phase=true" >> "$GITHUB_OUTPUT"
+            fi
+          done
+      - name: Reconstruct recent authenticated common-book input
+        if: matrix.scope == 'Breadth'
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+        run: python -m research.owner_eer1_readback --prepare-protection-recovery "$RUNNER_TEMP/eur-private"
+      - name: Bind and materialize the additional authentic market or earlier archive
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+        run: python -m research.owner_eur_authentic_expansion "${{ matrix.scope }}" "$RUNNER_TEMP/eur-private" expansion-source.json
+      - name: Replay initial fit and seal checkpoint
+        if: steps.resume.outputs.phase1 != 'true'
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+        run: |
+          python -m research.owner_eur_checkpoint "$RUNNER_TEMP/eur-private" expansion-result.json --protocol "$RUNNER_TEMP/eur-private/protocol.json" \
+            --phase 1 --checkpoint checkpoints/1
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: steps.resume.outputs.phase1 != 'true'
+        with:
+          name: ${{ env.CHECKPOINT_PREFIX }}-1
+          path: checkpoints/1
+          if-no-files-found: error
+          retention-days: 90
+      - name: Replay first test window and seal checkpoint
+        if: steps.resume.outputs.phase2 != 'true'
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+        run: |
+          python -m research.owner_eur_checkpoint "$RUNNER_TEMP/eur-private" expansion-result.json --protocol "$RUNNER_TEMP/eur-private/protocol.json" \
+            --previous checkpoints/1/checkpoint.sealed --phase 2 --checkpoint checkpoints/2
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: steps.resume.outputs.phase2 != 'true'
+        with:
+          name: ${{ env.CHECKPOINT_PREFIX }}-2
+          path: checkpoints/2
+          if-no-files-found: error
+          retention-days: 90
+      - name: Replay second test window and seal checkpoint
+        if: steps.resume.outputs.phase3 != 'true'
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+        run: |
+          python -m research.owner_eur_checkpoint "$RUNNER_TEMP/eur-private" expansion-result.json --protocol "$RUNNER_TEMP/eur-private/protocol.json" \
+            --previous checkpoints/2/checkpoint.sealed --phase 3 --checkpoint checkpoints/3
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: steps.resume.outputs.phase3 != 'true'
+        with:
+          name: ${{ env.CHECKPOINT_PREFIX }}-3
+          path: checkpoints/3
+          if-no-files-found: error
+          retention-days: 90
+      - name: Replay final test window and produce scenario report
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+        run: |
+          python -m research.owner_eur_checkpoint "$RUNNER_TEMP/eur-private" expansion-result.json --protocol "$RUNNER_TEMP/eur-private/protocol.json" \
+            --previous checkpoints/3/checkpoint.sealed
+      - name: Verify supported scope, financing and chronology
+        run: |
+          cp "$RUNNER_TEMP/eur-private/protocol.json" materialized-protocol.json
+          python - <<'PYVALID'
+          import json
+          from pathlib import Path
+          bind=json.loads(Path("expansion-source.json").read_bytes())
+          plan=json.loads(Path("materialized-protocol.json").read_bytes())
+          s=json.loads(Path("expansion-result.json").read_bytes())["Summary"]
+          assert s["Study"]==plan["Study"] and s["ProtocolSha256"]==bind["ProtocolSha256"]
+          assert s["SourceSha256"]==bind["SourceSha256"] and s["EvidenceManifestSha256"]==bind["EvidenceManifestSha256"]
+          assert len(s["Results"])==1 and len(s["Results"][0]["Trials"])==len(plan["Trials"])
+          assert s["Orders"]==s["SourceBrokerRequests"]==0
+          assert s["CloudActivated"] is s["IndependentConfirmationCertified"] is False
+          PYVALID
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: eur-expansion-result-${{ matrix.scope }}-${{ matrix.scenario }}
+          path: |
+            expansion-result.json
+            expansion-source.json
+            materialized-protocol.json
+            window-receipts/*.json
+          if-no-files-found: error
+          retention-days: 90
+  combine:
+    needs: evidence
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          pattern: eur-expansion-result-*
+          path: partitions
+      - name: Validate and consolidate each authentic study independently
+        run: |
+          set -euo pipefail
+          mkdir expansion-report
+          for scope in Earlier Breadth; do
+            dir="partitions/eur-expansion-result-$scope"
+            for scenario in 1 2; do
+              cmp "$dir-0/materialized-protocol.json" "$dir-$scenario/materialized-protocol.json"
+              cmp "$dir-0/expansion-source.json" "$dir-$scenario/expansion-source.json"
+            done
+            python -m research.merge_eur_scenarios "$dir-0/materialized-protocol.json" \
+              "expansion-report/$scope-economic.json" "$dir"-{0,1,2}/expansion-result.json
+            cp "$dir-0/expansion-source.json" "expansion-report/$scope-source.json"
+            cp "$dir-0/materialized-protocol.json" "expansion-report/$scope-protocol.json"
+          done
+          sha256sum expansion-report/*.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: eur-authentic-expansion-complete
+          path: expansion-report/
+          if-no-files-found: error
+          retention-days: 90
