@@ -9,12 +9,17 @@ internal static partial class IntegratedEconomicReplay
     {
         public bool UseRecoveredLocalPayoff { get; init; }
         public bool UseExtendedLocalPayoff { get; init; }
+        public bool UseAdaptivePayoff { get; init; }
+        public bool UseAdaptiveAllocation { get; init; }
+        public bool UseAdaptiveManagement { get; init; }
+        public bool UseRealizedForecastFeedback { get; init; }
     }
     sealed record HistoricalFit(string Id,NativeEurDevelopmentProfile Profile);
     sealed record HistoricalPlan(string Study,string Exposure,string SourceProtocolSha256,string EvidenceManifestSha256,
         long InitialFitFrom,long[] TestBoundaries,decimal[] Stresses,HistoricalFit[] Calibrations,HistoricalTrial[] Trials)
     {
         public HistoricalStopWitness? StopWitness { get; init; }
+        public Dictionary<string,string[]>? TrialGroups { get; init; }
         public HistoricalFundingWitness[]? FundingWitnesses { get; init; }
     }
     sealed record HistoricalStopWitness(string Symbol,int Side,long OriginalFillAt,long OriginalCloseAt,
@@ -45,7 +50,21 @@ internal static partial class IntegratedEconomicReplay
                 m.Market.DatedDevelopment?.Contract.OriginalBrokerAuthenticated!=true))
             throw new ArgumentException("HISTORICAL_EUR_CUSTODY_OR_PROTOCOL_BINDING");
 
-        var fitProfiles=protocol.Calibrations.ToDictionary(x=>x.Id,x=>x.Profile,StringComparer.Ordinal);
+        string? trialGroup=Environment.GetEnvironmentVariable("MXM_ECONOMIC_TRIAL_GROUP");
+        var selectedTrials=protocol.Trials;
+        if(protocol.TrialGroups is { } groups &&
+            !groups.Values.SelectMany(g=>g).OrderBy(x=>x,StringComparer.Ordinal)
+                .SequenceEqual(protocol.Trials.Select(t=>t.Id).OrderBy(x=>x,StringComparer.Ordinal)))
+            throw new ArgumentException("HISTORICAL_EUR_TRIAL_GROUPS_MUST_PARTITION_PROTOCOL");
+        if(trialGroup is not null)
+        {
+            if(protocol.TrialGroups is not { } registeredGroups||
+                !registeredGroups.TryGetValue(trialGroup,out var ids)||ids.Length==0)
+                throw new ArgumentException("HISTORICAL_EUR_INVALID_TRIAL_GROUP");
+            selectedTrials=protocol.Trials.Where(t=>ids.Contains(t.Id,StringComparer.Ordinal)).ToArray();
+        }
+        var fitProfiles=protocol.Calibrations.Where(p=>trialGroup is null || selectedTrials.Any(t=>t.Calibration==p.Id))
+            .ToDictionary(x=>x.Id,x=>x.Profile,StringComparer.Ordinal);
         string protocolHash=GeneralSha(protocolBytes);
         string sourceHash=GeneralSha(sourceBytes);
         string? receiptDirectory=Environment.GetEnvironmentVariable("MXM_ECONOMIC_RECEIPT_DIRECTORY");
@@ -112,7 +131,7 @@ internal static partial class IntegratedEconomicReplay
                 StringComparer.Ordinal);
             var observers=fitProfiles.Where(p=>p.Value.LearnFromOpportunityEpisodes).ToDictionary(p=>p.Key,p=>
                 new EurOpportunityObserver(p.Value,scenario,stress,source,protection!,streams),StringComparer.Ordinal);
-            var comparison=protocol.Trials.Select(t=>
+            var comparison=selectedTrials.Select(t=>
             {
                 if(!GeneralPolicies.Contains(t.Policy,StringComparer.Ordinal)||!fitProfiles.TryGetValue(t.Calibration,out var p))
                     throw new ArgumentException("HISTORICAL_EUR_UNREGISTERED_TRIAL");
@@ -120,7 +139,9 @@ internal static partial class IntegratedEconomicReplay
                     t.UseRecoveredLocalPayoff&&t.Policy!=NativeUnifiedPortfolioEngine.EurGeneralSelect)
                     throw new ArgumentException("HISTORICAL_EUR_CONTEXT_FOR_LOCAL_DISTRIBUTION");
                 var profile=p with {MinimumEpisodes=t.MinimumEpisodes??p.MinimumEpisodes,DayPenalty=t.DayPenalty??p.DayPenalty,
-                    UseRecoveredLocalPayoff=t.UseRecoveredLocalPayoff,UseExtendedLocalPayoff=t.UseExtendedLocalPayoff};
+                    UseRecoveredLocalPayoff=t.UseRecoveredLocalPayoff,UseExtendedLocalPayoff=t.UseExtendedLocalPayoff,
+                    UseAdaptivePayoff=t.UseAdaptivePayoff,UseAdaptiveAllocation=t.UseAdaptiveAllocation,
+                    UseAdaptiveManagement=t.UseAdaptiveManagement,UseRealizedForecastFeedback=t.UseRealizedForecastFeedback};
                 return (Trial:t,Profile:profile,Book:new NativeUnifiedPortfolioEngine(t.Policy,
                     fundingScenarioId:scenario,eurDevelopmentProfile:profile));
             }).ToArray();
@@ -128,7 +149,7 @@ internal static partial class IntegratedEconomicReplay
                 Environment.GetEnvironmentVariable("GITHUB_SHA"),
                 Environment.GetEnvironmentVariable("MXM_ECONOMIC_BOUNDED_NEIGHBORS")=="1",
                 Environment.GetEnvironmentVariable("MXM_ECONOMIC_PAIRED_DISTRIBUTION")=="1",
-                Environment.GetEnvironmentVariable("MXM_ECONOMIC_REUSE_FRAMES")=="1");
+                Environment.GetEnvironmentVariable("MXM_ECONOMIC_REUSE_FRAMES")=="1",trialGroup);
             var fitted=new List<JsonElement>();
             int completed=0;
             if(checkpointFrom is not null)
@@ -250,14 +271,19 @@ internal static partial class IntegratedEconomicReplay
                         if(i==0)book.LoadEurCalibration(snapshots[trial.Calibration]);
                         else book.UpdateEurResearchCalibration(snapshots[trial.Calibration]);
                     }
-                fitted.Add(JsonSerializer.SerializeToElement(new {AvailableBefore=start,Models=snapshots.Select(m=>new
+                var models=snapshots.Select(m=>new
                 {
                     Id=m.Key, m.Value.ObservationThrough, m.Value.LedgerEventChainSha256,
                     Hash=GeneralSha(JsonSerializer.SerializeToUtf8Bytes(m.Value,Json)),
                     Episodes=m.Value.Outcomes.Length,
                     ByFamilyDirection=m.Value.Outcomes.GroupBy(o=>new{o.Family,o.Side}).Select(g=>new
                     {g.Key.Family,g.Key.Side,Count=g.Count(),GrossEur=g.Sum(x=>x.GrossEur),NetEur=g.Sum(x=>x.NetEur)}).ToArray()
-                }).ToArray()},Json));
+                }).ToArray();
+                fitted.Add(protocol.TrialGroups is null
+                    ?JsonSerializer.SerializeToElement(new {AvailableBefore=start,Models=models},Json)
+                    :JsonSerializer.SerializeToElement(new {AvailableBefore=start,Models=models,
+                        EstimatorFits=comparison.Where(x=>x.Profile.UseAdaptivePayoff).Select(x=>new
+                        {x.Trial.Id,Fit=x.Book.AdaptiveFitReceipt()}).ToArray()},Json));
                 }
                 ProfileProgress("CALIBRATION_COMPLETE",start,boundaries[i+1],0,0);
                 Observe(start,boundaries[i+1],allBooks);
@@ -299,7 +325,13 @@ internal static partial class IntegratedEconomicReplay
                 Result=HistoricalBook(x.Book,boundaries)
             }).ToArray();
             var markets=streams.Values.Select(s=>new {s.Source.Market.Name,s.Source.CalendarStatus,s.Counts}).ToArray();
-            if(explain)output.Add(new {SpreadMultiplier=stress, CommissionAndDebitMultiplier=1m+stress,
+            if(explain && protocol.TrialGroups is not null)output.Add(new {SpreadMultiplier=stress, CommissionAndDebitMultiplier=1m+stress,
+                TrialGroup=trialGroup,Fits=fitted,Trials=trialResults,Markets=markets,
+                CalibrationBooks=probes.Select(p=>new {Id=p.Key,Details=EconomicStudyDetails(p.Value,source,streams,p.Value.ExportEurCalibration())}).ToArray(),
+                OpportunityObservations=observers.Select(p=>new {Id=p.Key,Details=p.Value.Report()}).ToArray(),
+                TrialDetails=comparison.Select(p=>new {p.Trial.Id,Details=EconomicStudyDetails(p.Book,source,streams),
+                    Forecasts=HistoricalForecasts(p.Book)}).ToArray()});
+            else if(explain)output.Add(new {SpreadMultiplier=stress, CommissionAndDebitMultiplier=1m+stress,
                 Fits=fitted,Trials=trialResults,Markets=markets,
                 CalibrationBooks=probes.Select(p=>new {Id=p.Key,Details=EconomicStudyDetails(p.Value,source,streams,p.Value.ExportEurCalibration())}).ToArray(),
                 OpportunityObservations=observers.Select(p=>new {Id=p.Key,Details=p.Value.Report()}).ToArray(),
@@ -329,6 +361,22 @@ internal static partial class IntegratedEconomicReplay
         if(NativeEconomicProfiler.Enabled)
             Console.WriteLine("HISTORICAL_EUR_PROFILE_FINAL "+JsonSerializer.Serialize(NativeEconomicProfiler.Snapshot(),Json));
         return 0;
+    }
+
+    static object HistoricalForecasts(NativeUnifiedPortfolioEngine book)
+    {
+        var episodes=book.CompleteModelTrips.Where(x=>x.EconomicEntry is not null)
+            .ToDictionary(x=>(x.Symbol,x.Family,x.Side,x.EconomicEntry!.DecisionAt));
+        var reconciliation=book.ReconciledModelEpisodes.ToDictionary(x=>x.PositionId,StringComparer.Ordinal);
+        return book.EurOpportunityReceipts.Where(x=>x.Payoff is not null).Select(x=>
+        {
+            var episode=episodes.GetValueOrDefault((x.Symbol,x.Family,x.Side,x.At));
+            return new {DecisionAt=x.At,x.Symbol,x.Family,x.Side,x.Units,x.ReservedRiskEur,x.KnownRoundTripCostEur,
+                x.NextManagementFundingCeilingEur,x.Payoff,CostRiskFraction=x.Context?.CostRiskFraction,
+                H1Direction=x.Context?.ClosedStates.SingleOrDefault(s=>s.Timeframe==NativeBarTimeframe.H1)?.Direction,
+                RealizedGrossEur=episode?.GrossEur,RealizedNetEur=episode is null?null:
+                    reconciliation.GetValueOrDefault(episode.PositionId)?.Evidence.ClosedNetEur,ClosedAt=episode?.CloseAt};
+        }).ToArray();
     }
 
     static object HistoricalBook(NativeUnifiedPortfolioEngine book,long[] boundaries)

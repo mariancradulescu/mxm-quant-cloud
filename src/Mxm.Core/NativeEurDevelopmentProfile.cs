@@ -27,6 +27,15 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
     public bool ModelFundingAtPriorClosedSessionQuote { get; init; }
 
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool UseAdaptivePayoff { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool UseAdaptiveAllocation { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool UseAdaptiveManagement { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool UseRealizedForecastFeedback { get; init; }
+
     internal string GeometryIdentity => FormattableString.Invariant(
         $"{UseAvailableContext}/{DistributionTargetRanges:G29}/{StopReserveMultiplier:G29}") +
         (ModeledStopLatencyMs is long latency ? FormattableString.Invariant($"/Trade/{latency}") : "") +
@@ -42,7 +51,9 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
             DayPenalty < 0m || StopReserveMultiplier < 1m || ModeledStopLatencyMs is <= 0L ||
             (LearnFromOpportunityEpisodes || ObserveIntentExecutionOnTicks) && ModeledStopLatencyMs is null ||
             UseExtendedLocalPayoff&&!UseRecoveredLocalPayoff ||
-            ObserveFamilyDirectionsOnClosedBars&&!LearnFromOpportunityEpisodes)
+            ObserveFamilyDirectionsOnClosedBars&&!LearnFromOpportunityEpisodes||
+            UseAdaptivePayoff&&!UseRecoveredLocalPayoff||
+            (UseAdaptiveAllocation||UseAdaptiveManagement||UseRealizedForecastFeedback)&&!UseAdaptivePayoff)
             throw new ArgumentException("EUR_REGISTERED_DEVELOPMENT_PROFILE");
     }
 }

@@ -54,7 +54,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
         long LastAt,NativeEurCalibrationOutcome[] History,NativeEurOpportunity[] Opportunities,
         Ucp1EurDecisionActivity[] DecisionActivity,Ucp1MarginObservation[] MarginMaxima,
         Ucp1MarginObservation[] MarginExceedances,Cpe1FamilyResearchState[] Cpe1Families,
-        string[] Cpe1ScoredEpisodes,EurPairedCalibrationState[]? PairedCalibration,ResearchPlanSlots? PlanSlots);
+        string[] Cpe1ScoredEpisodes,EurPairedCalibrationState[]? PairedCalibration,ResearchPlanSlots? PlanSlots,
+        EurRealizedForecastError[]? RealizedForecastErrors);
 
     internal string HistoricalEurCheckpoint()
     {
@@ -66,7 +67,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
             eurMarginExceedances.ToArray(),cpe1History.Select(x=>x.Value.ResearchState(x.Key)).ToArray(),
             cpe1ScoredEpisodes.ToArray(),UsePairedDistribution?pairedEurPayoff.Select(x=>
                 new EurPairedCalibrationState(x.Key.Family,x.Key.Side,x.Value.Residuals)).ToArray():null,
-            researchPlanOrder?.Checkpoint()));
+            researchPlanOrder?.Checkpoint(),eurRealizedErrors.Count==0?null:eurRealizedErrors.Values.SelectMany(x=>x).ToArray()));
     }
 
     internal static NativeUnifiedPortfolioEngine RestoreHistoricalEurCheckpoint(string checkpoint)
@@ -86,6 +87,12 @@ public sealed partial class NativeUnifiedPortfolioEngine
            s.DecisionActivity.Any(x=>x.At>s.LastAt)||
            s.MarginMaxima.Any(x=>x.At>s.LastAt)||s.MarginExceedances.Any(x=>x.At>s.LastAt))
             throw new ArgumentException("EUR_HISTORICAL_CHECKPOINT_IDENTITY_OR_CAUSALITY");
+        if(s.RealizedForecastErrors is { } realized)
+        {
+            if(book.eurDevelopmentProfile?.UseRealizedForecastFeedback!=true||realized.Any(e=>e.AvailableAt>s.LastAt))
+                throw new ArgumentException("EUR_HISTORICAL_CHECKPOINT_FORECAST_ERRORS");
+            foreach(var error in realized)book.RememberEurForecastError(error);
+        }
         book.eurHistory.Clear();
         foreach(var row in s.History)book.AddEurOutcome(row);
         book.eurOpportunities.Clear();
