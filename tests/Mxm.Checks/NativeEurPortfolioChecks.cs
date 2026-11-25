@@ -243,6 +243,17 @@ internal static class NativeEurPortfolioChecks
             adverse.PredictiveEvidence!.ConditionalNetPositiveFraction<=low.PredictiveEvidence!.ConditionalNetPositiveFraction&&
             adverse.PredictiveEvidence.FeedbackDays==3,
             "Predictive EUR applies signed reconciled feedback and recomputes conditional evidence");
+        var ranked=NativeEurAdaptiveEstimator.Fit(set,true,true,true,true);
+        var rankedFuture=NativeEurAdaptiveEstimator.Fit(set with {Outcomes=rows.Append(future).ToArray()},true,true,true,true);
+        using var receipt=System.Text.Json.JsonDocument.Parse(System.Text.Json.JsonSerializer.Serialize(ranked.Receipt()));
+        var candidates=receipt.RootElement.GetProperty("Grid").EnumerateArray().Select(x=>x.GetProperty("Id").GetString()!).ToArray();
+        check(candidates.Length==24&&candidates.Distinct().Count()==24&&
+            candidates.Any(x=>x.Contains("_P3_S1.4"))&&candidates.Any(x=>x.Contains("_P8_S0.7")),
+            "Ranked predictive grid searches independent transfer and slow-frame weights");
+        var rankedPayoff=ranked.Payoff("FAMILY",1,Context(false),cut+Step,2m,.4m);
+        check(rankedPayoff?.PredictiveEvidence?.Scope.StartsWith("RANKED_OUT_OF_TIME/",StringComparison.Ordinal)==true&&
+            rankedPayoff==rankedFuture.Payoff("FAMILY",1,Context(false),cut+Step,2m,.4m),
+            "Ranked opportunity calibration uses separate out-of-time dates and excludes future outcomes");
         var thin=NativeEurAdaptiveEstimator.Fit(set with {Outcomes=rows.Take(32).ToArray()},true,true);
         check(thin.Payoff("FAMILY",1,Context(false),cut+Step,2m,.4m) is null,
             "Predictive EUR does not substitute in-sample residuals when out-of-time support is absent");
