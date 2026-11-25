@@ -375,7 +375,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
         var capital=Cpe1FundingCapital(book,frame);
         if((capital?.MaximumSampledFundingAdjustedDrawdown??book.MaximumSampledDrawdown)>=.28m)
             return (plan,new("INTEGRATED_CPE1_GLOBAL_DD_PROTECTION",position.Units));
-        if(side*(sidePrice-geometry.Stop)<=0m)
+        if(NativeExecutableEconomics.TradeStopReached(side,sidePrice,geometry.Stop))
             return (plan,new("INTEGRATED_CPE1_OBSERVED_STRUCTURAL_STOP",position.Units));
         var bars=market.M15.Where(x=>x.CloseAt<frame.At).TakeLast(2).ToArray();
         if(bars.Length<2||bars[0].CloseAt!=bars[1].OpenAt)

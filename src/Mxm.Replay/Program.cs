@@ -13,6 +13,8 @@ if(args is ["--owner-eur-historical-study",var historicalProtocol,var historical
     return IntegratedEconomicReplay.RunHistoricalEur(historicalProtocol,historicalSource,historicalReport);
 if(args is ["--owner-eer1-closed-diagnosis",var diagnosisSource,var diagnosisLedger,var diagnosisReport])
     return IntegratedEconomicReplay.AuditEerClosedSource(diagnosisSource,diagnosisLedger,diagnosisReport);
+if(args is ["--owner-eer1-stop-trigger-source",var stopSource,var stopReport])
+    return IntegratedEconomicReplay.AuditEerStopTrigger(stopSource,stopReport);
 if(args is ["--owner-eur-conditional-continuity-pilot",var conditionalInput,var conditionalOutput,var conditionalCalibration,var conditionalSource])
     return IntegratedEconomicReplay.RunDatedEur(conditionalInput,conditionalOutput,conditionalCalibration,conditionalSource);
 if(args is ["--owner-eur-historical-development",var datedEurInput,var datedEurOutput,var calibrationOut])

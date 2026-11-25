@@ -59,7 +59,8 @@ def verify() -> None:
         require(command in ci, "EXISTING_NATIVE_CI_COMMAND_" +
                 command.split("/")[-1].replace(" ", "_"))
     spec = (ROOT / "docs/OWNER_SPEC.md").read_text()
-    require("OWNER prospective single C# authority — 2026-11-18" in spec,
+    require("same authoritative C# causal features, model, EUR allocator" in spec and
+            "in Core, Replay and the cBot adapter" in spec,
             "ACTIVE_OWNER_SINGLE_CSHARP_MANDATE")
     owner = (ROOT / "src/Mxm.Core/OwnerRiskLimits.cs").read_text()
     for invariant in ("InitialCapitalEur=300m",
