@@ -1,0 +1,78 @@
+{
+  "Study": "EUR_CONTEXTUAL_NET_1",
+  "Exposure": "PROJECT_EXPOSED_CONDITIONAL_DEVELOPMENT",
+  "SourceProtocolSha256": "2ac5e2da090ce4c69f4791affc54424766749630e16522e6672285ad46c98a3c",
+  "EvidenceManifestSha256": "bd4a063bef5876e649876faea5a4b602b8852483774f48c99881131e8b4082b9",
+  "InitialFitFrom": 1792972800000,
+  "TestBoundaries": [
+    1793577600000,
+    1794182400000,
+    1794787200000,
+    1795392000000
+  ],
+  "Stresses": [
+    0,
+    0.5,
+    1
+  ],
+  "StopWitness": {
+    "Symbol": "NatGas",
+    "Side": -1,
+    "OriginalFillAt": 1795015515000,
+    "OriginalCloseAt": 1795019115000,
+    "StopDistance": 0.014,
+    "FirstTradeTouchAt": 1795016231791
+  },
+  "Calibrations": [
+    {
+      "Id": "ALL_TICKS_STRUCTURE",
+      "Profile": {
+        "CaptureStudyDiagnostics": true,
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "LearnFromOpportunityEpisodes": true,
+        "ObserveIntentExecutionOnTicks": true,
+        "IncludeRecoveredStructure": true
+      }
+    },
+    {
+      "Id": "CLOSED_BAR_FAMILY_DIRECTION",
+      "Profile": {
+        "CaptureStudyDiagnostics": true,
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "LearnFromOpportunityEpisodes": true,
+        "ObserveIntentExecutionOnTicks": true,
+        "IncludeRecoveredStructure": true,
+        "ObserveFamilyDirectionsOnClosedBars": true
+      }
+    }
+  ],
+  "Trials": [
+    {
+      "Id": "CASH_CONTROL",
+      "Policy": "EUR_GENERAL_CASH",
+      "Calibration": "ALL_TICKS_STRUCTURE"
+    },
+    {
+      "Id": "LOCAL_4_FEATURE_CONTROL",
+      "Policy": "EUR_GENERAL_SELECT",
+      "Calibration": "ALL_TICKS_STRUCTURE",
+      "UseRecoveredLocalPayoff": true
+    },
+    {
+      "Id": "EXTENDED_CONTEXT",
+      "Policy": "EUR_GENERAL_SELECT",
+      "Calibration": "ALL_TICKS_STRUCTURE",
+      "UseRecoveredLocalPayoff": true,
+      "UseExtendedLocalPayoff": true
+    },
+    {
+      "Id": "EXTENDED_CONTEXT_BROAD_OBSERVER",
+      "Policy": "EUR_GENERAL_SELECT",
+      "Calibration": "CLOSED_BAR_FAMILY_DIRECTION",
+      "UseRecoveredLocalPayoff": true,
+      "UseExtendedLocalPayoff": true
+    }
+  ]
+}

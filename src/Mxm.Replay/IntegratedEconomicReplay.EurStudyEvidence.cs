@@ -7,12 +7,13 @@ internal static partial class IntegratedEconomicReplay
         EerEvidence source,EerProtectionTape protection,Dictionary<string,EerStream> markets)
     {
         readonly NativeEurDevelopmentProfile episodeProfile=profile with
-            {CaptureStudyDiagnostics=false,LearnFromOpportunityEpisodes=false};
-        readonly Dictionary<string,NativeUnifiedPortfolioEngine> active=new(StringComparer.Ordinal);
+            {CaptureStudyDiagnostics=false,LearnFromOpportunityEpisodes=false,ObserveFamilyDirectionsOnClosedBars=false};
+        readonly Dictionary<(string Symbol,string Family,int Side),NativeUnifiedPortfolioEngine> active=new();
         readonly List<NativeEurCalibrationOutcome> labels=new();
         readonly Dictionary<string,int> results=new(StringComparer.Ordinal);
         long observedThrough;
         int maxConcurrent;
+        int maxConcurrentEpisodes;
 
         NativeUnifiedPortfolioEngine ResearchEpisode() => new(NativeUnifiedPortfolioEngine.EurGeneralProbe,
             fundingScenarioId:scenario,eurDevelopmentProfile:episodeProfile);
@@ -22,20 +23,23 @@ internal static partial class IntegratedEconomicReplay
         public void Advance(Ucp1Frame frame)
         {
             observedThrough=frame.At;
-            foreach(var (symbol,episode) in active.ToArray())
+            foreach(var (key,episode) in active.ToArray())
             {
                 protection.Between(episode,frame.At-1,source,markets,scenario,stress);
                 source.Advance(episode,frame with {ObservationEpisodeOnly=true,
                     Protection=protection.GridCoverage(episode,frame.At)},markets,scenario,stress);
                 var book=episode.ModelSummary;
                 if(book.OpenPositions+book.PendingIntents>0)continue;
-                active.Remove(symbol);
+                active.Remove(key);
                 if(episode.CompleteModelTrips.SingleOrDefault() is not { } trip)
                 {Count("ENTRY_EXPIRED_OR_FAILED_REVALIDATION");continue;}
                 Count("CLOSED");
                 if(episode.ExportEurCalibration().Outcomes.SingleOrDefault() is { } label)
                 {
-                    labels.Add(label);
+                    // The common book ID is symbol/family/clock; independent
+                    // counterfactual LONG and SHORT labels also need direction.
+                    labels.Add(profile.ObserveFamilyDirectionsOnClosedBars
+                        ?label with {PositionId=FormattableString.Invariant($"{label.PositionId}/{label.Side}")}:label);
                     Count("MATURED_RECONCILED_LABEL");
                 }
                 else
@@ -48,31 +52,39 @@ internal static partial class IntegratedEconomicReplay
             // Sample at the close-based hourly clock, rotate between offers
             // with a pre-outcome ordering, and observe at most one episode per
             // symbol at a time. Co-moving markets still share calendar days.
-            if(frame.At%3_600_000L!=EurOffset)return;
+            bool broad=profile.ObserveFamilyDirectionsOnClosedBars;
+            if(!broad&&frame.At%3_600_000L!=EurOffset)return;
             var describe=ResearchEpisode();
             foreach(var market in frame.Markets)
             {
                 var offers=describe.DescribeEurGeneral(market,frame.At);
                 Count("SIGNALS",offers.Length);
                 if(offers.Length==0)continue;
-                if(active.ContainsKey(market.Symbol))
+                if(!broad&&active.ContainsKey((market.Symbol,"",0)))
                 {Count("SAME_SYMBOL_OVERLAP_EXCLUDED",offers.Length);continue;}
-                var chosen=offers.OrderBy(o=>EerHash(FormattableString.Invariant($"{frame.At}/{o.Symbol}/{o.Family}/{o.Side}")),
-                    StringComparer.Ordinal).First();
-                var episode=ResearchEpisode();
-                source.Advance(episode,frame with {ObservationEpisodeOnly=true,OpportunityToObserve=chosen},markets,scenario,stress);
-                if(episode.ModelSummary.PendingIntents>0)
+                var candidates=broad?offers:offers.OrderBy(o=>EerHash(FormattableString.Invariant($"{frame.At}/{o.Symbol}/{o.Family}/{o.Side}")),
+                    StringComparer.Ordinal).Take(1).ToArray();
+                foreach(var chosen in candidates)
                 {
-                    active.Add(market.Symbol,episode);
-                    Count("ISOLATED_MINIMUM_VOLUME_ADMISSION");
-                }
-                else
-                {
-                    Count("NOT_CONTRACTUALLY_OR_MONETARILY_ADMITTED");
-                    foreach(var (reason,count) in episode.ResearchDecisionCounts)Count(reason,count);
+                    var key=broad?(market.Symbol,chosen.Family,chosen.Side):(market.Symbol,"",0);
+                    if(active.ContainsKey(key))
+                    {Count("SAME_FAMILY_DIRECTION_OVERLAP_EXCLUDED");continue;}
+                    var episode=ResearchEpisode();
+                    source.Advance(episode,frame with {ObservationEpisodeOnly=true,OpportunityToObserve=chosen},markets,scenario,stress);
+                    if(episode.ModelSummary.PendingIntents>0)
+                    {
+                        active.Add(key,episode);
+                        Count("ISOLATED_MINIMUM_VOLUME_ADMISSION");
+                    }
+                    else
+                    {
+                        Count("NOT_CONTRACTUALLY_OR_MONETARILY_ADMITTED");
+                        foreach(var (reason,count) in episode.ResearchDecisionCounts)Count(reason,count);
+                    }
                 }
             }
-            maxConcurrent=Math.Max(maxConcurrent,active.Count);
+            maxConcurrent=Math.Max(maxConcurrent,active.Keys.Select(k=>k.Symbol).Distinct(StringComparer.Ordinal).Count());
+            maxConcurrentEpisodes=Math.Max(maxConcurrentEpisodes,active.Count);
         }
 
         public NativeEurCalibration Export()
@@ -86,7 +98,10 @@ internal static partial class IntegratedEconomicReplay
         }
 
         public object Report()=>new {Counts=results,RightCensoredEpisodes=active.Count,
-            SimultaneousSymbolsMaximum=maxConcurrent,Observation="ISOLATED_ONE_CONTRACTUAL_MINIMUM_VOLUME_EPISODE",
+            SimultaneousSymbolsMaximum=maxConcurrent,SimultaneousEpisodesMaximum=maxConcurrentEpisodes,
+            Observation=profile.ObserveFamilyDirectionsOnClosedBars
+                ?"CLOSED_M5_GRID_ONE_MINIMUM_VOLUME_EPISODE_PER_SYMBOL_FAMILY_DIRECTION"
+                :"ISOLATED_ONE_CONTRACTUAL_MINIMUM_VOLUME_EPISODE",
             CountedAsSharedBookRoundTrips=false,IndependentSamples=false,Labels=Export().Outcomes.Select(l=>new
             {l.PositionId,l.Family,l.Side,l.DecisionAt,l.ClosedAt,l.AvailableAt,l.GrossEur,l.NetEur,l.RiskEur,Symbol=l.Context?.Symbol})};
     }

@@ -8,6 +8,7 @@ internal static partial class IntegratedEconomicReplay
     sealed record HistoricalTrial(string Id,string Policy,string Calibration,int? MinimumEpisodes,decimal? DayPenalty)
     {
         public bool UseRecoveredLocalPayoff { get; init; }
+        public bool UseExtendedLocalPayoff { get; init; }
     }
     sealed record HistoricalFit(string Id,NativeEurDevelopmentProfile Profile);
     sealed record HistoricalPlan(string Study,string Exposure,string SourceProtocolSha256,string EvidenceManifestSha256,
@@ -81,10 +82,11 @@ internal static partial class IntegratedEconomicReplay
             {
                 if(!GeneralPolicies.Contains(t.Policy,StringComparer.Ordinal)||!fitProfiles.TryGetValue(t.Calibration,out var p))
                     throw new ArgumentException("HISTORICAL_EUR_UNREGISTERED_TRIAL");
-                if(t.UseRecoveredLocalPayoff&&t.Policy!=NativeUnifiedPortfolioEngine.EurGeneralSelect)
+                if(t.UseExtendedLocalPayoff&&!t.UseRecoveredLocalPayoff ||
+                    t.UseRecoveredLocalPayoff&&t.Policy!=NativeUnifiedPortfolioEngine.EurGeneralSelect)
                     throw new ArgumentException("HISTORICAL_EUR_CONTEXT_FOR_LOCAL_DISTRIBUTION");
                 var profile=p with {MinimumEpisodes=t.MinimumEpisodes??p.MinimumEpisodes,DayPenalty=t.DayPenalty??p.DayPenalty,
-                    UseRecoveredLocalPayoff=t.UseRecoveredLocalPayoff};
+                    UseRecoveredLocalPayoff=t.UseRecoveredLocalPayoff,UseExtendedLocalPayoff=t.UseExtendedLocalPayoff};
                 return (Trial:t,Profile:profile,Book:new NativeUnifiedPortfolioEngine(t.Policy,
                     fundingScenarioId:scenario,eurDevelopmentProfile:profile));
             }).ToArray();
