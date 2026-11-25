@@ -12,6 +12,8 @@ public sealed record NativeEurPayoff(int ReconciledEpisodes,int ObservationDays,
 {
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public string? Cohort { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public NativeEurPredictiveEvidence? PredictiveEvidence { get; init; }
 }
 public sealed record NativeEurBarState(NativeBarTimeframe Timeframe,int Direction,bool AboveRecentRange);
 public sealed record NativeEurDecisionContext(string Symbol,string? AssetClass, int UtcMinute,
@@ -20,6 +22,8 @@ public sealed record NativeEurDecisionContext(string Symbol,string? AssetClass, 
 {
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public decimal?[]? MarketState { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public decimal?[]? RelativeVolatility { get; init; }
 }
 public sealed record NativeEurOpportunity(long At,string Symbol,string Family,int Side,
     decimal Units,decimal GrossTargetEur,decimal GrossRiskEur,decimal KnownRoundTripCostEur,
@@ -193,7 +197,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
         foreach(var outcome in calibration.Outcomes)AddEurOutcome(outcome);
         if(eurDevelopmentProfile is {UseAdaptivePayoff:true} adaptive)
         {
-            adaptivePayoff=NativeEurAdaptiveEstimator.Fit(calibration,adaptive.UseExtendedLocalPayoff);
+            adaptivePayoff=NativeEurAdaptiveEstimator.Fit(calibration,adaptive.UseExtendedLocalPayoff,adaptive.UsePredictiveCalibration,adaptive.UseEconomicEstimatorObjective);
             return;
         }
         if(eurDevelopmentProfile is { UseRecoveredLocalPayoff:true } profile)
@@ -467,6 +471,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
         {
             if(!Cpe1Usable(market,at)||EurLevels(s,market) is not { } levels)continue;
             var marketState=IsEurGeneral?DescribeGeneralState(market,frame,s.Side):null;
+            var volatility=eurDevelopmentProfile?.CaptureVolatilityContext==true?DescribeRelativeVolatility(market,frame.At):null;
             var unitsOffered=(market.EurMargins??Array.Empty<NativeEurMarginObservation>())
                 .Where(x=>x.Side==s.Side&&x.Units>0m).Select(x=>x.Units)
                 .Append(market.Contract.MinimumUnits).Distinct()
@@ -487,7 +492,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 decimal? risk=debit is decimal knownDebit?ReservedEurRisk(bracket.RiskEur,knownDebit):null;
                 var context=DescribeEurContext(market,at,s.Side,(capital.HeldMarginEur??0m)+pending.Sum(x=>x.MarginEur),
                     capital.ResearchAdmissionEquityEur,risk,roundTripCost);
-                if(context is not null&&marketState is not null)context=context with {MarketState=marketState};
+                if(context is not null&&marketState is not null)context=context with {MarketState=marketState,RelativeVolatility=volatility};
                 if(CaptureEurDiagnostics&&policy==EurGeneralSelect&&context is null)ScoreDiagnostic("NO_CONTEXT");
                 var payoff=risk is >0m&&(IsEurRank||eurDevelopmentProfile is null)?EurPayoff(s.Family,s.Side,risk.Value,roundTripCost+debit!.Value,
                     policy is EurContextRank or EurGeneralSelect?context:null,CaptureEurDiagnostics?ScoreDiagnostic:null,at):null;
