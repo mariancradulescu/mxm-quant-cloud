@@ -125,7 +125,9 @@ def main():
         a=src.decode(packet["resType"],packet["res"])
         if type(a) is not m.ProtoOAGetTrendbarsRes or a.hasMore:continue
         need(q.symbolId==ids["USDJPY"] and q.period==e.ProtoOATrendbarPeriod.Value("M5"),"SOURCE_BAR_SCOPE")
-        for row in decode_bars(a.trendbar,q.fromTimestamp,q.toTimestamp+1,5):
+        description, rows=wire.history.inspect_bars(q,a,packet['availableAt'],closed_through=original.M5_END)
+        need(description['status'] in ('CLOSED_ROWS_VERIFIED','NO_CLOSED_ROWS_WITHIN_WINDOW','EXPECTED_RESPONSE_WITH_EMPTY_SERIES'), 'SOURCE_BAR_INVALID')
+        for row in rows:
             need(row[0] not in by_open or by_open[row[0]]==row,"SOURCE_BAR_CONFLICT")
             by_open[row[0]]=row
     need(len(by_open)==bars["USDJPY"]["M5"]["closedBars"],"SOURCE_BAR_COUNT")
