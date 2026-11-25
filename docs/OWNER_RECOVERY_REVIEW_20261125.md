@@ -17,6 +17,23 @@ Apply more than one letter where the evidence shows different failures. H record
 
 The original EER1 S0 trace locates the 70.045065% margin mark at 06:25:15 UTC on 9 November 2026. At 06:15:15, the XAUUSD admission and held commitments reserved EUR207.63 against equity of EUR296.835404, giving 69.947856%. The 06:20:15 fill recorded the same margin at 69.983338%. Equity fell to EUR296.423451 five minutes later with the same held margin and zero Pending. This crossing records post-fill equity deterioration. [Original ledger](https://github.com/mariancradulescu/mxm-quant-cloud/actions/runs/45568679560/artifacts/15000539686)
 
+In the worst S0 NatGas episode, a short of 200 units, the original stop distance was 0.014 in price units. The risk was EUR0.364691 at admission and EUR2.553044 at fill. The modeled loss was EUR8.390639 including EUR7.843388 of gross movement against the position. The original ASK first touched the Trade stop at 15:37:11.791 UTC on 18 November, 2,883.209 seconds before the 16:25:15 economic closure. The closure quote exceeded the stop by 0.032 in price units. The protected pages cover the entire interval. Actual fill requires an execution witness. [Stop trigger receipt](https://github.com/mariancradulescu/mxm-quant-cloud/actions/runs/45587413916/artifacts/15008703449) · [Spotware StopTriggerMethod](https://help.ctrader.com/ctrader-algo/references/Trading/StopTriggerMethod/)
+
+## Verified historical economic development
+
+[EUR_GENERAL_RECOVERED_HISTORY_1](../research/EUR_GENERAL_RECOVERED_HISTORY_1.md) ran all 33 registered combinations at revision `cf6477fd15ab4fff830262c5fddefe030fe8845b`. It used the corrected official calendars and authentic EER1 data, with 16 monetary markets. Initial fit starts on 26 October 2026 UTC. The two comparison weeks start on 9 and 16 November and share the same book throughout. The archive SHA-256 is `437d64e3b99e9125b9d1c2544903ad1347ba2fda70a36a8e494383752cf1b6d3`. [Original result and all trial records](https://github.com/mariancradulescu/mxm-quant-cloud/actions/runs/45585599004/artifacts/15009601754)
+
+| Trial and stress | Gross EUR | Reconciled book NET EUR | Closures by week | Sampled DD |
+| --- | ---: | ---: | ---: | ---: |
+| Available-context probe, S0 | −19.723102 | −87.057246 | 387 / 277 | 29.065710% |
+| Available-context probe, S1 | +3.749163 | Unresolved financing | 403 / 2 | 21.185877% |
+| Available-context probe, S2 | −23.338034 | −83.304969 | 243 / 0 | 28.007279% |
+| Strict contextual selection, S2 | −15.111828 | −49.736085 | 90 / 79 | 17.149271% |
+| Other contextual and pooled trials | 0 | 0 | 0 / 0 | 0% |
+| Cash in all three scenarios | 0 | 0 | 0 / 0 | 0% |
+
+The available-context S0 probe reached 11 markets and closed episodes in both EUR_GENERAL families. Losses exceeded the fill reserve in 180 of 664 closures. S1 ended with one unresolved funding window and recorded 59,789 candidate decisions with unbounded portfolio funding. The only active selector, strict S2, allocated to LONG distribution episodes in SpotBrent and NatGas. Both lost after costs, and 50 of 169 closures exceeded the fill reserve. All five fit profiles kept the same count of admissible closed labels in each cost scenario between calibration cutoffs. Lower episode counts and penalties, the target variants and the larger stop reserve still yielded abstention in these selector trials. The original results record the aggregate calibration wait reason. The contribution of individual gates to each rejected estimate remains unmeasured. All configurations remain unqualified.
+
 ## Older mechanism families
 
 | Mechanism and original evidence | Bounded conclusion and reuse |
