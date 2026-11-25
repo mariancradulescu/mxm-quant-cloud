@@ -1,0 +1,22 @@
+{
+  "Study": "EUR_ADAPTIVE_CALIBRATION_1",
+  "ProtocolSha256": "1ab20641bf4b06c24dc35ff1cd069afb0f5cbfa6cdbcd139c7782329e5f74980",
+  "OriginalRun": 45694735715,
+  "OriginalRevision": "4ae1e74b52dc27808fd42ee50b6b46bef34871be",
+  "InitialCheckpoints": {
+    "0": {
+      "Artifact": 15060238088,
+      "ArchiveSha256": "727a4a7d7f7b082832936c43b58e34028735e71cb1e4b1e5da4f51242d95186f"
+    },
+    "1": {
+      "Artifact": 15059504973,
+      "ArchiveSha256": "8ef85c646cb5af2f8fec52e6660f9ad6e3439fe7e436beb8529157bdecc2b0b1"
+    },
+    "2": {
+      "Artifact": 15061211555,
+      "ArchiveSha256": "202436e040b6be11b25c7218aa101e9d155c0bb11f134fd5214d8fc7cc82d5be"
+    }
+  },
+  "ValidatedRevision": "02e993792fd26d9110d05c9ae38666b4ece3ebfd",
+  "TechnicalRun": 45696792349
+}
