@@ -47,6 +47,9 @@ internal static partial class IntegratedEconomicReplay
 
         var fitProfiles=protocol.Calibrations.ToDictionary(x=>x.Id,x=>x.Profile,StringComparer.Ordinal);
         string protocolHash=GeneralSha(protocolBytes);
+        string sourceHash=GeneralSha(sourceBytes);
+        string? receiptDirectory=Environment.GetEnvironmentVariable("MXM_ECONOMIC_RECEIPT_DIRECTORY");
+        if(receiptDirectory is not null)Directory.CreateDirectory(receiptDirectory);
         EerEvidence source;
         EerProtectionTape? protection;
         using (NativeEconomicProfiler.Measure("replay.source_construction")) source=new EerEvidence(input);
@@ -71,8 +74,21 @@ internal static partial class IntegratedEconomicReplay
             return new {Witness=witness,StrictEur=strict,ClosedSessionScenarioEur=conditional,
                 quoteBasis=StaleRolloverWitness(basis),ActualBrokerSettlementEur=(decimal?)null};
         }).ToArray();
+        // Selection is execution partitioning only: the original full protocol bytes,
+        // scenario identity, all trials and all chronological folds remain unchanged.
+        string? scenarioIndexText=Environment.GetEnvironmentVariable("MXM_ECONOMIC_SCENARIO_INDEX");
+        int? scenarioIndex=null;
+        if(scenarioIndexText is not null)
+        {
+            if(!int.TryParse(scenarioIndexText,System.Globalization.NumberStyles.None,
+                System.Globalization.CultureInfo.InvariantCulture,out int index)||
+                index<0||index>=protocol.Stresses.Length)
+                throw new ArgumentException("HISTORICAL_EUR_INVALID_SCENARIO_INDEX");
+            scenarioIndex=index;
+        }
         var output=new List<object>();
-        foreach(decimal stress in protocol.Stresses)
+        foreach(decimal stress in scenarioIndex.HasValue
+            ?new[]{protocol.Stresses[scenarioIndex.Value]}:protocol.Stresses)
         {
             string scenario=EerHash(protocolHash+"|"+FormattableString.Invariant($"{stress:G29}"));
             var streams=input.Markets.ToDictionary(m=>m.Market.Name,m=>new EerStream(m),StringComparer.Ordinal);
@@ -171,6 +187,32 @@ internal static partial class IntegratedEconomicReplay
                 ProfileProgress("CALIBRATION_COMPLETE",start,boundaries[i+1],0,0);
                 Observe(start,boundaries[i+1],allBooks);
                 Console.WriteLine($"HISTORICAL_EUR {stress:G29} TEST {i+1}/{boundaries.Length-1} completed");
+                if(receiptDirectory is not null)
+                {
+                    // Read-only cumulative receipt, NOT a restorable engine checkpoint.
+                    // Never publish the decrypted input, credentials or active private source tape.
+                    using var receiptProfile=NativeEconomicProfiler.Measure("replay.window_receipt");
+                    string name=Path.Combine(receiptDirectory,$"{scenario}-fold-{i+1:D3}.json");
+                    string temporary=name+".tmp";
+                    var through=boundaries.Take(i+2).ToArray();
+                    var receipt=new
+                    {
+                        protocol.Study,ProtocolSha256=protocolHash,SourceSha256=sourceHash,
+                        input.EvidenceManifestSha256,Scenario=stress,ScenarioId=scenario,Fold=i+1,
+                        Through=boundaries[i+1],ExecutedRevision=Environment.GetEnvironmentVariable("GITHUB_SHA"),
+                        Fits=fitted.ToArray(),Trials=comparison.Select(x=>new
+                        {x.Trial.Id,Result=HistoricalBook(x.Book,through)}).ToArray(),
+                        RestorableCheckpoint=false,IndependentConfirmationCertified=false,
+                        SourceBrokerRequests=0,Orders=0,CloudActivated=false
+                    };
+                    using(var receiptFile=new FileStream(temporary,FileMode.CreateNew,FileAccess.Write))
+                    {
+                        JsonSerializer.Serialize(receiptFile,receipt,Json);
+                        receiptFile.Flush(true);
+                    }
+                    File.Move(temporary,name);
+                    Console.WriteLine("HISTORICAL_EUR_WINDOW_RECEIPT "+Path.GetFileName(name));
+                }
             }
             ProfileProgress("SCENARIO_REPORT_START",boundaries[0],boundaries[^1],0,0);
             using (NativeEconomicProfiler.Measure("replay.scenario_report"))
@@ -193,7 +235,7 @@ internal static partial class IntegratedEconomicReplay
         }
         var summary=new
         {
-            protocol.Study,protocol.Exposure,ProtocolSha256=protocolHash,SourceSha256=GeneralSha(sourceBytes),
+            protocol.Study,protocol.Exposure,ProtocolSha256=protocolHash,SourceSha256=sourceHash,
             input.EvidenceManifestSha256,input.EngineRevision,ExecutedRevision=Environment.GetEnvironmentVariable("GITHUB_SHA"),
             protocol.InitialFitFrom,protocol.TestBoundaries,DeclaredScenarioTrialCount=protocol.Stresses.Length*protocol.Trials.Length,
             Results=output,DistilledWinnerForPromotion=false,IndependentConfirmationCertified=false,
