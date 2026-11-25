@@ -48,6 +48,13 @@ internal static class NativeEurPortfolioChecks
             "Three witnessed fills are repriced and equity-admitted after Pending");
         var restored=NativeUnifiedPortfolioEngine.Restore(first.Checkpoint());
         check(restored.ModelSummary==first.ModelSummary,"EUR checkpoint retains common funded book");
+        var known=later.FundingCapital!;
+        const string missingMark="MISSING_CURRENT_LIQUIDATION_MARK";
+        check(NativeUnifiedPortfolioEngine.EurRejectedCapital(missingMark,later.ModelBook,
+                  known with { OutstandingDebitCeilingEur=null })=="WAIT_UNBOUNDED_PORTFOLIO_FUNDING"&&
+              NativeUnifiedPortfolioEngine.EurRejectedCapital(missingMark,
+                  later.ModelBook with {LiquidationEquityEur=null},known)=="WAIT_"+missingMark,
+            "EUR distinguishes missing collateral marks from fully marked equity with unbounded carry");
         LateNetChangesRanking(check);
         ContractClocksAndDirectionalCosts(check);
         var flexible=input.Markets[0] with {EurNativeClock=true};
