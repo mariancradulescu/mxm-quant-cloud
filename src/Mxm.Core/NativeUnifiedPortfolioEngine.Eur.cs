@@ -50,6 +50,14 @@ public sealed partial class NativeUnifiedPortfolioEngine
     readonly Dictionary<(string Family,int Side),List<NativeEurCalibrationOutcome>> eurHistory=new();
     readonly List<NativeEurOpportunity> eurOpportunities=new();
     NativeEurCalibration? eurCalibration;
+    public long LastObservationAt=>previousClock;
+    public string PolicyName=>policy;
+
+    // The native platform computes margin inside the callback. Consecutive
+    // observed grid slots can have different real completion timestamps.
+    internal static bool EurFrameFollows(Ucp1MarketFrame frame,long earlier,long at)
+        =>frame.EurNativeClock? (at-15_000L)/300_000L-(earlier-15_000L)/300_000L<=1:
+            at-earlier<=300_000L;
 
     void RememberEurOutcome(Ucp1Episode trip,Ucp1ReconciledEpisode reconciled)
     {

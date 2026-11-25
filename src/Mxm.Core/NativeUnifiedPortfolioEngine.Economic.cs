@@ -261,7 +261,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
            plan.Side*(prior.Target-execution)<=0m)
             return null;
         var q=observed.Quote;
-        if((fundingReserves is null&&cpe1UnreconciledFunding) || q.At-intent.At>300000L)
+        if((fundingReserves is null&&cpe1UnreconciledFunding) || !EurFrameFollows(observed,intent.At,q.At))
             return null; // No late fill after a missing M5 source clock.
         if(OwnerEur && EurMargin(observed,plan.Side,plan.Units,q.At) is null)return null;
         var carriedDebit=fundingReserves is null?0m:

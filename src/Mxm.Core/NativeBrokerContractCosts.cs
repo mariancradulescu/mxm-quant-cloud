@@ -55,6 +55,14 @@ public static class NativeBrokerContractCosts
     public static NativeOriginalFxRate ComposeCausalQuoteToEur(
         string quoteAsset,long decisionClockUtcMs,
         IReadOnlyList<NativeOriginalFxHop> route)
+        =>ComposeQuoteToEur(quoteAsset,decisionClockUtcMs,route,true);
+
+    public static NativeOriginalFxRate ComposeCurrentAlgoQuoteToEur(
+        string quoteAsset,long decisionClockUtcMs,IReadOnlyList<NativeOriginalFxHop> route)
+        =>ComposeQuoteToEur(quoteAsset,decisionClockUtcMs,route,false);
+
+    static NativeOriginalFxRate ComposeQuoteToEur(string quoteAsset,long decisionClockUtcMs,
+        IReadOnlyList<NativeOriginalFxHop> route,bool originalCustody)
     {
         if(string.IsNullOrWhiteSpace(quoteAsset)||
            decisionClockUtcMs<=0||route is null)
@@ -73,7 +81,7 @@ public static class NativeBrokerContractCosts
         var names=new List<string>();
         foreach(var hop in route)
         {
-            if(!hop.OriginalBrokerAuthenticated ||
+            if(hop.OriginalBrokerAuthenticated!=originalCustody ||
                string.IsNullOrWhiteSpace(hop.Symbol) ||
                string.IsNullOrWhiteSpace(hop.BaseAsset) ||
                string.IsNullOrWhiteSpace(hop.QuoteAsset) ||
@@ -151,6 +159,14 @@ public static class NativeBrokerContractCosts
     public static NativeCostAttribution QuoteBothDirections(
         NativeObservedContractTerms c,NativeMarketCostContext q)
         =>Price(c,q,null,null,true,true,bothDirections:true);
+
+    public static NativeCostAttribution QuoteCurrentAlgoBothDirections(
+        NativeObservedContractTerms c,NativeMarketCostContext q)
+    {
+        if(c.OriginalBrokerAuthenticated)
+            throw new ArgumentException("ALGO_CURRENT_CONTRACT_PROVENANCE_MISMATCH");
+        return Price(c,q,null,null,true,false,bothDirections:true);
+    }
 
     // cTrader Algo Symbol fields have NOT been cryptographically authenticated
     // against the original Pepperstone Open API account contract. Never set the
