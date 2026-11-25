@@ -226,9 +226,9 @@ internal sealed partial class NativeEurAdaptiveEstimator
         return output;
     }
 
-    internal static NativeEurAdaptiveEstimator Fit(NativeEurCalibration calibration,bool extended,bool predictive=false,bool economicObjective=false)
+    internal static NativeEurAdaptiveEstimator Fit(NativeEurCalibration calibration,bool extended,bool predictive=false,bool economicObjective=false,bool selectionAware=false)
     {
-        if(predictive)return FitPredictive(calibration,extended,economicObjective);
+        if(predictive)return FitPredictive(calibration,extended,economicObjective,selectionAware);
         var rows=calibration.Outcomes.Where(o=>o.AvailableAt<=calibration.ObservationThrough&&
                 o.DecisionAt.HasValue&&o.Context?.MarketState is {Length:16})
             .Select(o=>new Row(o,o.Context!,o.DecisionAt!.Value/Day,Values(o.Context!,extended))).ToArray();
