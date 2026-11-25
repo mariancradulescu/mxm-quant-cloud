@@ -22,6 +22,10 @@ public sealed record Ucp1MarketFrame(
     public NativeFundingOfferEvidence[]? FundingOffers { get; init; }
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public NativeEurMarginObservation[]? EurMargins { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? OfficialAssetClass { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool EurDatedMarginScenario { get; init; }
 }
 public sealed record Ucp1BrokerFrame(BrokerIdentitySnapshot Identity,
     decimal? AccountCashEur,string AccountType);
@@ -44,6 +48,8 @@ public sealed record Ucp1Episode(string PositionId,string Symbol,string Family,
     // Prospective CPE1: one economic episode, fully financed model or censored.
     public NativeJointOpportunityEpisodeEvidence? EconomicEvidence { get; init; }
     public NativeJointOpportunityEntry? EconomicEntry { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public NativeEurDecisionContext? EurContext { get; init; }
 }
 public sealed record Ucp1ReconciledEpisode(string PositionId,long AvailableAt,
     NativeJointOpportunityEpisodeEvidence Evidence);
@@ -104,6 +110,8 @@ public sealed record Ucp1Plan(string Id,string Symbol,string Family,int Side,
     public bool FinancingUnknown { get; init; }
     public decimal BookedFinancingEur { get; init; }
     public long LastEconomicM15 { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public NativeEurDecisionContext? EurContext { get; init; }
 }
 public sealed record Ucp1FrameResult(string Policy,long At,
     LedgerSummary ModelBook,int Proposed,int Admitted,int OpenFills,
@@ -183,7 +191,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
     readonly NativeIntegratedBarrierCalibration? integratedCalibration;
     readonly NativeCompleteModels? completeModels;
     readonly NativeCompleteProbe? completeProbe;
-    bool OwnerEur => policy is EurFirst or EurRank or EurCash;
+    bool IsEurRank => policy is EurRank or EurContextRank;
+    bool OwnerEur => IsEurRank || policy is EurFirst or EurCash;
     bool Cpe1 => OwnerEur || policy is "CPE1_ECONOMIC" or "CPE1_SIMPLE" or "CPE1_CASH";
     bool Cpe1Economic => policy=="CPE1_ECONOMIC";
     bool CompletePolicy => NativeCompletePolicy.IsPolicy(policy);
@@ -217,7 +226,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
     {
         if(policy is not ("JOINT" or "TRANSITION_ONLY" or "REPAIR_ONLY" or
                           "LONG" or "SHORT" or "CASH" or
-                          "CPE1_ECONOMIC" or "CPE1_SIMPLE" or "CPE1_CASH" or EurFirst or EurRank or EurCash or
+                          "CPE1_ECONOMIC" or "CPE1_SIMPLE" or "CPE1_CASH" or EurFirst or EurRank or EurContextRank or EurCash or
                           "SCP1_FIRST" or "SCP1_SCORE" or
                           "SCP1_MARGINAL" or "SCP1_ABSTAIN" or
                           "SCP1_LONG" or "SCP1_SHORT" or "SCP1_CASH" or
@@ -679,7 +688,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 var trip=new Ucp1Episode(held.Id,held.Symbol,p.Family,held.Side,
                     p.OpenAt,close.ClosedAt,held.Units,close.NetEur,
                     close.GrossEur,p.RiskEur,p.RiskEur>0?close.NetEur/p.RiskEur:null,
-                    p.MfeEur,p.MaeEur,close.Reason,p.CrossedUnknownHistory);
+                    p.MfeEur,p.MaeEur,close.Reason,p.CrossedUnknownHistory) {EurContext=p.EurContext};
                 if(p.Integrated is { } geometry)
                 {
                     var parts=Cpe1&&!geometry.Reduced?new[]{close}:
