@@ -32,6 +32,7 @@ public sealed record NativeCompleteDistribution(NativeCompleteSample[] Samples, 
     internal NativeCompletePrediction? Predict(decimal[] features,long clock,decimal scale,
         out (decimal Minimum,decimal Maximum) range,string? symbol=null,string? assetClass=null)
     {
+        using var predictionProfile=NativeEconomicProfiler.Measure("distribution.predict");
         range=default;
         if (scale <= 0m) throw new ArgumentException("COMPLETE_POLICY_RISK_SCALE");
         int first = WithoutResidence ? 2 : 0;
@@ -40,7 +41,10 @@ public sealed record NativeCompleteDistribution(NativeCompleteSample[] Samples, 
             if (sample.Features.Length != features.Length) throw new ArgumentException("COMPLETE_POLICY_FEATURE_COUNT");
             decimal distance = 0m;
             if(MaskedEconomicContext)
+            {
+                using var distanceProfile=NativeEconomicProfiler.MeasureDistance();
                 distance=ContextDistance(features,sample.Features,symbol,sample.Symbol,assetClass,sample.AssetClass);
+            }
             else
                 for (int i = first; i < features.Length; i++)
                 {
@@ -51,6 +55,7 @@ public sealed record NativeCompleteDistribution(NativeCompleteSample[] Samples, 
         }).OrderBy(v => v.distance).ThenBy(v => v.sample.DecisionAt).ThenBy(v => v.sample.Symbol, StringComparer.Ordinal);
         var days = new Dictionary<long, int>();
         var values = new List<(decimal Return, decimal Weight)>();
+        using (NativeEconomicProfiler.Measure("distribution.rank_select"))
         foreach (var (sample, distance) in ranked)
         {
             long day = sample.DecisionAt / NativeCompletePolicy.Day;
@@ -60,6 +65,7 @@ public sealed record NativeCompleteDistribution(NativeCompleteSample[] Samples, 
             values.Add(((sample.OutcomeR + BiasR) * scale, 1m / (1m + distance)));
             if (values.Count == 48) break;
         }
+        using var summaryProfile=NativeEconomicProfiler.Measure("distribution.summarize");
         if (values.Count < 12 || days.Count < 4) return null;
         decimal weight = values.Sum(x => x.Weight);
         decimal mean = values.Sum(x => x.Return * x.Weight) / weight;
@@ -105,6 +111,7 @@ public sealed record NativeCompleteDistribution(NativeCompleteSample[] Samples, 
 
     public NativeCompleteDistribution Calibrate(IEnumerable<NativeCompleteSample> observations)
     {
+        using var calibrationProfile=NativeEconomicProfiler.Measure("distribution.calibrate");
         var errors = observations.Select(row =>
             (row.DecisionAt, Predicted: Predict(row.Features,row.DecisionAt,1m,out _,row.Symbol,row.AssetClass), row.OutcomeR))
             .Where(row => row.Predicted is not null)
