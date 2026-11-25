@@ -80,7 +80,7 @@ def metadata_summary(p,digest,meta,rid):
         if name in route_names:roles.append("CONVERSION")
         # Route legs need the overlap even when they are also existing markets.
         # Already captured base route history is retained rather than recollected.
-        prior=name in p["Base"] or name in ("USDJPY",)
+        prior=name in p["Base"]
         windows=p["Windows"][-1:] if prior and name not in p["New"] else p["Windows"]
         for w in windows:
             targets.append(dict(symbol=name,symbolId=row["id"],window=w["Id"],
