@@ -123,11 +123,13 @@ public sealed partial class NativeUnifiedPortfolioEngine
         {
             if(eurDevelopmentProfile is {UseRealizedForecastFeedback:true} && trip.EconomicEntry is { } entry &&
                 eurOpportunities.FindLast(o=>o.At==entry.DecisionAt && o.Symbol==trip.Symbol && o.Family==trip.Family &&
-                    o.Side==trip.Side && o.ReservedRiskEur is >0m && o.Payoff is not null) is { } admission)
+                    o.Side==trip.Side && o.ReservedRiskEur is >0m && o.Payoff is not null &&
+                    (eurDevelopmentProfile.UsePredictiveCalibration!=true || o.Decision is "LONG_PENDING" or "SHORT_PENDING")) is { } admission)
             {
+                decimal realizedRisk=eurDevelopmentProfile.UsePredictiveCalibration?admission.ReservedRiskEur!.Value:evidence.ReservedRiskEur;
                 RememberEurForecastError(new(trip.Symbol,trip.Family,trip.Side,reconciled.AvailableAt,
-                    gross/evidence.ReservedRiskEur-admission.Payoff!.GrossMeanEur/admission.ReservedRiskEur!.Value,
-                    net/evidence.ReservedRiskEur-admission.Payoff.NetMeanEur/admission.ReservedRiskEur.Value));
+                    gross/realizedRisk-admission.Payoff!.GrossMeanEur/admission.ReservedRiskEur!.Value,
+                    net/realizedRisk-admission.Payoff.NetMeanEur/admission.ReservedRiskEur.Value));
             }
             return;
         }
@@ -311,8 +313,10 @@ public sealed partial class NativeUnifiedPortfolioEngine
     {
         if(eurDevelopmentProfile is {UseAdaptivePayoff:true} && decisionAt is long adaptiveClock)
         {
-            var estimate=adaptivePayoff?.Payoff(family,side,target,adaptiveClock,candidateRiskEur,currentCostFloorEur);
-            if(estimate is not null && target is not null && eurDevelopmentProfile.UseRealizedForecastFeedback)
+            var feedback=eurDevelopmentProfile is {UsePredictiveCalibration:true,UseRealizedForecastFeedback:true}&&target is not null
+                ?RealizedForecastAdjustment(target.Symbol,family,side,adaptiveClock):null;
+            var estimate=adaptivePayoff?.Payoff(family,side,target,adaptiveClock,candidateRiskEur,currentCostFloorEur,feedback);
+            if(estimate is not null && target is not null && eurDevelopmentProfile.UseRealizedForecastFeedback&&!eurDevelopmentProfile.UsePredictiveCalibration)
                 estimate=ApplyRealizedForecastErrors(estimate,target.Symbol,family,side,adaptiveClock,candidateRiskEur);
             diagnostic?.Invoke(estimate is null?"ADAPTIVE_INSUFFICIENT_SUPPORT":
                 estimate.GrossLowerEur<=0m?"ADAPTIVE_GROSS_LOWER_NONPOSITIVE":
@@ -379,6 +383,24 @@ public sealed partial class NativeUnifiedPortfolioEngine
         }
         return new NativeEurPayoff(pool.Length,days.Length,grossMean,grossLower,netMean,netLower,
             (decimal)samples.Count(x=>x.Net>0m)/samples.Length,samples.Min(x=>x.Net),samples.Max(x=>x.Net)) { Cohort=cohort };
+    }
+
+    NativeEurForecastAdjustment? RealizedForecastAdjustment(string symbol,string family,int side,long at)
+    {
+        const long day=86_400_000L;
+        if(!eurRealizedErrors.TryGetValue((symbol,family,side),out var history))return null;
+        var errors=history.Where(e=>e.AvailableAt<at).GroupBy(e=>e.AvailableAt/day)
+            .Select(g=>(Weight:Math.Pow(.5,(at/day-g.Key)/7d),Gross:(double)g.Average(e=>e.GrossR),
+                Net:(double)g.Average(e=>e.NetR))).ToArray();
+        if(errors.Length==0)return null;
+        double mass=3d+errors.Sum(e=>e.Weight);
+        double gross=errors.Sum(e=>e.Weight*e.Gross)/mass,net=errors.Sum(e=>e.Weight*e.Net)/mass;
+        // Three prior zero-error day units shrink signed feedback; the added
+        // uncertainty is not treated as independent of the calibration error.
+        double Sem(Func<(double Weight,double Gross,double Net),double> value,double mean)
+            =>Math.Sqrt((3d*mean*mean+errors.Sum(e=>e.Weight*Math.Pow(value(e)-mean,2)))/mass*
+                (3d+errors.Sum(e=>e.Weight*e.Weight))/(mass*mass));
+        return new(errors.Length,gross,net,Sem(e=>e.Gross,gross),Sem(e=>e.Net,net));
     }
 
     NativeEurPayoff ApplyRealizedForecastErrors(NativeEurPayoff estimate,string symbol,string family,int side,
