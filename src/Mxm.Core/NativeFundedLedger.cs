@@ -267,14 +267,10 @@ public sealed partial class NativeFundedLedger
                 if(e.ExecutionPrice!=outPrice || Math.Abs(e.FeeEur-Fee(q,e.Units,-closedPosition.Side))>.000000001m)
                     throw new ArgumentException("NATIVE_LEDGER_MODELED_EXIT_COST_BINDING");
                 decimal fraction=e.Units/closedPosition.Units,entryFee=closedPosition.EntryFeeRemaining*fraction,finance=closedPosition.FinancingRemaining*fraction;
-                decimal converted=ConvertQuote(q,closedPosition.Side*e.Units*(outPrice-(closedPosition.EntryPrice??throw new InvalidOperationException("ENTRY_BASIS_UNKNOWN"))));
-                decimal reference=(q.EurCredit+q.EurDebit)/2;
-                decimal gross=closedPosition.Side*e.Units*((q.Bid+q.Ask)/2-(entry.Bid+entry.Ask)/2)*reference;
-                decimal spread=e.Units*((entry.Ask-entry.Bid)+(q.Ask-q.Bid))/2*reference;
-                decimal slip=e.Units*(closedPosition.SlippagePerSide+exitSlippage)*reference;
-                decimal conversion=gross-spread-slip-converted;
-                if(conversion<-.000000001m)throw new InvalidOperationException("NATIVE_LEDGER_CONVERSION_COST");
-                conversion=Math.Max(0,conversion);decimal net=converted-entryFee-e.FeeEur+finance;
+                var (gross,spread,slip,conversion,converted)=NativeExecutableEconomics.ClosedPriceMoney(
+                    entry,q,closedPosition.Side,e.Units,closedPosition.EntryPrice??
+                        throw new InvalidOperationException("ENTRY_BASIS_UNKNOWN"),outPrice,closedPosition.SlippagePerSide,exitSlippage);
+                decimal net=converted-entryFee-e.FeeEur+finance;
                 bool complete=e.Units==closedPosition.Units;
                 settlement=new(closedPosition.Id,closedPosition.Symbol,closedPosition.EntryAt,e.At,e.Units,gross,spread,slip,conversion,entryFee+e.FeeEur,-finance,net,complete,e.Reason);
                 if(state.ClosedFunding is not null)
@@ -290,7 +286,7 @@ public sealed partial class NativeFundedLedger
                 else
                 {
                     state.Positions[closedPosition.Id]=closedPosition with {Units=closedPosition.Units-e.Units,EntryFeeRemaining=closedPosition.EntryFeeRemaining-entryFee,FinancingRemaining=closedPosition.FinancingRemaining-finance};
-                    if(close.Reason=="MODEL_UNTRANSMITTED_INTEGRATED_FAVORABLE_REDUCTION" &&
+                    if(NativeSimulatedCloseLifecycle.IsReductionReason(close.Reason) &&
                        close.Units==e.Units)
                         state.Pending.Remove(closedPosition.Id);
                 }

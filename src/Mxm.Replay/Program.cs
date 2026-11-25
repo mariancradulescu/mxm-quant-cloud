@@ -7,6 +7,10 @@ if(args is [var officialEurInput,var officialEurOutput,"--owner-official-eur"])
     return OwnerOfficialEur.Run(officialEurInput,officialEurOutput);
 if(args is ["--owner-eer1-extended",var eerInput,var eerReport,var eerCalibrations])
     return IntegratedEconomicReplay.RunEer1(eerInput,eerReport,eerCalibrations);
+if(args is ["--owner-eur-general",var generalPhase,var generalInput,var generalOutput,var generalModels])
+    return IntegratedEconomicReplay.RunGeneralEur(generalPhase,generalInput,generalOutput,generalModels);
+if(args is ["--owner-eer1-closed-diagnosis",var diagnosisSource,var diagnosisLedger,var diagnosisReport])
+    return IntegratedEconomicReplay.AuditEerClosedSource(diagnosisSource,diagnosisLedger,diagnosisReport);
 if(args is ["--owner-eur-conditional-continuity-pilot",var conditionalInput,var conditionalOutput,var conditionalCalibration,var conditionalSource])
     return IntegratedEconomicReplay.RunDatedEur(conditionalInput,conditionalOutput,conditionalCalibration,conditionalSource);
 if(args is ["--owner-eur-historical-development",var datedEurInput,var datedEurOutput,var calibrationOut])

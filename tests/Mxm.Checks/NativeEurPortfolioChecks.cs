@@ -69,6 +69,7 @@ internal static class NativeEurPortfolioChecks
             "Conditional rollover rejects post-charge and incomplete witnesses");
         LateNetChangesRanking(check);
         ContractClocksAndDirectionalCosts(check);
+        GeneralEurChoosesFundedCombination(check);
         var flexible=input.Markets[0] with {EurNativeClock=true};
         check(NativeUnifiedPortfolioEngine.EurFrameFollows(flexible,input.At+1_000,input.At+Step+2_000)&&
             !NativeUnifiedPortfolioEngine.EurFrameFollows(flexible,input.At+1_000,input.At+2*Step+2_000)&&
@@ -87,6 +88,73 @@ internal static class NativeEurPortfolioChecks
             opens.Length,i=>opens[i],Read);
         check(ready is {Ready:true,DailyCalendarBreaks:1}&&ready.Bars[1].OpenAt==opens[1]&&!tooEarly.Ready,
             "Daily EUR context retains a calendar gap and requires a witnessed active successor");
+    }
+
+    static void GeneralEurChoosesFundedCombination(Action<bool,string> check)
+    {
+        const long day=86_400_000L;
+        Ucp1Frame Shape(long at)
+        {
+            var shape=OfficialShape(1,1,at-Step);
+            var windows=NativeClosedMarketContext.CoverageWindows.Select(r=>
+            {
+                long width=NativeClosedMarketContext.Duration(r.Timeframe);
+                long close=at-1;
+                var bars=Enumerable.Range(0,r.Count).Select(i=>new NativeClosedMarketBar(
+                    close-(r.Count-i)*width,close-(r.Count-i-1)*width,100m,100.40m,99.80m,100.20m,100)).ToArray();
+                return new NativeBarWindow(r.Timeframe,r.Count,close,close,"SYNTHETIC",NativeBarStatus.Ready,bars);
+            }).ToArray();
+            return shape with {Markets=new[]{("A",180m),("B",95m),("C",95m)}.Select(x=>
+            {
+                var m=Named(shape.Markets[0],x.Item1);
+                return m with {Quote=m.Quote with {Bid=100.20m,Ask=100.22m,MarginPerUnit=x.Item2},
+                    M5=windows[1].Bars,M15=windows[2].Bars,EurTickSize=.01m,OfficialAssetClass="SYNTHETIC",
+                    ClosedBars=new(at,windows),
+                    EurMargins=new[]{new NativeEurMarginObservation(1,1m,x.Item2,at,Proof)},
+                    FundingOffers=new[]{new NativeFundingOfferEvidence(m.Symbol,1,1m,at,at,at+Step,at+Step,0m,Proof)}};
+            }).ToArray()};
+        }
+        var probe=new NativeUnifiedPortfolioEngine(NativeUnifiedPortfolioEngine.EurGeneralProbe);
+        var fit=Shape(Origin);
+        var observed=probe.Advance(fit);
+        check(observed.Pending>0&&probe.EurOpportunityReceipts.Any(x=>
+            x.Family==NativeGeneralOpportunity.Distribution&&x.Context?.MarketState?.Length==16),
+            "General EUR evaluates broad direction, witnessed frames and net geometry in Core");
+        var calibration=probe.ExportEurCalibration();
+        var uncalibrated=new NativeUnifiedPortfolioEngine(NativeUnifiedPortfolioEngine.EurGeneralSelect);
+        var frame=Shape(Origin+Step);
+        check(uncalibrated.Advance(frame).Pending==0&&uncalibrated.EurOpportunityReceipts.Any(x=>
+            x.Decision=="WAIT_RECONCILED_PAYOFF_EVIDENCE"),"General EUR waits without supported monetary outcomes");
+
+        var observations=fit.Markets.SelectMany(m=>Enumerable.Range(1,20).Select(i=>
+        {
+            long past=Origin-i*day;
+            decimal net=m.Symbol=="A"?4m:3m;
+            var context=probe.EurOpportunityReceipts.First(x=>x.Symbol==m.Symbol&&x.Context is not null).Context;
+            return new NativeEurCalibrationOutcome(m.Symbol+i,NativeGeneralOpportunity.Distribution,1,past,past,
+                net+.50m,net,1m){Context=context};
+        })).ToArray();
+        calibration=calibration with {Outcomes=observations};
+        var contextual=new NativeUnifiedPortfolioEngine(NativeUnifiedPortfolioEngine.EurGeneralSelect);
+        contextual.LoadEurCalibration(calibration);
+        var adapter=new NativeUnifiedCloudParityAdapter(NativeUnifiedPortfolioEngine.EurGeneralSelect);
+        adapter.LoadEurCalibration(calibration);
+        var pending=contextual.Advance(frame);
+        var selected=contextual.EurOpportunityReceipts.Where(x=>x.Decision=="LONG_PENDING").ToArray();
+        check(pending==adapter.Observe(frame) && selected.Select(x=>x.Symbol).SequenceEqual(new[]{"B","C"}) &&
+            pending.FundingCapital?.PendingOpenMarginEur==190m && selected.All(x=>x.DisplacedAlternativeEur.HasValue),
+            "General EUR chooses two jointly financed alternatives over the largest standalone forecast");
+        var restored=NativeUnifiedPortfolioEngine.Restore(contextual.Checkpoint());
+        var later=Shape(Origin+2*Step);
+        check(contextual.Advance(later)==restored.Advance(later)&&adapter.Observe(later).Held==2,
+            "General EUR revalidates fills and resumes the same reserved portfolio from a checkpoint");
+        var checkedFuture=new NativeUnifiedPortfolioEngine(NativeUnifiedPortfolioEngine.EurGeneralSelect);
+        checkedFuture.LoadEurCalibration(calibration);
+        var malformed=frame.Markets[0];
+        var altered=malformed.ClosedBars!.Windows.Select(w=>w.Timeframe==NativeBarTimeframe.H1
+            ?w with {Bars=w.Bars.Select(b=>b with {CloseAt=frame.At+Step}).ToArray()}:w).ToArray();
+        check(checkedFuture.Advance(frame with {Markets=new[]{malformed with {ClosedBars=new(frame.At,altered)}}}).Pending==0,
+            "General EUR rejects a claimed ready context containing future bars");
     }
 
     static void ExplicitScenarioContinuity(Action<bool,string> check)

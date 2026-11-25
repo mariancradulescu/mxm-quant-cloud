@@ -30,12 +30,12 @@ public static class NativePostFillCapitalGuard
         IReadOnlyCollection<NativePendingCapitalGate.Commitment> pendingOpen,
         string proposedPendingPositionId,int side,
         LedgerQuote currentQuote,decimal entrySlippage,
-        decimal extraPossibleDebitEur=0m)
+        decimal extraPossibleDebitEur=0m,decimal? exitSlippage=null)
     {
         ArgumentNullException.ThrowIfNull(held);
         ArgumentNullException.ThrowIfNull(pendingOpen);
         ArgumentNullException.ThrowIfNull(currentQuote);
-        if(side is not (1 or -1)||entrySlippage<0m||extraPossibleDebitEur<0m||
+        if(side is not (1 or -1)||entrySlippage<0m||exitSlippage is <0m||extraPossibleDebitEur<0m||
             currentQuote.Bid<=0m||currentQuote.Ask<currentQuote.Bid||
             currentQuote.EurCredit<=0m||currentQuote.EurDebit<currentQuote.EurCredit)
             throw new ArgumentException("POST_FILL_PRICE_OR_SIDE_INVALID");
@@ -53,7 +53,7 @@ public static class NativePostFillCapitalGuard
         decimal exitFee=NativeFundedLedger.Fee(currentQuote,proposal[0].Units,-side);
         decimal entry=NativeExecutableEconomics.EntryPrice(currentQuote,side,entrySlippage);
         decimal exit=NativeExecutableEconomics.ExitPrice(
-            side>0?currentQuote.Bid:currentQuote.Ask,side,entrySlippage);
+            side>0?currentQuote.Bid:currentQuote.Ask,side,exitSlippage??entrySlippage);
         decimal quoteProfit=side*(exit-entry)*proposal[0].Units;
         decimal converted=quoteProfit*(quoteProfit>=0m?
             currentQuote.EurCredit:currentQuote.EurDebit);

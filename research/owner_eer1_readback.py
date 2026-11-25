@@ -66,7 +66,7 @@ def read_archives(key,work):
             add(ids[q.symbolId],tf,rows)
     return bars,add,conflicts,proof
 
-def main(recovery=False):
+def main(recovery=False, diagnosis=None):
     if recovery:
         from . import owner_eer1_recovery as recover
     run=recover.ORIGINAL_RUN if recovery else os.environ["GITHUB_RUN_ID"]
@@ -83,7 +83,8 @@ def main(recovery=False):
     source_acquired=max(p["at"] for p in original["packets"])
     rows={x["symbol"]:x for x in mat["matrix"]}
     OUT.mkdir(exist_ok=False)
-    if recovery:recover.prove_shadow(receipt,key,account,rows,chosen,eer.charge_clocks(meta["terms"]),OUT)
+    if recovery and diagnosis is None:
+        recover.prove_shadow(receipt,key,account,rows,chosen,eer.charge_clocks(meta["terms"]),OUT)
     verified_shards=[]
     with tempfile.TemporaryDirectory(prefix="eer1-custody-") as temp:
         work=Path(temp);bars,add,conflicts,proof=read_archives(key,work)
@@ -199,8 +200,23 @@ def main(recovery=False):
         engine_revision=recover.ORIGINAL_HEAD if recovery else os.environ["GITHUB_SHA"]
         payload=dict(Start=eer.START,FitEnd=eer.FIT_END,End=eer.END,ProtocolSha256=receipt["protocolSha256"],
             EngineRevision=engine_revision,EvidenceManifestSha256=manifest_sha,SourceAcquiredAt=source_acquired,Markets=markets,Tapes=tapes,Routes=meta["routes"])
-        path.write_bytes(src.canonical(payload));path.chmod(0o600)
+        if diagnosis is not None:
+            from .official_symbol_calendar import build_clock_grid
+            for market in markets:
+                info=meta["info"][market["Market"]["Name"]]
+                grid=build_clock_grid(info["fields"],eer.WARM,eer.END+7*eer.DAY)
+                market.update(ScheduledClocks=grid["openClocks"],AmbiguousCalendarClocks=grid["ambiguousClocks"],
+                              CalendarStatus=grid["status"])
+        with os.fdopen(os.open(path,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600),"wb") as private:
+            private.write(src.canonical(payload))
         env={k:v for k,v in os.environ.items() if k!="R3_CUSTODY_PRIVATE_KEY_PEM"}
+        if diagnosis is not None:
+            original, report=diagnosis
+            need(src.digest(original.read_bytes())=="b8239d32b80c5b6a87722ebb6e07de0a2455cea52e4b2dde460a52be38f4a9e2",
+                 "EER1_DIAGNOSIS_ORIGINAL_ECONOMIC_HASH")
+            subprocess.run(["dotnet","src/Mxm.Replay/bin/Release/net8.0/Mxm.Replay.dll","--owner-eer1-closed-diagnosis",
+                str(path),str(original),str(report)],check=True,env=env)
+            return
         subprocess.run(["dotnet","src/Mxm.Replay/bin/Release/net8.0/Mxm.Replay.dll","--owner-eer1-extended",
             str(path),str(OUT/"economic.json"),str(OUT)],check=True,env=env)
         (OUT/"receipt.json").write_bytes(src.canonical(dict(inputSha256=src.digest(path.read_bytes()),
@@ -215,5 +231,9 @@ def main(recovery=False):
     print("EER1_NATIVE_EXTENDED_PUBLISHED",flush=True)
 
 if __name__=="__main__":
-    need(sys.argv[1:] in ([],["--recover-original"]),"EER1_READBACK_MODE")
-    main(sys.argv[1:]==["--recover-original"])
+    args=sys.argv[1:]
+    if len(args)==3 and args[0]=="--diagnose-source":
+        main(recovery=True,diagnosis=(Path(args[1]),Path(args[2])))
+    else:
+        need(args in ([],["--recover-original"]),"EER1_READBACK_MODE")
+        main(args==["--recover-original"])

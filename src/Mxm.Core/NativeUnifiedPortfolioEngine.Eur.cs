@@ -16,7 +16,11 @@ public sealed record NativeEurPayoff(int ReconciledEpisodes,int ObservationDays,
 public sealed record NativeEurBarState(NativeBarTimeframe Timeframe,int Direction,bool AboveRecentRange);
 public sealed record NativeEurDecisionContext(string Symbol,string? AssetClass, int UtcMinute,
     NativeEurBarState[] ClosedStates,decimal CommittedMarginFraction,decimal CostRiskFraction,
-    bool DatedTermsScenario);
+    bool DatedTermsScenario)
+{
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public decimal?[]? MarketState { get; init; }
+}
 public sealed record NativeEurOpportunity(long At,string Symbol,string Family,int Side,
     decimal Units,decimal GrossTargetEur,decimal GrossRiskEur,decimal KnownRoundTripCostEur,
     decimal? NextManagementFundingCeilingEur,decimal? CurrentMarginEstimateEur,
@@ -25,6 +29,12 @@ public sealed record NativeEurOpportunity(long At,string Symbol,string Family,in
 {
     public decimal? ConditionalNetAtTargetEur { get; init; }
     public decimal? ConditionalNetRewardRisk { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public decimal? DisplacedAlternativeEur { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public decimal? ProtectiveStop { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public decimal? PriceTarget { get; init; }
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public NativeEurDecisionContext? Context { get; init; }
 }
@@ -40,6 +50,8 @@ public sealed record NativeEurCalibration(long ObservationThrough,string LedgerE
 {
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public string? FundingScenarioId { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? OpportunitySchema { get; init; }
 }
 
 public sealed partial class NativeUnifiedPortfolioEngine
@@ -87,11 +99,12 @@ public sealed partial class NativeUnifiedPortfolioEngine
 
     public NativeEurCalibration ExportEurCalibration()
     {
-        if(policy!=EurFirst||previousClock<=0)
+        if(policy is not (EurFirst or EurGeneralProbe)||previousClock<=0)
             throw new ArgumentException("EUR_CALIBRATION_REQUIRES_COMPLETED_FIRST_LEDGER_BEFORE_CONFIRMATION");
         var outcomes=eurHistory.Values.SelectMany(rows=>rows)
             .OrderBy(o=>o.ClosedAt).ThenBy(o=>o.PositionId,StringComparer.Ordinal).ToArray();
-        return new(previousClock,ModelSummary.EventChainHash,outcomes) {FundingScenarioId=FundingScenarioId};
+        return new(previousClock,ModelSummary.EventChainHash,outcomes) {FundingScenarioId=FundingScenarioId,
+            OpportunitySchema=IsEurGeneral?EurGeneralSchema:null};
     }
 
     public void LoadEurCalibration(NativeEurCalibration calibration)
@@ -104,6 +117,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
     void RestoreEurCalibration(NativeEurCalibration calibration)
     {
         if(!IsEurRank||calibration.FundingScenarioId!=FundingScenarioId||calibration.ObservationThrough<=0||
+            calibration.OpportunitySchema!=(IsEurGeneral?EurGeneralSchema:null)||
+            (IsEurGeneral&&calibration.Outcomes.Any(x=>x.Context?.MarketState is not { Length: GeneralStateSize }))||
             calibration.LedgerEventChainSha256 is not {Length:64}||
             !calibration.LedgerEventChainSha256.All(Uri.IsHexDigit)||
             calibration.Outcomes.Select(o=>o.PositionId).Distinct(StringComparer.Ordinal)
@@ -165,8 +180,17 @@ public sealed partial class NativeUnifiedPortfolioEngine
         decimal clock=1m-Math.Min(minutes,1440-minutes)/720m;
         decimal capital=1m-Math.Min(1m,Math.Abs(target.CommittedMarginFraction-observed.CommittedMarginFraction));
         decimal cost=1m-Math.Min(1m,Math.Abs(target.CostRiskFraction-observed.CostRiskFraction));
-        return (1m+clock+capital+cost+paired.Sum(x=>(x.a.Direction==x.b.Direction?1m:0m)+
-            (x.a.AboveRecentRange==x.b.AboveRecentRange?1m:0m)))/(4m+2m*paired.Length);
+        decimal affinity=1m+clock+capital+cost+paired.Sum(x=>(x.a.Direction==x.b.Direction?1m:0m)+
+            (x.a.AboveRecentRange==x.b.AboveRecentRange?1m:0m));
+        int terms=4+2*paired.Length;
+        if(target.MarketState is { } current && observed.MarketState is { } history)
+            for(int i=0;i<current.Length;i++)
+                if(current[i] is decimal a&&history[i] is decimal b)
+                {
+                    affinity+=1m-Math.Min(1m,Math.Abs(a-b)/2m);
+                    terms++;
+                }
+        return affinity/terms;
     }
 
     static NativeEurDecisionContext? DescribeEurContext(Ucp1MarketFrame market,long at,int side,
@@ -219,7 +243,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
         foreach(var (s,market) in options.OrderBy(x=>x.Frame.Symbol,StringComparer.Ordinal)
             .ThenBy(x=>x.Signal.Family,StringComparer.Ordinal).ThenBy(x=>x.Signal.Side))
         {
-            if(!Cpe1Usable(market,at)||Cpe1Levels(s,market) is not { } levels)continue;
+            if(!Cpe1Usable(market,at)||EurLevels(s,market) is not { } levels)continue;
+            var marketState=IsEurGeneral?DescribeGeneralState(market,frame,s.Side):null;
             var unitsOffered=(market.EurMargins??Array.Empty<NativeEurMarginObservation>())
                 .Where(x=>x.Side==s.Side&&x.Units>0m).Select(x=>x.Units)
                 .Append(market.Contract.MinimumUnits).Distinct().OrderByDescending(x=>x);
@@ -239,19 +264,22 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 decimal? risk=bracket.RiskEur+debit;
                 var context=DescribeEurContext(market,at,s.Side,(capital.HeldMarginEur??0m)+pending.Sum(x=>x.MarginEur),
                     capital.ResearchAdmissionEquityEur,risk,roundTripCost);
+                if(context is not null&&marketState is not null)context=context with {MarketState=marketState};
                 var payoff=risk is >0m?EurPayoff(s.Family,s.Side,risk.Value,roundTripCost+debit!.Value,
-                    policy==EurContextRank?context:null):null;
+                    policy is EurContextRank or EurGeneralSelect?context:null):null;
                 var receipt=new NativeEurOpportunity(at,market.Symbol,s.Family,s.Side,units,grossTarget,grossRisk,
                     roundTripCost,debit,margin?.MarginEur,risk,capital.HeldMarginEur,capital.PendingOpenMarginEur,
                     capital.ResearchAdmissionEquityEur,payoff,"ASSESS")
                 {
                     ConditionalNetAtTargetEur=bracket.RewardEur-debit,
                     ConditionalNetRewardRisk=risk is >0m?(bracket.RewardEur-debit)/risk:null,
+                    ProtectiveStop=IsEurGeneral?levels.Stop:null,
+                    PriceTarget=IsEurGeneral?levels.Target:null,
                     Context=context
                 };
                 string? unavailable=margin is null?"WAIT_VOLUME_MARGIN_EVIDENCE":debit is null?"WAIT_FUNDING_CEILING":
                     grossRisk<=0m||grossTarget<=0m||risk is not >0m||bracket.RewardEur<=debit.Value?"WAIT_PRICE_GEOMETRY":
-                    policy==EurCash?"WAIT_CASH":
+                    policy is EurCash or EurGeneralCash?"WAIT_CASH":
                     capital.MaximumSampledFundingAdjustedDrawdown>=.28m?"WAIT_PORTFOLIO_DRAWDOWN":
                     IsEurRank&&payoff is not {GrossLowerEur:>0m,NetLowerEur:>0m}
                         ?"WAIT_RECONCILED_PAYOFF_EVIDENCE":null;
@@ -261,18 +289,12 @@ public sealed partial class NativeUnifiedPortfolioEngine
             }
         }
 
-        IEnumerable<EurCandidate> ranked=IsEurRank?
-            choices.OrderByDescending(x=>x.Receipt.Payoff!.NetLowerEur):choices;
-        foreach(var choice in ranked)
+        void Admit(EurCandidate choice)
         {
             var s=choice.Signal;
             var market=choice.Market;
             var receipt=choice.Receipt;
             decimal units=receipt.Units, margin=market.Quote.MarginPerUnit;
-            var gate=NativePendingCapitalGate.Assess(capital.ResearchAdmissionEquityEur,book.UsedMarginEur is not null,
-                held,pending,new(market.Symbol,s.Family,units,market.Contract.VolumeStepUnits,units,
-                    margin,choice.Geometry.InitialRiskEur/units));
-            if(!gate.IsFinanceable){Trace(receipt,EurRejectedCapital(gate.Status,book,capital));continue;}
             string id="UCP1/"+policy+"/"+market.Symbol+"/"+s.Family+"/"+at;
             Apply(Event("REQUEST_OPEN",at,id,market.Symbol,s.Side,units,margin:margin,
                 slip:market.SlippagePerSideQuote,reason:"NATIVE_CONDITIONAL_SELECTION") with
@@ -283,7 +305,34 @@ public sealed partial class NativeUnifiedPortfolioEngine
             admitted++;
             Trace(receipt,s.Side>0?"LONG_PENDING":"SHORT_PENDING");
         }
+        if(policy is EurGeneralSelect or EurGeneralPooled)
+            AllocateGeneralEur(frame,book,capital,held,pending,choices,Admit,Trace);
+        else
+        {
+            IEnumerable<EurCandidate> ranked=IsEurRank?choices.OrderByDescending(x=>x.Receipt.Payoff!.NetLowerEur):
+                policy==EurGeneralProbe?choices.OrderBy(x=>ProbeKey(x.Receipt),StringComparer.Ordinal):choices;
+            foreach(var choice in ranked)
+            {
+                var gate=AssessEurCandidate(capital,book,held,pending,choice);
+                if(!gate.IsFinanceable){Trace(choice.Receipt,EurRejectedCapital(gate.Status,book,capital));continue;}
+                Admit(choice);
+            }
+        }
         return RecordIntegratedFrame(at,model.Ledger.Summary(at),frame);
+    }
+
+    static (decimal Stop,decimal Target)? EurLevels(Ucp1DecisionSignal signal,Ucp1MarketFrame market)
+        =>signal.GeneralGeometry is { } geometry?(geometry.Stop,geometry.Target):Cpe1Levels(signal,market);
+
+    static NativePendingCapitalGate.Admission AssessEurCandidate(NativeFundingCapital capital,LedgerSummary book,
+        NativePendingCapitalGate.Commitment[] held,List<NativePendingCapitalGate.Commitment> pending,
+        EurCandidate choice,decimal extraRisk=0m)
+    {
+        var market=choice.Market;
+        decimal units=choice.Receipt.Units;
+        return NativePendingCapitalGate.Assess(capital.ResearchAdmissionEquityEur,book.UsedMarginEur is not null,
+            held,pending,new(market.Symbol,choice.Signal.Family,units,market.Contract.VolumeStepUnits,units,
+                market.Quote.MarginPerUnit,choice.Geometry.InitialRiskEur/units,extraRisk));
     }
 
     NativeModelCloseInstruction? ManageFundedTarget(Ucp1Plan plan,LedgerPosition position,

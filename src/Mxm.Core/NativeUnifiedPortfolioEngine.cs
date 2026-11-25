@@ -28,6 +28,8 @@ public sealed record Ucp1MarketFrame(
     public bool EurDatedMarginScenario { get; init; }
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
     public bool EurNativeClock { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public decimal? EurTickSize { get; init; }
 }
 public sealed record Ucp1BrokerFrame(BrokerIdentitySnapshot Identity,
     decimal? AccountCashEur,string AccountType);
@@ -38,7 +40,11 @@ public sealed record Ucp1Frame(long At,Ucp1MarketFrame[] Markets,
     public NativeAccruedFundingEvidence[]? FundingEvidence { get; init; }
 }
 public sealed record Ucp1DecisionSignal(string Symbol,string Family,int Side,
-    decimal Atr,decimal Equilibrium,decimal ExpectedMove,long LastCompletedM5At);
+    decimal Atr,decimal Equilibrium,decimal ExpectedMove,long LastCompletedM5At)
+{
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public NativeIntegratedCandidate? GeneralGeometry { get; init; }
+}
 public sealed record Ucp1Episode(string PositionId,string Symbol,string Family,
     int Side,long OpenAt,long CloseAt,decimal Units,decimal NetEur,
     decimal GrossEur,decimal EntryRiskEur,decimal? R,
@@ -193,8 +199,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
     readonly NativeIntegratedBarrierCalibration? integratedCalibration;
     readonly NativeCompleteModels? completeModels;
     readonly NativeCompleteProbe? completeProbe;
-    bool IsEurRank => policy is EurRank or EurContextRank;
-    bool OwnerEur => IsEurRank || policy is EurFirst or EurCash;
+    bool IsEurRank => policy is EurRank or EurContextRank or EurGeneralSelect or EurGeneralPooled;
+    bool OwnerEur => IsEurRank || policy is EurFirst or EurCash or EurGeneralProbe or EurGeneralCash;
     bool Cpe1 => OwnerEur || policy is "CPE1_ECONOMIC" or "CPE1_SIMPLE" or "CPE1_CASH";
     bool Cpe1Economic => policy=="CPE1_ECONOMIC";
     bool CompletePolicy => NativeCompletePolicy.IsPolicy(policy);
@@ -229,6 +235,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
         if(policy is not ("JOINT" or "TRANSITION_ONLY" or "REPAIR_ONLY" or
                           "LONG" or "SHORT" or "CASH" or
                           "CPE1_ECONOMIC" or "CPE1_SIMPLE" or "CPE1_CASH" or EurFirst or EurRank or EurContextRank or EurCash or
+                          EurGeneralProbe or EurGeneralSelect or EurGeneralPooled or EurGeneralCash or
                           "SCP1_FIRST" or "SCP1_SCORE" or
                           "SCP1_MARGINAL" or "SCP1_ABSTAIN" or
                           "SCP1_LONG" or "SCP1_SHORT" or "SCP1_CASH" or
@@ -733,7 +740,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
                     {Count(fcp1?"FCP1_COMPLETED_M15_DECISION_CLOCK_STALE":
                         "SCP1_COMPLETED_M15_DECISION_CLOCK_STALE");continue;}
                 }
-                var signals=Ucp1CausalSignals.Describe(m,t);
+                var signals=IsEurGeneral?DescribeEurGeneral(m,t):Ucp1CausalSignals.Describe(m,t);
                 if(signals.Length==0)continue;
                 long completed=signals[0].LastCompletedM5At;
                 if(lastSignalBar.GetValueOrDefault(m.Symbol)>=completed)continue;

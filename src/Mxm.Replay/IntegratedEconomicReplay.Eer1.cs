@@ -7,7 +7,11 @@ internal static partial class IntegratedEconomicReplay
 {
     sealed record EerHop(string Symbol,string BaseAsset,string QuoteAsset);
     sealed record EerTape(string Name,SourceQuote[] Quotes,DatedRolloverQuote[] FundingQuotes);
-    sealed record EerMarket(SourceMarket Market,long TermsAcquiredAt,long[]? ScheduledClocks);
+    sealed record EerMarket(SourceMarket Market,long TermsAcquiredAt,long[]? ScheduledClocks)
+    {
+        public long[]? AmbiguousCalendarClocks { get; init; }
+        public string? CalendarStatus { get; init; }
+    }
     sealed record EerInput(long Start,long FitEnd,long End,string ProtocolSha256,string EngineRevision,
         string EvidenceManifestSha256,long SourceAcquiredAt,EerMarket[] Markets,EerTape[] Tapes,
         Dictionary<string,EerHop[]> Routes);
@@ -24,7 +28,15 @@ internal static partial class IntegratedEconomicReplay
             if(Source.ScheduledClocks is not { } schedule)return null;
             int i=Array.BinarySearch(schedule,at);
             if(i<0)return null;
-            return i+1<schedule.Length?schedule[i+1]:null;
+            if(i+1>=schedule.Length)return null;
+            long next=schedule[i+1];
+            if(Source.AmbiguousCalendarClocks is {Length:>0} ambiguous)
+            {
+                int first=Array.BinarySearch(ambiguous,at);
+                if(first<0)first=~first;
+                if(first<ambiguous.Length&&ambiguous[first]<next)return null;
+            }
+            return next;
         }
     }
     static string EerHash(string text)=>Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text))).ToLowerInvariant();
@@ -82,10 +94,13 @@ internal static partial class IntegratedEconomicReplay
             decimal? bid=q is {RequestedCoverage:true,Bid:>0m,BidAt:>0L}&&q.BidAt<=at&&at-q.BidAt<=7_200_000L?q.Bid:null;
             return new(bid,ConversionAt(asset,at,true));
         }
-        public Ucp1MarketFrame? Frame(EerStream stream,long at,string scenario,decimal stress)
+        public Ucp1MarketFrame? Frame(EerStream stream,long at,string scenario,decimal stress,bool general=false)
         {
             var m=stream.Source.Market;
-            if(stream.Source.ScheduledClocks is null){stream.Mark(at,"UNKNOWN_OFFICIAL_SCHEDULE");return null;}
+            if(stream.Source.ScheduledClocks is null)
+            {stream.Mark(at,general?stream.Source.CalendarStatus??"CALENDAR_NOT_COLLECTED":"UNKNOWN_OFFICIAL_SCHEDULE");return null;}
+            if(general&&stream.Source.AmbiguousCalendarClocks is { } unclear&&Array.BinarySearch(unclear,at)>=0)
+            {stream.Mark(at,"OFFICIAL_HOLIDAY_BOUNDS_AMBIGUOUS");return null;}
             long? next=stream.Next(at);
             if(next is null){stream.Mark(at,"SCHEDULE_CLOSED_OR_END");return null;}
             var q=At(m.Name,at);
@@ -133,7 +148,7 @@ internal static partial class IntegratedEconomicReplay
             return new(m.Name,quote,c,context.For(NativeBarTimeframe.M5).Bars,context.For(NativeBarTimeframe.M15).Bars,
                 slip,"AUTHENTIC_QUOTES_EXPLICIT_RETROSPECTIVE_TERMS_SCENARIO")
                 {ClosedBars=context,OfficialAssetClass=m.OfficialAssetClass,EurDatedMarginScenario=true,
-                 EurMargins=margins,FundingOffers=offers.ToArray()};
+                 EurMargins=margins,FundingOffers=offers.ToArray(),EurTickSize=general?m.TickSize:null};
         }
         public void Advance(NativeUnifiedPortfolioEngine book,Ucp1Frame frame,
             Dictionary<string,EerStream> markets,string scenario,decimal stress)

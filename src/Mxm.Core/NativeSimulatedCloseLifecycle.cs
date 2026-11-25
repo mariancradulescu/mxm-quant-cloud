@@ -28,6 +28,10 @@ public sealed record NativeModelCloseStep(
 
 public static class NativeSimulatedCloseLifecycle
 {
+    internal const string MarginReduction = "INTEGRATED_EUR_GENERAL_MARGIN_REDUCTION";
+    internal static bool IsReductionReason(string reason) =>
+        reason is "MODEL_UNTRANSMITTED_INTEGRATED_FAVORABLE_REDUCTION" or ("MODEL_UNTRANSMITTED_" + MarginReduction);
+
     // The 120 seconds describes validity of a modeled close instruction,
     // not duration of holding exposure or a strategy-specific trading exit.
     public const long ModelCloseResponseWindowMs=120000L;
@@ -140,7 +144,7 @@ public static class NativeSimulatedCloseLifecycle
             {
                 decimal exitPrice=NativeExecutableEconomics.ExitPrice(held.Side>0?quote.Bid:quote.Ask,
                     held.Side,quote.LiquidationSlippagePerSide??held.SlippagePerSide);
-                decimal units=pending.Reason=="MODEL_UNTRANSMITTED_INTEGRATED_FAVORABLE_REDUCTION"
+                decimal units=IsReductionReason(pending.Reason)
                     ?pending.Units:held.Units;
                 if(units<=0m || units>held.Units)
                     throw new ArgumentException("INTEGRATED_REDUCTION_VOLUME");
@@ -173,7 +177,7 @@ public static class NativeSimulatedCloseLifecycle
         var instruction=observation.Instruction;
         if(instruction is not null && (instruction.Units<=0m || instruction.Units>held.Units ||
            !instruction.Reason.StartsWith("INTEGRATED_",StringComparison.Ordinal) ||
-           (instruction.Units<held.Units && instruction.Reason!="INTEGRATED_FAVORABLE_REDUCTION")))
+           (instruction.Units<held.Units && !IsReductionReason("MODEL_UNTRANSMITTED_"+instruction.Reason))))
             throw new ArgumentException("INTEGRATED_CAUSAL_CLOSE_INSTRUCTION");
         if(instruction is not null || verdict.RequestClose)
         {
