@@ -32,6 +32,8 @@ jobs:
           MXM_ECONOMIC_PROFILE=1 MXM_ECONOMIC_PROFILE_DISTANCE=1 MXM_ECONOMIC_BOUNDED_NEIGHBORS=0 dotnet "$dll" --small > benchmark/distance-small.json
           MXM_ECONOMIC_PROFILE=0 MXM_ECONOMIC_BOUNDED_NEIGHBORS=1 dotnet "$dll" > benchmark/bounded.json
           MXM_ECONOMIC_PROFILE=1 MXM_ECONOMIC_BOUNDED_NEIGHBORS=1 dotnet "$dll" > benchmark/bounded-profiled.json
+          MXM_ECONOMIC_PROFILE=0 MXM_ECONOMIC_BOUNDED_NEIGHBORS=0 MXM_ECONOMIC_PAIRED_DISTRIBUTION=1 dotnet "$dll" > benchmark/paired.json
+          MXM_ECONOMIC_PROFILE=0 MXM_ECONOMIC_BOUNDED_NEIGHBORS=1 MXM_ECONOMIC_PAIRED_DISTRIBUTION=1 dotnet "$dll" > benchmark/paired-bounded.json
       - name: Verify prediction and calibration digests, publish measured comparisons
         run: |
           python - <<'PY'
@@ -41,7 +43,7 @@ jobs:
           def load(name): return {r['Size']:r for r in json.loads((p/(name+'.json')).read_text())['Results']}
           base=load('baseline')
           comparison=[]
-          for mode in ('profiled','distance-small','bounded','bounded-profiled'):
+          for mode in ('profiled','distance-small','bounded','bounded-profiled','paired','paired-bounded'):
               rows=load(mode)
               assert set(rows)==({256} if mode=='distance-small' else set(base))
               for n,r in rows.items():
@@ -58,7 +60,8 @@ jobs:
           MXM_ECONOMIC_PROFILE=0 MXM_ECONOMIC_BOUNDED_NEIGHBORS=0 dotnet "$dll" > benchmark/native-baseline.log
           MXM_ECONOMIC_PROFILE=1 MXM_ECONOMIC_BOUNDED_NEIGHBORS=0 dotnet "$dll" > benchmark/native-profiled.log
           MXM_ECONOMIC_PROFILE=0 MXM_ECONOMIC_BOUNDED_NEIGHBORS=1 dotnet "$dll" > benchmark/native-bounded.log
-          tail -n 3 benchmark/native-baseline.log benchmark/native-profiled.log benchmark/native-bounded.log
+          MXM_ECONOMIC_PROFILE=0 MXM_ECONOMIC_BOUNDED_NEIGHBORS=1 MXM_ECONOMIC_PAIRED_DISTRIBUTION=1 dotnet "$dll" > benchmark/native-paired.log
+          tail -n 3 benchmark/native-baseline.log benchmark/native-profiled.log benchmark/native-bounded.log benchmark/native-paired.log
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:

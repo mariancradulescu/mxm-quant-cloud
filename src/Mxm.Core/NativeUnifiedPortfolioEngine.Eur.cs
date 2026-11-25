@@ -77,6 +77,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
     internal Ucp1EurDecisionActivity[] EurDecisionActivity => eurDecisionActivity.ToArray();
     NativeEurCalibration? eurCalibration;
     readonly Dictionary<(string Family,int Side),(NativeCompleteDistribution Gross,NativeCompleteDistribution Net)> localEurPayoff=new();
+    readonly Dictionary<(string Family,int Side),NativeCompleteDistributionPair> pairedEurPayoff=new();
+    static readonly bool UsePairedDistribution=Environment.GetEnvironmentVariable("MXM_ECONOMIC_PAIRED_DISTRIBUTION")=="1";
     public long LastObservationAt=>previousClock;
     public string PolicyName=>policy;
 
@@ -168,21 +170,34 @@ public sealed partial class NativeUnifiedPortfolioEngine
         if(eurDevelopmentProfile is { UseRecoveredLocalPayoff:true } profile)
         {
             localEurPayoff.Clear();
+            pairedEurPayoff.Clear();
             foreach(var (key,history) in eurHistory)
             {
                 var features=history.Where(o=>o.DecisionAt.HasValue)
                     .Select(o=>(Outcome:o,State:LocalEurPayoffFeatures(o.Context,profile.UseExtendedLocalPayoff)))
                     .Where(x=>x.State is not null).ToArray();
-                NativeCompleteDistribution Fit(string component,Func<NativeEurCalibrationOutcome,decimal> value)
+                NativeCompleteDistribution Build(Func<NativeEurCalibrationOutcome,decimal> value)
                 {
-                    using var fitProfile=NativeEconomicProfiler.Measure(component);
                     var samples=features.Select(x=>new NativeCompleteSample(x.Outcome.Context!.Symbol,
                         x.Outcome.DecisionAt!.Value,x.Outcome.AvailableAt,x.State!,value(x.Outcome)/x.Outcome.RiskEur)
                         {AssetClass=profile.UseExtendedLocalPayoff?x.Outcome.Context!.AssetClass:null}).ToArray();
-                    return (new NativeCompleteDistribution(samples,WithoutResidence:false)
-                        {MaskedEconomicContext=profile.UseExtendedLocalPayoff}).Calibrate(samples);
+                    return new NativeCompleteDistribution(samples,WithoutResidence:false)
+                        {MaskedEconomicContext=profile.UseExtendedLocalPayoff};
                 }
-                localEurPayoff.Add(key,(Fit("eur.calibrate_gross",o=>o.GrossEur),Fit("eur.calibrate_net",o=>o.NetEur)));
+                NativeCompleteDistribution Fit(string component,Func<NativeEurCalibrationOutcome,decimal> value)
+                {
+                    using var fitProfile=NativeEconomicProfiler.Measure(component);
+                    var model=Build(value);
+                    return model.Calibrate(model.Samples);
+                }
+                if(UsePairedDistribution)
+                {
+                    using var pairedProfile=NativeEconomicProfiler.Measure("eur.calibrate_pair");
+                    var pair=new NativeCompleteDistributionPair(Build(o=>o.GrossEur),Build(o=>o.NetEur)).Calibrate();
+                    pairedEurPayoff.Add(key,pair);
+                    localEurPayoff.Add(key,(pair.Gross,pair.Net));
+                }
+                else localEurPayoff.Add(key,(Fit("eur.calibrate_gross",o=>o.GrossEur),Fit("eur.calibrate_net",o=>o.NetEur)));
             }
         }
     }
@@ -219,10 +234,18 @@ public sealed partial class NativeUnifiedPortfolioEngine
         {diagnostic?.Invoke("NO_FAMILY_DIRECTION_HISTORY");return null;}
         NativeCompletePrediction? gross,net;
         (decimal Minimum,decimal Maximum) range;
-        using (NativeEconomicProfiler.Measure("eur.predict_gross"))
-            gross=model.Gross.Predict(features,at,risk,out _,context?.Symbol,context?.AssetClass);
-        using (NativeEconomicProfiler.Measure("eur.predict_net"))
-            net=model.Net.Predict(features,at,risk,out range,context?.Symbol,context?.AssetClass);
+        if(pairedEurPayoff.TryGetValue((family,side),out var pair))
+        {
+            using var pairProfile=NativeEconomicProfiler.Measure("eur.predict_pair");
+            (gross,net)=pair.Predict(features,at,risk,out range,context?.Symbol,context?.AssetClass);
+        }
+        else
+        {
+            using (NativeEconomicProfiler.Measure("eur.predict_gross"))
+                gross=model.Gross.Predict(features,at,risk,out _,context?.Symbol,context?.AssetClass);
+            using (NativeEconomicProfiler.Measure("eur.predict_net"))
+                net=model.Net.Predict(features,at,risk,out range,context?.Symbol,context?.AssetClass);
+        }
         if(gross is null||net is null)
         {diagnostic?.Invoke("LOCAL_DISTRIBUTION_SUPPORT");return null;}
         decimal netLower=Math.Min(net.Lower,gross.Lower-cost);
