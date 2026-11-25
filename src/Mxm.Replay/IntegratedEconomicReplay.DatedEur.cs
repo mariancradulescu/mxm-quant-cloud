@@ -154,6 +154,14 @@ internal static partial class IntegratedEconomicReplay
         var candidates=engine.EurOpportunityReceipts;
         var realizedGross=all.Sum(t=>t.EconomicEvidence?.ClosedGrossEur??t.GrossEur);
         var settledNet=reconciled.Sum(r=>r.Evidence.ClosedNetEur);
+        // Same-episode monetary cohorts. Never subtract a subset NET from the
+        // gross of the full population. Booked amounts are not final swap.
+        var settled=all.Where(t=>known.ContainsKey(t.PositionId)).ToArray();
+        var unsettled=all.Where(t=>!known.ContainsKey(t.PositionId)).ToArray();
+        decimal Gross(Ucp1Episode t)=>t.EconomicEvidence?.ClosedGrossEur??t.GrossEur;
+        var settledGross=settled.Sum(Gross);
+        var unsettledGross=unsettled.Sum(Gross);
+        var unresolvedWindows=engine.FundingExposureSnapshot().Where(x=>!x.ExactInLedger).ToArray();
         var weeks=Enumerable.Range(0,(int)((through-from)/86_400_000L))
             .Select(i=>Week(from+i*86_400_000L)).Distinct().ToArray();
         var final=curve.LastOrDefault()?.FundingCapital;
@@ -165,6 +173,35 @@ internal static partial class IntegratedEconomicReplay
             Policy=policy,InitialCapitalEur=OwnerRiskAuthority.InitialCapitalEur,Summary=summary,
             ConditionalGrossClosedEur=all.Length>0?(decimal?)realizedGross:null,
             ConditionalNetReconciledClosedEur=reconciled.Length>0?settledNet:null,
+            SameEpisodeMoney=new
+            {
+                TotalGrossEur=all.Length>0?(decimal?)realizedGross:null,
+                ReconciledGrossEur=settled.Length>0?(decimal?)settledGross:null,
+                ReconciledNetEur=settled.Length>0?settledNet:null,
+                ReconciledCostEur=settled.Length>0?settledGross-settledNet:null,
+                UnreconciledGrossEur=unsettled.Length>0?(decimal?)unsettledGross:null,
+                UnreconciledBookedNetAtCloseEur=unsettled.Length>0?(decimal?)unsettled.Sum(t=>t.NetEur):null,
+                UnreconciledBookedCostAtCloseEur=unsettled.Length>0?(decimal?)unsettled.Sum(t=>Gross(t)-t.NetEur):null,
+                UnreconciledAdditionalCostEur=(decimal?)null,
+                AccountingCashEur=summary.CashEur,
+                DemonstrableEquityEur=final?.DemonstrableEquityEur,
+                OutstandingDebitCeilingEur=final?.OutstandingDebitCeilingEur
+            },
+            UnresolvedFundingWindows=unresolvedWindows,
+            UnreconciledEpisodeTrace=unsettled.Select(t=>new {t.PositionId,t.Symbol,t.Family,t.Side,
+                t.Units,t.OpenAt,t.CloseAt,GrossEur=Gross(t),BookedNetAtCloseEur=t.NetEur,t.CrossedUnknownHistory}).ToArray(),
+            EquityAvailabilityTrace=curve.Where(p=>p.EquityEur is null||p.UsedMarginEur is null||
+                p.FundingCapital?.DemonstrableEquityEur is null).Select(p=>new
+                {
+                    p.At,p.CashEur,p.EquityEur,p.UsedMarginEur,p.Held,p.Pending,
+                    MissingLiquidationEquity=p.EquityEur is null,
+                    MissingMargin=p.UsedMarginEur is null,
+                    MissingFundingCeiling=p.FundingCapital?.OutstandingDebitCeilingEur is null,
+                    OutstandingHeldWindows=p.FundingCapital?.OutstandingHeldWindows,
+                    OutstandingClosedWindows=p.FundingCapital?.OutstandingClosedWindows
+                }).ToArray(),
+            OpportunityDecisionTrace=candidates.Select(c=>new {c.At,c.Symbol,c.Family,c.Side,c.Units,c.Decision,
+                c.EquityEur,c.CurrentMarginEstimateEur,c.NextManagementFundingCeilingEur}).ToArray(),
             WholeFlatConditionalNetEur=all.Length==reconciled.Length&&summary.OpenPositions==0&&
                 summary.PendingIntents==0?summary.ClosedNetEur:(decimal?)null,
             CertifiedBrokerNetEur=(decimal?)null,
