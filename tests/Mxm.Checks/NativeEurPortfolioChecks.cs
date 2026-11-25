@@ -55,6 +55,7 @@ internal static class NativeEurPortfolioChecks
               NativeUnifiedPortfolioEngine.EurRejectedCapital(missingMark,
                   later.ModelBook with {LiquidationEquityEur=null},known)=="WAIT_"+missingMark,
             "EUR distinguishes missing collateral marks from fully marked equity with unbounded carry");
+        ExplicitScenarioContinuity(check);
         LateNetChangesRanking(check);
         ContractClocksAndDirectionalCosts(check);
         var flexible=input.Markets[0] with {EurNativeClock=true};
@@ -75,6 +76,41 @@ internal static class NativeEurPortfolioChecks
             opens.Length,i=>opens[i],Read);
         check(ready is {Ready:true,DailyCalendarBreaks:1}&&ready.Bars[1].OpenAt==opens[1]&&!tooEarly.Ready,
             "Daily EUR context retains a calendar gap and requires a witnessed active successor");
+    }
+
+    static void ExplicitScenarioContinuity(Action<bool,string> check)
+    {
+        string scenario=new string('b',64);
+        var book=new NativeUnifiedPortfolioEngine(NativeUnifiedPortfolioEngine.EurFirst,fundingScenarioId:scenario);
+        var first=book.Advance(OfficialShape(1,1));
+        check(first.Pending==1&&first.FundingCapital is {DemonstrableEquityEur:null,ConditionalEquityEur:300m},
+            "Scenario uses common capital without representing it as demonstrated equity");
+        book.Advance(OfficialShape(2,1));
+        var fill=book.OriginalModelEvents.Last(e=>e.Kind=="OPEN_FILL");
+        var frame=OfficialShape(3,1,bid:102.20m,offer:false);
+        var proof=new NativeAccruedFundingEvidence(fill.PositionId,fill.Symbol,fill.Side,fill.Units,
+            fill.At,frame.At,frame.At,-.05m,null,Proof);
+        var before=book.Checkpoint();
+        try {book.Advance(frame with {FundingEvidence=new[]{proof}});check(false,"Scenario must reject unlabeled amount");}
+        catch(ArgumentException){check(before==book.Checkpoint(),"Unlabeled funding rejection is atomic");}
+        var observed=book.Advance(frame with {FundingEvidence=new[]{proof with {ScenarioId=scenario}}});
+        check(observed.FundingCapital is {DemonstrableEquityEur:null,ConditionalEquityEur:>0m,PostedFinancingEur:-.05m},
+            "Conditional debit affects the same cash ledger and admission equity");
+        var restored=NativeUnifiedPortfolioEngine.Restore(book.Checkpoint());
+        check(restored.FundingScenarioId==scenario&&restored.ModelSummary==book.ModelSummary,
+            "Scenario identity and monetary state survive checkpoint");
+        var next=OfficialShape(4,1,bid:102.20m,offer:false);
+        var missing=restored.Advance(next);
+        check(missing.FundingCapital is {ConditionalEquityEur:null,DemonstrableEquityEur:null},
+            "Missing scenario evidence remains unbounded, not zero");
+        try {new NativeUnifiedCloudParityAdapter(NativeUnifiedPortfolioEngine.EurFirst).Restore(book.Checkpoint());
+            check(false,"Cloud cannot restore scenario");}
+        catch(ArgumentException){check(true,"Cloud rejects scenario checkpoint");}
+        var calibration=book.ExportEurCalibration();
+        try {new NativeUnifiedPortfolioEngine(NativeUnifiedPortfolioEngine.EurRank).LoadEurCalibration(calibration);
+            check(false,"Ordinary rank cannot load scenario calibration");}
+        catch(ArgumentException){check(true,"Scenario calibration cannot cross into ordinary rank");}
+        new NativeUnifiedPortfolioEngine(NativeUnifiedPortfolioEngine.EurRank,fundingScenarioId:scenario).LoadEurCalibration(calibration);
     }
 
     static void ContractClocksAndDirectionalCosts(Action<bool,string> check)

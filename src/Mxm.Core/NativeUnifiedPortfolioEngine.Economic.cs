@@ -73,7 +73,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
             ConditionalNetKnown=true,
             ClosedNetEur=net,
             RealizedNetR=net/evidence.ReservedRiskEur,
-            EvidenceStatus=evidence.MarkCoverageComplete?"COMPLETE_CONDITIONAL_MODELED_EPISODE":
+            EvidenceStatus=FundingScenarioId is not null?"COMPLETE_EXPLICIT_SCENARIO_MODELED_EPISODE":
+                evidence.MarkCoverageComplete?"COMPLETE_CONDITIONAL_MODELED_EPISODE":
                 "COMPLETE_CASH_BUT_SAMPLE_MARKS_INCOMPLETE"
         });
     }
@@ -141,7 +142,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
         if(OwnerEur)return AdvanceEur(at,frame,options);
         var book=model.Ledger.Summary(at);
         var financial=Cpe1FundingCapital(book,frame);
-        var equity=financial is null?book.LiquidationEquityEur:financial.DemonstrableEquityEur;
+        var equity=financial is null?book.LiquidationEquityEur:financial.ResearchAdmissionEquityEur;
         if(financial is {OutstandingDebitCeilingEur:null})
             Count("ACCRUED_FUNDING_UNBOUNDED");
         if(policy=="CPE1_CASH" || (fundingReserves is null&&cpe1UnreconciledFunding) ||
@@ -253,7 +254,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
         LedgerSummary current,Ucp1MarketFrame observed,decimal execution,Ucp1Frame frame)
     {
         var financial=Cpe1FundingCapital(current,frame);
-        var equity=financial is null?current.LiquidationEquityEur:financial.DemonstrableEquityEur;
+        var equity=financial is null?current.LiquidationEquityEur:financial.ResearchAdmissionEquityEur;
         if(plan.Integrated is not { } prior || equity is not >0m ||
            (financial?.MaximumSampledFundingAdjustedDrawdown??current.MaximumSampledDrawdown)>=.28m ||
            !Cpe1Usable(observed,observed.Quote.At) ||

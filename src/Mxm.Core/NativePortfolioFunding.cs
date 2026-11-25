@@ -8,7 +8,11 @@ namespace Mxm.Core;
 // causal availability and binds it to an exact position and exposure window.
 public sealed record NativeAccruedFundingEvidence(string PositionId,string Symbol,
     int Side,decimal Units,long FromExclusive,long ThroughInclusive,long AvailableAt,
-    decimal? ExactSignedEur,decimal? MaximumTotalDebitEur,string SourceSha256);
+    decimal? ExactSignedEur,decimal? MaximumTotalDebitEur,string SourceSha256)
+{
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? ScenarioId { get; init; }
+}
 
 public sealed record NativeFundingOfferEvidence(string Symbol,int Side,decimal Units,long AvailableAt,
     long EffectiveFrom,long NextScheduledManagementAt,long CoveredThrough,decimal MaximumDebitEur,
@@ -20,16 +24,40 @@ public sealed record NativeFundingExposure(string PositionId,string Symbol,int S
 {
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public long? ExactObservedAt { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? ScenarioId { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore]
+    public string EvidenceClass => ScenarioId is not null && ExactInLedger ? "CONDITIONAL_SCENARIO" :
+        ExactInLedger ? "SUPPORTED_LEDGER_AMOUNT" :
+        AdditionalDebitCeilingEur.HasValue ? "SUPPORTED_DEBIT_CEILING" : "UNKNOWN_UNBOUNDED";
 }
 
 public sealed record NativeFundingCheckpoint(NativeFundingExposure[] Exposures,
-    decimal PostedFinancingEur,decimal MaximumSampledFundingAdjustedDrawdown);
+    decimal PostedFinancingEur,decimal MaximumSampledFundingAdjustedDrawdown)
+{
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? ScenarioId { get; init; }
+}
 
 public sealed record NativeFundingCapital(decimal PostedFinancingEur,
     int OutstandingHeldWindows,int OutstandingClosedWindows,decimal? OutstandingDebitCeilingEur,
     decimal? DemonstrableEquityEur,decimal? HeldMarginEur,decimal PendingOpenMarginEur,
     decimal? DemonstrableFreeMarginEur,decimal? ReconciledClosedModelNetEur,
-    decimal MaximumSampledFundingAdjustedDrawdown);
+    decimal MaximumSampledFundingAdjustedDrawdown)
+{
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? ScenarioId { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public decimal? ConditionalEquityEur { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public decimal? ConditionalFreeMarginEur { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public decimal? ConditionalClosedModelNetEur { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public decimal? ConditionalUnmodeledDebitCeilingEur { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore]
+    public decimal? ResearchAdmissionEquityEur => ScenarioId is null ? DemonstrableEquityEur : ConditionalEquityEur;
+}
 
 internal sealed record NativeObservedFundingRate(string Unit,decimal Long,decimal Short);
 
@@ -42,9 +70,15 @@ internal sealed class NativePortfolioFunding
     decimal postedFinancingEur;
     decimal maximumSampledFundingAdjustedDrawdown;
 
-    public NativePortfolioFunding(NativeFundingCheckpoint? saved=null)
+    public string? ScenarioId {get;}
+    public NativePortfolioFunding(NativeFundingCheckpoint? saved=null,string? scenarioId=null)
     {
+        ScenarioId=saved?.ScenarioId??scenarioId;
+        if(ScenarioId is not null && !ValidHash(ScenarioId))
+            throw new ArgumentException("FUNDING_SCENARIO_ID_MUST_BE_PROTOCOL_SHA256");
         if(saved is null)return;
+        if(saved.Exposures.Any(w=>w.ScenarioId!=ScenarioId))
+            throw new ArgumentException("FUNDING_SCENARIO_CHECKPOINT_MISMATCH");
         foreach(var window in saved.Exposures)
             windows.Add((window.PositionId,window.FromExclusive),window);
         postedFinancingEur=saved.PostedFinancingEur;
@@ -52,7 +86,7 @@ internal sealed class NativePortfolioFunding
     }
 
     public NativeFundingCheckpoint Checkpoint()=>new(InExposureOrder().ToArray(),
-        postedFinancingEur,maximumSampledFundingAdjustedDrawdown);
+        postedFinancingEur,maximumSampledFundingAdjustedDrawdown) {ScenarioId=ScenarioId};
 
     IEnumerable<NativeFundingExposure> InExposureOrder()=>windows.Values
         .OrderBy(w=>w.PositionId,StringComparer.Ordinal).ThenBy(w=>w.FromExclusive);
@@ -73,7 +107,7 @@ internal sealed class NativePortfolioFunding
         foreach(var proof in evidence)
         {
             var key=(proof.PositionId,proof.FromExclusive);
-            if(!seen.Add(key) || !windows.TryGetValue(key,out var window) ||
+            if(proof.ScenarioId!=ScenarioId || !seen.Add(key) || !windows.TryGetValue(key,out var window) ||
                window.Symbol!=proof.Symbol || window.Side!=proof.Side || window.Units!=proof.Units ||
                proof.ThroughInclusive!= (window.ClosedAt??at) ||
                proof.ThroughInclusive<=proof.FromExclusive || proof.AvailableAt<=0 ||
@@ -125,7 +159,7 @@ internal sealed class NativePortfolioFunding
     }
 
     public void Open(string id,string symbol,int side,decimal units,long at)
-        =>windows.Add((id,at),new(id,symbol,side,units,at,0m,true,0m,null,null));
+        =>windows.Add((id,at),new(id,symbol,side,units,at,0m,true,0m,null,null) {ScenarioId=ScenarioId});
 
     public bool IsOutstanding(string id)=>windows.Values.Any(x=>x.PositionId==id&&!x.ExactInLedger);
 
@@ -157,11 +191,18 @@ internal sealed class NativePortfolioFunding
         if(equity is decimal floor)
             maximumSampledFundingAdjustedDrawdown=Math.Max(maximumSampledFundingAdjustedDrawdown,
                 1m-floor/book.ObservedPeakEur);
-        return new(postedFinancingEur,unresolved.Length-settledExposure,settledExposure,debitCeiling,
-            equity,book.UsedMarginEur,pendingOpenMarginEur,
-            equity-book.UsedMarginEur-pendingOpenMarginEur,
-            settledExposure==0?book.ClosedNetEur:null,
-            Math.Max(book.MaximumSampledDrawdown,maximumSampledFundingAdjustedDrawdown));
+        return new(postedFinancingEur,unresolved.Length-settledExposure,settledExposure,ScenarioId is null?debitCeiling:null,
+            ScenarioId is null?equity:null,book.UsedMarginEur,pendingOpenMarginEur,
+            ScenarioId is null?equity-book.UsedMarginEur-pendingOpenMarginEur:null,
+            ScenarioId is null&&settledExposure==0?book.ClosedNetEur:null,
+            Math.Max(book.MaximumSampledDrawdown,maximumSampledFundingAdjustedDrawdown))
+            {
+                ScenarioId=ScenarioId,
+                ConditionalEquityEur=ScenarioId is null?null:equity,
+                ConditionalFreeMarginEur=ScenarioId is null?null:equity-book.UsedMarginEur-pendingOpenMarginEur,
+                ConditionalClosedModelNetEur=ScenarioId is not null&&settledExposure==0?book.ClosedNetEur:null,
+                ConditionalUnmodeledDebitCeilingEur=ScenarioId is null?null:debitCeiling
+            };
     }
 
     public static decimal? OfferDebit(Ucp1MarketFrame market,int side,decimal units,long at)
