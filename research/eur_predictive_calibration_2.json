@@ -1,0 +1,117 @@
+{
+  "Study": "EUR_PREDICTIVE_CALIBRATION_2",
+  "Exposure": "PROJECT_EXPOSED_CONDITIONAL_DEVELOPMENT",
+  "SourceProtocolSha256": "2ac5e2da090ce4c69f4791affc54424766749630e16522e6672285ad46c98a3c",
+  "EvidenceManifestSha256": "bd4a063bef5876e649876faea5a4b602b8852483774f48c99881131e8b4082b9",
+  "InitialFitFrom": 1792972800000,
+  "TestBoundaries": [
+    1793577600000,
+    1794182400000,
+    1794787200000,
+    1795392000000
+  ],
+  "Stresses": [
+    0,
+    0.5,
+    1
+  ],
+  "StopWitness": {
+    "Symbol": "NatGas",
+    "Side": -1,
+    "OriginalFillAt": 1795015515000,
+    "OriginalCloseAt": 1795019115000,
+    "StopDistance": 0.014,
+    "FirstTradeTouchAt": 1795016231791
+  },
+  "Calibrations": [
+    {
+      "Id": "CLOSED_BAR_FAMILY_DIRECTION",
+      "Profile": {
+        "CaptureStudyDiagnostics": true,
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "LearnFromOpportunityEpisodes": true,
+        "ObserveIntentExecutionOnTicks": true,
+        "IncludeRecoveredStructure": true,
+        "ObserveFamilyDirectionsOnClosedBars": true,
+        "CaptureVolatilityContext": true
+      }
+    },
+    {
+      "Id": "CLOSED_BAR_FAMILY_DIRECTION_NEAR_TARGET",
+      "Profile": {
+        "CaptureStudyDiagnostics": true,
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "LearnFromOpportunityEpisodes": true,
+        "ObserveIntentExecutionOnTicks": true,
+        "IncludeRecoveredStructure": true,
+        "ObserveFamilyDirectionsOnClosedBars": true,
+        "DistributionTargetRanges": 1.5,
+        "CaptureVolatilityContext": true
+      }
+    }
+  ],
+  "Trials": [
+    {
+      "Id": "PREDICTIVE_LOSS_BROAD",
+      "Policy": "EUR_GENERAL_SELECT",
+      "Calibration": "CLOSED_BAR_FAMILY_DIRECTION",
+      "UseRecoveredLocalPayoff": true,
+      "UseAdaptivePayoff": true,
+      "UseExtendedLocalPayoff": true,
+      "UsePredictiveCalibration": true,
+      "UseEconomicEstimatorObjective": false,
+      "UseRealizedForecastFeedback": false
+    },
+    {
+      "Id": "PREDICTIVE_UTILITY_BROAD",
+      "Policy": "EUR_GENERAL_SELECT",
+      "Calibration": "CLOSED_BAR_FAMILY_DIRECTION",
+      "UseRecoveredLocalPayoff": true,
+      "UseAdaptivePayoff": true,
+      "UseExtendedLocalPayoff": true,
+      "UsePredictiveCalibration": true,
+      "UseEconomicEstimatorObjective": true,
+      "UseRealizedForecastFeedback": false
+    },
+    {
+      "Id": "PREDICTIVE_UTILITY_GEOMETRY",
+      "Policy": "EUR_GENERAL_SELECT",
+      "Calibration": "CLOSED_BAR_FAMILY_DIRECTION_NEAR_TARGET",
+      "UseRecoveredLocalPayoff": true,
+      "UseAdaptivePayoff": true,
+      "UseExtendedLocalPayoff": true,
+      "UsePredictiveCalibration": true,
+      "UseEconomicEstimatorObjective": true,
+      "UseRealizedForecastFeedback": false
+    },
+    {
+      "Id": "PREDICTIVE_UTILITY_GEOMETRY_FEEDBACK",
+      "Policy": "EUR_GENERAL_SELECT",
+      "Calibration": "CLOSED_BAR_FAMILY_DIRECTION_NEAR_TARGET",
+      "UseRecoveredLocalPayoff": true,
+      "UseAdaptivePayoff": true,
+      "UseExtendedLocalPayoff": true,
+      "UsePredictiveCalibration": true,
+      "UseEconomicEstimatorObjective": true,
+      "UseRealizedForecastFeedback": true
+    }
+  ],
+  "ArchivedControl": {
+    "Run": 45697450509,
+    "Artifact": 15062311936,
+    "ArchiveSha256": "02905c5be4f1ab51aba085d0a3a69f3bf083d4d236bcf7fd6c2a6f58fa68d25e",
+    "Study": "EUR_ADAPTIVE_CALIBRATION_1"
+  },
+  "TrialGroups": {
+    "ESTIMATORS": [
+      "PREDICTIVE_LOSS_BROAD",
+      "PREDICTIVE_UTILITY_BROAD"
+    ],
+    "GEOMETRY": [
+      "PREDICTIVE_UTILITY_GEOMETRY",
+      "PREDICTIVE_UTILITY_GEOMETRY_FEEDBACK"
+    ]
+  }
+}
