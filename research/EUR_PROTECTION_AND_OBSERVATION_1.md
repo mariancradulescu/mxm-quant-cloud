@@ -13,3 +13,11 @@ The observation policy samples at the hourly closed-bar clock, using one outcome
 The recovered structural comparison adds the existing `RANGE_TRANSITION` and `EQUILIBRIUM_REPAIR` signals and their CPE1 stop/target geometry. Compare their incremental effect against the corrected general policy and then against the same general policy calibrated from individually observed episodes. The 1.25 reserve variant tests sensitivity using the previously registered neighboring reserve. The selector reports the separate evaluation counts for cohort support, observed gross and net, day uncertainty, and the current cost floor. These counters can overlap and include volume and configuration evaluations.
 
 The result includes dated funding gaps, a trace of admission and margin observations, and the outcomes and exclusions for the five prior fit profiles. The archived NatGas case pins the original first Trade touch to 18 November at 15:37:11.791 UTC. Live broker execution, independent confirmation and Cloud restart recovery require separate evidence. [Spotware Trade trigger methods](https://help.ctrader.com/ctrader-algo/references/Trading/StopTriggerMethod/) · [Spotware stop execution](https://help.ctrader.com/trading-with-ctrader/orders/)
+
+## Execution-clock follow-up
+
+[Registered catalogue](eur_executable_timing_1.json)
+
+The follow-up starts comparison on 2 November and uses three chronological test weeks inside the same authenticated window. Closed-bar requests can fill at later tick observations when the contract, quote, conversion, costs and funded admission can be verified. An outstanding native stop takes priority over a discretionary exit. The 100 ms and source availability rules represent conditional execution. Missing millisecond fills remain explicitly modeled from the available later quote evidence.
+
+The recovered complete-position estimator compares local M5/M15 profiles using matured gross and net outcomes in EUR per reserved risk unit. It reuses the existing neighbor and day-support rules, calibrates errors only from earlier settled episodes, and reprices the current candidate's cost floor. The matching selector uses the same labels with its ordinary day aggregation. The structural comparison adds the two archived signals with the same capital and protection rules.

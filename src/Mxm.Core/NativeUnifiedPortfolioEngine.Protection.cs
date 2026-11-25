@@ -9,9 +9,15 @@ namespace Mxm.Core;
 public sealed record Ucp1StopTouch(string PositionId, decimal Minimum, decimal Maximum, bool CompleteSinceOpen);
 public sealed record Ucp1StopQuote(string PositionId, bool CompleteSinceTrigger);
 public sealed record Ucp1ProtectionObservation(bool BetweenDecisions, Ucp1StopTouch[] Touches,
-    Ucp1StopQuote[] ExecutableQuotes, string[] UnverifiedPositionIds);
+    Ucp1StopQuote[] ExecutableQuotes, string[] UnverifiedPositionIds)
+{
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string[]? ExecutableIntentIds { get; init; }
+}
 public sealed record Ucp1StopWatch(string PositionId, string Symbol, int Side, long OpenedAt, decimal Stop,
     long? TriggerAt, long? FillNotBefore);
+internal sealed record Ucp1IntentWatch(string PositionId,string Symbol,bool Buy,bool Opening,long DecisionAt,
+    long FillNotBefore,long ExpiresAfter);
 public sealed record Ucp1StopTrigger(long At, decimal MinimumGap, decimal MaximumGap,
     bool CompleteSinceOpen, bool TickSource);
 public sealed record Ucp1StopExecution(Ucp1StopTrigger Trigger, long FillAt, long ModeledLatencyMs,
@@ -36,6 +42,13 @@ public sealed partial class NativeUnifiedPortfolioEngine
         plans.Values.Where(p=>p.OpenAt>0 && p.Integrated is not null).Select(p=>new Ucp1StopWatch(
             p.Id,p.Symbol,p.Side,p.OpenAt,p.Stop,p.NativeStop?.At,
             p.NativeStop is { } trigger ? trigger.At+eurDevelopmentProfile!.ModeledStopLatencyMs!.Value : null)).ToArray();
+
+    internal Ucp1IntentWatch[] IntentWatches() => eurDevelopmentProfile is not { ObserveIntentExecutionOnTicks:true }
+        ?Array.Empty<Ucp1IntentWatch>():model.Ledger.PendingSnapshot()
+            .Where(p=>p.Kind=="REQUEST_OPEN"||p.Kind=="REQUEST_CLOSE"&&
+                p.Reason.StartsWith("MODEL_UNTRANSMITTED_",StringComparison.Ordinal)&&p.Reason!=NativeStopModelReason)
+            .Select(p=>new Ucp1IntentWatch(p.PositionId,p.Symbol,p.Kind=="REQUEST_OPEN"?p.Side>0:p.Side<0,
+                p.Kind=="REQUEST_OPEN",p.At,p.At+p.LatencyMs,p.At+600_000L)).ToArray();
 
     internal Ucp1MarginObservation[] EurMarginExceedances => eurMarginExceedances.ToArray();
     internal Ucp1MarginObservation[] EurMarginMaxima => eurMarginMaxima.Values.OrderBy(x=>x.Phase,StringComparer.Ordinal).ToArray();

@@ -228,6 +228,28 @@ internal static class NativeEurPortfolioChecks
                  ModeledSlippage:.02m,TickFillQuote:true,CompleteSinceTrigger:true}&&
             tickBook.ExportEurCalibration().Outcomes.Single().AvailableAt==exitFrame.At,
             "Stop execution binds a later quote, distinguishes trigger gap, waiting move and slippage, and then matures a label");
+
+        var intentBook=new NativeUnifiedPortfolioEngine(NativeUnifiedPortfolioEngine.EurGeneralProbe,
+            eurDevelopmentProfile:tickProfile with {ObserveIntentExecutionOnTicks=true});
+        var intended=intentBook.Advance(sparseFrame);
+        var order=intentBook.IntentWatches().Single();
+        Ucp1Frame ExecutionQuote(long at)
+        {
+            var market=sparseFrame.Markets.Single();
+            return new Ucp1Frame(at,new[]{market with {Quote=market.Quote with {At=at},
+                FundingOffers=market.FundingOffers!.Select(o=>o with {NextScheduledManagementAt=at+Step,
+                    CoveredThrough=at+Step}).ToArray()}})
+            {
+                Protection=new(true,Array.Empty<Ucp1StopTouch>(),Array.Empty<Ucp1StopQuote>(),Array.Empty<string>())
+                    {ExecutableIntentIds=new[]{order.PositionId}}
+            };
+        }
+        check(order.Opening&&order.Buy&&intentBook.Advance(ExecutionQuote(order.FillNotBefore-1)).Pending==1,
+            "An opening intent retains its closed-bar decision and rejects a premature ASK fill");
+        var intrabar=intentBook.Advance(ExecutionQuote(order.FillNotBefore+1));
+        check(intrabar is {Pending:0,Held:1,OpenFills:1}&&intrabar.Proposed==intended.Proposed&&
+              intentBook.OriginalModelEvents.Last(e=>e.Kind=="OPEN_FILL").At==order.FillNotBefore+1,
+            "An executable quote fills the existing intent between bars without generating another decision");
     }
 
     static void ExplicitScenarioContinuity(Action<bool,string> check)

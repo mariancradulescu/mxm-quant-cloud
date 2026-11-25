@@ -38,6 +38,21 @@ internal static partial class IntegratedEconomicReplay
             }
             return next;
         }
+
+        public long? AtOrAfter(long from,long at)
+        {
+            if(Source.ScheduledClocks is not { } schedule)return null;
+            int i=Array.BinarySearch(schedule,from);
+            if(i<0)i=~i;
+            if(i>=schedule.Length)return null;
+            if(Source.AmbiguousCalendarClocks is {Length:>0} ambiguous)
+            {
+                int first=Array.BinarySearch(ambiguous,at);
+                if(first<0)first=~first;
+                if(first<ambiguous.Length&&ambiguous[first]<schedule[i])return null;
+            }
+            return schedule[i];
+        }
     }
     static string EerHash(string text)=>Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text))).ToLowerInvariant();
 
@@ -129,20 +144,9 @@ internal static partial class IntegratedEconomicReplay
                     ExitFeeFloor=quote.ExitFeeFloor*costMultiple,SellFeePerUnit=quote.SellFeePerUnit*costMultiple};
             }
             catch(ArgumentException){stream.Mark(at,"COMMISSION_OR_VOLUME_ROUTE_UNSUPPORTED");return null;}
-            var margins=t.Margin.SelectMany(x=>new[]{
-                new NativeEurMarginObservation(1,x.Units,x.BuyMargin,c.ObservedAtUtcMs,t.Digest),
-                new NativeEurMarginObservation(-1,x.Units,x.SellMargin,c.ObservedAtUtcMs,t.Digest)})
-                .Where(x=>x.MarginEur>0m&&(x.Side>0||t.ShortAllowed)).ToArray();
-            var offers=new List<NativeFundingOfferEvidence>();
-            foreach(var x in margins)
-            {
-                decimal? amount;
-                try {amount=Financing(t,at,next.Value,x.Side,x.Units,_=>new(q.Bid,fx));}
-                catch(ArgumentException){amount=null;}
-                if(amount is decimal debit)offers.Add(new(m.Name,x.Side,x.Units,c.ObservedAtUtcMs,c.ObservedAtUtcMs,
-                    next.Value,next.Value,Math.Max(0m,-debit)*costMultiple,EerHash(scenario+"|"+t.Digest+"|"+at+"|"+next.Value)) {ScenarioId=scenario});
-            }
-            if(offers.Count==0)stream.Count("UNKNOWN_SCENARIO_CARRY");
+            var margins=DatedMargins(t);
+            var offers=ManagementFunding(margins,t,m.Name,at,next.Value,scenario,stress,q.Bid,fx);
+            if(offers.Length==0)stream.Count("UNKNOWN_SCENARIO_CARRY");
             else stream.Count(next.Value>at+EurStep?"CLOSURE_CARRY_RESERVED":"CARRY_RESERVED");
             var context=DatedEurContext(m,q);
             foreach(var w in context.Windows)stream.Count(w.Timeframe+"_"+w.Status);
@@ -150,7 +154,7 @@ internal static partial class IntegratedEconomicReplay
             return new(m.Name,quote,c,context.For(NativeBarTimeframe.M5).Bars,context.For(NativeBarTimeframe.M15).Bars,
                 slip,"AUTHENTIC_QUOTES_EXPLICIT_RETROSPECTIVE_TERMS_SCENARIO")
                 {ClosedBars=context,OfficialAssetClass=m.OfficialAssetClass,EurDatedMarginScenario=true,
-                 EurMargins=margins,FundingOffers=offers.ToArray(),EurTickSize=general?m.TickSize:null};
+                 EurMargins=margins,FundingOffers=offers,EurTickSize=general?m.TickSize:null};
         }
         public void Advance(NativeUnifiedPortfolioEngine book,Ucp1Frame frame,
             Dictionary<string,EerStream> markets,string scenario,decimal stress)
@@ -199,6 +203,48 @@ internal static partial class IntegratedEconomicReplay
                     "OBSERVED_TICK_CONDITIONAL_MONETARY_TERMS");
             }
             catch(ArgumentException){return null;}
+        }
+
+        public Ucp1MarketFrame? IntentEntryMark(EerProtectionTape tape,EerStream stream,long at,
+            string scenario,decimal stress)
+        {
+            var market=stream.Source.Market;
+            if(ProtectionMark(tape,stream.Source,at,stress) is not { } seen ||
+                tape.QuoteAt(market.Name,at) is not { } q ||
+                market.DatedDevelopment is not { TradingMode:0 } terms || market.EnabledAtCapture!=true ||
+                stream.AtOrAfter(at+EurStep,at) is not long through)return null;
+            var fx=ConversionAt(terms.Contract.QuoteAsset,at,false,tape)!;
+            var margins=DatedMargins(terms);
+            var context=DatedEurContext(market,q);
+            return seen with
+            {
+                M5=context.For(NativeBarTimeframe.M5).Bars,M15=context.For(NativeBarTimeframe.M15).Bars,
+                ClosedBars=context,OfficialAssetClass=market.OfficialAssetClass,EurDatedMarginScenario=true,
+                EurMargins=margins,FundingOffers=ManagementFunding(margins,terms,market.Name,at,through,scenario,stress,q.Bid,fx),
+                EurTickSize=market.TickSize
+            };
+        }
+
+        static NativeEurMarginObservation[] DatedMargins(DatedEurTerms t)=>t.Margin.SelectMany(x=>new[]{
+            new NativeEurMarginObservation(1,x.Units,x.BuyMargin,t.Contract.ObservedAtUtcMs,t.Digest),
+            new NativeEurMarginObservation(-1,x.Units,x.SellMargin,t.Contract.ObservedAtUtcMs,t.Digest)})
+            .Where(x=>x.MarginEur>0m&&(x.Side>0||t.ShortAllowed)).ToArray();
+
+        static NativeFundingOfferEvidence[] ManagementFunding(NativeEurMarginObservation[] margins,DatedEurTerms terms,
+            string symbol,long at,long next,string scenario,decimal stress,decimal bid,NativeOriginalFxRate rate)
+        {
+            var offers=new List<NativeFundingOfferEvidence>();
+            foreach(var margin in margins)
+            {
+                decimal? amount;
+                try {amount=Financing(terms,at,next,margin.Side,margin.Units,_=>new(bid,rate));}
+                catch(ArgumentException){amount=null;}
+                if(amount is decimal fundingDebit)offers.Add(new(symbol,margin.Side,margin.Units,
+                    terms.Contract.ObservedAtUtcMs,terms.Contract.ObservedAtUtcMs,next,next,
+                    Math.Max(0m,-fundingDebit)*(1m+stress),EerHash(scenario+"|"+terms.Digest+"|"+at+"|"+next))
+                    {ScenarioId=scenario});
+            }
+            return offers.ToArray();
         }
     }
 

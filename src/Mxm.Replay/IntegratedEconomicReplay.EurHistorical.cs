@@ -5,7 +5,10 @@ internal static partial class IntegratedEconomicReplay
 {
     const long HistoricalDay = 86_400_000L;
     const string ExposedDevelopment = "PROJECT_EXPOSED_CONDITIONAL_DEVELOPMENT";
-    sealed record HistoricalTrial(string Id,string Policy,string Calibration,int? MinimumEpisodes,decimal? DayPenalty);
+    sealed record HistoricalTrial(string Id,string Policy,string Calibration,int? MinimumEpisodes,decimal? DayPenalty)
+    {
+        public bool UseRecoveredLocalPayoff { get; init; }
+    }
     sealed record HistoricalFit(string Id,NativeEurDevelopmentProfile Profile);
     sealed record HistoricalPlan(string Study,string Exposure,string SourceProtocolSha256,string EvidenceManifestSha256,
         long InitialFitFrom,long[] TestBoundaries,decimal[] Stresses,HistoricalFit[] Calibrations,HistoricalTrial[] Trials)
@@ -61,7 +64,10 @@ internal static partial class IntegratedEconomicReplay
             {
                 if(!GeneralPolicies.Contains(t.Policy,StringComparer.Ordinal)||!fitProfiles.TryGetValue(t.Calibration,out var p))
                     throw new ArgumentException("HISTORICAL_EUR_UNREGISTERED_TRIAL");
-                var profile=p with {MinimumEpisodes=t.MinimumEpisodes??p.MinimumEpisodes,DayPenalty=t.DayPenalty??p.DayPenalty};
+                if(t.UseRecoveredLocalPayoff&&t.Policy!=NativeUnifiedPortfolioEngine.EurGeneralSelect)
+                    throw new ArgumentException("HISTORICAL_EUR_CONTEXT_FOR_LOCAL_DISTRIBUTION");
+                var profile=p with {MinimumEpisodes=t.MinimumEpisodes??p.MinimumEpisodes,DayPenalty=t.DayPenalty??p.DayPenalty,
+                    UseRecoveredLocalPayoff=t.UseRecoveredLocalPayoff};
                 return (Trial:t,Profile:profile,Book:new NativeUnifiedPortfolioEngine(t.Policy,
                     fundingScenarioId:scenario,eurDevelopmentProfile:profile));
             }).ToArray();
