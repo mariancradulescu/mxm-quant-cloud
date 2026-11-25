@@ -13,6 +13,8 @@ internal static partial class IntegratedEconomicReplay
         public bool UseAdaptiveAllocation { get; init; }
         public bool UseAdaptiveManagement { get; init; }
         public bool UseRealizedForecastFeedback { get; init; }
+        public bool UsePredictiveCalibration { get; init; }
+        public bool UseEconomicEstimatorObjective { get; init; }
     }
     sealed record HistoricalFit(string Id,NativeEurDevelopmentProfile Profile);
     sealed record HistoricalPlan(string Study,string Exposure,string SourceProtocolSha256,string EvidenceManifestSha256,
@@ -144,7 +146,8 @@ internal static partial class IntegratedEconomicReplay
                 var profile=p with {MinimumEpisodes=t.MinimumEpisodes??p.MinimumEpisodes,DayPenalty=t.DayPenalty??p.DayPenalty,
                     UseRecoveredLocalPayoff=t.UseRecoveredLocalPayoff,UseExtendedLocalPayoff=t.UseExtendedLocalPayoff,
                     UseAdaptivePayoff=t.UseAdaptivePayoff,UseAdaptiveAllocation=t.UseAdaptiveAllocation,
-                    UseAdaptiveManagement=t.UseAdaptiveManagement,UseRealizedForecastFeedback=t.UseRealizedForecastFeedback};
+                    UseAdaptiveManagement=t.UseAdaptiveManagement,UseRealizedForecastFeedback=t.UseRealizedForecastFeedback,
+                    UsePredictiveCalibration=t.UsePredictiveCalibration,UseEconomicEstimatorObjective=t.UseEconomicEstimatorObjective};
                 return (Trial:t,Profile:profile,Book:new NativeUnifiedPortfolioEngine(t.Policy,
                     fundingScenarioId:scenario,eurDevelopmentProfile:profile));
             }).ToArray();
