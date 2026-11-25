@@ -15,6 +15,8 @@ internal static partial class IntegratedEconomicReplay
     {
         public EerMarket Source;
         public Dictionary<string,int> Counts=new(StringComparer.Ordinal);
+        public Dictionary<long,string> Availability=new();
+        public void Mark(long at,string reason){Count(reason);Availability[at]=reason;}
         public EerStream(EerMarket source){Source=source;}
         public void Count(string reason)=>Counts[reason]=Counts.GetValueOrDefault(reason)+1;
         public long? Next(long at)
@@ -83,30 +85,33 @@ internal static partial class IntegratedEconomicReplay
         public Ucp1MarketFrame? Frame(EerStream stream,long at,string scenario,decimal stress)
         {
             var m=stream.Source.Market;
-            if(stream.Source.ScheduledClocks is null){stream.Count("UNKNOWN_OFFICIAL_SCHEDULE");return null;}
+            if(stream.Source.ScheduledClocks is null){stream.Mark(at,"UNKNOWN_OFFICIAL_SCHEDULE");return null;}
             long? next=stream.Next(at);
-            if(next is null){stream.Count("SCHEDULE_CLOSED_OR_END");return null;}
+            if(next is null){stream.Mark(at,"SCHEDULE_CLOSED_OR_END");return null;}
             var q=At(m.Name,at);
-            if(q is null||!Fresh(q,at,30_000L)){stream.Count("OPEN_SCHEDULE_MISSING_QUOTE");return null;}
+            if(q is null||!Fresh(q,at,30_000L)){stream.Mark(at,"OPEN_SCHEDULE_MISSING_QUOTE");return null;}
             if(m.DatedDevelopment is not { } t||t.TradingMode!=0||m.EnabledAtCapture!=true)
-            {stream.Count("CONTRACT_OR_TRADING_MODE");return null;}
-            if(t.Margin.Length==0){stream.Count("MISSING_MARGIN");return null;}
+            {stream.Mark(at,"CONTRACT_OR_TRADING_MODE");return null;}
+            if(t.Margin.Length==0){stream.Mark(at,"MISSING_MARGIN");return null;}
             var c=t.Contract;
             var fx=ConversionAt(c.QuoteAsset,at,false);
-            if(fx is null){stream.Count("MISSING_QUOTE_CONVERSION");return null;}
+            if(fx is null){stream.Mark(at,"MISSING_QUOTE_CONVERSION");return null;}
             var usd=ConversionAt("USD",at,false);
             var minFee=c.MinimumCommissionAsset is { } a?ConversionAt(a,at,false):null;
             decimal perUnit=t.Margin.Where(x=>x.Units>0m).Select(x=>Math.Max(x.BuyMargin,x.SellMargin)/x.Units).DefaultIfEmpty().Max();
-            if(perUnit<=0m){stream.Count("NONPOSITIVE_MARGIN");return null;}
+            if(perUnit<=0m){stream.Mark(at,"NONPOSITIVE_MARGIN");return null;}
             decimal slip=(q.Ask-q.Bid)*stress;
+            decimal costMultiple=1m+stress;
             LedgerQuote quote;
             try
             {
                 quote=NativeBrokerContractCosts.QuoteBothDirections(c,new(at,q.Bid,q.Ask,fx.CreditToEur,fx.DebitToEur,
                     usd?.DebitToEur??0m,minFee?.DebitToEur,perUnit*c.MinimumUnits,c.MinimumUnits,slip)).Quote
                     with {LiquidationSlippagePerSide=slip};
+                quote=quote with {ExitFeePerUnit=quote.ExitFeePerUnit*costMultiple,
+                    ExitFeeFloor=quote.ExitFeeFloor*costMultiple,SellFeePerUnit=quote.SellFeePerUnit*costMultiple};
             }
-            catch(ArgumentException){stream.Count("COMMISSION_OR_VOLUME_ROUTE_UNSUPPORTED");return null;}
+            catch(ArgumentException){stream.Mark(at,"COMMISSION_OR_VOLUME_ROUTE_UNSUPPORTED");return null;}
             var margins=t.Margin.SelectMany(x=>new[]{
                 new NativeEurMarginObservation(1,x.Units,x.BuyMargin,c.ObservedAtUtcMs,t.Digest),
                 new NativeEurMarginObservation(-1,x.Units,x.SellMargin,c.ObservedAtUtcMs,t.Digest)})
@@ -118,20 +123,20 @@ internal static partial class IntegratedEconomicReplay
                 try {amount=Financing(t,at,next.Value,x.Side,x.Units,_=>new(q.Bid,fx));}
                 catch(ArgumentException){amount=null;}
                 if(amount is decimal debit)offers.Add(new(m.Name,x.Side,x.Units,c.ObservedAtUtcMs,c.ObservedAtUtcMs,
-                    next.Value,next.Value,Math.Max(0m,-debit),EerHash(scenario+"|"+t.Digest+"|"+at+"|"+next.Value)) {ScenarioId=scenario});
+                    next.Value,next.Value,Math.Max(0m,-debit)*costMultiple,EerHash(scenario+"|"+t.Digest+"|"+at+"|"+next.Value)) {ScenarioId=scenario});
             }
             if(offers.Count==0)stream.Count("UNKNOWN_SCENARIO_CARRY");
             else stream.Count(next.Value>at+EurStep?"CLOSURE_CARRY_RESERVED":"CARRY_RESERVED");
             var context=DatedEurContext(m,q);
             foreach(var w in context.Windows)stream.Count(w.Timeframe+"_"+w.Status);
-            stream.Count("MONETARY_FRAME");
+            stream.Mark(at,"MONETARY_FRAME");
             return new(m.Name,quote,c,context.For(NativeBarTimeframe.M5).Bars,context.For(NativeBarTimeframe.M15).Bars,
                 slip,"AUTHENTIC_QUOTES_EXPLICIT_RETROSPECTIVE_TERMS_SCENARIO")
                 {ClosedBars=context,OfficialAssetClass=m.OfficialAssetClass,EurDatedMarginScenario=true,
                  EurMargins=margins,FundingOffers=offers.ToArray()};
         }
         public void Advance(NativeUnifiedPortfolioEngine book,Ucp1Frame frame,
-            Dictionary<string,EerStream> markets,string scenario)
+            Dictionary<string,EerStream> markets,string scenario,decimal stress)
         {
             var evidence=new List<NativeAccruedFundingEvidence>();
             foreach(var x in book.FundingExposureSnapshot().Where(x=>x.ClosedAt is null||!x.ExactInLedger))
@@ -145,13 +150,15 @@ internal static partial class IntegratedEconomicReplay
                 if(accrued is decimal amount)
                     evidence.Add(new(x.PositionId,x.Symbol,x.Side,x.Units,x.FromExclusive,through,frame.At,null,null,
                         EerHash(scenario+"|"+terms.Digest+"|"+x.PositionId+"|"+x.FromExclusive+"|"+through))
-                        {ScenarioId=scenario,ConditionalSignedEur=amount,SourceAcquiredAt=Input.SourceAcquiredAt});
+                        {ScenarioId=scenario,ConditionalSignedEur=amount<0m?amount*(1m+stress):amount,
+                         SourceAcquiredAt=Input.SourceAcquiredAt});
             }
             book.Advance(frame with {FundingEvidence=evidence.ToArray()});
         }
     }
 
-    static object EerBook(string policy,NativeUnifiedPortfolioEngine book,long start,long end,NativeEurCalibration? calibration)
+    static object EerBook(string policy,NativeUnifiedPortfolioEngine book,long start,long end,NativeEurCalibration? calibration,
+        Dictionary<string,EerStream> streams)
     {
         var trips=book.CompleteModelTrips;
         var reconciled=book.ReconciledModelEpisodes.ToDictionary(x=>x.PositionId,StringComparer.Ordinal);
@@ -159,13 +166,32 @@ internal static partial class IntegratedEconomicReplay
         var curve=book.CommonBookEquityPath;
         var risk=curve.Where(x=>x.FundingCapital?.ConditionalEquityEur is >0m)
             .Where(x=>x.UsedMarginEur.HasValue).Select(x=>(x.UsedMarginEur!.Value+x.FundingCapital!.PendingOpenMarginEur)/x.FundingCapital.ConditionalEquityEur!.Value).ToArray();
+        var unknown=curve.Where(x=>x.FundingCapital?.ConditionalEquityEur is null).Select(x=>x.At).OrderBy(x=>x).ToArray();
+        int run=0,maxRun=0;long prior=-1;
+        foreach(long at in unknown){run=at-prior==EurStep?run+1:1;maxRun=Math.Max(run,maxRun);prior=at;}
+        Dictionary<string,int> Coverage(Ucp1Episode x)
+        {
+            var counts=new Dictionary<string,int>(StringComparer.Ordinal);
+            var clocks=streams[x.Symbol].Availability;
+            for(long at=x.OpenAt;at<=x.CloseAt;at+=EurStep)
+            {
+                string reason=clocks.GetValueOrDefault(at,"UNOBSERVED_CLOCK");
+                if(reason!="MONETARY_FRAME")counts[reason]=counts.GetValueOrDefault(reason)+1;
+            }
+            return counts;
+        }
         return new {Base=DatedEurReport(policy,book,start,end,calibration),
+            SampledUnknownEquityClocks=unknown.Length,LongestConsecutiveUnknownEquityClocks=maxRun,
+            SampledUnknownEquityMinutes=unknown.Length*5,
+            SampledFloatMinimumEur=curve.Where(x=>x.FundingCapital?.ConditionalEquityEur is not null)
+                .Select(x=>x.FundingCapital!.ConditionalEquityEur-x.CashEur).DefaultIfEmpty(null).Min(),
             DaysWithClosed=trips.Select(x=>x.CloseAt/86_400_000L).Distinct().Count(),
             MaximumObservedHeldPendingEquityFraction=risk.Length==0?(decimal?)null:risk.Max(),
             ModeledClocksWithMarginOver70Percent=risk.Count(x=>x>.70m),
             CalibrationExcluded=used is null?null:trips.Where(x=>!used.Contains(x.PositionId)).Select(x=>new
             {
-                x.PositionId,x.Symbol,x.Family,x.Side,x.OpenAt,x.CloseAt,x.Units,x.CrossedUnknownHistory,
+                x.PositionId,x.Symbol,x.Family,x.Side,x.OpenAt,x.CloseAt,x.Units,x.CrossedUnknownHistory,x.ExitReason,x.EntryRiskEur,
+                MissingClocksByReason=Coverage(x),Context=x.EurContext,
                 GrossEur=x.EconomicEvidence?.ClosedGrossEur??x.GrossEur,
                 NetEur=reconciled.TryGetValue(x.PositionId,out var rec)?rec.Evidence.ClosedNetEur:null
             }).ToArray(),
@@ -201,7 +227,7 @@ internal static partial class IntegratedEconomicReplay
                 var frames=streams.Values.Select(x=>source.Frame(x,at,id,stress)).OfType<Ucp1MarketFrame>().ToArray();
                 var frame=new Ucp1Frame(at,frames);
                 if(at<input.FitEnd)
-                {if(frames.Length>=2)matchedFit++;source.Advance(fit,frame,streams,id);}
+                {if(frames.Length>=2)matchedFit++;source.Advance(fit,frame,streams,id,stress);}
                 else
                 {
                     if(calibration is null)
@@ -212,18 +238,25 @@ internal static partial class IntegratedEconomicReplay
                         books[NativeUnifiedPortfolioEngine.EurContextRank].LoadEurCalibration(calibration);
                     }
                     if(frames.Length>=2)matchedComparison++;
-                    foreach(var b in books.Values)source.Advance(b,frame,streams,id);
+                    foreach(var b in books.Values)source.Advance(b,frame,streams,id,stress);
                 }
                 if((at-EurOffset-input.Start)%86_400_000L==0)
                     Console.WriteLine("EER1 "+label+" day "+((at-input.Start)/86_400_000L+1)+" / 28");
             }
             if(calibration is null)throw new ArgumentException("EER1_EMPTY_FIT");
             File.WriteAllText(Path.Combine(calibrationFolder,label+"-calibration.json"),JsonSerializer.Serialize(calibration,Json));
-            results.Add(new {Stress=label,SlippagePerSideSpreadMultiple=stress,ScenarioId=id,
+            var pooled=books[NativeUnifiedPortfolioEngine.EurRank].EurOpportunityReceipts;
+            var contextual=books[NativeUnifiedPortfolioEngine.EurContextRank].EurOpportunityReceipts;
+            static (long,string,string,int,decimal) Match(NativeEurOpportunity x)=>(x.At,x.Symbol,x.Family,x.Side,x.Units);
+            var matches=pooled.Join(contextual,Match,Match,(a,b)=>(a,b)).ToArray();
+            results.Add(new {Stress=label,SlippagePerSideSpreadMultiple=stress,CommissionAndDebitMultiple=1m+stress,ScenarioId=id,
+                ContextTransfer=new {Matched=matches.Length,ComparablePayoffs=matches.Count(p=>p.a.Payoff is not null&&p.b.Payoff is not null),
+                    ChangedNetBound=matches.Count(p=>p.a.Payoff?.NetLowerEur!=p.b.Payoff?.NetLowerEur),
+                    ChangedDecision=matches.Count(p=>p.a.Decision!=p.b.Decision)},
                 FitClocksWithAtLeastTwo=matchedFit,ComparisonClocksWithAtLeastTwo=matchedComparison,
                 MarketEvidence=streams.Values.Select(x=>new {x.Source.Market.Name,x.Source.Market.OfficialAssetClass,x.Source.TermsAcquiredAt,x.Counts}).ToArray(),
-                Fit=EerBook(NativeUnifiedPortfolioEngine.EurFirst,fit,input.Start,input.FitEnd,calibration),
-                Books=names.Select(n=>EerBook(n,books[n],input.FitEnd,input.End,null)).ToArray(),
+                Fit=EerBook(NativeUnifiedPortfolioEngine.EurFirst,fit,input.Start,input.FitEnd,calibration,streams),
+                Books=names.Select(n=>EerBook(n,books[n],input.FitEnd,input.End,null,streams)).ToArray(),
                 CalibrationEpisodes=calibration.Outcomes.Length,
                 CalibrationDays=calibration.Outcomes.Select(x=>x.ClosedAt/86_400_000L).Distinct().Count(),
                 CalibrationCells=calibration.Outcomes.GroupBy(x=>new {x.Family,x.Side,Symbol=x.Context?.Symbol,Class=x.Context?.AssetClass})

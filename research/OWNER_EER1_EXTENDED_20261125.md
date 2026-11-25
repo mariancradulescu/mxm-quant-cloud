@@ -42,9 +42,11 @@ acquisition time, model time, evidence manifest and engine revision are distinct
 Same NativeUnifiedPortfolioEngine, EUR FIRST/RANK/RANK_CONTEXT/CASH. Existing
 families, geometry, causal day thresholds (20/3), management and post-fill
 risk gates unchanged. Stress scenarios predeclared: S0 observed spread,
-published observed fee/swap point, zero extra slippage; S1 same spread/fees,
-extra 0.5 observed spread per execution side; S2 same spread/fees,
-extra 1 observed spread per execution side. These are modeled stresses, not
+published observed fee/swap point, zero extra slippage; S1 same witnessed spread,
+extra 0.5 observed spread per execution side and 1.5x commission and negative
+funding debit; S2 extra 1 observed spread per execution side and 2x commission
+and negative funding debit. Positive funding credit is not inflated; the
+quoted BID/ASK and original terms are unchanged. These are modeled stresses, not
 broker execution guarantees. Do not select a winner retrospectively.
 Scenario identity hashes exact input, protocol, engine revision and stress.
 No transfer of calibration across scenario identities. Report all comparators,

@@ -161,6 +161,8 @@ def collect_market(j,account,sid,row,target,charges,keep,name):
     budget=[PER_SYMBOL-len(j.packets)] if hasattr(j,"t") else [PER_SYMBOL-j.index]
     windows=[]; quote_marks=[]; funding=[]; tail={e.BID:[],e.ASK:[]}; tail_leaves={e.BID:[],e.ASK:[]}
     for day in range(START,END,DAY):
+        if not keep and (day-START)%DAY==0:
+            print("EER1_SOURCE_PROGRESS",name,(day-START)//DAY+1,"/ 28",flush=True)
         sides={e.BID:[],e.ASK:[]}; leaves={e.BID:[],e.ASK:[]}
         # Existing full-session custody already covers 26 Oct–16 Nov.
         # Only charge-time pages missing in that custody are requested here.
