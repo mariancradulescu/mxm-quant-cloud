@@ -224,7 +224,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
     public NativeUnifiedPortfolioEngine(string policy,string brokerBinding="",
         Scp1ScoreModel? scoredModel=null,NativeCompleteModels? models=null,NativeCompleteProbe? probe=null,
         NativeStructuralModels? closedContextModels=null, NativeFundedActionModel? actionModel=null,
-        bool reserveAccruedFunding=false)
+        bool reserveAccruedFunding=false,string? fundingScenarioId=null)
     {
         if(policy is not ("JOINT" or "TRANSITION_ONLY" or "REPAIR_ONLY" or
                           "LONG" or "SHORT" or "CASH" or
@@ -239,7 +239,9 @@ public sealed partial class NativeUnifiedPortfolioEngine
             throw new ArgumentException("UCP1_UNDECLARED_COMPLETE_POLICY");
         this.policy=policy;
         if(reserveAccruedFunding&&!Cpe1)throw new ArgumentException("FUNDING_RESERVES_REQUIRE_CPE1_LIFECYCLE");
-        if(reserveAccruedFunding||OwnerEur)fundingReserves=new();
+        if(fundingScenarioId is not null && (!OwnerEur||!string.IsNullOrWhiteSpace(brokerBinding)))
+            throw new ArgumentException("FUNDING_SCENARIO_REPLAY_ONLY");
+        if(reserveAccruedFunding||OwnerEur)fundingReserves=new(scenarioId:fundingScenarioId);
         completeModels=models;
         completeProbe=probe;
         structuralModels=closedContextModels;
@@ -266,6 +268,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
         {
             if(!Cpe1)throw new ArgumentException("FUNDING_RESERVES_REQUIRE_CPE1_LIFECYCLE");
             fundingReserves=new(s.AccruedFunding);
+            if(fundingReserves.ScenarioId is not null && !OwnerEur)throw new ArgumentException("FUNDING_SCENARIO_REPLAY_ONLY");
         }
         else if(OwnerEur)throw new ArgumentException("EUR_FUNDING_CHECKPOINT_REQUIRED");
         completeModels=s.CompleteModels;
@@ -305,6 +308,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
              ??throw new ArgumentException("UCP1_MISSING_CHECKPOINT"));
     public LedgerEvent[] OriginalModelEvents=>facts.ToArray();
     public LedgerSummary ModelSummary=>model.Ledger.Summary();
+    public string? FundingScenarioId=>fundingReserves?.ScenarioId;
     public Scp1ChoiceReceipt[] Scp1ChoiceReceipts=>scoredChoices.ToArray();
     public NativeIntegratedCalibrationState? IntegratedCalibration()=>integratedCalibration?.Checkpoint();
     public Ucp1Episode[] CompleteModelTrips=>trips.ToArray();
@@ -503,12 +507,13 @@ public sealed partial class NativeUnifiedPortfolioEngine
             fundingReserves.Observe(t,fundingEvidence,(window,delta,proof)=>
                 Apply(Event(window.ClosedAt is null?"FINANCING":"CLOSED_FUNDING_SETTLEMENT",
                     t,window.PositionId,window.Symbol,window.Side,
-                    window.Units,reason:window.ClosedAt is null?
+                    window.Units,reason:proof.ScenarioId is not null ?
+                        "CONDITIONAL_SCENARIO_FUNDING_MODEL_SETTLEMENT" : window.ClosedAt is null?
                         "SUPPORTED_ACCRUED_FUNDING_MODEL_SETTLEMENT":"SUPPORTED_CLOSED_EXPOSURE_FUNDING_SETTLEMENT",
                     quotes:quotes,financing:delta) with {EvidenceHash=proof.SourceSha256,
                         AvailableAt=proof.AvailableAt,CalibratedThrough=proof.ThroughInclusive,LatencyMs=0,
                         FundingFromExclusive=window.ClosedAt is null?null:window.FromExclusive}));
-            foreach(var id in fundingEvidence.Where(proof=>proof.ExactSignedEur.HasValue)
+            foreach(var id in fundingEvidence.Where(proof=>proof.LedgerAmount.HasValue)
                 .Select(proof=>proof.PositionId).Distinct(StringComparer.Ordinal))
                 if(trips.Find(trip=>trip.PositionId==id) is { } completed)
                     RememberCpe1Episode(completed,t);

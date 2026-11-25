@@ -36,7 +36,11 @@ public sealed record NativeEurCalibrationOutcome(string PositionId,string Family
     public NativeEurDecisionContext? Context { get; init; }
 }
 public sealed record NativeEurCalibration(long ObservationThrough,string LedgerEventChainSha256,
-    NativeEurCalibrationOutcome[] Outcomes);
+    NativeEurCalibrationOutcome[] Outcomes)
+{
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? FundingScenarioId { get; init; }
+}
 
 public sealed partial class NativeUnifiedPortfolioEngine
 {
@@ -87,7 +91,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
             throw new ArgumentException("EUR_CALIBRATION_REQUIRES_COMPLETED_FIRST_LEDGER_BEFORE_CONFIRMATION");
         var outcomes=eurHistory.Values.SelectMany(rows=>rows)
             .OrderBy(o=>o.ClosedAt).ThenBy(o=>o.PositionId,StringComparer.Ordinal).ToArray();
-        return new(previousClock,ModelSummary.EventChainHash,outcomes);
+        return new(previousClock,ModelSummary.EventChainHash,outcomes) {FundingScenarioId=FundingScenarioId};
     }
 
     public void LoadEurCalibration(NativeEurCalibration calibration)
@@ -99,7 +103,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
 
     void RestoreEurCalibration(NativeEurCalibration calibration)
     {
-        if(!IsEurRank||calibration.ObservationThrough<=0||
+        if(!IsEurRank||calibration.FundingScenarioId!=FundingScenarioId||calibration.ObservationThrough<=0||
             calibration.LedgerEventChainSha256 is not {Length:64}||
             !calibration.LedgerEventChainSha256.All(Uri.IsHexDigit)||
             calibration.Outcomes.Select(o=>o.PositionId).Distinct(StringComparer.Ordinal)
@@ -195,7 +199,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
 
     internal static string EurRejectedCapital(string status,LedgerSummary book,NativeFundingCapital capital)
         =>status=="MISSING_CURRENT_LIQUIDATION_MARK"&&book.LiquidationEquityEur.HasValue&&
-            book.UsedMarginEur.HasValue&&capital.OutstandingDebitCeilingEur is null
+            book.UsedMarginEur.HasValue&&(capital.ScenarioId is null?capital.OutstandingDebitCeilingEur:capital.ConditionalUnmodeledDebitCeilingEur) is null
             ?"WAIT_UNBOUNDED_PORTFOLIO_FUNDING":"WAIT_"+status;
 
     Ucp1FrameResult AdvanceEur(long at,Ucp1Frame frame,
@@ -231,15 +235,15 @@ public sealed partial class NativeUnifiedPortfolioEngine
                     units,bracket.Entry,s.Side>0?q.Bid:q.Ask,
                     q.LiquidationSlippagePerSide??market.SlippagePerSideQuote));
                 var margin=EurMargin(market,s.Side,units,at);
-                var debit=NativePortfolioFunding.OfferDebit(market,s.Side,units,at);
+                var debit=NativePortfolioFunding.OfferDebit(market,s.Side,units,at,FundingScenarioId);
                 decimal? risk=bracket.RiskEur+debit;
                 var context=DescribeEurContext(market,at,s.Side,(capital.HeldMarginEur??0m)+pending.Sum(x=>x.MarginEur),
-                    capital.DemonstrableEquityEur,risk,roundTripCost);
+                    capital.ResearchAdmissionEquityEur,risk,roundTripCost);
                 var payoff=risk is >0m?EurPayoff(s.Family,s.Side,risk.Value,roundTripCost+debit!.Value,
                     policy==EurContextRank?context:null):null;
                 var receipt=new NativeEurOpportunity(at,market.Symbol,s.Family,s.Side,units,grossTarget,grossRisk,
                     roundTripCost,debit,margin?.MarginEur,risk,capital.HeldMarginEur,capital.PendingOpenMarginEur,
-                    capital.DemonstrableEquityEur,payoff,"ASSESS")
+                    capital.ResearchAdmissionEquityEur,payoff,"ASSESS")
                 {
                     ConditionalNetAtTargetEur=bracket.RewardEur-debit,
                     ConditionalNetRewardRisk=risk is >0m?(bracket.RewardEur-debit)/risk:null,
@@ -265,7 +269,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
             var market=choice.Market;
             var receipt=choice.Receipt;
             decimal units=receipt.Units, margin=market.Quote.MarginPerUnit;
-            var gate=NativePendingCapitalGate.Assess(capital.DemonstrableEquityEur,book.UsedMarginEur is not null,
+            var gate=NativePendingCapitalGate.Assess(capital.ResearchAdmissionEquityEur,book.UsedMarginEur is not null,
                 held,pending,new(market.Symbol,s.Family,units,market.Contract.VolumeStepUnits,units,
                     margin,choice.Geometry.InitialRiskEur/units));
             if(!gate.IsFinanceable){Trace(receipt,EurRejectedCapital(gate.Status,book,capital));continue;}

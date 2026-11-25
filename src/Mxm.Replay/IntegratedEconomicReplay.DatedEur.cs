@@ -44,7 +44,7 @@ internal static partial class IntegratedEconomicReplay
         }
         void Count(string key)=>Counts[key]=Counts.GetValueOrDefault(key)+1;
 
-        public Ucp1MarketFrame? Frame(long at,SourceQuote? eurUsd)
+        public Ucp1MarketFrame? Frame(long at,SourceQuote? eurUsd,string? scenarioId=null)
         {
             if(!Quotes.TryGetValue(at,out var q)||!Fresh(q,at,30_000L))
             {Count("NO_MATCHED_MARKET_QUOTE");return null;}
@@ -82,7 +82,7 @@ internal static partial class IntegratedEconomicReplay
                 var expected=Financing(terms,at,next,m.Side,m.Units,_=>new(null,null));
                 if(expected.HasValue)
                     offers.Add(new(Source.Name,m.Side,m.Units,c.ObservedAtUtcMs,c.ObservedAtUtcMs,next,next,
-                        Math.Max(0m,-expected.Value),terms.Digest));
+                        Math.Max(0m,-expected.Value),terms.Digest) {ScenarioId=scenarioId});
             }
             Count(offers.Count>0?"QUOTED_WITH_DATED_SCENARIO":"QUOTED_WITHOUT_FUNDING_BOUND");
             return new(Source.Name,quote,c,m5.Observe(at),m15.Observe(at),0m,
@@ -128,7 +128,8 @@ internal static partial class IntegratedEconomicReplay
     }
 
     static void AdvanceDatedEur(NativeUnifiedPortfolioEngine book,Ucp1Frame frame,
-        Dictionary<string,DatedEurTerms> terms,Dictionary<string,Dictionary<long,DatedRolloverQuote>> quotes)
+        Dictionary<string,DatedEurTerms> terms,Dictionary<string,Dictionary<long,DatedRolloverQuote>> quotes,
+        ConditionalRolloverArchive? conditional=null)
     {
         var funding=new List<NativeAccruedFundingEvidence>();
         foreach(var x in book.FundingExposureSnapshot().Where(x=>x.ClosedAt is null||!x.ExactInLedger))
@@ -137,8 +138,17 @@ internal static partial class IntegratedEconomicReplay
             if(through<=x.FromExclusive||!terms.TryGetValue(x.Symbol,out var t))continue;
             var market=quotes[x.Symbol];
             if(Financing(t,x.FromExclusive,through,x.Side,x.Units,
-                charge=>ChargeQuote(t.Contract.QuoteAsset,charge,market,quotes["EURUSD"])) is decimal accrued)
-                funding.Add(new(x.PositionId,x.Symbol,x.Side,x.Units,x.FromExclusive,through,frame.At,accrued,null,t.Digest));
+                charge=>conditional is null?ChargeQuote(t.Contract.QuoteAsset,charge,market,quotes["EURUSD"]):
+                    conditional.Quote(t,x.Side,charge)) is decimal accrued)
+            {
+                if(conditional is null)
+                    funding.Add(new(x.PositionId,x.Symbol,x.Side,x.Units,x.FromExclusive,through,frame.At,accrued,null,t.Digest));
+                else
+                    funding.Add(new(x.PositionId,x.Symbol,x.Side,x.Units,x.FromExclusive,through,frame.At,null,null,
+                        conditional.EvidenceHash(t,x,through,book.FundingScenarioId!))
+                        {ScenarioId=book.FundingScenarioId,ConditionalSignedEur=accrued,
+                         SourceAcquiredAt=Math.Max(conditional.AcquiredAt,t.Contract.ObservedAtUtcMs)});
+            }
         }
         book.Advance(frame with {FundingEvidence=funding.ToArray()});
     }
@@ -185,8 +195,13 @@ internal static partial class IntegratedEconomicReplay
                 UnreconciledAdditionalCostEur=(decimal?)null,
                 AccountingCashEur=summary.CashEur,
                 DemonstrableEquityEur=final?.DemonstrableEquityEur,
-                OutstandingDebitCeilingEur=final?.OutstandingDebitCeilingEur
+                OutstandingDebitCeilingEur=final?.OutstandingDebitCeilingEur,
+                ConditionalEquityEur=final?.ConditionalEquityEur,
+                ConditionalUnmodeledDebitCeilingEur=final?.ConditionalUnmodeledDebitCeilingEur
             },
+            FundingScenarioId=engine.FundingScenarioId,
+            ScenarioFundingWindows=engine.FundingScenarioId is null?null:
+                engine.FundingExposureSnapshot().Select(x=>new {Exposure=x,EvidenceClass=x.EvidenceClass}).ToArray(),
             UnresolvedFundingWindows=unresolvedWindows,
             UnreconciledEpisodeTrace=unsettled.Select(t=>new {t.PositionId,t.Symbol,t.Family,t.Side,
                 t.Units,t.OpenAt,t.CloseAt,GrossEur=Gross(t),BookedNetAtCloseEur=t.NetEur,t.CrossedUnknownHistory}).ToArray(),
@@ -197,6 +212,9 @@ internal static partial class IntegratedEconomicReplay
                     MissingLiquidationEquity=p.EquityEur is null,
                     MissingMargin=p.UsedMarginEur is null,
                     MissingFundingCeiling=p.FundingCapital?.OutstandingDebitCeilingEur is null,
+                    MissingScenarioAmount=engine.FundingScenarioId is not null &&
+                        p.FundingCapital?.ConditionalUnmodeledDebitCeilingEur is null,
+                    ConditionalEquityEur=p.FundingCapital?.ConditionalEquityEur,
                     OutstandingHeldWindows=p.FundingCapital?.OutstandingHeldWindows,
                     OutstandingClosedWindows=p.FundingCapital?.OutstandingClosedWindows
                 }).ToArray(),
@@ -211,6 +229,9 @@ internal static partial class IntegratedEconomicReplay
             SampledHeldPeak=curve.Select(x=>x.Held).DefaultIfEmpty().Max(),
             HeldAndPendingPeakEur=curve.Max(x=>x.FundingCapital is { } c?c.HeldMarginEur+c.PendingOpenMarginEur:null),
             ClocksWithUnknownEquity=curve.Count(x=>x.EquityEur is null||x.FundingCapital?.DemonstrableEquityEur is null),
+            ClocksWithUnknownAdmissionEquity=curve.Count(x=>x.EquityEur is null||x.FundingCapital?.ResearchAdmissionEquityEur is null),
+            ClocksWithUnknownConditionalEquity=engine.FundingScenarioId is null?(int?)null:
+                curve.Count(x=>x.FundingCapital?.ConditionalEquityEur is null),
             ModelActions=engine.OriginalModelEvents.GroupBy(e=>e.Kind).ToDictionary(g=>g.Key,g=>g.Count()),
             Reductions=engine.OriginalModelEvents.Count(e=>e.Kind=="CLOSE_FILL"&&e.Reason.Contains("REDUCTION",StringComparison.Ordinal)),
             Weekly=weeks.Select(w=>new {Week=w,Closes=all.Count(t=>Week(t.CloseAt)==w),
@@ -279,21 +300,35 @@ internal static partial class IntegratedEconomicReplay
     static Dictionary<long,DatedRolloverQuote> RolloverIndex(SourceMarket market)
         =>(market.RolloverQuotes??Array.Empty<DatedRolloverQuote>()).ToDictionary(q=>q.At);
 
-    public static int RunDatedEur(string input,string report,string calibrationPath)
+    public static int RunDatedEur(string input,string report,string calibrationPath,string? conditionalSource=null)
     {
         var source=JsonSerializer.Deserialize<Source>(File.ReadAllText(input),Json)
             ??throw new ArgumentException("DATED_EUR_SOURCE_MISSING");
         if(source.End!=DatedEurEnd||source.Start>DatedEurStart||source.ManagementIntervalMs!=30_000L)
             throw new ArgumentException("DATED_EUR_REGISTERED_WINDOW_MISMATCH");
+        var conditional=conditionalSource is null?null:new ConditionalRolloverArchive(conditionalSource);
+        string? scenario=conditional is null?null:source.ProtocolSha256;
+        var coverage=source.Markets.Select(m=>
+        {
+            var t=m.DatedDevelopment;
+            bool eligible=t is not null && t.TradingMode==0 && t.Contract.MinimumUnits>0m &&
+                (conditional is null || (new[]{1,-1}.Where(side=>side>0||t.ShortAllowed).All(side=>
+                    Financing(t,DatedEurStart,DatedEurEnd-1,side,t.Contract.MinimumUnits,
+                        charge=>conditional.Quote(t,side,charge)).HasValue)));
+            return new {m.Name,ScenarioFinanciallyCovered=eligible};
+        }).ToArray();
+        var covered=coverage.Where(x=>x.ScenarioFinanciallyCovered).Select(x=>x.Name).ToHashSet();
+        if(conditional is not null && covered.Count<2)
+            throw new InvalidOperationException("CONDITIONAL_SOURCE_PREFLIGHT_INSUFFICIENT_MARKETS");
         var markets=source.Markets.Select(m=>new DatedEurMarket(m)).ToArray();
         var fx=markets.Single(m=>m.Source.Name=="EURUSD").Quotes;
         var quotes=markets.ToDictionary(m=>m.Source.Name,m=>RolloverIndex(m.Source),StringComparer.Ordinal);
         var terms=markets.Where(m=>m.Source.DatedDevelopment is not null)
             .ToDictionary(m=>m.Source.Name,m=>m.Source.DatedDevelopment!,StringComparer.Ordinal);
-        var first=new NativeUnifiedPortfolioEngine(NativeUnifiedPortfolioEngine.EurFirst);
+        var first=new NativeUnifiedPortfolioEngine(NativeUnifiedPortfolioEngine.EurFirst,fundingScenarioId:scenario);
         var names=new[]{NativeUnifiedPortfolioEngine.EurFirst,NativeUnifiedPortfolioEngine.EurRank,
             NativeUnifiedPortfolioEngine.EurContextRank,NativeUnifiedPortfolioEngine.EurCash};
-        var books=names.ToDictionary(n=>n,n=>new NativeUnifiedPortfolioEngine(n),StringComparer.Ordinal);
+        var books=names.ToDictionary(n=>n,n=>new NativeUnifiedPortfolioEngine(n,fundingScenarioId:scenario),StringComparer.Ordinal);
         var clocksWith2Quotes=new Dictionary<string,int>();
         var matchedClocks=new Dictionary<string,int>();
         NativeEurCalibration? calibration=null;
@@ -301,13 +336,14 @@ internal static partial class IntegratedEconomicReplay
         decimal? firstCalibratedRankEquity=null;
         for(long at=DatedEurStart+EurOffset;at<DatedEurEnd;at+=EurStep)
         {
-            var observed=markets.Select(m=>m.Frame(at,fx.GetValueOrDefault(at))).OfType<Ucp1MarketFrame>().ToArray();
+            var observed=markets.Where(m=>conditional is null||covered.Contains(m.Source.Name))
+                .Select(m=>m.Frame(at,fx.GetValueOrDefault(at),scenario)).OfType<Ucp1MarketFrame>().ToArray();
             string phase=at<DatedEurComparison?"FIT":"COMPARISON";
             if(markets.Count(m=>m.Quotes.TryGetValue(at,out var q)&&Fresh(q,at,30_000L))>=2)
                 clocksWith2Quotes[phase]=clocksWith2Quotes.GetValueOrDefault(phase)+1;
             if(observed.Length>=2)matchedClocks[phase]=matchedClocks.GetValueOrDefault(phase)+1;
             var frame=new Ucp1Frame(at,observed);
-            if(at<DatedEurComparison){AdvanceDatedEur(first,frame,terms,quotes);continue;}
+            if(at<DatedEurComparison){AdvanceDatedEur(first,frame,terms,quotes,conditional);continue;}
             if(calibration is null)
             {
                 string checkpoint=first.Checkpoint();
@@ -321,7 +357,7 @@ internal static partial class IntegratedEconomicReplay
                 books[NativeUnifiedPortfolioEngine.EurContextRank].LoadEurCalibration(calibration);
                 firstCalibratedRankEquity=books[NativeUnifiedPortfolioEngine.EurRank].ModelSummary.CashEur;
             }
-            foreach(var book in books.Values)AdvanceDatedEur(book,frame,terms,quotes);
+            foreach(var book in books.Values)AdvanceDatedEur(book,frame,terms,quotes,conditional);
         }
         if(calibration is null)throw new InvalidOperationException("DATED_EUR_CALIBRATION_WINDOW_EMPTY");
         File.WriteAllText(calibrationPath,JsonSerializer.Serialize(calibration,Json));
@@ -331,7 +367,11 @@ internal static partial class IntegratedEconomicReplay
         static (long,string,string,int,decimal) Match(NativeEurOpportunity c)=>(c.At,c.Symbol,c.Family,c.Side,c.Units);
         File.WriteAllText(report,JsonSerializer.Serialize(new
         {
-            Purpose="AUTHENTIC_EUR_INTEGRATED_EXPOSED_DEVELOPMENT_DATED_SCENARIO",
+            Purpose=conditional is null?"AUTHENTIC_EUR_INTEGRATED_EXPOSED_DEVELOPMENT_DATED_SCENARIO":
+                "DISTINCT_EXPOSED_CONDITIONAL_CAPITAL_CONTINUITY_PILOT_NOT_QUALIFICATION",
+            ScenarioId=scenario,ConditionalSourceSha256=conditional?.Sha256,
+            ConditionalSourceAcquiredAt=conditional?.AcquiredAt,
+            ScenarioCoverage=conditional is null?null:coverage,
             source.ProtocolSha256,source.SourceRun,Start=DatedEurStart,ComparisonStart=DatedEurComparison,EndExclusive=DatedEurEnd,
             CommonQuoteClocks=clocksWith2Quotes,CommonDatedMonetaryClocks=matchedClocks,
             Terms=terms.ToDictionary(p=>p.Key,p=>new {p.Value.SourceRun,p.Value.Contract.ObservedAtUtcMs,

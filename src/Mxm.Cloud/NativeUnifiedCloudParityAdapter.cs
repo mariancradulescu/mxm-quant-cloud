@@ -35,5 +35,9 @@ public sealed class NativeUnifiedCloudParityAdapter
     public NativeFundedActionReceipt[] FundedActions=>engine.FundedActionReceipts;
     public string Checkpoint()=>engine.Checkpoint();
     public void Restore(string checkpoint)
-        =>engine=NativeUnifiedPortfolioEngine.Restore(checkpoint);
+    {
+        var restored=NativeUnifiedPortfolioEngine.Restore(checkpoint);
+        if(restored.FundingScenarioId is not null)throw new ArgumentException("FUNDING_SCENARIO_REPLAY_ONLY");
+        engine=restored;
+    }
 }
