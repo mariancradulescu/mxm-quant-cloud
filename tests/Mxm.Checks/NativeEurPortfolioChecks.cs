@@ -56,6 +56,16 @@ internal static class NativeEurPortfolioChecks
                   later.ModelBook with {LiquidationEquityEur=null},known)=="WAIT_"+missingMark,
             "EUR distinguishes missing collateral marks from fully marked equity with unbounded carry");
         ExplicitScenarioContinuity(check);
+        const long charge=1794002400000L;
+        var bid=new NativeConditionalRolloverSide(charge-70_000,new long[]{100_000,100_001},true,charge+100_000);
+        var ask=new NativeConditionalRolloverSide(charge-65_000,new long[]{100_010,100_012},true,charge+100_000);
+        var fx=NativeConditionalRollover.UsdToEur(bid,ask,charge);
+        check(fx is not null && fx.DebitToEur==1m && fx.CreditToEur==1m/1.00012m &&
+            NativeConditionalRollover.MarketBid(bid,charge,-1m)==1.00001m,
+            "Conditional rollover uses observed adverse endpoints without extending execution quote age");
+        check(NativeConditionalRollover.UsdToEur(bid with {At=charge+1},ask,charge) is null &&
+            NativeConditionalRollover.MarketBid(bid with {Complete=false},charge,-1m) is null,
+            "Conditional rollover rejects post-charge and incomplete witnesses");
         LateNetChangesRanking(check);
         ContractClocksAndDirectionalCosts(check);
         var flexible=input.Markets[0] with {EurNativeClock=true};
