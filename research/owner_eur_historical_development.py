@@ -57,7 +57,10 @@ def preceding_terms():
             result[name] = dict(Contract=cost_terms, Margin=margin,
                                 ShortAllowed=detail.HasField("enableShortSelling") and detail.enableShortSelling,
                                 TradingMode=detail.tradingMode, AccountSwapFree=swap_free,
-                                Digest=sha(detail.SerializeToString() + q.SerializeToString() +
+                                AccountType=trader.accountType if trader.HasField("accountType") else None,
+                                MoneyDigits=trader.moneyDigits if trader.HasField("moneyDigits") else None,
+                                PriceDigits=detail.digits,
+                                Digest=sha(trader.SerializeToString() + detail.SerializeToString() + q.SerializeToString() +
                                            r.SerializeToString() + str(run).encode()),
                                 SourceRun=str(run))
         old_bars.update(bundle["bars"])
@@ -65,6 +68,8 @@ def preceding_terms():
 
 
 def main():
+    evidence_only = sys.argv[1:] == ["--evidence-only"]
+    need(evidence_only or not sys.argv[1:], "DATED_EUR_ENTRY_MODE")
     key = os.environ.get("R3_CUSTODY_PRIVATE_KEY_PEM", "").encode()
     need(bool(key), "DATED_EUR_EXISTING_CUSTODY_KEY_MISSING")
     matrix_data = MATRIX.read_bytes()
@@ -103,15 +108,18 @@ def main():
                       f, separators=(",", ":"))
         input_hash = integrated.hashlib_file(materialized)
         env = {k:v for k,v in os.environ.items() if k != "R3_CUSTODY_PRIVATE_KEY_PEM"}
-        result, calibration = OUT / "economic.json", OUT / "calibration.json"
-        print("DATED_EUR_ARCHIVES_BOUND_RUN_NATIVE_ONCE", len(markets), flush=True)
+        result = OUT / ("finance-and-daily-context.json" if evidence_only else "economic.json")
+        calibration = OUT / "calibration.json"
+        mode = "--owner-eur-archive-evidence-only" if evidence_only else "--owner-eur-historical-development"
+        print("DATED_EUR_ARCHIVES_BOUND", mode, len(markets), flush=True)
         subprocess.run(["dotnet", "src/Mxm.Replay/bin/Release/net8.0/Mxm.Replay.dll",
-                        "--owner-eur-historical-development", str(materialized),str(result),str(calibration)],
+                        mode, str(materialized),str(result)] + ([] if evidence_only else [str(calibration)]),
                        check=True, env=env)
     receipt = dict(ArchiveRun=context.INTEGRATED_RUN, SupplementaryRun=SUPPLEMENTARY,
         HxcRun=context.HXC1_RUN, PrecedingContractRuns=list(COMPLETE_BY), ExposedDevelopment=True,
         InputSha256=input_hash, ProtocolSha256=protocol_hash, ResultSha256=sha(result.read_bytes()),
-        CalibrationSha256=sha(calibration.read_bytes()), OriginalSupplementaryHash=extra["CipherSha256"],
+        CalibrationSha256=None if evidence_only else sha(calibration.read_bytes()),
+        EvidenceOnly=evidence_only, OriginalSupplementaryHash=extra["CipherSha256"],
         MarketSources=source_notes, BrokerRequests=0, Orders=0, CloudActivated=False)
     (OUT / "receipt.json").write_text(json.dumps(receipt,indent=2) + "\n")
     print("DATED_EUR_NATIVE_DEVELOPMENT_PUBLISHED", flush=True)

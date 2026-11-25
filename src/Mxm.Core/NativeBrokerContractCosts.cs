@@ -41,6 +41,7 @@ public sealed record NativeOriginalFxHop(
     decimal Bid,decimal Ask,bool OriginalBrokerAuthenticated);
 public sealed record NativeOriginalFxRate(
     decimal CreditToEur,decimal DebitToEur,string[] RouteSymbols);
+public sealed record NativeObservedRolloverQuote(decimal? Bid,NativeOriginalFxRate? QuoteToEur);
 
 public static class NativeBrokerContractCosts
 {
@@ -281,6 +282,50 @@ public static class NativeBrokerContractCosts
             signed+=charge*(charge>=0?quoteCreditToEur:quoteDebitToEur);
         }
         return signed;
+    }
+
+    // Spotware public server model, ProtoSwapCalculationType. Inputs are dated
+    // account and market observations. This calculates a conditional scenario,
+    // without asserting the tariff or the conversion actually charged.
+    public static decimal? ObservedDailySwapEur(NativeObservedContractTerms terms,long from,long through,
+        int side,decimal units,bool? accountSwapFree,int? accountType,int? moneyDigits,int? priceDigits,
+        Func<long,NativeObservedRolloverQuote> quoteAt)
+    {
+        Validate(terms,units);
+        if(from<=0||through<from||side is not (1 or -1))
+            throw new ArgumentException("NATIVE_DAILY_SWAP_INPUT_INVALID");
+        if(terms.ObservedAtUtcMs>from||accountSwapFree is not false||
+            NextScheduledSwapCharge(terms,from) is not long first)return null;
+        if(first>through)return 0m;
+        if(terms.SwapPeriodHours!=24||terms.ChargeSwapAtWeekends is not bool weekends||
+            terms.SkipSwapPeriods is not int skip||skip<0)return null;
+        decimal total=0m;
+        for(long charge=first;charge<=through;charge+=86_400_000L)
+        {
+            var weekday=DateTimeOffset.FromUnixTimeMilliseconds(charge).DayOfWeek;
+            if(!weekends&&weekday is (DayOfWeek.Saturday or DayOfWeek.Sunday))continue;
+            if(skip>0){skip--;continue;}
+            if(terms.TripleSwapWeekday is not (>=0 and <=7)||
+                (side>0?terms.LongSwap:terms.ShortSwap) is not decimal swap)return null;
+            if(swap==0m)continue;
+            if(accountType is not (0 or 1)||moneyDigits is not (>=0 and <=18))return null;
+            var quote=quoteAt(charge);
+            if(quote.QuoteToEur is not {CreditToEur:>0m,DebitToEur:>0m} fx||
+                fx.DebitToEur<fx.CreditToEur)return null;
+            decimal? perUnit=terms.SwapCalculationType switch
+            {
+                0 when terms.PipPosition is >=0 and <=18=>swap*Pip(terms.PipPosition.Value),
+                1 when quote.Bid is >0m=>quote.Bid.Value*swap/100m/365m,
+                2 when priceDigits is >=0 and <=18=>swap*Pip(priceDigits.Value),
+                _=>null
+            };
+            if(perUnit is null)return null;
+            int iso=weekday==DayOfWeek.Sunday?7:(int)weekday;
+            decimal amount=perUnit.Value*units*(iso==terms.TripleSwapWeekday?3m:1m);
+            total+=decimal.Round(amount*(amount>=0m?fx.CreditToEur:fx.DebitToEur),
+                moneyDigits.Value,MidpointRounding.AwayFromZero);
+        }
+        return total;
     }
 
     public static long? NextScheduledSwapCharge(NativeObservedContractTerms terms,long fromExclusive)

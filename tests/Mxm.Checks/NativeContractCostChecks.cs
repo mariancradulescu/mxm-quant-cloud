@@ -94,6 +94,24 @@ static class NativeContractCostChecks
             terms with {SkipSwapPeriods=null},wed,wed+20*60000L,1,
             1000m,.006m,.006m)==null,
             "unknown rollover skip cannot be assumed zero");
+        var percentage=terms with { SwapCalculationType=1,LongSwap=-3.65m,ShortSwap=3.65m,
+            MinimumUnits=1m,VolumeStepUnits=1m };
+        var rolloverQuote=new NativeObservedRolloverQuote(100m,new NativeOriginalFxRate(.9m,1m,new[]{"EURUSD"}));
+        var wedCharge=wed+10*60_000L;
+        decimal? Dated(NativeObservedContractTerms c,int side,NativeObservedRolloverQuote q,int? digits=2)
+            =>NativeBrokerContractCosts.ObservedDailySwapEur(c,wed,wedCharge,side,10m,false,0,digits,2,
+                at=>at==wedCharge?q:throw new InvalidOperationException("UNEXPECTED_CHARGE_CLOCK"));
+        check(Dated(percentage,1,rolloverQuote)==-.30m&&Dated(percentage,-1,rolloverQuote)==.27m,
+            "official annual percentage rollover uses charge bid and directional EUR conversion before daily rounding");
+        check(Dated(percentage,1,rolloverQuote with {Bid=null}) is null&&
+            Dated(percentage,1,rolloverQuote with {QuoteToEur=null}) is null&&
+            Dated(percentage,1,rolloverQuote,null) is null&&
+            Dated(percentage with {ObservedAtUtcMs=wed+1L},1,rolloverQuote) is null,
+            "a missing charge mark, EUR route or source precision and a future snapshot cannot price a debit");
+        var points=percentage with {SwapCalculationType=2,TripleSwapWeekday=0,LongSwap=-.15m};
+        check(Dated(points,1,rolloverQuote with {Bid=null})==-.02m&&
+            Dated(percentage with {SkipSwapPeriods=1},1,new(null,null))==0m,
+            "explicit no-tripling points use price digits and half-up rounding; a witnessed skip requires no rate");
         var feeFloor=terms with {PreciseRateWire=0,PreciseMinimumWire=2000000L};
         var min=NativeBrokerContractCosts.Quote(feeFloor,context);
         check(min.OneSideCommissionEur==.018m,

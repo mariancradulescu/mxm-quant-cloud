@@ -9,7 +9,7 @@ on:
       - 'src/Mxm.Core/NativeUnifiedPortfolioEngine.Eur.cs'
   push:
     branches: [main]
-    paths: ['ops/owner-eur-integrated-development-once.txt']
+    paths: ['ops/owner-eur-integrated-development-once.txt', 'ops/owner-eur-archive-limits-once.txt']
 permissions:
   contents: read
   actions: read
@@ -19,6 +19,7 @@ jobs:
     timeout-minutes: 12
     outputs:
       activate: ${{ steps.marker.outputs.activate }}
+      mode: ${{ steps.marker.outputs.mode }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -37,6 +38,12 @@ jobs:
           [[ "$GITHUB_EVENT_NAME" == push ]] || exit 0
           marker=ops/owner-eur-integrated-development-once.txt
           subject=OWNER_EUR_INTEGRATED_ARCHIVES_20261125
+          mode=economic
+          if [[ "$(git log -1 --format=%s)" == OWNER_EUR_ARCHIVE_LIMITS_ONLY_20261125 ]]; then
+            marker=ops/owner-eur-archive-limits-once.txt
+            subject=OWNER_EUR_ARCHIVE_LIMITS_ONLY_20261125
+            mode=evidence
+          fi
           [[ "$GITHUB_REF" == refs/heads/main && "$GITHUB_RUN_ATTEMPT" == 1 &&
              "$GITHUB_ACTOR" == mariancradulescu &&
              "$(git log -1 --format=%s)" == "$subject" &&
@@ -44,6 +51,7 @@ jobs:
              -z "$(git log -1 HEAD^ -- "$marker")" ]]
           cmp -s "$marker" <(printf '%s\n' "$subject")
           echo 'activate=true' >> "$GITHUB_OUTPUT"
+          echo "mode=$mode" >> "$GITHUB_OUTPUT"
   archive-replay:
     needs: verify
     if: needs.verify.outputs.activate == 'true'
@@ -111,8 +119,15 @@ jobs:
           run-id: 45478379270
           github-token: ${{ github.token }}
       - name: Run registered same-engine EUR development on existing archives
-        run: python -m research.owner_eur_historical_development
+        run: |
+          if [[ "$OWNER_ARCHIVE_MODE" == evidence ]]; then
+            python -m research.owner_eur_historical_development --evidence-only
+          else
+            [[ "$OWNER_ARCHIVE_MODE" == economic ]]
+            python -m research.owner_eur_historical_development
+          fi
         env:
+          OWNER_ARCHIVE_MODE: ${{ needs.verify.outputs.mode }}
           R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:

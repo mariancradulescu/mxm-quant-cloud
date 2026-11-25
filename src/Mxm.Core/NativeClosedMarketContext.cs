@@ -22,6 +22,8 @@ public sealed record NativeBarWindow(NativeBarTimeframe Timeframe, int RequiredB
     long? WitnessAt, string Source, NativeBarStatus Status, NativeClosedMarketBar[] Bars)
 {
     public bool Ready => Status == NativeBarStatus.Ready;
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public int? DailyCalendarBreaks { get; init; }
 
     // Provenance is kept separately. These are the exact market values made available to a consumer.
     public string? ValuesSha256() => Ready
@@ -67,6 +69,47 @@ public static class NativeClosedMarketContext
     public static NativeBarWindow Platform(NativeBarRequirement window, long at, long? witnessAt,
         int barCount, Func<int, long> openAt, Func<int, NativeClosedMarketBar> read)
         => Read(window, at, witnessAt, "CTRADER_ALGO_BARS", barCount, openAt, read, platform: true);
+
+    // Use only a witnessed successor for daily context. Calendar gaps are
+    // retained as evidence; no missing session is replaced by an invented bar.
+    public static NativeBarWindow WitnessedDailySessions(int required,long at,long? witnessAt,string source,
+        int count,Func<int,long> openAt,Func<int,NativeClosedMarketBar> read)
+    {
+        const long width=86_400_000L;
+        if(at<=0||required<2)throw new ArgumentOutOfRangeException(nameof(at));
+        NativeBarWindow Empty(NativeBarStatus status,long expected)
+            =>new(NativeBarTimeframe.D1,required,expected,witnessAt,source,status,Array.Empty<NativeClosedMarketBar>());
+        if(count==0)return Empty(NativeBarStatus.SourceMissing,0);
+        if(witnessAt is not long tick||tick>at)return Empty(NativeBarStatus.CloseUnobserved,0);
+        long limit=Math.Min(at-1,tick);
+        int left=0,right=count;
+        while(left<right)
+        {
+            int pivot=left+(right-left)/2;
+            if(openAt(pivot)<=limit)left=pivot+1;else right=pivot;
+        }
+        int active=left-1;
+        if(active<0||limit-openAt(active)>=width)
+            return Empty(NativeBarStatus.LatestBarMissing,0);
+        long anchor=openAt(active);
+        if(active<required)return Empty(NativeBarStatus.InsufficientHistory,anchor);
+        var window=new NativeClosedMarketBar[required];
+        int breaks=0;
+        for(int i=0;i<required;i++)
+        {
+            int index=active-required+i;
+            var bar=read(index);
+            long successor=openAt(index+1);
+            if(bar.OpenAt!=openAt(index)||bar.CloseAt!=bar.OpenAt+width||bar.CloseAt>successor||
+                bar.CloseAt>=at||bar.OpenAt<0||bar.Low<=0m||bar.Low>Math.Min(bar.Open,bar.Close)||
+                bar.High<Math.Max(bar.Open,bar.Close)||bar.TickVolume<0)
+                return Empty(NativeBarStatus.InvalidBar,anchor);
+            if(bar.CloseAt!=successor)breaks++;
+            window[i]=bar;
+        }
+        return new(NativeBarTimeframe.D1,required,anchor,witnessAt,source,NativeBarStatus.Ready,window)
+            { DailyCalendarBreaks=breaks };
+    }
 
     static NativeBarWindow Read(NativeBarRequirement window, long at, long? witnessAt, string source,
         int count, Func<int, long> openAt, Func<int, NativeClosedMarketBar> read, bool platform)

@@ -7,6 +7,8 @@ if(args is [var officialEurInput,var officialEurOutput,"--owner-official-eur"])
     return OwnerOfficialEur.Run(officialEurInput,officialEurOutput);
 if(args is ["--owner-eur-historical-development",var datedEurInput,var datedEurOutput,var calibrationOut])
     return IntegratedEconomicReplay.RunDatedEur(datedEurInput,datedEurOutput,calibrationOut);
+if(args is ["--owner-eur-archive-evidence-only",var evidenceEurInput,var evidenceEurOutput])
+    return IntegratedEconomicReplay.AuditDatedEurEvidence(evidenceEurInput,evidenceEurOutput);
 
 if(args is [var auditSourceFile, var auditOriginalFile, var auditOutputFile, "--cpe1-funding-source-audit"])
     return Cpe1OriginalIntegratedRunner.AuditFundingSource(auditSourceFile,auditOriginalFile,auditOutputFile);
