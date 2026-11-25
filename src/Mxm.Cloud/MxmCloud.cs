@@ -75,7 +75,9 @@ public partial class MxmCloud : Robot
         // as the restart authority. Reconstruct from native broker facts.
         _fundedSession=new NativeFundedSession(_accountBinding);
 
-        if (ObserveStructuralPortfolio)
+        if (!string.IsNullOrWhiteSpace(EurResearchPolicy))
+            StartEurPolicy();
+        else if (ObserveStructuralPortfolio)
             StartStructuralObservation();
         else if(EnableFullSessionObservation)
         {
@@ -131,7 +133,8 @@ public partial class MxmCloud : Robot
         // Independent MODEL_REPLAY capital, never the broker monetary domain.
         // A restart begins a fresh observational simulation, not a cash reset
         // of any broker account; historical recovery requires causal replay.
-        if(EnableExploratoryReplay && !EnableUnifiedReadOnlyPolicy && !EnableFullSessionObservation && !ObserveStructuralPortfolio)
+        if(EnableExploratoryReplay && !EnableUnifiedReadOnlyPolicy && !EnableFullSessionObservation &&
+            !ObserveStructuralPortfolio && string.IsNullOrWhiteSpace(EurResearchPolicy))
         {
             if(!string.IsNullOrWhiteSpace(IntegratedDevelopmentModel))
             {
@@ -239,13 +242,8 @@ public partial class MxmCloud : Robot
         // The existing single-fee-attributed model quote is not sufficient
         // for both sides of these contracts: never misprice them.
         if(feeType is 1 or 3 && (!fullSession || market.Commission!=0d))return null;
-        int pipPosition=0;
-        decimal pip=(decimal)market.PipSize;
-        while(pip>0m && pip<1m && pipPosition<18)
-        {
-            pip*=10m;pipPosition++;
-        }
-        if(pip!=1m)return null;
+        var terms=ReadNativeContract(market,clock);
+        if(terms is null)return null;
         decimal bid=(decimal)market.Bid,ask=(decimal)market.Ask;
         decimal credit,debit;
         if(_integratedResearch || _unifiedPolicy is not null)
@@ -257,42 +255,15 @@ public partial class MxmCloud : Robot
             debit=1m/conversion.Bid;
         }
         else credit=debit=(decimal)AssetConverter.Convert(1d,market.QuoteAsset,Account.Asset);
-        string minimumAsset=market.MinCommissionType==SymbolMinCommissionType.QuoteAsset
-            ?market.QuoteAsset.Name:market.MinCommissionAsset?.Name ?? "";
-        decimal minimum=(decimal)market.VolumeInUnitsMin;
+        string minimumAsset=terms.MinimumCommissionAsset??"";
+        decimal minimum=terms.MinimumUnits;
         if(minimum<=0)return null;
         decimal requiredMargin=(decimal)System.Math.Max(
             market.GetEstimatedMargin(TradeType.Buy,market.VolumeInUnitsMin),
             market.GetEstimatedMargin(TradeType.Sell,market.VolumeInUnitsMin));
-        var commission=(decimal)market.Commission;
-        // CTrader direct fee value -> the PREEXISTING Proto contract wire
-        // representation. USD/lot, quote/lot are exact unit mappings.
-        long commissionWire=checked((long)decimal.Round(commission*100000000m,0));
-        long minWire=checked((long)decimal.Round((decimal)market.MinCommission*100000000m,0));
-        int convBps=checked((int)System.Math.Round(
-            market.PnLConversionFeeRate*10000d));
-        int? triple=market.Swap3DaysRollover.HasValue
-            ?(market.Swap3DaysRollover.Value==System.DayOfWeek.Sunday?7:
-                (int)market.Swap3DaysRollover.Value):null;
-        int? swapType=market.SwapCalculationType switch
-        {
-            SymbolSwapCalculationType.Pips=>0,
-            SymbolSwapCalculationType.Percentage=>1,
-            _=>null
-        };
-        // Algo exposes the current literal rates. Charge time, period, weekend
-        // behavior and skip rules stay unknown until an applicable source proves them.
-        var terms=new NativeObservedContractTerms(name,market.QuoteAsset.Name,
-            clock,minimum,(decimal)market.VolumeInUnitsStep,
-            (decimal)market.VolumeInUnitsMax,(decimal)market.LotSize,
-            feeType,commissionWire,(int)market.MinCommissionType+1,
-            minWire,minimumAsset,convBps,
-            swapType,
-            (decimal)market.SwapLong,(decimal)market.SwapShort,pipPosition,
-            null,null,triple,null,null,false,false);
         var usdFx=NativeBrokerContractCosts.RequiresUsdCommissionRate(terms)
             ?(_integratedResearch || _unifiedPolicy is not null?(credit+debit)/2m:(decimal)AssetConverter.Convert(1d,"USD",Account.Asset)):0m;
-        decimal? minAssetFx=minWire>0 && terms.MinimumCommissionType==1 &&
+        decimal? minAssetFx=terms.PreciseMinimumWire>0 && terms.MinimumCommissionType==1 &&
             minimumAsset.Length>0 && minimumAsset!=terms.QuoteAsset && minimumAsset!="USD"
             ?(decimal)AssetConverter.Convert(1d,minimumAsset,Account.Asset):null;
         var context=new NativeMarketCostContext(clock,bid,ask,credit,debit,usdFx,minAssetFx,
@@ -483,6 +454,9 @@ public partial class MxmCloud : Robot
                 name=>Symbols.Exists(name),sweep:_readOnlyUniverseSweep);
             var symbols=universe.Symbols;
             if (ObserveClosedMarketBars) ReportClosedMarketBars(universe.ResearchSymbols);
+            if (_eurPolicy is not null)
+                ObserveEurPolicy(universe.ResearchSymbols, new Ucp1BrokerFrame(broker,
+                    (decimal)Account.Balance,Account.AccountType.ToString()));
             // UCP1 observation-only product path: exactly the same C# Core
             // Advance(frame) and EUR300 MODEL ledger as original-source Replay.
             // The independently observed broker inventory, order identities and

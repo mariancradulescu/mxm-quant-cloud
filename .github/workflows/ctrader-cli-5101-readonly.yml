@@ -91,6 +91,26 @@ jobs:
             echo "CLI_UNAUTHED_BACKTEST_OTHER_ERROR_EXAMINE_PROBE" | tee -a ctrader-cli-5101/auth-probe-status.txt
             cat ctrader-cli-5101/backtest-auth-probe.txt
           fi
+      - name: Check the documented cost and conversion flags with the official 5.10.6 CLI
+        shell: bash
+        run: |
+          image=ghcr.io/spotware/ctrader-console@sha256:6a339e15ee895de270be4a4e293fdb3f2fcdbecfbbace460105703125742e5ad
+          docker pull "$image"
+          docker run --rm "$image" --version > ctrader-cli-5101/cli-5106-version.txt
+          for flag in plain commission-auto precise-conversion together; do
+            args=()
+            if [[ "$flag" == commission-auto || "$flag" == together ]]; then args+=(--commission-auto); fi
+            if [[ "$flag" == precise-conversion || "$flag" == together ]]; then args+=(--precise-conversion); fi
+            set +e
+            timeout 40s docker run --rm -v "$GITHUB_WORKSPACE/ctrader-cli-5101:/algo:ro" "$image" \
+              backtest /algo/Mxm.Cloud.ctrader-cli-5101.algo --broker=Pepperstone --symbol=EURUSD \
+              --period=m5 --data-mode=ticks --start=04/11/2026 --end=16/11/2026 --balance=300 \
+              --report-json=/tmp/mxm-eur-probe.json "${args[@]}" \
+              > "ctrader-cli-5101/cli-5106-$flag.txt" 2>&1
+            rc=$?
+            set -e
+            printf '%s %s\n' "$flag" "$rc" >> ctrader-cli-5101/cli-5106-status.txt
+          done
       - name: Upload credential-free CLI build receipt
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4

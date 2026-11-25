@@ -26,6 +26,8 @@ public sealed record Ucp1MarketFrame(
     public string? OfficialAssetClass { get; init; }
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
     public bool EurDatedMarginScenario { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool EurNativeClock { get; init; }
 }
 public sealed record Ucp1BrokerFrame(BrokerIdentitySnapshot Identity,
     decimal? AccountCashEur,string AccountType);
@@ -613,7 +615,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
             // CPE1's witnessed M5 stream has no legacy Integrated.Path.
             // Missing quotes or elapsed M5 clocks are actual gaps, not the
             // absence of a path that the frozen CPE1 input never requires.
-            if(Cpe1 ? (q is null || t-p.LastObservedAt>300000L) :
+            if(Cpe1 ? (q is null || !EurFrameFollows(input!,p.LastObservedAt,t)) :
                (t-p.LastObservedAt>(CoherentIntegrated?NativeIntegratedLifecycle.IntervalMs:60_000L) ||
                 (p.Integrated is not null && input?.Integrated?.Path?.Complete!=true)))
             {

@@ -58,7 +58,7 @@ public partial class MxmCloud
         _ => throw new ArgumentOutOfRangeException(nameof(period))
     };
 
-    NativeBarContext ReadClosedMarketBars(string symbol, long at, long? tickAt)
+    NativeBarContext ReadClosedMarketBars(string symbol, long at, long? tickAt,bool eurDecision=false)
     {
         var windows = new List<NativeBarWindow>();
         foreach (var requirement in NativeClosedMarketContext.CoverageWindows)
@@ -79,7 +79,13 @@ public partial class MxmCloud
                 return new(open, open + width, (decimal)bars.OpenPrices[index], (decimal)bars.HighPrices[index],
                     (decimal)bars.LowPrices[index], (decimal)bars.ClosePrices[index], (long)bars.TickVolumes[index]);
             }
-            windows.Add(NativeClosedMarketContext.Platform(requirement, at, tickAt, bars.Count, OpenAt, Read));
+            var needed=eurDecision?period switch
+            {
+                NativeBarTimeframe.M5=>new(period,5),
+                NativeBarTimeframe.M15=>new(period,3),
+                _=>requirement
+            }:requirement;
+            windows.Add(NativeClosedMarketContext.Platform(needed, at, tickAt, bars.Count, OpenAt, Read));
         }
         return new(at, windows.ToArray());
     }

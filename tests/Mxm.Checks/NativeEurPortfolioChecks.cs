@@ -50,6 +50,11 @@ internal static class NativeEurPortfolioChecks
         check(restored.ModelSummary==first.ModelSummary,"EUR checkpoint retains common funded book");
         LateNetChangesRanking(check);
         ContractClocksAndDirectionalCosts(check);
+        var flexible=input.Markets[0] with {EurNativeClock=true};
+        check(NativeUnifiedPortfolioEngine.EurFrameFollows(flexible,input.At+1_000,input.At+Step+2_000)&&
+            !NativeUnifiedPortfolioEngine.EurFrameFollows(flexible,input.At+1_000,input.At+2*Step+2_000)&&
+            !NativeUnifiedPortfolioEngine.EurFrameFollows(input.Markets[0],input.At+1_000,input.At+Step+2_000),
+            "Native platform margin observation jitter permits adjacent slots but cannot bridge a missing slot");
     }
 
     static void ContractClocksAndDirectionalCosts(Action<bool,string> check)

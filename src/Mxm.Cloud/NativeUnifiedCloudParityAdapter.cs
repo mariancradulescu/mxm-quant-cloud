@@ -23,6 +23,10 @@ public sealed class NativeUnifiedCloudParityAdapter
     public Ucp1FrameResult Observe(Ucp1Frame frame)=>engine.Advance(residence?.Observe(frame)??frame);
     public void UseFundedActionModel(NativeFundedActionModel snapshot, long at)=>engine.UseFundedActionModel(snapshot,at);
     public void CalibrateEurRankFrom(NativeUnifiedCloudParityAdapter first)=>engine.CalibrateEurRankFrom(first.engine);
+    public void LoadEurCalibration(NativeEurCalibration calibration)=>engine.LoadEurCalibration(calibration);
+    public long LastObservationAt=>engine.LastObservationAt;
+    public string PolicyName=>engine.PolicyName;
+    public NativeFundingExposure[] FundingExposureSnapshot()=>engine.FundingExposureSnapshot();
     public string[] ActiveSymbols=>engine.ActiveSymbols;
     public LedgerEvent[] ModelFacts=>engine.OriginalModelEvents;
     public Scp1ChoiceReceipt[] Scp1Choices=>engine.Scp1ChoiceReceipts;
