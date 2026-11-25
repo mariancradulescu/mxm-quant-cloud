@@ -1,8 +1,8 @@
-name: OWNER EUR protection and opportunity observation research
+name: OWNER EUR intentions, protection and recovered payoff
 on:
   push:
     branches: [main]
-    paths: ['research/eur_protection_and_observation_1.json']
+    paths: ['research/eur_executable_timing_1.json']
 permissions:
   actions: read
   contents: read
@@ -138,9 +138,9 @@ jobs:
           run-id: 43817213663
           github-token: ${{ github.token }}
       - name: Verify the registered historical trial catalogue
-        run: echo '64d738a2e251d88a99632be65ba3e115ba31aa81799a6003509fa3506bcf1209  research/eur_protection_and_observation_1.json' | sha256sum -c -
+        run: echo '1c9b65d375f34fa600b503be25bacff2958ea71213da8026f1ecdedb3ce9e140  research/eur_executable_timing_1.json' | sha256sum -c -
       - name: Reconstruct protected source and evaluate the registered CSharp portfolios
-        run: python -m research.owner_eer1_readback --protection-development research/eur_protection_and_observation_1.json protection-study-result.json
+        run: python -m research.owner_eer1_readback --protection-development research/eur_executable_timing_1.json executable-timing-result.json
         env:
           R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
       - name: Verify research scope and trial completeness
@@ -148,14 +148,14 @@ jobs:
           python - <<'PYRESULT'
           import json
           from pathlib import Path
-          evidence = json.loads(Path("protection-study-result.json").read_bytes())
+          evidence = json.loads(Path("executable-timing-result.json").read_bytes())
           report = evidence["Summary"]
-          assert report["ProtocolSha256"] == "64d738a2e251d88a99632be65ba3e115ba31aa81799a6003509fa3506bcf1209"
-          assert report["DeclaredScenarioTrialCount"] == 33
+          assert report["ProtocolSha256"] == "1c9b65d375f34fa600b503be25bacff2958ea71213da8026f1ecdedb3ce9e140"
+          assert report["DeclaredScenarioTrialCount"] == 27
           assert len(report["Results"]) == 3
-          assert all(len(s["Trials"]) == 11 and len(s["Fits"]) == 2 for s in report["Results"])
-          assert all(len(s["CalibrationBooks"]) == 6 and len(s["OpportunityObservations"]) == 4 for s in report["Results"])
-          assert all(len(b["Result"]["Weeks"]) == 2 for s in report["Results"] for b in s["Trials"])
+          assert all(len(s["Trials"]) == 9 and len(s["Fits"]) == 3 for s in report["Results"])
+          assert all(len(s["CalibrationBooks"]) == 0 and len(s["OpportunityObservations"]) == 4 for s in report["Results"])
+          assert all(len(b["Result"]["Weeks"]) == 3 for s in report["Results"] for b in s["Trials"])
           assert report["SourceBrokerRequests"] == report["Orders"] == 0
           assert report["CloudActivated"] is report["IndependentConfirmationCertified"] is False
           assert evidence["StopWitness"]["EarlierByMilliseconds"] == 2883209
@@ -169,7 +169,7 @@ jobs:
           PYRESULT
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: eur-protection-and-opportunity-observation
-          path: protection-study-result.json
+          name: eur-executable-timing-and-recovered-payoff
+          path: executable-timing-result.json
           retention-days: 90
           if-no-files-found: error

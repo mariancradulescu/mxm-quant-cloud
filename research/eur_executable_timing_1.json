@@ -1,0 +1,27 @@
+{
+  "Study":"EUR_EXECUTABLE_TIMING_1",
+  "Exposure":"PROJECT_EXPOSED_CONDITIONAL_DEVELOPMENT",
+  "SourceProtocolSha256":"2ac5e2da090ce4c69f4791affc54424766749630e16522e6672285ad46c98a3c",
+  "EvidenceManifestSha256":"bd4a063bef5876e649876faea5a4b602b8852483774f48c99881131e8b4082b9",
+  "InitialFitFrom":1792972800000,
+  "TestBoundaries":[1793577600000,1794182400000,1794787200000,1795392000000],
+  "Stresses":[0,0.5,1],
+  "StopWitness":{"Symbol":"NatGas","Side":-1,"OriginalFillAt":1795015515000,"OriginalCloseAt":1795019115000,"StopDistance":0.014,"FirstTradeTouchAt":1795016231791},
+  "Calibrations":[
+    {"Id":"STOP_TICK","Profile":{"CaptureStudyDiagnostics":true,"UseAvailableContext":true,"ModeledStopLatencyMs":100,"LearnFromOpportunityEpisodes":true}},
+    {"Id":"ALL_TICKS","Profile":{"CaptureStudyDiagnostics":true,"UseAvailableContext":true,"ModeledStopLatencyMs":100,"LearnFromOpportunityEpisodes":true,"ObserveIntentExecutionOnTicks":true}},
+    {"Id":"ALL_TICKS_STRUCTURE","Profile":{"CaptureStudyDiagnostics":true,"UseAvailableContext":true,"ModeledStopLatencyMs":100,"LearnFromOpportunityEpisodes":true,"ObserveIntentExecutionOnTicks":true,"IncludeRecoveredStructure":true}},
+    {"Id":"ALL_TICKS_RESERVE_125","Profile":{"CaptureStudyDiagnostics":true,"UseAvailableContext":true,"ModeledStopLatencyMs":100,"LearnFromOpportunityEpisodes":true,"ObserveIntentExecutionOnTicks":true,"StopReserveMultiplier":1.25}}
+  ],
+  "Trials":[
+    {"Id":"CASH","Policy":"EUR_GENERAL_CASH","Calibration":"STOP_TICK"},
+    {"Id":"STOP_TICK_PROBE","Policy":"EUR_GENERAL_PROBE","Calibration":"STOP_TICK"},
+    {"Id":"STOP_TICK_SELECT","Policy":"EUR_GENERAL_SELECT","Calibration":"STOP_TICK"},
+    {"Id":"ALL_TICKS_PROBE","Policy":"EUR_GENERAL_PROBE","Calibration":"ALL_TICKS"},
+    {"Id":"ALL_TICKS_SELECT","Policy":"EUR_GENERAL_SELECT","Calibration":"ALL_TICKS"},
+    {"Id":"ALL_TICKS_LOCAL_PAYOFF_SELECT","Policy":"EUR_GENERAL_SELECT","Calibration":"ALL_TICKS","UseRecoveredLocalPayoff":true},
+    {"Id":"ALL_TICKS_STRUCTURE_SELECT","Policy":"EUR_GENERAL_SELECT","Calibration":"ALL_TICKS_STRUCTURE"},
+    {"Id":"ALL_TICKS_STRUCTURE_LOCAL_SELECT","Policy":"EUR_GENERAL_SELECT","Calibration":"ALL_TICKS_STRUCTURE","UseRecoveredLocalPayoff":true},
+    {"Id":"ALL_TICKS_RESERVE_125_PROBE","Policy":"EUR_GENERAL_PROBE","Calibration":"ALL_TICKS_RESERVE_125"}
+  ]
+}

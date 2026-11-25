@@ -18,7 +18,12 @@ public sealed record NativeCompleteDistribution(NativeCompleteSample[] Samples, 
     decimal BiasR = 0m, decimal UncertaintyR = 0m)
 {
     public NativeCompletePrediction? Predict(decimal[] features, long clock, decimal scale)
+        =>Predict(features,clock,scale,out _);
+
+    internal NativeCompletePrediction? Predict(decimal[] features,long clock,decimal scale,
+        out (decimal Minimum,decimal Maximum) range)
     {
+        range=default;
         if (scale <= 0m) throw new ArgumentException("COMPLETE_POLICY_RISK_SCALE");
         int first = WithoutResidence ? 2 : 0;
         var ranked = Samples.Where(s => s.SettledAt < clock).Select(sample =>
@@ -47,6 +52,7 @@ public sealed record NativeCompleteDistribution(NativeCompleteSample[] Samples, 
         decimal weight = values.Sum(x => x.Weight);
         decimal mean = values.Sum(x => x.Return * x.Weight) / weight;
         var ordered = values.OrderBy(x => x.Return).ToArray();
+        range=(ordered[0].Return,ordered[^1].Return);
         decimal Quantile(decimal fraction)
         {
             decimal sum = 0m;

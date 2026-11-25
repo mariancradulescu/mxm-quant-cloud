@@ -88,7 +88,7 @@ internal static partial class IntegratedEconomicReplay
         public object Report()=>new {Counts=results,RightCensoredEpisodes=active.Count,
             SimultaneousSymbolsMaximum=maxConcurrent,Observation="ISOLATED_ONE_CONTRACTUAL_MINIMUM_VOLUME_EPISODE",
             CountedAsSharedBookRoundTrips=false,IndependentSamples=false,Labels=Export().Outcomes.Select(l=>new
-            {l.PositionId,l.Family,l.Side,l.ClosedAt,l.AvailableAt,l.GrossEur,l.NetEur,l.RiskEur,Symbol=l.Context?.Symbol})};
+            {l.PositionId,l.Family,l.Side,l.DecisionAt,l.ClosedAt,l.AvailableAt,l.GrossEur,l.NetEur,l.RiskEur,Symbol=l.Context?.Symbol})};
     }
 
     static object EconomicStudyDetails(NativeUnifiedPortfolioEngine book,EerEvidence source,

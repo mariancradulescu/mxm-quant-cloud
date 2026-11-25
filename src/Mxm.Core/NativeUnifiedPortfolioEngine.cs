@@ -499,6 +499,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
         if(frame is null||frame.At<=previousClock||frame.At<=0||
            frame.At<=(eurCalibration?.ObservationThrough??-1L)||
            (frame.Protection is not null && !ModelsNativeStops)||
+           (frame.Protection?.ExecutableIntentIds is not null &&
+               (eurDevelopmentProfile?.ObserveIntentExecutionOnTicks!=true||!frame.Protection.BetweenDecisions))||
            (frame.ObservationEpisodeOnly && (policy!=EurGeneralProbe || FundingScenarioId is null))||
            frame.Markets is null||frame.Markets.Select(m=>m.Symbol)
                .Distinct(StringComparer.Ordinal).Count()!=frame.Markets.Length||
@@ -513,6 +515,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
                     LiquidationSlippagePerSide=NativeIntegratedEconomicPolicy.Slippage(m.Quote.Bid,m.Quote.Ask,
                         e.TickSize,AdverseCompletePolicy) } } : m).ToArray() };
         long t=frame.At;
+        bool between=frame.Protection is { BetweenDecisions:true };
+        var readyIntents=frame.Protection?.ExecutableIntentIds?.ToHashSet(StringComparer.Ordinal);
         var fundingEvidence=frame.FundingEvidence??Array.Empty<NativeAccruedFundingEvidence>();
         fundingReserves?.Validate(t,fundingEvidence);
         ReadBroker(frame.Broker);
@@ -566,7 +570,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
         if(ModelsNativeStops)
         {
             AdvanceNativeStops(frame, by);
-            if(frame.Protection is { BetweenDecisions:true })
+            if(between&&readyIntents is not { Count:>0 })
                 return RecordIntegratedFrame(t,model.Ledger.Summary(t),frame);
         }
         // Handle outstanding OPEN decisions first. A REQUEST is NOT a fill.
@@ -574,6 +578,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
             .Where(x=>x.Kind=="REQUEST_OPEN")
             .OrderBy(x=>x.PositionId,StringComparer.Ordinal).ToArray())
         {
+            if(between && !readyIntents!.Contains(request.PositionId))continue;
             if(t-request.At>(Cpe1?2*300000L:ResponseWindow))
             {
                 Apply(Event("MODEL_OPEN_INTENT_EXPIRED",t,request.PositionId,
@@ -627,7 +632,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
                           AdmissionReservedRiskEur=p.Integrated!.InitialRiskEur } : p.EconomicEntry};
                 fundingReserves?.Open(request.PositionId,request.Symbol,request.Side,request.Units,t);
                 openFills++;
-                if(CaptureEurDiagnostics) RecordEurRiskObservation(t,"OPEN_FILL",frame,request.PositionId);
+                if(CaptureEurDiagnostics) RecordEurRiskObservation(t,between?"OPEN_FILL_TICK":"OPEN_FILL",frame,request.PositionId);
+                if(between)Count("EUR_OPEN_FILL_CONDITIONAL_TICK");
             }
             catch(InvalidOperationException e) when(e.Message is
                ("NATIVE_LEDGER_UNFINANCED_MODEL_FILL" or
@@ -647,7 +653,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
         foreach(var held in model.Ledger.PositionSnapshot()
             .OrderBy(x=>x.Id,StringComparer.Ordinal).ToArray())
         {
-            if(held.EntryAt>=t)continue;
+            if(held.EntryAt>=t||between&&!readyIntents!.Contains(held.Id))continue;
             if(!plans.TryGetValue(held.Id,out var p))
                 throw new InvalidOperationException("UCP1_HELD_PLAN_MISSING");
             if(p.NativeStop is not null)continue; // The native trigger has priority over strategy exits.
@@ -671,7 +677,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
                     direction=m15[1].Close-m15[0].Close;
             }
             NativeModelCloseInstruction? instruction=null;
-            if(p.Integrated is not null && input is not null)
+            if(!between && p.Integrated is not null && input is not null)
             {
                 (p,instruction)=Cpe1?Cpe1Manage(p,held,input,frame):
                     ManageIntegrated(p,held,input,deRisk);
@@ -699,7 +705,10 @@ public sealed partial class NativeUnifiedPortfolioEngine
             if(Cpe1)
             {
                 foreach(var fact in verdict.AppliedFacts.Where(x=>x.Kind is "REQUEST_CLOSE" or "CLOSE_FILL"))
+                {
                     Count("CPE1_"+(fact.Units<held.Units?"REDUCE_":"CLOSE_")+fact.Kind);
+                    if(between && fact.Kind=="CLOSE_FILL")Count("EUR_STRATEGY_CLOSE_FILL_CONDITIONAL_TICK");
+                }
                 if(q is not null && instruction is null &&
                    !verdict.AppliedFacts.Any(x=>x.Kind is "REQUEST_CLOSE" or "CLOSE_FILL"))
                     Count("CPE1_OBSERVED_HOLD_NO_NEW_CLOSE_EVENT");
@@ -733,7 +742,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
         bool fcp1=policy.StartsWith("FCP1_",StringComparison.Ordinal);
         if(NativeIntegratedEconomicPolicy.IsPolicy(policy))
             return AdvanceIntegrated(t, frame, describeLegacy, describeExhaustion, actionProbe);
-        if(frame.ObservationEpisodeOnly&&frame.OpportunityToObserve is null)
+        if(between || frame.ObservationEpisodeOnly&&frame.OpportunityToObserve is null)
             return RecordIntegratedFrame(t,model.Ledger.Summary(t),frame);
         if(policy!="CASH" && policy!="SCP1_CASH" && policy!="FCP1_CASH")
         {

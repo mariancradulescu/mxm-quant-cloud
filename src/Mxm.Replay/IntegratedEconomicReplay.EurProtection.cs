@@ -143,10 +143,13 @@ internal static partial class IntegratedEconomicReplay
             while(book.LastObservationAt>0 && book.LastObservationAt<through)
             {
                 var watches=book.ProtectionWatches();
+                var orders=book.IntentWatches();
                 long at=long.MaxValue;
                 var touches=new List<Ucp1StopTouch>();
                 var fills=new List<Ucp1StopQuote>();
+                var executions=new List<Ucp1IntentWatch>();
                 var marks=new Dictionary<(string,long),Ucp1MarketFrame?>();
+                var entryMarks=new Dictionary<(string,long),Ucp1MarketFrame>();
                 Ucp1MarketFrame? Mark(string name,long clock)
                 {
                     var key=(name,clock);
@@ -161,6 +164,7 @@ internal static partial class IntegratedEconomicReplay
                     at=clock;
                     touches.Clear();
                     fills.Clear();
+                    executions.Clear();
                 }
 
                 foreach(var watch in watches)
@@ -188,12 +192,34 @@ internal static partial class IntegratedEconomicReplay
                         break;
                     }
                 }
+                foreach(var order in orders)
+                {
+                    long from=Math.Max(book.LastObservationAt+1,order.FillNotBefore);
+                    long until=Math.Min(Math.Min(through,at),order.ExpiresAfter);
+                    foreach(var tick in Side(order.Symbol,!order.Buy).Events(from,until))
+                    {
+                        if(tick.Low!=tick.High||Mark(order.Symbol,tick.At) is null)continue;
+                        if(order.Opening)
+                        {
+                            var quote=source.IntentEntryMark(this,markets[order.Symbol],tick.At,scenario,stress);
+                            if(quote is null)continue;
+                            entryMarks[(order.Symbol,tick.At)]=quote;
+                        }
+                        Select(tick.At);
+                        executions.Add(order);
+                        break;
+                    }
+                }
                 if(at==long.MaxValue)return;
-                var frames=watches.Select(w=>w.Symbol).Distinct(StringComparer.Ordinal)
-                    .Select(n=>Mark(n,at)).OfType<Ucp1MarketFrame>().ToArray();
+                var opening=executions.Where(x=>x.Opening).Select(x=>x.Symbol).ToHashSet(StringComparer.Ordinal);
+                var frames=watches.Select(w=>w.Symbol).Concat(orders.Select(o=>o.Symbol)).Distinct(StringComparer.Ordinal)
+                    .Select(n=>opening.Contains(n)?entryMarks[(n,at)]:Mark(n,at))
+                    .OfType<Ucp1MarketFrame>().ToArray();
+                var executable=executions.Select(o=>o.PositionId).ToArray();
                 source.Advance(book,new Ucp1Frame(at,frames)
                 {
                     Protection=new(true,touches.ToArray(),fills.ToArray(),Array.Empty<string>())
+                    {ExecutableIntentIds=executable.Length>0?executable:null}
                 },markets,scenario,stress);
             }
         }

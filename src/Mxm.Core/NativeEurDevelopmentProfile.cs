@@ -16,10 +16,15 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
     public bool IncludeRecoveredStructure { get; init; }
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
     public bool LearnFromOpportunityEpisodes { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool ObserveIntentExecutionOnTicks { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool UseRecoveredLocalPayoff { get; init; }
 
     internal string GeometryIdentity => FormattableString.Invariant(
         $"{UseAvailableContext}/{DistributionTargetRanges:G29}/{StopReserveMultiplier:G29}") +
         (ModeledStopLatencyMs is long latency ? FormattableString.Invariant($"/Trade/{latency}") : "") +
+        (ObserveIntentExecutionOnTicks?"/TICK_INTENTS":"") +
         (IncludeRecoveredStructure?"/RANGE_TRANSITION+EQUILIBRIUM_REPAIR":"");
 
     internal void Verify()
@@ -27,7 +32,7 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
         if (DistributionTargetRanges <= 0m || (!UseAvailableContext && DistributionTargetRanges != 2m) ||
             MinimumDays < 2 || MinimumEpisodes < MinimumDays ||
             DayPenalty < 0m || StopReserveMultiplier < 1m || ModeledStopLatencyMs is <= 0L ||
-            LearnFromOpportunityEpisodes && ModeledStopLatencyMs is null)
+            (LearnFromOpportunityEpisodes || ObserveIntentExecutionOnTicks) && ModeledStopLatencyMs is null)
             throw new ArgumentException("EUR_REGISTERED_DEVELOPMENT_PROFILE");
     }
 }

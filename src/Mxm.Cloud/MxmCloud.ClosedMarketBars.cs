@@ -20,6 +20,8 @@ public partial class MxmCloud
 
     string[]? fundedActionSymbols;
     readonly Dictionary<(string Symbol, NativeBarTimeframe Period), Bars> closedBarSources = new();
+    readonly HashSet<(string Symbol, NativeBarTimeframe Period)> pendingClosedBarHistory = new();
+    readonly Dictionary<(string Symbol, NativeBarTimeframe Period), long> exhaustedClosedBarHistory = new();
     long lastContextClock;
     string lastContextStatus = "";
 
@@ -85,12 +87,35 @@ public partial class MxmCloud
                 NativeBarTimeframe.M15=>new(period,3),
                 _=>requirement
             }:requirement;
-            windows.Add(eurDecision&&period==NativeBarTimeframe.D1?
+            var window=eurDecision&&period==NativeBarTimeframe.D1?
                 NativeClosedMarketContext.WitnessedDailySessions(needed.Count,at,tickAt,
                     "CTRADER_ALGO_NATIVE_DAILY_WITH_WITNESSED_SUCCESSOR",bars.Count,OpenAt,Read):
-                NativeClosedMarketContext.Platform(needed, at, tickAt, bars.Count, OpenAt, Read));
+                NativeClosedMarketContext.Platform(needed, at, tickAt, bars.Count, OpenAt, Read);
+            windows.Add(window);
+            if(window.Status is NativeBarStatus.SourceMissing or NativeBarStatus.InsufficientHistory ||
+                (window.Status==NativeBarStatus.LatestBarMissing && bars.Count>0 && at<=OpenAt(0)))
+                ExtendNativeBarHistory(key,bars);
         }
         return new(at, windows.ToArray());
+    }
+
+    void ExtendNativeBarHistory((string Symbol,NativeBarTimeframe Period) key,Bars bars)
+    {
+        long earliest=bars.Count>0?Stamp(bars.OpenTimes[0]):0L;
+        if(exhaustedClosedBarHistory.TryGetValue(key,out long previous)&&previous==earliest ||
+            !pendingClosedBarHistory.Add(key))return;
+        try
+        {
+            bars.LoadMoreHistoryAsync(args=>BeginInvokeOnMainThread(()=>
+            {
+                pendingClosedBarHistory.Remove(key);
+                if(args.Count==0)exhaustedClosedBarHistory[key]=earliest;
+            }));
+        }
+        catch(InvalidOperationException)
+        {
+            pendingClosedBarHistory.Remove(key);
+        }
     }
 
     void ReportClosedMarketBars(string[] symbols)

@@ -305,7 +305,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 bracket.Entry,plan.Side>0?q.Bid:q.Ask,q.LiquidationSlippagePerSide??intent.SlippagePerSide));
             var context=DescribeEurContext(observed,frame.At,plan.Side,guard.TotalReservedMarginEur,equity,risk,cost);
             if(context is not null)context=context with {MarketState=DescribeGeneralState(observed,frame,plan.Side)};
-            if(EurPayoff(plan.Family,plan.Side,risk,cost+debit,policy==EurGeneralSelect?context:null)
+            if(EurPayoff(plan.Family,plan.Side,risk,cost+debit,policy==EurGeneralSelect?context:null,decisionAt:frame.At)
                 is not {GrossLowerEur:>0m,NetLowerEur:>0m})return null;
         }
         return prior with {InitialRiskEur=risk,InitialRewardEur=reward};
