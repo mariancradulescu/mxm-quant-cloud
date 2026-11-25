@@ -40,7 +40,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
     readonly Dictionary<string,Ucp1MarginObservation> eurMarginMaxima = new(StringComparer.Ordinal);
 
     internal Ucp1StopWatch[] ProtectionWatches() => !ModelsNativeStops ? Array.Empty<Ucp1StopWatch>() :
-        plans.Values.Where(p=>p.OpenAt>0 && p.Integrated is not null).Select(p=>new Ucp1StopWatch(
+        PlanValues.Where(p=>p.OpenAt>0 && p.Integrated is not null).Select(p=>new Ucp1StopWatch(
             p.Id,p.Symbol,p.Side,p.OpenAt,p.Stop,p.NativeStop?.At,
             p.NativeStop is { } trigger ? trigger.At+eurDevelopmentProfile!.ModeledStopLatencyMs!.Value : null)).ToArray();
 
@@ -157,6 +157,6 @@ public sealed partial class NativeUnifiedPortfolioEngine
         }
         trips.Add(trip);
         if(Cpe1)RememberCpe1Episode(trip,at);
-        plans.Remove(held.Id);
+        RemovePlan(held.Id);
     }
 }

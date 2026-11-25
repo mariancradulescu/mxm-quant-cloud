@@ -68,7 +68,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
             .Sum(f => f.Units * Math.Max(f.MarginPerUnit, markets[f.Symbol].Quote.MarginPerUnit));
         decimal usedMargin = book.UsedMarginEur ?? 0m;
         decimal marginBudget = Math.Max(0m, equity * .75m - usedMargin - pendingMargin);
-        decimal committed = plans.Values.Sum(p => p.RiskEur);
+        decimal committed = PlanValues.Sum(p => p.RiskEur);
         decimal riskBudget = Math.Max(0m, Math.Min(equity * .06m,
             equity - .70m * book.ObservedPeakEur) - committed);
         bool budgeted = policy.Contains("_BUDGET", StringComparison.Ordinal);
@@ -293,7 +293,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
             Apply(Event("REQUEST_OPEN", at, id, market.Symbol, signal.Side, terms.Units,
                 margin: market.Quote.MarginPerUnit, slip: terms.ExecutionSlippage,
                 reason: "NATIVE_CONDITIONAL_SELECTION"));
-            plans.Add(id, new(id, market.Symbol, signal.Family, signal.Side,
+            AddPlan(id, new(id, market.Symbol, signal.Family, signal.Side,
                 signal.Volatility, signal.Target, selected.ReservedRiskEur, signal.Stop, 0m, 0, 0m,
                 terms.Units, 0m, 0m, 0, false,
                 new NativeIntegratedPlan(signal.Stop, signal.Target, terms.RiskEur, terms.RewardEur)
@@ -373,7 +373,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
         decimal liquidation = NativeExecutableEconomics.EstimateNet(position.EntryQuote!, q, position.Side,
             position.Units, plan.Entry, sidePrice, q.LiquidationSlippagePerSide ?? position.SlippagePerSide);
         var features = NativeFundedActionValue.Features(market, frame, position.Side, book,
-            plans.Values.Sum(p => p.RiskEur), plan.RiskEur, position.Units * q.MarginPerUnit,
+            PlanValues.Sum(p => p.RiskEur), plan.RiskEur, position.Units * q.MarginPerUnit,
             new[] { liquidation / plan.RiskEur, plan.MfeEur / plan.RiskEur,
                 plan.MaeEur / plan.RiskEur, (frame.At - plan.OpenAt) / (decimal)NativeCompletePolicy.Day });
         var offer = new NativeFundedActionOffer(NativeFundedActionValue.Close, position.Id, market.Symbol,
@@ -394,7 +394,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
         var financial=Cpe1FundingCapital(summary,frame);
         if(!researchFork) curve.Add(new Ucp1CurvePoint(at, summary.CashEur, summary.LiquidationEquityEur, summary.UsedMarginEur,
             summary.OpenPositions, summary.PendingIntents, summary.CompleteRoundTrips)
-            { PlannedAggregateRiskEur=plans.Values.Sum(p=>p.RiskEur),FundingCapital=financial });
+            { PlannedAggregateRiskEur=PlanValues.Sum(p=>p.RiskEur),FundingCapital=financial });
         return new(policy, at, summary, proposed, admitted, openFills, trips.Count,
             summary.PendingIntents, summary.OpenPositions, lastBrokerEvidence, summary.EventChainHash)
             {FundingCapital=financial};
@@ -413,7 +413,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
         decimal fee = 2m * Fee(q, plan.Units);
         decimal risk = (plan.Side * (execution - entry.Stop) + q.Ask - q.Bid)
             * plan.Units * q.EurDebit + fee;
-        decimal allRisk = plans.Values.Sum(p => p.RiskEur) - plan.RiskEur + risk;
+        decimal allRisk = PlanValues.Sum(p => p.RiskEur) - plan.RiskEur + risk;
         return risk <= Math.Min(entry.InitialRiskEur * 1.10m, equity * .02m) &&
             allRisk <= Math.Min(equity * .06m, equity - .70m * summary.ObservedPeakEur) &&
             used + plan.Units * q.MarginPerUnit + fee <= equity * .75m;
@@ -424,7 +424,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
             ? variant == "ABLATION" ? models.Ablation : models.Entry : null;
 
     decimal DirectionalRisk(int side, string? except = null)
-        => plans.Values.Where(p => p.Id != except && p.Side == side).Sum(p => p.RiskEur);
+        => PlanValues.Where(p => p.Id != except && p.Side == side).Sum(p => p.RiskEur);
 
     static NativeIntegratedTerms ExecutableTerms(NativeIntegratedTerms terms, int side, decimal stop,
         decimal target, Ucp1MarketFrame market)
@@ -455,7 +455,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
         terms = ExecutableBracketTerms ? ExecutableTerms(terms, plan.Side, geometry.Stop, geometry.Target, input) :
             NativeIntegratedLifecycle.Revalue(terms, plan.Side, geometry.Stop, geometry.Target, input);
         decimal stressed = NativeIntegratedLifecycle.StressedRisk(terms, plan.Atr, q);
-        decimal usedRisk = plans.Values.Sum(p => p.RiskEur) - plan.RiskEur;
+        decimal usedRisk = PlanValues.Sum(p => p.RiskEur) - plan.RiskEur;
         decimal fee = 2m * Fee(q, plan.Units);
         if (stressed > equity * .02m ||
             usedRisk + stressed > Math.Min(equity * .06m, equity - .70m * summary.ObservedPeakEur) ||
@@ -495,7 +495,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
     {
         if (summary.OpenPositions == 0 || summary.LiquidationEquityEur is not decimal equity ||
             summary.UsedMarginEur is not decimal used) return false;
-        decimal heldRisk = plans.Values.Where(x => x.OpenAt > 0L).Sum(x => x.RiskEur);
+        decimal heldRisk = PlanValues.Where(x => x.OpenAt > 0L).Sum(x => x.RiskEur);
         return summary.MaximumSampledDrawdown >= .30m || used > equity * .75m ||
             equity - summary.ObservedPeakEur * .70m <= heldRisk ||
             ExecutableBracketTerms && Math.Max(DirectionalRisk(1), DirectionalRisk(-1)) > equity * .04m;

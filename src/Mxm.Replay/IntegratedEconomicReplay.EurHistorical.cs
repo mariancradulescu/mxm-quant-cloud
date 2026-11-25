@@ -86,6 +86,21 @@ internal static partial class IntegratedEconomicReplay
                 throw new ArgumentException("HISTORICAL_EUR_INVALID_SCENARIO_INDEX");
             scenarioIndex=index;
         }
+        string? checkpointFrom=Environment.GetEnvironmentVariable("MXM_ECONOMIC_CHECKPOINT_FROM");
+        string? checkpointTo=Environment.GetEnvironmentVariable("MXM_ECONOMIC_CHECKPOINT_TO");
+        string? stopAfterText=Environment.GetEnvironmentVariable("MXM_ECONOMIC_STOP_AFTER_PHASE");
+        bool checkpointing=checkpointFrom is not null || checkpointTo is not null || stopAfterText is not null;
+        int? stopAfter=null;
+        if(checkpointing && (scenarioIndex is null || protectionDirectory is null ||
+            (checkpointTo is null)!=(stopAfterText is null)))
+            throw new ArgumentException("EUR_HISTORICAL_CHECKPOINT_REQUIRES_ISOLATED_PROTECTION_SCENARIO");
+        if(stopAfterText is not null)
+        {
+            if(!int.TryParse(stopAfterText,out int phase) || phase<1 || phase>=boundaries.Length)
+                throw new ArgumentException("EUR_HISTORICAL_INVALID_CHECKPOINT_PHASE");
+            stopAfter=phase;
+        }
+        string? protectionHash=checkpointing?ProtectionFingerprint(protectionDirectory!):null;
         var output=new List<object>();
         foreach(decimal stress in scenarioIndex.HasValue
             ?new[]{protocol.Stresses[scenarioIndex.Value]}:protocol.Stresses)
@@ -109,6 +124,62 @@ internal static partial class IntegratedEconomicReplay
                 return (Trial:t,Profile:profile,Book:new NativeUnifiedPortfolioEngine(t.Policy,
                     fundingScenarioId:scenario,eurDevelopmentProfile:profile));
             }).ToArray();
+            var binding=new HistoricalReplayBinding(protocolHash,sourceHash,protectionHash??"",scenario,
+                Environment.GetEnvironmentVariable("GITHUB_SHA"),
+                Environment.GetEnvironmentVariable("MXM_ECONOMIC_BOUNDED_NEIGHBORS")=="1",
+                Environment.GetEnvironmentVariable("MXM_ECONOMIC_PAIRED_DISTRIBUTION")=="1",
+                Environment.GetEnvironmentVariable("MXM_ECONOMIC_REUSE_FRAMES")=="1");
+            var fitted=new List<JsonElement>();
+            int completed=0;
+            if(checkpointFrom is not null)
+            {
+                using var file=File.OpenRead(checkpointFrom);
+                var state=JsonSerializer.Deserialize<HistoricalReplayState>(file)
+                    ??throw new InvalidDataException("EUR_HISTORICAL_CHECKPOINT_REQUIRED");
+                completed=state.CompletedPhases;
+                if(state.Version!=HistoricalStateVersion||state.Binding!=binding||completed<1||
+                    completed>=boundaries.Length||state.LastClock!=boundaries[completed-1]-EurStep+EurOffset||
+                    state.Fits.Length!=completed-1||state.Streams.Count!=streams.Count||
+                    state.Observers.Count!=observers.Count||state.Probes.Count!=probes.Count||
+                    state.Trials.Count!=comparison.Length)
+                    throw new InvalidDataException("EUR_HISTORICAL_CHECKPOINT_BINDING");
+                foreach(var (symbol,stream) in streams)
+                {
+                    var saved=state.Streams[symbol];
+                    if(saved.Availability.Keys.Any(at=>at>state.LastClock))
+                        throw new InvalidDataException("EUR_HISTORICAL_CHECKPOINT_STREAM_CLOCK");
+                    stream.Counts=saved.Counts;
+                    stream.Availability=saved.Availability;
+                }
+                foreach(var key in probes.Keys.ToArray())
+                    probes[key]=RestoreHistoricalBook(state.Probes[key],probes[key].PolicyName,scenario,state.LastClock);
+                foreach(var (id,observer) in observers)observer.Restore(state.Observers[id],state.LastClock);
+                for(int i=0;i<comparison.Length;i++)
+                {
+                    var (trial,profile,book)=comparison[i];
+                    comparison[i]=(trial,profile,RestoreHistoricalBook(state.Trials[trial.Id],book.PolicyName,
+                        scenario,completed==1?-1:state.LastClock));
+                }
+                fitted.AddRange(state.Fits);
+                Console.WriteLine($"HISTORICAL_EUR_CHECKPOINT_RESTORED {scenario} phase={completed} clock={state.LastClock}");
+            }
+            if(stopAfter is int nextPhase && nextPhase!=completed+1)
+                throw new ArgumentException("EUR_HISTORICAL_CHECKPOINT_PHASE_NOT_CONSECUTIVE");
+
+            bool SavePhase(int phase)
+            {
+                if(stopAfter!=phase)return false;
+                using var checkpointProfile=NativeEconomicProfiler.Measure("replay.checkpoint");
+                WriteHistoricalState(checkpointTo!,new(HistoricalStateVersion,binding,phase,
+                    boundaries[phase-1]-EurStep+EurOffset,
+                    streams.ToDictionary(x=>x.Key,x=>new HistoricalStreamState(x.Value.Counts,x.Value.Availability)),
+                    probes.ToDictionary(x=>x.Key,x=>x.Value.HistoricalEurCheckpoint()),
+                    observers.ToDictionary(x=>x.Key,x=>x.Value.Checkpoint()),
+                    comparison.ToDictionary(x=>x.Trial.Id,x=>x.Book.HistoricalEurCheckpoint()),fitted.ToArray()));
+                Console.WriteLine($"HISTORICAL_EUR_CHECKPOINT_SAVED {scenario} phase={phase}");
+                return true;
+            }
+
             var allComparisonBooks=comparison.Select(x=>x.Book).ToArray();
             var probeBooks=probes.Values.ToArray();
             var allBooks=probeBooks.Concat(allComparisonBooks).ToArray();
@@ -131,6 +202,7 @@ internal static partial class IntegratedEconomicReplay
                 ProfileProgress("OBSERVE_START",from,to,processed,total);
                 for(long at=from+EurOffset;at<to;at+=EurStep)
                 {
+                    if(binding.ReuseFrames)source.BeginHistoricalClock();
                     Ucp1MarketFrame[] markets;
                     using (NativeEconomicProfiler.Measure("replay.market_frames"))
                         markets=streams.Values.Select(s=>source.Frame(s,at,scenario,stress,general:true))
@@ -156,9 +228,12 @@ internal static partial class IntegratedEconomicReplay
                         ProfileProgress("OBSERVE",from,to,processed,total);
                 }
             }
-            Observe(protocol.InitialFitFrom,boundaries[0],probeBooks);
-            var fitted=new List<object>();
-            for(int i=0;i+1<boundaries.Length;i++)
+            if(completed==0)
+            {
+                Observe(protocol.InitialFitFrom,boundaries[0],probeBooks);
+                if(SavePhase(1))return 0;
+            }
+            for(int i=Math.Max(0,completed-1);i+1<boundaries.Length;i++)
             {
                 long start=boundaries[i];
                 ProfileProgress("CALIBRATION_START",start,boundaries[i+1],0,0);
@@ -175,14 +250,14 @@ internal static partial class IntegratedEconomicReplay
                         if(i==0)book.LoadEurCalibration(snapshots[trial.Calibration]);
                         else book.UpdateEurResearchCalibration(snapshots[trial.Calibration]);
                     }
-                fitted.Add(new {AvailableBefore=start,Models=snapshots.Select(m=>new
+                fitted.Add(JsonSerializer.SerializeToElement(new {AvailableBefore=start,Models=snapshots.Select(m=>new
                 {
                     Id=m.Key, m.Value.ObservationThrough, m.Value.LedgerEventChainSha256,
                     Hash=GeneralSha(JsonSerializer.SerializeToUtf8Bytes(m.Value,Json)),
                     Episodes=m.Value.Outcomes.Length,
                     ByFamilyDirection=m.Value.Outcomes.GroupBy(o=>new{o.Family,o.Side}).Select(g=>new
                     {g.Key.Family,g.Key.Side,Count=g.Count(),GrossEur=g.Sum(x=>x.GrossEur),NetEur=g.Sum(x=>x.NetEur)}).ToArray()
-                }).ToArray()});
+                }).ToArray()},Json));
                 }
                 ProfileProgress("CALIBRATION_COMPLETE",start,boundaries[i+1],0,0);
                 Observe(start,boundaries[i+1],allBooks);
@@ -213,6 +288,7 @@ internal static partial class IntegratedEconomicReplay
                     File.Move(temporary,name);
                     Console.WriteLine("HISTORICAL_EUR_WINDOW_RECEIPT "+Path.GetFileName(name));
                 }
+                if(SavePhase(i+2))return 0;
             }
             ProfileProgress("SCENARIO_REPORT_START",boundaries[0],boundaries[^1],0,0);
             using (NativeEconomicProfiler.Measure("replay.scenario_report"))

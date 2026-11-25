@@ -77,7 +77,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
     internal Ucp1EurDecisionActivity[] EurDecisionActivity => eurDecisionActivity.ToArray();
     NativeEurCalibration? eurCalibration;
     readonly Dictionary<(string Family,int Side),(NativeCompleteDistribution Gross,NativeCompleteDistribution Net)> localEurPayoff=new();
-    readonly Dictionary<(string Family,int Side),NativeCompleteDistributionPair> pairedEurPayoff=new();
+    sealed record EurPairedCalibrationState(string Family,int Side,NativeCompleteResidual?[] Residuals);
+    Dictionary<(string Family,int Side),(NativeCompleteDistributionPair Distribution,NativeCompleteResidual?[] Residuals)> pairedEurPayoff=new();
     static readonly bool UsePairedDistribution=Environment.GetEnvironmentVariable("MXM_ECONOMIC_PAIRED_DISTRIBUTION")=="1";
     public long LastObservationAt=>previousClock;
     public string PolicyName=>policy;
@@ -148,7 +149,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
         RestoreEurCalibration(calibration);
     }
 
-    void RestoreEurCalibration(NativeEurCalibration calibration)
+    void RestoreEurCalibration(NativeEurCalibration calibration,EurPairedCalibrationState[]? restored=null)
     {
         using var calibrationProfile=NativeEconomicProfiler.Measure("eur.restore_calibration");
         if(!IsEurRank||calibration.FundingScenarioId!=FundingScenarioId||calibration.ObservationThrough<=0||
@@ -170,7 +171,9 @@ public sealed partial class NativeUnifiedPortfolioEngine
         if(eurDevelopmentProfile is { UseRecoveredLocalPayoff:true } profile)
         {
             localEurPayoff.Clear();
-            pairedEurPayoff.Clear();
+            var previous=pairedEurPayoff;
+            pairedEurPayoff=new();
+            var saved=restored?.ToDictionary(x=>(x.Family,x.Side));
             foreach(var (key,history) in eurHistory)
             {
                 var features=history.Where(o=>o.DecisionAt.HasValue)
@@ -193,12 +196,23 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 if(UsePairedDistribution)
                 {
                     using var pairedProfile=NativeEconomicProfiler.Measure("eur.calibrate_pair");
-                    var pair=new NativeCompleteDistributionPair(Build(o=>o.GrossEur),Build(o=>o.NetEur)).Calibrate();
-                    pairedEurPayoff.Add(key,pair);
+                    var model=new NativeCompleteDistributionPair(Build(o=>o.GrossEur),Build(o=>o.NetEur));
+                    var prefix=Array.Empty<NativeCompleteResidual?>();
+                    if(saved is not null)
+                    {
+                        if(!saved.Remove(key,out var frozen)||frozen.Residuals.Length!=model.Gross.Samples.Length)
+                            throw new ArgumentException("EUR_CHECKPOINT_CALIBRATION_GROUP");
+                        prefix=frozen.Residuals;
+                    }
+                    else if(previous.TryGetValue(key,out var prior)&&model.CanReuseCalibration(prior.Distribution))
+                        prefix=prior.Residuals;
+                    var pair=model.Calibrate(prefix,out var residuals);
+                    pairedEurPayoff.Add(key,(pair,residuals));
                     localEurPayoff.Add(key,(pair.Gross,pair.Net));
                 }
                 else localEurPayoff.Add(key,(Fit("eur.calibrate_gross",o=>o.GrossEur),Fit("eur.calibrate_net",o=>o.NetEur)));
             }
+            if(saved is {Count:>0})throw new ArgumentException("EUR_CHECKPOINT_CALIBRATION_GROUP");
         }
     }
 
@@ -237,7 +251,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
         if(pairedEurPayoff.TryGetValue((family,side),out var pair))
         {
             using var pairProfile=NativeEconomicProfiler.Measure("eur.predict_pair");
-            (gross,net)=pair.Predict(features,at,risk,out range,context?.Symbol,context?.AssetClass);
+            (gross,net)=pair.Distribution.Predict(features,at,risk,out range,context?.Symbol,context?.AssetClass);
         }
         else
         {
@@ -457,7 +471,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
             Apply(Event("REQUEST_OPEN",at,id,market.Symbol,s.Side,units,margin:margin,
                 slip:market.SlippagePerSideQuote,reason:"NATIVE_CONDITIONAL_SELECTION") with
                 {AvailableAt=at,CalibratedThrough=s.LastCompletedM5At,TracksLateFunding=true});
-            plans.Add(id,new(id,market.Symbol,s.Family,s.Side,s.Atr,s.Equilibrium,choice.Geometry.InitialRiskEur,
+            AddPlan(id,new(id,market.Symbol,s.Family,s.Side,s.Atr,s.Equilibrium,choice.Geometry.InitialRiskEur,
                 choice.Geometry.Stop,0m,0L,0m,units,0m,0m,0L,false,choice.Geometry) {EurContext=receipt.Context});
             pending.Add(new(id,market.Symbol,units,margin,choice.Geometry.InitialRiskEur,s.Family,true));
             admitted++;

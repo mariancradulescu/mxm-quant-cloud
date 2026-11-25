@@ -42,7 +42,20 @@ internal static class NativeEurPortfolioChecks
             var net=new NativeCompleteDistribution(netRows,false){MaskedEconomicContext=masked};
             var originalGross=gross.Calibrate(grossRows);
             var originalNet=net.Calibrate(netRows);
-            var pair=new NativeCompleteDistributionPair(gross,net).Calibrate();
+            var raw=new NativeCompleteDistributionPair(gross,net);
+            var pair=raw.Calibrate();
+            var prefix=new NativeCompleteDistributionPair(gross with { Samples=grossRows[..120] },
+                net with { Samples=netRows[..120] });
+            _=prefix.Calibrate(Array.Empty<NativeCompleteResidual?>(),out var residuals);
+            var incremental=raw.Calibrate(residuals,out _);
+            check(raw.CanReuseCalibration(prefix)&&pair.Gross==incremental.Gross&&pair.Net==incremental.Net,
+                $"Causal append preserves exact calibrated distributions masked={masked}");
+            var earlier=grossRows[120] with {SettledAt=grossRows[0].DecisionAt};
+            var changed=new NativeCompleteDistributionPair(
+                gross with { Samples=grossRows[..120].Append(earlier).ToArray() },
+                net with { Samples=netRows[..120].Append(earlier with {OutcomeR=netRows[120].OutcomeR}).ToArray() });
+            check(!changed.CanReuseCalibration(prefix),
+                $"Overlapping newly available observations require full recalibration masked={masked}");
             check(pair.Gross.BiasR==originalGross.BiasR&&pair.Gross.UncertaintyR==originalGross.UncertaintyR&&
                 pair.Net.BiasR==originalNet.BiasR&&pair.Net.UncertaintyR==originalNet.UncertaintyR,
                 $"Paired calibration exact decimal parity masked={masked}");

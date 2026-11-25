@@ -12,11 +12,49 @@ public sealed partial class NativeUnifiedPortfolioEngine
     sealed record Cpe1FamilyResearchState(string Family,bool FundingAware,decimal[] GrossReturns,
         long[] CloseDays,decimal? LowerBound,bool ReturnsChanged,int Settled,int Winners);
 
+    sealed record ResearchPlanSlots(string?[] Keys,int[] Free);
+
+    // Preserve the traversal of the funded plan book across removal and slot
+    // reuse. Restoration must not change the ordering of equal-clock marks.
+    sealed class ResearchPlanOrder
+    {
+        readonly List<string?> keys;
+        readonly Stack<int> free;
+
+        public ResearchPlanOrder(IEnumerable<string> active,ResearchPlanSlots? restored=null)
+        {
+            keys=restored?.Keys.ToList()??active.Cast<string?>().ToList();
+            free=new(restored?.Free.Reverse()??Array.Empty<int>());
+            if(restored is not null &&
+                (!keys.OfType<string>().SequenceEqual(active,StringComparer.Ordinal)||
+                !restored.Free.OrderBy(i=>i).SequenceEqual(Enumerable.Range(0,keys.Count).Where(i=>keys[i] is null))))
+                throw new ArgumentException("EUR_CHECKPOINT_PLAN_SLOTS");
+        }
+
+        public void Add(string id)
+        {
+            if(free.TryPop(out int slot))keys[slot]=id;
+            else keys.Add(id);
+        }
+
+        public void Remove(string id)
+        {
+            int slot=keys.IndexOf(id);
+            keys[slot]=null;
+            free.Push(slot);
+        }
+
+        public IEnumerable<Ucp1Plan> Values(Dictionary<string,Ucp1Plan> plans) =>
+            keys.OfType<string>().Select(id=>plans[id]);
+
+        public ResearchPlanSlots Checkpoint()=>new(keys.ToArray(),free.ToArray());
+    }
+
     sealed record EurResearchState(string Version,string CoreCheckpoint,string Policy,string? FundingScenarioId,
         long LastAt,NativeEurCalibrationOutcome[] History,NativeEurOpportunity[] Opportunities,
         Ucp1EurDecisionActivity[] DecisionActivity,Ucp1MarginObservation[] MarginMaxima,
         Ucp1MarginObservation[] MarginExceedances,Cpe1FamilyResearchState[] Cpe1Families,
-        string[] Cpe1ScoredEpisodes);
+        string[] Cpe1ScoredEpisodes,EurPairedCalibrationState[]? PairedCalibration,ResearchPlanSlots? PlanSlots);
 
     internal string HistoricalEurCheckpoint()
     {
@@ -26,7 +64,9 @@ public sealed partial class NativeUnifiedPortfolioEngine
             PolicyName,FundingScenarioId,LastObservationAt,eurHistory.Values.SelectMany(x=>x).ToArray(),
             eurOpportunities.ToArray(),eurDecisionActivity.ToArray(),eurMarginMaxima.Values.ToArray(),
             eurMarginExceedances.ToArray(),cpe1History.Select(x=>x.Value.ResearchState(x.Key)).ToArray(),
-            cpe1ScoredEpisodes.ToArray()));
+            cpe1ScoredEpisodes.ToArray(),UsePairedDistribution?pairedEurPayoff.Select(x=>
+                new EurPairedCalibrationState(x.Key.Family,x.Key.Side,x.Value.Residuals)).ToArray():null,
+            researchPlanOrder?.Checkpoint()));
     }
 
     internal static NativeUnifiedPortfolioEngine RestoreHistoricalEurCheckpoint(string checkpoint)
@@ -35,7 +75,9 @@ public sealed partial class NativeUnifiedPortfolioEngine
             ??throw new ArgumentException("EUR_HISTORICAL_CHECKPOINT_REQUIRED");
         if(s.Version!=EurResearchCheckpointVersion)
             throw new ArgumentException("EUR_HISTORICAL_CHECKPOINT_VERSION");
-        var book=Restore(s.CoreCheckpoint);
+        var core=JsonSerializer.Deserialize<Ucp1Checkpoint>(s.CoreCheckpoint)
+            ??throw new ArgumentException("UCP1_MISSING_CHECKPOINT");
+        var book=new NativeUnifiedPortfolioEngine(core,s.PairedCalibration,s.PlanSlots);
         if(!book.OwnerEur||book.researchFork||book.FundingScenarioId is null||
            book.FundingScenarioId!=s.FundingScenarioId||book.PolicyName!=s.Policy||
            book.LastObservationAt!=s.LastAt||

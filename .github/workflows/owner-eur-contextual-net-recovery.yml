@@ -3,8 +3,15 @@ on:
   pull_request:
     paths:
       - 'research/merge_eur_scenarios.py'
+      - 'research/owner_eur_checkpoint.py'
+      - 'research/owner_eer1_readback.py'
+      - 'research/test_owner_eur_checkpoint.py'
+      - 'src/Mxm.Replay/IntegratedEconomicReplay.Eur*.cs'
+      - 'src/Mxm.Replay/IntegratedEconomicReplay.Eer1.cs'
+      - 'src/Mxm.Core/NativeCompleteDistributionPair.cs'
+      - 'src/Mxm.Core/NativePortfolioFunding.cs'
+      - 'src/Mxm.Core/NativeUnifiedPortfolioEngine.Eur*.cs'
       - 'research/test_merge_eur_scenarios.py'
-      - 'src/Mxm.Replay/IntegratedEconomicReplay.EurHistorical.cs'
       - '.github/workflows/owner-eur-contextual-net-recovery.yml'
   push:
     branches: [main]
@@ -22,18 +29,28 @@ jobs:
       - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
         with:
           dotnet-version: '8.0.x'
-      - run: python -m unittest research.test_merge_eur_scenarios
+      - run: python -m pip install -r research/requirements.txt
       - run: dotnet build src/Mxm.Replay -c Release
+      - run: python -m unittest research.test_merge_eur_scenarios research.test_owner_eur_checkpoint
+      - run: dotnet run --project tests/Mxm.Checks -c Release
   evidence:
     needs: technical
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.run_attempt == 1 && github.actor == 'mariancradulescu'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.actor == 'mariancradulescu'
     strategy:
       fail-fast: false
       matrix:
         scenario: [0, 1, 2]
     environment: mxm-r3-custody-v1
     runs-on: ubuntu-24.04
-    timeout-minutes: 180
+    timeout-minutes: 350
+    env:
+      MXM_ECONOMIC_SCENARIO_INDEX: ${{ matrix.scenario }}
+      MXM_ECONOMIC_RECEIPT_DIRECTORY: window-receipts
+      MXM_ECONOMIC_PROFILE: 0
+      MXM_ECONOMIC_BOUNDED_NEIGHBORS: 1
+      MXM_ECONOMIC_PAIRED_DISTRIBUTION: 1
+      MXM_ECONOMIC_REUSE_FRAMES: 1
+      CHECKPOINT_PREFIX: eur-contextual-net-checkpoint-${{ matrix.scenario }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -172,14 +189,76 @@ jobs:
           assert marker["Study"]=="EUR_CONTEXTUAL_NET_1" and marker["Mode"]=="ISOLATED_TECHNICAL_RECOVERY"
           assert marker["ParityEvidenceRun"]>0 and marker["CheckpointParityEvidenceRun"]>0
           PY
-      - name: Reconstruct authenticated evidence and compare contextual payoff
-        run: python -m research.owner_eer1_readback --protection-development research/eur_contextual_net_1.json contextual-net-result.json
+      - name: Recover encrypted checkpoints from an earlier attempt
+        id: resume
+        if: github.run_attempt > 1
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p window-receipts
+          gh api --paginate "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?per_page=100" \
+            --jq '.artifacts[] | select(.expired == false) | .name' > "$RUNNER_TEMP/checkpoint-artifacts.txt"
+          for phase in 1 2 3; do
+            name="$CHECKPOINT_PREFIX-$phase"
+            if grep -Fxq "$name" "$RUNNER_TEMP/checkpoint-artifacts.txt"; then
+              gh run download "$GITHUB_RUN_ID" --name "$name" --dir "checkpoints/$phase"
+              find "checkpoints/$phase" -name '*.json' -type f -exec cp {} window-receipts/ \;
+              echo "phase$phase=true" >> "$GITHUB_OUTPUT"
+            fi
+          done
+      - name: Reconstruct original authenticated evidence once
         env:
           R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
-          MXM_ECONOMIC_SCENARIO_INDEX: ${{ matrix.scenario }}
-          MXM_ECONOMIC_RECEIPT_DIRECTORY: window-receipts
-          MXM_ECONOMIC_PROFILE: 0
-          MXM_ECONOMIC_BOUNDED_NEIGHBORS: 1
+        run: python -m research.owner_eer1_readback --prepare-protection-recovery "$RUNNER_TEMP/eur-private"
+      - name: Replay initial fit and seal checkpoint
+        if: steps.resume.outputs.phase1 != 'true'
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+        run: |
+          python -m research.owner_eur_checkpoint "$RUNNER_TEMP/eur-private" contextual-net-result.json \
+            --phase 1 --checkpoint checkpoints/1
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: steps.resume.outputs.phase1 != 'true'
+        with:
+          name: ${{ env.CHECKPOINT_PREFIX }}-1
+          path: checkpoints/1
+          if-no-files-found: error
+          retention-days: 90
+      - name: Replay first test window and seal checkpoint
+        if: steps.resume.outputs.phase2 != 'true'
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+        run: |
+          python -m research.owner_eur_checkpoint "$RUNNER_TEMP/eur-private" contextual-net-result.json \
+            --previous checkpoints/1/checkpoint.sealed --phase 2 --checkpoint checkpoints/2
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: steps.resume.outputs.phase2 != 'true'
+        with:
+          name: ${{ env.CHECKPOINT_PREFIX }}-2
+          path: checkpoints/2
+          if-no-files-found: error
+          retention-days: 90
+      - name: Replay second test window and seal checkpoint
+        if: steps.resume.outputs.phase3 != 'true'
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+        run: |
+          python -m research.owner_eur_checkpoint "$RUNNER_TEMP/eur-private" contextual-net-result.json \
+            --previous checkpoints/2/checkpoint.sealed --phase 3 --checkpoint checkpoints/3
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: steps.resume.outputs.phase3 != 'true'
+        with:
+          name: ${{ env.CHECKPOINT_PREFIX }}-3
+          path: checkpoints/3
+          if-no-files-found: error
+          retention-days: 90
+      - name: Replay final test window and produce scenario report
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+        run: |
+          python -m research.owner_eur_checkpoint "$RUNNER_TEMP/eur-private" contextual-net-result.json \
+            --previous checkpoints/3/checkpoint.sealed
       - name: Verify research scope and comparison completeness
         env:
           SCENARIO_INDEX: ${{ matrix.scenario }}
@@ -206,14 +285,13 @@ jobs:
                   print(s["SpreadMultiplier"],t["Id"],r["Closed"],r["ClosedGrossEur"],r["ClosedNetEur"],r["Hard21AllFullRegisteredWeeks"])
           PYRESULT
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: always()
         with:
           name: eur-contextual-net-recovery-scenario-${{ matrix.scenario }}
           path: |
             contextual-net-result.json
             window-receipts/*.json
           retention-days: 90
-          if-no-files-found: warn
+          if-no-files-found: error
   combine:
     needs: evidence
     runs-on: ubuntu-24.04

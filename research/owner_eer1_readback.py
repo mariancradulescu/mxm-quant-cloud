@@ -82,7 +82,7 @@ def read_archives(key,work):
             add(ids[q.symbolId],tf,rows)
     return bars,add,conflicts,proof
 
-def main(recovery=False, diagnosis=None, development=None, tick_protection=False, session_funding=False):
+def main(recovery=False, diagnosis=None, development=None, tick_protection=False, session_funding=False, prepared=None):
     if recovery:
         from . import owner_eer1_recovery as recover
     run=recover.ORIGINAL_RUN if recovery else os.environ["GITHUB_RUN_ID"]
@@ -99,14 +99,16 @@ def main(recovery=False, diagnosis=None, development=None, tick_protection=False
     source_acquired=max(p["at"] for p in original["packets"])
     rows={x["symbol"]:x for x in mat["matrix"]}
     OUT.mkdir(exist_ok=False)
-    if recovery and diagnosis is None and development is None:
+    if recovery and diagnosis is None and development is None and prepared is None:
         recover.prove_shadow(receipt,key,account,rows,chosen,eer.charge_clocks(meta["terms"]),OUT)
     verified_shards=[]
-    with tempfile.TemporaryDirectory(prefix="eer1-custody-") as temp:
+    if prepared is not None:
+        prepared.mkdir(mode=0o700)
+    with tempfile.TemporaryDirectory(prefix="eer1-custody-", dir=prepared) as temp:
         work=Path(temp);bars,add,conflicts,proof=read_archives(key,work)
         # Recover the already observed 21-day full-session quote tape,
         # including the authenticated multiframe supplement; no recollection.
-        protection=work/"verified-protection"
+        protection=(prepared or work)/"verified-protection"
         if tick_protection:
             protection.mkdir(mode=0o700)
         archived,extra=context.sources(key,"44733062339",native_boundaries=True,
@@ -222,7 +224,7 @@ def main(recovery=False, diagnosis=None, development=None, tick_protection=False
         engine_revision=recover.ORIGINAL_HEAD if recovery else os.environ["GITHUB_SHA"]
         payload=dict(Start=eer.START,FitEnd=eer.FIT_END,End=eer.END,ProtocolSha256=receipt["protocolSha256"],
             EngineRevision=engine_revision,EvidenceManifestSha256=manifest_sha,SourceAcquiredAt=source_acquired,Markets=markets,Tapes=tapes,Routes=meta["routes"])
-        if diagnosis is not None or development is not None:
+        if diagnosis is not None or development is not None or prepared is not None:
             from .official_symbol_calendar import build_clock_grid
             for market in markets:
                 info=meta["info"][market["Market"]["Name"]]
@@ -238,8 +240,12 @@ def main(recovery=False, diagnosis=None, development=None, tick_protection=False
                             scheduled=set(calendar["openClocks"]) | set(calendar["ambiguousClocks"])
                             closed.extend(at for at in range(eer.START+offset,eer.END,eer.DAY) if at not in scheduled)
                     market["ClosedRolloverClocks"]=sorted(closed)
+        if prepared is not None:
+            path=prepared/"source.json"
         with os.fdopen(os.open(path,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600),"wb") as private:
             private.write(src.canonical(payload))
+        if prepared is not None:
+            return
         env={k:v for k,v in os.environ.items() if k!="R3_CUSTODY_PRIVATE_KEY_PEM"}
         if development is not None:
             protocol, report=development
@@ -271,7 +277,9 @@ def main(recovery=False, diagnosis=None, development=None, tick_protection=False
 
 if __name__=="__main__":
     args=sys.argv[1:]
-    if len(args)==3 and args[0]=="--historical-development":
+    if len(args)==2 and args[0]=="--prepare-protection-recovery":
+        main(recovery=True,tick_protection=True,prepared=Path(args[1]))
+    elif len(args)==3 and args[0]=="--historical-development":
         main(recovery=True,development=(Path(args[1]),Path(args[2])))
     elif len(args)==3 and args[0]=="--protection-development":
         main(recovery=True,development=(Path(args[1]),Path(args[2])),tick_protection=True)
