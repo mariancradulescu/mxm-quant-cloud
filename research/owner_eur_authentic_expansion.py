@@ -182,7 +182,13 @@ def breadth(registered,key,work):
     additional,supp_receipt=supplemental.readback(key,"44733062339",native_boundaries=True)
     market["AdditionalTimeframes"]={tf:dict(Source="AUTHENTIC_ARCHIVED_SUPPLEMENT",Bars=marks.normalized_bars(
         additional.get((name,tf),[]))) for tf in ("M1","M30","H4","D1")}
-    market["OfficialAssetClass"]=market["Class"]
+    # Legacy full-session records omit EnabledAtCapture even though the
+    # verified original LightSymbol carries it. Bind the original fact.
+    market["EnabledAtCapture"]=selected.enabled
+    eer_receipt=json.loads((eer.OUT/"receipt.json").read_bytes())
+    eer_meta=eer.unpack(eer.OUT,eer_receipt["metadata"],key,recovery.ORIGINAL_RUN)
+    current=eer.metadata_read(eer_meta["packets"],eer_receipt["selected"],account)["roster"].get(name)
+    market["OfficialAssetClass"]=current["assetClass"] if current and current["id"]==selected.symbolId else None
     info=dict(fields=fields,priceDigits=detail.digits,shortAllowed=detail.enableShortSelling,
               tradingMode=detail.tradingMode,digest=src.digest(detail.SerializeToString()))
     money=dict(accountSwapFree=src.field(trader,"swapFree"),accountType=src.field(trader,"accountType"),
@@ -194,7 +200,10 @@ def breadth(registered,key,work):
     payload["Tapes"].append(dict(Name=name,Quotes=quotes,FundingQuotes=market["RolloverQuotes"]))
     proof=dict(OriginalInputManifest=payload["EvidenceManifestSha256"],FullSessionReceipt=context.INTEGRATED_RECEIPT,
                SupplementCipher=supp_receipt["CipherSha256"],AddedMarket=name,AddedMonetaryMarks=len(quotes),
-               FirstAddedMark=quotes[0]["At"],LastAddedMark=quotes[-1]["At"],PreviousMarketCount=len(existing),MarketCount=len(payload["Markets"]),Mode="FULL_SESSION_SCOPE_EXTENSION")
+               FirstAddedMark=quotes[0]["At"],LastAddedMark=quotes[-1]["At"],
+               AddedEnabledAtCapture=selected.enabled,AddedTradingMode=detail.tradingMode,
+               AddedOfficialAssetClass=market["OfficialAssetClass"],AddedMarginObservations=len(market["Margin"]),
+               PreviousMarketCount=len(existing),MarketCount=len(payload["Markets"]),Mode="FULL_SESSION_SCOPE_EXTENSION")
     return payload,proof
 
 
