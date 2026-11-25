@@ -1,0 +1,219 @@
+name: OWNER EUR contextual net isolated technical recovery
+on:
+  push:
+    branches: [main]
+    paths: ['research/eur_contextual_net_1_recovery_execution.json']
+permissions:
+  actions: read
+  contents: read
+jobs:
+  evidence:
+    if: github.run_attempt == 1 && github.actor == 'mariancradulescu'
+    strategy:
+      fail-fast: false
+      matrix:
+        scenario: [0, 1, 2]
+    environment: mxm-r3-custody-v1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - run: python -m unittest research.test_official_symbol_calendar research.test_owner_eer1_source
+      - run: dotnet build src/Mxm.Replay -c Release
+      - name: Pin exact original artifact identity and archive digest
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/"$GITHUB_REPOSITORY"/actions/artifacts/15000522105 > /tmp/eer1-artifact.json
+          python -c 'import json; a=json.load(open("/tmp/eer1-artifact.json")); assert a["id"]==15000522105 and a["workflow_run"]["id"]==45555613548 and a["size_in_bytes"]==233873730 and a["digest"]=="sha256:107b2bc43e6ff25a5799e253b0ab6ee718ad5b88ef3bb3211d84ad6c20b87a5b" and not a["expired"]'
+          gh api repos/"$GITHUB_REPOSITORY"/actions/artifacts/15000522105/zip > /tmp/eer1-original.zip
+          echo '107b2bc43e6ff25a5799e253b0ab6ee718ad5b88ef3bb3211d84ad6c20b87a5b  /tmp/eer1-original.zip' | sha256sum -c -
+          unzip -q /tmp/eer1-original.zip -d eer1-source
+          rm /tmp/eer1-original.zip
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: owner-eur-conditional-source-verified
+          path: pilot-source
+          run-id: 45552716026
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: source-history-public-receipt
+          path: original-source-history
+          run-id: 45396314675
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: source-history-original-sealed
+          path: original-source-history
+          run-id: 45396314675
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: owner-history-extension-sealed-and-receipt
+          path: previous-extension
+          run-id: 45409527714
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: sealed-source
+          path: bdp-source
+          run-id: 41724643418
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: sealed-source
+          path: aip-source
+          run-id: 41735441128
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: hxc1-original-historical-encrypted-source
+          path: mde1-hxc1-source
+          run-id: 43817213663
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: xmh2-complete-274day-m15-encrypted-source
+          path: mde1-xmh2-source
+          run-id: 44352570167
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: p05-new-live-readonly-authentic-source-sealed
+          path: p05-sealed
+          run-id: 45134137836
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: p05-new-live-readonly-aggregate-public
+          path: p05-public
+          run-id: 45134137836
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: owner-eur-gap-official-original
+          path: prior-gap
+          run-id: 45541671931
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: owner-eur-rollover-official-original
+          path: prior-rollover
+          run-id: 45549613144
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: integrated-full-session-custody
+          path: integrated-sealed-source
+          run-id: 44687919474
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: integrated-full-session-source-public
+          path: integrated-source-public
+          run-id: 44687919474
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: closed-market-original-ciphertext
+          path: closed-market-source
+          run-id: 44733062339
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: closed-market-original-source-public
+          path: closed-market-source
+          run-id: 44733062339
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: hxc1-original-historical-encrypted-source
+          path: hxc1-original
+          run-id: 43817213663
+          github-token: ${{ github.token }}
+      - name: Run native technical checks before economic replay
+        run: dotnet run --project tests/Mxm.Checks -c Release
+      - name: Verify recovery execution binding
+        run: |
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          p=Path("research/eur_contextual_net_1.json")
+          marker=json.loads(Path("research/eur_contextual_net_1_recovery_execution.json").read_bytes())
+          assert marker["OriginalRun"]==45611813412 and marker["ProtocolSha256"]==hashlib.sha256(p.read_bytes()).hexdigest()
+          assert marker["Study"]=="EUR_CONTEXTUAL_NET_1" and marker["Mode"]=="ISOLATED_TECHNICAL_RECOVERY"
+          assert marker["ParityEvidenceRun"]>0 and marker["CheckpointParityEvidenceRun"]>0
+          PY
+      - name: Reconstruct authenticated evidence and compare contextual payoff
+        run: python -m research.owner_eer1_readback --protection-development research/eur_contextual_net_1.json contextual-net-result.json
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+          MXM_ECONOMIC_SCENARIO_INDEX: ${{ matrix.scenario }}
+          MXM_ECONOMIC_RECEIPT_DIRECTORY: window-receipts
+          MXM_ECONOMIC_PROFILE: 0
+          MXM_ECONOMIC_BOUNDED_NEIGHBORS: 1
+      - name: Verify research scope and comparison completeness
+        env:
+          SCENARIO_INDEX: ${{ matrix.scenario }}
+        run: |
+          python - <<'PYRESULT'
+          import hashlib, json, os
+          from pathlib import Path
+          evidence = json.loads(Path("contextual-net-result.json").read_bytes())
+          report = evidence["Summary"]
+          assert report["ProtocolSha256"] == hashlib.sha256(Path("research/eur_contextual_net_1.json").read_bytes()).hexdigest()
+          assert report["DeclaredScenarioTrialCount"] == 12 and len(report["Results"]) == 1
+          p=json.loads(Path("research/eur_contextual_net_1.json").read_bytes())
+          assert report["Results"][0]["SpreadMultiplier"]==p["Stresses"][int(os.environ["SCENARIO_INDEX"])]
+          expected = {"CASH_CONTROL", "LOCAL_4_FEATURE_CONTROL", "EXTENDED_CONTEXT", "EXTENDED_CONTEXT_BROAD_OBSERVER"}
+          assert all({b["Id"] for b in s["Trials"]} == expected and len(s["Fits"]) == 3 for s in report["Results"])
+          assert all(len(s["OpportunityObservations"]) == 2 for s in report["Results"])
+          assert report["SourceBrokerRequests"] == report["Orders"] == 0
+          assert report["CloudActivated"] is report["IndependentConfirmationCertified"] is False
+          assert evidence["BrokerFillEvidence"] is False
+          print("CONTEXTUAL NET", report["ProtocolSha256"], report["TestBoundaries"])
+          for s in report["Results"]:
+              for t in s["Trials"]:
+                  r=t["Result"]
+                  print(s["SpreadMultiplier"],t["Id"],r["Closed"],r["ClosedGrossEur"],r["ClosedNetEur"],r["Hard21AllFullRegisteredWeeks"])
+          PYRESULT
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: eur-contextual-net-recovery-scenario-${{ matrix.scenario }}
+          path: |
+            contextual-net-result.json
+            window-receipts/*.json
+          retention-days: 90
+          if-no-files-found: warn
+  combine:
+    needs: evidence
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          pattern: eur-contextual-net-recovery-scenario-*
+          path: isolated
+      - name: Validate and combine exact reports
+        run: |
+          python -m research.merge_eur_scenarios research/eur_contextual_net_1.json contextual-net-combined.json isolated/eur-contextual-net-recovery-scenario-{0,1,2}/contextual-net-result.json
+          sha256sum contextual-net-combined.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: eur-contextual-net-technical-recovery-combined
+          path: contextual-net-combined.json
+          if-no-files-found: error
+          retention-days: 90
