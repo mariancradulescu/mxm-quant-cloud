@@ -27,6 +27,38 @@ internal static class NativeEurPortfolioChecks
 
     internal static void Run(Action<bool,string> check)
     {
+        foreach(bool masked in new[]{false,true})
+        {
+            var grossRows=Enumerable.Range(0,240).Select(i=>
+            {
+                long at=Origin+i/24*86400000L+i%24*Step;
+                decimal[] features=masked?new[]{(decimal)(i%7)/7m,1m,0m,(decimal)(i%2)}
+                    :new[]{(decimal)(i%7)/7m,(decimal)(i%2),0m,1m};
+                return new NativeCompleteSample("S"+i%3,at,at+Step,features,(i%17-8)/7m)
+                    {AssetClass="C"+i%2};
+            }).ToArray();
+            var netRows=grossRows.Select((x,i)=>x with {OutcomeR=x.OutcomeR-(i%5+1)/100m}).ToArray();
+            var gross=new NativeCompleteDistribution(grossRows,false){MaskedEconomicContext=masked};
+            var net=new NativeCompleteDistribution(netRows,false){MaskedEconomicContext=masked};
+            var originalGross=gross.Calibrate(grossRows);
+            var originalNet=net.Calibrate(netRows);
+            var pair=new NativeCompleteDistributionPair(gross,net).Calibrate();
+            check(pair.Gross.BiasR==originalGross.BiasR&&pair.Gross.UncertaintyR==originalGross.UncertaintyR&&
+                pair.Net.BiasR==originalNet.BiasR&&pair.Net.UncertaintyR==originalNet.UncertaintyR,
+                $"Paired calibration exact decimal parity masked={masked}");
+            foreach(int index in new[]{0,47,95,120,239})
+            {
+                var row=grossRows[index];
+                foreach(long clock in new[]{row.SettledAt,row.SettledAt+1,grossRows[^1].SettledAt+1})
+                {
+                    var g=originalGross.Predict(row.Features,clock,3.17m,out _,row.Symbol,row.AssetClass);
+                    var n=originalNet.Predict(row.Features,clock,3.17m,out var oldRange,row.Symbol,row.AssetClass);
+                    var both=pair.Predict(row.Features,clock,3.17m,out var newRange,row.Symbol,row.AssetClass);
+                    check(g==both.Gross&&n==both.Net&&oldRange==newRange,
+                        $"Paired prediction and return range exact parity {masked}/{index}/{clock}");
+                }
+            }
+        }
         // Include exact ties, overfull days, varied day counts and input permutations.
         foreach(int size in new[]{0,1,47,48,49,127,1024})
         foreach(int days in new[]{1,4,9,64})
