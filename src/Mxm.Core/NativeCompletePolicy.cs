@@ -26,6 +26,48 @@ public sealed record NativeCompleteDistribution(NativeCompleteSample[] Samples, 
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
     public bool MaskedEconomicContext { get; init; }
 
+    // Experimental exact selector; baseline remains the default until measured parity is certified.
+    static readonly bool BoundedNeighbors=Environment.GetEnvironmentVariable("MXM_ECONOMIC_BOUNDED_NEIGHBORS")=="1";
+
+    internal static IEnumerable<(NativeCompleteSample sample,decimal distance,int index)> SelectBoundedNeighbors(
+        IEnumerable<(NativeCompleteSample sample,decimal distance,int index)> candidates)
+    {
+        var order=Comparer<(NativeCompleteSample sample,decimal distance,int index)>.Create((a,b)=>
+        {
+            int c=a.distance.CompareTo(b.distance);
+            if(c==0)c=a.sample.DecisionAt.CompareTo(b.sample.DecisionAt);
+            if(c==0)c=StringComparer.Ordinal.Compare(a.sample.Symbol,b.sample.Symbol);
+            return c==0?a.index.CompareTo(b.index):c;
+        });
+        var worstFirst=Comparer<(NativeCompleteSample sample,decimal distance,int index)>.Create((a,b)=>order.Compare(b,a));
+        var byDay=new Dictionary<long,PriorityQueue<(NativeCompleteSample sample,decimal distance,int index),
+            (NativeCompleteSample sample,decimal distance,int index)>>();
+        void Keep(PriorityQueue<(NativeCompleteSample sample,decimal distance,int index),
+            (NativeCompleteSample sample,decimal distance,int index)> heap,
+            (NativeCompleteSample sample,decimal distance,int index) row,int limit)
+        {
+            if(heap.Count<limit)heap.Enqueue(row,row);
+            else if(order.Compare(row,heap.Peek())<0)
+            {
+                heap.Dequeue();
+                heap.Enqueue(row,row);
+            }
+        }
+        foreach(var row in candidates)
+        {
+            long day=row.sample.DecisionAt/NativeCompletePolicy.Day;
+            if(!byDay.TryGetValue(day,out var heap))byDay.Add(day,heap=new(worstFirst));
+            Keep(heap,row,8);
+        }
+        // Any row outside its day's first eight cannot enter the original selected set.
+        // The global first 48 among the surviving rows exactly match the original scan.
+        var global=new PriorityQueue<(NativeCompleteSample sample,decimal distance,int index),
+            (NativeCompleteSample sample,decimal distance,int index)>(worstFirst);
+        foreach(var heap in byDay.Values)
+            foreach(var row in heap.UnorderedItems)Keep(global,row.Element,48);
+        return global.UnorderedItems.Select(x=>x.Element).OrderBy(x=>x,order);
+    }
+
     public NativeCompletePrediction? Predict(decimal[] features, long clock, decimal scale)
         =>Predict(features,clock,scale,out _);
 
@@ -36,7 +78,7 @@ public sealed record NativeCompleteDistribution(NativeCompleteSample[] Samples, 
         range=default;
         if (scale <= 0m) throw new ArgumentException("COMPLETE_POLICY_RISK_SCALE");
         int first = WithoutResidence ? 2 : 0;
-        var ranked = Samples.Where(s => s.SettledAt < clock).Select(sample =>
+        var candidates = Samples.Where(s => s.SettledAt < clock).Select((sample,index) =>
         {
             if (sample.Features.Length != features.Length) throw new ArgumentException("COMPLETE_POLICY_FEATURE_COUNT");
             decimal distance = 0m;
@@ -51,12 +93,21 @@ public sealed record NativeCompleteDistribution(NativeCompleteSample[] Samples, 
                     decimal delta = features[i] - sample.Features[i];
                     distance += delta * delta;
                 }
-            return (sample, distance);
-        }).OrderBy(v => v.distance).ThenBy(v => v.sample.DecisionAt).ThenBy(v => v.sample.Symbol, StringComparer.Ordinal);
+            return (sample, distance, index);
+        });
+        IEnumerable<(NativeCompleteSample sample,decimal distance,int index)> ranked =
+            BoundedNeighbors && MaskedEconomicContext
+                ? DeferredBounded()
+                : candidates.OrderBy(v=>v.distance).ThenBy(v=>v.sample.DecisionAt)
+                    .ThenBy(v=>v.sample.Symbol,StringComparer.Ordinal);
+        IEnumerable<(NativeCompleteSample sample,decimal distance,int index)> DeferredBounded()
+        {
+            foreach(var row in SelectBoundedNeighbors(candidates))yield return row;
+        }
         var days = new Dictionary<long, int>();
         var values = new List<(decimal Return, decimal Weight)>();
         using (NativeEconomicProfiler.Measure("distribution.rank_select"))
-        foreach (var (sample, distance) in ranked)
+        foreach (var (sample, distance, _) in ranked)
         {
             long day = sample.DecisionAt / NativeCompletePolicy.Day;
             int count = days.GetValueOrDefault(day);

@@ -1,0 +1,68 @@
+name: OWNER contextual estimator technical benchmark
+on:
+  pull_request:
+    paths:
+      - 'tests/Mxm.EconomicBenchmark/**'
+      - 'src/Mxm.Core/NativeCompletePolicy.cs'
+      - '.github/workflows/owner-contextual-estimator-benchmark.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  benchmark:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - run: dotnet build tests/Mxm.EconomicBenchmark -c Release
+      - run: dotnet build tests/Mxm.Checks -c Release
+      - name: Measure baseline, profiler overhead and bounded selection on same runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p benchmark
+          dll=tests/Mxm.EconomicBenchmark/bin/Release/net8.0/Mxm.EconomicBenchmark.dll
+          MXM_ECONOMIC_PROFILE=0 MXM_ECONOMIC_BOUNDED_NEIGHBORS=0 dotnet "$dll" > benchmark/baseline.json
+          MXM_ECONOMIC_PROFILE=1 MXM_ECONOMIC_BOUNDED_NEIGHBORS=0 dotnet "$dll" > benchmark/profiled.json
+          MXM_ECONOMIC_PROFILE=1 MXM_ECONOMIC_PROFILE_DISTANCE=1 MXM_ECONOMIC_BOUNDED_NEIGHBORS=0 dotnet "$dll" --small > benchmark/distance-small.json
+          MXM_ECONOMIC_PROFILE=0 MXM_ECONOMIC_BOUNDED_NEIGHBORS=1 dotnet "$dll" > benchmark/bounded.json
+          MXM_ECONOMIC_PROFILE=1 MXM_ECONOMIC_BOUNDED_NEIGHBORS=1 dotnet "$dll" > benchmark/bounded-profiled.json
+      - name: Verify prediction and calibration digests, publish measured comparisons
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('benchmark')
+          def load(name): return {r['Size']:r for r in json.loads((p/(name+'.json')).read_text())['Results']}
+          base=load('baseline')
+          comparison=[]
+          for mode in ('profiled','distance-small','bounded','bounded-profiled'):
+              rows=load(mode)
+              assert set(rows)==({256} if mode=='distance-small' else set(base))
+              for n,r in rows.items():
+                  a=base[n]
+                  assert a['Digest']==r['Digest'], (mode,n)
+                  comparison.append(dict(mode=mode,size=n,calibration_speedup=a['CalibrationMs']/max(r['CalibrationMs'],1e-9),prediction_speedup=a['PredictionMs']/max(r['PredictionMs'],1e-9),allocation_ratio=r['AllocatedBytes']/max(a['AllocatedBytes'],1),exact_digest=r['Digest']))
+          (p/'comparison.json').write_text(json.dumps(comparison,indent=2))
+          print(json.dumps(comparison,indent=2))
+          PY
+      - name: Native checks with baseline, instrumented, and experimental selector
+        run: |
+          set -euo pipefail
+          dll=tests/Mxm.Checks/bin/Release/net8.0/Mxm.Checks.dll
+          MXM_ECONOMIC_PROFILE=0 MXM_ECONOMIC_BOUNDED_NEIGHBORS=0 dotnet "$dll" > benchmark/native-baseline.log
+          MXM_ECONOMIC_PROFILE=1 MXM_ECONOMIC_BOUNDED_NEIGHBORS=0 dotnet "$dll" > benchmark/native-profiled.log
+          MXM_ECONOMIC_PROFILE=0 MXM_ECONOMIC_BOUNDED_NEIGHBORS=1 dotnet "$dll" > benchmark/native-bounded.log
+          tail -n 3 benchmark/native-baseline.log benchmark/native-profiled.log benchmark/native-bounded.log
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: contextual-estimator-technical-benchmark
+          path: benchmark/
+          if-no-files-found: warn
+          retention-days: 90

@@ -27,6 +27,28 @@ internal static class NativeEurPortfolioChecks
 
     internal static void Run(Action<bool,string> check)
     {
+        // Include exact ties, overfull days, varied day counts and input permutations.
+        foreach(int size in new[]{0,1,47,48,49,127,1024})
+        foreach(int days in new[]{1,4,9,64})
+        {
+            var rows=Enumerable.Range(0,size).Select(i=>
+            {
+                long at=(i%days)*86400000L+(i%3);
+                var sample=new NativeCompleteSample("S"+(i%4),at,at+1,new[]{0m,1m},i);
+                return (sample,distance:(decimal)(i%5),index:i);
+            }).Reverse().Select((row,index)=>(row.sample,row.distance,index)).ToArray();
+            var counts=new Dictionary<long,int>();
+            var expected=rows.OrderBy(x=>x.distance).ThenBy(x=>x.sample.DecisionAt)
+                .ThenBy(x=>x.sample.Symbol,StringComparer.Ordinal).Where(x=>
+                {
+                    long day=x.sample.DecisionAt/86400000L;
+                    int count=counts.GetValueOrDefault(day);
+                    counts[day]=count+1;
+                    return count<8;
+                }).Take(48).Select(x=>x.index).ToArray();
+            check(expected.SequenceEqual(NativeCompleteDistribution.SelectBoundedNeighbors(rows).Select(x=>x.index)),
+                $"Bounded contextual selection preserves exact stable ordered identities: {size}/{days}");
+        }
         check(NativeExecutableEconomics.TradeStopReached(1,99m,100m)&&
               NativeExecutableEconomics.TradeStopReached(-1,101m,100m)&&
               NativeExecutableEconomics.TradeStopReached(-1,100m,100m)&&
