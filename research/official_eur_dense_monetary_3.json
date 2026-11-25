@@ -1,0 +1,44 @@
+{
+  "study": "OFFICIAL_EUR_DENSE_MONETARY_3",
+  "symbols": [
+    "EURUSD",
+    "US500",
+    "XAUUSD",
+    "SpotBrent"
+  ],
+  "windows": [
+    {
+      "id": "W07_MON",
+      "weekIndex": 7,
+      "weekdayOffset": 0
+    },
+    {
+      "id": "W07_TUE",
+      "weekIndex": 7,
+      "weekdayOffset": 1
+    },
+    {
+      "id": "W07_WED",
+      "weekIndex": 7,
+      "weekdayOffset": 2
+    },
+    {
+      "id": "W07_THU",
+      "weekIndex": 7,
+      "weekdayOffset": 3
+    },
+    {
+      "id": "W07_FRI",
+      "weekIndex": 7,
+      "weekdayOffset": 4
+    }
+  ],
+  "partitionHours": 24,
+  "requestBlockHours": 1,
+  "perSidePageBudget": 512,
+  "markFreshnessMs": 30000,
+  "markIntervalMs": 300000,
+  "markOffsetMs": 15000,
+  "selectionBasis": "Next already registered historical bar week, all five UTC weekdays and all four temporal markets, independent of realized results.",
+  "scope": "READ_ONLY_HISTORICAL_QUOTES_NOT_HISTORICAL_TARIFF_CERTIFICATION"
+}
