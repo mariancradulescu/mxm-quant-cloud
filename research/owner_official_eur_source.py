@@ -584,6 +584,23 @@ def extension_history(key):
     return archive, {r["name"]:margin.get(r["symbolId"]) for r in selection}
 
 
+def observed_bar_span(period,values):
+    if not values:
+        return None
+    width=source.PERIODS[period]*MINUTE
+    stamps=sorted(values)
+    first=stamps[0]
+    intervals=[]
+    for a,b in zip(stamps,stamps[1:]):
+        if a+width!=b:
+            intervals.append((first,a+width))
+            first=b
+    intervals.append((first,stamps[-1]+width))
+    return dict(closedBars=len(stamps),fromOpen=stamps[0],throughClose=stamps[-1]+width,
+        observedIntervals=intervals,internalClockBreaks=len(intervals)-1,
+        officialHistoricalSessionsCertified=False)
+
+
 def market_matrix(work,key,inventory,authenticated,today):
     from .v32_unified_source_adapter import execute
     coverage=defaultdict(lambda:defaultdict(set))
@@ -609,20 +626,6 @@ def market_matrix(work,key,inventory,authenticated,today):
         for period,rows in series.items():
             add(name,period,rows.keys())
 
-    def span(period,values):
-        width=source.PERIODS[period]*MINUTE
-        stamps=sorted(values)
-        first=stamps[0]
-        intervals=[]
-        for a,b in zip(stamps,stamps[1:]):
-            if a+width!=b:
-                intervals.append((first,a+width))
-                first=b
-        intervals.append((first,stamps[-1]+width))
-        return dict(closedBars=len(stamps),fromOpen=stamps[0],throughClose=stamps[-1]+width,
-            observedIntervals=intervals,internalClockBreaks=len(intervals)-1,
-            officialHistoricalSessionsCertified=False)
-
     category_names=inventory["categories"]
     class_names=inventory["assetClasses"]
     leverage=inventory["leverage"]
@@ -633,7 +636,7 @@ def market_matrix(work,key,inventory,authenticated,today):
         category=category_names.get(int(c["Category"])) if c["Category"].isdigit() else None
         observed=estimated.get(symbol) or c.get("Margin")
         fields=c["Fields"]
-        series={p:span(p,z) for p,z in coverage[symbol].items() if z}
+        series={p:observed_bar_span(p,z) for p,z in coverage[symbol].items() if z}
         results.append(dict(symbol=symbol,categoryId=c["Category"],category=category[0] if category else None,
             assetClass=class_names.get(category[1]) if category else None,contractObservedAt=c["AvailableAt"],
             tradingMode=fields.get("tradingMode"),shortSelling=fields.get("enableShortSelling"),
