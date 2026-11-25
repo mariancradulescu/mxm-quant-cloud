@@ -166,23 +166,32 @@ def main():
             # broker field where present and refuse to invent it otherwise.
             market["TickSize"]=str(10**(-info["priceDigits"])) if info["priceDigits"] is not None else "0"
             markets.append(dict(Market=market,TermsAcquiredAt=meta["actual"][name],ScheduledClocks=meta["schedules"].get(name)))
+        manifest=dict(newMetadata=receipt["metadata"],newShards=[{k:v for k,v in ref.items() if k!="summary"} for ref in receipt["sources"]],
+            originalHistoryProof=proof,integratedFullSessionRun="44687919474",integratedFullSessionReceipt=context.INTEGRATED_RECEIPT,
+            supplementaryCipher=extra["CipherSha256"],priorRolloverValuesSha256=pilot_receipt["rolloverValuesSha256"],
+            priorMatrixSha256=eer.MATRIX_SHA)
+        manifest_sha=src.digest(src.canonical(manifest))
+        (OUT/"evidence-manifest.json").write_bytes(src.canonical(manifest))
         census=dict(sourceRun=run,priorMatrixSha256=eer.MATRIX_SHA,officialRosterCount=len(meta["roster"]),
             historicalMarkets=sum(any(v.values()) for v in bars.values()),archiveProof=proof,integratedFullSessionReused="44687919474",conflictingBarClocks=len(conflicts),
             historicalCoverage={n:{tf:len(v) for tf,v in b.items()} for n,b in bars.items()},
             selected=chosen,pending=pending,eligibility=eligibility,sourceNotes=source_notes,
+            universe=[dict(symbol=n,officialClass=v["assetClass"],currentEnabled=v["enabled"],
+                hasHistory=any(bars.get(n,{}).values()),selected=n in chosen,captured=n in tape_names,
+                status=("TRANCHE_EVALUATION_INPUT" if n in chosen and n in tape_names else "PENDING_RESEARCH" if v["enabled"] else "DISABLED_AT_CAPTURE")) for n,v in meta["roster"].items()],
             orders=0,cloudActivated=False)
         (OUT/"source-census.json").write_bytes(src.canonical(census))
         if len([x for x in markets if x["Market"]["Name"] in tape_names])<2:
             print("EER1_FEWER_THAN_TWO_CAPTURED_MARKETS",flush=True);return
         path=work/"native-input.json"
         payload=dict(Start=eer.START,FitEnd=eer.FIT_END,End=eer.END,ProtocolSha256=receipt["protocolSha256"],
-            EngineRevision=os.environ["GITHUB_SHA"],SourceAcquiredAt=source_acquired,Markets=markets,Tapes=tapes,Routes=meta["routes"])
+            EngineRevision=os.environ["GITHUB_SHA"],EvidenceManifestSha256=manifest_sha,SourceAcquiredAt=source_acquired,Markets=markets,Tapes=tapes,Routes=meta["routes"])
         path.write_bytes(src.canonical(payload));path.chmod(0o600)
         env={k:v for k,v in os.environ.items() if k!="R3_CUSTODY_PRIVATE_KEY_PEM"}
         subprocess.run(["dotnet","src/Mxm.Replay/bin/Release/net8.0/Mxm.Replay.dll","--owner-eer1-extended",
             str(path),str(OUT/"economic.json"),str(OUT)],check=True,env=env)
         (OUT/"receipt.json").write_bytes(src.canonical(dict(inputSha256=src.digest(path.read_bytes()),
-            engineRevision=os.environ["GITHUB_SHA"],protocolSha256=receipt["protocolSha256"],
+            engineRevision=os.environ["GITHUB_SHA"],protocolSha256=receipt["protocolSha256"],evidenceManifestSha256=manifest_sha,
             economicSha256=src.digest((OUT/"economic.json").read_bytes()),sourceAcquiredAt=source_acquired,
             calibrationHashes={p.name:src.digest(p.read_bytes()) for p in OUT.glob("*-calibration.json")},
             originalPilotRun="45552716026",originalPilotReplayed=False,orders=0,cloudActivated=False,

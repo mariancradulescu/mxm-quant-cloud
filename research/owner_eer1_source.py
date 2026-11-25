@@ -4,7 +4,7 @@ from datetime import datetime, date, timedelta, timezone
 from decimal import Decimal
 from pathlib import Path
 from zoneinfo import ZoneInfo
-import json, os, sys, time, bisect
+import json, os, sys, time, bisect, gzip
 
 from . import owner_official_eur_source as wire
 from . import owner_eur_rollover_continuity as roll
@@ -264,11 +264,11 @@ def metadata_read(packets,selected,account):
     names=[n for n in selected if n in roster and roster[n]["enabled"]]
     route_names=sorted({x["Symbol"] for hops in routes.values() for x in hops if x["Symbol"] in roster})
     return dict(terms=terms,actual=actual,schedules=schedules,info=info,margin={n:margins.get(v["id"],[]) for n,v in info.items()},
-        routes=routes,roster=roster,sourceNames=list(dict.fromkeys(names+route_names)),
+        routes=routes,roster=roster,sourceNames=list(dict.fromkeys([n for n in names if n in ANCHORS]+route_names+[n for n in names if n not in ANCHORS])),
         accountSwapFree=src.field(tr,"swapFree"),accountType=src.field(tr,"accountType"),moneyDigits=src.field(tr,"moneyDigits"))
 
 def seal(path,obj,recipient,rid):
-    clear=src.canonical(obj); encrypted=seal_new(clear,recipient,rid)
+    clear=gzip.compress(src.canonical(obj),mtime=0); encrypted=seal_new(clear,recipient,rid)
     path.write_bytes(encrypted)
     return dict(file=path.name,plainSha256=src.digest(clear),cipherSha256=src.digest(encrypted))
 
@@ -305,6 +305,6 @@ def unpack(folder,ref,key,run):
     need(src.digest(cipher)==ref["cipherSha256"],"EER1_CIPHER_HASH")
     raw=unseal_new(cipher,key,run)
     need(src.digest(raw)==ref["plainSha256"],"EER1_PLAIN_HASH")
-    return json.loads(raw)
+    return json.loads(gzip.decompress(raw))
 
 if __name__=="__main__":capture()

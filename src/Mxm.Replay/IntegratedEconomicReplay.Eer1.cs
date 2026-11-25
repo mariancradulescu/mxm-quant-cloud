@@ -9,7 +9,7 @@ internal static partial class IntegratedEconomicReplay
     sealed record EerTape(string Name,SourceQuote[] Quotes,DatedRolloverQuote[] FundingQuotes);
     sealed record EerMarket(SourceMarket Market,long TermsAcquiredAt,long[]? ScheduledClocks);
     sealed record EerInput(long Start,long FitEnd,long End,string ProtocolSha256,string EngineRevision,
-        long SourceAcquiredAt,EerMarket[] Markets,EerTape[] Tapes,
+        string EvidenceManifestSha256,long SourceAcquiredAt,EerMarket[] Markets,EerTape[] Tapes,
         Dictionary<string,EerHop[]> Routes);
     sealed class EerStream
     {
@@ -180,7 +180,7 @@ internal static partial class IntegratedEconomicReplay
         var input=JsonSerializer.Deserialize<EerInput>(raw,Json)??throw new ArgumentException("EER1_INPUT");
         long start=new DateTimeOffset(2026,10,26,0,0,0,TimeSpan.Zero).ToUnixTimeMilliseconds();
         if(input.Start!=start||input.FitEnd!=start+14*86_400_000L||input.End!=start+28*86_400_000L||
-            input.ProtocolSha256.Length!=64||input.EngineRevision.Length!=40||input.SourceAcquiredAt<input.End)
+            input.ProtocolSha256.Length!=64||input.EngineRevision.Length!=40||input.EvidenceManifestSha256.Length!=64||input.SourceAcquiredAt<input.End)
             throw new ArgumentException("EER1_PROTOCOL_BINDING");
         string manifest=Convert.ToHexString(SHA256.HashData(raw)).ToLowerInvariant();
         var source=new EerEvidence(input);
@@ -230,7 +230,7 @@ internal static partial class IntegratedEconomicReplay
                     .Select(g=>new {g.Key,Episodes=g.Count(),Days=g.Select(x=>x.ClosedAt/86_400_000L).Distinct().Count(),
                         GrossEur=g.Sum(x=>x.GrossEur),NetEur=g.Sum(x=>x.NetEur)}).ToArray()});
             File.WriteAllText(reportPath,JsonSerializer.Serialize(new {Purpose="EER1_EXTENDED_EXPOSED_CONDITIONAL_DEVELOPMENT",
-                ManifestSha256=manifest,input.ProtocolSha256,input.EngineRevision,input.SourceAcquiredAt,input.Start,input.FitEnd,input.End,
+                ManifestSha256=manifest,input.EvidenceManifestSha256,input.ProtocolSha256,input.EngineRevision,input.SourceAcquiredAt,input.Start,input.FitEnd,input.End,
                 Results=results,BrokerNetCertified=false,IndependentConfirmation=false,ContinuousDrawdownCertified=false,
                 Hard21Certified=false,Orders=0,CloudActivated=false},Json));
         }
