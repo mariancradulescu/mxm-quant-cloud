@@ -140,6 +140,13 @@ def main():
         settlementPriceConventionCertified=False,historicalTariffContinuityCertified=False,
         originalDecisionRewritten=False,brokerRequests=0,economicEvaluations=0,orders=0,cloudActivated=False)))
     (OUT/"integrated-coverage-matrix.json").write_bytes(src.canonical(matrix))
+    (OUT/"receipt.json").write_bytes(src.canonical(dict(sourceRun=RUN,
+        originalPlaintextSha256=receipt["plaintextSha256"],
+        rolloverValuesSha256=src.digest((OUT/"rollover-values.json").read_bytes()),
+        matrixSha256=src.digest((OUT/"integrated-coverage-matrix.json").read_bytes()),
+        acquiredAt=max(a for stamps in available.values() for a in stamps),
+        tickRows=sum(len(rows) for rows in collected.values()), USDJPY_M5=matrix["USDJPY_M5"],
+        brokerRequests=0,economicEvaluations=0,orders=0,cloudActivated=False)))
     print("CONDITIONAL_SOURCE_READBACK",len(windows),len(by_open),matrix["USDJPY_M5"],flush=True)
 
 

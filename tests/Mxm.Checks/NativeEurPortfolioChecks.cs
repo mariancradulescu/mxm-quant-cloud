@@ -56,6 +56,7 @@ internal static class NativeEurPortfolioChecks
                   later.ModelBook with {LiquidationEquityEur=null},known)=="WAIT_"+missingMark,
             "EUR distinguishes missing collateral marks from fully marked equity with unbounded carry");
         ExplicitScenarioContinuity(check);
+        ExplicitScenarioMultiDay(check);
         const long charge=1794002400000L;
         var bid=new NativeConditionalRolloverSide(charge-70_000,new long[]{100_000,100_001},true,charge+100_000);
         var ask=new NativeConditionalRolloverSide(charge-65_000,new long[]{100_010,100_012},true,charge+100_000);
@@ -123,6 +124,44 @@ internal static class NativeEurPortfolioChecks
             check(false,"Ordinary rank cannot load scenario calibration");}
         catch(ArgumentException){check(true,"Scenario calibration cannot cross into ordinary rank");}
         new NativeUnifiedPortfolioEngine(NativeUnifiedPortfolioEngine.EurRank,fundingScenarioId:scenario).LoadEurCalibration(calibration);
+    }
+
+    static void ExplicitScenarioMultiDay(Action<bool,string> check)
+    {
+        const long day=86_400_000L;
+        string scenario=new string('c',64);
+        var first=new NativeUnifiedPortfolioEngine(NativeUnifiedPortfolioEngine.EurFirst,fundingScenarioId:scenario);
+        Ucp1Frame FrameWithScenario(int slot,long at,decimal bid=100.95m,bool offer=true)
+        {
+            var frame=OfficialShape(slot,1,at,bid,offer);
+            return frame with {Markets=frame.Markets.Select(m=>m with
+                {FundingOffers=m.FundingOffers?.Select(o=>o with {ScenarioId=scenario}).ToArray()}).ToArray()};
+        }
+        for(int i=0;i<20;i++)
+        {
+            long start=Origin+i*day;
+            var admitted=first.Advance(FrameWithScenario(1,start));
+            if(admitted.Pending!=1)throw new InvalidOperationException("Scenario did not resume on next day");
+            first.Advance(FrameWithScenario(2,start));
+            var fill=first.OriginalModelEvents.Last(e=>e.Kind=="OPEN_FILL");
+            first.Advance(FrameWithScenario(3,start,102.20m,false));
+            first.Advance(FrameWithScenario(4,start,102.20m,false));
+            first.Advance(FrameWithScenario(5,start,102.20m,false));
+            var frame=FrameWithScenario(6,start,102.20m,false);
+            var proof=new NativeAccruedFundingEvidence(fill.PositionId,fill.Symbol,fill.Side,fill.Units,
+                fill.At,start+5*Step,frame.At,null,null,Proof)
+                {ScenarioId=scenario,ConditionalSignedEur=-.01m,SourceAcquiredAt=frame.At+day};
+            var result=first.Advance(frame with {FundingEvidence=new[]{proof}});
+            if(result.FundingCapital is not {ConditionalEquityEur:>0m,DemonstrableEquityEur:null,OutstandingClosedWindows:0})
+                throw new InvalidOperationException("Scenario cash continuity failed");
+        }
+        var calibration=first.ExportEurCalibration();
+        var rank=new NativeUnifiedPortfolioEngine(NativeUnifiedPortfolioEngine.EurRank,fundingScenarioId:scenario);
+        rank.LoadEurCalibration(calibration);
+        var comparison=rank.Advance(FrameWithScenario(1,Origin+20*day));
+        check(calibration.Outcomes.Length==20&&calibration.Outcomes.Select(x=>x.ClosedAt/day).Distinct().Count()==20&&
+            comparison.Pending==1&&comparison.FundingCapital is {DemonstrableEquityEur:null,ConditionalEquityEur:300m},
+            "Conditional financing restores multi-day capital and causally transfers sufficient EUR outcomes into RANK");
     }
 
     static void ContractClocksAndDirectionalCosts(Action<bool,string> check)
