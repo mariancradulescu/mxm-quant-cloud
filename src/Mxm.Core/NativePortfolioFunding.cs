@@ -80,7 +80,16 @@ internal sealed record NativeObservedFundingRate(string Unit,decimal Long,decima
 // an ended exposure, in the portfolio's one funded ledger.
 internal sealed class NativePortfolioFunding
 {
+    static readonly IComparer<(string PositionId,long From)> ExposureOrder=
+        Comparer<(string PositionId,long From)>.Create((a,b)=>
+        {
+            int c=StringComparer.Ordinal.Compare(a.PositionId,b.PositionId);
+            return c==0?a.From.CompareTo(b.From):c;
+        });
     readonly Dictionary<(string PositionId,long From),NativeFundingExposure> windows=new();
+    readonly Dictionary<string,List<long>> positionWindows=new(StringComparer.Ordinal);
+    readonly SortedSet<(string PositionId,long From)> needingEvidence=new(ExposureOrder);
+    int exactWindows;
     decimal postedFinancingEur;
     decimal maximumSampledFundingAdjustedDrawdown;
 
@@ -94,7 +103,7 @@ internal sealed class NativePortfolioFunding
         if(saved.Exposures.Any(w=>w.ScenarioId!=ScenarioId))
             throw new ArgumentException("FUNDING_SCENARIO_CHECKPOINT_MISMATCH");
         foreach(var window in saved.Exposures)
-            windows.Add((window.PositionId,window.FromExclusive),window);
+            AddWindow(window);
         postedFinancingEur=saved.PostedFinancingEur;
         maximumSampledFundingAdjustedDrawdown=saved.MaximumSampledFundingAdjustedDrawdown;
     }
@@ -104,6 +113,31 @@ internal sealed class NativePortfolioFunding
 
     IEnumerable<NativeFundingExposure> InExposureOrder()=>windows.Values
         .OrderBy(w=>w.PositionId,StringComparer.Ordinal).ThenBy(w=>w.FromExclusive);
+
+    void AddWindow(NativeFundingExposure window)
+    {
+        var key=(window.PositionId,window.FromExclusive);
+        windows.Add(key,window);
+        if(!positionWindows.TryGetValue(window.PositionId,out var clocks))
+            positionWindows.Add(window.PositionId,clocks=new());
+        clocks.Add(window.FromExclusive);
+        if(window.ExactInLedger)exactWindows++;
+        if(window.ClosedAt is null||!window.ExactInLedger)needingEvidence.Add(key);
+    }
+
+    void UpdateWindow(NativeFundingExposure previous,NativeFundingExposure replacement)
+    {
+        var key=(previous.PositionId,previous.FromExclusive);
+        windows[key]=replacement;
+        if(previous.ExactInLedger!=replacement.ExactInLedger)exactWindows+=replacement.ExactInLedger?1:-1;
+        if(replacement.ClosedAt is not null && replacement.ExactInLedger)needingEvidence.Remove(key);
+    }
+
+    IEnumerable<NativeFundingExposure> PositionWindows(string id)
+        =>positionWindows.TryGetValue(id,out var clocks)?clocks.Select(at=>windows[(id,at)]):
+            Array.Empty<NativeFundingExposure>();
+
+    public NativeFundingExposure[] EvidenceWindows()=>needingEvidence.Select(key=>windows[key]).ToArray();
 
     public void ValidateHeldBinding(LedgerPosition[] held)
     {
@@ -142,18 +176,15 @@ internal sealed class NativePortfolioFunding
         Action<NativeFundingExposure,decimal,NativeAccruedFundingEvidence> post)
     {
         var byWindow=evidence.ToDictionary(p=>(p.PositionId,p.FromExclusive));
-        foreach(var window in InExposureOrder().ToArray())
+        foreach(var window in EvidenceWindows())
         {
             var key=(window.PositionId,window.FromExclusive);
             if(!byWindow.TryGetValue(key,out var proof))
             {
                 if(window.ClosedAt is null)
-                    windows[key]=window with {ExactInLedger=false,AdditionalDebitCeilingEur=null,EvidenceSha256=null};
+                    UpdateWindow(window,window with {ExactInLedger=false,AdditionalDebitCeilingEur=null,EvidenceSha256=null});
                 continue;
             }
-            // A settled closed exposure is a durable idempotence tombstone.
-            // Validate has already rejected contradictory replacement evidence.
-            if(window.ClosedAt is not null && window.ExactInLedger)continue;
             if(proof.LedgerAmount is decimal exact)
             {
                 var delta=exact-window.BookedSignedEur;
@@ -163,27 +194,27 @@ internal sealed class NativePortfolioFunding
                     post(window,delta,proof);
                     postedFinancingEur=postedTotal;
                 }
-                windows[key]=window with {BookedSignedEur=exact,ExactInLedger=true,
+                UpdateWindow(window,window with {BookedSignedEur=exact,ExactInLedger=true,
                     AdditionalDebitCeilingEur=0m,EvidenceSha256=proof.SourceSha256,ExactObservedAt=at,
-                    SourceAcquiredAt=proof.SourceAcquiredAt};
+                    SourceAcquiredAt=proof.SourceAcquiredAt});
                 continue;
             }
             // The cap refers to total signed financing for this window. Any
             // amount already booked belongs to the same window and stays cash.
             decimal unused=Math.Max(0m,proof.MaximumTotalDebitEur!.Value+window.BookedSignedEur);
-            windows[key]=window with {ExactInLedger=false,AdditionalDebitCeilingEur=unused,
-                EvidenceSha256=proof.SourceSha256,SourceAcquiredAt=proof.SourceAcquiredAt};
+            UpdateWindow(window,window with {ExactInLedger=false,AdditionalDebitCeilingEur=unused,
+                EvidenceSha256=proof.SourceSha256,SourceAcquiredAt=proof.SourceAcquiredAt});
         }
     }
 
     public void Open(string id,string symbol,int side,decimal units,long at)
-        =>windows.Add((id,at),new(id,symbol,side,units,at,0m,true,0m,null,null) {ScenarioId=ScenarioId});
+        =>AddWindow(new(id,symbol,side,units,at,0m,true,0m,null,null) {ScenarioId=ScenarioId});
 
-    public bool IsOutstanding(string id)=>windows.Values.Any(x=>x.PositionId==id&&!x.ExactInLedger);
+    public bool IsOutstanding(string id)=>PositionWindows(id).Any(x=>!x.ExactInLedger);
 
     public long? ClosedReconciliationAt(string id,long closedAt,long legacyKnowledgeAt)
     {
-        var exposures=windows.Values.Where(w=>w.PositionId==id).ToArray();
+        var exposures=PositionWindows(id).ToArray();
         if(exposures.Any(w=>w.ClosedAt is null || !w.ExactInLedger))return null;
         long lastEvidence=exposures.Select(w=>w.ExactObservedAt??legacyKnowledgeAt).DefaultIfEmpty(closedAt).Max();
         return Math.Max(closedAt,lastEvidence);
@@ -191,10 +222,16 @@ internal sealed class NativePortfolioFunding
 
     public void Close(string id,decimal closedUnits,long at)
     {
-        var active=windows.Single(x=>x.Key.PositionId==id&&x.Value.ClosedAt is null);
-        var w=active.Value;
-        if(at<=w.FromExclusive && w.ExactInLedger)windows.Remove(active.Key);
-        else windows[active.Key]=w with {ClosedAt=at};
+        var w=PositionWindows(id).Single(x=>x.ClosedAt is null);
+        if(at<=w.FromExclusive && w.ExactInLedger)
+        {
+            var key=(id,w.FromExclusive);
+            windows.Remove(key);
+            needingEvidence.Remove(key);
+            positionWindows[id].Remove(w.FromExclusive);
+            exactWindows--;
+        }
+        else UpdateWindow(w,w with {ClosedAt=at});
         decimal remaining=w.Units-closedUnits;
         if(remaining>0m)Open(id,w.Symbol,w.Side,remaining,at);
     }
@@ -204,7 +241,7 @@ internal sealed class NativePortfolioFunding
 
     internal NativeFundingCapital Capital(LedgerSummary book,decimal pendingOpenMarginEur,bool updateObservedDrawdown)
     {
-        var unresolved=InExposureOrder().Where(x=>!x.ExactInLedger).ToArray();
+        var unresolved=needingEvidence.Select(key=>windows[key]).Where(x=>!x.ExactInLedger).ToArray();
         int settledExposure=unresolved.Count(x=>x.ClosedAt.HasValue);
         decimal? debitCeiling=unresolved.Any(x=>x.AdditionalDebitCeilingEur is null)?
             null:unresolved.Sum(x=>x.AdditionalDebitCeilingEur!.Value);
@@ -223,7 +260,7 @@ internal sealed class NativePortfolioFunding
                 ConditionalFreeMarginEur=ScenarioId is null?null:equity-book.UsedMarginEur-pendingOpenMarginEur,
                 ConditionalClosedModelNetEur=ScenarioId is not null&&settledExposure==0?book.ClosedNetEur:null,
                 ConditionalUnmodeledDebitCeilingEur=ScenarioId is null?null:debitCeiling,
-                ScenarioSettledWindows=ScenarioId is null?null:windows.Values.Count(w=>w.ExactInLedger)
+                ScenarioSettledWindows=ScenarioId is null?null:exactWindows
             };
     }
 

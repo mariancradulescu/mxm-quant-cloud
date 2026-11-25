@@ -225,6 +225,20 @@ public sealed partial class NativeUnifiedPortfolioEngine
     readonly NativeFundedSession model;
     readonly NativeFundedSession broker;
     readonly Dictionary<string,Ucp1Plan> plans=new(StringComparer.Ordinal);
+    readonly ResearchPlanOrder? researchPlanOrder;
+
+    IEnumerable<Ucp1Plan> PlanValues=>researchPlanOrder?.Values(plans)??plans.Values;
+
+    void AddPlan(string id,Ucp1Plan plan)
+    {
+        plans.Add(id,plan);
+        researchPlanOrder?.Add(id);
+    }
+
+    void RemovePlan(string id)
+    {
+        if(plans.Remove(id))researchPlanOrder?.Remove(id);
+    }
     readonly Dictionary<string,long> lastSignalBar=new(StringComparer.Ordinal);
     readonly Dictionary<string,int> reasons=new(StringComparer.Ordinal);
     readonly List<LedgerEvent> facts=new();
@@ -263,6 +277,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
         if(fundingScenarioId is not null && (!OwnerEur||!string.IsNullOrWhiteSpace(brokerBinding)))
             throw new ArgumentException("FUNDING_SCENARIO_REPLAY_ONLY");
         if(reserveAccruedFunding||OwnerEur)fundingReserves=new(scenarioId:fundingScenarioId);
+        if(fundingScenarioId is not null)researchPlanOrder=new(plans.Keys);
         completeModels=models;
         completeProbe=probe;
         structuralModels=closedContextModels;
@@ -280,7 +295,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
         broker=new NativeFundedSession(string.IsNullOrWhiteSpace(brokerBinding)?
             "UCP1_BROKER_READ_ONLY_"+policy:brokerBinding);
     }
-    private NativeUnifiedPortfolioEngine(Ucp1Checkpoint s)
+    private NativeUnifiedPortfolioEngine(Ucp1Checkpoint s,EurPairedCalibrationState[]? pairedCalibration=null,
+        ResearchPlanSlots? planSlots=null)
     {
         researchFork=s.ResearchFork;
         if(s.Version!=Version)throw new ArgumentException("UCP1_CHECKPOINT_VERSION");
@@ -312,11 +328,12 @@ public sealed partial class NativeUnifiedPortfolioEngine
         if(fundingReserves is not null)model.Ledger.RecoverFundingDirections(s.Events);
         broker=NativeFundedSession.Restore(s.BrokerSession,s.BrokerBinding);
         foreach(var p in s.Plans)plans.Add(p.Key,p.Value);
+        if(FundingScenarioId is not null)researchPlanOrder=new(plans.Keys,planSlots);
         foreach(var p in s.LastSignalBar)lastSignalBar.Add(p.Key,p.Value);
         foreach(var p in s.Reasons)reasons.Add(p.Key,p.Value);
         facts.AddRange(s.Events);trips.AddRange(s.Trips);curve.AddRange(s.Curve);
         cpe1UnreconciledFunding=s.Cpe1UnreconciledFunding;
-        if(s.EurCalibration is { } calibration)RestoreEurCalibration(calibration);
+        if(s.EurCalibration is { } calibration)RestoreEurCalibration(calibration,pairedCalibration);
         previousClock=s.LastAt;seq=s.Sequence;
         if(Cpe1)
             foreach(var trip in trips)RememberCpe1Episode(trip,previousClock);
@@ -338,6 +355,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
     public NativeEurOpportunity[] EurOpportunityReceipts=>eurOpportunities.ToArray();
     public NativeFundingExposure[] FundingExposureSnapshot()=>
         fundingReserves?.Checkpoint().Exposures??Array.Empty<NativeFundingExposure>();
+    internal NativeFundingExposure[] FundingEvidenceWindows()=>
+        fundingReserves?.EvidenceWindows()??Array.Empty<NativeFundingExposure>();
     public Ucp1ReconciledEpisode[] ReconciledModelEpisodes=>trips
         .Select(trip=>ReconcileCpe1Episode(trip,previousClock)).OfType<Ucp1ReconciledEpisode>()
         .OrderBy(trip=>trip.AvailableAt).ThenBy(trip=>trip.PositionId,StringComparer.Ordinal).ToArray();
@@ -345,7 +364,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
     public NativeFundedActionReceipt[] FundedActionReceipts=>fundedActions.ToArray();
     public Ucp1CurvePoint[] CommonBookEquityPath=>curve.ToArray();
     public IReadOnlyDictionary<string,int> ResearchDecisionCounts=>new Dictionary<string,int>(reasons,StringComparer.Ordinal);
-    public string[] ActiveSymbols=>plans.Values.Where(p=>p.OpenAt>0 || p.Integrated is not null)
+    public string[] ActiveSymbols=>PlanValues.Where(p=>p.OpenAt>0 || p.Integrated is not null)
         .Select(p=>p.Symbol).Distinct(StringComparer.Ordinal).ToArray();
     public void UseFundedActionModel(NativeFundedActionModel snapshot, long nextClock)
     {
@@ -364,7 +383,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
         =>Checkpoint(includeTrace: false, asResearchFork: suppressResearchTrace);
     string Checkpoint(bool includeTrace, bool asResearchFork=false)=>JsonSerializer.Serialize(new Ucp1Checkpoint(
         Version,policy,model.Checkpoint(),broker.Checkpoint(),broker.AccountBinding,
-        new(plans,StringComparer.Ordinal),new(lastSignalBar,StringComparer.Ordinal),
+        PlanValues.ToDictionary(p=>p.Id,StringComparer.Ordinal),new(lastSignalBar,StringComparer.Ordinal),
         previousClock,seq,proposed,admitted,openFills,expiredOpens,
         expiredCloses,closeRequests,rejections,sourceUnknownClocks,
         gapExposures,new(reasons,StringComparer.Ordinal),
@@ -584,7 +603,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 Apply(Event("MODEL_OPEN_INTENT_EXPIRED",t,request.PositionId,
                     request.Symbol,request.Side,request.Units,
                     reason:"MODEL_UNTRANSMITTED_OPEN_RESPONSE_WINDOW_EXPIRED"));
-                plans.Remove(request.PositionId);
+                RemovePlan(request.PositionId);
                 expiredOpens++;
                 continue;
             }
@@ -603,7 +622,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 Apply(Event("MODEL_OPEN_INTENT_EXPIRED",t,request.PositionId,
                     request.Symbol,request.Side,request.Units,
                     reason:"MODEL_UNTRANSMITTED_OPEN_FUNDED_FILL_REJECTED"));
-                plans.Remove(request.PositionId);
+                RemovePlan(request.PositionId);
                 expiredOpens++;
                 Count("INTEGRATED_PLAN_INVALIDATED_BEFORE_FILL");
                 continue;
@@ -642,7 +661,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 Apply(Event("MODEL_OPEN_INTENT_EXPIRED",t,request.PositionId,
                     request.Symbol,request.Side,request.Units,
                     reason:"MODEL_UNTRANSMITTED_OPEN_FUNDED_FILL_REJECTED"));
-                plans.Remove(request.PositionId);expiredOpens++;
+                RemovePlan(request.PositionId);expiredOpens++;
                 Count("MODEL_UNFINANCED_ENTRY_AT_LATER_OBSERVED_QUOTE");
             }
         }

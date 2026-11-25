@@ -3,12 +3,22 @@ using Mxm.Core;
 
 internal static partial class IntegratedEconomicReplay
 {
+    sealed record ObserverEpisodeKey(string Symbol,string Family,int Side);
+    sealed record ObserverEpisode(ObserverEpisodeKey Key,NativeUnifiedPortfolioEngine Book);
+    sealed record ObserverEpisodeCheckpoint(ObserverEpisodeKey Key,string Book);
+    sealed record ObserverCheckpoint(long ObservedThrough,int MaxConcurrent,int MaxConcurrentEpisodes,
+        Dictionary<string,int> Counts,NativeEurCalibrationOutcome[] Labels,
+        ObserverEpisodeCheckpoint?[] Episodes,int[] FreeSlots);
+
     sealed class EurOpportunityObserver(NativeEurDevelopmentProfile profile,string scenario,decimal stress,
         EerEvidence source,EerProtectionTape protection,Dictionary<string,EerStream> markets)
     {
         readonly NativeEurDevelopmentProfile episodeProfile=profile with
             {CaptureStudyDiagnostics=false,LearnFromOpportunityEpisodes=false,ObserveFamilyDirectionsOnClosedBars=false};
-        readonly Dictionary<(string Symbol,string Family,int Side),NativeUnifiedPortfolioEngine> active=new();
+        readonly Dictionary<ObserverEpisodeKey,int> active=new();
+        readonly List<ObserverEpisode?> episodes=new();
+        readonly Stack<int> freeSlots=new();
+        NativeUnifiedPortfolioEngine? descriptor;
         readonly List<NativeEurCalibrationOutcome> labels=new();
         readonly Dictionary<string,int> results=new(StringComparer.Ordinal);
         long observedThrough;
@@ -20,12 +30,52 @@ internal static partial class IntegratedEconomicReplay
 
         void Count(string reason,int amount=1) => results[reason]=results.GetValueOrDefault(reason)+amount;
 
+        public ObserverCheckpoint Checkpoint()=>new(observedThrough,maxConcurrent,maxConcurrentEpisodes,
+            results,labels.ToArray(),episodes.Select(episode=>episode is null?null:
+                new ObserverEpisodeCheckpoint(episode.Key,episode.Book.HistoricalEurCheckpoint())).ToArray(),
+            freeSlots.ToArray());
+
+        public void Restore(ObserverCheckpoint state,long expectedClock)
+        {
+            if(state.ObservedThrough!=expectedClock||state.Labels.Any(x=>x.AvailableAt>expectedClock)||
+                !state.FreeSlots.OrderBy(i=>i).SequenceEqual(Enumerable.Range(0,state.Episodes.Length)
+                    .Where(i=>state.Episodes[i] is null)))
+                throw new ArgumentException("EUR_OBSERVER_CHECKPOINT_CLOCK_OR_SLOTS");
+            observedThrough=state.ObservedThrough;
+            maxConcurrent=state.MaxConcurrent;
+            maxConcurrentEpisodes=state.MaxConcurrentEpisodes;
+            foreach(var (reason,count) in state.Counts)results.Add(reason,count);
+            labels.AddRange(state.Labels);
+            for(int i=0;i<state.Episodes.Length;i++)
+            {
+                var saved=state.Episodes[i];
+                if(saved is null){episodes.Add(null);continue;}
+                var episode=NativeUnifiedPortfolioEngine.RestoreHistoricalEurCheckpoint(saved.Book);
+                if(episode.FundingScenarioId!=scenario||episode.PolicyName!=NativeUnifiedPortfolioEngine.EurGeneralProbe||
+                    episode.LastObservationAt!=expectedClock||!markets.ContainsKey(saved.Key.Symbol))
+                    throw new ArgumentException("EUR_OBSERVER_CHECKPOINT_EPISODE");
+                active.Add(saved.Key,i);
+                episodes.Add(new(saved.Key,episode));
+            }
+            foreach(int slot in state.FreeSlots.Reverse())freeSlots.Push(slot);
+        }
+
+        void Admit(ObserverEpisodeKey key,NativeUnifiedPortfolioEngine book)
+        {
+            var episode=new ObserverEpisode(key,book);
+            if(freeSlots.TryPop(out int slot))episodes[slot]=episode;
+            else {slot=episodes.Count;episodes.Add(episode);}
+            active.Add(key,slot);
+        }
+
         public void Advance(Ucp1Frame frame)
         {
             observedThrough=frame.At;
             using (NativeEconomicProfiler.Measure("observer.active_episodes"))
-            foreach(var (key,episode) in active.ToArray())
+            for(int slot=0;slot<episodes.Count;slot++)
             {
+                if(episodes[slot] is not { } current)continue;
+                var episode=current.Book;
                 using (NativeEconomicProfiler.Measure("observer.tick_protection"))
                     protection.Between(episode,frame.At-1,source,markets,scenario,stress);
                 using (NativeEconomicProfiler.Measure("observer.episode_advance"))
@@ -33,7 +83,9 @@ internal static partial class IntegratedEconomicReplay
                         Protection=protection.GridCoverage(episode,frame.At)},markets,scenario,stress);
                 var book=episode.ModelSummary;
                 if(book.OpenPositions+book.PendingIntents>0)continue;
-                active.Remove(key);
+                active.Remove(current.Key);
+                episodes[slot]=null;
+                freeSlots.Push(slot);
                 if(episode.CompleteModelTrips.SingleOrDefault() is not { } trip)
                 {Count("ENTRY_EXPIRED_OR_FAILED_REVALIDATION");continue;}
                 Count("CLOSED");
@@ -58,19 +110,19 @@ internal static partial class IntegratedEconomicReplay
             bool broad=profile.ObserveFamilyDirectionsOnClosedBars;
             if(!broad&&frame.At%3_600_000L!=EurOffset)return;
             using var signalProfile=NativeEconomicProfiler.Measure("observer.discover_and_admit");
-            var describe=ResearchEpisode();
+            var describe=descriptor??=ResearchEpisode();
             foreach(var market in frame.Markets)
             {
                 var offers=describe.DescribeEurGeneral(market,frame.At);
                 Count("SIGNALS",offers.Length);
                 if(offers.Length==0)continue;
-                if(!broad&&active.ContainsKey((market.Symbol,"",0)))
+                if(!broad&&active.ContainsKey(new(market.Symbol,"",0)))
                 {Count("SAME_SYMBOL_OVERLAP_EXCLUDED",offers.Length);continue;}
                 var candidates=broad?offers:offers.OrderBy(o=>EerHash(FormattableString.Invariant($"{frame.At}/{o.Symbol}/{o.Family}/{o.Side}")),
                     StringComparer.Ordinal).Take(1).ToArray();
                 foreach(var chosen in candidates)
                 {
-                    var key=broad?(market.Symbol,chosen.Family,chosen.Side):(market.Symbol,"",0);
+                    var key=broad?new ObserverEpisodeKey(market.Symbol,chosen.Family,chosen.Side):new(market.Symbol,"",0);
                     if(active.ContainsKey(key))
                     {Count("SAME_FAMILY_DIRECTION_OVERLAP_EXCLUDED");continue;}
                     var episode=ResearchEpisode();
@@ -78,7 +130,7 @@ internal static partial class IntegratedEconomicReplay
                         source.Advance(episode,frame with {ObservationEpisodeOnly=true,OpportunityToObserve=chosen},markets,scenario,stress);
                     if(episode.ModelSummary.PendingIntents>0)
                     {
-                        active.Add(key,episode);
+                        Admit(key,episode);
                         Count("ISOLATED_MINIMUM_VOLUME_ADMISSION");
                     }
                     else

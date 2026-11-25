@@ -257,7 +257,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
             reason:"NATIVE_CONDITIONAL_SELECTION");
         Apply(fundingReserves is null?request:
             request with {AvailableAt=at,CalibratedThrough=s.LastCompletedM5At,TracksLateFunding=true});
-        plans.Add(id,new Ucp1Plan(id,m.Symbol,s.Family,s.Side,s.Atr,s.Equilibrium,
+        AddPlan(id,new Ucp1Plan(id,m.Symbol,s.Family,s.Side,s.Atr,s.Equilibrium,
             chosen.Geometry.InitialRiskEur,chosen.Geometry.Stop,0m,0L,0m,
             chosen.Units,0m,0m,0L,false,chosen.Geometry));
         admitted++;Count("CPE1_EUR_REWARD_RISK_FUNDED_PENDING");

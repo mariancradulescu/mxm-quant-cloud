@@ -63,6 +63,19 @@ internal static partial class IntegratedEconomicReplay
         readonly Dictionary<string,Dictionary<long,SourceQuote>> tape;
         readonly Dictionary<string,Dictionary<long,DatedRolloverQuote>> funding;
         readonly Dictionary<string,EerMarket> marketCalendars;
+        bool reuseCurrentFrames;
+        readonly Dictionary<(string Asset,long At,bool Tick),NativeOriginalFxRate?> clockConversions=new();
+        readonly Dictionary<(string Symbol,long At,decimal Stress),Ucp1MarketFrame?> protectionMarks=new();
+        readonly Dictionary<(string Symbol,long At,string Scenario,decimal Stress),Ucp1MarketFrame?> intentMarks=new();
+
+        public void BeginHistoricalClock()
+        {
+            reuseCurrentFrames=true;
+            clockConversions.Clear();
+            protectionMarks.Clear();
+            intentMarks.Clear();
+        }
+
         public EerEvidence(EerInput input)
         {
             Input=input;
@@ -91,6 +104,17 @@ internal static partial class IntegratedEconomicReplay
 
         public NativeOriginalFxRate? ConversionAt(string asset,long at,bool charge,EerProtectionTape? protection=null,
             Dictionary<(string Symbol,long ChargeAt),long>? priorClocks=null)
+        {
+            if(!reuseCurrentFrames||charge)
+                return SourceConversionAt(asset,at,charge,protection,priorClocks);
+            var key=(asset,at,protection is not null);
+            if(!clockConversions.TryGetValue(key,out var rate))
+                clockConversions.Add(key,rate=SourceConversionAt(asset,at,false,protection,null));
+            return rate;
+        }
+
+        NativeOriginalFxRate? SourceConversionAt(string asset,long at,bool charge,EerProtectionTape? protection,
+            Dictionary<(string Symbol,long ChargeAt),long>? priorClocks)
         {
             if(asset=="EUR")return new(1m,1m,Array.Empty<string>());
             if(!Input.Routes.TryGetValue(asset,out var route)||route.Length is <1 or >4)return null;
@@ -195,7 +219,7 @@ internal static partial class IntegratedEconomicReplay
             Dictionary<string,EerStream> markets,string scenario,decimal stress)
         {
             var evidence=new List<NativeAccruedFundingEvidence>();
-            foreach(var x in book.FundingExposureSnapshot().Where(x=>x.ClosedAt is null||!x.ExactInLedger))
+            foreach(var x in book.FundingEvidenceWindows())
             {
                 long through=x.ClosedAt??frame.At;
                 if(through<=x.FromExclusive||markets[x.Symbol].Source.Market.DatedDevelopment is not { } terms)continue;
@@ -216,6 +240,15 @@ internal static partial class IntegratedEconomicReplay
         }
 
         public Ucp1MarketFrame? ProtectionMark(EerProtectionTape tape,EerMarket market,long at,decimal stress)
+        {
+            if(!reuseCurrentFrames)return BuildProtectionMark(tape,market,at,stress);
+            var key=(market.Market.Name,at,stress);
+            if(!protectionMarks.TryGetValue(key,out var mark))
+                protectionMarks.Add(key,mark=BuildProtectionMark(tape,market,at,stress));
+            return mark;
+        }
+
+        Ucp1MarketFrame? BuildProtectionMark(EerProtectionTape tape,EerMarket market,long at,decimal stress)
         {
             if(market.Market.DatedDevelopment is not { } terms || tape.QuoteAt(market.Market.Name,at) is not { } q)
                 return null;
@@ -244,6 +277,16 @@ internal static partial class IntegratedEconomicReplay
         }
 
         public Ucp1MarketFrame? IntentEntryMark(EerProtectionTape tape,EerStream stream,long at,
+            string scenario,decimal stress)
+        {
+            if(!reuseCurrentFrames)return BuildIntentEntryMark(tape,stream,at,scenario,stress);
+            var key=(stream.Source.Market.Name,at,scenario,stress);
+            if(!intentMarks.TryGetValue(key,out var mark))
+                intentMarks.Add(key,mark=BuildIntentEntryMark(tape,stream,at,scenario,stress));
+            return mark;
+        }
+
+        Ucp1MarketFrame? BuildIntentEntryMark(EerProtectionTape tape,EerStream stream,long at,
             string scenario,decimal stress)
         {
             var market=stream.Source.Market;
