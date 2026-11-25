@@ -34,6 +34,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
     internal const string NativeStopModelReason = "MODEL_UNTRANSMITTED_INTEGRATED_NATIVE_TRADE_STOP";
     bool ModelsNativeStops => eurDevelopmentProfile?.ModeledStopLatencyMs is not null;
     internal bool ModelsEurStopOnTicks => ModelsNativeStops;
+    internal bool UsesClosedSessionFundingQuotes => eurDevelopmentProfile?.ModelFundingAtPriorClosedSessionQuote==true;
     bool CaptureEurDiagnostics => eurDevelopmentProfile is { CaptureStudyDiagnostics:true } && !researchFork;
     readonly List<Ucp1MarginObservation> eurMarginExceedances = new();
     readonly Dictionary<string,Ucp1MarginObservation> eurMarginMaxima = new(StringComparer.Ordinal);

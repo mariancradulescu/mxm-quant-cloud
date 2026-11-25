@@ -21,3 +21,11 @@ The result includes dated funding gaps, a trace of admission and margin observat
 The follow-up starts comparison on 2 November and uses three chronological test weeks inside the same authenticated window. Closed-bar requests can fill at later tick observations when the contract, quote, conversion, costs and funded admission can be verified. An outstanding native stop takes priority over a discretionary exit. The 100 ms and source availability rules represent conditional execution. Missing millisecond fills remain explicitly modeled from the available later quote evidence.
 
 The recovered complete-position estimator compares local M5/M15 profiles using matured gross and net outcomes in EUR per reserved risk unit. It reuses the existing neighbor and day-support rules, calibrates errors only from earlier settled episodes, and reprices the current candidate's cost floor. The matching selector uses the same labels with its ordinary day aggregation. The structural comparison adds the two archived signals with the same capital and protection rules.
+
+## Conditional rollover follow-up
+
+[Registered catalogue](eur_closed_session_rollover_1.json) · [Position and financing evidence](https://github.com/mariancradulescu/mxm-quant-cloud/actions/runs/45594293265/artifacts/15013692341)
+
+The comparison keeps the same tick execution and capital gates and changes the input to the conditional funding calculation. For a market that the broker's dated calendar marks as closed at rollover, the second scenario may use its last scheduled quote if the quote is authentically observed and the intervening calendar is unambiguous. The witness records the quote clock for every such substitution. It preserves an unavailable amount when the calendar or quote is unsupported.
+
+AAXJ.US and AMD.US supply the missing percentage-swap price examples. LTCUSD supplies the missing USD-to-EUR weekend conversion example. Each original position interval also receives an isolated funding calculation. Amounts in this receipt are conditional historical model values. Actual broker settlement and an unconditional debit bound still require their own evidence.
