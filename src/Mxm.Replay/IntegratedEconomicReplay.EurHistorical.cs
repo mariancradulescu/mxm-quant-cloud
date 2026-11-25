@@ -161,7 +161,11 @@ internal static partial class IntegratedEconomicReplay
                 var state=JsonSerializer.Deserialize<HistoricalReplayState>(file)
                     ??throw new InvalidDataException("EUR_HISTORICAL_CHECKPOINT_REQUIRED");
                 completed=state.CompletedPhases;
-                if(state.Version!=HistoricalStateVersion||state.Binding!=binding||completed<1||
+                string? originalRevision=Environment.GetEnvironmentVariable("MXM_ECONOMIC_PORTFOLIO_FIT_ORIGINAL_REVISION");
+                bool verifiedInitialState=originalRevision is {Length:40}&&originalRevision.All(Uri.IsHexDigit)&&
+                    protocol.Study=="EUR_ADAPTIVE_CALIBRATION_1"&&trialGroup=="PORTFOLIO"&&completed==1&&
+                    stopAfter==2&&state.Binding==(binding with {Revision=originalRevision});
+                if(state.Version!=HistoricalStateVersion||state.Binding!=binding&&!verifiedInitialState||completed<1||
                     completed>=boundaries.Length||state.LastClock!=boundaries[completed-1]-EurStep+EurOffset||
                     state.Fits.Length!=completed-1||state.Streams.Count!=streams.Count||
                     state.Observers.Count!=observers.Count||state.Probes.Count!=probes.Count||

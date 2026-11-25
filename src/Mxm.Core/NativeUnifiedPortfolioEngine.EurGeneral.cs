@@ -252,8 +252,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 decimal lot=market.Contract.MinimumUnits,volumeStep=market.Contract.VolumeStepUnits;
                 decimal rest=position.Units-lot;
                 bool canReduce=!geometry.Reduced&&upside>0m&&lot>0m&&volumeStep>0m&&rest>=lot&&(rest-lot)%volumeStep==0m;
-                return new(canReduce?"EUR_ADVERSE_CONTINUATION_REDUCE":"EUR_ADVERSE_CONTINUATION_CLOSE",
-                    canReduce?lot:position.Units);
+                return new(canReduce?NativeSimulatedCloseLifecycle.AdaptiveContinuationReduction:
+                    NativeSimulatedCloseLifecycle.AdaptiveContinuationClose,canReduce?lot:position.Units);
             }
         }
         if (displacement < 0m && (remaining is <= 0m || side * (market.M15[^1].Close - plan.Equilibrium) <= 0m))
