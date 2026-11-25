@@ -66,11 +66,14 @@ def read_archives(key,work):
             add(ids[q.symbolId],tf,rows)
     return bars,add,conflicts,proof
 
-def main():
-    run=os.environ["GITHUB_RUN_ID"]
+def main(recovery=False):
+    if recovery:
+        from . import owner_eer1_recovery as recover
+    run=recover.ORIGINAL_RUN if recovery else os.environ["GITHUB_RUN_ID"]
     key=os.environ["R3_CUSTODY_PRIVATE_KEY_PEM"].encode()
     receipt=json.loads((eer.OUT/"receipt.json").read_bytes())
     need(receipt["runId"]==run and receipt["protocolSha256"]==src.digest(eer.PROTOCOL.read_bytes()) and receipt["matrixSha256"]==eer.MATRIX_SHA,"EER1_READBACK_SCOPE")
+    if recovery:recover.verify_original(receipt)
     mat=eer.matrix();chosen,pending=eer.selection(mat,wire.public_original())
     need(receipt["selected"]==chosen and receipt["pending"]==pending,"EER1_SELECTION_BINDING")
     original=eer.unpack(eer.OUT,receipt["metadata"],key,run)
@@ -80,6 +83,8 @@ def main():
     source_acquired=max(p["at"] for p in original["packets"])
     rows={x["symbol"]:x for x in mat["matrix"]}
     OUT.mkdir(exist_ok=False)
+    if recovery:recover.prove_shadow(receipt,key,account,rows,chosen,eer.charge_clocks(meta["terms"]),OUT)
+    verified_shards=[]
     with tempfile.TemporaryDirectory(prefix="eer1-custody-") as temp:
         work=Path(temp);bars,add,conflicts,proof=read_archives(key,work)
         # Recover the already observed 21-day full-session quote tape,
@@ -125,7 +130,12 @@ def main():
                 FundingQuotes=sorted(fmap.values(),key=lambda q:q["At"])))
             source_notes[name]=dict(requests=len(j.packets),newMarks=len(quotes),reusedMarks=len(original_quotes),marks=len(qmap),fundingMarks=len(fmap),
                 completeRoots=sum(w[2]["complete"] for w in summary["tickWindows"]),barCells=summary["bars"])
-            print("EER1_SHARD_VERIFIED",name,len(quotes),flush=True)
+            verified_shards.append(dict(symbol=name,requests=j.index,summaryIdentical=True))
+            (OUT/"readback-progress.json").write_bytes(src.canonical(dict(originalRun=run,verified=verified_shards,
+                verifiedRequests=sum(x["requests"] for x in verified_shards),expectedShards=len(receipt["sources"]),
+                brokerRequests=0,orders=0,cloudActivated=False)))
+            print("EER1_SHARD_VERIFIED",name,len(quotes),len(verified_shards),"/",len(receipt["sources"]),flush=True)
+        need(len(verified_shards)==len(receipt["sources"]) and sum(x["requests"] for x in verified_shards)==sum(x["requests"] for x in receipt["sources"]),"EER1_RECOVERY_COMPLETE")
         # Archived observations remain available even if a new tranche shard
         # was not reached. They are not called newly collected.
         for name,quotes in old_quotes.items():
@@ -182,20 +192,28 @@ def main():
             orders=0,cloudActivated=False)
         (OUT/"source-census.json").write_bytes(src.canonical(census))
         if len([x for x in markets if x["Market"]["Name"] in tape_names])<2:
-            print("EER1_FEWER_THAN_TWO_CAPTURED_MARKETS",flush=True);return
+            need(False,"EER1_FEWER_THAN_TWO_CAPTURED_MARKETS")
         path=work/"native-input.json"
+        # Native economic sources and protocol must remain byte-identical to
+        # the original registered revision in the custody-only recovery.
+        engine_revision=recover.ORIGINAL_HEAD if recovery else os.environ["GITHUB_SHA"]
         payload=dict(Start=eer.START,FitEnd=eer.FIT_END,End=eer.END,ProtocolSha256=receipt["protocolSha256"],
-            EngineRevision=os.environ["GITHUB_SHA"],EvidenceManifestSha256=manifest_sha,SourceAcquiredAt=source_acquired,Markets=markets,Tapes=tapes,Routes=meta["routes"])
+            EngineRevision=engine_revision,EvidenceManifestSha256=manifest_sha,SourceAcquiredAt=source_acquired,Markets=markets,Tapes=tapes,Routes=meta["routes"])
         path.write_bytes(src.canonical(payload));path.chmod(0o600)
         env={k:v for k,v in os.environ.items() if k!="R3_CUSTODY_PRIVATE_KEY_PEM"}
         subprocess.run(["dotnet","src/Mxm.Replay/bin/Release/net8.0/Mxm.Replay.dll","--owner-eer1-extended",
             str(path),str(OUT/"economic.json"),str(OUT)],check=True,env=env)
         (OUT/"receipt.json").write_bytes(src.canonical(dict(inputSha256=src.digest(path.read_bytes()),
-            engineRevision=os.environ["GITHUB_SHA"],protocolSha256=receipt["protocolSha256"],evidenceManifestSha256=manifest_sha,
+            engineRevision=engine_revision,recoveryRevision=os.environ["GITHUB_SHA"] if recovery else None,
+            originalSourceRun=run,originalSourceArtifact=recover.ARTIFACT_ID if recovery else None,
+            originalSourceArchiveSha256=recover.ARTIFACT_SHA if recovery else None,brokerRequests=0,
+            protocolSha256=receipt["protocolSha256"],evidenceManifestSha256=manifest_sha,
             economicSha256=src.digest((OUT/"economic.json").read_bytes()),sourceAcquiredAt=source_acquired,
             calibrationHashes={p.name:src.digest(p.read_bytes()) for p in OUT.glob("*-calibration.json")},
             originalPilotRun="45552716026",originalPilotReplayed=False,orders=0,cloudActivated=False,
             independentConfirmation=False,brokerNetCertified=False)))
     print("EER1_NATIVE_EXTENDED_PUBLISHED",flush=True)
 
-if __name__=="__main__":main()
+if __name__=="__main__":
+    need(sys.argv[1:] in ([],["--recover-original"]),"EER1_READBACK_MODE")
+    main(sys.argv[1:]==["--recover-original"])

@@ -156,20 +156,20 @@ def covered(leaves,lo,hi):
         if cursor>hi:return True
     return cursor>hi
 
-def collect_market(j,account,sid,row,target,charges,keep,name):
+def collect_market(j,account,sid,row,target,charges,keep,symbol_name):
     bars,bar_report=bars_for(j,account,sid,row) if target else ({},{})
     budget=[PER_SYMBOL-len(j.packets)] if hasattr(j,"t") else [PER_SYMBOL-j.index]
     windows=[]; quote_marks=[]; funding=[]; tail={e.BID:[],e.ASK:[]}; tail_leaves={e.BID:[],e.ASK:[]}
     for day in range(START,END,DAY):
         if not keep and (day-START)%DAY==0:
-            print("EER1_SOURCE_PROGRESS",name,(day-START)//DAY+1,"/ 28",flush=True)
+            print("EER1_SOURCE_PROGRESS",symbol_name,(day-START)//DAY+1,"/ 28",flush=True)
         sides={e.BID:[],e.ASK:[]}; leaves={e.BID:[],e.ASK:[]}
         # Existing full-session custody already covers 26 Oct–16 Nov.
         # Only charge-time pages missing in that custody are requested here.
         roots=[(lo,lo+4*3600000-1) for lo in range(day,day+DAY,4*3600000)]
-        if name in PRIOR_FULL and day<integrated.END:
+        if symbol_name in PRIOR_FULL and day<integrated.END:
             roots=[]
-            if not (name in ("EURUSD","US500") and day>=PRIOR_ROLL_START):
+            if not (symbol_name in ("EURUSD","US500") and day>=PRIOR_ROLL_START):
                 spans=[]
                 for minute in charges:
                     at=day+minute*60000
@@ -187,7 +187,7 @@ def collect_market(j,account,sid,row,target,charges,keep,name):
                 # Merge same millisecond only if the original prices agree.
                 # Conflicting endpoints remain unusable for funding.
                 sides[side].sort(key=lambda r:r[0])
-            for q in (() if name in PRIOR_FULL and day<integrated.END else marks.minute_marks(day,sides[e.BID],sides[e.ASK],interval=STEP)):
+            for q in (() if symbol_name in PRIOR_FULL and day<integrated.END else marks.minute_marks(day,sides[e.BID],sides[e.ASK],interval=STEP)):
                 at=q["At"]
                 if all(covered(leaves[s],max(day,at-30000),at) for s in sides):
                     quote_marks.append(q)
@@ -195,11 +195,11 @@ def collect_market(j,account,sid,row,target,charges,keep,name):
                 at=day+minute*60000; lo=at-2*3600000
                 q={"At":at,"RequestedCoverage":all(covered(tail_leaves[s]+leaves[s],lo,at) for s in sides)}
                 if q["RequestedCoverage"]:
-                    for s,name in ((e.BID,"Bid"),(e.ASK,"Ask")):
+                    for s,side_label in ((e.BID,"Bid"),(e.ASK,"Ask")):
                         candidates=[v for v in tail[s]+sides[s] if lo<=v[0]<=at]
                         b=conditional.boundary(candidates,at,True)
                         if b and not b["conflict"]:
-                            q[name+"At"]=b["at"];q[name]=str(Decimal(b["rawPrices"][0]).scaleb(-5))
+                            q[side_label+"At"]=b["at"];q[side_label]=str(Decimal(b["rawPrices"][0]).scaleb(-5))
                 funding.append(q)
         for s in sides:
             tail[s]=[v for v in sides[s] if v[0]>=day+DAY-2*3600000] if keep else []
