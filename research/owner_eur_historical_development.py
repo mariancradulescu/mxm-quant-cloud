@@ -25,6 +25,7 @@ COMPLETE_BY = {
     41724643418: "2026-11-03T21:52:44+00:00",
     41735441128: "2026-11-03T23:05:43+00:00",
 }
+ARCHIVE_START = int(datetime.fromisoformat("2026-11-04T00:00:00+00:00").timestamp()*1000)
 
 
 def sha(data):
@@ -67,6 +68,17 @@ def preceding_terms():
     return result, old_bars
 
 
+def rollover_clocks(terms):
+    minutes = set()
+    for entry in terms.values():
+        c = entry["Contract"]
+        period, offset = c["SwapPeriodHours"], c["SwapTimeUtcMinute"]
+        if period and 24 % period == 0 and offset is not None and 0 <= offset < 1440:
+            minutes.update(range(offset, 1440, 60*period))
+    return [day + minute*60_000 for day in range(ARCHIVE_START, integrated.END, integrated.DAY)
+            for minute in sorted(minutes)]
+
+
 def main():
     evidence_only = sys.argv[1:] == ["--evidence-only"]
     need(evidence_only or not sys.argv[1:], "DATED_EUR_ENTRY_MODE")
@@ -77,7 +89,8 @@ def main():
     roster = {r["symbol"]: r for r in json.loads(matrix_data)["matrix"]}
     dated, old_bars = preceding_terms()
     print("DATED_EUR_PRECEDING_TERMS_VERIFIED", len(dated), flush=True)
-    markets, extra = context.sources(key, SUPPLEMENTARY, native_boundaries=True)
+    markets, extra = context.sources(key, SUPPLEMENTARY, native_boundaries=True,
+                                     rollover_clocks=rollover_clocks(dated))
     source_notes = []
     for market in markets:
         symbol = market["Name"]

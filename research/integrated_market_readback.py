@@ -69,6 +69,27 @@ def minute_marks(day, bids, asks, interval=MINUTE):
                "Path": dict(zip(("BidLow", "BidHigh", "AskLow", "AskHigh", "Complete"),
                                 (*extrema, complete)))}
 
+def witnessed_rollover_quotes(clocks, covered_hours, bids, asks):
+    """Exact as-of sides at requested clocks, with no interpolation."""
+    if not clocks:
+        return
+    timestamps = tuple([r[0] for r in side] for side in (bids, asks))
+    for at in clocks:
+        covered = all(hour in covered_hours for hour in
+                      range((at - MAX_SIDE_AGE) // HOUR * HOUR, at // HOUR * HOUR + HOUR, HOUR))
+        quote = {"At": at, "RequestedCoverage": covered}
+        if covered:
+            for name, side, stamps in zip(("Bid", "Ask"), (bids, asks), timestamps):
+                i = bisect.bisect_right(stamps, at) - 1
+                if i < 0 or at - stamps[i] > MAX_SIDE_AGE:
+                    continue
+                same = bisect.bisect_left(stamps, stamps[i], 0, i)
+                if any(side[j][1] != side[i][1] for j in range(same, i)):
+                    continue
+                quote[name + "At"] = stamps[i]
+                quote[name] = str(Decimal(side[i][1]) / PRICE_SCALE)
+        yield quote
+
 
 class TickPageIntegrityError(CaptureContractError):
     def __init__(self, code, side, first, last, **details):
@@ -129,7 +150,7 @@ def reconcile_tick_pages(raw, account, symbol_id, windows):
     return ticks, {side_names[side]: summary for side, summary in stats.items()}
 
 
-def readback(receipt, private_key, interval=MINUTE, scope=ORIGINAL, include_markets=None):
+def readback(receipt, private_key, interval=MINUTE, scope=ORIGINAL, include_markets=None, rollover_clocks=None):
     """Original full readback or recovery-proven, explicitly selected complete subset.
 
     Caller MUST validate all original shards with funded_history_recovery.scan
@@ -142,6 +163,11 @@ def readback(receipt, private_key, interval=MINUTE, scope=ORIGINAL, include_mark
     need(page_model in (None, TICK_PAGE_MODEL), "INTEGRATED_TICK_PAGE_MODEL")
     legacy = page_model is None
     raw_request_count = 0
+    clocks_by_day = {}
+    if rollover_clocks is not None:
+        for clock in sorted(set(rollover_clocks)):
+            need(scope.start <= clock < scope.end, "INTEGRATED_ROLLOVER_WITNESS_RANGE")
+            clocks_by_day.setdefault(clock // DAY * DAY, []).append(clock)
     opened_shards = set()
     shard_metadata = {v["File"]: v for v in receipt["Shards"]}
     need(len(shard_metadata) == len(receipt["Shards"]) and
@@ -233,6 +259,7 @@ def readback(receipt, private_key, interval=MINUTE, scope=ORIGINAL, include_mark
         if not legacy:
             need(bar_no_quotes == observed["BarNoQuotesPages"], "INTEGRATED_BAR_NO_QUOTES_COUNT")
         marks = []
+        rollovers = []
         count = {e.BID: 0, e.ASK: 0}
         prior_tail = {e.BID: [], e.ASK: []}
         activity_periods = ("M5",) if legacy else scope.periods
@@ -249,6 +276,7 @@ def readback(receipt, private_key, interval=MINUTE, scope=ORIGINAL, include_mark
             windows = list(tick_windows(day, expected_hours))
             if not windows:
                 need(key not in shard_metadata, "INTEGRATED_TICK_UNPLANNED_SHARD")
+                rollovers.extend(dict(At=at, RequestedCoverage=False) for at in clocks_by_day.get(day, ()))
                 prior_tail = {e.BID: [], e.ASK: []}
                 continue
             shard = open_shard(key)
@@ -267,8 +295,9 @@ def readback(receipt, private_key, interval=MINUTE, scope=ORIGINAL, include_mark
             hours += milliseconds // HOUR
             for side, side_ticks in sides.items():
                 count[side] += len(side_ticks)
-            marks.extend(minute_marks(day, prior_tail[e.BID] + sides[e.BID],
-                                     prior_tail[e.ASK] + sides[e.ASK], interval))
+            bids, asks = prior_tail[e.BID] + sides[e.BID], prior_tail[e.ASK] + sides[e.ASK]
+            marks.extend(minute_marks(day, bids, asks, interval))
+            rollovers.extend(witnessed_rollover_quotes(clocks_by_day.get(day, ()), expected_hours, bids, asks))
             prior_tail = {side: [row for row in side_ticks if row[0] >= day + DAY - 90_000]
                           for side, side_ticks in sides.items()}
         need(hours == observed["SourceTickHours"] and count[e.BID] == observed["Bid"] and
@@ -281,6 +310,8 @@ def readback(receipt, private_key, interval=MINUTE, scope=ORIGINAL, include_mark
             "M5": normalized_bars(bars["M5"]), "M15": normalized_bars(bars["M15"]),
             "H1": normalized_bars(bars["H1"]), "Quotes": marks,
             "ActiveHours": len(active), "RequestedTickHours": hours})
+        if rollover_clocks is not None:
+            market_records[-1]["RolloverQuotes"] = rollovers
         if not legacy:
             market_records[-1].update(EnabledAtCapture=symbol.enabled, TickPages=tick_stats,
                                       BarNoQuotesPages=bar_no_quotes)

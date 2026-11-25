@@ -14,6 +14,20 @@ internal static partial class IntegratedEconomicReplay
     sealed record DatedEurTerms(NativeObservedContractTerms Contract,NativeObservedVolume[] Margin,
         bool ShortAllowed,int TradingMode,bool? AccountSwapFree,string Digest,string SourceRun,
         int? AccountType,int? MoneyDigits,int? PriceDigits);
+    sealed record DatedRolloverQuote(long At,bool RequestedCoverage,long? BidAt,long? AskAt,decimal? Bid,decimal? Ask)
+    {
+        public decimal? WitnessedBid=>RequestedCoverage&&Bid is >0m&&Recent(BidAt)?Bid:null;
+        public NativeOriginalFxRate? EurConversion(string asset)
+        {
+            if(asset=="EUR")
+                return NativeBrokerContractCosts.ComposeCausalQuoteToEur(asset,At,Array.Empty<NativeOriginalFxHop>());
+            if(asset!="USD"||WitnessedBid is not decimal bid||Ask is not decimal ask||ask<bid||
+                !Recent(AskAt))return null;
+            return NativeBrokerContractCosts.ComposeCausalQuoteToEur(asset,At,new[] {
+                new NativeOriginalFxHop("EURUSD","EUR","USD",Math.Min(BidAt!.Value,AskAt!.Value),bid,ask,true)});
+        }
+        bool Recent(long? at)=>at is >0L&&at<=At&&At-at<=30_000L;
+    }
 
     sealed class DatedEurMarket
     {
@@ -107,17 +121,14 @@ internal static partial class IntegratedEconomicReplay
             terms.AccountSwapFree,terms.AccountType,terms.MoneyDigits,terms.PriceDigits,quoteAt);
 
     static NativeObservedRolloverQuote ChargeQuote(string asset,long charge,
-        Dictionary<long,SourceQuote> market,Dictionary<long,SourceQuote> eurUsd)
+        Dictionary<long,DatedRolloverQuote> market,Dictionary<long,DatedRolloverQuote> eurUsd)
     {
-        long sample=NativeClosedMarketContext.LatestClock(charge,30_000L,EurOffset);
-        var quote=market.GetValueOrDefault(sample);
-        return new(quote is not null&&Fresh(quote,charge,60_000L)?quote.Bid:null,
-            Conversion(asset,charge,eurUsd.GetValueOrDefault(sample)));
+        var state=eurUsd.GetValueOrDefault(charge)??new DatedRolloverQuote(charge,false,null,null,null,null);
+        return new(market.GetValueOrDefault(charge)?.WitnessedBid,state.EurConversion(asset));
     }
 
     static void AdvanceDatedEur(NativeUnifiedPortfolioEngine book,Ucp1Frame frame,
-        Dictionary<string,DatedEurTerms> terms,Dictionary<string,Dictionary<long,SourceQuote>> quotes,
-        Dictionary<long,SourceQuote> fxQuotes)
+        Dictionary<string,DatedEurTerms> terms,Dictionary<string,Dictionary<long,DatedRolloverQuote>> quotes)
     {
         var funding=new List<NativeAccruedFundingEvidence>();
         foreach(var x in book.FundingExposureSnapshot().Where(x=>x.ClosedAt is null||!x.ExactInLedger))
@@ -126,7 +137,7 @@ internal static partial class IntegratedEconomicReplay
             if(through<=x.FromExclusive||!terms.TryGetValue(x.Symbol,out var t))continue;
             var market=quotes[x.Symbol];
             if(Financing(t,x.FromExclusive,through,x.Side,x.Units,
-                charge=>ChargeQuote(t.Contract.QuoteAsset,charge,market,fxQuotes)) is decimal accrued)
+                charge=>ChargeQuote(t.Contract.QuoteAsset,charge,market,quotes["EURUSD"])) is decimal accrued)
                 funding.Add(new(x.PositionId,x.Symbol,x.Side,x.Units,x.FromExclusive,through,frame.At,accrued,null,t.Digest));
         }
         book.Advance(frame with {FundingEvidence=funding.ToArray()});
@@ -192,14 +203,14 @@ internal static partial class IntegratedEconomicReplay
             ??throw new ArgumentException("DATED_EUR_SOURCE_MISSING");
         if(source.End!=DatedEurEnd||source.Start>DatedEurStart||source.ManagementIntervalMs!=30_000L)
             throw new ArgumentException("DATED_EUR_REGISTERED_WINDOW_MISMATCH");
-        var fx=source.Markets.Single(m=>m.Name=="EURUSD").Quotes.ToDictionary(q=>q.At);
+        var fx=RolloverIndex(source.Markets.Single(m=>m.Name=="EURUSD"));
         var markets=source.Markets.Select(m=>
         {
             var clocks=m.Quotes.Where(q=>q.At>=DatedEurStart&&q.At<DatedEurEnd&&q.At%EurStep==EurOffset).ToArray();
             var days=clocks.Select(q=>DatedEurContext(m,q).For(NativeBarTimeframe.D1)).ToArray();
             var dated=m.DatedDevelopment;
             var c=dated?.Contract;
-            var quotes=m.Quotes.ToDictionary(q=>q.At);
+            var quotes=RolloverIndex(m);
             var rollovers=new List<object>();
             if(dated is not null&&c is not null)
                 for(long day=DatedEurStart;day<DatedEurEnd;day+=86_400_000L)
@@ -208,6 +219,8 @@ internal static partial class IntegratedEconomicReplay
                     if(roll is not long time||time>=day+86_400_000L)continue;
                     var quote=ChargeQuote(c.QuoteAsset,time,quotes,fx);
                     rollovers.Add(new {At=time,MarketBidWitness=quote.Bid.HasValue,
+                        MarketArchiveCoversClock=quotes.GetValueOrDefault(time)?.RequestedCoverage==true,
+                        ConversionArchiveCoversClock=c.QuoteAsset=="EUR"||fx.GetValueOrDefault(time)?.RequestedCoverage==true,
                         ConversionWitness=quote.QuoteToEur is not null});
                 }
             return new {m.Name,OfficialClass=m.OfficialAssetClass,M5WitnessClocks=clocks.Length,
@@ -226,6 +239,9 @@ internal static partial class IntegratedEconomicReplay
         return 0;
     }
 
+    static Dictionary<long,DatedRolloverQuote> RolloverIndex(SourceMarket market)
+        =>(market.RolloverQuotes??Array.Empty<DatedRolloverQuote>()).ToDictionary(q=>q.At);
+
     public static int RunDatedEur(string input,string report,string calibrationPath)
     {
         var source=JsonSerializer.Deserialize<Source>(File.ReadAllText(input),Json)
@@ -234,7 +250,7 @@ internal static partial class IntegratedEconomicReplay
             throw new ArgumentException("DATED_EUR_REGISTERED_WINDOW_MISMATCH");
         var markets=source.Markets.Select(m=>new DatedEurMarket(m)).ToArray();
         var fx=markets.Single(m=>m.Source.Name=="EURUSD").Quotes;
-        var quotes=markets.ToDictionary(m=>m.Source.Name,m=>m.Quotes,StringComparer.Ordinal);
+        var quotes=markets.ToDictionary(m=>m.Source.Name,m=>RolloverIndex(m.Source),StringComparer.Ordinal);
         var terms=markets.Where(m=>m.Source.DatedDevelopment is not null)
             .ToDictionary(m=>m.Source.Name,m=>m.Source.DatedDevelopment!,StringComparer.Ordinal);
         var first=new NativeUnifiedPortfolioEngine(NativeUnifiedPortfolioEngine.EurFirst);
@@ -254,7 +270,7 @@ internal static partial class IntegratedEconomicReplay
                 clocksWith2Quotes[phase]=clocksWith2Quotes.GetValueOrDefault(phase)+1;
             if(observed.Length>=2)matchedClocks[phase]=matchedClocks.GetValueOrDefault(phase)+1;
             var frame=new Ucp1Frame(at,observed);
-            if(at<DatedEurComparison){AdvanceDatedEur(first,frame,terms,quotes,fx);continue;}
+            if(at<DatedEurComparison){AdvanceDatedEur(first,frame,terms,quotes);continue;}
             if(calibration is null)
             {
                 string checkpoint=first.Checkpoint();
@@ -268,7 +284,7 @@ internal static partial class IntegratedEconomicReplay
                 books[NativeUnifiedPortfolioEngine.EurContextRank].LoadEurCalibration(calibration);
                 firstCalibratedRankEquity=books[NativeUnifiedPortfolioEngine.EurRank].ModelSummary.CashEur;
             }
-            foreach(var book in books.Values)AdvanceDatedEur(book,frame,terms,quotes,fx);
+            foreach(var book in books.Values)AdvanceDatedEur(book,frame,terms,quotes);
         }
         if(calibration is null)throw new InvalidOperationException("DATED_EUR_CALIBRATION_WINDOW_EMPTY");
         File.WriteAllText(calibrationPath,JsonSerializer.Serialize(calibration,Json));

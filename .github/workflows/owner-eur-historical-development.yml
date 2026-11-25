@@ -4,6 +4,8 @@ on:
     paths:
       - '.github/workflows/owner-eur-historical-development.yml'
       - 'research/owner_eur_historical_development.py'
+      - 'research/integrated_market_readback.py'
+      - 'research/test_integrated_market_ticks.py'
       - 'research/OWNER_EUR_INTEGRATED_DEVELOPMENT_20261125.md'
       - 'src/Mxm.Replay/IntegratedEconomicReplay.DatedEur.cs'
       - 'src/Mxm.Core/NativeUnifiedPortfolioEngine.Eur.cs'

@@ -32,6 +32,15 @@ def tick_packet(side, first, last, more=False, stamps=(), code=None):
 
 
 class TickPaginationTests(unittest.TestCase):
+    def test_rollover_requests_cover_both_hours_and_exclude_future_or_ambiguous_quotes(self):
+        charge = 2*source.HOUR
+        bids = [(charge-3_000, 110_000), (charge+1, 130_000)]
+        asks = [(charge-5_000, 111_000), (charge-5_000, 112_000), (charge-5_000, 111_000)]
+        good, = readback.witnessed_rollover_quotes([charge], {source.HOUR, charge}, bids, asks)
+        self.assertEqual(good, dict(At=charge, RequestedCoverage=True, BidAt=charge-3_000, Bid="1.1"))
+        absent, = readback.witnessed_rollover_quotes([charge], {source.HOUR}, bids, asks)
+        self.assertEqual(absent, dict(At=charge, RequestedCoverage=False))
+
     def test_terminal_partition_with_different_bid_and_ask_shapes(self):
         raw = [
             tick_packet(e.BID, 100, 107, True, [107]),
