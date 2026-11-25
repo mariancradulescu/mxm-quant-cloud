@@ -47,8 +47,11 @@ internal static partial class IntegratedEconomicReplay
 
         var fitProfiles=protocol.Calibrations.ToDictionary(x=>x.Id,x=>x.Profile,StringComparer.Ordinal);
         string protocolHash=GeneralSha(protocolBytes);
-        var source=new EerEvidence(input);
-        var protection=protectionDirectory is null?null:new EerProtectionTape(protectionDirectory);
+        EerEvidence source;
+        EerProtectionTape? protection;
+        using (NativeEconomicProfiler.Measure("replay.source_construction")) source=new EerEvidence(input);
+        using (NativeEconomicProfiler.Measure("replay.protection_construction"))
+            protection=protectionDirectory is null?null:new EerProtectionTape(protectionDirectory);
         bool explain=protection is not null;
         if(explain!=protocol.Calibrations.Any(p=>p.Profile.ModeledStopLatencyMs is not null)||
             explain!=(protocol.StopWitness is not null))throw new ArgumentException("HISTORICAL_PROTECTION_SOURCE_REQUIRED");
@@ -94,23 +97,48 @@ internal static partial class IntegratedEconomicReplay
             var probeBooks=probes.Values.ToArray();
             var allBooks=probeBooks.Concat(allComparisonBooks).ToArray();
 
+            void ProfileProgress(string stage,long from,long to,long processed,long total)
+            {
+                if(!NativeEconomicProfiler.Enabled)return;
+                Console.WriteLine("HISTORICAL_EUR_PROFILE "+JsonSerializer.Serialize(new
+                {
+                    Stage=stage,Stress=stress,From=from,To=to,ProcessedClocks=processed,TotalClocks=total,
+                    Trials=comparison.Select(x=>x.Trial.Id).ToArray(),
+                    Observers=observers.Select(x=>new {Id=x.Key,Progress=x.Value.Progress()}).ToArray(),
+                    Timings=NativeEconomicProfiler.Snapshot()
+                },Json));
+            }
+
             void Observe(long from,long to,NativeUnifiedPortfolioEngine[] books)
             {
+                long processed=0;
+                long total=Math.Max(0L,(to-from-EurOffset+EurStep-1)/EurStep);
+                ProfileProgress("OBSERVE_START",from,to,processed,total);
                 for(long at=from+EurOffset;at<to;at+=EurStep)
                 {
-                    var markets=streams.Values.Select(s=>source.Frame(s,at,scenario,stress,general:true))
-                        .OfType<Ucp1MarketFrame>().ToArray();
+                    Ucp1MarketFrame[] markets;
+                    using (NativeEconomicProfiler.Measure("replay.market_frames"))
+                        markets=streams.Values.Select(s=>source.Frame(s,at,scenario,stress,general:true))
+                            .OfType<Ucp1MarketFrame>().ToArray();
                     var frame=new Ucp1Frame(at,markets);
                     foreach(var book in books)
                     {
                         if(protection is not null && book.ModelsEurStopOnTicks)
                         {
-                            protection.Between(book,at-1,source,streams,scenario,stress);
-                            source.Advance(book,frame with { Protection=protection.GridCoverage(book,at) },streams,scenario,stress);
+                            using (NativeEconomicProfiler.Measure("replay.book_tick_protection"))
+                                protection.Between(book,at-1,source,streams,scenario,stress);
+                            using (NativeEconomicProfiler.Measure("replay.book_advance"))
+                                source.Advance(book,frame with { Protection=protection.GridCoverage(book,at) },streams,scenario,stress);
                         }
-                        else source.Advance(book,frame,streams,scenario,stress);
+                        else
+                            using (NativeEconomicProfiler.Measure("replay.book_advance"))
+                                source.Advance(book,frame,streams,scenario,stress);
                     }
-                    foreach(var observer in observers.Values)observer.Advance(frame);
+                    using (NativeEconomicProfiler.Measure("replay.observers"))
+                        foreach(var observer in observers.Values)observer.Advance(frame);
+                    processed++;
+                    if(NativeEconomicProfiler.Enabled && (processed%64==0 || processed==total))
+                        ProfileProgress("OBSERVE",from,to,processed,total);
                 }
             }
             Observe(protocol.InitialFitFrom,boundaries[0],probeBooks);
@@ -118,6 +146,9 @@ internal static partial class IntegratedEconomicReplay
             for(int i=0;i+1<boundaries.Length;i++)
             {
                 long start=boundaries[i];
+                ProfileProgress("CALIBRATION_START",start,boundaries[i+1],0,0);
+                using (NativeEconomicProfiler.Measure("replay.calibration_boundary"))
+                {
                 var snapshots=probes.ToDictionary(p=>p.Key,p=>p.Value.ExportEurCalibration(),StringComparer.Ordinal);
                 foreach(var (id,observer) in observers)snapshots.Add(id,observer.Export());
                 foreach(var (_,model) in snapshots)
@@ -137,9 +168,14 @@ internal static partial class IntegratedEconomicReplay
                     ByFamilyDirection=m.Value.Outcomes.GroupBy(o=>new{o.Family,o.Side}).Select(g=>new
                     {g.Key.Family,g.Key.Side,Count=g.Count(),GrossEur=g.Sum(x=>x.GrossEur),NetEur=g.Sum(x=>x.NetEur)}).ToArray()
                 }).ToArray()});
+                }
+                ProfileProgress("CALIBRATION_COMPLETE",start,boundaries[i+1],0,0);
                 Observe(start,boundaries[i+1],allBooks);
                 Console.WriteLine($"HISTORICAL_EUR {stress:G29} TEST {i+1}/{boundaries.Length-1} completed");
             }
+            ProfileProgress("SCENARIO_REPORT_START",boundaries[0],boundaries[^1],0,0);
+            using (NativeEconomicProfiler.Measure("replay.scenario_report"))
+            {
             var trialResults=comparison.Select(x=>new
             {
                 x.Trial.Id,x.Trial.Policy,x.Trial.Calibration,x.Profile,
@@ -153,6 +189,8 @@ internal static partial class IntegratedEconomicReplay
                 TrialDetails=comparison.Select(p=>new {p.Trial.Id,Details=EconomicStudyDetails(p.Book,source,streams)}).ToArray()});
             else output.Add(new {SpreadMultiplier=stress, CommissionAndDebitMultiplier=1m+stress,
                 Fits=fitted, Trials=trialResults, Markets=markets});
+            }
+            ProfileProgress("SCENARIO_REPORT_COMPLETE",boundaries[0],boundaries[^1],0,0);
         }
         var summary=new
         {
@@ -162,12 +200,17 @@ internal static partial class IntegratedEconomicReplay
             Results=output,DistilledWinnerForPromotion=false,IndependentConfirmationCertified=false,
             ContinuousDrawdownCertified=false,BrokerNetCertified=false,SourceBrokerRequests=0,Orders=0,CloudActivated=false
         };
-        using var file=new FileStream(reportPath,FileMode.CreateNew,FileAccess.Write);
+        using (NativeEconomicProfiler.Measure("replay.final_serialization"))
+        using (var file=new FileStream(reportPath,FileMode.CreateNew,FileAccess.Write))
+        {
         if(explain)
             JsonSerializer.Serialize(file,new {Summary=summary,StopWitness=stopWitness,FundingWitnesses=fundingWitnesses,
                 Coverage="TICK_TRIGGER_AND_CONDITIONAL_FILL_WHERE_SUPPORTED_WITH_GRID_FALLBACK",
                 MarkCoverage="DECISION_AND_PROTECTION_EVENT_MARKS",BrokerFillEvidence=false},Json);
         else JsonSerializer.Serialize(file,summary,Json);
+        }
+        if(NativeEconomicProfiler.Enabled)
+            Console.WriteLine("HISTORICAL_EUR_PROFILE_FINAL "+JsonSerializer.Serialize(NativeEconomicProfiler.Snapshot(),Json));
         return 0;
     }
 
