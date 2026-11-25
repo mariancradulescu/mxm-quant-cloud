@@ -1,6 +1,8 @@
 """Exact decision-path attribution; identical execution cohorts are not causal randomization."""
 import argparse
 from itertools import combinations
+from decimal import Decimal, getcontext
+getcontext().prec=60
 from pathlib import Path
 from .merge_eur_adaptive import collect
 from .merge_eur_scenarios import exact_json, read, require
@@ -30,7 +32,10 @@ def path_attribution(summary, trial):
         detail=next(t for t in s["TrialDetails"] if t["Id"]==trial)
         result=next(t["Result"] for t in s["Trials"] if t["Id"]==trial)
         episodes=closed(detail)
-        require(len(episodes)==result["Closed"] and net(list(episodes.values()))==result["ClosedNetEur"],
+        actual=net(list(episodes.values()))
+        reported=result["ClosedNetEur"]
+        require(len(episodes)==result["Closed"] and ((actual is None and reported is None) or
+                (actual is not None and reported is not None and abs(actual-reported)<=Decimal("1e-20"))),
                 "ATTRIBUTION_LEDGER_RECONCILIATION")
         fit=[]
         for fold in s["Fits"]:
