@@ -8,9 +8,14 @@ internal static partial class IntegratedEconomicReplay
     sealed record HistoricalTrial(string Id,string Policy,string Calibration,int? MinimumEpisodes,decimal? DayPenalty);
     sealed record HistoricalFit(string Id,NativeEurDevelopmentProfile Profile);
     sealed record HistoricalPlan(string Study,string Exposure,string SourceProtocolSha256,string EvidenceManifestSha256,
-        long InitialFitFrom,long[] TestBoundaries,decimal[] Stresses,HistoricalFit[] Calibrations,HistoricalTrial[] Trials);
+        long InitialFitFrom,long[] TestBoundaries,decimal[] Stresses,HistoricalFit[] Calibrations,HistoricalTrial[] Trials)
+    {
+        public HistoricalStopWitness? StopWitness { get; init; }
+    }
+    sealed record HistoricalStopWitness(string Symbol,int Side,long OriginalFillAt,long OriginalCloseAt,
+        decimal StopDistance,long FirstTradeTouchAt);
 
-    public static int RunHistoricalEur(string protocolPath,string sourcePath,string reportPath)
+    public static int RunHistoricalEur(string protocolPath,string sourcePath,string reportPath,string? protectionDirectory=null)
     {
         if(File.Exists(reportPath))throw new IOException("HISTORICAL_EUR_REPORT_ALREADY_EXISTS");
         byte[] protocolBytes=File.ReadAllBytes(protocolPath);
@@ -37,14 +42,21 @@ internal static partial class IntegratedEconomicReplay
         var fitProfiles=protocol.Calibrations.ToDictionary(x=>x.Id,x=>x.Profile,StringComparer.Ordinal);
         string protocolHash=GeneralSha(protocolBytes);
         var source=new EerEvidence(input);
+        var protection=protectionDirectory is null?null:new EerProtectionTape(protectionDirectory);
+        bool explain=protection is not null;
+        if(explain!=protocol.Calibrations.Any(p=>p.Profile.ModeledStopLatencyMs is not null)||
+            explain!=(protocol.StopWitness is not null))throw new ArgumentException("HISTORICAL_PROTECTION_SOURCE_REQUIRED");
+        var stopWitness=protection?.AuditWitness(protocol.StopWitness!);
         var output=new List<object>();
         foreach(decimal stress in protocol.Stresses)
         {
             string scenario=EerHash(protocolHash+"|"+FormattableString.Invariant($"{stress:G29}"));
             var streams=input.Markets.ToDictionary(m=>m.Market.Name,m=>new EerStream(m),StringComparer.Ordinal);
-            var probes=fitProfiles.ToDictionary(p=>p.Key,p=>new NativeUnifiedPortfolioEngine(
+            var probes=fitProfiles.Where(p=>!p.Value.LearnFromOpportunityEpisodes).ToDictionary(p=>p.Key,p=>new NativeUnifiedPortfolioEngine(
                 NativeUnifiedPortfolioEngine.EurGeneralProbe,fundingScenarioId:scenario,eurDevelopmentProfile:p.Value),
                 StringComparer.Ordinal);
+            var observers=fitProfiles.Where(p=>p.Value.LearnFromOpportunityEpisodes).ToDictionary(p=>p.Key,p=>
+                new EurOpportunityObserver(p.Value,scenario,stress,source,protection!,streams),StringComparer.Ordinal);
             var comparison=protocol.Trials.Select(t=>
             {
                 if(!GeneralPolicies.Contains(t.Policy,StringComparer.Ordinal)||!fitProfiles.TryGetValue(t.Calibration,out var p))
@@ -64,7 +76,16 @@ internal static partial class IntegratedEconomicReplay
                     var markets=streams.Values.Select(s=>source.Frame(s,at,scenario,stress,general:true))
                         .OfType<Ucp1MarketFrame>().ToArray();
                     var frame=new Ucp1Frame(at,markets);
-                    foreach(var book in books)source.Advance(book,frame,streams,scenario,stress);
+                    foreach(var book in books)
+                    {
+                        if(protection is not null && book.ModelsEurStopOnTicks)
+                        {
+                            protection.Between(book,at-1,source,streams,scenario,stress);
+                            source.Advance(book,frame with { Protection=protection.GridCoverage(book,at) },streams,scenario,stress);
+                        }
+                        else source.Advance(book,frame,streams,scenario,stress);
+                    }
+                    foreach(var observer in observers.Values)observer.Advance(frame);
                 }
             }
             Observe(protocol.InitialFitFrom,boundaries[0],probeBooks);
@@ -73,6 +94,7 @@ internal static partial class IntegratedEconomicReplay
             {
                 long start=boundaries[i];
                 var snapshots=probes.ToDictionary(p=>p.Key,p=>p.Value.ExportEurCalibration(),StringComparer.Ordinal);
+                foreach(var (id,observer) in observers)snapshots.Add(id,observer.Export());
                 foreach(var (_,model) in snapshots)
                     if(model.ObservationThrough>=start || model.Outcomes.Any(x=>x.AvailableAt>=start))
                         throw new InvalidOperationException("HISTORICAL_EUR_CALIBRATION_EXPOSED_TO_OWN_TEST");
@@ -98,20 +120,29 @@ internal static partial class IntegratedEconomicReplay
                 x.Trial.Id,x.Trial.Policy,x.Trial.Calibration,x.Profile,
                 Result=HistoricalBook(x.Book,boundaries)
             }).ToArray();
-            output.Add(new {SpreadMultiplier=stress, CommissionAndDebitMultiplier=1m+stress,
-                Fits=fitted, Trials=trialResults, Markets=streams.Values.Select(s=>new
-                {s.Source.Market.Name,s.Source.CalendarStatus,s.Counts}).ToArray()});
+            var markets=streams.Values.Select(s=>new {s.Source.Market.Name,s.Source.CalendarStatus,s.Counts}).ToArray();
+            if(explain)output.Add(new {SpreadMultiplier=stress, CommissionAndDebitMultiplier=1m+stress,
+                Fits=fitted,Trials=trialResults,Markets=markets,
+                CalibrationBooks=probes.Select(p=>new {Id=p.Key,Details=EconomicStudyDetails(p.Value,source,streams,p.Value.ExportEurCalibration())}).ToArray(),
+                OpportunityObservations=observers.Select(p=>new {Id=p.Key,Details=p.Value.Report()}).ToArray(),
+                TrialDetails=comparison.Select(p=>new {p.Trial.Id,Details=EconomicStudyDetails(p.Book,source,streams)}).ToArray()});
+            else output.Add(new {SpreadMultiplier=stress, CommissionAndDebitMultiplier=1m+stress,
+                Fits=fitted, Trials=trialResults, Markets=markets});
         }
-        var result=JsonSerializer.SerializeToUtf8Bytes(new
+        var summary=new
         {
             protocol.Study,protocol.Exposure,ProtocolSha256=protocolHash,SourceSha256=GeneralSha(sourceBytes),
             input.EvidenceManifestSha256,input.EngineRevision,ExecutedRevision=Environment.GetEnvironmentVariable("GITHUB_SHA"),
             protocol.InitialFitFrom,protocol.TestBoundaries,DeclaredScenarioTrialCount=protocol.Stresses.Length*protocol.Trials.Length,
             Results=output,DistilledWinnerForPromotion=false,IndependentConfirmationCertified=false,
             ContinuousDrawdownCertified=false,BrokerNetCertified=false,SourceBrokerRequests=0,Orders=0,CloudActivated=false
-        },Json);
+        };
         using var file=new FileStream(reportPath,FileMode.CreateNew,FileAccess.Write);
-        file.Write(result);
+        if(explain)
+            JsonSerializer.Serialize(file,new {Summary=summary,StopWitness=stopWitness,
+                Coverage="TICK_TRIGGER_AND_CONDITIONAL_FILL_WHERE_SUPPORTED_WITH_GRID_FALLBACK",
+                MarkCoverage="DECISION_AND_PROTECTION_EVENT_MARKS",BrokerFillEvidence=false},Json);
+        else JsonSerializer.Serialize(file,summary,Json);
         return 0;
     }
 

@@ -156,7 +156,7 @@ def covered(leaves,lo,hi):
         if cursor>hi:return True
     return cursor>hi
 
-def collect_market(j,account,sid,row,target,charges,keep,symbol_name):
+def collect_market(j,account,sid,row,target,charges,keep,symbol_name,tick_sink=None):
     bars,bar_report=bars_for(j,account,sid,row) if target else ({},{})
     budget=[PER_SYMBOL-len(j.packets)] if hasattr(j,"t") else [PER_SYMBOL-j.index]
     windows=[]; quote_marks=[]; funding=[]; tail={e.BID:[],e.ASK:[]}; tail_leaves={e.BID:[],e.ASK:[]}
@@ -187,6 +187,10 @@ def collect_market(j,account,sid,row,target,charges,keep,symbol_name):
                 # Merge same millisecond only if the original prices agree.
                 # Conflicting endpoints remain unusable for funding.
                 sides[side].sort(key=lambda r:r[0])
+                if tick_sink is not None:
+                    complete=[(lo,hi) for lo,hi,status,_,_ in leaves[side]
+                              if status in ("VERIFIED_COMPLETE_PAGE","PROVIDER_NO_QUOTES")]
+                    tick_sink(symbol_name,side,sides[side],complete)
             for q in (() if symbol_name in PRIOR_FULL and day<integrated.END else marks.minute_marks(day,sides[e.BID],sides[e.ASK],interval=STEP)):
                 at=q["At"]
                 if all(covered(leaves[s],max(day,at-30000),at) for s in sides):

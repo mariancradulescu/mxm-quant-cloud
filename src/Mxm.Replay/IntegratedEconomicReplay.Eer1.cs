@@ -54,7 +54,7 @@ internal static partial class IntegratedEconomicReplay
         }
         public SourceQuote? At(string name,long at)=>tape.GetValueOrDefault(name)?.GetValueOrDefault(at);
         public DatedRolloverQuote? FundingAt(string name,long at)=>funding.GetValueOrDefault(name)?.GetValueOrDefault(at);
-        public NativeOriginalFxRate? ConversionAt(string asset,long at,bool charge)
+        public NativeOriginalFxRate? ConversionAt(string asset,long at,bool charge,EerProtectionTape? protection=null)
         {
             if(asset=="EUR")return new(1m,1m,Array.Empty<string>());
             if(!Input.Routes.TryGetValue(asset,out var route)||route.Length is <1 or >4)return null;
@@ -73,7 +73,9 @@ internal static partial class IntegratedEconomicReplay
                 }
                 else
                 {
-                    var q=At(h.Symbol,at);
+                    var q=protection?.QuoteAt(h.Symbol,at)??At(h.Symbol,at);
+                    if(q is null && protection is not null)
+                        q=At(h.Symbol,(at-EurOffset)/EurStep*EurStep+EurOffset);
                     if(q is null||!Fresh(q,at,30_000L))return null;
                     bid=q.Bid;ask=q.Ask;
                     hops.Add(new(h.Symbol,h.BaseAsset,h.QuoteAsset,Math.Min(q.BidAt,q.AskAt),bid,ask,true));
@@ -169,6 +171,34 @@ internal static partial class IntegratedEconomicReplay
                          SourceAcquiredAt=Input.SourceAcquiredAt});
             }
             book.Advance(frame with {FundingEvidence=evidence.ToArray()});
+        }
+
+        public Ucp1MarketFrame? ProtectionMark(EerProtectionTape tape,EerMarket market,long at,decimal stress)
+        {
+            if(market.Market.DatedDevelopment is not { } terms || tape.QuoteAt(market.Market.Name,at) is not { } q)
+                return null;
+            var contract=terms.Contract;
+            var fx=ConversionAt(contract.QuoteAsset,at,false,tape);
+            if(fx is null)return null;
+            var usd=ConversionAt("USD",at,false,tape);
+            var minFee=contract.MinimumCommissionAsset is { } a?ConversionAt(a,at,false,tape):null;
+            decimal perUnit=terms.Margin.Where(x=>x.Units>0m)
+                .Select(x=>Math.Max(x.BuyMargin,x.SellMargin)/x.Units).DefaultIfEmpty().Max();
+            if(perUnit<=0m)return null;
+            decimal slip=(q.Ask-q.Bid)*stress;
+            decimal costMultiple=1m+stress;
+            try
+            {
+                var quote=NativeBrokerContractCosts.QuoteBothDirections(contract,new(at,q.Bid,q.Ask,fx.CreditToEur,fx.DebitToEur,
+                    usd?.DebitToEur??0m,minFee?.DebitToEur,perUnit*contract.MinimumUnits,contract.MinimumUnits,slip)).Quote;
+                return new(market.Market.Name,quote with
+                {
+                    LiquidationSlippagePerSide=slip,ExitFeePerUnit=quote.ExitFeePerUnit*costMultiple,
+                    ExitFeeFloor=quote.ExitFeeFloor*costMultiple,SellFeePerUnit=quote.SellFeePerUnit*costMultiple
+                },contract,Array.Empty<NativeClosedMarketBar>(),Array.Empty<NativeClosedMarketBar>(),slip,
+                    "OBSERVED_TICK_CONDITIONAL_MONETARY_TERMS");
+            }
+            catch(ArgumentException){return null;}
         }
     }
 

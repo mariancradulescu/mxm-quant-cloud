@@ -1,5 +1,5 @@
 """Protected EER1 archive reuse and execution of the common C# portfolio."""
-import json, os, sys, tempfile, subprocess
+import json, os, sys, tempfile, subprocess, struct
 from pathlib import Path
 from collections import defaultdict
 from . import owner_eer1_source as eer
@@ -16,6 +16,22 @@ from .custody import unseal_new
 from .decode import need
 
 OUT=Path("eer1-economic-public")
+
+
+def protection_tick_sink(folder, lane):
+    record=struct.Struct("<qq")
+
+    def write(name, side, ticks, complete):
+        if not ticks and not complete:
+            return
+        side_label="bid" if side==e.BID else "ask"
+        base=folder/(src.digest(name.encode())+"-"+side_label+"-"+lane)
+        for suffix, rows in ((".ticks",sorted(ticks)),(".coverage",sorted(complete))):
+            if rows:
+                with base.with_suffix(suffix).open("ab") as file:
+                    file.write(b"".join(record.pack(first,second) for first,second in rows))
+
+    return write
 
 def read_archives(key,work):
     bars=defaultdict(lambda:defaultdict(dict)); conflicts=set(); counts=defaultdict(int)
@@ -66,7 +82,7 @@ def read_archives(key,work):
             add(ids[q.symbolId],tf,rows)
     return bars,add,conflicts,proof
 
-def main(recovery=False, diagnosis=None, development=None):
+def main(recovery=False, diagnosis=None, development=None, tick_protection=False):
     if recovery:
         from . import owner_eer1_recovery as recover
     run=recover.ORIGINAL_RUN if recovery else os.environ["GITHUB_RUN_ID"]
@@ -90,7 +106,11 @@ def main(recovery=False, diagnosis=None, development=None):
         work=Path(temp);bars,add,conflicts,proof=read_archives(key,work)
         # Recover the already observed 21-day full-session quote tape,
         # including the authenticated multiframe supplement; no recollection.
-        archived,extra=context.sources(key,"44733062339",native_boundaries=True)
+        protection=work/"verified-protection"
+        if tick_protection:
+            protection.mkdir(mode=0o700)
+        archived,extra=context.sources(key,"44733062339",native_boundaries=True,
+            tick_sink=protection_tick_sink(protection,"full-session") if tick_protection else None)
         old_quotes={}
         for m in archived:
             n=m["Name"]
@@ -116,7 +136,9 @@ def main(recovery=False, diagnosis=None, development=None):
             name=ref["name"];sid=ref["id"]
             need(data["runId"]==run and data["name"]==name and data["id"]==sid and meta["roster"][name]["id"]==sid and name in meta["sourceNames"],"EER1_SHARD_BINDING")
             j=src.ReadbackJournal(data["packets"])
-            summary,series,quotes,funding=eer.collect_market(j,account,sid,rows.get(name,{}),name in chosen,eer.charge_clocks(meta["terms"]),True,name)
+            summary,series,quotes,funding=eer.collect_market(j,account,sid,rows.get(name,{}),name in chosen,
+                eer.charge_clocks(meta["terms"]),True,name,
+                tick_sink=protection_tick_sink(protection,"eer1") if tick_protection else None)
             need(summary==ref["summary"]==data["summary"] and j.index==len(j.packets)==ref["requests"],"EER1_SHARD_REPLAY")
             for tf,values in series.items():add(name,tf,values.values())
             if j.packets:source_acquired=max(source_acquired,max(p["availableAt"] for p in j.packets))
@@ -212,8 +234,11 @@ def main(recovery=False, diagnosis=None, development=None):
         env={k:v for k,v in os.environ.items() if k!="R3_CUSTODY_PRIVATE_KEY_PEM"}
         if development is not None:
             protocol, report=development
-            subprocess.run(["dotnet","src/Mxm.Replay/bin/Release/net8.0/Mxm.Replay.dll","--owner-eur-historical-study",
-                str(protocol),str(path),str(report)],check=True,env=env)
+            args=["dotnet","src/Mxm.Replay/bin/Release/net8.0/Mxm.Replay.dll","--owner-eur-historical-study",
+                str(protocol),str(path),str(report)]
+            if tick_protection:
+                args.append(str(protection))
+            subprocess.run(args,check=True,env=env)
             return
         if diagnosis is not None:
             original, report=diagnosis
@@ -239,6 +264,8 @@ if __name__=="__main__":
     args=sys.argv[1:]
     if len(args)==3 and args[0]=="--historical-development":
         main(recovery=True,development=(Path(args[1]),Path(args[2])))
+    elif len(args)==3 and args[0]=="--protection-development":
+        main(recovery=True,development=(Path(args[1]),Path(args[2])),tick_protection=True)
     elif len(args)==3 and args[0]=="--diagnose-source":
         main(recovery=True,diagnosis=(Path(args[1]),Path(args[2])))
     else:

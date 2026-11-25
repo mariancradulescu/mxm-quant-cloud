@@ -54,7 +54,11 @@ public sealed record NativeEurCalibration(long ObservationThrough,string LedgerE
     public string? OpportunitySchema { get; init; }
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public string? DevelopmentGeometry { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool OpportunityEpisodeLabels { get; init; }
 }
+public sealed record Ucp1EurDecisionActivity(long At,int Opportunities,int Admitted,
+    IReadOnlyDictionary<string,int> CandidateDecisions);
 
 public sealed partial class NativeUnifiedPortfolioEngine
 {
@@ -67,6 +71,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
         NativeIntegratedPlan Geometry,NativeEurOpportunity Receipt);
     readonly Dictionary<(string Family,int Side),List<NativeEurCalibrationOutcome>> eurHistory=new();
     readonly List<NativeEurOpportunity> eurOpportunities=new();
+    readonly List<Ucp1EurDecisionActivity> eurDecisionActivity=new();
+    internal Ucp1EurDecisionActivity[] EurDecisionActivity => eurDecisionActivity.ToArray();
     NativeEurCalibration? eurCalibration;
     public long LastObservationAt=>previousClock;
     public string PolicyName=>policy;
@@ -141,6 +147,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
         if(!IsEurRank||calibration.FundingScenarioId!=FundingScenarioId||calibration.ObservationThrough<=0||
             calibration.OpportunitySchema!=(IsEurGeneral?EurGeneralSchema:null)||
             calibration.DevelopmentGeometry!=eurDevelopmentProfile?.GeometryIdentity||
+            calibration.OpportunityEpisodeLabels!=(eurDevelopmentProfile?.LearnFromOpportunityEpisodes??false)||
             (IsEurGeneral&&calibration.Outcomes.Any(x=>x.Context?.MarketState is not { Length: GeneralStateSize }))||
             calibration.LedgerEventChainSha256 is not {Length:64}||
             !calibration.LedgerEventChainSha256.All(Uri.IsHexDigit)||
@@ -159,11 +166,14 @@ public sealed partial class NativeUnifiedPortfolioEngine
     // Taking the smaller NET avoids crediting a cheaper historical tariff and
     // avoids charging the same cost twice. Use day means as the sample unit.
     internal NativeEurPayoff? EurPayoff(string family,int side,decimal candidateRiskEur,decimal currentCostFloorEur,
-        NativeEurDecisionContext? target=null)
+        NativeEurDecisionContext? target=null,Action<string>? diagnostic=null)
     {
         int minEpisodes=eurDevelopmentProfile?.MinimumEpisodes??20;
         int minDays=eurDevelopmentProfile?.MinimumDays??3;
-        if(!eurHistory.TryGetValue((family,side),out var history)||history.Count<minEpisodes)return null;
+        if(!eurHistory.TryGetValue((family,side),out var history))
+        {diagnostic?.Invoke("NO_FAMILY_DIRECTION_HISTORY");return null;}
+        if(history.Count<minEpisodes)
+        {diagnostic?.Invoke("INSUFFICIENT_EPISODES");return null;}
         NativeEurCalibrationOutcome[] pool=history.ToArray();
         string? cohort=null;
         if(target is not null)
@@ -175,27 +185,46 @@ public sealed partial class NativeUnifiedPortfolioEngine
             if(Supported(sameSymbol)){pool=sameSymbol;cohort="SYMBOL";}
             else if(Supported(sameClass)){pool=sameClass;cohort="OFFICIAL_CLASS";}
             else cohort="POOLED_FAMILY_DIRECTION";
+            diagnostic?.Invoke("TRANSFER_"+cohort);
         }
         var samples=pool.Select(x=>
         {
             decimal scale=candidateRiskEur/x.RiskEur;
             decimal gross=x.GrossEur*scale;
             return (CloseDay:x.ClosedAt/86400000L,Gross:gross,
-                Net:Math.Min(x.NetEur*scale,gross-currentCostFloorEur),
+                HistoricalNet:x.NetEur*scale,Net:Math.Min(x.NetEur*scale,gross-currentCostFloorEur),
                 Weight:target is not null&&x.Context is { } observed?EurAffinity(target,observed):1m);
         }).ToArray();
         var days=samples.GroupBy(x=>x.CloseDay).OrderBy(g=>g.Key)
             .Select(g=> (Gross:g.Sum(x=>x.Gross*x.Weight)/g.Sum(x=>x.Weight),
                 Net:g.Sum(x=>x.Net*x.Weight)/g.Sum(x=>x.Weight))).ToArray();
-        if(days.Length<minDays)return null;
+        if(days.Length<minDays)
+        {diagnostic?.Invoke("INSUFFICIENT_OBSERVATION_DAYS");return null;}
         decimal grossMean=days.Average(x=>x.Gross),netMean=days.Average(x=>x.Net);
         // The existing program's one-sided 1.645 standard-error penalty,
         // applied separately to the day-block series. Diagnostic only.
         decimal Lower(decimal mean,IEnumerable<decimal> sample)
             =>mean-(eurDevelopmentProfile?.DayPenalty??1.645m)*(decimal)Math.Sqrt(sample.Sum(x=>Math.Pow((double)(x-mean),2))/
                 ((double)days.Length*(days.Length-1)));
-        return new NativeEurPayoff(pool.Length,days.Length,grossMean,Lower(grossMean,days.Select(x=>x.Gross)),
-            netMean,Lower(netMean,days.Select(x=>x.Net)),
+        decimal grossLower=Lower(grossMean,days.Select(x=>x.Gross));
+        decimal netLower=Lower(netMean,days.Select(x=>x.Net));
+        if(diagnostic is not null)
+        {
+            if(grossMean<=0m)diagnostic("GROSS_MEAN_NONPOSITIVE");
+            else if(grossLower<=0m)diagnostic("GROSS_DAY_UNCERTAINTY");
+
+            if(netLower<=0m)
+            {
+                var historicalDays=samples.GroupBy(x=>x.CloseDay).OrderBy(g=>g.Key)
+                    .Select(g=>g.Sum(x=>x.HistoricalNet*x.Weight)/g.Sum(x=>x.Weight)).ToArray();
+                decimal historicalMean=historicalDays.Average();
+                if(historicalMean<=0m)diagnostic("HISTORICAL_NET_MEAN_NONPOSITIVE");
+                else if(Lower(historicalMean,historicalDays)<=0m)diagnostic("HISTORICAL_NET_DAY_UNCERTAINTY");
+                else diagnostic("CURRENT_COST_FLOOR");
+            }
+            if(grossLower>0m&&netLower>0m)diagnostic("PAYOFF_PASSES");
+        }
+        return new NativeEurPayoff(pool.Length,days.Length,grossMean,grossLower,netMean,netLower,
             (decimal)samples.Count(x=>x.Net>0m)/samples.Length,samples.Min(x=>x.Net),samples.Max(x=>x.Net)) { Cohort=cohort };
     }
 
@@ -260,9 +289,13 @@ public sealed partial class NativeUnifiedPortfolioEngine
         var held=Cpe1Commitments(false,frame);
         var pending=Cpe1Commitments(true,frame).ToList();
         var choices=new List<EurCandidate>();
+        int admittedBefore=admitted;
+        var activity=CaptureEurDiagnostics?new Dictionary<string,int>(StringComparer.Ordinal):null;
+        void ScoreDiagnostic(string state) => Count("EUR_PAYOFF_"+state);
         void Trace(NativeEurOpportunity o,string state)
         {
             Count("EUR_"+state);
+            if(activity is not null)activity[state]=activity.GetValueOrDefault(state)+1;
             if(!researchFork&&(eurDevelopmentProfile is null||state is "LONG_PENDING" or "SHORT_PENDING"))eurOpportunities.Add(o with {Decision=state,
                 HeldMarginEur=capital.HeldMarginEur,PendingMarginEur=pending.Sum(x=>x.MarginEur)});
         }
@@ -273,7 +306,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
             var marketState=IsEurGeneral?DescribeGeneralState(market,frame,s.Side):null;
             var unitsOffered=(market.EurMargins??Array.Empty<NativeEurMarginObservation>())
                 .Where(x=>x.Side==s.Side&&x.Units>0m).Select(x=>x.Units)
-                .Append(market.Contract.MinimumUnits).Distinct().OrderByDescending(x=>x);
+                .Append(market.Contract.MinimumUnits).Distinct()
+                .Where(units=>!frame.ObservationEpisodeOnly||units==market.Contract.MinimumUnits).OrderByDescending(x=>x);
             foreach(var units in unitsOffered)
             {
                 var q=market.Quote;
@@ -291,8 +325,9 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 var context=DescribeEurContext(market,at,s.Side,(capital.HeldMarginEur??0m)+pending.Sum(x=>x.MarginEur),
                     capital.ResearchAdmissionEquityEur,risk,roundTripCost);
                 if(context is not null&&marketState is not null)context=context with {MarketState=marketState};
+                if(CaptureEurDiagnostics&&policy==EurGeneralSelect&&context is null)ScoreDiagnostic("NO_CONTEXT");
                 var payoff=risk is >0m&&(IsEurRank||eurDevelopmentProfile is null)?EurPayoff(s.Family,s.Side,risk.Value,roundTripCost+debit!.Value,
-                    policy is EurContextRank or EurGeneralSelect?context:null):null;
+                    policy is EurContextRank or EurGeneralSelect?context:null,CaptureEurDiagnostics?ScoreDiagnostic:null):null;
                 var receipt=new NativeEurOpportunity(at,market.Symbol,s.Family,s.Side,units,grossTarget,grossRisk,
                     roundTripCost,debit,margin?.MarginEur,risk,capital.HeldMarginEur,capital.PendingOpenMarginEur,
                     capital.ResearchAdmissionEquityEur,payoff,"ASSESS")
@@ -330,6 +365,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
             pending.Add(new(id,market.Symbol,units,margin,choice.Geometry.InitialRiskEur,s.Family,true));
             admitted++;
             Trace(receipt,s.Side>0?"LONG_PENDING":"SHORT_PENDING");
+            if(CaptureEurDiagnostics)RecordEurRiskObservation(at,"ADMISSION",frame,id);
         }
         if(policy is EurGeneralSelect or EurGeneralPooled)
             AllocateGeneralEur(frame,book,capital,held,pending,choices,Admit,Trace);
@@ -344,6 +380,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 Admit(choice);
             }
         }
+        if(activity is not null&&options.Count>0)eurDecisionActivity.Add(new(at,options.Count,admitted-admittedBefore,activity));
         return RecordIntegratedFrame(at,model.Ledger.Summary(at),frame);
     }
 

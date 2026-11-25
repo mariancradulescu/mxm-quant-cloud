@@ -150,7 +150,8 @@ def reconcile_tick_pages(raw, account, symbol_id, windows):
     return ticks, {side_names[side]: summary for side, summary in stats.items()}
 
 
-def readback(receipt, private_key, interval=MINUTE, scope=ORIGINAL, include_markets=None, rollover_clocks=None):
+def readback(receipt, private_key, interval=MINUTE, scope=ORIGINAL, include_markets=None, rollover_clocks=None,
+             tick_sink=None):
     """Original full readback or recovery-proven, explicitly selected complete subset.
 
     Caller MUST validate all original shards with funded_history_recovery.scan
@@ -295,6 +296,8 @@ def readback(receipt, private_key, interval=MINUTE, scope=ORIGINAL, include_mark
             hours += milliseconds // HOUR
             for side, side_ticks in sides.items():
                 count[side] += len(side_ticks)
+                if tick_sink is not None:
+                    tick_sink(name, side, side_ticks, windows)
             bids, asks = prior_tail[e.BID] + sides[e.BID], prior_tail[e.ASK] + sides[e.ASK]
             marks.extend(minute_marks(day, bids, asks, interval))
             rollovers.extend(witnessed_rollover_quotes(clocks_by_day.get(day, ()), expected_hours, bids, asks))

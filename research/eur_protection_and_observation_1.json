@@ -1,0 +1,38 @@
+{
+  "Study": "EUR_PROTECTION_AND_OBSERVATION_1",
+  "Exposure": "PROJECT_EXPOSED_CONDITIONAL_DEVELOPMENT",
+  "SourceProtocolSha256": "2ac5e2da090ce4c69f4791affc54424766749630e16522e6672285ad46c98a3c",
+  "EvidenceManifestSha256": "bd4a063bef5876e649876faea5a4b602b8852483774f48c99881131e8b4082b9",
+  "InitialFitFrom": 1792972800000,
+  "TestBoundaries": [1794182400000, 1794787200000, 1795392000000],
+  "Stresses": [0, 0.5, 1],
+  "StopWitness": {
+    "Symbol": "NatGas", "Side": -1, "OriginalFillAt": 1795015515000,
+    "OriginalCloseAt": 1795019115000, "StopDistance": 0.014, "FirstTradeTouchAt": 1795016231791
+  },
+  "Calibrations": [
+    {"Id":"GRID_STRICT", "Profile":{"CaptureStudyDiagnostics":true}},
+    {"Id":"GRID_AVAILABLE", "Profile":{"CaptureStudyDiagnostics":true,"UseAvailableContext":true}},
+    {"Id":"GRID_TARGET_15", "Profile":{"CaptureStudyDiagnostics":true,"UseAvailableContext":true,"DistributionTargetRanges":1.5}},
+    {"Id":"GRID_TARGET_25", "Profile":{"CaptureStudyDiagnostics":true,"UseAvailableContext":true,"DistributionTargetRanges":2.5}},
+    {"Id":"GRID_RESERVE_125", "Profile":{"CaptureStudyDiagnostics":true,"UseAvailableContext":true,"StopReserveMultiplier":1.25}},
+    {"Id":"TICK_FUNDED", "Profile":{"CaptureStudyDiagnostics":true,"UseAvailableContext":true,"ModeledStopLatencyMs":100}},
+    {"Id":"TICK_OBSERVED", "Profile":{"CaptureStudyDiagnostics":true,"UseAvailableContext":true,"ModeledStopLatencyMs":100,"LearnFromOpportunityEpisodes":true}},
+    {"Id":"TICK_STRUCTURE_OBSERVED", "Profile":{"CaptureStudyDiagnostics":true,"UseAvailableContext":true,"ModeledStopLatencyMs":100,"LearnFromOpportunityEpisodes":true,"IncludeRecoveredStructure":true}},
+    {"Id":"TICK_SLOW", "Profile":{"CaptureStudyDiagnostics":true,"UseAvailableContext":true,"ModeledStopLatencyMs":1000,"LearnFromOpportunityEpisodes":true}},
+    {"Id":"TICK_RESERVE_125", "Profile":{"CaptureStudyDiagnostics":true,"UseAvailableContext":true,"ModeledStopLatencyMs":100,"StopReserveMultiplier":1.25,"LearnFromOpportunityEpisodes":true}}
+  ],
+  "Trials": [
+    {"Id":"CASH", "Policy":"EUR_GENERAL_CASH", "Calibration":"GRID_AVAILABLE"},
+    {"Id":"GRID_PROBE", "Policy":"EUR_GENERAL_PROBE", "Calibration":"GRID_AVAILABLE"},
+    {"Id":"GRID_STRICT_SELECT", "Policy":"EUR_GENERAL_SELECT", "Calibration":"GRID_STRICT"},
+    {"Id":"TICK_PROBE", "Policy":"EUR_GENERAL_PROBE", "Calibration":"TICK_FUNDED"},
+    {"Id":"TICK_FUNDED_SELECT", "Policy":"EUR_GENERAL_SELECT", "Calibration":"TICK_FUNDED"},
+    {"Id":"TICK_OBSERVED_SELECT", "Policy":"EUR_GENERAL_SELECT", "Calibration":"TICK_OBSERVED"},
+    {"Id":"TICK_OBSERVED_POOLED", "Policy":"EUR_GENERAL_POOLED", "Calibration":"TICK_OBSERVED"},
+    {"Id":"TICK_STRUCTURE_PROBE", "Policy":"EUR_GENERAL_PROBE", "Calibration":"TICK_STRUCTURE_OBSERVED"},
+    {"Id":"TICK_STRUCTURE_SELECT", "Policy":"EUR_GENERAL_SELECT", "Calibration":"TICK_STRUCTURE_OBSERVED"},
+    {"Id":"TICK_SLOW_PROBE", "Policy":"EUR_GENERAL_PROBE", "Calibration":"TICK_SLOW"},
+    {"Id":"TICK_RESERVE_125_PROBE", "Policy":"EUR_GENERAL_PROBE", "Calibration":"TICK_RESERVE_125"}
+  ]
+}

@@ -262,6 +262,12 @@ public sealed partial class NativeUnifiedPortfolioEngine
            plan.Side*(prior.Target-execution)<=0m)
             return null;
         var q=observed.Quote;
+        if(ModelsNativeStops && NativeExecutableEconomics.TradeStopReached(plan.Side,
+            plan.Side>0?q.Bid:q.Ask,prior.Stop))
+        {
+            Count("EUR_FILL_STOP_ALREADY_MARKETABLE");
+            return null;
+        }
         if((fundingReserves is null&&cpe1UnreconciledFunding) || !EurFrameFollows(observed,intent.At,q.At))
             return null; // No late fill after a missing M5 source clock.
         if(OwnerEur && EurMargin(observed,plan.Side,plan.Units,q.At) is null)return null;
@@ -375,7 +381,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
         var capital=Cpe1FundingCapital(book,frame);
         if((capital?.MaximumSampledFundingAdjustedDrawdown??book.MaximumSampledDrawdown)>=.28m)
             return (plan,new("INTEGRATED_CPE1_GLOBAL_DD_PROTECTION",position.Units));
-        if(NativeExecutableEconomics.TradeStopReached(side,sidePrice,geometry.Stop))
+        if(!ModelsNativeStops && NativeExecutableEconomics.TradeStopReached(side,sidePrice,geometry.Stop))
             return (plan,new("INTEGRATED_CPE1_OBSERVED_STRUCTURAL_STOP",position.Units));
         var bars=market.M15.Where(x=>x.CloseAt<frame.At).TakeLast(2).ToArray();
         if(bars.Length<2||bars[0].CloseAt!=bars[1].OpenAt)
