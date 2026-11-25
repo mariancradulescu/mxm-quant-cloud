@@ -7,7 +7,7 @@ using Mxm.Core;
 const long day=86400000L;
 const long start=1700006400000L;
 var results=new List<object>();
-foreach(int size in new[]{256,1024,4096})
+foreach(int size in (args.Contains("--small")?new[]{256}:new[]{256,1024,4096}))
 {
     var rng=new Random(479+size);
     var rows=Enumerable.Range(0,size).Select(i=>
