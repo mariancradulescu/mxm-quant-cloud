@@ -1,0 +1,373 @@
+{
+  "Study": "EUR_DENSE_FUNDED_2",
+  "Earlier": {
+    "InitialFitFrom": 1685318400000,
+    "TestBoundaries": [
+      1690761600000,
+      1702857600000,
+      1705276800000,
+      1717372800000
+    ],
+    "Trials": [
+      "CASH_CONTROL",
+      "FINANCEABLE_PROBE",
+      "PREDICTIVE_UTILITY_BROAD",
+      "PREDICTIVE_UTILITY_GEOMETRY",
+      "PREDICTIVE_UTILITY_GEOMETRY_FEEDBACK"
+    ],
+    "SymbolIds": [
+      1,
+      41,
+      127,
+      249
+    ],
+    "Archives": [
+      {
+        "Folder": "earlier-annual",
+        "Run": 45584495052,
+        "Artifact": 15006989686,
+        "ArchiveSha256": "ed2ead1e9a114425b1901938b7a921b3c30b8a506bf62905d90313e3dbe01d17"
+      },
+      {
+        "Folder": "earlier-monetary",
+        "Run": 45594894360,
+        "Artifact": 15012084572,
+        "ArchiveSha256": "01e4116f83f3f5ee01a236e64b19ab49a6e1d2d26172a4ec951fc4b597debf43"
+      },
+      {
+        "Folder": "dense/dense-monetary-protected-EURUSD-W06_THU",
+        "Run": 45708565411,
+        "Artifact": 15065998617,
+        "ArchiveSha256": "197e5753f07865fd07837414992ffc6b85a776d3de2e8ed6474b553091fee6d7"
+      },
+      {
+        "Folder": "dense/dense-monetary-protected-EURUSD-W06_TUE",
+        "Run": 45708565411,
+        "Artifact": 15066701643,
+        "ArchiveSha256": "e625f82491ac5bf2e50a8e87cf2520a1e0d0eaed13580601a48cd8e61f993833"
+      },
+      {
+        "Folder": "dense/dense-monetary-protected-EURUSD-W32_THU",
+        "Run": 45708565411,
+        "Artifact": 15066816909,
+        "ArchiveSha256": "f5611008244512f2aa2b098d397ce8f18aa0c9732ac8ad0364923dc7269132f5"
+      },
+      {
+        "Folder": "dense/dense-monetary-protected-EURUSD-W32_TUE",
+        "Run": 45708565411,
+        "Artifact": 15066781775,
+        "ArchiveSha256": "c4de6b6dd9ab35c87425bc30ff254bde97955c5504e29cf2825124f35536557a"
+      },
+      {
+        "Folder": "dense/dense-monetary-protected-SpotBrent-W06_THU",
+        "Run": 45708565411,
+        "Artifact": 15066024608,
+        "ArchiveSha256": "3ca2917a21685c5a426932d2e48ce1bef317f956c8135a9614d700928463546a"
+      },
+      {
+        "Folder": "dense/dense-monetary-protected-SpotBrent-W06_TUE",
+        "Run": 45708565411,
+        "Artifact": 15066797924,
+        "ArchiveSha256": "28f30dcf2ca83aa458d96907e21b99b926cc3b6e7fccbb8efc60c409c34c661f"
+      },
+      {
+        "Folder": "dense/dense-monetary-protected-SpotBrent-W32_THU",
+        "Run": 45708565411,
+        "Artifact": 15066238595,
+        "ArchiveSha256": "8687f65904816cd6f5082caa4b04ac73a248df84d21bb415ed3b386a39e02f9b"
+      },
+      {
+        "Folder": "dense/dense-monetary-protected-SpotBrent-W32_TUE",
+        "Run": 45708565411,
+        "Artifact": 15067935607,
+        "ArchiveSha256": "6f54b297590108c3ede77bc8d3446f2e19761201d3def769c4a6ecebc3e1ba06"
+      },
+      {
+        "Folder": "dense/dense-monetary-protected-US500-W06_THU",
+        "Run": 45708565411,
+        "Artifact": 15066063432,
+        "ArchiveSha256": "1387213372a1329e070e0f2db6e8f5871b78528ddf17bf8ea8814df10e3477cb"
+      },
+      {
+        "Folder": "dense/dense-monetary-protected-US500-W06_TUE",
+        "Run": 45708565411,
+        "Artifact": 15066097657,
+        "ArchiveSha256": "1382a412597945cf8e1d0c1132cb911ce54ac5066528d462e309877dab695999"
+      },
+      {
+        "Folder": "dense/dense-monetary-protected-US500-W32_THU",
+        "Run": 45708565411,
+        "Artifact": 15066707565,
+        "ArchiveSha256": "77505cd57bc5489f3d636587fcb194931183b80ed24cf77976459082665f20ce"
+      },
+      {
+        "Folder": "dense/dense-monetary-protected-US500-W32_TUE",
+        "Run": 45708565411,
+        "Artifact": 15067355561,
+        "ArchiveSha256": "5a22e5d44e30b449b48120eb59c22aa04f9a0dbcaa9af9c3364daa401cd60ba1"
+      },
+      {
+        "Folder": "dense/dense-monetary-protected-XAUUSD-W06_THU",
+        "Run": 45708565411,
+        "Artifact": 15067805304,
+        "ArchiveSha256": "7a0e993b2aa1d73e5f43c134295751f3028d2510b6f46faf9044a0b481fb2da7"
+      },
+      {
+        "Folder": "dense/dense-monetary-protected-XAUUSD-W06_TUE",
+        "Run": 45708565411,
+        "Artifact": 15065304211,
+        "ArchiveSha256": "1edd361ad2c4b1e5965778cdbaaa6bb6f9b33b0ff571fa3f78e98386d741a4ac"
+      },
+      {
+        "Folder": "dense/dense-monetary-protected-XAUUSD-W32_THU",
+        "Run": 45708565411,
+        "Artifact": 15067455980,
+        "ArchiveSha256": "ba4d7236dd1e52ce344c897978b2f7ad001226f0292beccb218b4022141e2693"
+      },
+      {
+        "Folder": "dense/dense-monetary-protected-XAUUSD-W32_TUE",
+        "Run": 45708565411,
+        "Artifact": 15066548548,
+        "ArchiveSha256": "dcea27024ba0f0d8d6ef96595f9f7d116dbbfb0caa7e0696af364bf9913f1282"
+      }
+    ]
+  },
+  "DenseRun": 45708565411,
+  "DenseArchives": [
+    {
+      "Folder": "dense/dense-monetary-protected-EURUSD-W06_THU",
+      "Run": 45708565411,
+      "Artifact": 15065998617,
+      "ArchiveSha256": "197e5753f07865fd07837414992ffc6b85a776d3de2e8ed6474b553091fee6d7",
+      "Name": "dense-monetary-protected-EURUSD-W06_THU"
+    },
+    {
+      "Folder": "dense/dense-monetary-protected-EURUSD-W06_TUE",
+      "Run": 45708565411,
+      "Artifact": 15066701643,
+      "ArchiveSha256": "e625f82491ac5bf2e50a8e87cf2520a1e0d0eaed13580601a48cd8e61f993833",
+      "Name": "dense-monetary-protected-EURUSD-W06_TUE"
+    },
+    {
+      "Folder": "dense/dense-monetary-protected-EURUSD-W32_THU",
+      "Run": 45708565411,
+      "Artifact": 15066816909,
+      "ArchiveSha256": "f5611008244512f2aa2b098d397ce8f18aa0c9732ac8ad0364923dc7269132f5",
+      "Name": "dense-monetary-protected-EURUSD-W32_THU"
+    },
+    {
+      "Folder": "dense/dense-monetary-protected-EURUSD-W32_TUE",
+      "Run": 45708565411,
+      "Artifact": 15066781775,
+      "ArchiveSha256": "c4de6b6dd9ab35c87425bc30ff254bde97955c5504e29cf2825124f35536557a",
+      "Name": "dense-monetary-protected-EURUSD-W32_TUE"
+    },
+    {
+      "Folder": "dense/dense-monetary-protected-SpotBrent-W06_THU",
+      "Run": 45708565411,
+      "Artifact": 15066024608,
+      "ArchiveSha256": "3ca2917a21685c5a426932d2e48ce1bef317f956c8135a9614d700928463546a",
+      "Name": "dense-monetary-protected-SpotBrent-W06_THU"
+    },
+    {
+      "Folder": "dense/dense-monetary-protected-SpotBrent-W06_TUE",
+      "Run": 45708565411,
+      "Artifact": 15066797924,
+      "ArchiveSha256": "28f30dcf2ca83aa458d96907e21b99b926cc3b6e7fccbb8efc60c409c34c661f",
+      "Name": "dense-monetary-protected-SpotBrent-W06_TUE"
+    },
+    {
+      "Folder": "dense/dense-monetary-protected-SpotBrent-W32_THU",
+      "Run": 45708565411,
+      "Artifact": 15066238595,
+      "ArchiveSha256": "8687f65904816cd6f5082caa4b04ac73a248df84d21bb415ed3b386a39e02f9b",
+      "Name": "dense-monetary-protected-SpotBrent-W32_THU"
+    },
+    {
+      "Folder": "dense/dense-monetary-protected-SpotBrent-W32_TUE",
+      "Run": 45708565411,
+      "Artifact": 15067935607,
+      "ArchiveSha256": "6f54b297590108c3ede77bc8d3446f2e19761201d3def769c4a6ecebc3e1ba06",
+      "Name": "dense-monetary-protected-SpotBrent-W32_TUE"
+    },
+    {
+      "Folder": "dense/dense-monetary-protected-US500-W06_THU",
+      "Run": 45708565411,
+      "Artifact": 15066063432,
+      "ArchiveSha256": "1387213372a1329e070e0f2db6e8f5871b78528ddf17bf8ea8814df10e3477cb",
+      "Name": "dense-monetary-protected-US500-W06_THU"
+    },
+    {
+      "Folder": "dense/dense-monetary-protected-US500-W06_TUE",
+      "Run": 45708565411,
+      "Artifact": 15066097657,
+      "ArchiveSha256": "1382a412597945cf8e1d0c1132cb911ce54ac5066528d462e309877dab695999",
+      "Name": "dense-monetary-protected-US500-W06_TUE"
+    },
+    {
+      "Folder": "dense/dense-monetary-protected-US500-W32_THU",
+      "Run": 45708565411,
+      "Artifact": 15066707565,
+      "ArchiveSha256": "77505cd57bc5489f3d636587fcb194931183b80ed24cf77976459082665f20ce",
+      "Name": "dense-monetary-protected-US500-W32_THU"
+    },
+    {
+      "Folder": "dense/dense-monetary-protected-US500-W32_TUE",
+      "Run": 45708565411,
+      "Artifact": 15067355561,
+      "ArchiveSha256": "5a22e5d44e30b449b48120eb59c22aa04f9a0dbcaa9af9c3364daa401cd60ba1",
+      "Name": "dense-monetary-protected-US500-W32_TUE"
+    },
+    {
+      "Folder": "dense/dense-monetary-protected-XAUUSD-W06_THU",
+      "Run": 45708565411,
+      "Artifact": 15067805304,
+      "ArchiveSha256": "7a0e993b2aa1d73e5f43c134295751f3028d2510b6f46faf9044a0b481fb2da7",
+      "Name": "dense-monetary-protected-XAUUSD-W06_THU"
+    },
+    {
+      "Folder": "dense/dense-monetary-protected-XAUUSD-W06_TUE",
+      "Run": 45708565411,
+      "Artifact": 15065304211,
+      "ArchiveSha256": "1edd361ad2c4b1e5965778cdbaaa6bb6f9b33b0ff571fa3f78e98386d741a4ac",
+      "Name": "dense-monetary-protected-XAUUSD-W06_TUE"
+    },
+    {
+      "Folder": "dense/dense-monetary-protected-XAUUSD-W32_THU",
+      "Run": 45708565411,
+      "Artifact": 15067455980,
+      "ArchiveSha256": "ba4d7236dd1e52ce344c897978b2f7ad001226f0292beccb218b4022141e2693",
+      "Name": "dense-monetary-protected-XAUUSD-W32_THU"
+    },
+    {
+      "Folder": "dense/dense-monetary-protected-XAUUSD-W32_TUE",
+      "Run": 45708565411,
+      "Artifact": 15066548548,
+      "ArchiveSha256": "dcea27024ba0f0d8d6ef96595f9f7d116dbbfb0caa7e0696af364bf9913f1282",
+      "Name": "dense-monetary-protected-XAUUSD-W32_TUE"
+    }
+  ],
+  "Scope": "PROJECT_EXPOSED_CONDITIONAL_CURRENT_TERMS_NO_HISTORICAL_CERTIFICATION",
+  "ExpectedVerifiedPartitions": 16,
+  "ExpectedVerifiedRequests": 810,
+  "ExpectedVerifiedMarks": 4177,
+  "PredictiveControl": {
+    "Run": 45708420980,
+    "Artifact": 15066903746,
+    "ArchiveSha256": "3a618a44c3acd53f83b4ab36aef61d530ba9ee4b2d7c19ae5f112cab786105b8"
+  },
+  "VerifiedArchives": [
+    {
+      "Folder": "dense/dense-monetary-verified-EURUSD-W06_THU",
+      "Run": 45708565411,
+      "Artifact": 15066859079,
+      "ArchiveSha256": "4466acc8bb00d73139121564a3c043f12222358d5896a000007e7ac6ad601641",
+      "Name": "dense-monetary-verified-EURUSD-W06_THU"
+    },
+    {
+      "Folder": "dense/dense-monetary-verified-EURUSD-W06_TUE",
+      "Run": 45708565411,
+      "Artifact": 15067965705,
+      "ArchiveSha256": "210b277c993628dea7046004ec9876d8d173beb70c29bc165db7ea28f9a6ffd7",
+      "Name": "dense-monetary-verified-EURUSD-W06_TUE"
+    },
+    {
+      "Folder": "dense/dense-monetary-verified-EURUSD-W32_THU",
+      "Run": 45708565411,
+      "Artifact": 15067606251,
+      "ArchiveSha256": "317f25ba3c6ffbc3661d2690aeec4ee5ee898b51bdd121e45b2ab0de92db1034",
+      "Name": "dense-monetary-verified-EURUSD-W32_THU"
+    },
+    {
+      "Folder": "dense/dense-monetary-verified-EURUSD-W32_TUE",
+      "Run": 45708565411,
+      "Artifact": 15066224352,
+      "ArchiveSha256": "84a2a98fe860d3efd206383306d4322d44d1cadd8f38cbc307e834112edab452",
+      "Name": "dense-monetary-verified-EURUSD-W32_TUE"
+    },
+    {
+      "Folder": "dense/dense-monetary-verified-SpotBrent-W06_THU",
+      "Run": 45708565411,
+      "Artifact": 15068170011,
+      "ArchiveSha256": "28378aafbd44bd3e7a57d49766b37d9936a6aa78c751360c893580e277e83631",
+      "Name": "dense-monetary-verified-SpotBrent-W06_THU"
+    },
+    {
+      "Folder": "dense/dense-monetary-verified-SpotBrent-W06_TUE",
+      "Run": 45708565411,
+      "Artifact": 15066778638,
+      "ArchiveSha256": "49e3dddeb80cd16ad795018cdf020d8ffd89317f8f21ceaeae53e4e39181b7b3",
+      "Name": "dense-monetary-verified-SpotBrent-W06_TUE"
+    },
+    {
+      "Folder": "dense/dense-monetary-verified-SpotBrent-W32_THU",
+      "Run": 45708565411,
+      "Artifact": 15066483351,
+      "ArchiveSha256": "a18736f78a6d7a5ea05a84dbe8dba2759ebad558125dfe22e835639fd503c508",
+      "Name": "dense-monetary-verified-SpotBrent-W32_THU"
+    },
+    {
+      "Folder": "dense/dense-monetary-verified-SpotBrent-W32_TUE",
+      "Run": 45708565411,
+      "Artifact": 15068195094,
+      "ArchiveSha256": "affdaa6b149e0ca12ece3cd0941ba6da48a613025c05cbf553cc41346511cf4b",
+      "Name": "dense-monetary-verified-SpotBrent-W32_TUE"
+    },
+    {
+      "Folder": "dense/dense-monetary-verified-US500-W06_THU",
+      "Run": 45708565411,
+      "Artifact": 15067326879,
+      "ArchiveSha256": "2f2d8abcd0817826e4d8c0112499fdc712a2f856a768f165e7ed1e74aeaae34d",
+      "Name": "dense-monetary-verified-US500-W06_THU"
+    },
+    {
+      "Folder": "dense/dense-monetary-verified-US500-W06_TUE",
+      "Run": 45708565411,
+      "Artifact": 15066204865,
+      "ArchiveSha256": "ca77525d52837ec136ecc1abfc77fd24577700112f0fb0482fd2e9174574b146",
+      "Name": "dense-monetary-verified-US500-W06_TUE"
+    },
+    {
+      "Folder": "dense/dense-monetary-verified-US500-W32_THU",
+      "Run": 45708565411,
+      "Artifact": 15066294832,
+      "ArchiveSha256": "ce059d5ba6472f0c78f638279856af19fd7bfd95f486e695e202811830f049a6",
+      "Name": "dense-monetary-verified-US500-W32_THU"
+    },
+    {
+      "Folder": "dense/dense-monetary-verified-US500-W32_TUE",
+      "Run": 45708565411,
+      "Artifact": 15067686192,
+      "ArchiveSha256": "c009889d00165895f177ec0ac3e72c2d8cc3b85c1aff7df2f52c4f59e312f237",
+      "Name": "dense-monetary-verified-US500-W32_TUE"
+    },
+    {
+      "Folder": "dense/dense-monetary-verified-XAUUSD-W06_THU",
+      "Run": 45708565411,
+      "Artifact": 15067766135,
+      "ArchiveSha256": "a68c1c4917bd72d534642cf4093acf5c3a215d68136a1823a7ad32292dc506cb",
+      "Name": "dense-monetary-verified-XAUUSD-W06_THU"
+    },
+    {
+      "Folder": "dense/dense-monetary-verified-XAUUSD-W06_TUE",
+      "Run": 45708565411,
+      "Artifact": 15067143739,
+      "ArchiveSha256": "b63a301ca93a684cf29e0ce533bf63db75cdef51e9a0b29914e99cbb68bfcf6d",
+      "Name": "dense-monetary-verified-XAUUSD-W06_TUE"
+    },
+    {
+      "Folder": "dense/dense-monetary-verified-XAUUSD-W32_THU",
+      "Run": 45708565411,
+      "Artifact": 15066789339,
+      "ArchiveSha256": "c69ae349f7f204aacb0a9fa0aa5e9ba4ccf55a76562a6b0c1cbfab0bc8ee2e3e",
+      "Name": "dense-monetary-verified-XAUUSD-W32_THU"
+    },
+    {
+      "Folder": "dense/dense-monetary-verified-XAUUSD-W32_TUE",
+      "Run": 45708565411,
+      "Artifact": 15066254565,
+      "ArchiveSha256": "acc47ff97f1051a84203fd65eedd192e52a3f9706255247159f36c31f7611f7c",
+      "Name": "dense-monetary-verified-XAUUSD-W32_TUE"
+    }
+  ]
+}
