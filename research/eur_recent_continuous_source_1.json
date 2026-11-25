@@ -1,0 +1,66 @@
+{
+  "Study": "EUR_RECENT_CONTINUOUS_SOURCE_1",
+  "Exposure": "DEVELOPMENT_ONLY_NO_INDEPENDENT_CLAIM",
+  "PriorRun": 45568679560,
+  "PriorCensusSha256": "0fece43b54d788666fa139141adbf3f9cd07d708b3665adc704cafd39cdf0882",
+  "BreadthRun": 45698476242,
+  "ExistingAdditional": "AAPL.US",
+  "Base": [
+    "EURUSD",
+    "GBPUSD",
+    "XAUUSD",
+    "US500",
+    "Coffee",
+    "BTCUSD",
+    "SpotBrent",
+    "GOOG.US-24",
+    "AAXJ.US",
+    "GER40-F",
+    "EURJPY",
+    "CN50",
+    "Sugar",
+    "LTCUSD",
+    "NatGas",
+    "AMD.US",
+    "AAPL.US"
+  ],
+  "New": [
+    "XAGUSD",
+    "Cotton",
+    "ETHUSD",
+    "SpotCrude"
+  ],
+  "Windows": [
+    {
+      "Id": "OCT26",
+      "From": "2026-10-26",
+      "To": "2026-11-02"
+    },
+    {
+      "Id": "NOV02",
+      "From": "2026-11-02",
+      "To": "2026-11-09"
+    },
+    {
+      "Id": "NOV09",
+      "From": "2026-11-09",
+      "To": "2026-11-16"
+    },
+    {
+      "Id": "NOV16",
+      "From": "2026-11-16",
+      "To": "2026-11-23"
+    },
+    {
+      "Id": "NOV23",
+      "From": "2026-11-23",
+      "To": "2026-11-25"
+    }
+  ],
+  "WarmFrom": "2026-10-05",
+  "PageHours": 4,
+  "PerPartitionMaxRequests": 1000,
+  "PerPartitionSeconds": 1080,
+  "PerSidePageBudget": 450,
+  "SelectionBasis": "Preserve all seventeen prior economic markets; first four pending names of verified original class-balanced census. New markets get overlapping windows, existing markets adjacent latest closed days. Conversion routes added from official metadata; no performance filter."
+}
