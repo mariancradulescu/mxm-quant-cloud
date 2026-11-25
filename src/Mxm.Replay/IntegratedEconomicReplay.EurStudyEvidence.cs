@@ -23,11 +23,14 @@ internal static partial class IntegratedEconomicReplay
         public void Advance(Ucp1Frame frame)
         {
             observedThrough=frame.At;
+            using (NativeEconomicProfiler.Measure("observer.active_episodes"))
             foreach(var (key,episode) in active.ToArray())
             {
-                protection.Between(episode,frame.At-1,source,markets,scenario,stress);
-                source.Advance(episode,frame with {ObservationEpisodeOnly=true,
-                    Protection=protection.GridCoverage(episode,frame.At)},markets,scenario,stress);
+                using (NativeEconomicProfiler.Measure("observer.tick_protection"))
+                    protection.Between(episode,frame.At-1,source,markets,scenario,stress);
+                using (NativeEconomicProfiler.Measure("observer.episode_advance"))
+                    source.Advance(episode,frame with {ObservationEpisodeOnly=true,
+                        Protection=protection.GridCoverage(episode,frame.At)},markets,scenario,stress);
                 var book=episode.ModelSummary;
                 if(book.OpenPositions+book.PendingIntents>0)continue;
                 active.Remove(key);
@@ -54,6 +57,7 @@ internal static partial class IntegratedEconomicReplay
             // symbol at a time. Co-moving markets still share calendar days.
             bool broad=profile.ObserveFamilyDirectionsOnClosedBars;
             if(!broad&&frame.At%3_600_000L!=EurOffset)return;
+            using var signalProfile=NativeEconomicProfiler.Measure("observer.discover_and_admit");
             var describe=ResearchEpisode();
             foreach(var market in frame.Markets)
             {
@@ -70,7 +74,8 @@ internal static partial class IntegratedEconomicReplay
                     if(active.ContainsKey(key))
                     {Count("SAME_FAMILY_DIRECTION_OVERLAP_EXCLUDED");continue;}
                     var episode=ResearchEpisode();
-                    source.Advance(episode,frame with {ObservationEpisodeOnly=true,OpportunityToObserve=chosen},markets,scenario,stress);
+                    using (NativeEconomicProfiler.Measure("observer.admission"))
+                        source.Advance(episode,frame with {ObservationEpisodeOnly=true,OpportunityToObserve=chosen},markets,scenario,stress);
                     if(episode.ModelSummary.PendingIntents>0)
                     {
                         active.Add(key,episode);
@@ -87,8 +92,12 @@ internal static partial class IntegratedEconomicReplay
             maxConcurrentEpisodes=Math.Max(maxConcurrentEpisodes,active.Count);
         }
 
+        public object Progress()=>new {ObservedThrough=observedThrough,Signals=results.GetValueOrDefault("SIGNALS"),
+            MaturedLabels=labels.Count,ActiveEpisodes=active.Count};
+
         public NativeEurCalibration Export()
         {
+            using var exportProfile=NativeEconomicProfiler.Measure("observer.export");
             var matured=labels.OrderBy(x=>x.ClosedAt).ThenBy(x=>x.PositionId,StringComparer.Ordinal).ToArray();
             return new NativeEurCalibration(observedThrough,GeneralSha(JsonSerializer.SerializeToUtf8Bytes(matured,Json)),matured)
             {
@@ -109,6 +118,7 @@ internal static partial class IntegratedEconomicReplay
     static object EconomicStudyDetails(NativeUnifiedPortfolioEngine book,EerEvidence source,
         Dictionary<string,EerStream> markets,NativeEurCalibration? calibration=null)
     {
+        using var detailsProfile=NativeEconomicProfiler.Measure("replay.economic_details");
         var trips=book.CompleteModelTrips;
         var reconciled=book.ReconciledModelEpisodes.ToDictionary(x=>x.PositionId,StringComparer.Ordinal);
         var included=calibration?.Outcomes.ToDictionary(x=>x.PositionId,StringComparer.Ordinal);
