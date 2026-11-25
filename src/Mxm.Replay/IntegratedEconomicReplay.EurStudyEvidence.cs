@@ -97,7 +97,8 @@ internal static partial class IntegratedEconomicReplay
         var trips=book.CompleteModelTrips;
         var reconciled=book.ReconciledModelEpisodes.ToDictionary(x=>x.PositionId,StringComparer.Ordinal);
         var included=calibration?.Outcomes.ToDictionary(x=>x.PositionId,StringComparer.Ordinal);
-        var outstanding=book.FundingExposureSnapshot().Where(w=>!w.ExactInLedger).Select(w=>
+        var exposures=book.FundingExposureSnapshot();
+        var outstanding=exposures.Where(w=>!w.ExactInLedger).Select(w=>
         {
             var terms=markets[w.Symbol].Source.Market.DatedDevelopment!;
             var contract=terms.Contract;
@@ -117,10 +118,21 @@ internal static partial class IntegratedEconomicReplay
         }).ToArray();
         var admissions=book.OriginalModelEvents.Where(e=>e.Kind=="REQUEST_OPEN").ToArray();
         var fills=book.OriginalModelEvents.Where(e=>e.Kind=="OPEN_FILL").ToDictionary(e=>e.PositionId,StringComparer.Ordinal);
+        var conditional=new List<object>();
+        if(book.UsesClosedSessionFundingQuotes)
+            foreach(var window in exposures.Where(x=>x.ExactInLedger))
+            {
+                var terms=markets[window.Symbol].Source.Market.DatedDevelopment!;
+                var basis=new Dictionary<(string Symbol,long ChargeAt),long>();
+                long through=window.ClosedAt??book.LastObservationAt;
+                if(source.ModeledFunding(terms,window,through,basis) is decimal amount && basis.Count>0)
+                    conditional.Add(new {window.PositionId,window.Symbol,window.Side,window.FromExclusive,window.ClosedAt,
+                        AmountAtOriginalScale=amount,ScenarioBookedEur=window.BookedSignedEur,QuoteBasis=StaleRolloverWitness(basis)});
+            }
         return new
         {
             MarginMaxima=book.EurMarginMaxima,MarginExceedances=book.EurMarginExceedances,
-            OutstandingFunding=outstanding,Activity=book.EurDecisionActivity,
+            OutstandingFunding=outstanding,ClosedSessionFunding=conditional,Activity=book.EurDecisionActivity,
             EquityPath=book.CommonBookEquityPath.Select(x=>new
             {
                 x.At,x.CashEur,EquityEur=x.FundingCapital?.ConditionalEquityEur,x.UsedMarginEur,
@@ -151,4 +163,8 @@ internal static partial class IntegratedEconomicReplay
             })
         };
     }
+
+    static object StaleRolloverWitness(Dictionary<(string Symbol,long ChargeAt),long> basis) => basis
+        .OrderBy(p=>p.Key.ChargeAt).ThenBy(p=>p.Key.Symbol,StringComparer.Ordinal)
+        .Select(p=>new {p.Key.Symbol,p.Key.ChargeAt,LastOfficialSessionClock=p.Value}).ToArray();
 }

@@ -82,7 +82,7 @@ def read_archives(key,work):
             add(ids[q.symbolId],tf,rows)
     return bars,add,conflicts,proof
 
-def main(recovery=False, diagnosis=None, development=None, tick_protection=False):
+def main(recovery=False, diagnosis=None, development=None, tick_protection=False, session_funding=False):
     if recovery:
         from . import owner_eer1_recovery as recover
     run=recover.ORIGINAL_RUN if recovery else os.environ["GITHUB_RUN_ID"]
@@ -229,6 +229,15 @@ def main(recovery=False, diagnosis=None, development=None, tick_protection=False
                 grid=build_clock_grid(info["fields"],eer.WARM,eer.END+7*eer.DAY)
                 market.update(ScheduledClocks=grid["openClocks"],AmbiguousCalendarClocks=grid["ambiguousClocks"],
                               CalendarStatus=grid["status"])
+                if session_funding:
+                    closed=[]
+                    for minute in eer.charge_clocks(meta["terms"]):
+                        offset=minute*60_000
+                        calendar=build_clock_grid(info["fields"],eer.START,eer.END,step=eer.DAY,offset=offset)
+                        if calendar["openClocks"] is not None:
+                            scheduled=set(calendar["openClocks"]) | set(calendar["ambiguousClocks"])
+                            closed.extend(at for at in range(eer.START+offset,eer.END,eer.DAY) if at not in scheduled)
+                    market["ClosedRolloverClocks"]=sorted(closed)
         with os.fdopen(os.open(path,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600),"wb") as private:
             private.write(src.canonical(payload))
         env={k:v for k,v in os.environ.items() if k!="R3_CUSTODY_PRIVATE_KEY_PEM"}
@@ -266,6 +275,8 @@ if __name__=="__main__":
         main(recovery=True,development=(Path(args[1]),Path(args[2])))
     elif len(args)==3 and args[0]=="--protection-development":
         main(recovery=True,development=(Path(args[1]),Path(args[2])),tick_protection=True)
+    elif len(args)==3 and args[0]=="--session-funding-development":
+        main(recovery=True,development=(Path(args[1]),Path(args[2])),tick_protection=True,session_funding=True)
     elif len(args)==3 and args[0]=="--diagnose-source":
         main(recovery=True,diagnosis=(Path(args[1]),Path(args[2])))
     else:

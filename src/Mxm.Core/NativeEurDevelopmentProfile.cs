@@ -20,12 +20,15 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
     public bool ObserveIntentExecutionOnTicks { get; init; }
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
     public bool UseRecoveredLocalPayoff { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool ModelFundingAtPriorClosedSessionQuote { get; init; }
 
     internal string GeometryIdentity => FormattableString.Invariant(
         $"{UseAvailableContext}/{DistributionTargetRanges:G29}/{StopReserveMultiplier:G29}") +
         (ModeledStopLatencyMs is long latency ? FormattableString.Invariant($"/Trade/{latency}") : "") +
         (ObserveIntentExecutionOnTicks?"/TICK_INTENTS":"") +
-        (IncludeRecoveredStructure?"/RANGE_TRANSITION+EQUILIBRIUM_REPAIR":"");
+        (IncludeRecoveredStructure?"/RANGE_TRANSITION+EQUILIBRIUM_REPAIR":"") +
+        (ModelFundingAtPriorClosedSessionQuote?"/CLOSED_SESSION_FUNDING":"");
 
     internal void Verify()
     {

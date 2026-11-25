@@ -14,9 +14,11 @@ internal static partial class IntegratedEconomicReplay
         long InitialFitFrom,long[] TestBoundaries,decimal[] Stresses,HistoricalFit[] Calibrations,HistoricalTrial[] Trials)
     {
         public HistoricalStopWitness? StopWitness { get; init; }
+        public HistoricalFundingWitness[]? FundingWitnesses { get; init; }
     }
     sealed record HistoricalStopWitness(string Symbol,int Side,long OriginalFillAt,long OriginalCloseAt,
         decimal StopDistance,long FirstTradeTouchAt);
+    sealed record HistoricalFundingWitness(string PositionId,string Symbol,int Side,decimal Units,long FromExclusive,long ClosedAt);
 
     public static int RunHistoricalEur(string protocolPath,string sourcePath,string reportPath,string? protectionDirectory=null)
     {
@@ -49,7 +51,22 @@ internal static partial class IntegratedEconomicReplay
         bool explain=protection is not null;
         if(explain!=protocol.Calibrations.Any(p=>p.Profile.ModeledStopLatencyMs is not null)||
             explain!=(protocol.StopWitness is not null))throw new ArgumentException("HISTORICAL_PROTECTION_SOURCE_REQUIRED");
+        if(protocol.Calibrations.Any(p=>p.Profile.ModelFundingAtPriorClosedSessionQuote) &&
+            (protocol.FundingWitnesses is not { Length:>0 } || input.Markets.Any(m=>m.ClosedRolloverClocks is null)))
+            throw new ArgumentException("HISTORICAL_ROLLOVER_SCENARIO_REQUIRES_DATED_SESSION_EVIDENCE");
         var stopWitness=protection?.AuditWitness(protocol.StopWitness!);
+        var fundingWitnesses=protocol.FundingWitnesses?.Select(witness=>
+        {
+            var market=input.Markets.Single(m=>m.Market.Name==witness.Symbol);
+            var terms=market.Market.DatedDevelopment!;
+            var exposure=new NativeFundingExposure(witness.PositionId,witness.Symbol,witness.Side,witness.Units,
+                witness.FromExclusive,0m,false,null,witness.ClosedAt,null);
+            var basis=new Dictionary<(string Symbol,long ChargeAt),long>();
+            var strict=source.ModeledFunding(terms,exposure,witness.ClosedAt);
+            var conditional=source.ModeledFunding(terms,exposure,witness.ClosedAt,basis);
+            return new {Witness=witness,StrictEur=strict,ClosedSessionScenarioEur=conditional,
+                quoteBasis=StaleRolloverWitness(basis),ActualBrokerSettlementEur=(decimal?)null};
+        }).ToArray();
         var output=new List<object>();
         foreach(decimal stress in protocol.Stresses)
         {
@@ -145,7 +162,7 @@ internal static partial class IntegratedEconomicReplay
         };
         using var file=new FileStream(reportPath,FileMode.CreateNew,FileAccess.Write);
         if(explain)
-            JsonSerializer.Serialize(file,new {Summary=summary,StopWitness=stopWitness,
+            JsonSerializer.Serialize(file,new {Summary=summary,StopWitness=stopWitness,FundingWitnesses=fundingWitnesses,
                 Coverage="TICK_TRIGGER_AND_CONDITIONAL_FILL_WHERE_SUPPORTED_WITH_GRID_FALLBACK",
                 MarkCoverage="DECISION_AND_PROTECTION_EVENT_MARKS",BrokerFillEvidence=false},Json);
         else JsonSerializer.Serialize(file,summary,Json);

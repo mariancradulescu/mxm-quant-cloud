@@ -11,6 +11,7 @@ internal static partial class IntegratedEconomicReplay
     {
         public long[]? AmbiguousCalendarClocks { get; init; }
         public string? CalendarStatus { get; init; }
+        public long[]? ClosedRolloverClocks { get; init; }
     }
     sealed record EerInput(long Start,long FitEnd,long End,string ProtocolSha256,string EngineRevision,
         string EvidenceManifestSha256,long SourceAcquiredAt,EerMarket[] Markets,EerTape[] Tapes,
@@ -61,15 +62,35 @@ internal static partial class IntegratedEconomicReplay
         public EerInput Input;
         readonly Dictionary<string,Dictionary<long,SourceQuote>> tape;
         readonly Dictionary<string,Dictionary<long,DatedRolloverQuote>> funding;
+        readonly Dictionary<string,EerMarket> marketCalendars;
         public EerEvidence(EerInput input)
         {
             Input=input;
             tape=input.Tapes.ToDictionary(m=>m.Name,m=>m.Quotes.ToDictionary(q=>q.At),StringComparer.Ordinal);
             funding=input.Tapes.ToDictionary(m=>m.Name,m=>m.FundingQuotes.ToDictionary(q=>q.At),StringComparer.Ordinal);
+            marketCalendars=input.Markets.ToDictionary(m=>m.Market.Name,StringComparer.Ordinal);
         }
         public SourceQuote? At(string name,long at)=>tape.GetValueOrDefault(name)?.GetValueOrDefault(at);
         public DatedRolloverQuote? FundingAt(string name,long at)=>funding.GetValueOrDefault(name)?.GetValueOrDefault(at);
-        public NativeOriginalFxRate? ConversionAt(string asset,long at,bool charge,EerProtectionTape? protection=null)
+        SourceQuote? LastClosedSessionMark(string name,long at)
+        {
+            if(marketCalendars.GetValueOrDefault(name) is not { ClosedRolloverClocks:{ } closed,ScheduledClocks:{ } schedule } market ||
+               Array.BinarySearch(closed,at)<0)return null;
+            int previous=Array.BinarySearch(schedule,at);
+            if(previous>=0||~previous==0)return null;
+            long clock=schedule[(~previous)-1];
+            if(market.AmbiguousCalendarClocks is { Length:>0 } unclear)
+            {
+                int first=Array.BinarySearch(unclear,clock);
+                if(first<0)first=~first;
+                if(first<unclear.Length&&unclear[first]<=at)return null;
+            }
+            var prior=At(name,clock);
+            return prior is not null&&Fresh(prior,clock,30_000L)?prior:null;
+        }
+
+        public NativeOriginalFxRate? ConversionAt(string asset,long at,bool charge,EerProtectionTape? protection=null,
+            Dictionary<(string Symbol,long ChargeAt),long>? priorClocks=null)
         {
             if(asset=="EUR")return new(1m,1m,Array.Empty<string>());
             if(!Input.Routes.TryGetValue(asset,out var route)||route.Length is <1 or >4)return null;
@@ -82,9 +103,12 @@ internal static partial class IntegratedEconomicReplay
                 if(charge)
                 {
                     var q=FundingAt(h.Symbol,at);
-                    if(q is not {RequestedCoverage:true,Bid:>0m,Ask:>0m,BidAt:>0L,AskAt:>0L} ||
-                       q.BidAt>at||q.AskAt>at||at-q.BidAt>7_200_000L||at-q.AskAt>7_200_000L||q.Ask<q.Bid)return null;
-                    bid=q.Bid.Value;ask=q.Ask.Value;
+                    if(q is {RequestedCoverage:true,Bid:>0m,Ask:>0m,BidAt:>0L,AskAt:>0L} &&
+                       q.BidAt<=at&&q.AskAt<=at&&at-q.BidAt<=7_200_000L&&at-q.AskAt<=7_200_000L&&q.Ask>=q.Bid)
+                    {bid=q.Bid.Value;ask=q.Ask.Value;}
+                    else if(priorClocks is not null && LastClosedSessionMark(h.Symbol,at) is { } prior)
+                    {bid=prior.Bid;ask=prior.Ask;priorClocks[(h.Symbol,at)]=prior.At;}
+                    else return null;
                 }
                 else
                 {
@@ -105,11 +129,22 @@ internal static partial class IntegratedEconomicReplay
             return charge?new(credit,debit,route.Select(h=>h.Symbol).ToArray()):
                 NativeBrokerContractCosts.ComposeCausalQuoteToEur(asset,at,hops);
         }
-        public NativeObservedRolloverQuote Charge(string name,string asset,long at)
+        public NativeObservedRolloverQuote Charge(string name,string asset,long at,
+            Dictionary<(string Symbol,long ChargeAt),long>? priorClocks=null)
         {
             var q=FundingAt(name,at);
             decimal? bid=q is {RequestedCoverage:true,Bid:>0m,BidAt:>0L}&&q.BidAt<=at&&at-q.BidAt<=7_200_000L?q.Bid:null;
-            return new(bid,ConversionAt(asset,at,true));
+            if(bid is null && priorClocks is not null && LastClosedSessionMark(name,at) is { } prior)
+            {bid=prior.Bid;priorClocks[(name,at)]=prior.At;}
+            return new(bid,ConversionAt(asset,at,true,priorClocks:priorClocks));
+        }
+
+        public decimal? ModeledFunding(DatedEurTerms terms,NativeFundingExposure exposure,long through,
+            Dictionary<(string Symbol,long ChargeAt),long>? priorClocks=null)
+        {
+            try {return Financing(terms,exposure.FromExclusive,through,exposure.Side,exposure.Units,
+                charge=>Charge(exposure.Symbol,terms.Contract.QuoteAsset,charge,priorClocks));}
+            catch(ArgumentException){return null;}
         }
         public Ucp1MarketFrame? Frame(EerStream stream,long at,string scenario,decimal stress,bool general=false)
         {
@@ -164,15 +199,18 @@ internal static partial class IntegratedEconomicReplay
             {
                 long through=x.ClosedAt??frame.At;
                 if(through<=x.FromExclusive||markets[x.Symbol].Source.Market.DatedDevelopment is not { } terms)continue;
-                decimal? accrued;
-                try {accrued=Financing(terms,x.FromExclusive,through,x.Side,x.Units,
-                    charge=>Charge(x.Symbol,terms.Contract.QuoteAsset,charge));}
-                catch(ArgumentException){accrued=null;}
+                var prior=book.UsesClosedSessionFundingQuotes?new Dictionary<(string Symbol,long ChargeAt),long>():null;
+                decimal? accrued=ModeledFunding(terms,x,through,prior);
                 if(accrued is decimal amount)
+                {
+                    string provenance=prior is { Count:>0 }?"|CLOSED_SESSION|"+string.Join("|",prior
+                        .OrderBy(p=>p.Key.Symbol,StringComparer.Ordinal).ThenBy(p=>p.Key.ChargeAt)
+                        .Select(p=>FormattableString.Invariant($"{p.Key.Symbol}/{p.Key.ChargeAt}/{p.Value}"))):"";
                     evidence.Add(new(x.PositionId,x.Symbol,x.Side,x.Units,x.FromExclusive,through,frame.At,null,null,
-                        EerHash(scenario+"|"+terms.Digest+"|"+x.PositionId+"|"+x.FromExclusive+"|"+through))
+                        EerHash(scenario+"|"+terms.Digest+"|"+x.PositionId+"|"+x.FromExclusive+"|"+through+provenance))
                         {ScenarioId=scenario,ConditionalSignedEur=amount<0m?amount*(1m+stress):amount,
                          SourceAcquiredAt=Input.SourceAcquiredAt});
+                }
             }
             book.Advance(frame with {FundingEvidence=evidence.ToArray()});
         }

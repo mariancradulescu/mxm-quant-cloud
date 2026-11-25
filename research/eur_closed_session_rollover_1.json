@@ -1,0 +1,26 @@
+{
+  "Study":"EUR_CLOSED_SESSION_ROLLOVER_1",
+  "Exposure":"PROJECT_EXPOSED_CONDITIONAL_DEVELOPMENT",
+  "SourceProtocolSha256":"2ac5e2da090ce4c69f4791affc54424766749630e16522e6672285ad46c98a3c",
+  "EvidenceManifestSha256":"bd4a063bef5876e649876faea5a4b602b8852483774f48c99881131e8b4082b9",
+  "InitialFitFrom":1792972800000,
+  "TestBoundaries":[1794182400000,1794787200000,1795392000000],
+  "Stresses":[0,0.5,1],
+  "StopWitness":{"Symbol":"NatGas","Side":-1,"OriginalFillAt":1795015515000,"OriginalCloseAt":1795019115000,"StopDistance":0.014,"FirstTradeTouchAt":1795016231791},
+  "FundingWitnesses":[
+    {"PositionId":"UCP1/EUR_GENERAL_PROBE/AAXJ.US/GENERAL_BIDIRECTIONAL_DISTRIBUTION/1793032815000","Symbol":"AAXJ.US","Side":1,"Units":0.2,"FromExclusive":1793033115000,"ClosedAt":1793115315000},
+    {"PositionId":"UCP1/EUR_GENERAL_PROBE/AMD.US/GENERAL_BIDIRECTIONAL_DISTRIBUTION/1793035215000","Symbol":"AMD.US","Side":-1,"Units":0.1,"FromExclusive":1793035515000,"ClosedAt":1793108415000},
+    {"PositionId":"UCP1/EUR_GENERAL_PROBE/LTCUSD/GENERAL_HOURLY_EQUILIBRIUM/1794599715000","Symbol":"LTCUSD","Side":-1,"Units":0.1,"FromExclusive":1794600015000,"ClosedAt":1794780615000}
+  ],
+  "Calibrations":[
+    {"Id":"AT_CHARGE_ONLY","Profile":{"CaptureStudyDiagnostics":true,"UseAvailableContext":true,"ModeledStopLatencyMs":100,"ObserveIntentExecutionOnTicks":true}},
+    {"Id":"OFFICIAL_CLOSED_SESSION","Profile":{"CaptureStudyDiagnostics":true,"UseAvailableContext":true,"ModeledStopLatencyMs":100,"ObserveIntentExecutionOnTicks":true,"ModelFundingAtPriorClosedSessionQuote":true}}
+  ],
+  "Trials":[
+    {"Id":"CASH","Policy":"EUR_GENERAL_CASH","Calibration":"AT_CHARGE_ONLY"},
+    {"Id":"AT_CHARGE_PROBE","Policy":"EUR_GENERAL_PROBE","Calibration":"AT_CHARGE_ONLY"},
+    {"Id":"CLOSED_SESSION_PROBE","Policy":"EUR_GENERAL_PROBE","Calibration":"OFFICIAL_CLOSED_SESSION"},
+    {"Id":"AT_CHARGE_SELECT","Policy":"EUR_GENERAL_SELECT","Calibration":"AT_CHARGE_ONLY"},
+    {"Id":"CLOSED_SESSION_SELECT","Policy":"EUR_GENERAL_SELECT","Calibration":"OFFICIAL_CLOSED_SESSION"}
+  ]
+}
