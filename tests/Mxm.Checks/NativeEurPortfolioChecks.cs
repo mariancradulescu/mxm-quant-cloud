@@ -307,7 +307,11 @@ internal static class NativeEurPortfolioChecks
         var first=book.Advance(Conditional(OfficialShape(1,1)));
         check(first.Pending==1&&first.FundingCapital is {DemonstrableEquityEur:null,ConditionalEquityEur:300m},
             "Scenario uses common capital without representing it as demonstrated equity");
-        book.Advance(Conditional(OfficialShape(2,1)));
+        var pendingCopy=NativeUnifiedPortfolioEngine.RestoreHistoricalEurCheckpoint(book.HistoricalEurCheckpoint());
+        var fillFrame=Conditional(OfficialShape(2,1));
+        check(book.Advance(fillFrame)==pendingCopy.Advance(fillFrame)&&
+            book.HistoricalEurCheckpoint()==pendingCopy.HistoricalEurCheckpoint(),
+            "Research checkpoint preserves pending admission, fill and diagnostic state exactly");
         var fill=book.OriginalModelEvents.Last(e=>e.Kind=="OPEN_FILL");
         var frame=OfficialShape(3,1,bid:102.20m,offer:false);
         var proof=new NativeAccruedFundingEvidence(fill.PositionId,fill.Symbol,fill.Side,fill.Units,
@@ -318,7 +322,9 @@ internal static class NativeEurPortfolioChecks
         var observed=book.Advance(frame with {FundingEvidence=new[]{proof with {ScenarioId=scenario,ExactSignedEur=null,ConditionalSignedEur=-.05m,SourceAcquiredAt=frame.At+Step}}});
         check(observed.FundingCapital is {DemonstrableEquityEur:null,ConditionalEquityEur:>0m,PostedFinancingEur:-.05m},
             "Conditional debit affects the same cash ledger and admission equity");
-        var restored=NativeUnifiedPortfolioEngine.Restore(book.Checkpoint());
+        var heldState=book.HistoricalEurCheckpoint();
+        var restored=NativeUnifiedPortfolioEngine.RestoreHistoricalEurCheckpoint(heldState);
+        check(restored.HistoricalEurCheckpoint()==heldState,"Research checkpoint roundtrips held financing state and traces");
         check(restored.FundingScenarioId==scenario&&restored.ModelSummary==book.ModelSummary,
             "Scenario identity and monetary state survive checkpoint");
         var next=OfficialShape(4,1,bid:102.20m,offer:false);
@@ -333,6 +339,8 @@ internal static class NativeEurPortfolioChecks
             check(false,"Ordinary rank cannot load scenario calibration");}
         catch(ArgumentException){check(true,"Scenario calibration cannot cross into ordinary rank");}
         new NativeUnifiedPortfolioEngine(NativeUnifiedPortfolioEngine.EurRank,fundingScenarioId:scenario).LoadEurCalibration(calibration);
+        check(book.Advance(next)==missing&&book.HistoricalEurCheckpoint()==restored.HistoricalEurCheckpoint(),
+            "Continued and restored held books preserve unknown funding, ledger and diagnostic state");
     }
 
     static void ExplicitScenarioMultiDay(Action<bool,string> check)
