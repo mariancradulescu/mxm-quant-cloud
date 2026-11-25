@@ -1,0 +1,39 @@
+{
+  "study": "OFFICIAL_EUR_DENSE_MONETARY_2",
+  "symbols": [
+    "EURUSD",
+    "US500",
+    "XAUUSD",
+    "SpotBrent"
+  ],
+  "windows": [
+    {
+      "id": "W06_TUE",
+      "weekIndex": 6,
+      "weekdayOffset": 1
+    },
+    {
+      "id": "W06_THU",
+      "weekIndex": 6,
+      "weekdayOffset": 3
+    },
+    {
+      "id": "W32_TUE",
+      "weekIndex": 32,
+      "weekdayOffset": 1
+    },
+    {
+      "id": "W32_THU",
+      "weekIndex": 32,
+      "weekdayOffset": 3
+    }
+  ],
+  "partitionHours": 24,
+  "requestBlockHours": 1,
+  "perSidePageBudget": 512,
+  "markFreshnessMs": 30000,
+  "markIntervalMs": 300000,
+  "markOffsetMs": 15000,
+  "selectionBasis": "Fixed Tuesday and Thursday of two previously registered earlier-history bar weeks; no realized returns or instrument exclusion used.",
+  "scope": "READ_ONLY_HISTORICAL_QUOTES_NOT_HISTORICAL_TARIFF_CERTIFICATION"
+}
