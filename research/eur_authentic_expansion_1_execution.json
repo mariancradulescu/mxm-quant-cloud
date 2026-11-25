@@ -1,0 +1,11 @@
+{
+  "Study": "EUR_AUTHENTIC_EXPANSION_1",
+  "ProtocolSha256": "06e2b7566ea1b3a3371b41d15aeb805a1678bc6044a02d4631f9f08c96b22267",
+  "ValidatedRevision": "bf4bc7876f15e91883cff484bbb760bce5fc0fc8",
+  "TechnicalRun": 45695232490,
+  "Scopes": [
+    "Earlier",
+    "Breadth"
+  ],
+  "DeclaredEvaluationCount": 18
+}
