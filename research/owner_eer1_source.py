@@ -31,6 +31,8 @@ MATRIX=Path("pilot-source/integrated-coverage-matrix.json")
 MATRIX_SHA="6ffbe6d6bda9c57fde3ce92f3d851edc14e3930c79552bf31093ad27fd2b0d1c"
 PROTOCOL=Path("research/OWNER_EER1_EXTENDED_20261125.md")
 ANCHORS=("EURUSD","GBPUSD","XAUUSD","US500")
+PRIOR_FULL=set((*ANCHORS,"SpotBrent","AAPL.US","AAPL"))
+PRIOR_ROLL_START=int(datetime(2026,11,4,tzinfo=timezone.utc).timestamp()*1000)
 PER_SYMBOL=1450
 HORIZON_SECONDS=180*60
 
@@ -154,21 +156,36 @@ def covered(leaves,lo,hi):
         if cursor>hi:return True
     return cursor>hi
 
-def collect_market(j,account,sid,row,target,charges,keep):
+def collect_market(j,account,sid,row,target,charges,keep,name):
     bars,bar_report=bars_for(j,account,sid,row) if target else ({},{})
     budget=[PER_SYMBOL-len(j.packets)] if hasattr(j,"t") else [PER_SYMBOL-j.index]
     windows=[]; quote_marks=[]; funding=[]; tail={e.BID:[],e.ASK:[]}; tail_leaves={e.BID:[],e.ASK:[]}
     for day in range(START,END,DAY):
         sides={e.BID:[],e.ASK:[]}; leaves={e.BID:[],e.ASK:[]}
-        for lo in range(day,day+DAY,4*3600000):
+        # Existing full-session custody already covers 26 Oct–16 Nov.
+        # Only charge-time pages missing in that custody are requested here.
+        roots=[(lo,lo+4*3600000-1) for lo in range(day,day+DAY,4*3600000)]
+        if name in PRIOR_FULL and day<integrated.END:
+            roots=[]
+            if not (name in ("EURUSD","US500") and day>=PRIOR_ROLL_START):
+                spans=[]
+                for minute in charges:
+                    at=day+minute*60000
+                    spans.append((at-2*3600000,at))
+                for lo,hi in sorted(spans):
+                    if roots and lo<=roots[-1][1]+1:roots[-1]=(roots[-1][0],max(roots[-1][1],hi))
+                    else:roots.append((lo,hi))
+        for lo,hi in roots:
             for side in (e.BID,e.ASK):
-                raw,pages=roll.tick_window(j.query,account,sid,side,lo,lo+4*3600000-1,budget)
+                raw,pages=roll.tick_window(j.query,account,sid,side,lo,hi,budget)
                 windows.append([lo,side,roll.describe(raw,pages,lo)])
                 sides[side].extend(raw);leaves[side].extend(pages)
         if keep:
             for side in sides:
+                # Merge same millisecond only if the original prices agree.
+                # Conflicting endpoints remain unusable for funding.
                 sides[side].sort(key=lambda r:r[0])
-            for q in marks.minute_marks(day,sides[e.BID],sides[e.ASK],interval=STEP):
+            for q in (() if name in PRIOR_FULL and day<integrated.END else marks.minute_marks(day,sides[e.BID],sides[e.ASK],interval=STEP)):
                 at=q["At"]
                 if all(covered(leaves[s],max(day,at-30000),at) for s in sides):
                     quote_marks.append(q)
@@ -273,7 +290,7 @@ def capture():
             if not t.connected or time.monotonic()-start>HORIZON_SECONDS:break
             j=src.Journal(t,account);j.deadline=time.monotonic()+min(1200,max(1,HORIZON_SECONDS-(time.monotonic()-start)))
             sid=meta["roster"][name]["id"]
-            summary,_,_,_=collect_market(j,account,sid,rows.get(name,{}),name in chosen,charge_clocks(meta["terms"]),False)
+            summary,_,_,_=collect_market(j,account,sid,rows.get(name,{}),name in chosen,charge_clocks(meta["terms"]),False,name)
             ref=seal(OUT/(str(sid)+".sealed"),dict(runId=rid,name=name,id=sid,packets=j.packets,summary=summary),receiver,rid)
             receipt["sources"].append(dict(ref,name=name,id=sid,requests=len(j.packets),summary=summary))
             (OUT/"receipt.json").write_bytes(src.canonical(receipt))

@@ -9,6 +9,8 @@ from . import source_history_universe as src
 from . import integrated_market_readback as normalized
 from . import v32_unified_source_adapter as annual
 from . import owner_eur_gap_evidence as gap
+from . import closed_market_context_readback as context
+from . import integrated_market_source as integrated
 from .ctrader_proto import OpenApiMessages_pb2 as m, OpenApiModelMessages_pb2 as e
 from .custody import unseal_new
 from .decode import need
@@ -80,20 +82,56 @@ def main():
     OUT.mkdir(exist_ok=False)
     with tempfile.TemporaryDirectory(prefix="eer1-custody-") as temp:
         work=Path(temp);bars,add,conflicts,proof=read_archives(key,work)
+        # Recover the already observed 21-day full-session quote tape,
+        # including the authenticated multiframe supplement; no recollection.
+        archived,extra=context.sources(key,"44733062339",native_boundaries=True)
+        old_quotes={}
+        for m in archived:
+            n=m["Name"]
+            for tf in ("M5","M15","H1"):add(n,tf,m[tf])
+            for tf,b in m["AdditionalTimeframes"].items():add(n,tf,b["Bars"])
+            old_quotes[n]=[q for q in m["Quotes"] if q["At"]%eer.STEP==15000]
+        del archived
+        rollover=json.loads(Path("pilot-source/rollover-values.json").read_bytes())
+        pilot_receipt=json.loads(Path("pilot-source/receipt.json").read_bytes())
+        need(src.digest(Path("pilot-source/rollover-values.json").read_bytes())==pilot_receipt["rolloverValuesSha256"],"EER1_PRIOR_ROLLOVER_HASH")
+        old_funding=defaultdict(dict)
+        from decimal import Decimal
+        for w in rollover["windows"]:
+            at=w["rollover"];q={"At":at,"RequestedCoverage":all(x["complete"] for x in w["sides"].values())}
+            for side in ("BID","ASK"):
+                b=w["sides"][side]["lastBefore"]
+                if b and not b["conflict"]:
+                    q[side.title()+"At"]=b["at"];q[side.title()]=str(Decimal(b["rawPrices"][0]).scaleb(-5))
+            old_funding[w["symbol"]][at]=q
         tapes=[];source_notes={}
         for ref in receipt["sources"]:
             data=eer.unpack(eer.OUT,ref,key,run)
             name=ref["name"];sid=ref["id"]
             need(data["runId"]==run and data["name"]==name and data["id"]==sid and meta["roster"][name]["id"]==sid and name in meta["sourceNames"],"EER1_SHARD_BINDING")
             j=src.ReadbackJournal(data["packets"])
-            summary,series,quotes,funding=eer.collect_market(j,account,sid,rows.get(name,{}),name in chosen,eer.charge_clocks(meta["terms"]),True)
+            summary,series,quotes,funding=eer.collect_market(j,account,sid,rows.get(name,{}),name in chosen,eer.charge_clocks(meta["terms"]),True,name)
             need(summary==ref["summary"]==data["summary"] and j.index==len(j.packets)==ref["requests"],"EER1_SHARD_REPLAY")
             for tf,values in series.items():add(name,tf,values.values())
             if j.packets:source_acquired=max(source_acquired,max(p["availableAt"] for p in j.packets))
-            tapes.append(dict(Name=name,Quotes=quotes,FundingQuotes=funding))
-            source_notes[name]=dict(requests=len(j.packets),marks=len(quotes),fundingMarks=len(funding),
+            original_quotes=old_quotes.get(name,[])
+            qmap={q["At"]:q for q in original_quotes}
+            for q in quotes:
+                need(q["At"] not in qmap,"EER1_REPEATED_QUOTE_CLOCK")
+                qmap[q["At"]]=q
+            fmap={q["At"]:q for q in funding}
+            fmap.update(old_funding.get(name,{}))
+            tapes.append(dict(Name=name,Quotes=sorted(qmap.values(),key=lambda q:q["At"]),
+                FundingQuotes=sorted(fmap.values(),key=lambda q:q["At"])))
+            source_notes[name]=dict(requests=len(j.packets),newMarks=len(quotes),reusedMarks=len(original_quotes),marks=len(qmap),fundingMarks=len(fmap),
                 completeRoots=sum(w[2]["complete"] for w in summary["tickWindows"]),barCells=summary["bars"])
             print("EER1_SHARD_VERIFIED",name,len(quotes),flush=True)
+        # Archived observations remain available even if a new tranche shard
+        # was not reached. They are not called newly collected.
+        for name,quotes in old_quotes.items():
+            if name in meta["sourceNames"] and name not in {x["Name"] for x in tapes}:
+                tapes.append(dict(Name=name,Quotes=quotes,FundingQuotes=list(old_funding.get(name,{}).values())))
+                source_notes[name]=dict(requests=0,newMarks=0,reusedMarks=len(quotes),marks=len(quotes),fundingMarks=len(old_funding.get(name,{})))
         tape_names={x["Name"] for x in tapes}
         markets=[];eligibility={}
         for name in chosen:
@@ -129,7 +167,7 @@ def main():
             market["TickSize"]=str(10**(-info["priceDigits"])) if info["priceDigits"] is not None else "0"
             markets.append(dict(Market=market,TermsAcquiredAt=meta["actual"][name],ScheduledClocks=meta["schedules"].get(name)))
         census=dict(sourceRun=run,priorMatrixSha256=eer.MATRIX_SHA,officialRosterCount=len(meta["roster"]),
-            historicalMarkets=sum(any(v.values()) for v in bars.values()),archiveProof=proof,conflictingBarClocks=len(conflicts),
+            historicalMarkets=sum(any(v.values()) for v in bars.values()),archiveProof=proof,integratedFullSessionReused="44687919474",conflictingBarClocks=len(conflicts),
             historicalCoverage={n:{tf:len(v) for tf,v in b.items()} for n,b in bars.items()},
             selected=chosen,pending=pending,eligibility=eligibility,sourceNotes=source_notes,
             orders=0,cloudActivated=False)

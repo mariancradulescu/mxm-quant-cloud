@@ -24,7 +24,7 @@ or funding gap produces a reason, not a substitute value. Historical broker
 tariff continuity, actual financing and continuous DD are not certified.
 
 Reuse authenticated multi-timeframe originals and retrieve missing date blocks
-from official closed bars. Collect genuine historical BID/ASK across the entire
+from official closed bars. Reuse the original 21-day full-session quote tape where available, and collect only its missing charge endpoints or subsequent intervals; reuse the 483,328 recovered rollover ticks via their verified endpoint receipt. Collect genuine historical BID/ASK across the entire
 registered interval in bounded, resumable per-symbol shards; no bars-as-quotes.
 Incomplete tick pages, conflicting marks and absent conversion paths stay unknown.
 A fixed 30-second execution witness at each M5+15s clock is unchanged. Calendar
