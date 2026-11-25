@@ -11,7 +11,10 @@ on:
       - 'src/Mxm.Core/NativeUnifiedPortfolioEngine.Eur.cs'
   push:
     branches: [main]
-    paths: ['ops/owner-eur-integrated-development-once.txt', 'ops/owner-eur-archive-limits-once.txt']
+    paths:
+      - 'ops/owner-eur-integrated-development-once.txt'
+      - 'ops/owner-eur-archive-limits-once.txt'
+      - 'ops/owner-eur-archive-limits-recovery-once.txt'
 permissions:
   contents: read
   actions: read
@@ -44,6 +47,10 @@ jobs:
           if [[ "$(git log -1 --format=%s)" == OWNER_EUR_ARCHIVE_LIMITS_ONLY_20261125 ]]; then
             marker=ops/owner-eur-archive-limits-once.txt
             subject=OWNER_EUR_ARCHIVE_LIMITS_ONLY_20261125
+            mode=evidence
+          elif [[ "$(git log -1 --format=%s)" == OWNER_EUR_ARCHIVE_LIMITS_RECOVERY_ONLY_20261125 ]]; then
+            marker=ops/owner-eur-archive-limits-recovery-once.txt
+            subject=OWNER_EUR_ARCHIVE_LIMITS_RECOVERY_ONLY_20261125
             mode=evidence
           fi
           [[ "$GITHUB_REF" == refs/heads/main && "$GITHUB_RUN_ATTEMPT" == 1 &&
