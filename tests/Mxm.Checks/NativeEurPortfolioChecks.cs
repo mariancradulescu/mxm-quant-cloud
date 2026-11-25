@@ -207,7 +207,12 @@ internal static class NativeEurPortfolioChecks
         var extendedProfile=available with {UseRecoveredLocalPayoff=true,UseExtendedLocalPayoff=true};
         var extendedBook=new NativeUnifiedPortfolioEngine(NativeUnifiedPortfolioEngine.EurGeneralSelect,eurDevelopmentProfile:extendedProfile);
         extendedBook.LoadEurCalibration(recoveredModel with {Outcomes=observations.Select(o=>o with {DecisionAt=o.ClosedAt-Step}).ToArray()});
-        extendedBook.Advance(sparseFrame);
+        var extendedSparse=later.Markets[1];
+        var extendedSparseWindows=extendedSparse.ClosedBars!.Windows.Where(w=>w.Timeframe is NativeBarTimeframe.M5 or NativeBarTimeframe.M15).ToArray();
+        var extendedSparseFrame=later with {Markets=new[]{extendedSparse with {ClosedBars=new(later.At,extendedSparseWindows)}}};
+        check(extendedSparseFrame.At>recoveredModel.ObservationThrough,
+            "Extended local decision follows the calibration observation boundary");
+        extendedBook.Advance(extendedSparseFrame);
         check(extendedBook.EurOpportunityReceipts.Any(o=>o.Payoff?.Cohort=="EXTENDED_MASKED_CONTEXT_LOCAL_DISTRIBUTION"),
             "Extended local payoff can use a causal sparse frame in the common EUR book");
 
