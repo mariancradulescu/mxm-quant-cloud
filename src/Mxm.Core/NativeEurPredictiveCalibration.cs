@@ -9,7 +9,10 @@ namespace Mxm.Core;
 public sealed record NativeEurPredictiveEvidence(string Scope,int ValidationDays,int ValidationLabels,
     decimal EffectiveDays,decimal GrossMeanStandardErrorEur,decimal NetMeanStandardErrorEur,
     decimal NetIndividualP10Eur,decimal NetIndividualP90Eur,decimal ConditionalNetPositiveFraction,
-    decimal GrossCostPositiveFraction,decimal JointPositiveLowerBound);
+    decimal GrossCostPositiveFraction,decimal JointPositiveLowerBound,
+    int FeedbackDays,decimal FeedbackGrossCorrectionEur,decimal FeedbackNetCorrectionEur);
+
+internal sealed record NativeEurForecastAdjustment(int Days,double Gross,double Net,double GrossSem,double NetSem);
 
 internal sealed partial class NativeEurAdaptiveEstimator
 {
@@ -221,7 +224,7 @@ internal sealed partial class NativeEurAdaptiveEstimator
     }
 
     NativeEurPayoff? PredictivePayoff(string family,int side,GroupModel model,NativeEurDecisionContext context,
-        decimal risk,decimal cost)
+        decimal risk,decimal cost,NativeEurForecastAdjustment? feedback)
     {
         if(risk<=0)return null;
         string scope="POOLED_OUT_OF_TIME";
@@ -235,11 +238,13 @@ internal sealed partial class NativeEurAdaptiveEstimator
         }
         if(error is null)return null; // never substitute training residuals
         var (g,n)=Estimate(model,context,Values(context,true,true),selected);
+        g+=feedback?.Gross??0; n+=feedback?.Net??0;
+        double grossSem=error.GrossSem+(feedback?.GrossSem??0),netSem=error.NetSem+(feedback?.NetSem??0);
         double grossMean=g+error.Gross.Mean,netMean=n+error.Net.Mean;
         decimal gross=(decimal)grossMean*risk;
         decimal net=Math.Min((decimal)netMean*risk,gross-cost);
-        decimal grossLower=(decimal)(grossMean-1.645*error.GrossSem)*risk;
-        decimal netLower=Math.Min((decimal)(netMean-1.645*error.NetSem)*risk,grossLower-cost);
+        decimal grossLower=(decimal)(grossMean-1.645*grossSem)*risk;
+        decimal netLower=Math.Min((decimal)(netMean-1.645*netSem)*risk,grossLower-cost);
         double netPositive=error.Net.Tail(-n),grossPositive=error.Gross.Tail((double)(cost/risk)-g);
         // Without a joint dependence model, the Frechet lower bound is valid
         // for the two empirical marginal probability estimates.
@@ -248,9 +253,10 @@ internal sealed partial class NativeEurAdaptiveEstimator
             Math.Min((decimal)(n+error.Net.Minimum)*risk,(decimal)(g+error.Gross.Minimum)*risk-cost),
             Math.Min((decimal)(n+error.Net.Maximum)*risk,(decimal)(g+error.Gross.Maximum)*risk-cost))
         {Cohort=selected.Id,PredictiveEvidence=new(scope,error.Days,error.Labels,(decimal)error.EffectiveDays,
-            (decimal)error.GrossSem*risk,(decimal)error.NetSem*risk,
+            (decimal)grossSem*risk,(decimal)netSem*risk,
             (decimal)(n+error.Net.Quantile(.1))*risk,(decimal)(n+error.Net.Quantile(.9))*risk,
-            (decimal)netPositive,(decimal)grossPositive,(decimal)joint)};
+            (decimal)netPositive,(decimal)grossPositive,(decimal)joint,feedback?.Days??0,
+            (decimal)(feedback?.Gross??0)*risk,(decimal)(feedback?.Net??0)*risk)};
     }
 
     object PredictiveReceipt()=>new
