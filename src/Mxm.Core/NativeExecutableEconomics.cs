@@ -28,4 +28,18 @@ public static class NativeExecutableEconomics
         return new(entry, -EstimateNet(quote, quote, side, units, entry, stop, exitSlippage),
             EstimateNet(quote, quote, side, units, entry, target, exitSlippage));
     }
+
+    internal static (decimal Gross,decimal Spread,decimal Slippage,decimal Conversion,decimal Converted) ClosedPriceMoney(
+        LedgerQuote entry,LedgerQuote exit,int side,decimal units,decimal entryPrice,decimal exitPrice,
+        decimal entrySlippage,decimal exitSlippage)
+    {
+        decimal converted=NativeFundedLedger.ConvertQuote(exit,side*units*(exitPrice-entryPrice));
+        decimal reference=(exit.EurCredit+exit.EurDebit)/2;
+        decimal gross=side*units*((exit.Bid+exit.Ask)/2-(entry.Bid+entry.Ask)/2)*reference;
+        decimal spread=units*((entry.Ask-entry.Bid)+(exit.Ask-exit.Bid))/2*reference;
+        decimal slip=units*(entrySlippage+exitSlippage)*reference;
+        decimal conversion=gross-spread-slip-converted;
+        if(conversion<-.000000001m)throw new InvalidOperationException("NATIVE_LEDGER_CONVERSION_COST");
+        return (gross,spread,slip,Math.Max(0m,conversion),converted);
+    }
 }

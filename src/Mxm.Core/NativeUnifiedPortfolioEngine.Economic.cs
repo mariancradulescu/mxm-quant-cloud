@@ -100,7 +100,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
            m.Quote.MarginPerUnit>0m &&
            m.Quote.EurCredit>0m && m.Quote.EurDebit>=m.Quote.EurCredit;
 
-    static (decimal Stop,decimal Target)? Cpe1Levels(
+    internal static (decimal Stop,decimal Target)? Cpe1Levels(
         Ucp1DecisionSignal signal,Ucp1MarketFrame m)
     {
         // Ranges are completed M5 structural boundaries, never ATR alone.
@@ -287,9 +287,21 @@ public sealed partial class NativeUnifiedPortfolioEngine
             equity,current.UsedMarginEur is not null,
             held,pending,plan.Id))return null;
         var guard=NativePostFillCapitalGuard.Assess(equity,
-            held,pending,plan.Id,plan.Side,q,intent.SlippagePerSide,debit);
+            held,pending,plan.Id,plan.Side,q,intent.SlippagePerSide,debit,
+            IsEurGeneral?q.LiquidationSlippagePerSide:null);
         if(!guard.Allowed || (fundingReserves is not null && guard.ProjectedPostFillLiquidationEquityEur <
             current.ObservedPeakEur*(1m-OwnerRiskAuthority.MaximumSystemDrawdown)))return null;
+        if(IsEurGeneral&&guard.PreFillLiquidationEquityEur-guard.AggregateReservedRiskEur<
+            current.ObservedPeakEur*(1m-OwnerRiskAuthority.MaximumSystemDrawdown))return null;
+        if(policy is EurGeneralSelect or EurGeneralPooled)
+        {
+            decimal cost=Math.Max(0m,-NativeExecutableEconomics.EstimateNet(q,q,plan.Side,plan.Units,
+                bracket.Entry,plan.Side>0?q.Bid:q.Ask,q.LiquidationSlippagePerSide??intent.SlippagePerSide));
+            var context=DescribeEurContext(observed,frame.At,plan.Side,guard.TotalReservedMarginEur,equity,risk,cost);
+            if(context is not null)context=context with {MarketState=DescribeGeneralState(observed,frame,plan.Side)};
+            if(EurPayoff(plan.Family,plan.Side,risk,cost+debit,policy==EurGeneralSelect?context:null)
+                is not {GrossLowerEur:>0m,NetLowerEur:>0m})return null;
+        }
         return prior with {InitialRiskEur=risk,InitialRewardEur=reward};
     }
 
@@ -360,7 +372,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
                     q.EurCredit>0m&&q.EurDebit>=q.EurCredit)).ToArray()};
         }
         var book=model.Ledger.Summary(frame.At);
-        if((Cpe1FundingCapital(book,frame)?.MaximumSampledFundingAdjustedDrawdown??book.MaximumSampledDrawdown)>=.28m)
+        var capital=Cpe1FundingCapital(book,frame);
+        if((capital?.MaximumSampledFundingAdjustedDrawdown??book.MaximumSampledDrawdown)>=.28m)
             return (plan,new("INTEGRATED_CPE1_GLOBAL_DD_PROTECTION",position.Units));
         if(side*(sidePrice-geometry.Stop)<=0m)
             return (plan,new("INTEGRATED_CPE1_OBSERVED_STRUCTURAL_STOP",position.Units));
@@ -372,6 +385,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
             return (plan,null);
         plan=plan with {LastEconomicM15=witness};
         decimal displacement=side*(bars[^1].Close-bars[0].Close);
+        if(IsEurGeneral)
+            return (plan,ManageGeneralEur(plan,position,market,frame,capital,sidePrice,displacement));
         if(displacement<0m && side*(bars[^1].Close-plan.Equilibrium)<=0m)
             return (plan,new("INTEGRATED_CPE1_M15_THESIS_INVALIDATION",position.Units));
         if(fundingReserves is not null)

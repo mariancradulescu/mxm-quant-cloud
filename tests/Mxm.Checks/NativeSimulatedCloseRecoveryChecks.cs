@@ -28,14 +28,14 @@ internal static class NativeSimulatedCloseRecoveryChecks
             kind is "OPEN_FILL" or "CLOSE_FILL" ?.01m:0m,1m,slip,
             at-20,at-30,100,reason,Hash,qs??Array.Empty<LedgerQuote>());
 
-    static (NativeFundedSession Session,NativeModelCloseProtection Protection) Begin(long at)
+    static (NativeFundedSession Session,NativeModelCloseProtection Protection) Begin(long at,decimal units=1m)
     {
         var s=new NativeFundedSession(SessionBinding);
         var opening=Q(A,at+1000,10m);
         s.ApplyResearchFacts(new[]{
-            E("SIR1/initial/open", "REQUEST_OPEN",at),
+            E("SIR1/initial/open", "REQUEST_OPEN",at,units:units),
             E("SIR1/initial/fill", "OPEN_FILL",at+1000,
-                price:opening.Ask,qs:new[]{opening})
+                units:units,price:opening.Ask,qs:new[]{opening}) with {FeeEur=.01m*units}
         });
         var protectedState=new NativeModelCloseProtection(Position,"ADAPT",
             new NativeExitSeed(.1m,10.5m),9.8m,opening.Ask,at+1000);
@@ -216,6 +216,18 @@ internal static class NativeSimulatedCloseRecoveryChecks
             }});}
         catch(ArgumentException){falseModelExpiryDenied=true;}
         check(falseModelExpiryDenied,"only explicitly UNTRANSMITTED model close may expire");
+
+        var (pressured,riskProtection)=Begin(First,2m);
+        var reduction=NativeSimulatedCloseLifecycle.Advance(pressured,riskProtection,
+            new(First+2000,Q(A,First+2000,9.99m),Instruction:new(NativeSimulatedCloseLifecycle.MarginReduction,1m),
+                IntegratedManagesProtection:true));
+        check(reduction.CommonBook.UsedMarginEur==2m&&reduction.CommonBook.PendingIntents==1,
+            "General margin reduction keeps its entire commitment until a later witnessed fill");
+        var reduced=NativeSimulatedCloseLifecycle.Advance(pressured,reduction.Protection,
+            new(First+3000,Q(A,First+3000,9.98m),IntegratedManagesProtection:true));
+        check(reduced.CommonBook.UsedMarginEur==1m&&reduced.CommonBook.PendingIntents==0&&
+            reduced.CommonBook.CompleteRoundTrips==0&&reduced.AppliedFacts.Single(e=>e.Kind=="CLOSE_FILL").Units==1m,
+            "General margin reduction releases only the actually filled volume");
 
         // Synthetic serialized audit digest; not proof of historical broker
         // source, independent real NET, continuity of intraminute risk or HARD21.

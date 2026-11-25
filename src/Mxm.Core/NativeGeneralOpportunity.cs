@@ -20,10 +20,13 @@ public static class NativeGeneralOpportunity
         => (ceil ? Math.Ceiling(value / tick) : Math.Floor(value / tick)) * tick;
 
     public static NativeStructuralSetup[] Describe(Ucp1MarketFrame market)
+        => Describe(market, market.Integrated?.TickSize ?? 0m);
+
+    internal static NativeStructuralSetup[] Describe(Ucp1MarketFrame market, decimal tick)
     {
         if (!NativeStructuralOpportunity.ContextReady(market) ||
             market.ClosedBars is not { } context ||
-            market.Integrated is not { TickSize: > 0m } data ||
+            tick <= 0m ||
             market.Quote.Bid <= 0m || market.Quote.Ask < market.Quote.Bid)
             return Array.Empty<NativeStructuralSetup>();
 
@@ -41,7 +44,6 @@ public static class NativeGeneralOpportunity
         decimal span = m5.TakeLast(5).Average(b => b.High - b.Low);
         if (span <= 0m || m5.TakeLast(5).Any(b => b.High <= b.Low))
             return Array.Empty<NativeStructuralSetup>();
-        decimal tick = data.TickSize;
         decimal volatility = Math.Max(tick, span);
         decimal center = h1.TakeLast(2).Average(b => (b.High + b.Low) / 2m);
         decimal mid = (q.Ask + q.Bid) / 2m;

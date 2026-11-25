@@ -79,7 +79,8 @@ public partial class MxmCloud
         {
             string mode=EurResearchPolicy.Trim();
             if(mode is not (NativeUnifiedPortfolioEngine.EurFirst or NativeUnifiedPortfolioEngine.EurRank or
-                    NativeUnifiedPortfolioEngine.EurContextRank) || Account.Asset.Name!="EUR"||
+                    NativeUnifiedPortfolioEngine.EurContextRank or NativeUnifiedPortfolioEngine.EurGeneralSelect or
+                    NativeUnifiedPortfolioEngine.EurGeneralPooled) || Account.Asset.Name!="EUR"||
                !DateTimeOffset.TryParseExact(EurResearchStartUtc,"yyyy-MM-dd'T'HH:mm:ss'Z'",
                    CultureInfo.InvariantCulture,DateTimeStyles.AssumeUniversal,out var start))
                 throw new ArgumentException("EUR_RUNTIME_CONFIGURATION");
@@ -250,7 +251,9 @@ public partial class MxmCloud
                 proof.Through,0m,proof.SourceSha256)).ToArray();
         return new(c.Symbol,quote,c,closed.For(NativeBarTimeframe.M5).Bars,closed.For(NativeBarTimeframe.M15).Bars,
             0m,"CTRADER_NATIVE_OBSERVATION_ONLY") {ClosedBars=closed,EurMargins=executable,FundingOffers=offers,
-            OfficialAssetClass=_eurClasses.GetValueOrDefault(c.Symbol),EurNativeClock=true};
+            OfficialAssetClass=_eurClasses.GetValueOrDefault(c.Symbol),EurNativeClock=true,
+            EurTickSize=EurResearchPolicy.Trim() is NativeUnifiedPortfolioEngine.EurGeneralSelect or
+                NativeUnifiedPortfolioEngine.EurGeneralPooled ? (decimal)symbol.TickSize : null};
     }
 
     void SaveEurCheckpoint()
