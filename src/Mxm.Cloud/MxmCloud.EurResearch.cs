@@ -79,17 +79,21 @@ public partial class MxmCloud
         {
             string mode=EurResearchPolicy.Trim();
             if(mode is not (NativeUnifiedPortfolioEngine.EurFirst or NativeUnifiedPortfolioEngine.EurRank or
-                    NativeUnifiedPortfolioEngine.EurContextRank or NativeUnifiedPortfolioEngine.EurGeneralSelect or
-                    NativeUnifiedPortfolioEngine.EurGeneralPooled) || Account.Asset.Name!="EUR"||
-               !DateTimeOffset.TryParseExact(EurResearchStartUtc,"yyyy-MM-dd'T'HH:mm:ss'Z'",
-                   CultureInfo.InvariantCulture,DateTimeStyles.AssumeUniversal,out var start))
-                throw new ArgumentException("EUR_RUNTIME_CONFIGURATION");
+                    NativeUnifiedPortfolioEngine.EurContextRank or NativeUnifiedPortfolioEngine.EurGeneralProbe or
+                    NativeUnifiedPortfolioEngine.EurGeneralSelect or NativeUnifiedPortfolioEngine.EurGeneralPooled or
+                    NativeUnifiedPortfolioEngine.EurGeneralCash))
+                throw new ArgumentException("EUR_RUNTIME_POLICY");
+            if(Account.Asset.Name!="EUR")throw new ArgumentException("EUR_RUNTIME_ACCOUNT_CURRENCY");
+            if(!DateTimeOffset.TryParseExact(EurResearchStartUtc,"yyyy-MM-dd'T'HH:mm:ss'Z'",
+                CultureInfo.InvariantCulture,DateTimeStyles.AssumeUniversal,out var start))
+                throw new ArgumentException("EUR_RUNTIME_START_CLOCK");
             _eurFirstClock=start.ToUnixTimeMilliseconds();
             if(_eurFirstClock<=0||_eurFirstClock%EurNativeStep!=EurNativeOffset)
                 throw new ArgumentException("EUR_RUNTIME_GRID");
             long now=Stamp(Server.TimeInUtc);
             NativeEurCalibration? calibration=null;
-            if(mode!=NativeUnifiedPortfolioEngine.EurFirst)
+            if(mode is NativeUnifiedPortfolioEngine.EurRank or NativeUnifiedPortfolioEngine.EurContextRank or
+                NativeUnifiedPortfolioEngine.EurGeneralSelect or NativeUnifiedPortfolioEngine.EurGeneralPooled)
             {
                 calibration=EurVerifiedJson<NativeEurCalibration>(EurCalibrationJson,EurCalibrationSha256);
                 if(calibration.ObservationThrough>=_eurFirstClock)
@@ -112,6 +116,8 @@ public partial class MxmCloud
             }
 
             _eurEpoch=EurHash(_accountBinding+"|"+mode+"|"+_eurFirstClock+"|"+EurCalibrationSha256.Trim().ToLowerInvariant());
+            // cTrader Cloud keeps LocalStorage only for the current run.
+            // Preserve the epoch requirement if there is no recoverable snapshot.
             string? storage=null;
             try {storage=LocalStorage.GetString(EurRuntimeStorage,LocalStorageScope.Instance);}
             catch(LocalStorageException) { }
@@ -143,6 +149,12 @@ public partial class MxmCloud
             _eurPolicy=adapter;
             Print("MXM EUR observation mode {0}; official no-charge intervals {1}.",
                 mode,_eurFunding.Length);
+        }
+        catch(ArgumentException error) when(error.Message.StartsWith("EUR_RUNTIME_",StringComparison.Ordinal)||
+            error.Message.StartsWith("EUR_CHECKED_JSON_",StringComparison.Ordinal))
+        {
+            _eurPolicy=null;
+            Print("MXM EUR observation inactive. {0}",error.Message);
         }
         catch(Exception)
         {
@@ -252,8 +264,9 @@ public partial class MxmCloud
         return new(c.Symbol,quote,c,closed.For(NativeBarTimeframe.M5).Bars,closed.For(NativeBarTimeframe.M15).Bars,
             0m,"CTRADER_NATIVE_OBSERVATION_ONLY") {ClosedBars=closed,EurMargins=executable,FundingOffers=offers,
             OfficialAssetClass=_eurClasses.GetValueOrDefault(c.Symbol),EurNativeClock=true,
-            EurTickSize=EurResearchPolicy.Trim() is NativeUnifiedPortfolioEngine.EurGeneralSelect or
-                NativeUnifiedPortfolioEngine.EurGeneralPooled ? (decimal)symbol.TickSize : null};
+            EurTickSize=EurResearchPolicy.Trim() is NativeUnifiedPortfolioEngine.EurGeneralProbe or
+                NativeUnifiedPortfolioEngine.EurGeneralSelect or NativeUnifiedPortfolioEngine.EurGeneralPooled or
+                NativeUnifiedPortfolioEngine.EurGeneralCash ? (decimal)symbol.TickSize : null};
     }
 
     void SaveEurCheckpoint()
