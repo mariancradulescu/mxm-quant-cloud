@@ -199,7 +199,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
         foreach(var outcome in calibration.Outcomes)AddEurOutcome(outcome);
         if(eurDevelopmentProfile is {UseAdaptivePayoff:true} adaptive)
         {
-            adaptivePayoff=NativeEurAdaptiveEstimator.Fit(calibration,adaptive.UseExtendedLocalPayoff,adaptive.UsePredictiveCalibration,adaptive.UseEconomicEstimatorObjective);
+            adaptivePayoff=NativeEurAdaptiveEstimator.Fit(calibration,adaptive.UseExtendedLocalPayoff,adaptive.UsePredictiveCalibration,adaptive.UseEconomicEstimatorObjective,adaptive.UseSelectionAwarePredictiveGrid);
             return;
         }
         if(eurDevelopmentProfile is { UseRecoveredLocalPayoff:true } profile)
