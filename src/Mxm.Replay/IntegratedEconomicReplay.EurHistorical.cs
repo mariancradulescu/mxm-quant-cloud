@@ -71,8 +71,21 @@ internal static partial class IntegratedEconomicReplay
             return new {Witness=witness,StrictEur=strict,ClosedSessionScenarioEur=conditional,
                 quoteBasis=StaleRolloverWitness(basis),ActualBrokerSettlementEur=(decimal?)null};
         }).ToArray();
+        // Selection is execution partitioning only: the original full protocol bytes,
+        // scenario identity, all trials and all chronological folds remain unchanged.
+        string? scenarioIndexText=Environment.GetEnvironmentVariable("MXM_ECONOMIC_SCENARIO_INDEX");
+        int? scenarioIndex=null;
+        if(scenarioIndexText is not null)
+        {
+            if(!int.TryParse(scenarioIndexText,System.Globalization.NumberStyles.None,
+                System.Globalization.CultureInfo.InvariantCulture,out int index)||
+                index<0||index>=protocol.Stresses.Length)
+                throw new ArgumentException("HISTORICAL_EUR_INVALID_SCENARIO_INDEX");
+            scenarioIndex=index;
+        }
         var output=new List<object>();
-        foreach(decimal stress in protocol.Stresses)
+        foreach(decimal stress in scenarioIndex.HasValue
+            ?new[]{protocol.Stresses[scenarioIndex.Value]}:protocol.Stresses)
         {
             string scenario=EerHash(protocolHash+"|"+FormattableString.Invariant($"{stress:G29}"));
             var streams=input.Markets.ToDictionary(m=>m.Market.Name,m=>new EerStream(m),StringComparer.Ordinal);
