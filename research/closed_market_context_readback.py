@@ -21,7 +21,7 @@ INTEGRATED_RECEIPT = "1f4621b9e76cb38d0ac69f0d88ea02b4face3d124b5528a56ba853d1ac
 AUDIT = Path("closed-market-context-public")
 
 
-def sources(key, supplementary_run, native_boundaries=False):
+def sources(key, supplementary_run, native_boundaries=False, rollover_clocks=None):
     more, new_receipt = supplement.readback(key, supplementary_run, native_boundaries=native_boundaries)
 
     root = Path("hxc1-original")
@@ -40,7 +40,7 @@ def sources(key, supplementary_run, native_boundaries=False):
          and receipt["Status"] == "AUTHENTIC_READ_ONLY_SOURCE_CAPTURED"
          and digest(integrated.PROTOCOL.read_bytes()) == receipt["ProtocolSha256"],
          "CLOSED_CONTEXT_FULL_SESSION_ORIGINAL_RECEIPT")
-    records = integrated.readback(receipt, key, interval=30_000)
+    records = integrated.readback(receipt, key, interval=30_000, rollover_clocks=rollover_clocks)
     close = supplement.stamp(json.loads(supplement.PROTOCOL.read_text())["coveredByHxc1From"])
     for market in records:
         symbol = market["Name"]

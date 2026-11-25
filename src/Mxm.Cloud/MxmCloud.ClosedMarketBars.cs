@@ -85,7 +85,10 @@ public partial class MxmCloud
                 NativeBarTimeframe.M15=>new(period,3),
                 _=>requirement
             }:requirement;
-            windows.Add(NativeClosedMarketContext.Platform(needed, at, tickAt, bars.Count, OpenAt, Read));
+            windows.Add(eurDecision&&period==NativeBarTimeframe.D1?
+                NativeClosedMarketContext.WitnessedDailySessions(needed.Count,at,tickAt,
+                    "CTRADER_ALGO_NATIVE_DAILY_WITH_WITNESSED_SUCCESSOR",bars.Count,OpenAt,Read):
+                NativeClosedMarketContext.Platform(needed, at, tickAt, bars.Count, OpenAt, Read));
         }
         return new(at, windows.ToArray());
     }

@@ -48,6 +48,13 @@ internal static class NativeEurPortfolioChecks
             "Three witnessed fills are repriced and equity-admitted after Pending");
         var restored=NativeUnifiedPortfolioEngine.Restore(first.Checkpoint());
         check(restored.ModelSummary==first.ModelSummary,"EUR checkpoint retains common funded book");
+        var known=later.FundingCapital!;
+        const string missingMark="MISSING_CURRENT_LIQUIDATION_MARK";
+        check(NativeUnifiedPortfolioEngine.EurRejectedCapital(missingMark,later.ModelBook,
+                  known with { OutstandingDebitCeilingEur=null })=="WAIT_UNBOUNDED_PORTFOLIO_FUNDING"&&
+              NativeUnifiedPortfolioEngine.EurRejectedCapital(missingMark,
+                  later.ModelBook with {LiquidationEquityEur=null},known)=="WAIT_"+missingMark,
+            "EUR distinguishes missing collateral marks from fully marked equity with unbounded carry");
         LateNetChangesRanking(check);
         ContractClocksAndDirectionalCosts(check);
         var flexible=input.Markets[0] with {EurNativeClock=true};
@@ -55,6 +62,19 @@ internal static class NativeEurPortfolioChecks
             !NativeUnifiedPortfolioEngine.EurFrameFollows(flexible,input.At+1_000,input.At+2*Step+2_000)&&
             !NativeUnifiedPortfolioEngine.EurFrameFollows(input.Markets[0],input.At+1_000,input.At+Step+2_000),
             "Native platform margin observation jitter permits adjacent slots but cannot bridge a missing slot");
+        const long day=86_400_000L;
+        var opens=new[]{Origin,Origin+day,Origin+4*day};
+        NativeClosedMarketBar Read(int index)
+        {
+            if(index==2)throw new InvalidOperationException("The active daily OHLC must never be read");
+            return new(opens[index],opens[index]+day,100m,102m,99m,101m,100);
+        }
+        var ready=NativeClosedMarketContext.WitnessedDailySessions(2,opens[2]+15_000,opens[2]+1,"TEST_D1",
+            opens.Length,i=>opens[i],Read);
+        var tooEarly=NativeClosedMarketContext.WitnessedDailySessions(2,opens[2],opens[2]-1,"TEST_D1",
+            opens.Length,i=>opens[i],Read);
+        check(ready is {Ready:true,DailyCalendarBreaks:1}&&ready.Bars[1].OpenAt==opens[1]&&!tooEarly.Ready,
+            "Daily EUR context retains a calendar gap and requires a witnessed active successor");
     }
 
     static void ContractClocksAndDirectionalCosts(Action<bool,string> check)

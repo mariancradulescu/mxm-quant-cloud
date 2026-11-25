@@ -193,6 +193,11 @@ public sealed partial class NativeUnifiedPortfolioEngine
         return offers is {Length:1}?offers[0]:null;
     }
 
+    internal static string EurRejectedCapital(string status,LedgerSummary book,NativeFundingCapital capital)
+        =>status=="MISSING_CURRENT_LIQUIDATION_MARK"&&book.LiquidationEquityEur.HasValue&&
+            book.UsedMarginEur.HasValue&&capital.OutstandingDebitCeilingEur is null
+            ?"WAIT_UNBOUNDED_PORTFOLIO_FUNDING":"WAIT_"+status;
+
     Ucp1FrameResult AdvanceEur(long at,Ucp1Frame frame,
         List<(Ucp1DecisionSignal Signal,Ucp1MarketFrame Frame)> options)
     {
@@ -263,7 +268,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
             var gate=NativePendingCapitalGate.Assess(capital.DemonstrableEquityEur,book.UsedMarginEur is not null,
                 held,pending,new(market.Symbol,s.Family,units,market.Contract.VolumeStepUnits,units,
                     margin,choice.Geometry.InitialRiskEur/units));
-            if(!gate.IsFinanceable){Trace(receipt,"WAIT_"+gate.Status);continue;}
+            if(!gate.IsFinanceable){Trace(receipt,EurRejectedCapital(gate.Status,book,capital));continue;}
             string id="UCP1/"+policy+"/"+market.Symbol+"/"+s.Family+"/"+at;
             Apply(Event("REQUEST_OPEN",at,id,market.Symbol,s.Side,units,margin:margin,
                 slip:market.SlippagePerSideQuote,reason:"NATIVE_CONDITIONAL_SELECTION") with
