@@ -29,8 +29,11 @@ public sealed record NativeModelCloseStep(
 public static class NativeSimulatedCloseLifecycle
 {
     internal const string MarginReduction = "INTEGRATED_EUR_GENERAL_MARGIN_REDUCTION";
+    internal const string AdaptiveContinuationReduction = "INTEGRATED_EUR_ADVERSE_CONTINUATION_REDUCE";
+    internal const string AdaptiveContinuationClose = "INTEGRATED_EUR_ADVERSE_CONTINUATION_CLOSE";
     internal static bool IsReductionReason(string reason) =>
-        reason is "MODEL_UNTRANSMITTED_INTEGRATED_FAVORABLE_REDUCTION" or ("MODEL_UNTRANSMITTED_" + MarginReduction);
+        reason is "MODEL_UNTRANSMITTED_INTEGRATED_FAVORABLE_REDUCTION" or ("MODEL_UNTRANSMITTED_" + MarginReduction)
+            or ("MODEL_UNTRANSMITTED_" + AdaptiveContinuationReduction);
 
     // The 120 seconds describes validity of a modeled close instruction,
     // not duration of holding exposure or a strategy-specific trading exit.

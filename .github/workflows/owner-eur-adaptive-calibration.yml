@@ -12,13 +12,18 @@ on:
       - '.github/workflows/owner-eur-adaptive-calibration.yml'
   push:
     branches: [main]
-    paths: ['research/eur_adaptive_calibration_1_execution.json']
+    paths:
+      - 'research/eur_adaptive_calibration_1_execution.json'
+      - 'research/eur_adaptive_calibration_1_portfolio_recovery.json'
 permissions:
   contents: read
   actions: read
 jobs:
   technical:
     runs-on: ubuntu-24.04
+    outputs:
+      groups: ${{ steps.execution.outputs.groups }}
+      recovery: ${{ steps.execution.outputs.recovery }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -30,6 +35,25 @@ jobs:
       - run: dotnet build src/Mxm.Replay -c Release
       - run: dotnet run --project tests/Mxm.Checks -c Release
       - run: python -m unittest research.test_merge_eur_scenarios research.test_owner_eur_checkpoint research.test_merge_eur_adaptive
+      - name: Bind the requested execution partition
+        id: execution
+        run: |
+          python - <<'PYPLAN'
+          import hashlib, json, os
+          from pathlib import Path
+          path=Path("research/eur_adaptive_calibration_1_portfolio_recovery.json")
+          groups=["ESTIMATORS","PORTFOLIO"]
+          if path.exists():
+              data=json.loads(path.read_bytes())
+              raw=Path("research/eur_adaptive_calibration_1.json").read_bytes()
+              assert data["Study"]==json.loads(raw)["Study"] and data["ProtocolSha256"]==hashlib.sha256(raw).hexdigest()
+              assert data["OriginalRun"]==45694735715 and data["OriginalRevision"]=="4ae1e74b52dc27808fd42ee50b6b46bef34871be"
+              assert set(data["InitialCheckpoints"])=={"0","1","2"}
+              groups=["PORTFOLIO"]
+          with open(os.environ["GITHUB_OUTPUT"],"a") as f:
+              f.write("groups="+json.dumps(groups,separators=(",",":"))+"\n")
+              f.write("recovery="+str(path.exists()).lower()+"\n")
+          PYPLAN
   evidence:
     needs: technical
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.actor == 'mariancradulescu'
@@ -37,7 +61,7 @@ jobs:
       fail-fast: false
       matrix:
         scenario: [0, 1, 2]
-        trial-group: [ESTIMATORS, PORTFOLIO]
+        trial-group: ${{ fromJSON(needs.technical.outputs.groups) }}
     environment: mxm-r3-custody-v1
     runs-on: ubuntu-24.04
     timeout-minutes: 350
@@ -206,19 +230,50 @@ jobs:
               echo "phase$phase=true" >> "$GITHUB_OUTPUT"
             fi
           done
+      - name: Restore the original funded fit checkpoint
+        if: needs.technical.outputs.recovery == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PYFIT'
+          import hashlib, json, os, subprocess, zipfile
+          from pathlib import Path
+          marker=json.loads(Path("research/eur_adaptive_calibration_1_portfolio_recovery.json").read_bytes())
+          scenario=os.environ["MXM_ECONOMIC_SCENARIO_INDEX"]
+          expected=marker["InitialCheckpoints"][scenario]
+          repo=os.environ["GITHUB_REPOSITORY"]
+          endpoint=f"repos/{repo}/actions/artifacts/{expected['Artifact']}"
+          meta=json.loads(subprocess.check_output(["gh","api",endpoint]))
+          assert meta["workflow_run"]["id"]==marker["OriginalRun"]
+          assert meta["workflow_run"]["head_sha"]==marker["OriginalRevision"]
+          assert meta["name"]==f"eur-adaptive-checkpoint-{scenario}-PORTFOLIO-1"
+          assert meta["digest"]=="sha256:"+expected["ArchiveSha256"]
+          folder=Path("checkpoints/1")
+          folder.mkdir(parents=True,exist_ok=False)
+          archive=folder/"original.zip"
+          with archive.open("xb") as f:
+              subprocess.run(["gh","api",endpoint+"/zip"],stdout=f,check=True)
+          assert hashlib.sha256(archive.read_bytes()).hexdigest()==expected["ArchiveSha256"]
+          with zipfile.ZipFile(archive) as z:
+              assert z.namelist()==["checkpoint.sealed"]
+              (folder/"checkpoint.sealed").write_bytes(z.read("checkpoint.sealed"))
+          archive.unlink()
+          with open(os.environ["GITHUB_ENV"],"a") as f:
+              f.write("MXM_ECONOMIC_PORTFOLIO_FIT_ORIGINAL_REVISION="+marker["OriginalRevision"]+"\n")
+          PYFIT
       - name: Reconstruct original authenticated evidence once
         env:
           R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
         run: python -m research.owner_eer1_readback --prepare-protection-recovery "$RUNNER_TEMP/eur-private"
       - name: Replay initial fit and seal checkpoint
-        if: steps.resume.outputs.phase1 != 'true'
+        if: steps.resume.outputs.phase1 != 'true' && needs.technical.outputs.recovery != 'true'
         env:
           R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
         run: |
           python -m research.owner_eur_checkpoint "$RUNNER_TEMP/eur-private" adaptive-partition.json --protocol research/eur_adaptive_calibration_1.json \
             --phase 1 --checkpoint checkpoints/1
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: steps.resume.outputs.phase1 != 'true'
+        if: steps.resume.outputs.phase1 != 'true' && needs.technical.outputs.recovery != 'true'
         with:
           name: ${{ env.CHECKPOINT_PREFIX }}-1
           path: checkpoints/1
@@ -286,8 +341,9 @@ jobs:
           if-no-files-found: error
           retention-days: 90
   combine:
-    needs: evidence
+    needs: [technical, evidence]
     runs-on: ubuntu-24.04
+    timeout-minutes: 110
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -296,6 +352,11 @@ jobs:
         with:
           pattern: eur-adaptive-result-*
           path: partitions
+      - name: Verify the unchanged original estimator reports
+        if: needs.technical.outputs.recovery == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python -m research.recover_eur_adaptive_partitions partitions original-estimator-provenance.json
       - name: Read exact archived comparator and reconcile the new reports
         env:
           GH_TOKEN: ${{ github.token }}
@@ -303,8 +364,14 @@ jobs:
           gh api repos/"$GITHUB_REPOSITORY"/actions/artifacts/15053582243/zip > /tmp/contextual-archived.zip
           echo '48161242683fece3a6e5ae9bf48cc3efd40f4fc2338be735e2b52fc5620d9b88  /tmp/contextual-archived.zip' | sha256sum -c -
           unzip -p /tmp/contextual-archived.zip contextual-net-combined.json > /tmp/contextual-archived.json
+          recovery=()
+          if [[ -f original-estimator-provenance.json ]]; then
+            revision=$(python -c 'import json; print(json.load(open("original-estimator-provenance.json"))["Revision"])')
+            recovery=(--original-estimator-revision "$revision")
+          fi
           python -m research.merge_eur_adaptive research/eur_adaptive_calibration_1.json /tmp/contextual-archived.json \
-            adaptive-report partitions/eur-adaptive-result-*/adaptive-partition.json
+            adaptive-report partitions/eur-adaptive-result-*/adaptive-partition.json "${recovery[@]}"
+          if [[ -f original-estimator-provenance.json ]]; then cp original-estimator-provenance.json adaptive-report/; fi
           sha256sum adaptive-report/*.json
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:

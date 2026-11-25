@@ -3,12 +3,13 @@ from collections import defaultdict
 from decimal import Decimal
 from hashlib import sha256
 import argparse
+import os
 from pathlib import Path
 
 from .merge_eur_scenarios import exact_json, read, require
 
 
-def collect(protocol_path, reports):
+def collect(protocol_path, reports, revisions_by_group=None):
     plan = read(protocol_path)
     protocol_hash = sha256(protocol_path.read_bytes()).hexdigest()
     expected_groups = plan["TrialGroups"]
@@ -37,7 +38,11 @@ def collect(protocol_path, reports):
                 and [t["Id"] for t in result["TrialDetails"]] == expected_groups[group]
                 and [f["AvailableBefore"] for f in result["Fits"]] == plan["TestBoundaries"][:-1]
                 and all(t["Result"]["InitialCapitalEur"] == 300 for t in result["Trials"]), "PARTITION_TRIALS")
-        header = dict(report, Summary={k: v for k, v in summary.items() if k != "Results"})
+        metadata={k:v for k,v in summary.items() if k!="Results"}
+        if revisions_by_group is not None:
+            require(metadata.pop("ExecutedRevision")==revisions_by_group[group],"PARTITION_EXECUTION_REVISION")
+            metadata["ExecutedRevisionsByTrialGroup"]=revisions_by_group
+        header = dict(report, Summary=metadata)
         if prefix is None:
             prefix = header
         require(prefix == header, "PARTITION_SOURCE")
@@ -127,8 +132,11 @@ def main():
     parser.add_argument("baseline",type=Path)
     parser.add_argument("output",type=Path)
     parser.add_argument("reports",type=Path,nargs="+")
+    parser.add_argument("--original-estimator-revision")
     args=parser.parse_args()
-    study=collect(args.protocol,args.reports)
+    original=args.original_estimator_revision
+    revisions=None if original is None else dict(ESTIMATORS=original,PORTFOLIO=os.environ["GITHUB_SHA"])
+    study=collect(args.protocol,args.reports,revisions)
     plan=read(args.protocol)
     audit=attribution(study,read(args.baseline),plan)
     args.output.mkdir(exist_ok=False)

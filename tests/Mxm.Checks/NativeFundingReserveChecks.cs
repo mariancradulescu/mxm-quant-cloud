@@ -243,7 +243,7 @@ internal static class NativeFundingReserveChecks
             "A partial close preserves its original funding window and reserves both remaining held and pending margin");
     }
 
-    static void ReducedPositionSettlement(Action<bool,string> check)
+    static void ReducedPositionSettlement(Action<bool,string> check,string reason)
     {
         Ucp1Frame TwoUnits(int slot)
         {
@@ -267,7 +267,7 @@ internal static class NativeFundingReserveChecks
         var reduction=NativeSimulatedCloseLifecycle.Advance(session,
             new(open.PositionId,"ADAPT",new(plan.Atr,plan.Equilibrium),plan.Stop,plan.Extreme,plan.LastObservedAt),
             new(Clock(3),Observation(3,100.95m).Markets.Single().Quote,
-                Instruction:new("INTEGRATED_FAVORABLE_REDUCTION",1m),IntegratedManagesProtection:true));
+                Instruction:new(reason,1m),IntegratedManagesProtection:true));
         engine=NativeUnifiedPortfolioEngine.Restore(JsonSerializer.Serialize(saved with
             {Session=session.Checkpoint(),Events=saved.Events.Concat(reduction.AppliedFacts).ToArray()}));
         var reduced=engine.Advance(Observation(4,101.03m,offer:null));
@@ -335,7 +335,8 @@ internal static class NativeFundingReserveChecks
         LateExactSettlement(check,-.40m);
         LateExactSettlement(check,.25m);
         PartialExposure(check);
-        ReducedPositionSettlement(check);
+        ReducedPositionSettlement(check,"INTEGRATED_FAVORABLE_REDUCTION");
+        ReducedPositionSettlement(check,NativeSimulatedCloseLifecycle.AdaptiveContinuationReduction);
         InsufficientOfferCoverage(check);
     }
 }
