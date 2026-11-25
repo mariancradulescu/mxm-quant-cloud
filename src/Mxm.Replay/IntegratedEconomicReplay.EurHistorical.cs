@@ -99,13 +99,12 @@ internal static partial class IntegratedEconomicReplay
 
             void ProfileProgress(string stage,long from,long to,long processed,long total)
             {
-                if(!NativeEconomicProfiler.Enabled)return;
-                Console.WriteLine("HISTORICAL_EUR_PROFILE "+JsonSerializer.Serialize(new
+                Console.WriteLine("HISTORICAL_EUR_PROGRESS "+JsonSerializer.Serialize(new
                 {
                     Stage=stage,Stress=stress,From=from,To=to,ProcessedClocks=processed,TotalClocks=total,
                     Trials=comparison.Select(x=>x.Trial.Id).ToArray(),
                     Observers=observers.Select(x=>new {Id=x.Key,Progress=x.Value.Progress()}).ToArray(),
-                    Timings=NativeEconomicProfiler.Snapshot()
+                    Timings=NativeEconomicProfiler.Enabled?NativeEconomicProfiler.Snapshot():null
                 },Json));
             }
 
@@ -137,7 +136,7 @@ internal static partial class IntegratedEconomicReplay
                     using (NativeEconomicProfiler.Measure("replay.observers"))
                         foreach(var observer in observers.Values)observer.Advance(frame);
                     processed++;
-                    if(NativeEconomicProfiler.Enabled && (processed%64==0 || processed==total))
+                    if(processed%64==0 || processed==total)
                         ProfileProgress("OBSERVE",from,to,processed,total);
                 }
             }
