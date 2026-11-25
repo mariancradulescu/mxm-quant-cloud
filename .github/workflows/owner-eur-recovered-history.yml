@@ -1,0 +1,166 @@
+name: OWNER EUR general recovered-history economic development
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/owner-eur-recovered-history.yml']
+permissions:
+  actions: read
+  contents: read
+jobs:
+  evidence:
+    if: github.run_attempt == 1 && github.actor == 'mariancradulescu'
+    environment: mxm-r3-custody-v1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - run: python -m unittest research.test_official_symbol_calendar research.test_owner_eer1_source
+      - run: dotnet build src/Mxm.Replay -c Release
+      - name: Pin exact original artifact identity and archive digest
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/"$GITHUB_REPOSITORY"/actions/artifacts/15000522105 > /tmp/eer1-artifact.json
+          python -c 'import json; a=json.load(open("/tmp/eer1-artifact.json")); assert a["id"]==15000522105 and a["workflow_run"]["id"]==45555613548 and a["size_in_bytes"]==233873730 and a["digest"]=="sha256:107b2bc43e6ff25a5799e253b0ab6ee718ad5b88ef3bb3211d84ad6c20b87a5b" and not a["expired"]'
+          gh api repos/"$GITHUB_REPOSITORY"/actions/artifacts/15000522105/zip > /tmp/eer1-original.zip
+          echo '107b2bc43e6ff25a5799e253b0ab6ee718ad5b88ef3bb3211d84ad6c20b87a5b  /tmp/eer1-original.zip' | sha256sum -c -
+          unzip -q /tmp/eer1-original.zip -d eer1-source
+          rm /tmp/eer1-original.zip
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: owner-eur-conditional-source-verified
+          path: pilot-source
+          run-id: 45552716026
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: source-history-public-receipt
+          path: original-source-history
+          run-id: 45396314675
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: source-history-original-sealed
+          path: original-source-history
+          run-id: 45396314675
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: owner-history-extension-sealed-and-receipt
+          path: previous-extension
+          run-id: 45409527714
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: sealed-source
+          path: bdp-source
+          run-id: 41724643418
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: sealed-source
+          path: aip-source
+          run-id: 41735441128
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: hxc1-original-historical-encrypted-source
+          path: mde1-hxc1-source
+          run-id: 43817213663
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: xmh2-complete-274day-m15-encrypted-source
+          path: mde1-xmh2-source
+          run-id: 44352570167
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: p05-new-live-readonly-authentic-source-sealed
+          path: p05-sealed
+          run-id: 45134137836
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: p05-new-live-readonly-aggregate-public
+          path: p05-public
+          run-id: 45134137836
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: owner-eur-gap-official-original
+          path: prior-gap
+          run-id: 45541671931
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: owner-eur-rollover-official-original
+          path: prior-rollover
+          run-id: 45549613144
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: integrated-full-session-custody
+          path: integrated-sealed-source
+          run-id: 44687919474
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: integrated-full-session-source-public
+          path: integrated-source-public
+          run-id: 44687919474
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: closed-market-original-ciphertext
+          path: closed-market-source
+          run-id: 44733062339
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: closed-market-original-source-public
+          path: closed-market-source
+          run-id: 44733062339
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: hxc1-original-historical-encrypted-source
+          path: hxc1-original
+          run-id: 43817213663
+          github-token: ${{ github.token }}
+      - name: Verify the registered historical trial catalogue
+        run: echo '98d9d78e7d226999d2e50f621c22a9396dd74d66980c66cf181792fffa479961  research/eur_general_recovered_history_1.json' | sha256sum -c -
+      - name: Run the distinct CSharp historical optimization on the custody tape
+        run: python -m research.owner_eer1_readback --historical-development research/eur_general_recovered_history_1.json recovered-history-result.json
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - name: Verify research scope and trial completeness
+        run: |
+          python - <<'PYRESULT'
+          import json
+          from pathlib import Path
+          report = json.loads(Path("recovered-history-result.json").read_bytes())
+          assert report["ProtocolSha256"] == "98d9d78e7d226999d2e50f621c22a9396dd74d66980c66cf181792fffa479961"
+          assert report["DeclaredScenarioTrialCount"] == 33
+          assert len(report["Results"]) == 3
+          assert all(len(s["Trials"]) == 11 and len(s["Fits"]) == 2 for s in report["Results"])
+          assert all(len(b["Result"]["Weeks"]) == 2 for s in report["Results"] for b in s["Trials"])
+          assert report["SourceBrokerRequests"] == report["Orders"] == 0
+          assert report["CloudActivated"] is report["IndependentConfirmationCertified"] is False
+          print("VERIFIED HISTORICAL RESEARCH WINDOW", report["TestBoundaries"])
+          PYRESULT
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: eur-general-recovered-history-original
+          path: recovered-history-result.json
+          retention-days: 90
+          if-no-files-found: error

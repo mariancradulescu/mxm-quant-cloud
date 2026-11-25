@@ -17,17 +17,30 @@ public sealed partial class NativeUnifiedPortfolioEngine
 
     bool IsEurGeneral => policy is EurGeneralProbe or EurGeneralSelect or EurGeneralPooled or EurGeneralCash;
 
-    static Ucp1DecisionSignal[] DescribeEurGeneral(Ucp1MarketFrame market, long at)
+    Ucp1DecisionSignal[] DescribeEurGeneral(Ucp1MarketFrame market, long at)
     {
         if (market.Quote.At != at || market.EurTickSize is not decimal tick || !Cpe1Usable(market, at))
             return Array.Empty<Ucp1DecisionSignal>();
-        if (NativeClosedMarketContext.CoverageWindows.Where(w => w.Timeframe <= NativeBarTimeframe.H1)
-            .Any(w => ObservedWindow(market, w.Timeframe, at) is null))
-            return Array.Empty<Ucp1DecisionSignal>();
-
-        return NativeGeneralOpportunity.Describe(market, tick).Select(setup =>
+        NativeIntegratedCandidate[] candidates;
+        if(eurDevelopmentProfile is {UseAvailableContext:true} profile)
         {
-            var geometry = setup.Signal;
+            if(ObservedWindow(market,NativeBarTimeframe.M5,at) is not { } m5||
+                ObservedWindow(market,NativeBarTimeframe.M15,at) is null||
+                m5.Bars[^1].CloseAt!=market.M5[^1].CloseAt)
+                return Array.Empty<Ucp1DecisionSignal>();
+            candidates=NativeGeneralOpportunity.Geometries(market,tick,m5.Bars,
+                ObservedWindow(market,NativeBarTimeframe.H1,at)?.Bars??Array.Empty<NativeClosedMarketBar>(),
+                profile.DistributionTargetRanges);
+        }
+        else
+        {
+            if (NativeClosedMarketContext.CoverageWindows.Where(w => w.Timeframe <= NativeBarTimeframe.H1)
+                .Any(w => ObservedWindow(market, w.Timeframe, at) is null))
+                return Array.Empty<Ucp1DecisionSignal>();
+            candidates=NativeGeneralOpportunity.Describe(market,tick).Select(x=>x.Signal).ToArray();
+        }
+        return candidates.Select(geometry =>
+        {
             decimal origin = market.M5[^1].Close;
             return new Ucp1DecisionSignal(market.Symbol, geometry.Family, geometry.Side,
                 geometry.Volatility, origin, Math.Abs(geometry.Target - origin), geometry.DecisionBar)

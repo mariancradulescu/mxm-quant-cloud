@@ -1,0 +1,29 @@
+{
+  "Study": "EUR_GENERAL_RECOVERED_HISTORY_1",
+  "Exposure": "PROJECT_EXPOSED_CONDITIONAL_DEVELOPMENT",
+  "SourceProtocolSha256": "2ac5e2da090ce4c69f4791affc54424766749630e16522e6672285ad46c98a3c",
+  "EvidenceManifestSha256": "bd4a063bef5876e649876faea5a4b602b8852483774f48c99881131e8b4082b9",
+  "InitialFitFrom": 1792972800000,
+  "TestBoundaries": [1794182400000, 1794787200000, 1795392000000],
+  "Stresses": [0, 0.5, 1],
+  "Calibrations": [
+    {"Id":"STRICT", "Profile":{"UseAvailableContext":false,"DistributionTargetRanges":2,"MinimumEpisodes":20,"MinimumDays":3,"DayPenalty":1.645,"StopReserveMultiplier":1}},
+    {"Id":"AVAILABLE", "Profile":{"UseAvailableContext":true,"DistributionTargetRanges":2,"MinimumEpisodes":20,"MinimumDays":3,"DayPenalty":1.645,"StopReserveMultiplier":1}},
+    {"Id":"TARGET_15", "Profile":{"UseAvailableContext":true,"DistributionTargetRanges":1.5,"MinimumEpisodes":20,"MinimumDays":3,"DayPenalty":1.645,"StopReserveMultiplier":1}},
+    {"Id":"TARGET_25", "Profile":{"UseAvailableContext":true,"DistributionTargetRanges":2.5,"MinimumEpisodes":20,"MinimumDays":3,"DayPenalty":1.645,"StopReserveMultiplier":1}},
+    {"Id":"RESERVE_125", "Profile":{"UseAvailableContext":true,"DistributionTargetRanges":2,"MinimumEpisodes":20,"MinimumDays":3,"DayPenalty":1.645,"StopReserveMultiplier":1.25}}
+  ],
+  "Trials": [
+    {"Id":"STRICT_SELECT","Policy":"EUR_GENERAL_SELECT","Calibration":"STRICT"},
+    {"Id":"STRICT_POOLED","Policy":"EUR_GENERAL_POOLED","Calibration":"STRICT"},
+    {"Id":"AVAILABLE_SELECT","Policy":"EUR_GENERAL_SELECT","Calibration":"AVAILABLE"},
+    {"Id":"AVAILABLE_POOLED","Policy":"EUR_GENERAL_POOLED","Calibration":"AVAILABLE"},
+    {"Id":"AVAILABLE_SUPPORT_12","Policy":"EUR_GENERAL_SELECT","Calibration":"AVAILABLE","MinimumEpisodes":12},
+    {"Id":"AVAILABLE_PENALTY_1","Policy":"EUR_GENERAL_SELECT","Calibration":"AVAILABLE","DayPenalty":1},
+    {"Id":"AVAILABLE_TARGET_15","Policy":"EUR_GENERAL_SELECT","Calibration":"TARGET_15"},
+    {"Id":"AVAILABLE_TARGET_25","Policy":"EUR_GENERAL_SELECT","Calibration":"TARGET_25"},
+    {"Id":"AVAILABLE_RESERVE_125","Policy":"EUR_GENERAL_SELECT","Calibration":"RESERVE_125"},
+    {"Id":"AVAILABLE_PROBE","Policy":"EUR_GENERAL_PROBE","Calibration":"AVAILABLE"},
+    {"Id":"CASH","Policy":"EUR_GENERAL_CASH","Calibration":"AVAILABLE"}
+  ]
+}

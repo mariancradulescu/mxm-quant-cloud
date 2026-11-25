@@ -9,6 +9,8 @@ if(args is ["--owner-eer1-extended",var eerInput,var eerReport,var eerCalibratio
     return IntegratedEconomicReplay.RunEer1(eerInput,eerReport,eerCalibrations);
 if(args is ["--owner-eur-general",var generalPhase,var generalInput,var generalOutput,var generalModels])
     return IntegratedEconomicReplay.RunGeneralEur(generalPhase,generalInput,generalOutput,generalModels);
+if(args is ["--owner-eur-historical-study",var historicalProtocol,var historicalSource,var historicalReport])
+    return IntegratedEconomicReplay.RunHistoricalEur(historicalProtocol,historicalSource,historicalReport);
 if(args is ["--owner-eer1-closed-diagnosis",var diagnosisSource,var diagnosisLedger,var diagnosisReport])
     return IntegratedEconomicReplay.AuditEerClosedSource(diagnosisSource,diagnosisLedger,diagnosisReport);
 if(args is ["--owner-eur-conditional-continuity-pilot",var conditionalInput,var conditionalOutput,var conditionalCalibration,var conditionalSource])

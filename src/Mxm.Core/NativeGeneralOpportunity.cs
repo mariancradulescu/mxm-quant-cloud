@@ -41,10 +41,6 @@ public static class NativeGeneralOpportunity
             m5[^1].CloseAt >= q.At || m5[^1].CloseAt != m1[^1].CloseAt)
             return Array.Empty<NativeStructuralSetup>();
 
-        decimal span = m5.TakeLast(5).Average(b => b.High - b.Low);
-        if (span <= 0m || m5.TakeLast(5).Any(b => b.High <= b.Low))
-            return Array.Empty<NativeStructuralSetup>();
-        decimal volatility = Math.Max(tick, span);
         decimal center = h1.TakeLast(2).Average(b => (b.High + b.Low) / 2m);
         decimal mid = (q.Ask + q.Bid) / 2m;
         decimal previousRange = Math.Max(tick, m30.TakeLast(2).Average(b => b.High - b.Low));
@@ -52,20 +48,10 @@ public static class NativeGeneralOpportunity
         decimal recentVolume = m1.TakeLast(5).Average(b => (decimal)b.TickVolume);
         decimal h1Range = Math.Max(tick, h1.TakeLast(2).Max(b => b.High) -
             h1.TakeLast(2).Min(b => b.Low));
-        var setups = new List<NativeStructuralSetup>(3);
-
-        void Add(string family, int side, decimal stop, decimal target)
+        return Geometries(market,tick,m5,h1,2m).Select(signal =>
         {
-            decimal entering = side == 1 ? q.Ask : q.Bid;
-            decimal exiting = side == 1 ? q.Bid : q.Ask;
-            if (stop <= 0m || target <= 0m ||
-                side * (exiting - stop) <= 0m ||
-                side * (target - entering) <= 0m ||
-                !NativeIntegratedLifecycle.ProtectionCompatible(side, stop, target, market))
-                return;
-
-            // All observations precede the decision. No feature is formed from
-            // the post-decision quote path or a future unfinished M15/H1 bar.
+            int side = signal.Side;
+            decimal volatility = signal.Volatility;
             var state = new[]
             {
                 Clip(side * (m5[^1].Close - m5[^5].Open) / volatility),
@@ -77,40 +63,43 @@ public static class NativeGeneralOpportunity
                 Clip(side * (mid - m5.TakeLast(5).Average(b => b.Close)) / volatility),
                 Clip((q.Ask - q.Bid) / volatility)
             };
-            var signal = new NativeIntegratedCandidate(family, side, stop, target,
-                volatility, m5[^1].CloseAt);
-            // Zero structural boundary: this mode is not a reclaimed-edge rule.
-            // Its causal fill admissibility has its own explicit clock check.
-            var thesis = new NativeEntryThesis(family, 0m,
+            var thesis = new NativeEntryThesis(signal.Family, 0m,
                 context.For(NativeBarTimeframe.M15).ExpectedCloseAt);
-            setups.Add(new(signal, thesis, state));
-        }
+            return new NativeStructuralSetup(signal,thesis,state);
+        }).ToArray();
+    }
 
-        // Mechanism A: full-state direction-neutral distributional choice.
-        // One recent completed-bar price range is the *frozen* risk unit; the
-        // symmetric two-unit target is a declared comparator, not fitted.
-        // No result-dependent activity, trend or breakout threshold.
+    internal static NativeIntegratedCandidate[] Geometries(Ucp1MarketFrame market,decimal tick,
+        NativeClosedMarketBar[] m5,NativeClosedMarketBar[] h1,decimal targetRanges)
+    {
+        var q = market.Quote;
+        if (tick <= 0m || q.Bid <= 0m || q.Ask < q.Bid || m5.Length < 5 ||
+            m5.TakeLast(5).Any(b=>b.CloseAt>=q.At||b.High<=b.Low))
+            return Array.Empty<NativeIntegratedCandidate>();
+        decimal volatility = Math.Max(tick, m5.TakeLast(5).Average(b=>b.High-b.Low));
+        var candidates = new List<NativeIntegratedCandidate>(3);
+        void Add(string family,int side,decimal target)
+        {
+            decimal entering=side==1?q.Ask:q.Bid;
+            decimal exiting=side==1?q.Bid:q.Ask;
+            decimal stop=Tick(exiting-side*volatility,tick,side<0);
+            if(stop>0m&&target>0m&&side*(exiting-stop)>0m&&side*(target-entering)>0m&&
+                NativeIntegratedLifecycle.ProtectionCompatible(side,stop,target,market))
+                candidates.Add(new(family,side,stop,target,volatility,m5[^1].CloseAt));
+        }
         foreach (int side in new[] { 1, -1 })
         {
-            decimal stop = Tick((side == 1 ? q.Bid : q.Ask) - side * volatility,
-                tick, side < 0);
-            decimal target = Tick((side == 1 ? q.Ask : q.Bid) + side * 2m * volatility,
+            decimal target = Tick((side == 1 ? q.Ask : q.Bid) + side * targetRanges * volatility,
                 tick, side > 0);
-            Add(Distribution, side, stop, target);
+            Add(Distribution, side, target);
         }
-
-        // Mechanism B: restoring the observed center of the last two CLOSED
-        // hourly ranges. This is geometric opportunity detection, with no
-        // filter on the *direction* of historical returns.
-        int toward = Math.Sign(center - mid);
-        if (toward != 0)
+        if(h1.Length>=2&&h1.TakeLast(2).All(bar=>bar.CloseAt<q.At))
         {
-            decimal stop = Tick((toward == 1 ? q.Bid : q.Ask) - toward * volatility,
-                tick, toward < 0);
-            decimal target = Tick(center, tick, toward > 0);
-            Add(Equilibrium, toward, stop, target);
+            decimal center=h1.TakeLast(2).Average(b=>(b.High+b.Low)/2m);
+            int toward=Math.Sign(center-(q.Ask+q.Bid)/2m);
+            if(toward!=0)Add(Equilibrium,toward,Tick(center,tick,toward>0));
         }
-        return setups.ToArray();
+        return candidates.ToArray();
     }
 
     // Causal fill check, distinct from structural boundary reclaim validation.

@@ -52,6 +52,8 @@ public sealed record NativeEurCalibration(long ObservationThrough,string LedgerE
     public string? FundingScenarioId { get; init; }
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public string? OpportunitySchema { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? DevelopmentGeometry { get; init; }
 }
 
 public sealed partial class NativeUnifiedPortfolioEngine
@@ -68,6 +70,16 @@ public sealed partial class NativeUnifiedPortfolioEngine
     NativeEurCalibration? eurCalibration;
     public long LastObservationAt=>previousClock;
     public string PolicyName=>policy;
+
+    void VerifyEurDevelopmentProfile(NativeEurDevelopmentProfile? options)
+    {
+        if(options is null)return;
+        if(!IsEurGeneral)throw new ArgumentException("EUR_PROFILE_REQUIRES_GENERAL_POLICY");
+        options.Verify();
+    }
+
+    decimal ReservedEurRisk(decimal executableRisk,decimal debit)
+        =>executableRisk*(eurDevelopmentProfile?.StopReserveMultiplier??1m)+debit;
 
     // The native platform computes margin inside the callback. Consecutive
     // observed grid slots can have different real completion timestamps.
@@ -104,7 +116,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
         var outcomes=eurHistory.Values.SelectMany(rows=>rows)
             .OrderBy(o=>o.ClosedAt).ThenBy(o=>o.PositionId,StringComparer.Ordinal).ToArray();
         return new(previousClock,ModelSummary.EventChainHash,outcomes) {FundingScenarioId=FundingScenarioId,
-            OpportunitySchema=IsEurGeneral?EurGeneralSchema:null};
+            OpportunitySchema=IsEurGeneral?EurGeneralSchema:null,
+            DevelopmentGeometry=eurDevelopmentProfile?.GeometryIdentity};
     }
 
     public void LoadEurCalibration(NativeEurCalibration calibration)
@@ -114,10 +127,20 @@ public sealed partial class NativeUnifiedPortfolioEngine
         RestoreEurCalibration(calibration);
     }
 
+    public void UpdateEurResearchCalibration(NativeEurCalibration calibration)
+    {
+        if(eurDevelopmentProfile is null||eurCalibration is null||
+            calibration.ObservationThrough<=eurCalibration.ObservationThrough||
+            calibration.ObservationThrough>previousClock)
+            throw new ArgumentException("EUR_RECALIBRATION_MUST_ADVANCE_CAUSALLY_ON_SAME_BOOK");
+        RestoreEurCalibration(calibration);
+    }
+
     void RestoreEurCalibration(NativeEurCalibration calibration)
     {
         if(!IsEurRank||calibration.FundingScenarioId!=FundingScenarioId||calibration.ObservationThrough<=0||
             calibration.OpportunitySchema!=(IsEurGeneral?EurGeneralSchema:null)||
+            calibration.DevelopmentGeometry!=eurDevelopmentProfile?.GeometryIdentity||
             (IsEurGeneral&&calibration.Outcomes.Any(x=>x.Context?.MarketState is not { Length: GeneralStateSize }))||
             calibration.LedgerEventChainSha256 is not {Length:64}||
             !calibration.LedgerEventChainSha256.All(Uri.IsHexDigit)||
@@ -126,6 +149,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
             calibration.Outcomes.Any(o=>o.AvailableAt>calibration.ObservationThrough||
                 o.ClosedAt<=0||o.AvailableAt<o.ClosedAt||o.RiskEur<=0m||o.Side is not (-1 or 1)))
             throw new ArgumentException("EUR_CALIBRATION_INVALID_CAUSAL_OUTCOME");
+        eurHistory.Clear();
         eurCalibration=calibration;
         foreach(var outcome in calibration.Outcomes)AddEurOutcome(outcome);
     }
@@ -137,15 +161,17 @@ public sealed partial class NativeUnifiedPortfolioEngine
     internal NativeEurPayoff? EurPayoff(string family,int side,decimal candidateRiskEur,decimal currentCostFloorEur,
         NativeEurDecisionContext? target=null)
     {
-        if(!eurHistory.TryGetValue((family,side),out var history)||history.Count<20)return null;
+        int minEpisodes=eurDevelopmentProfile?.MinimumEpisodes??20;
+        int minDays=eurDevelopmentProfile?.MinimumDays??3;
+        if(!eurHistory.TryGetValue((family,side),out var history)||history.Count<minEpisodes)return null;
         NativeEurCalibrationOutcome[] pool=history.ToArray();
         string? cohort=null;
         if(target is not null)
         {
             var sameSymbol=pool.Where(x=>x.Context?.Symbol==target.Symbol).ToArray();
             var sameClass=pool.Where(x=>target.AssetClass is not null&&x.Context?.AssetClass==target.AssetClass).ToArray();
-            static bool Supported(NativeEurCalibrationOutcome[] rows)
-                =>rows.Length>=20&&rows.Select(r=>r.ClosedAt/86400000L).Distinct().Take(3).Count()==3;
+            bool Supported(NativeEurCalibrationOutcome[] rows)
+                =>rows.Length>=minEpisodes&&rows.Select(r=>r.ClosedAt/86400000L).Distinct().Take(minDays).Count()==minDays;
             if(Supported(sameSymbol)){pool=sameSymbol;cohort="SYMBOL";}
             else if(Supported(sameClass)){pool=sameClass;cohort="OFFICIAL_CLASS";}
             else cohort="POOLED_FAMILY_DIRECTION";
@@ -161,12 +187,12 @@ public sealed partial class NativeUnifiedPortfolioEngine
         var days=samples.GroupBy(x=>x.CloseDay).OrderBy(g=>g.Key)
             .Select(g=> (Gross:g.Sum(x=>x.Gross*x.Weight)/g.Sum(x=>x.Weight),
                 Net:g.Sum(x=>x.Net*x.Weight)/g.Sum(x=>x.Weight))).ToArray();
-        if(days.Length<3)return null;
+        if(days.Length<minDays)return null;
         decimal grossMean=days.Average(x=>x.Gross),netMean=days.Average(x=>x.Net);
         // The existing program's one-sided 1.645 standard-error penalty,
         // applied separately to the day-block series. Diagnostic only.
         decimal Lower(decimal mean,IEnumerable<decimal> sample)
-            =>mean-1.645m*(decimal)Math.Sqrt(sample.Sum(x=>Math.Pow((double)(x-mean),2))/
+            =>mean-(eurDevelopmentProfile?.DayPenalty??1.645m)*(decimal)Math.Sqrt(sample.Sum(x=>Math.Pow((double)(x-mean),2))/
                 ((double)days.Length*(days.Length-1)));
         return new NativeEurPayoff(pool.Length,days.Length,grossMean,Lower(grossMean,days.Select(x=>x.Gross)),
             netMean,Lower(netMean,days.Select(x=>x.Net)),
@@ -237,7 +263,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
         void Trace(NativeEurOpportunity o,string state)
         {
             Count("EUR_"+state);
-            if(!researchFork)eurOpportunities.Add(o with {Decision=state,
+            if(!researchFork&&(eurDevelopmentProfile is null||state is "LONG_PENDING" or "SHORT_PENDING"))eurOpportunities.Add(o with {Decision=state,
                 HeldMarginEur=capital.HeldMarginEur,PendingMarginEur=pending.Sum(x=>x.MarginEur)});
         }
         foreach(var (s,market) in options.OrderBy(x=>x.Frame.Symbol,StringComparer.Ordinal)
@@ -261,11 +287,11 @@ public sealed partial class NativeUnifiedPortfolioEngine
                     q.LiquidationSlippagePerSide??market.SlippagePerSideQuote));
                 var margin=EurMargin(market,s.Side,units,at);
                 var debit=NativePortfolioFunding.OfferDebit(market,s.Side,units,at,FundingScenarioId);
-                decimal? risk=bracket.RiskEur+debit;
+                decimal? risk=debit is decimal knownDebit?ReservedEurRisk(bracket.RiskEur,knownDebit):null;
                 var context=DescribeEurContext(market,at,s.Side,(capital.HeldMarginEur??0m)+pending.Sum(x=>x.MarginEur),
                     capital.ResearchAdmissionEquityEur,risk,roundTripCost);
                 if(context is not null&&marketState is not null)context=context with {MarketState=marketState};
-                var payoff=risk is >0m?EurPayoff(s.Family,s.Side,risk.Value,roundTripCost+debit!.Value,
+                var payoff=risk is >0m&&(IsEurRank||eurDevelopmentProfile is null)?EurPayoff(s.Family,s.Side,risk.Value,roundTripCost+debit!.Value,
                     policy is EurContextRank or EurGeneralSelect?context:null):null;
                 var receipt=new NativeEurOpportunity(at,market.Symbol,s.Family,s.Side,units,grossTarget,grossRisk,
                     roundTripCost,debit,margin?.MarginEur,risk,capital.HeldMarginEur,capital.PendingOpenMarginEur,

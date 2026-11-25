@@ -223,7 +223,7 @@ predictive economic validation.
 
 ## Authentic extended universe and economic evidence (2026-11-05)
 
-The architecture still has **one** authority: [OWNER v2.0](OWNER_SPEC.md).
+The [active OWNER specification](OWNER_SPEC.md) governs research and deployment decisions.
 The collector, run-bound encrypted readback, native C# selector, risk accounting,
 NativeFundedLedger, NativeFundedSession and observation-only Cloud cBot are
 unchanged foundations. A new research source does not add a second ledger,
@@ -240,8 +240,8 @@ The two Asian MBF1 groups have **zero complete evaluable episodes**: 260
 scheduled feature clocks lacked complete aligned source observations. They are
 **data-limited, not evidence of a negative edge**. The other MBF1 groups are
 negative after central/adverse conditional cost in the globally exposed
-selection calendar. ERP1 and MBF1 remain frozen in their exact scored forms;
-neither may be inverted, retuned, rerun, or salvaged from exposed audit outcomes.
+selection calendar. ERP1 and MBF1 retain their exact scored results. Future development
+can reuse those hypotheses and their exposed history in a registered investigation.
 
 **Evidence integrity:** the existing byte-for-byte `frozenFileSha256` gate
 now covers `docs/FULL_CTRADER_ACCOUNT_INVENTORY_AUTHENTIC_20261105.json`,

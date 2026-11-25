@@ -271,7 +271,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
         var bracket=NativeExecutableEconomics.Bracket(q,plan.Side,plan.Units,
             prior.Stop,prior.Target,intent.SlippagePerSide,
             q.LiquidationSlippagePerSide??intent.SlippagePerSide);
-        var risk=bracket.RiskEur+debit;
+        var risk=ReservedEurRisk(bracket.RiskEur,debit);
         var reward=bracket.RewardEur-debit;
         if(bracket.RiskEur<=0m||reward<=0m)return null;
         var held=Cpe1Commitments(false,frame);

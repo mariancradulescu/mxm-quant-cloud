@@ -102,6 +102,8 @@ public sealed record Ucp1Checkpoint(string Version,string Policy,string Session,
     public NativeFundingCheckpoint? AccruedFunding { get; init; }
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public NativeEurCalibration? EurCalibration { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public NativeEurDevelopmentProfile? EurDevelopmentProfile { get; init; }
 }
 public sealed record Scp1ChoiceReceipt(long At,string Symbol,string Family,int Side,
     decimal? ConditionalExpectedNetEur,decimal? AdverseLowerNetEur,
@@ -222,6 +224,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
     readonly List<Ucp1CurvePoint> curve=new();
     readonly bool researchFork;
     readonly NativePortfolioFunding? fundingReserves;
+    readonly NativeEurDevelopmentProfile? eurDevelopmentProfile;
     bool cpe1UnreconciledFunding;
     long previousClock=-1,seq;
     int proposed,admitted,openFills,expiredOpens,expiredCloses,
@@ -230,7 +233,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
     public NativeUnifiedPortfolioEngine(string policy,string brokerBinding="",
         Scp1ScoreModel? scoredModel=null,NativeCompleteModels? models=null,NativeCompleteProbe? probe=null,
         NativeStructuralModels? closedContextModels=null, NativeFundedActionModel? actionModel=null,
-        bool reserveAccruedFunding=false,string? fundingScenarioId=null)
+        bool reserveAccruedFunding=false,string? fundingScenarioId=null,
+        NativeEurDevelopmentProfile? eurDevelopmentProfile=null)
     {
         if(policy is not ("JOINT" or "TRANSITION_ONLY" or "REPAIR_ONLY" or
                           "LONG" or "SHORT" or "CASH" or
@@ -245,6 +249,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
            !NativeIntegratedEconomicPolicy.IsPolicy(policy))
             throw new ArgumentException("UCP1_UNDECLARED_COMPLETE_POLICY");
         this.policy=policy;
+        VerifyEurDevelopmentProfile(eurDevelopmentProfile);
+        this.eurDevelopmentProfile=eurDevelopmentProfile;
         if(reserveAccruedFunding&&!Cpe1)throw new ArgumentException("FUNDING_RESERVES_REQUIRE_CPE1_LIFECYCLE");
         if(fundingScenarioId is not null && (!OwnerEur||!string.IsNullOrWhiteSpace(brokerBinding)))
             throw new ArgumentException("FUNDING_SCENARIO_REPLAY_ONLY");
@@ -271,6 +277,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
         researchFork=s.ResearchFork;
         if(s.Version!=Version)throw new ArgumentException("UCP1_CHECKPOINT_VERSION");
         policy=s.Policy;
+        VerifyEurDevelopmentProfile(s.EurDevelopmentProfile);
+        eurDevelopmentProfile=s.EurDevelopmentProfile;
         if(s.AccruedFunding is not null)
         {
             if(!Cpe1)throw new ArgumentException("FUNDING_RESERVES_REQUIRE_CPE1_LIFECYCLE");
@@ -328,6 +336,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
     public bool Cpe1UnreconciledFunding=>cpe1UnreconciledFunding;
     public NativeFundedActionReceipt[] FundedActionReceipts=>fundedActions.ToArray();
     public Ucp1CurvePoint[] CommonBookEquityPath=>curve.ToArray();
+    public IReadOnlyDictionary<string,int> ResearchDecisionCounts=>new Dictionary<string,int>(reasons,StringComparer.Ordinal);
     public string[] ActiveSymbols=>plans.Values.Where(p=>p.OpenAt>0 || p.Integrated is not null)
         .Select(p=>p.Symbol).Distinct(StringComparer.Ordinal).ToArray();
     public void UseFundedActionModel(NativeFundedActionModel snapshot, long nextClock)
@@ -358,7 +367,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
             FundedActions = fundedActions.Count == 0 ? null : fundedActions.ToArray(),
             ResearchFork = researchFork || asResearchFork,
             Cpe1UnreconciledFunding=cpe1UnreconciledFunding,
-            AccruedFunding=fundingReserves?.Checkpoint(), EurCalibration=eurCalibration });
+            AccruedFunding=fundingReserves?.Checkpoint(), EurCalibration=eurCalibration,
+            EurDevelopmentProfile=eurDevelopmentProfile });
     static string Sha(string s)=>Convert.ToHexString(SHA256.HashData(
         Encoding.UTF8.GetBytes(s))).ToLowerInvariant();
     LedgerEvent Event(string kind,long at,string id="",string sym="",int side=0,
