@@ -1,8 +1,8 @@
-name: OWNER historical availability, universe continuation and CLI optimizer
+name: OWNER official history and monetary source windows
 on:
   push:
     branches: [main]
-    paths: ['.github/workflows/owner-history-continuation.yml']
+    paths: ['research/official_history_monetary_windows_1.json']
 permissions:
   contents: read
   actions: read
@@ -38,18 +38,25 @@ jobs:
           run-id: 45573479281
           github-token: ${{ github.token }}
           path: input/verified-tranche
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: history-continuation-verified
+          run-id: 45584495052
+          github-token: ${{ github.token }}
+          path: input/verified-continuation
       - run: |
+          echo '15544ae5a45b0fd07e2ffddb49ca3b71b150340e5b9b45b9d3c41c29e8fa2ffb  research/official_history_monetary_windows_1.json' | sha256sum -c -
           mkdir -p input/eer1-economic
           cp eer1-public/source-census.json input/eer1-economic/
-          cp -R input/{original-source-history,eer1-economic,verified-tranche} .
-          python -m research.owner_history_continuation plan
+          cp -R input/{original-source-history,eer1-economic,verified-tranche,verified-continuation} .
+          python -m research.owner_history_continuation plan --registered-continuation research/official_history_monetary_windows_1.json
       - run: python -m research.custody_new
         env:
           R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
       - run: mv new-recipient-output input/
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: history-continuation-input
+          name: history-monetary-windows-input
           path: input/
           retention-days: 2
           if-no-files-found: error
@@ -71,15 +78,15 @@ jobs:
       - run: python -m pip install -r research/requirements.txt
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          name: history-continuation-input
-      - run: python -m research.owner_history_continuation capture
+          name: history-monetary-windows-input
+      - run: python -m research.owner_history_continuation capture --registered-continuation research/official_history_monetary_windows_1.json
         env:
           R3_CTRADER_CLIENT_ID: ${{ secrets.R3_CTRADER_CLIENT_ID }}
           R3_CTRADER_CLIENT_SECRET: ${{ secrets.R3_CTRADER_CLIENT_SECRET }}
           R3_CTRADER_ACCESS_TOKEN: ${{ secrets.R3_CTRADER_ACCESS_TOKEN }}
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: history-continuation-protected
+          name: history-monetary-windows-protected
           path: owner-history-continuation/
           retention-days: 90
           if-no-files-found: error
@@ -98,49 +105,17 @@ jobs:
       - run: python -m pip install -r research/requirements.txt
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          name: history-continuation-input
+          name: history-monetary-windows-input
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          name: history-continuation-protected
+          name: history-monetary-windows-protected
           path: owner-history-continuation
-      - run: python -m research.owner_history_continuation verify
+      - run: python -m research.owner_history_continuation verify --registered-continuation research/official_history_monetary_windows_1.json
         env:
           R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: history-continuation-verified
-          path: history-continuation-verified.json
-          retention-days: 90
-          if-no-files-found: error
-
-  optimizer-command:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 12
-    steps:
-      - name: Inspect optimizer commands in the existing official CLI images
-        shell: bash
-        run: |
-          mkdir -p optimizer-capability
-          for version in 5101 5106; do
-            if [[ "$version" == 5101 ]]; then
-              image=ghcr.io/spotware/ctrader-console:5.10.1
-            else
-              image=ghcr.io/spotware/ctrader-console@sha256:6a339e15ee895de270be4a4e293fdb3f2fcdbecfbbace460105703125742e5ad
-            fi
-            docker pull "$image"
-            docker image inspect --format '{{index .RepoDigests 0}}' "$image" > "optimizer-capability/$version-digest.txt"
-            docker run --rm --network none "$image" --version > "optimizer-capability/$version-version.txt"
-            set +e
-            timeout 45s docker run --rm --network none "$image" --help > "optimizer-capability/$version-help.txt" 2>&1
-            help_exit=$?
-            timeout 45s docker run --rm --network none "$image" optimize --help > "optimizer-capability/$version-optimize.txt" 2>&1
-            optimize_exit=$?
-            set -e
-            printf 'help %s\noptimize_help %s\n' "$help_exit" "$optimize_exit" > "optimizer-capability/$version-status.txt"
-          done
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: official-optimizer-command-receipt
-          path: optimizer-capability/
+          name: history-monetary-windows-verified
+          path: history-monetary-windows-verified.json
           retention-days: 90
           if-no-files-found: error
