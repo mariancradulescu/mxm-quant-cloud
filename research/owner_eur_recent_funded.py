@@ -158,10 +158,10 @@ def materialize(work,public_path):
                     previous=entry.get(field)
                     latest=grid[grid_key]
                     # If either interval is unknown, do not manufacture clocks.
-                    if previous is None or latest is None:
+                    if previous is None and latest is None:
                         entry[field]=None
                     else:
-                        entry[field]=sorted(set(x for x in previous if x<prior_end)|set(latest))
+                        entry[field]=sorted(set(x for x in previous or [] if x<prior_end)|set(latest or []))
                 calendar_status[name]=grid["status"]
             else:
                 entry["ScheduledClocks"]=[x for x in entry.get("ScheduledClocks") or [] if x<prior_end]
