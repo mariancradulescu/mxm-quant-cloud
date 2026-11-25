@@ -5,10 +5,18 @@ using System.Linq;
 namespace Mxm.Core;
 
 internal sealed record EurEstimatorCandidate(string Id,int HalfLifeDays,double Ridge,double ScopePriorDays,
-    double SlowFrameWeight,int MinimumDays,int MinimumLabels);
-internal sealed record EurEstimatorScore(string Id,int ValidationDays,int Labels,double? Loss);
+    double SlowFrameWeight,int MinimumDays,int MinimumLabels)
+{
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool Predictive { get; init; }
+}
+internal sealed record EurEstimatorScore(string Id,int ValidationDays,int Labels,double? Loss)
+{
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public double? EconomicUtility { get; init; }
+}
 
-internal sealed class NativeEurAdaptiveEstimator
+internal sealed partial class NativeEurAdaptiveEstimator
 {
     const long Day=86_400_000L;
     static readonly int[] Local={2,3,4,5};
@@ -27,12 +35,12 @@ internal sealed class NativeEurAdaptiveEstimator
         public double Net => (double)(Label.NetEur/Label.RiskEur);
         public (string Family,int Side) Group => (Label.Family,Label.Side);
     }
-    sealed record Normalization(double[] Mean,double[] StandardDeviation,bool Extended);
+    sealed record Normalization(double[] Mean,double[] StandardDeviation,bool Extended,RegimeCuts? Regime=null);
     sealed record ScopeResidual(int Days,double Gross,double Net);
     sealed record ErrorBand(double GrossBias,double GrossWidth,double NetBias,double NetWidth);
     sealed record GroupModel(Normalization Scale,double[] Gross,double[] Net,Dictionary<string,ScopeResidual> Scopes,
         int Days,int Labels,double PositiveFraction,decimal MinimumNetR,decimal MaximumNetR,ErrorBand Errors);
-    sealed record Validation(Row Row,double GrossError,double NetError);
+    sealed record Validation(Row Row,double GrossError,double NetError,bool Supported=true);
 
     readonly Dictionary<(string Family,int Side),GroupModel> groups;
     readonly EurEstimatorCandidate selected;
@@ -48,7 +56,9 @@ internal sealed class NativeEurAdaptiveEstimator
         this.scores=scores;
     }
 
-    internal object Receipt()=>new
+    internal object Receipt()=>selected.Predictive?PredictiveReceipt():LegacyReceipt();
+
+    object LegacyReceipt()=>new
     {
         Selected=selected,ObservationThrough=fittedThrough,Grid=scores,
         Groups=groups.Select(x=>new {x.Key.Family,x.Key.Side,x.Value.Days,x.Value.Labels,
@@ -56,7 +66,7 @@ internal sealed class NativeEurAdaptiveEstimator
             x.Value.Errors.NetBias,x.Value.Errors.NetWidth}).ToArray()
     };
 
-    static double?[] Values(NativeEurDecisionContext context,bool extended)
+    static double?[] Values(NativeEurDecisionContext context,bool extended,bool predictive=false)
     {
         var state=context.MarketState!;
         var values=(extended?Extended:Local).Select(i=>(double?)state[i]).ToList();
@@ -66,6 +76,12 @@ internal sealed class NativeEurAdaptiveEstimator
             values.Add(Math.Sin(phase));
             values.Add(Math.Cos(phase));
         }
+        if(predictive&&extended)
+            for(int i=0;i<7;i++)
+            {
+                var relative=context.RelativeVolatility is {Length:7} v?v[i]:null;
+                values.Add(relative is >0m?Math.Log((double)relative.Value):null);
+            }
         decimal cost=Math.Max(0m,context.CostRiskFraction);
         values.Add((double)(cost/(1m+cost)));
         return values.ToArray();
@@ -79,13 +95,13 @@ internal sealed class NativeEurAdaptiveEstimator
         return FormattableString.Invariant($"H1:{trend}/{volatility}");
     }
 
-    static IEnumerable<string> ScopeKeys(NativeEurDecisionContext context,bool extended)
+    static IEnumerable<string> ScopeKeys(NativeEurDecisionContext context,bool extended,RegimeCuts? cuts=null)
     {
         if(context.AssetClass is { } asset)yield return "CLASS:"+asset;
         yield return "SYMBOL:"+context.Symbol;
         if(extended)
         {
-            string regime=Regime(context);
+            string regime=cuts is null?Regime(context):PredictiveRegime(context,cuts);
             yield return "REGIME:"+regime;
             yield return "SYMBOL_REGIME:"+context.Symbol+":"+regime;
         }
@@ -133,7 +149,7 @@ internal sealed class NativeEurAdaptiveEstimator
         }
         if(p.ScopePriorDays==0)return (gross,net);
         double sw=p.ScopePriorDays,dg=0,dn=0;
-        foreach(var key in ScopeKeys(context,fitted.Scale.Extended))
+        foreach(var key in ScopeKeys(context,fitted.Scale.Extended,fitted.Scale.Regime))
         {
             if(!fitted.Scopes.TryGetValue(key,out var entry))continue;
             // Each specificity level contributes a shrunken transfer correction.
@@ -186,7 +202,7 @@ internal sealed class NativeEurAdaptiveEstimator
                 standard[i]=mass>0?Math.Max(.000001,Math.Sqrt(observed.Sum(r=>
                     r.Weight*Math.Pow(r.Row.Features[k]!.Value-mean[k],2))/mass)):1;
             }
-            var scale=new Normalization(mean,standard,extended);
+            var scale=new Normalization(mean,standard,extended,p.Predictive?FitRegime(group.Select(r=>r.Context)):null);
             var regressors=weighted.Select(r=>(X:Design(r.Row.Features,scale,p),r.Row.Gross,r.Row.Net,r.Weight)).ToArray();
             var (gross,net)=NativeContextValueResearch.WeightedRidgePair(regressors,p.Ridge);
             var model=new GroupModel(scale,gross,net,new(StringComparer.Ordinal),days,count,
@@ -198,7 +214,7 @@ internal sealed class NativeEurAdaptiveEstimator
                 return new Validation(row,row.Gross-pred.Gross,row.Net-pred.Net);
             }).ToArray();
             if(p.ScopePriorDays>0)
-                foreach(var scope in errors.SelectMany(e=>ScopeKeys(e.Row.Context,extended).Select(k=>(Key:k,Error:e)))
+                foreach(var scope in errors.SelectMany(e=>ScopeKeys(e.Row.Context,extended,scale.Regime).Select(k=>(Key:k,Error:e)))
                     .GroupBy(x=>x.Key,StringComparer.Ordinal))
                 {
                     var scopeDays=scope.GroupBy(x=>x.Error.Row.Day).ToArray();
@@ -210,8 +226,9 @@ internal sealed class NativeEurAdaptiveEstimator
         return output;
     }
 
-    internal static NativeEurAdaptiveEstimator Fit(NativeEurCalibration calibration,bool extended)
+    internal static NativeEurAdaptiveEstimator Fit(NativeEurCalibration calibration,bool extended,bool predictive=false,bool economicObjective=false)
     {
+        if(predictive)return FitPredictive(calibration,extended,economicObjective);
         var rows=calibration.Outcomes.Where(o=>o.AvailableAt<=calibration.ObservationThrough&&
                 o.DecisionAt.HasValue&&o.Context?.MarketState is {Length:16})
             .Select(o=>new Row(o,o.Context!,o.DecisionAt!.Value/Day,Values(o.Context!,extended))).ToArray();
@@ -250,6 +267,7 @@ internal sealed class NativeEurAdaptiveEstimator
     {
         if(at<=fittedThrough||context?.MarketState is not {Length:16}||!groups.TryGetValue((family,side),out var model))
             return null;
+        if(selected.Predictive)return PredictivePayoff(family,side,model,context,risk,cost);
         var (g,n)=Estimate(model,context,Values(context,model.Scale.Extended),selected);
         var errors=model.Errors;
         decimal gross=(decimal)g*risk,net=(decimal)n*risk;
