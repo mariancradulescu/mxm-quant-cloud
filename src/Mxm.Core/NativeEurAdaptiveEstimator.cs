@@ -263,11 +263,11 @@ internal sealed partial class NativeEurAdaptiveEstimator
         return new(fitted,winner.Parameters,calibration.ObservationThrough,trials.Select(x=>x.Score).ToArray());
     }
 
-    internal NativeEurPayoff? Payoff(string family,int side,NativeEurDecisionContext? context,long at,decimal risk,decimal cost)
+    internal NativeEurPayoff? Payoff(string family,int side,NativeEurDecisionContext? context,long at,decimal risk,decimal cost,NativeEurForecastAdjustment? feedback=null)
     {
         if(at<=fittedThrough||context?.MarketState is not {Length:16}||!groups.TryGetValue((family,side),out var model))
             return null;
-        if(selected.Predictive)return PredictivePayoff(family,side,model,context,risk,cost);
+        if(selected.Predictive)return PredictivePayoff(family,side,model,context,risk,cost,feedback);
         var (g,n)=Estimate(model,context,Values(context,model.Scale.Extended),selected);
         var errors=model.Errors;
         decimal gross=(decimal)g*risk,net=(decimal)n*risk;
