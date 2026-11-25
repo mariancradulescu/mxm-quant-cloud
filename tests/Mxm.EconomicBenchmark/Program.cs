@@ -25,16 +25,20 @@ foreach(int size in (args.Contains("--small")?new[]{256}:new[]{256,1024,4096}))
         .Predict(rows[0].Features,start+day,2m);
     long allocated=GC.GetAllocatedBytesForCurrentThread();
     var watch=Stopwatch.StartNew();
-    var calibratedGross=gross.Calibrate(rows);
-    var calibratedNet=net.Calibrate(net.Samples);
+    var paired=Environment.GetEnvironmentVariable("MXM_ECONOMIC_PAIRED_DISTRIBUTION")=="1"
+        ?new NativeCompleteDistributionPair(gross,net).Calibrate():null;
+    var calibratedGross=paired?.Gross??gross.Calibrate(rows);
+    var calibratedNet=paired?.Net??net.Calibrate(net.Samples);
     double calibrationMs=watch.Elapsed.TotalMilliseconds;
     watch.Restart();
     var predictions=Enumerable.Range(0,128).Select(i=>
     {
         var row=rows[(i*31)%size];
         long clock=i%3==0?row.SettledAt:rows[^1].SettledAt+1;
-        return new {Gross=calibratedGross.Predict(row.Features,clock,3.17m),
-            Net=calibratedNet.Predict(row.Features,clock,3.17m)};
+        var value=paired is null
+            ?(Gross:calibratedGross.Predict(row.Features,clock,3.17m),Net:calibratedNet.Predict(row.Features,clock,3.17m))
+            :paired.Predict(row.Features,clock,3.17m);
+        return new {value.Gross,value.Net};
     }).ToArray();
     double predictionMs=watch.Elapsed.TotalMilliseconds;
     var digest=Convert.ToHexString(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(new
