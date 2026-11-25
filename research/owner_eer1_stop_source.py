@@ -9,7 +9,6 @@ from tempfile import TemporaryDirectory
 from . import owner_eer1_source as eer
 from . import owner_eur_conditional_source as conditional
 from . import owner_eur_rollover_continuity as roll
-from . import owner_official_eur_source as wire
 from .ctrader_proto import OpenApiMessages_pb2 as m, OpenApiModelMessages_pb2 as e
 from .decode import need
 
@@ -24,18 +23,25 @@ ROOT_SPAN = 4 * 3600000
 
 def focused_ticks(shard, fill, close):
     replies = {}
-    for row, request, response in wire.decoded_packets({"requests": shard["packets"]}):
-        if not isinstance(request, m.ProtoOAGetTickDataReq):
+    account = None
+    for packet in shard["packets"]:
+        if packet["reqType"] != m.ProtoOAGetTickDataReq.__name__:
             continue
-        need(request.symbolId == shard["id"], "EER1_STOP_SYMBOL_BINDING")
-        key = request.SerializeToString()
+        query = eer.src.decode(packet["reqType"], packet["req"])
+        if account is None:
+            account = query.ctidTraderAccountId
+        need(query.IsInitialized() and query.symbolId == shard["id"] and
+             query.ctidTraderAccountId == account, "EER1_STOP_SYMBOL_BINDING")
+        key = packet["req"]
         need(key not in replies, "EER1_STOP_DUPLICATE_TICK_REQUEST")
-        replies[key] = (response, row["at"], "REPLAYED")
-        account = request.ctidTraderAccountId
-    need(bool(replies), "EER1_STOP_SHARD_TICKS")
+        replies[key] = packet
+    need(account is not None and eer.src.original_account(account), "EER1_STOP_SHARD_TICKS")
 
     def request(query):
-        return replies.get(query.SerializeToString(), (None, None, eer.src.UNCOLLECTED))
+        packet = replies.get(eer.src.encode(query))
+        if packet is None:
+            return None, None, eer.src.UNCOLLECTED
+        return eer.src.ReadbackJournal([packet]).query(query)
 
     start = fill - 30000
     first_root = start // ROOT_SPAN * ROOT_SPAN

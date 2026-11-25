@@ -1,4 +1,4 @@
-name: OWNER EER1 archived NatGas quote protection evidence
+name: OWNER EER1 archived NatGas quote protection evidence from original journal
 on:
   push:
     branches: [main]
@@ -23,6 +23,7 @@ jobs:
         with:
           dotnet-version: '8.0.x'
       - run: python -m pip install -r research/requirements.txt
+      - run: python -m unittest research.test_owner_eer1_source
       - run: dotnet build src/Mxm.Replay -c Release
       - name: Read the immutable ciphertext and EER1 diagnosis
         env:

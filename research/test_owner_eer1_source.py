@@ -1,6 +1,29 @@
 import unittest
 from .owner_eer1_source import schedule,selection,covered,START,STEP,DAY
 class EerSourceChecks(unittest.TestCase):
+    def test_focused_stop_reuses_original_request_journal(self):
+        from unittest.mock import patch
+        from . import source_history_universe as src
+        from .ctrader_proto import OpenApiMessages_pb2 as m, OpenApiModelMessages_pb2 as e
+        from .owner_eer1_stop_source import ROOT_SPAN, focused_ticks
+        from .guard import CaptureContractError
+
+        fill = START + 60_000
+        with patch.object(src, "original_account", return_value=True):
+            packets = []
+            for side, price in ((e.BID,320000),(e.ASK,320100)):
+                req = m.ProtoOAGetTickDataReq(ctidTraderAccountId=1,symbolId=7,type=side,
+                                              fromTimestamp=START,toTimestamp=START+ROOT_SPAN-1)
+                res = m.ProtoOAGetTickDataRes(ctidTraderAccountId=1,hasMore=False)
+                res.tickData.add(timestamp=fill,tick=price)
+                packets.append(dict(reqType=type(req).__name__,req=src.encode(req),
+                                    resType=type(res).__name__,res=src.encode(res),
+                                    requestAt=fill+300_000,availableAt=fill+301_000))
+            self.assertEqual(focused_ticks({"id":7,"packets":packets},fill,fill+60_000),
+                             {e.BID:[[fill,320000]],e.ASK:[[fill,320100]]})
+            with self.assertRaisesRegex(CaptureContractError,"EER1_STOP_CUSTODY_WINDOW_INCOMPLETE"):
+                focused_ticks({"id":7,"packets":packets[:1]},fill,fill+60_000)
+
     def test_calendar(self):
         x={"scheduleTimeZone":"UTC","schedule":[{"startSecond":86400,"endSecond":6*86400}]}
         c=schedule(x,START,START+7*DAY)
