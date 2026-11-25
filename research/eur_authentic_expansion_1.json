@@ -1,0 +1,55 @@
+{
+  "Study": "EUR_AUTHENTIC_EXPANSION_1",
+  "Earlier": {
+    "InitialFitFrom": 1685318400000,
+    "TestBoundaries": [
+      1690761600000,
+      1702857600000,
+      1705276800000,
+      1717372800000
+    ],
+    "Trials": [
+      "CASH_CONTROL",
+      "ADAPTIVE_FULL_BROAD"
+    ],
+    "SymbolIds": [
+      1,
+      41,
+      127,
+      249
+    ],
+    "Archives": [
+      {
+        "Folder": "earlier-annual",
+        "Run": 45584495052,
+        "Artifact": 15006989686,
+        "ArchiveSha256": "ed2ead1e9a114425b1901938b7a921b3c30b8a506bf62905d90313e3dbe01d17"
+      },
+      {
+        "Folder": "earlier-monetary",
+        "Run": 45594894360,
+        "Artifact": 15012084572,
+        "ArchiveSha256": "01e4116f83f3f5ee01a236e64b19ab49a6e1d2d26172a4ec951fc4b597debf43"
+      }
+    ]
+  },
+  "Breadth": {
+    "InitialFitFrom": 1792972800000,
+    "TestBoundaries": [
+      1793577600000,
+      1794182400000,
+      1794787200000,
+      1795392000000
+    ],
+    "Trials": [
+      "CASH_CONTROL",
+      "ADAPTIVE_FULL_BROAD",
+      "ADAPTIVE_FULL_NARROW"
+    ],
+    "BaseInstruments": 16,
+    "ArchivedAliases": [
+      "AAPL",
+      "AAPL.US"
+    ]
+  }
+}
