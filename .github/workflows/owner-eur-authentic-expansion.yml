@@ -7,13 +7,18 @@ on:
       - '.github/workflows/owner-eur-authentic-expansion.yml'
   push:
     branches: [main]
-    paths: ['research/eur_authentic_expansion_1_execution.json']
+    paths:
+      - 'research/eur_authentic_expansion_1_execution.json'
+      - 'research/eur_authentic_expansion_1_breadth_recovery.json'
 permissions:
   contents: read
   actions: read
 jobs:
   technical:
     runs-on: ubuntu-24.04
+    outputs:
+      scopes: ${{ steps.execution.outputs.scopes }}
+      recovery: ${{ steps.execution.outputs.recovery }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -25,13 +30,32 @@ jobs:
       - run: python -m research.owner_eur_authentic_expansion --help
       - run: dotnet build src/Mxm.Replay -c Release
       - run: python -m unittest research.test_owner_eur_checkpoint research.test_merge_eur_scenarios
+      - name: Bind the scope of this execution
+        id: execution
+        run: |
+          python - <<'PYPLAN'
+          import hashlib, json, os
+          from pathlib import Path
+          path=Path("research/eur_authentic_expansion_1_breadth_recovery.json")
+          scopes=["Earlier","Breadth"]
+          if path.exists():
+              raw=Path("research/eur_authentic_expansion_1.json").read_bytes()
+              marker=json.loads(path.read_bytes())
+              assert marker["ProtocolSha256"]==hashlib.sha256(raw).hexdigest()
+              assert marker["Study"]==json.loads(raw)["Study"]
+              assert marker["OriginalRun"]==45695954070 and marker["Scope"]=="Breadth"
+              scopes=["Breadth"]
+          with open(os.environ["GITHUB_OUTPUT"],"a") as out:
+              out.write("scopes="+json.dumps(scopes,separators=(",",":"))+"\n")
+              out.write("recovery="+str(path.exists()).lower()+"\n")
+          PYPLAN
   evidence:
     needs: technical
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.actor == 'mariancradulescu'
     strategy:
       fail-fast: false
       matrix:
-        scope: [Earlier, Breadth]
+        scope: ${{ fromJSON(needs.technical.outputs.scopes) }}
         scenario: [0, 1, 2]
     environment: mxm-r3-custody-v1
     runs-on: ubuntu-24.04
@@ -310,6 +334,11 @@ jobs:
           assert len(s["Results"])==1 and len(s["Results"][0]["Trials"])==len(plan["Trials"])
           assert s["Orders"]==s["SourceBrokerRequests"]==0
           assert s["CloudActivated"] is s["IndependentConfirmationCertified"] is False
+          if Path("research/eur_authentic_expansion_1_breadth_recovery.json").exists():
+              assert bind["Scope"]=="Breadth"
+              apple,=[m for m in s["Results"][0]["Markets"] if m["Name"]==bind["Proof"]["AddedMarket"]]
+              assert apple["Counts"].get("MONETARY_FRAME",0)>0, apple["Counts"]
+              print("AUTHENTIC_ADDED_MONETARY_FRAMES", apple["Name"],apple["Counts"]["MONETARY_FRAME"])
           PYVALID
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
@@ -322,7 +351,7 @@ jobs:
           if-no-files-found: error
           retention-days: 90
   combine:
-    needs: evidence
+    needs: [technical, evidence]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -333,10 +362,14 @@ jobs:
           pattern: eur-expansion-result-*
           path: partitions
       - name: Validate and consolidate each authentic study independently
+        env:
+          MXM_BREADTH_ONLY: ${{ needs.technical.outputs.recovery }}
         run: |
           set -euo pipefail
           mkdir expansion-report
-          for scope in Earlier Breadth; do
+          scopes=(Earlier Breadth)
+          if [[ "$MXM_BREADTH_ONLY" == "true" ]]; then scopes=(Breadth); fi
+          for scope in "${scopes[@]}"; do
             dir="partitions/eur-expansion-result-$scope"
             for scenario in 1 2; do
               cmp "$dir-0/materialized-protocol.json" "$dir-$scenario/materialized-protocol.json"
