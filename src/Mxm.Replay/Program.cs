@@ -11,6 +11,8 @@ if(args is ["--owner-eur-general",var generalPhase,var generalInput,var generalO
     return IntegratedEconomicReplay.RunGeneralEur(generalPhase,generalInput,generalOutput,generalModels);
 if(args is ["--owner-eur-historical-study",var historicalProtocol,var historicalSource,var historicalReport])
     return IntegratedEconomicReplay.RunHistoricalEur(historicalProtocol,historicalSource,historicalReport);
+if(args is ["--owner-eur-historical-study",var protectionProtocol,var protectionSource,var protectionReport,var protectionTape])
+    return IntegratedEconomicReplay.RunHistoricalEur(protectionProtocol,protectionSource,protectionReport,protectionTape);
 if(args is ["--owner-eer1-closed-diagnosis",var diagnosisSource,var diagnosisLedger,var diagnosisReport])
     return IntegratedEconomicReplay.AuditEerClosedSource(diagnosisSource,diagnosisLedger,diagnosisReport);
 if(args is ["--owner-eer1-stop-trigger-source",var stopSource,var stopReport])

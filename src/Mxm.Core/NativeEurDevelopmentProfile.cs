@@ -8,14 +8,26 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
     decimal DistributionTargetRanges = 2m, int MinimumEpisodes = 20, int MinimumDays = 3,
     decimal DayPenalty = 1.645m, decimal StopReserveMultiplier = 1m)
 {
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public long? ModeledStopLatencyMs { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool CaptureStudyDiagnostics { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool IncludeRecoveredStructure { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool LearnFromOpportunityEpisodes { get; init; }
+
     internal string GeometryIdentity => FormattableString.Invariant(
-        $"{UseAvailableContext}/{DistributionTargetRanges:G29}/{StopReserveMultiplier:G29}");
+        $"{UseAvailableContext}/{DistributionTargetRanges:G29}/{StopReserveMultiplier:G29}") +
+        (ModeledStopLatencyMs is long latency ? FormattableString.Invariant($"/Trade/{latency}") : "") +
+        (IncludeRecoveredStructure?"/RANGE_TRANSITION+EQUILIBRIUM_REPAIR":"");
 
     internal void Verify()
     {
         if (DistributionTargetRanges <= 0m || (!UseAvailableContext && DistributionTargetRanges != 2m) ||
             MinimumDays < 2 || MinimumEpisodes < MinimumDays ||
-            DayPenalty < 0m || StopReserveMultiplier < 1m)
+            DayPenalty < 0m || StopReserveMultiplier < 1m || ModeledStopLatencyMs is <= 0L ||
+            LearnFromOpportunityEpisodes && ModeledStopLatencyMs is null)
             throw new ArgumentException("EUR_REGISTERED_DEVELOPMENT_PROFILE");
     }
 }

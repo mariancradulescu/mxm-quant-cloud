@@ -199,14 +199,17 @@ internal sealed class NativePortfolioFunding
         if(remaining>0m)Open(id,w.Symbol,w.Side,remaining,at);
     }
 
-    public NativeFundingCapital Capital(LedgerSummary book,decimal pendingOpenMarginEur)
+    public NativeFundingCapital Capital(LedgerSummary book,decimal pendingOpenMarginEur) =>
+        Capital(book,pendingOpenMarginEur,updateObservedDrawdown:true);
+
+    internal NativeFundingCapital Capital(LedgerSummary book,decimal pendingOpenMarginEur,bool updateObservedDrawdown)
     {
         var unresolved=InExposureOrder().Where(x=>!x.ExactInLedger).ToArray();
         int settledExposure=unresolved.Count(x=>x.ClosedAt.HasValue);
         decimal? debitCeiling=unresolved.Any(x=>x.AdditionalDebitCeilingEur is null)?
             null:unresolved.Sum(x=>x.AdditionalDebitCeilingEur!.Value);
         decimal? equity=book.LiquidationEquityEur-debitCeiling;
-        if(equity is decimal floor)
+        if(updateObservedDrawdown && equity is decimal floor)
             maximumSampledFundingAdjustedDrawdown=Math.Max(maximumSampledFundingAdjustedDrawdown,
                 1m-floor/book.ObservedPeakEur);
         return new(postedFinancingEur,unresolved.Length-settledExposure,settledExposure,ScenarioId is null?debitCeiling:null,

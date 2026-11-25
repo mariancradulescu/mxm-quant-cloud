@@ -191,6 +191,43 @@ internal static class NativeEurPortfolioChecks
         {
             check(revisable.ModelSummary==beforeRecalibration,"future calibration is rejected without changing the EUR book");
         }
+
+        var tickProfile=available with {ModeledStopLatencyMs=100L};
+        var tickBook=new NativeUnifiedPortfolioEngine(NativeUnifiedPortfolioEngine.EurGeneralProbe,eurDevelopmentProfile:tickProfile);
+        tickBook.Advance(sparseFrame);
+        var laterSingle=later with {Markets=new[]{later.Markets[1]}};
+        var entered=tickBook.Advance(laterSingle);
+        var watch=tickBook.ProtectionWatches().Single();
+        long touched=later.At+1_791L;
+        Ucp1Frame Tick(long at,decimal bid,Ucp1StopTouch[] touches,Ucp1StopQuote[] quotes)
+        {
+            var market=laterSingle.Markets[0];
+            return new Ucp1Frame(at,new[]{market with {Quote=market.Quote with
+                {At=at,Bid=bid,Ask=bid+.02m,LiquidationSlippagePerSide=.02m}}})
+            {
+                FundingEvidence=new[]{new NativeAccruedFundingEvidence(watch.PositionId,watch.Symbol,watch.Side,
+                    1m,later.At,at,at,0m,null,Proof)},
+                Protection=new(true,touches,quotes,Array.Empty<string>())
+            };
+        }
+        var trigger=tickBook.Advance(Tick(touched,watch.Stop-.03m,
+            new[]{new Ucp1StopTouch(watch.PositionId,watch.Stop-.03m,watch.Stop-.01m,true)},Array.Empty<Ucp1StopQuote>()));
+        check(trigger is {Held:1,Pending:1,CloseFills:0}&&trigger.Proposed==entered.Proposed&&
+            tickBook.OriginalModelEvents.Last().Kind=="MODEL_NATIVE_STOP_TRIGGER",
+            "A Trade tick latches protection between decisions and leaves cash and the held position unsettled");
+        var resumed=NativeUnifiedPortfolioEngine.Restore(tickBook.Checkpoint());
+        var observedQuote=new[]{new Ucp1StopQuote(watch.PositionId,true)};
+        var premature=Tick(touched+99L,watch.Stop-.06m,Array.Empty<Ucp1StopTouch>(),observedQuote);
+        check(tickBook.Advance(premature)==resumed.Advance(premature)&&tickBook.ModelSummary.OpenPositions==1,
+            "Protection survives checkpoint and cannot fill before the registered modeled latency");
+        var exitFrame=Tick(touched+101L,watch.Stop-.10m,Array.Empty<Ucp1StopTouch>(),observedQuote);
+        check(tickBook.Advance(exitFrame)==resumed.Advance(exitFrame)&&tickBook.ModelSummary is {OpenPositions:0,CompleteRoundTrips:1}&&
+            tickBook.OriginalModelEvents.Last().ExecutionPrice==watch.Stop-.12m&&
+            tickBook.CompleteModelTrips.Single().StopExecution is
+                {Trigger.MinimumGap:.01m,Trigger.MaximumGap:.03m,MinimumMoveAfterTrigger:.07m,MaximumMoveAfterTrigger:.09m,
+                 ModeledSlippage:.02m,TickFillQuote:true,CompleteSinceTrigger:true}&&
+            tickBook.ExportEurCalibration().Outcomes.Single().AvailableAt==exitFrame.At,
+            "Stop execution binds a later quote, distinguishes trigger gap, waiting move and slippage, and then matures a label");
     }
 
     static void ExplicitScenarioContinuity(Action<bool,string> check)

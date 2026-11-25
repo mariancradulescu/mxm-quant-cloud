@@ -1,8 +1,8 @@
-name: OWNER EUR general recovered-history economic development
+name: OWNER EUR protection and opportunity observation research
 on:
   push:
     branches: [main]
-    paths: ['.github/workflows/owner-eur-recovered-history.yml']
+    paths: ['research/eur_protection_and_observation_1.json']
 permissions:
   actions: read
   contents: read
@@ -11,7 +11,7 @@ jobs:
     if: github.run_attempt == 1 && github.actor == 'mariancradulescu'
     environment: mxm-r3-custody-v1
     runs-on: ubuntu-24.04
-    timeout-minutes: 90
+    timeout-minutes: 110
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -138,9 +138,9 @@ jobs:
           run-id: 43817213663
           github-token: ${{ github.token }}
       - name: Verify the registered historical trial catalogue
-        run: echo '98d9d78e7d226999d2e50f621c22a9396dd74d66980c66cf181792fffa479961  research/eur_general_recovered_history_1.json' | sha256sum -c -
-      - name: Run the distinct CSharp historical optimization on the custody tape
-        run: python -m research.owner_eer1_readback --historical-development research/eur_general_recovered_history_1.json recovered-history-result.json
+        run: echo '64d738a2e251d88a99632be65ba3e115ba31aa81799a6003509fa3506bcf1209  research/eur_protection_and_observation_1.json' | sha256sum -c -
+      - name: Reconstruct protected source and evaluate the registered CSharp portfolios
+        run: python -m research.owner_eer1_readback --protection-development research/eur_protection_and_observation_1.json protection-study-result.json
         env:
           R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
       - name: Verify research scope and trial completeness
@@ -148,19 +148,28 @@ jobs:
           python - <<'PYRESULT'
           import json
           from pathlib import Path
-          report = json.loads(Path("recovered-history-result.json").read_bytes())
-          assert report["ProtocolSha256"] == "98d9d78e7d226999d2e50f621c22a9396dd74d66980c66cf181792fffa479961"
+          evidence = json.loads(Path("protection-study-result.json").read_bytes())
+          report = evidence["Summary"]
+          assert report["ProtocolSha256"] == "64d738a2e251d88a99632be65ba3e115ba31aa81799a6003509fa3506bcf1209"
           assert report["DeclaredScenarioTrialCount"] == 33
           assert len(report["Results"]) == 3
           assert all(len(s["Trials"]) == 11 and len(s["Fits"]) == 2 for s in report["Results"])
+          assert all(len(s["CalibrationBooks"]) == 6 and len(s["OpportunityObservations"]) == 4 for s in report["Results"])
           assert all(len(b["Result"]["Weeks"]) == 2 for s in report["Results"] for b in s["Trials"])
           assert report["SourceBrokerRequests"] == report["Orders"] == 0
           assert report["CloudActivated"] is report["IndependentConfirmationCertified"] is False
+          assert evidence["StopWitness"]["EarlierByMilliseconds"] == 2883209
+          assert evidence["BrokerFillEvidence"] is False
+          labels = sum(s["Details"]["Counts"].get("MATURED_RECONCILED_LABEL", 0)
+                       for r in report["Results"] for s in r["OpportunityObservations"])
+          fills = sum(t["StopExecution"]["TickFillQuote"] for r in report["Results"]
+                       for trial in r["TrialDetails"] for t in trial["Details"]["Episodes"] if t.get("StopExecution"))
+          print("MATURED OBSERVATIONS", labels, "CONDITIONAL TICK FILLS", fills)
           print("VERIFIED HISTORICAL RESEARCH WINDOW", report["TestBoundaries"])
           PYRESULT
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: eur-general-recovered-history-original
-          path: recovered-history-result.json
+          name: eur-protection-and-opportunity-observation
+          path: protection-study-result.json
           retention-days: 90
           if-no-files-found: error

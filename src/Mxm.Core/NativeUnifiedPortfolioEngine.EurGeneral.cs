@@ -12,12 +12,12 @@ public sealed partial class NativeUnifiedPortfolioEngine
     public const string EurGeneralSelect = "EUR_GENERAL_SELECT";
     public const string EurGeneralPooled = "EUR_GENERAL_POOLED";
     public const string EurGeneralCash = "EUR_GENERAL_CASH";
-    const string EurGeneralSchema = "EUR_GENERAL_V1";
+    internal const string EurGeneralSchema = "EUR_GENERAL_V1";
     const int GeneralStateSize = 16;
 
     bool IsEurGeneral => policy is EurGeneralProbe or EurGeneralSelect or EurGeneralPooled or EurGeneralCash;
 
-    Ucp1DecisionSignal[] DescribeEurGeneral(Ucp1MarketFrame market, long at)
+    internal Ucp1DecisionSignal[] DescribeEurGeneral(Ucp1MarketFrame market, long at)
     {
         if (market.Quote.At != at || market.EurTickSize is not decimal tick || !Cpe1Usable(market, at))
             return Array.Empty<Ucp1DecisionSignal>();
@@ -39,13 +39,15 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 return Array.Empty<Ucp1DecisionSignal>();
             candidates=NativeGeneralOpportunity.Describe(market,tick).Select(x=>x.Signal).ToArray();
         }
-        return candidates.Select(geometry =>
+        var general=candidates.Select(geometry =>
         {
             decimal origin = market.M5[^1].Close;
             return new Ucp1DecisionSignal(market.Symbol, geometry.Family, geometry.Side,
                 geometry.Volatility, origin, Math.Abs(geometry.Target - origin), geometry.DecisionBar)
             { GeneralGeometry = geometry };
-        }).ToArray();
+        });
+        return (eurDevelopmentProfile is { IncludeRecoveredStructure:true }
+            ?general.Concat(Ucp1CausalSignals.Describe(market,at)):general).ToArray();
     }
 
     static NativeBarWindow? ObservedWindow(Ucp1MarketFrame market, NativeBarTimeframe timeframe, long at)

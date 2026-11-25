@@ -238,6 +238,18 @@ public sealed partial class NativeFundedLedger
                     e.LatencyMs<=0 || state.Pending.ContainsKey(e.PositionId))
                     throw new ArgumentException("NATIVE_LEDGER_CLOSE_INTENT");
                 state.Pending.Add(e.PositionId,e);break;
+            case "MODEL_NATIVE_STOP_TRIGGER":
+                if(state.MonetaryDomain!="MODEL_REPLAY" ||
+                   !state.Positions.TryGetValue(e.PositionId,out var protectedPosition) ||
+                   e.At<=protectedPosition.EntryAt || e.Symbol!=protectedPosition.Symbol ||
+                   e.Side!=protectedPosition.Side || e.Units!=protectedPosition.Units || e.LatencyMs<=0 ||
+                   e.ExecutionPrice!=0m || e.FeeEur!=0m || e.Quotes.Length!=0 ||
+                   e.Reason!=NativeUnifiedPortfolioEngine.NativeStopModelReason ||
+                   state.Pending.TryGetValue(e.PositionId,out var previousClose) &&
+                      (previousClose.Kind!="REQUEST_CLOSE" || previousClose.Reason==e.Reason ||
+                       !previousClose.Reason.StartsWith("MODEL_UNTRANSMITTED_",StringComparison.Ordinal)))
+                    throw new ArgumentException("NATIVE_LEDGER_MODEL_STOP_TRIGGER");
+                state.Pending[e.PositionId]=e with { Kind="REQUEST_CLOSE" };break;
             case "OPEN_FILL":
                 if(!state.Pending.TryGetValue(e.PositionId,out var request) || request.Kind!="REQUEST_OPEN" ||
                     request.Symbol!=e.Symbol || request.Side!=e.Side || request.Units!=e.Units || e.At<request.At+request.LatencyMs ||
@@ -256,7 +268,9 @@ public sealed partial class NativeFundedLedger
                 state=state with {CashEur=state.CashEur-e.FeeEur};state.Positions.Add(e.PositionId,position);state.Pending.Remove(e.PositionId);break;
             case "CLOSE_FILL":
                 if(!state.Positions.TryGetValue(e.PositionId,out var closedPosition) || !state.Pending.TryGetValue(e.PositionId,out var close) ||
-                    close.Kind!="REQUEST_CLOSE" || close.Symbol!=e.Symbol || e.At<close.At+close.LatencyMs || e.Units<=0 || e.Units>closedPosition.Units || e.FeeEur<0)
+                    close.Kind!="REQUEST_CLOSE" || close.Symbol!=e.Symbol || e.At<close.At+close.LatencyMs || e.Units<=0 || e.Units>closedPosition.Units || e.FeeEur<0 ||
+                    close.Reason==NativeUnifiedPortfolioEngine.NativeStopModelReason &&
+                    (e.Reason!=close.Reason || e.Units!=closedPosition.Units || e.Side!=closedPosition.Side))
                     throw new ArgumentException("NATIVE_LEDGER_CLOSE_FILL");
                 var entry=closedPosition.EntryQuote??throw new InvalidOperationException("MODEL_ENTRY_QUOTE_UNKNOWN");
                 var q=Quote(quotes,closedPosition.Symbol,e.At);
@@ -315,6 +329,7 @@ public sealed partial class NativeFundedLedger
             case "MODEL_CLOSE_INTENT_EXPIRED":
                 if(!state.Pending.TryGetValue(e.PositionId,out var staleClose) ||
                    staleClose.Kind!="REQUEST_CLOSE" ||
+                   staleClose.Reason==NativeUnifiedPortfolioEngine.NativeStopModelReason ||
                    !staleClose.Reason.StartsWith("MODEL_UNTRANSMITTED_",StringComparison.Ordinal) ||
                    !state.Positions.TryGetValue(e.PositionId,out var retained) ||
                    e.At<=staleClose.At ||
