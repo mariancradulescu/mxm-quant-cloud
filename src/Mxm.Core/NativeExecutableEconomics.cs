@@ -12,6 +12,11 @@ public static class NativeExecutableEconomics
     public static decimal ExitPrice(decimal executableSide, int side, decimal slippage)
         => executableSide - side * slippage;
 
+    // Spotware StopTriggerMethod.Trade uses Bid for a long stop and Ask for a short stop.
+    // A trigger is a price observation. The execution price is independent.
+    public static bool TradeStopReached(int side,decimal executableSide,decimal stop)
+        => side*(executableSide-stop)<=0m;
+
     public static decimal EstimateNet(LedgerQuote entryQuote, LedgerQuote exitQuote,
         int side, decimal units, decimal entry, decimal exitSide, decimal exitSlippage)
     {

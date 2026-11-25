@@ -27,6 +27,12 @@ internal static class NativeEurPortfolioChecks
 
     internal static void Run(Action<bool,string> check)
     {
+        check(NativeExecutableEconomics.TradeStopReached(1,99m,100m)&&
+              NativeExecutableEconomics.TradeStopReached(-1,101m,100m)&&
+              NativeExecutableEconomics.TradeStopReached(-1,100m,100m)&&
+              !NativeExecutableEconomics.TradeStopReached(1,101m,100m)&&
+              !NativeExecutableEconomics.TradeStopReached(-1,99m,100m),
+            "The executable Trade stop comparison respects direction, gaps and equality");
         var first=new NativeUnifiedPortfolioEngine(NativeUnifiedPortfolioEngine.EurFirst);
         var rank=new NativeUnifiedPortfolioEngine(NativeUnifiedPortfolioEngine.EurRank);
         var cash=new NativeUnifiedPortfolioEngine(NativeUnifiedPortfolioEngine.EurCash);
