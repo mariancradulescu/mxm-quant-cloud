@@ -344,7 +344,8 @@ public sealed partial class NativeFundedLedger
                     e.Side is not (-1 or 1) || e.SignedFinancingEur==0m ||
                     e.ExecutionPrice!=0m || e.FeeEur!=0m || e.MarginPerUnit!=0m ||
                     e.SlippagePerSide!=0m || e.LatencyMs!=0 ||
-                    e.Reason!="SUPPORTED_CLOSED_EXPOSURE_FUNDING_SETTLEMENT" ||
+                    (e.Reason!="SUPPORTED_CLOSED_EXPOSURE_FUNDING_SETTLEMENT" &&
+                      e.Reason!="CONDITIONAL_SCENARIO_FUNDING_MODEL_SETTLEMENT") ||
                     !state.Closed.Any(x=>x.PositionId==e.PositionId && x.Symbol==e.Symbol &&
                         x.OpenedAt<=from && x.ClosedAt==e.CalibratedThrough) ||
                     (state.ClosedFunding?.Any(x=>x.PositionId==e.PositionId &&
