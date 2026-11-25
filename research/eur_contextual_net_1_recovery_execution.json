@@ -1,0 +1,15 @@
+{
+  "Study": "EUR_CONTEXTUAL_NET_1",
+  "Mode": "ISOLATED_TECHNICAL_RECOVERY",
+  "OriginalRun": 45611813412,
+  "ProtocolSha256": "5084bd9e7dfce5b21363dc318082758ab151bbe60b489a98f4704c089b2a48c4",
+  "ImplementationRevision": "e6d148ff68eb35baca0c61aa2454ace300c6c62b",
+  "ParityEvidenceRun": 45673484754,
+  "CheckpointParityEvidenceRun": 45673484754,
+  "Scenarios": [
+    0,
+    1,
+    2
+  ],
+  "DeclaredScenarioTrialCount": 12
+}
