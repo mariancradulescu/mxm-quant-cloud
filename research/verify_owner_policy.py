@@ -14,8 +14,15 @@ def check():
         assert hashlib.sha256(Path(name).read_bytes()).hexdigest() == expected, 'FROZEN_EVIDENCE_CHANGED: ' + name
 
     owner = Path('docs/OWNER_SPEC.md').read_text()
-    assert owner.startswith('# Active OWNER specification v2.0')
-    assert 'OWNER decision 2026-11-04' in owner and 'OWNER prospective initial-capital amendment — 2026-11-05' in owner
+    assert owner.startswith('# OWNER specification — active ')
+    assert re.findall(r'^## ([1-8])\. ', owner, re.MULTILINE) == list('12345678')
+    for required in ('One common EUR300', '21 legally financed and fully closed round trips',
+                     'Maximum portfolio drawdown is 30% including floating equity',
+                     'at least twelve relevant months of genuinely independent confirmation',
+                     'order and Cloud-activation counts are both zero',
+                     'Original Git commits, artifacts, source hashes, cash ledgers, labels and verdicts are immutable'):
+        assert required in owner, 'MISSING_OWNER_REQUIREMENT: ' + required
+    assert 'OWNER_METHOD_RECONCILIATION_20261125.md' in owner and 'e094aa83cdcd9d028b61dca224c9e6d8d027acc6' in owner
     for name in ('README.md', 'docs/ARCHITECTURE.md', 'docs/ACCEPTANCE.md'):
         s = Path(name).read_text()
         assert 'OWNER_SPEC.md' in s, 'MISSING_ACTIVE_AUTHORITY: ' + name
@@ -641,7 +648,7 @@ def check():
     assert '--xua1-native-signs' in Path('src/Mxm.Replay/Program.cs').read_text()
     assert 'XuaNativeFeatureSigns' in Path('tests/Mxm.Checks/Program.cs').read_text()
 
-    print('PASS OWNER v2.0 contract, frozen evidence, native funding and no-order boundary; no NET qualification')
+    print('PASS active OWNER constraints, frozen evidence, native funding and read-only boundary')
 
 
 if __name__ == '__main__':

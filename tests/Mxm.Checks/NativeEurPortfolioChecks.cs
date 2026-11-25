@@ -155,6 +155,36 @@ internal static class NativeEurPortfolioChecks
             ?w with {Bars=w.Bars.Select(b=>b with {CloseAt=frame.At+Step}).ToArray()}:w).ToArray();
         check(checkedFuture.Advance(frame with {Markets=new[]{malformed with {ClosedBars=new(frame.At,altered)}}}).Pending==0,
             "General EUR rejects a claimed ready context containing future bars");
+
+        var sparse=frame.Markets[1];
+        var required=sparse.ClosedBars!.Windows.Where(w=>w.Timeframe is NativeBarTimeframe.M5 or NativeBarTimeframe.M15)
+            .ToArray();
+        var sparseFrame=frame with {Markets=new[]{sparse with {ClosedBars=new(frame.At,required)}}};
+        var strictProbe=new NativeUnifiedPortfolioEngine(NativeUnifiedPortfolioEngine.EurGeneralProbe);
+        var available=new NativeEurDevelopmentProfile(UseAvailableContext:true,MinimumEpisodes:12);
+        var recoveredProbe=new NativeUnifiedPortfolioEngine(NativeUnifiedPortfolioEngine.EurGeneralProbe,eurDevelopmentProfile:available);
+        check(strictProbe.Advance(sparseFrame).Pending==0&&recoveredProbe.Advance(sparseFrame).Pending==1&&
+            recoveredProbe.EurOpportunityReceipts.All(x=>x.Family==NativeGeneralOpportunity.Distribution),
+            "Registered EUR profile uses absent optional windows without creating an H1 equilibrium or changing the old policy");
+        var recoveredModel=recoveredProbe.ExportEurCalibration() with {Outcomes=observations};
+        var revisable=new NativeUnifiedPortfolioEngine(NativeUnifiedPortfolioEngine.EurGeneralSelect,eurDevelopmentProfile:available);
+        revisable.LoadEurCalibration(recoveredModel);
+        revisable.Advance(later);
+        var beforeRecalibration=revisable.ModelSummary;
+        var matured=recoveredModel with {ObservationThrough=later.At};
+        revisable.UpdateEurResearchCalibration(matured);
+        check(revisable.ModelSummary==beforeRecalibration&&
+            NativeUnifiedPortfolioEngine.Restore(revisable.Checkpoint()).ModelSummary==beforeRecalibration,
+            "Recalibration preserves the common cash, margin, risk and intent chain across the walk-forward boundary");
+        try
+        {
+            revisable.UpdateEurResearchCalibration(matured with {ObservationThrough=later.At+Step});
+            check(false,"future calibration must be rejected");
+        }
+        catch(ArgumentException)
+        {
+            check(revisable.ModelSummary==beforeRecalibration,"future calibration is rejected without changing the EUR book");
+        }
     }
 
     static void ExplicitScenarioContinuity(Action<bool,string> check)

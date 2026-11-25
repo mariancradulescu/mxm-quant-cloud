@@ -1,0 +1,181 @@
+using System.Text.Json;
+using Mxm.Core;
+
+internal static partial class IntegratedEconomicReplay
+{
+    const long HistoricalDay = 86_400_000L;
+    const string ExposedDevelopment = "PROJECT_EXPOSED_CONDITIONAL_DEVELOPMENT";
+    sealed record HistoricalTrial(string Id,string Policy,string Calibration,int? MinimumEpisodes,decimal? DayPenalty);
+    sealed record HistoricalFit(string Id,NativeEurDevelopmentProfile Profile);
+    sealed record HistoricalPlan(string Study,string Exposure,string SourceProtocolSha256,string EvidenceManifestSha256,
+        long InitialFitFrom,long[] TestBoundaries,decimal[] Stresses,HistoricalFit[] Calibrations,HistoricalTrial[] Trials);
+
+    public static int RunHistoricalEur(string protocolPath,string sourcePath,string reportPath)
+    {
+        if(File.Exists(reportPath))throw new IOException("HISTORICAL_EUR_REPORT_ALREADY_EXISTS");
+        byte[] protocolBytes=File.ReadAllBytes(protocolPath);
+        byte[] sourceBytes=File.ReadAllBytes(sourcePath);
+        var protocol=JsonSerializer.Deserialize<HistoricalPlan>(protocolBytes,Json)
+            ??throw new ArgumentException("HISTORICAL_EUR_PROTOCOL_REQUIRED");
+        var input=JsonSerializer.Deserialize<EerInput>(sourceBytes,Json)
+            ??throw new ArgumentException("HISTORICAL_EUR_AUTHENTIC_INPUT_REQUIRED");
+        var boundaries=protocol.TestBoundaries;
+        if(protocol.Exposure!=ExposedDevelopment||string.IsNullOrWhiteSpace(protocol.Study)||
+            protocol.SourceProtocolSha256!=input.ProtocolSha256||protocol.EvidenceManifestSha256!=input.EvidenceManifestSha256||
+            input.SourceAcquiredAt<input.End||boundaries.Length<2||protocol.InitialFitFrom<input.Start||
+            protocol.InitialFitFrom%HistoricalDay!=0L||boundaries[0]<=protocol.InitialFitFrom||boundaries[^1]>input.End||
+            boundaries.Select((x,i)=>x%HistoricalDay!=0L||i>0&&x<=boundaries[i-1]).Any(x=>x)||
+            protocol.Stresses.Length==0||protocol.Stresses.Any(s=>s<0m)||
+            protocol.Stresses.Distinct().Count()!=protocol.Stresses.Length||protocol.Calibrations.Length==0||
+            protocol.Trials.Length==0||protocol.Trials.Select(t=>t.Id).Distinct(StringComparer.Ordinal).Count()!=protocol.Trials.Length||
+            input.Markets.Length==0||input.Markets.Any(m=>m.CalendarStatus is null||
+                !VerifiedGrid(m.ScheduledClocks)||!VerifiedGrid(m.AmbiguousCalendarClocks)||
+                (m.ScheduledClocks??Array.Empty<long>()).Intersect(m.AmbiguousCalendarClocks??Array.Empty<long>()).Any()||
+                m.Market.DatedDevelopment?.Contract.OriginalBrokerAuthenticated!=true))
+            throw new ArgumentException("HISTORICAL_EUR_CUSTODY_OR_PROTOCOL_BINDING");
+
+        var fitProfiles=protocol.Calibrations.ToDictionary(x=>x.Id,x=>x.Profile,StringComparer.Ordinal);
+        string protocolHash=GeneralSha(protocolBytes);
+        var source=new EerEvidence(input);
+        var output=new List<object>();
+        foreach(decimal stress in protocol.Stresses)
+        {
+            string scenario=EerHash(protocolHash+"|"+FormattableString.Invariant($"{stress:G29}"));
+            var streams=input.Markets.ToDictionary(m=>m.Market.Name,m=>new EerStream(m),StringComparer.Ordinal);
+            var probes=fitProfiles.ToDictionary(p=>p.Key,p=>new NativeUnifiedPortfolioEngine(
+                NativeUnifiedPortfolioEngine.EurGeneralProbe,fundingScenarioId:scenario,eurDevelopmentProfile:p.Value),
+                StringComparer.Ordinal);
+            var comparison=protocol.Trials.Select(t=>
+            {
+                if(!GeneralPolicies.Contains(t.Policy,StringComparer.Ordinal)||!fitProfiles.TryGetValue(t.Calibration,out var p))
+                    throw new ArgumentException("HISTORICAL_EUR_UNREGISTERED_TRIAL");
+                var profile=p with {MinimumEpisodes=t.MinimumEpisodes??p.MinimumEpisodes,DayPenalty=t.DayPenalty??p.DayPenalty};
+                return (Trial:t,Profile:profile,Book:new NativeUnifiedPortfolioEngine(t.Policy,
+                    fundingScenarioId:scenario,eurDevelopmentProfile:profile));
+            }).ToArray();
+            var allComparisonBooks=comparison.Select(x=>x.Book).ToArray();
+            var probeBooks=probes.Values.ToArray();
+            var allBooks=probeBooks.Concat(allComparisonBooks).ToArray();
+
+            void Observe(long from,long to,NativeUnifiedPortfolioEngine[] books)
+            {
+                for(long at=from+EurOffset;at<to;at+=EurStep)
+                {
+                    var markets=streams.Values.Select(s=>source.Frame(s,at,scenario,stress,general:true))
+                        .OfType<Ucp1MarketFrame>().ToArray();
+                    var frame=new Ucp1Frame(at,markets);
+                    foreach(var book in books)source.Advance(book,frame,streams,scenario,stress);
+                }
+            }
+            Observe(protocol.InitialFitFrom,boundaries[0],probeBooks);
+            var fitted=new List<object>();
+            for(int i=0;i+1<boundaries.Length;i++)
+            {
+                long start=boundaries[i];
+                var snapshots=probes.ToDictionary(p=>p.Key,p=>p.Value.ExportEurCalibration(),StringComparer.Ordinal);
+                foreach(var (_,model) in snapshots)
+                    if(model.ObservationThrough>=start || model.Outcomes.Any(x=>x.AvailableAt>=start))
+                        throw new InvalidOperationException("HISTORICAL_EUR_CALIBRATION_EXPOSED_TO_OWN_TEST");
+                foreach(var (trial,_,book) in comparison)
+                    if(trial.Policy is NativeUnifiedPortfolioEngine.EurGeneralSelect or NativeUnifiedPortfolioEngine.EurGeneralPooled)
+                    {
+                        if(i==0)book.LoadEurCalibration(snapshots[trial.Calibration]);
+                        else book.UpdateEurResearchCalibration(snapshots[trial.Calibration]);
+                    }
+                fitted.Add(new {AvailableBefore=start,Models=snapshots.Select(m=>new
+                {
+                    Id=m.Key, m.Value.ObservationThrough, m.Value.LedgerEventChainSha256,
+                    Hash=GeneralSha(JsonSerializer.SerializeToUtf8Bytes(m.Value,Json)),
+                    Episodes=m.Value.Outcomes.Length,
+                    ByFamilyDirection=m.Value.Outcomes.GroupBy(o=>new{o.Family,o.Side}).Select(g=>new
+                    {g.Key.Family,g.Key.Side,Count=g.Count(),GrossEur=g.Sum(x=>x.GrossEur),NetEur=g.Sum(x=>x.NetEur)}).ToArray()
+                }).ToArray()});
+                Observe(start,boundaries[i+1],allBooks);
+                Console.WriteLine($"HISTORICAL_EUR {stress:G29} TEST {i+1}/{boundaries.Length-1} completed");
+            }
+            var trialResults=comparison.Select(x=>new
+            {
+                x.Trial.Id,x.Trial.Policy,x.Trial.Calibration,x.Profile,
+                Result=HistoricalBook(x.Book,boundaries)
+            }).ToArray();
+            output.Add(new {SpreadMultiplier=stress, CommissionAndDebitMultiplier=1m+stress,
+                Fits=fitted, Trials=trialResults, Markets=streams.Values.Select(s=>new
+                {s.Source.Market.Name,s.Source.CalendarStatus,s.Counts}).ToArray()});
+        }
+        var result=JsonSerializer.SerializeToUtf8Bytes(new
+        {
+            protocol.Study,protocol.Exposure,ProtocolSha256=protocolHash,SourceSha256=GeneralSha(sourceBytes),
+            input.EvidenceManifestSha256,input.EngineRevision,ExecutedRevision=Environment.GetEnvironmentVariable("GITHUB_SHA"),
+            protocol.InitialFitFrom,protocol.TestBoundaries,DeclaredScenarioTrialCount=protocol.Stresses.Length*protocol.Trials.Length,
+            Results=output,DistilledWinnerForPromotion=false,IndependentConfirmationCertified=false,
+            ContinuousDrawdownCertified=false,BrokerNetCertified=false,SourceBrokerRequests=0,Orders=0,CloudActivated=false
+        },Json);
+        using var file=new FileStream(reportPath,FileMode.CreateNew,FileAccess.Write);
+        file.Write(result);
+        return 0;
+    }
+
+    static object HistoricalBook(NativeUnifiedPortfolioEngine book,long[] boundaries)
+    {
+        var ledger=book.ModelSummary;
+        var trips=book.CompleteModelTrips;
+        var related=book.ReconciledModelEpisodes.ToDictionary(o=>o.PositionId,StringComparer.Ordinal);
+        var curve=book.CommonBookEquityPath;
+        var cash=curve.LastOrDefault()?.FundingCapital;
+        var funding=book.FundingExposureSnapshot();
+        var observations=curve.Where(p=>p.FundingCapital?.ConditionalEquityEur is >0m&&p.UsedMarginEur.HasValue)
+            .Select(p=>(p.UsedMarginEur!.Value+p.FundingCapital!.PendingOpenMarginEur)/p.FundingCapital.ConditionalEquityEur!.Value)
+            .ToArray();
+        decimal? Net(IEnumerable<Ucp1Episode> positions)
+        {
+            decimal total=0m;
+            foreach(var position in positions)
+            {
+                if(related.GetValueOrDefault(position.PositionId)?.Evidence.ClosedNetEur is not decimal value)
+                    return null;
+                total+=value;
+            }
+            return total;
+        }
+        const long week=604_800_000L;
+        var weeks=trips.GroupBy(p=>Week(p.CloseAt)).ToDictionary(g=>g.Key,g=>g.ToArray(),StringComparer.Ordinal);
+        long monday=boundaries[0]+(7L-(boundaries[0]/HistoricalDay+3L)%7L)%7L*HistoricalDay;
+        var weekly=Enumerable.Range(0,(int)Math.Max(0L,(boundaries[^1]-monday)/week)).Select(i=>
+        {
+            string id=Week(monday+i*week);
+            var closed=weeks.GetValueOrDefault(id)??Array.Empty<Ucp1Episode>();
+            return new {Week=id,Rounds=closed.Length,Hard21=closed.Length>=21,
+                GrossEur=closed.Sum(t=>t.GrossEur),NetEur=Net(closed)};
+        }).ToArray();
+        var folds=boundaries.Zip(boundaries.Skip(1)).Select(range=>
+        {
+            var closed=trips.Where(t=>t.CloseAt>=range.First&&t.CloseAt<range.Second).ToArray();
+            return new {From=range.First,Through=range.Second,Rounds=closed.Length,
+                GrossEur=closed.Sum(t=>t.GrossEur),NetEur=Net(closed)};
+        }).ToArray();
+        return new
+        {
+            ledger.CashEur,ledger.EventChainHash,ledger.OpenPositions,ledger.PendingIntents,
+            InitialCapitalEur=OwnerRiskAuthority.InitialCapitalEur,
+            Closed=trips.Length,ClosedGrossEur=trips.Sum(t=>t.GrossEur),ClosedNetEur=Net(trips),
+            AllTerminalNetEur=ledger.OpenPositions==0&&ledger.PendingIntents==0&&funding.All(f=>f.ExactInLedger)?Net(trips):null,
+            UnknownFundingWindows=funding.Count(f=>!f.ExactInLedger),
+            UnknownEquityClocks=curve.Count(p=>p.FundingCapital?.ConditionalEquityEur is null),
+            SampledDrawdown=cash?.MaximumSampledFundingAdjustedDrawdown,
+            MaxSampledHeldPendingMarginFraction=observations.Length>0?observations.Max():(decimal?)null,
+            MeanSampledHeldPendingMarginFraction=observations.Length>0?observations.Average():(decimal?)null,
+            BeyondFillRisk=related.Values.Count(t=>t.Evidence.ClosedNetEur is decimal n&&-n>t.Evidence.ReservedRiskEur),
+            Gaps=trips.Count(p=>p.CrossedUnknownHistory),Reductions=trips.Count(p=>p.Integrated?.PartialReduction==true),
+            CommissionEur=trips.Sum(p=>p.Integrated?.CommissionsEur??0m),
+            SpreadEur=trips.Sum(p=>p.Integrated?.SpreadEur??0m),
+            SlippageEur=trips.Sum(p=>p.Integrated?.SlippageEur??0m),
+            ConversionEur=trips.Sum(p=>p.Integrated?.ConversionEur??0m),
+            FundingSettlementsEur=cash?.PostedFinancingEur,
+            Hard21AllFullRegisteredWeeks=weekly.Length>0&&weekly.All(w=>w.Hard21),Weeks=weekly,Folds=folds,
+            NativeDecisions=book.ResearchDecisionCounts,
+            ExitReasons=trips.GroupBy(p=>p.ExitReason).ToDictionary(g=>g.Key,g=>g.Count()),
+            ByMarketFamily=trips.GroupBy(p=>new{p.Symbol,p.Family,p.Side}).Select(g=>new
+            {g.Key.Symbol,g.Key.Family,g.Key.Side,Rounds=g.Count(),GrossEur=g.Sum(p=>p.GrossEur),NetEur=Net(g)}).ToArray()
+        };
+    }
+}

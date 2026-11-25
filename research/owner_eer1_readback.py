@@ -66,7 +66,7 @@ def read_archives(key,work):
             add(ids[q.symbolId],tf,rows)
     return bars,add,conflicts,proof
 
-def main(recovery=False, diagnosis=None):
+def main(recovery=False, diagnosis=None, development=None):
     if recovery:
         from . import owner_eer1_recovery as recover
     run=recover.ORIGINAL_RUN if recovery else os.environ["GITHUB_RUN_ID"]
@@ -83,7 +83,7 @@ def main(recovery=False, diagnosis=None):
     source_acquired=max(p["at"] for p in original["packets"])
     rows={x["symbol"]:x for x in mat["matrix"]}
     OUT.mkdir(exist_ok=False)
-    if recovery and diagnosis is None:
+    if recovery and diagnosis is None and development is None:
         recover.prove_shadow(receipt,key,account,rows,chosen,eer.charge_clocks(meta["terms"]),OUT)
     verified_shards=[]
     with tempfile.TemporaryDirectory(prefix="eer1-custody-") as temp:
@@ -200,7 +200,7 @@ def main(recovery=False, diagnosis=None):
         engine_revision=recover.ORIGINAL_HEAD if recovery else os.environ["GITHUB_SHA"]
         payload=dict(Start=eer.START,FitEnd=eer.FIT_END,End=eer.END,ProtocolSha256=receipt["protocolSha256"],
             EngineRevision=engine_revision,EvidenceManifestSha256=manifest_sha,SourceAcquiredAt=source_acquired,Markets=markets,Tapes=tapes,Routes=meta["routes"])
-        if diagnosis is not None:
+        if diagnosis is not None or development is not None:
             from .official_symbol_calendar import build_clock_grid
             for market in markets:
                 info=meta["info"][market["Market"]["Name"]]
@@ -210,6 +210,11 @@ def main(recovery=False, diagnosis=None):
         with os.fdopen(os.open(path,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600),"wb") as private:
             private.write(src.canonical(payload))
         env={k:v for k,v in os.environ.items() if k!="R3_CUSTODY_PRIVATE_KEY_PEM"}
+        if development is not None:
+            protocol, report=development
+            subprocess.run(["dotnet","src/Mxm.Replay/bin/Release/net8.0/Mxm.Replay.dll","--owner-eur-historical-study",
+                str(protocol),str(path),str(report)],check=True,env=env)
+            return
         if diagnosis is not None:
             original, report=diagnosis
             need(src.digest(original.read_bytes())=="b8239d32b80c5b6a87722ebb6e07de0a2455cea52e4b2dde460a52be38f4a9e2",
@@ -232,7 +237,9 @@ def main(recovery=False, diagnosis=None):
 
 if __name__=="__main__":
     args=sys.argv[1:]
-    if len(args)==3 and args[0]=="--diagnose-source":
+    if len(args)==3 and args[0]=="--historical-development":
+        main(recovery=True,development=(Path(args[1]),Path(args[2])))
+    elif len(args)==3 and args[0]=="--diagnose-source":
         main(recovery=True,diagnosis=(Path(args[1]),Path(args[2])))
     else:
         need(args in ([],["--recover-original"]),"EER1_READBACK_MODE")
