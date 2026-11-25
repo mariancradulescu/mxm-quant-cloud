@@ -1,0 +1,144 @@
+{
+  "Study": "EUR_RECENT_FUNDED_1",
+  "Exposure": "PROJECT_EXPOSED_CONDITIONAL_DEVELOPMENT",
+  "SourceRun": 45716198383,
+  "SourceRevision": "bd7d403a2da0469472b2984252be91db7bedc2bd",
+  "InitialFitFrom": 1792972800000,
+  "TestBoundaries": [
+    1793577600000,
+    1794182400000,
+    1794787200000,
+    1795392000000,
+    1795564800000
+  ],
+  "Stresses": [
+    0,
+    0.5,
+    1
+  ],
+  "StopWitness": {
+    "Symbol": "NatGas",
+    "Side": -1,
+    "OriginalFillAt": 1795015515000,
+    "OriginalCloseAt": 1795019115000,
+    "StopDistance": 0.014,
+    "FirstTradeTouchAt": 1795016231791
+  },
+  "Calibrations": [
+    {
+      "Id": "CLOSED_BAR_FAMILY_DIRECTION_NEAR_TARGET",
+      "Profile": {
+        "CaptureStudyDiagnostics": true,
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "LearnFromOpportunityEpisodes": true,
+        "ObserveIntentExecutionOnTicks": true,
+        "IncludeRecoveredStructure": true,
+        "ObserveFamilyDirectionsOnClosedBars": true,
+        "DistributionTargetRanges": 1.5,
+        "CaptureVolatilityContext": true
+      }
+    }
+  ],
+  "Trials": [
+    {
+      "Id": "CASH_CONTROL",
+      "Policy": "EUR_GENERAL_CASH",
+      "Calibration": "CLOSED_BAR_FAMILY_DIRECTION_NEAR_TARGET"
+    },
+    {
+      "Id": "FINANCEABLE_PROBE",
+      "Policy": "EUR_GENERAL_PROBE",
+      "Calibration": "CLOSED_BAR_FAMILY_DIRECTION_NEAR_TARGET"
+    },
+    {
+      "Id": "ADAPTIVE_FULL_BROAD_GEOMETRY",
+      "Policy": "EUR_GENERAL_SELECT",
+      "Calibration": "CLOSED_BAR_FAMILY_DIRECTION_NEAR_TARGET",
+      "UseRecoveredLocalPayoff": true,
+      "UseAdaptivePayoff": true,
+      "UseExtendedLocalPayoff": true
+    },
+    {
+      "Id": "V2_VOLATILITY_FILL",
+      "Policy": "EUR_GENERAL_SELECT",
+      "Calibration": "CLOSED_BAR_FAMILY_DIRECTION_NEAR_TARGET",
+      "UseRecoveredLocalPayoff": true,
+      "UseAdaptivePayoff": true,
+      "UseExtendedLocalPayoff": true,
+      "UsePredictiveCalibration": true,
+      "UseEconomicEstimatorObjective": true,
+      "UseRealizedForecastFeedback": false,
+      "RevalidatePredictiveVolatilityAtFill": true
+    },
+    {
+      "Id": "V3_RANKED_GEOMETRY",
+      "Policy": "EUR_GENERAL_SELECT",
+      "Calibration": "CLOSED_BAR_FAMILY_DIRECTION_NEAR_TARGET",
+      "UseRecoveredLocalPayoff": true,
+      "UseAdaptivePayoff": true,
+      "UseExtendedLocalPayoff": true,
+      "UsePredictiveCalibration": true,
+      "UseEconomicEstimatorObjective": true,
+      "UseRealizedForecastFeedback": false,
+      "RevalidatePredictiveVolatilityAtFill": true,
+      "UseSelectionAwarePredictiveGrid": true
+    },
+    {
+      "Id": "V3_RANKED_GEOMETRY_FEEDBACK",
+      "Policy": "EUR_GENERAL_SELECT",
+      "Calibration": "CLOSED_BAR_FAMILY_DIRECTION_NEAR_TARGET",
+      "UseRecoveredLocalPayoff": true,
+      "UseAdaptivePayoff": true,
+      "UseExtendedLocalPayoff": true,
+      "UsePredictiveCalibration": true,
+      "UseEconomicEstimatorObjective": true,
+      "UseRealizedForecastFeedback": true,
+      "RevalidatePredictiveVolatilityAtFill": true,
+      "UseSelectionAwarePredictiveGrid": true
+    },
+    {
+      "Id": "V3_RANKED_GEOMETRY_RISK",
+      "Policy": "EUR_GENERAL_SELECT",
+      "Calibration": "CLOSED_BAR_FAMILY_DIRECTION_NEAR_TARGET",
+      "UseRecoveredLocalPayoff": true,
+      "UseAdaptivePayoff": true,
+      "UseExtendedLocalPayoff": true,
+      "UsePredictiveCalibration": true,
+      "UseEconomicEstimatorObjective": true,
+      "UseRealizedForecastFeedback": false,
+      "RevalidatePredictiveVolatilityAtFill": true,
+      "UseSelectionAwarePredictiveGrid": true,
+      "KeepAdmissionRiskAtFill": true
+    },
+    {
+      "Id": "V3_RANKED_JOINT_MANAGEMENT",
+      "Policy": "EUR_GENERAL_SELECT",
+      "Calibration": "CLOSED_BAR_FAMILY_DIRECTION_NEAR_TARGET",
+      "UseRecoveredLocalPayoff": true,
+      "UseAdaptivePayoff": true,
+      "UseExtendedLocalPayoff": true,
+      "UsePredictiveCalibration": true,
+      "UseEconomicEstimatorObjective": true,
+      "UseRealizedForecastFeedback": false,
+      "RevalidatePredictiveVolatilityAtFill": true,
+      "UseSelectionAwarePredictiveGrid": true,
+      "UseAdaptiveAllocation": true,
+      "UseAdaptiveManagement": true
+    }
+  ],
+  "TrialGroups": {
+    "CONTROL": [
+      "CASH_CONTROL",
+      "FINANCEABLE_PROBE",
+      "ADAPTIVE_FULL_BROAD_GEOMETRY",
+      "V2_VOLATILITY_FILL"
+    ],
+    "RANKED": [
+      "V3_RANKED_GEOMETRY",
+      "V3_RANKED_GEOMETRY_FEEDBACK",
+      "V3_RANKED_GEOMETRY_RISK",
+      "V3_RANKED_JOINT_MANAGEMENT"
+    ]
+  }
+}
