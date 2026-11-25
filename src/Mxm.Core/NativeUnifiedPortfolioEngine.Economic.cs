@@ -266,7 +266,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
             return null; // No late fill after a missing M5 source clock.
         if(OwnerEur && EurMargin(observed,plan.Side,plan.Units,q.At) is null)return null;
         var carriedDebit=fundingReserves is null?0m:
-            NativePortfolioFunding.OfferDebit(observed,plan.Side,plan.Units,q.At);
+            NativePortfolioFunding.OfferDebit(observed,plan.Side,plan.Units,q.At,FundingScenarioId);
         if(carriedDebit is not decimal debit)return null;
         var bracket=NativeExecutableEconomics.Bracket(q,plan.Side,plan.Units,
             prior.Stop,prior.Target,intent.SlippagePerSide,

@@ -235,7 +235,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
                     units,bracket.Entry,s.Side>0?q.Bid:q.Ask,
                     q.LiquidationSlippagePerSide??market.SlippagePerSideQuote));
                 var margin=EurMargin(market,s.Side,units,at);
-                var debit=NativePortfolioFunding.OfferDebit(market,s.Side,units,at);
+                var debit=NativePortfolioFunding.OfferDebit(market,s.Side,units,at,FundingScenarioId);
                 decimal? risk=bracket.RiskEur+debit;
                 var context=DescribeEurContext(market,at,s.Side,(capital.HeldMarginEur??0m)+pending.Sum(x=>x.MarginEur),
                     capital.ResearchAdmissionEquityEur,risk,roundTripCost);

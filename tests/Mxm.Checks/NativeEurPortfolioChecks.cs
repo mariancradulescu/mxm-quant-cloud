@@ -82,10 +82,12 @@ internal static class NativeEurPortfolioChecks
     {
         string scenario=new string('b',64);
         var book=new NativeUnifiedPortfolioEngine(NativeUnifiedPortfolioEngine.EurFirst,fundingScenarioId:scenario);
-        var first=book.Advance(OfficialShape(1,1));
+        Ucp1Frame Conditional(Ucp1Frame x)=>x with {Markets=x.Markets.Select(m=>m with
+            {FundingOffers=m.FundingOffers?.Select(o=>o with {ScenarioId=scenario}).ToArray()}).ToArray()};
+        var first=book.Advance(Conditional(OfficialShape(1,1)));
         check(first.Pending==1&&first.FundingCapital is {DemonstrableEquityEur:null,ConditionalEquityEur:300m},
             "Scenario uses common capital without representing it as demonstrated equity");
-        book.Advance(OfficialShape(2,1));
+        book.Advance(Conditional(OfficialShape(2,1)));
         var fill=book.OriginalModelEvents.Last(e=>e.Kind=="OPEN_FILL");
         var frame=OfficialShape(3,1,bid:102.20m,offer:false);
         var proof=new NativeAccruedFundingEvidence(fill.PositionId,fill.Symbol,fill.Side,fill.Units,
@@ -93,7 +95,7 @@ internal static class NativeEurPortfolioChecks
         var before=book.Checkpoint();
         try {book.Advance(frame with {FundingEvidence=new[]{proof}});check(false,"Scenario must reject unlabeled amount");}
         catch(ArgumentException){check(before==book.Checkpoint(),"Unlabeled funding rejection is atomic");}
-        var observed=book.Advance(frame with {FundingEvidence=new[]{proof with {ScenarioId=scenario}}});
+        var observed=book.Advance(frame with {FundingEvidence=new[]{proof with {ScenarioId=scenario,ExactSignedEur=null,ConditionalSignedEur=-.05m,SourceAcquiredAt=frame.At+Step}}});
         check(observed.FundingCapital is {DemonstrableEquityEur:null,ConditionalEquityEur:>0m,PostedFinancingEur:-.05m},
             "Conditional debit affects the same cash ledger and admission equity");
         var restored=NativeUnifiedPortfolioEngine.Restore(book.Checkpoint());

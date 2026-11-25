@@ -12,11 +12,21 @@ public sealed record NativeAccruedFundingEvidence(string PositionId,string Symbo
 {
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public string? ScenarioId { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public decimal? ConditionalSignedEur { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public long? SourceAcquiredAt { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore]
+    public decimal? LedgerAmount => ExactSignedEur??ConditionalSignedEur;
 }
 
 public sealed record NativeFundingOfferEvidence(string Symbol,int Side,decimal Units,long AvailableAt,
     long EffectiveFrom,long NextScheduledManagementAt,long CoveredThrough,decimal MaximumDebitEur,
-    string SourceSha256);
+    string SourceSha256)
+{
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? ScenarioId { get; init; }
+}
 
 public sealed record NativeFundingExposure(string PositionId,string Symbol,int Side,
     decimal Units,long FromExclusive,decimal BookedSignedEur,bool ExactInLedger,
@@ -26,6 +36,8 @@ public sealed record NativeFundingExposure(string PositionId,string Symbol,int S
     public long? ExactObservedAt { get; init; }
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public string? ScenarioId { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public long? SourceAcquiredAt { get; init; }
     [System.Text.Json.Serialization.JsonIgnore]
     public string EvidenceClass => ScenarioId is not null && ExactInLedger ? "CONDITIONAL_SCENARIO" :
         ExactInLedger ? "SUPPORTED_LEDGER_AMOUNT" :
@@ -55,6 +67,8 @@ public sealed record NativeFundingCapital(decimal PostedFinancingEur,
     public decimal? ConditionalClosedModelNetEur { get; init; }
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public decimal? ConditionalUnmodeledDebitCeilingEur { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public int? ScenarioSettledWindows { get; init; }
     [System.Text.Json.Serialization.JsonIgnore]
     public decimal? ResearchAdmissionEquityEur => ScenarioId is null ? DemonstrableEquityEur : ConditionalEquityEur;
 }
@@ -112,11 +126,14 @@ internal sealed class NativePortfolioFunding
                proof.ThroughInclusive!= (window.ClosedAt??at) ||
                proof.ThroughInclusive<=proof.FromExclusive || proof.AvailableAt<=0 ||
                proof.AvailableAt>at || !ValidHash(proof.SourceSha256) ||
-               (proof.ExactSignedEur.HasValue==proof.MaximumTotalDebitEur.HasValue) ||
+               ((proof.ExactSignedEur.HasValue?1:0)+(proof.ConditionalSignedEur.HasValue?1:0)+
+                    (proof.MaximumTotalDebitEur.HasValue?1:0)!=1) ||
+               (ScenarioId is null ? proof.ConditionalSignedEur.HasValue || proof.SourceAcquiredAt.HasValue :
+                    proof.ExactSignedEur.HasValue || proof.SourceAcquiredAt is not >0L) ||
                proof.MaximumTotalDebitEur is <0m ||
-               (proof.ExactSignedEur.HasValue && proof.AvailableAt<proof.ThroughInclusive) ||
+               (proof.LedgerAmount.HasValue && proof.AvailableAt<proof.ThroughInclusive) ||
                (window.ClosedAt is not null && window.ExactInLedger &&
-                proof.ExactSignedEur!=window.BookedSignedEur))
+                proof.LedgerAmount!=window.BookedSignedEur))
                 throw new ArgumentException("FUNDING_EVIDENCE_CLOCK_EXPOSURE_OR_AMOUNT");
         }
     }
@@ -137,7 +154,7 @@ internal sealed class NativePortfolioFunding
             // A settled closed exposure is a durable idempotence tombstone.
             // Validate has already rejected contradictory replacement evidence.
             if(window.ClosedAt is not null && window.ExactInLedger)continue;
-            if(proof.ExactSignedEur is decimal exact)
+            if(proof.LedgerAmount is decimal exact)
             {
                 var delta=exact-window.BookedSignedEur;
                 if(delta!=0m)
@@ -147,14 +164,15 @@ internal sealed class NativePortfolioFunding
                     postedFinancingEur=postedTotal;
                 }
                 windows[key]=window with {BookedSignedEur=exact,ExactInLedger=true,
-                    AdditionalDebitCeilingEur=0m,EvidenceSha256=proof.SourceSha256,ExactObservedAt=at};
+                    AdditionalDebitCeilingEur=0m,EvidenceSha256=proof.SourceSha256,ExactObservedAt=at,
+                    SourceAcquiredAt=proof.SourceAcquiredAt};
                 continue;
             }
             // The cap refers to total signed financing for this window. Any
             // amount already booked belongs to the same window and stays cash.
             decimal unused=Math.Max(0m,proof.MaximumTotalDebitEur!.Value+window.BookedSignedEur);
             windows[key]=window with {ExactInLedger=false,AdditionalDebitCeilingEur=unused,
-                EvidenceSha256=proof.SourceSha256};
+                EvidenceSha256=proof.SourceSha256,SourceAcquiredAt=proof.SourceAcquiredAt};
         }
     }
 
@@ -201,15 +219,16 @@ internal sealed class NativePortfolioFunding
                 ConditionalEquityEur=ScenarioId is null?null:equity,
                 ConditionalFreeMarginEur=ScenarioId is null?null:equity-book.UsedMarginEur-pendingOpenMarginEur,
                 ConditionalClosedModelNetEur=ScenarioId is not null&&settledExposure==0?book.ClosedNetEur:null,
-                ConditionalUnmodeledDebitCeilingEur=ScenarioId is null?null:debitCeiling
+                ConditionalUnmodeledDebitCeilingEur=ScenarioId is null?null:debitCeiling,
+                ScenarioSettledWindows=ScenarioId is null?null:windows.Values.Count(w=>w.ExactInLedger)
             };
     }
 
-    public static decimal? OfferDebit(Ucp1MarketFrame market,int side,decimal units,long at)
+    public static decimal? OfferDebit(Ucp1MarketFrame market,int side,decimal units,long at,string? scenarioId=null)
     {
         // The source schedule supplies the next available management clock,
         // including any known market closure.
-        var offers=market.FundingOffers?.Where(f=>f.Symbol==market.Symbol && f.Side==side && f.Units==units &&
+        var offers=market.FundingOffers?.Where(f=>f.ScenarioId==scenarioId && f.Symbol==market.Symbol && f.Side==side && f.Units==units &&
             f.AvailableAt>0 && f.AvailableAt<=at && f.EffectiveFrom>0 && f.EffectiveFrom<=at &&
             f.NextScheduledManagementAt>=at+300000L && f.CoveredThrough>=f.NextScheduledManagementAt &&
             f.MaximumDebitEur>=0m && ValidHash(f.SourceSha256)).Take(2).ToArray();

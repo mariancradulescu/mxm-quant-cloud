@@ -513,7 +513,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
                     quotes:quotes,financing:delta) with {EvidenceHash=proof.SourceSha256,
                         AvailableAt=proof.AvailableAt,CalibratedThrough=proof.ThroughInclusive,LatencyMs=0,
                         FundingFromExclusive=window.ClosedAt is null?null:window.FromExclusive}));
-            foreach(var id in fundingEvidence.Where(proof=>proof.ExactSignedEur.HasValue)
+            foreach(var id in fundingEvidence.Where(proof=>proof.LedgerAmount.HasValue)
                 .Select(proof=>proof.PositionId).Distinct(StringComparer.Ordinal))
                 if(trips.Find(trip=>trip.PositionId==id) is { } completed)
                     RememberCpe1Episode(completed,t);
