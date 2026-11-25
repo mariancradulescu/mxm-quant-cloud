@@ -1,0 +1,142 @@
+name: OWNER EUR rollover tick continuity evidence
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/owner-eur-rollover-continuity.yml'
+      - 'research/owner_eur_rollover_continuity.py'
+      - 'research/test_owner_eur_rollover_continuity.py'
+      - 'src/Mxm.Replay/IntegratedEconomicReplay.DatedEur.cs'
+  push:
+    branches: [main]
+    paths: ['ops/owner-eur-rollover-continuity-once.txt']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    outputs:
+      activate: ${{ steps.marker.outputs.activate }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: |
+          python -m pip install -r research/requirements.txt
+          python -m py_compile research/owner_eur_rollover_continuity.py
+          python -m unittest research.test_owner_eur_rollover_continuity research.test_owner_official_eur_source research.test_owner_source_history_expand
+      - id: marker
+        shell: bash
+        run: |
+          echo 'activate=false' >> "$GITHUB_OUTPUT"
+          [[ "$GITHUB_EVENT_NAME" == push ]] || exit 0
+          marker=ops/owner-eur-rollover-continuity-once.txt
+          subject=OWNER_EUR_ROLLOVER_CONTINUITY_20261125
+          [[ "$GITHUB_REF" == refs/heads/main && "$GITHUB_RUN_ATTEMPT" == 1 &&
+             "$GITHUB_ACTOR" == mariancradulescu &&
+             "$(git log -1 --format=%s)" == "$subject" &&
+             "$(git diff-tree --no-commit-id --name-status -r HEAD)" == $'A\t'"$marker" &&
+             -z "$(git log -1 HEAD^ -- "$marker")" ]]
+          cmp -s "$marker" <(printf '%s\n' "$subject")
+          echo 'activate=true' >> "$GITHUB_OUTPUT"
+  recipient:
+    needs: verify
+    if: needs.verify.outputs.activate == 'true'
+    environment: mxm-r3-custody-v1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - run: python -m research.custody_new
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: eur-rollover-recipient
+          path: new-recipient-output/
+          retention-days: 2
+          if-no-files-found: error
+  capture:
+    needs: [verify, recipient]
+    if: needs.verify.outputs.activate == 'true'
+    environment: mxm-r3-pepperstone-v1
+    concurrency:
+      group: mxm-existing-oauth-read-only
+      cancel-in-progress: false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 43
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: source-history-public-receipt
+          path: original-source-history
+          run-id: 45396314675
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: eur-rollover-recipient
+          path: eur-rollover-recipient
+      - name: Collect historical rollover ticks and common-window USDJPY M5
+        run: python -m research.owner_eur_rollover_continuity
+        env:
+          R3_CTRADER_CLIENT_ID: ${{ secrets.R3_CTRADER_CLIENT_ID }}
+          R3_CTRADER_CLIENT_SECRET: ${{ secrets.R3_CTRADER_CLIENT_SECRET }}
+          R3_CTRADER_ACCESS_TOKEN: ${{ secrets.R3_CTRADER_ACCESS_TOKEN }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: owner-eur-rollover-official-original
+          path: eur-rollover-continuity/
+          retention-days: 90
+          if-no-files-found: error
+  readback:
+    needs: [verify, capture]
+    if: needs.verify.outputs.activate == 'true' && needs.capture.result == 'success'
+    environment: mxm-r3-custody-v1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: source-history-public-receipt
+          path: original-source-history
+          run-id: 45396314675
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: owner-eur-rollover-official-original
+          path: eur-rollover-continuity
+      - run: python -m research.owner_eur_rollover_continuity --readback
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: owner-eur-rollover-verified-evidence
+          path: eur-rollover-continuity/verified-evidence.json
+          retention-days: 90
+          if-no-files-found: error
