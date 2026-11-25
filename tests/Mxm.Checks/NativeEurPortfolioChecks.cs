@@ -207,7 +207,7 @@ internal static class NativeEurPortfolioChecks
             Array.Empty<NativeEurBarState>(),0m,.10m,true)
             {
                 MarketState=Enumerable.Repeat<decimal?>(.1m,16).ToArray(),
-                RelativeVolatility=Enumerable.Repeat<decimal?>(high?.03m:.001m,7).ToArray()
+                RelativeVolatility=Enumerable.Repeat<decimal?>(high ? .03m : .001m,7).ToArray()
             };
         var rows=Enumerable.Range(0,224).Select(i=>
         {
