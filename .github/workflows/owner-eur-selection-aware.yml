@@ -1,0 +1,314 @@
+name: OWNER selection-aware EUR calibration v3
+on:
+  pull_request:
+    paths:
+      - 'src/Mxm.Core/NativeEurPredictiveCalibration.cs'
+      - 'src/Mxm.Core/NativeEurAdaptiveEstimator.cs'
+      - 'src/Mxm.Core/NativeEurDevelopmentProfile.cs'
+      - 'src/Mxm.Core/NativeUnifiedPortfolioEngine.Eur*.cs'
+      - 'src/Mxm.Replay/IntegratedEconomicReplay.Eur*.cs'
+      - 'tests/Mxm.Checks/NativeEurPortfolioChecks.cs'
+      - 'research/eur_selection_aware_3.json'
+      - 'research/merge_eur_selection_aware.py'
+      - '.github/workflows/owner-eur-selection-aware.yml'
+  push:
+    branches: [main]
+    paths: ['research/eur_selection_aware_3.json']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  technical:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - run: python -m pip install -r research/requirements.txt
+      - run: dotnet build src/Mxm.Replay -c Release
+      - run: dotnet run --project tests/Mxm.Checks -c Release
+      - run: python -m unittest research.test_merge_eur_scenarios research.test_owner_eur_checkpoint research.test_merge_eur_adaptive
+  evidence:
+    needs: technical
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.actor == 'mariancradulescu'
+    strategy:
+      fail-fast: false
+      matrix:
+        scenario: [0, 1, 2]
+        trial-group: [REVALIDATION, FEEDBACK_RISK]
+    environment: mxm-r3-custody-v1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 350
+    env:
+      MXM_ECONOMIC_SCENARIO_INDEX: ${{ matrix.scenario }}
+      MXM_ECONOMIC_TRIAL_GROUP: ${{ matrix.trial-group }}
+      MXM_ECONOMIC_RECEIPT_DIRECTORY: window-receipts
+      MXM_ECONOMIC_BOUNDED_NEIGHBORS: 1
+      MXM_ECONOMIC_PAIRED_DISTRIBUTION: 1
+      MXM_ECONOMIC_REUSE_FRAMES: 1
+      CHECKPOINT_PREFIX: eur-selection-aware-checkpoint-${{ matrix.scenario }}-${{ matrix.trial-group }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - run: python -m unittest research.test_official_symbol_calendar research.test_owner_eer1_source
+      - run: dotnet build src/Mxm.Replay -c Release
+      - name: Pin exact original artifact identity and archive digest
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/"$GITHUB_REPOSITORY"/actions/artifacts/15000522105 > /tmp/eer1-artifact.json
+          python -c 'import json; a=json.load(open("/tmp/eer1-artifact.json")); assert a["id"]==15000522105 and a["workflow_run"]["id"]==45555613548 and a["size_in_bytes"]==233873730 and a["digest"]=="sha256:107b2bc43e6ff25a5799e253b0ab6ee718ad5b88ef3bb3211d84ad6c20b87a5b" and not a["expired"]'
+          gh api repos/"$GITHUB_REPOSITORY"/actions/artifacts/15000522105/zip > /tmp/eer1-original.zip
+          echo '107b2bc43e6ff25a5799e253b0ab6ee718ad5b88ef3bb3211d84ad6c20b87a5b  /tmp/eer1-original.zip' | sha256sum -c -
+          unzip -q /tmp/eer1-original.zip -d eer1-source
+          rm /tmp/eer1-original.zip
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: owner-eur-conditional-source-verified
+          path: pilot-source
+          run-id: 45552716026
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: source-history-public-receipt
+          path: original-source-history
+          run-id: 45396314675
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: source-history-original-sealed
+          path: original-source-history
+          run-id: 45396314675
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: owner-history-extension-sealed-and-receipt
+          path: previous-extension
+          run-id: 45409527714
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: sealed-source
+          path: bdp-source
+          run-id: 41724643418
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: sealed-source
+          path: aip-source
+          run-id: 41735441128
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: hxc1-original-historical-encrypted-source
+          path: mde1-hxc1-source
+          run-id: 43817213663
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: xmh2-complete-274day-m15-encrypted-source
+          path: mde1-xmh2-source
+          run-id: 44352570167
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: p05-new-live-readonly-authentic-source-sealed
+          path: p05-sealed
+          run-id: 45134137836
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: p05-new-live-readonly-aggregate-public
+          path: p05-public
+          run-id: 45134137836
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: owner-eur-gap-official-original
+          path: prior-gap
+          run-id: 45541671931
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: owner-eur-rollover-official-original
+          path: prior-rollover
+          run-id: 45549613144
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: integrated-full-session-custody
+          path: integrated-sealed-source
+          run-id: 44687919474
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: integrated-full-session-source-public
+          path: integrated-source-public
+          run-id: 44687919474
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: closed-market-original-ciphertext
+          path: closed-market-source
+          run-id: 44733062339
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: closed-market-original-source-public
+          path: closed-market-source
+          run-id: 44733062339
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: hxc1-original-historical-encrypted-source
+          path: hxc1-original
+          run-id: 43817213663
+          github-token: ${{ github.token }}
+      - name: Run native technical checks before economic replay
+        run: dotnet run --project tests/Mxm.Checks -c Release
+      - name: Bind registered study and archived comparator
+        run: |
+          python - <<'PYBIND'
+          import hashlib, json
+          from pathlib import Path
+          p=Path("research/eur_selection_aware_3.json")
+          plan=json.loads(p.read_bytes())
+          assert plan["Study"]=="EUR_SELECTION_AWARE_3" and plan["ArchivedControl"]["Run"]==45708420980
+          assert len(plan["Trials"])*len(plan["Stresses"])==12
+          assert set(plan["TrialGroups"])=={"REVALIDATION","FEEDBACK_RISK"}
+          PYBIND
+      - name: Recover encrypted checkpoints from an earlier attempt
+        id: resume
+        if: github.run_attempt > 1
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p window-receipts
+          gh api --paginate "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?per_page=100" \
+            --jq '.artifacts[] | select(.expired == false) | .name' > "$RUNNER_TEMP/checkpoint-artifacts.txt"
+          for phase in 1 2 3; do
+            name="$CHECKPOINT_PREFIX-$phase"
+            if grep -Fxq "$name" "$RUNNER_TEMP/checkpoint-artifacts.txt"; then
+              gh run download "$GITHUB_RUN_ID" --name "$name" --dir "checkpoints/$phase"
+              find "checkpoints/$phase" -name '*.json' -type f -exec cp {} window-receipts/ \;
+              echo "phase$phase=true" >> "$GITHUB_OUTPUT"
+            fi
+          done
+      - name: Reconstruct original authenticated evidence once
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+        run: python -m research.owner_eer1_readback --prepare-protection-recovery "$RUNNER_TEMP/eur-private"
+      - name: Replay initial fit and seal checkpoint
+        if: steps.resume.outputs.phase1 != 'true'
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+        run: |
+          python -m research.owner_eur_checkpoint "$RUNNER_TEMP/eur-private" selection-partition.json --protocol research/eur_selection_aware_3.json \
+            --phase 1 --checkpoint checkpoints/1
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: steps.resume.outputs.phase1 != 'true'
+        with:
+          name: ${{ env.CHECKPOINT_PREFIX }}-1
+          path: checkpoints/1
+          if-no-files-found: error
+          retention-days: 90
+      - name: Replay first test window and seal checkpoint
+        if: steps.resume.outputs.phase2 != 'true'
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+        run: |
+          python -m research.owner_eur_checkpoint "$RUNNER_TEMP/eur-private" selection-partition.json --protocol research/eur_selection_aware_3.json \
+            --previous checkpoints/1/checkpoint.sealed --phase 2 --checkpoint checkpoints/2
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: steps.resume.outputs.phase2 != 'true'
+        with:
+          name: ${{ env.CHECKPOINT_PREFIX }}-2
+          path: checkpoints/2
+          if-no-files-found: error
+          retention-days: 90
+      - name: Replay second test window and seal checkpoint
+        if: steps.resume.outputs.phase3 != 'true'
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+        run: |
+          python -m research.owner_eur_checkpoint "$RUNNER_TEMP/eur-private" selection-partition.json --protocol research/eur_selection_aware_3.json \
+            --previous checkpoints/2/checkpoint.sealed --phase 3 --checkpoint checkpoints/3
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: steps.resume.outputs.phase3 != 'true'
+        with:
+          name: ${{ env.CHECKPOINT_PREFIX }}-3
+          path: checkpoints/3
+          if-no-files-found: error
+          retention-days: 90
+      - name: Replay final test window and produce scenario report
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+        run: |
+          python -m research.owner_eur_checkpoint "$RUNNER_TEMP/eur-private" selection-partition.json --protocol research/eur_selection_aware_3.json \
+            --previous checkpoints/3/checkpoint.sealed
+      - name: Verify independent partition before publication
+        run: |
+          python - <<'PYCHECK'
+          import hashlib, json, os
+          from pathlib import Path
+          p=Path("research/eur_selection_aware_3.json")
+          plan=json.loads(p.read_bytes())
+          result=json.loads(Path("selection-partition.json").read_bytes())
+          s=result["Summary"]
+          assert s["ProtocolSha256"]==hashlib.sha256(p.read_bytes()).hexdigest()
+          assert s["Orders"]==s["SourceBrokerRequests"]==0
+          assert s["CloudActivated"] is s["IndependentConfirmationCertified"] is result["BrokerFillEvidence"] is False
+          row,=s["Results"]
+          group=os.environ["MXM_ECONOMIC_TRIAL_GROUP"]
+          assert row["TrialGroup"]==group and row["SpreadMultiplier"]==plan["Stresses"][int(os.environ["MXM_ECONOMIC_SCENARIO_INDEX"])]
+          assert [t["Id"] for t in row["Trials"]]==plan["TrialGroups"][group]
+          assert len(row["Fits"])==len(plan["TestBoundaries"])-1
+          assert all(t["Result"]["InitialCapitalEur"]==300 for t in row["Trials"])
+          PYCHECK
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: eur-selection-aware-result-${{ matrix.scenario }}-${{ matrix.trial-group }}
+          path: |
+            selection-partition.json
+            window-receipts/*.json
+          if-no-files-found: error
+          retention-days: 90
+  combine:
+    needs: [technical, evidence]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 110
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          pattern: eur-selection-aware-result-*
+          path: partitions
+      - name: Bind and read the archived adaptive comparator and reconcile new trials
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/"$GITHUB_REPOSITORY"/actions/artifacts/15066903746/zip > /tmp/adaptive-archived.zip
+          echo '3a618a44c3acd53f83b4ab36aef61d530ba9ee4b2d7c19ae5f112cab786105b8  /tmp/adaptive-archived.zip' | sha256sum -c -
+          unzip -p /tmp/adaptive-archived.zip economic.json > /tmp/adaptive-archived.json
+          python -m research.merge_eur_selection_aware research/eur_selection_aware_3.json /tmp/adaptive-archived.json selection-report partitions/eur-selection-aware-result-*/selection-partition.json
+          sha256sum selection-report/*.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: eur-selection-aware-complete
+          path: selection-report/
+          if-no-files-found: error
+          retention-days: 90

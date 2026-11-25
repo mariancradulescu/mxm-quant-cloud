@@ -1,0 +1,112 @@
+{
+  "Study": "EUR_SELECTION_AWARE_3",
+  "Exposure": "PROJECT_EXPOSED_CONDITIONAL_DEVELOPMENT",
+  "SourceProtocolSha256": "2ac5e2da090ce4c69f4791affc54424766749630e16522e6672285ad46c98a3c",
+  "EvidenceManifestSha256": "bd4a063bef5876e649876faea5a4b602b8852483774f48c99881131e8b4082b9",
+  "InitialFitFrom": 1792972800000,
+  "TestBoundaries": [
+    1793577600000,
+    1794182400000,
+    1794787200000,
+    1795392000000
+  ],
+  "Stresses": [
+    0,
+    0.5,
+    1
+  ],
+  "StopWitness": {
+    "Symbol": "NatGas",
+    "Side": -1,
+    "OriginalFillAt": 1795015515000,
+    "OriginalCloseAt": 1795019115000,
+    "StopDistance": 0.014,
+    "FirstTradeTouchAt": 1795016231791
+  },
+  "Calibrations": [
+    {
+      "Id": "CLOSED_BAR_FAMILY_DIRECTION_NEAR_TARGET",
+      "Profile": {
+        "CaptureStudyDiagnostics": true,
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "LearnFromOpportunityEpisodes": true,
+        "ObserveIntentExecutionOnTicks": true,
+        "IncludeRecoveredStructure": true,
+        "ObserveFamilyDirectionsOnClosedBars": true,
+        "DistributionTargetRanges": 1.5,
+        "CaptureVolatilityContext": true
+      }
+    }
+  ],
+  "Trials": [
+    {
+      "Id": "V2_VOLATILITY_FILL",
+      "Policy": "EUR_GENERAL_SELECT",
+      "Calibration": "CLOSED_BAR_FAMILY_DIRECTION_NEAR_TARGET",
+      "UseRecoveredLocalPayoff": true,
+      "UseAdaptivePayoff": true,
+      "UseExtendedLocalPayoff": true,
+      "UsePredictiveCalibration": true,
+      "UseEconomicEstimatorObjective": true,
+      "UseRealizedForecastFeedback": false,
+      "RevalidatePredictiveVolatilityAtFill": true
+    },
+    {
+      "Id": "V3_RANKED_GEOMETRY",
+      "Policy": "EUR_GENERAL_SELECT",
+      "Calibration": "CLOSED_BAR_FAMILY_DIRECTION_NEAR_TARGET",
+      "UseRecoveredLocalPayoff": true,
+      "UseAdaptivePayoff": true,
+      "UseExtendedLocalPayoff": true,
+      "UsePredictiveCalibration": true,
+      "UseEconomicEstimatorObjective": true,
+      "UseRealizedForecastFeedback": false,
+      "RevalidatePredictiveVolatilityAtFill": true,
+      "UseSelectionAwarePredictiveGrid": true
+    },
+    {
+      "Id": "V3_RANKED_GEOMETRY_FEEDBACK",
+      "Policy": "EUR_GENERAL_SELECT",
+      "Calibration": "CLOSED_BAR_FAMILY_DIRECTION_NEAR_TARGET",
+      "UseRecoveredLocalPayoff": true,
+      "UseAdaptivePayoff": true,
+      "UseExtendedLocalPayoff": true,
+      "UsePredictiveCalibration": true,
+      "UseEconomicEstimatorObjective": true,
+      "UseRealizedForecastFeedback": true,
+      "RevalidatePredictiveVolatilityAtFill": true,
+      "UseSelectionAwarePredictiveGrid": true
+    },
+    {
+      "Id": "V3_RANKED_GEOMETRY_RISK",
+      "Policy": "EUR_GENERAL_SELECT",
+      "Calibration": "CLOSED_BAR_FAMILY_DIRECTION_NEAR_TARGET",
+      "UseRecoveredLocalPayoff": true,
+      "UseAdaptivePayoff": true,
+      "UseExtendedLocalPayoff": true,
+      "UsePredictiveCalibration": true,
+      "UseEconomicEstimatorObjective": true,
+      "UseRealizedForecastFeedback": false,
+      "RevalidatePredictiveVolatilityAtFill": true,
+      "UseSelectionAwarePredictiveGrid": true,
+      "KeepAdmissionRiskAtFill": true
+    }
+  ],
+  "ArchivedControl": {
+    "Run": 45708420980,
+    "Artifact": 15066903746,
+    "ArchiveSha256": "3a618a44c3acd53f83b4ab36aef61d530ba9ee4b2d7c19ae5f112cab786105b8",
+    "Study": "EUR_PREDICTIVE_CALIBRATION_2"
+  },
+  "TrialGroups": {
+    "REVALIDATION": [
+      "V2_VOLATILITY_FILL",
+      "V3_RANKED_GEOMETRY"
+    ],
+    "FEEDBACK_RISK": [
+      "V3_RANKED_GEOMETRY_FEEDBACK",
+      "V3_RANKED_GEOMETRY_RISK"
+    ]
+  }
+}

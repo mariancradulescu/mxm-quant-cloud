@@ -44,6 +44,13 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
     public bool UseEconomicEstimatorObjective { get; init; }
 
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool UseSelectionAwarePredictiveGrid { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool RevalidatePredictiveVolatilityAtFill { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool KeepAdmissionRiskAtFill { get; init; }
+
     internal string GeometryIdentity => FormattableString.Invariant(
         $"{UseAvailableContext}/{DistributionTargetRanges:G29}/{StopReserveMultiplier:G29}") +
         (ModeledStopLatencyMs is long latency ? FormattableString.Invariant($"/Trade/{latency}") : "") +
@@ -64,6 +71,9 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
             UseAdaptivePayoff&&!UseRecoveredLocalPayoff||
             UsePredictiveCalibration&&(!UseAdaptivePayoff||!CaptureVolatilityContext||!UseExtendedLocalPayoff)||
             UseEconomicEstimatorObjective&&!UsePredictiveCalibration||
+            UseSelectionAwarePredictiveGrid&&(!UsePredictiveCalibration||!UseEconomicEstimatorObjective)||
+            RevalidatePredictiveVolatilityAtFill&&!UsePredictiveCalibration||
+            KeepAdmissionRiskAtFill&&!UsePredictiveCalibration||
             (UseAdaptiveAllocation||UseAdaptiveManagement||UseRealizedForecastFeedback)&&!UseAdaptivePayoff)
             throw new ArgumentException("EUR_REGISTERED_DEVELOPMENT_PROFILE");
     }

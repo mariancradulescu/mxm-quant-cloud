@@ -294,6 +294,13 @@ public sealed partial class NativeUnifiedPortfolioEngine
         var risk=ReservedEurRisk(bracket.RiskEur,debit);
         var reward=bracket.RewardEur-debit;
         if(bracket.RiskEur<=0m||reward<=0m)return null;
+        // Registered ablation: no post-admission enlargement of the same
+        // order's monetary stop budget; retain all existing portfolio guards.
+        if(eurDevelopmentProfile?.KeepAdmissionRiskAtFill==true&&risk>prior.InitialRiskEur)
+        {
+            Count("EUR_FILL_EXCEEDS_ADMISSION_RESERVE");
+            return null;
+        }
         var held=Cpe1Commitments(false,frame);
         // The pending intent must be REPRICED at the actual next witnessed
         // fill. Never pass its stale admission risk or stale minimum margin
@@ -318,7 +325,9 @@ public sealed partial class NativeUnifiedPortfolioEngine
             decimal cost=Math.Max(0m,-NativeExecutableEconomics.EstimateNet(q,q,plan.Side,plan.Units,
                 bracket.Entry,plan.Side>0?q.Bid:q.Ask,q.LiquidationSlippagePerSide??intent.SlippagePerSide));
             var context=DescribeEurContext(observed,frame.At,plan.Side,guard.TotalReservedMarginEur,equity,risk,cost);
-            if(context is not null)context=context with {MarketState=DescribeGeneralState(observed,frame,plan.Side)};
+            if(context is not null)context=context with {MarketState=DescribeGeneralState(observed,frame,plan.Side),
+                RelativeVolatility=eurDevelopmentProfile?.RevalidatePredictiveVolatilityAtFill==true
+                    ?DescribeRelativeVolatility(observed,frame.At):null};
             if(EurPayoff(plan.Family,plan.Side,risk,cost+debit,policy==EurGeneralSelect?context:null,decisionAt:frame.At)
                 is not {GrossLowerEur:>0m,NetLowerEur:>0m})return null;
         }

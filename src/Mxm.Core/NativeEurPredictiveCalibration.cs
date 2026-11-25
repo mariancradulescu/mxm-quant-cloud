@@ -23,6 +23,8 @@ internal sealed partial class NativeEurAdaptiveEstimator
     ErrorDistribution? pooledErrors;
     long[] selectionDates=Array.Empty<long>(),errorDates=Array.Empty<long>();
     bool economicSelection;
+    bool selectionAwareCalibration;
+    bool selectedResidualSupport;
 
     static double[] Terciles(IEnumerable<double?> values)
     {
@@ -52,7 +54,7 @@ internal sealed partial class NativeEurAdaptiveEstimator
     // Same causal forecasts are scored for each candidate, including the cash
     // decision for unsupported rows. The last dates are reserved for error
     // calibration; they do not participate in candidate selection.
-    static NativeEurAdaptiveEstimator FitPredictive(NativeEurCalibration calibration,bool extended,bool economic)
+    static NativeEurAdaptiveEstimator FitPredictive(NativeEurCalibration calibration,bool extended,bool economic,bool selectionAware)
     {
         using var profile=NativeEconomicProfiler.Measure("eur.predictive_fit");
         if(!extended)throw new ArgumentException("EUR_PREDICTIVE_REQUIRES_EXTENDED");
@@ -68,8 +70,11 @@ internal sealed partial class NativeEurAdaptiveEstimator
         var grid=(from half in new[]{0,4,12}
                   from ridge in new[]{.7,2.0}
                   from prior in new[]{3d,8d}
-                  select new EurEstimatorCandidate(FormattableString.Invariant($"V2_H{half}_R{ridge}_P{prior}"),
-                      half,ridge,prior,prior==3d ? .7 : 1.4,2,8){Predictive=true}).ToArray();
+                  from slow in (selectionAware?new[]{.7,1.4}:new[]{prior==3d ? .7 : 1.4})
+                  select new EurEstimatorCandidate(selectionAware
+                      ?FormattableString.Invariant($"V3_H{half}_R{ridge}_P{prior}_S{slow}")
+                      :FormattableString.Invariant($"V2_H{half}_R{ridge}_P{prior}"),
+                      half,ridge,prior,slow,2,8){Predictive=true}).ToArray();
 
         Validation[] Forward(EurEstimatorCandidate p,long[] clocks)
         {
@@ -95,6 +100,28 @@ internal sealed partial class NativeEurAdaptiveEstimator
             return daily.Length==0?null:daily.Average();
         }
 
+        // Exposed development proxy: at each decision clock rank simultaneous
+        // minimum-volume labels by predicted monetary value against CASH.
+        // This is not a financed portfolio or a substitute for the native replay.
+        Validation? RankedChoice(IEnumerable<Validation> candidates)
+            =>candidates.Where(x=>x.Supported&&x.Row.Gross-x.GrossError>0&&
+                Math.Min(x.Row.Net-x.NetError,x.Row.Gross-x.GrossError-(double)x.Row.Context.CostRiskFraction)>0)
+                .OrderByDescending(x=>Math.Min(x.Row.Net-x.NetError,
+                    x.Row.Gross-x.GrossError-(double)x.Row.Context.CostRiskFraction)*(double)x.Row.Label.RiskEur)
+                .ThenBy(x=>x.Row.Context.Symbol,StringComparer.Ordinal)
+                .ThenBy(x=>x.Row.Label.Family,StringComparer.Ordinal).ThenBy(x=>x.Row.Label.Side).FirstOrDefault();
+
+        double? RankedUtility(Validation[] validation)
+        {
+            var daily=validation.GroupBy(x=>x.Row.Day).Select(day=>
+                day.GroupBy(x=>x.Row.Label.DecisionAt!.Value).Average(clock=>
+                {
+                    var chosen=RankedChoice(clock);
+                    return chosen is null?0d:(double)chosen.Row.Label.NetEur;
+                })).ToArray();
+            return daily.Length==0?null:daily.Average();
+        }
+
         var scores=grid.Select(p=>
         {
             var validation=Forward(p,selection);
@@ -104,7 +131,7 @@ internal sealed partial class NativeEurAdaptiveEstimator
             var utility=DayScore(validation,x=>x.Supported&&x.Row.Gross-x.GrossError>0&&
                 x.Row.Net-x.NetError>0?x.Row.Net:0);
             return (Parameters:p,Score:new EurEstimatorScore(p.Id,selection.Length,validation.Length,loss)
-                {EconomicUtility=utility});
+                {EconomicUtility=selectionAware?RankedUtility(validation):utility});
         }).ToArray();
         var winner=economic?scores.OrderByDescending(x=>x.Score.EconomicUtility??double.NegativeInfinity)
             .ThenBy(x=>x.Score.Loss??double.PositiveInfinity).First():
@@ -112,8 +139,21 @@ internal sealed partial class NativeEurAdaptiveEstimator
         var fitted=FitGroups(rows,calibration.ObservationThrough,winner.Parameters,true);
         var output=new NativeEurAdaptiveEstimator(fitted,winner.Parameters,calibration.ObservationThrough,
             scores.Select(x=>x.Score).ToArray())
-            {selectionDates=selection,errorDates=errorDays,economicSelection=economic};
+            {selectionDates=selection,errorDates=errorDays,economicSelection=economic,selectionAwareCalibration=selectionAware};
         var held=Forward(winner.Parameters,errorDays).Where(x=>x.Supported).ToArray();
+        if(selectionAware)
+        {
+            // The candidate is already frozen. Calibrate on ranked decisions
+            // in the disjoint residual dates, never on selection dates.
+            // Preserve the out-of-time baseline when the ranked subset is thin.
+            var ranked=held.GroupBy(x=>x.Row.Label.DecisionAt!.Value).Select(RankedChoice)
+                .OfType<Validation>().ToArray();
+            if(ranked.Select(x=>x.Row.Day).Distinct().Count()>=2)
+            {
+                held=ranked;
+                output.selectedResidualSupport=true;
+            }
+        }
         var pooled=Weighted(held,calibration.ObservationThrough/Day,winner.Parameters.HalfLifeDays);
         if(pooled.Select(x=>x.Day).Distinct().Count()>=2)
             output.pooledErrors=new ErrorDistribution(pooled);
@@ -239,6 +279,7 @@ internal sealed partial class NativeEurAdaptiveEstimator
                 {error=cell;scope=key;break;}
         }
         if(error is null)return null; // never substitute training residuals
+        if(selectionAwareCalibration)scope=(selectedResidualSupport?"RANKED_OUT_OF_TIME/":"ALL_OUT_OF_TIME_FALLBACK/")+scope;
         var (g,n)=Estimate(model,context,Values(context,true,true),selected);
         g+=feedback?.Gross??0; n+=feedback?.Net??0;
         double grossSem=error.GrossSem+(feedback?.GrossSem??0),netSem=error.NetSem+(feedback?.NetSem??0);
@@ -264,7 +305,7 @@ internal sealed partial class NativeEurAdaptiveEstimator
     object PredictiveReceipt()=>new
     {
         Selected=selected,ObservationThrough=fittedThrough,Grid=scores,
-        Objective=economicSelection?"DAY_SYMBOL_SIGN_DECISION_NET_UTILITY":"DAY_SYMBOL_PREDICTION_LOSS",
+        Objective=selectionAwareCalibration?"DAY_CLOCK_RANKED_MONETARY_CASH_ALTERNATIVE":economicSelection?"DAY_SYMBOL_SIGN_DECISION_NET_UTILITY":"DAY_SYMBOL_PREDICTION_LOSS",
         SelectionDays=selectionDates,ResidualCalibrationDays=errorDates,
         PooledValidationDays=pooledErrors?.Days??0,PooledValidationLabels=pooledErrors?.Labels??0,
         Groups=groups.Select(x=>new {x.Key.Family,x.Key.Side,x.Value.Days,x.Value.Labels,
