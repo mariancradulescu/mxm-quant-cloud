@@ -77,9 +77,29 @@ public sealed record NativeCompleteDistribution(NativeCompleteSample[] Samples, 
         using var predictionProfile=NativeEconomicProfiler.Measure("distribution.predict");
         range=default;
         if (scale <= 0m) throw new ArgumentException("COMPLETE_POLICY_RISK_SCALE");
-        int first = WithoutResidence ? 2 : 0;
-        var candidates = Samples.Where(s => s.SettledAt < clock).Select((sample,index) =>
+        var ranked=RankNeighbors(features,clock,symbol,assetClass);
+        var days = new Dictionary<long, int>();
+        var values = new List<(decimal Return, decimal Weight)>();
+        using (NativeEconomicProfiler.Measure("distribution.rank_select"))
+        foreach (var (sample, distance, _) in ranked)
         {
+            long day = sample.DecisionAt / NativeCompletePolicy.Day;
+            int count = days.GetValueOrDefault(day);
+            if (count >= 8) continue;
+            days[day] = count + 1;
+            values.Add(((sample.OutcomeR + BiasR) * scale, 1m / (1m + distance)));
+            if (values.Count == 48) break;
+        }
+        return Summarize(values,days.Count,scale,out range);
+    }
+
+    IEnumerable<(NativeCompleteSample sample,decimal distance,int index)> RankNeighbors(decimal[] features,long clock,
+        string? symbol,string? assetClass)
+    {
+        int first = WithoutResidence ? 2 : 0;
+        var candidates = Samples.Select((sample,index)=>(sample,index)).Where(row=>row.sample.SettledAt<clock).Select(row =>
+        {
+            var (sample,index)=row;
             if (sample.Features.Length != features.Length) throw new ArgumentException("COMPLETE_POLICY_FEATURE_COUNT");
             decimal distance = 0m;
             if(MaskedEconomicContext)
@@ -104,20 +124,42 @@ public sealed record NativeCompleteDistribution(NativeCompleteSample[] Samples, 
         {
             foreach(var row in SelectBoundedNeighbors(candidates))yield return row;
         }
-        var days = new Dictionary<long, int>();
-        var values = new List<(decimal Return, decimal Weight)>();
+        return ranked;
+    }
+
+    // Caller holds a validated, common ordered sample geometry. Only outcome and
+    // calibration differ; distance, causal eligibility, daily cap and tie order are common.
+    internal (NativeCompletePrediction? Gross,NativeCompletePrediction? Net) PredictPaired(
+        NativeCompleteDistribution net,decimal[] features,long clock,decimal scale,
+        out (decimal Minimum,decimal Maximum) range,string? symbol,string? assetClass)
+    {
+        using var predictionProfile=NativeEconomicProfiler.Measure("distribution.predict_pair");
+        if(scale<=0m)throw new ArgumentException("COMPLETE_POLICY_RISK_SCALE");
+        var days=new Dictionary<long,int>();
+        var grossValues=new List<(decimal Return,decimal Weight)>();
+        var netValues=new List<(decimal Return,decimal Weight)>();
         using (NativeEconomicProfiler.Measure("distribution.rank_select"))
-        foreach (var (sample, distance, _) in ranked)
+        foreach(var (sample,distance,index) in RankNeighbors(features,clock,symbol,assetClass))
         {
-            long day = sample.DecisionAt / NativeCompletePolicy.Day;
-            int count = days.GetValueOrDefault(day);
-            if (count >= 8) continue;
-            days[day] = count + 1;
-            values.Add(((sample.OutcomeR + BiasR) * scale, 1m / (1m + distance)));
-            if (values.Count == 48) break;
+            long day=sample.DecisionAt/NativeCompletePolicy.Day;
+            int count=days.GetValueOrDefault(day);
+            if(count>=8)continue;
+            days[day]=count+1;
+            decimal weight=1m/(1m+distance);
+            grossValues.Add(((sample.OutcomeR+BiasR)*scale,weight));
+            netValues.Add(((net.Samples[index].OutcomeR+net.BiasR)*scale,weight));
+            if(grossValues.Count==48)break;
         }
+        return (Summarize(grossValues,days.Count,scale,out _),
+            net.Summarize(netValues,days.Count,scale,out range));
+    }
+
+    NativeCompletePrediction? Summarize(List<(decimal Return,decimal Weight)> values,int dayCount,decimal scale,
+        out (decimal Minimum,decimal Maximum) range)
+    {
+        range=default;
         using var summaryProfile=NativeEconomicProfiler.Measure("distribution.summarize");
-        if (values.Count < 12 || days.Count < 4) return null;
+        if (values.Count < 12 || dayCount < 4) return null;
         decimal weight = values.Sum(x => x.Weight);
         decimal mean = values.Sum(x => x.Return * x.Weight) / weight;
         var ordered = values.OrderBy(x => x.Return).ToArray();
@@ -133,7 +175,7 @@ public sealed record NativeCompleteDistribution(NativeCompleteSample[] Samples, 
             return ordered[^1].Return;
         }
         return new(mean, mean - UncertaintyR * scale, values.Where(x => x.Return > 0m).Sum(x => x.Weight) / weight,
-            Quantile(.10m), Quantile(.50m), Quantile(.90m), values.Count, days.Count);
+            Quantile(.10m), Quantile(.50m), Quantile(.90m), values.Count, dayCount);
     }
 
     internal static decimal ContextDistance(decimal[] target,decimal[] observed,string? symbol=null,
@@ -168,6 +210,11 @@ public sealed record NativeCompleteDistribution(NativeCompleteSample[] Samples, 
             .Where(row => row.Predicted is not null)
             .GroupBy(row => row.DecisionAt / NativeCompletePolicy.Day)
             .Select(g => g.Average(row => row.OutcomeR - row.Predicted!.Mean)).ToArray();
+        return WithCalibrationErrors(errors);
+    }
+
+    internal NativeCompleteDistribution WithCalibrationErrors(decimal[] errors)
+    {
         if (errors.Length < 4) return this;
         decimal mean = errors.Average();
         decimal sampleVariance = errors.Sum(e => (e - mean) * (e - mean)) / (errors.Length - 1);
