@@ -43,7 +43,9 @@ internal sealed partial class NativeEurAdaptiveEstimator
             Terciles(contexts.Select(TrendMagnitude)));
     }
     static string Bucket(double? value,double[] cuts)
-        =>value is not double v||cuts.Length!=2?"NA":v<cuts[0]?"LOW":v>cuts[1]?"HIGH":"MID";
+        =>value is not double v||cuts.Length!=2?"NA":cuts[0]==cuts[1]
+            ?v<cuts[0]?"LOW":v>cuts[1]?"HIGH":"MID"
+            :v<=cuts[0]?"LOW":v>=cuts[1]?"HIGH":"MID";
     static string PredictiveRegime(NativeEurDecisionContext c,RegimeCuts cuts)
         =>FormattableString.Invariant($"H1:{(c.MarketState![8] is decimal m?Math.Sign(m):2)}/{Bucket(TrendMagnitude(c),cuts.TrendMagnitude)}/{Bucket(Volatility(c),cuts.Volatility)}/{Bucket(Expansion(c),cuts.Expansion)}");
 
