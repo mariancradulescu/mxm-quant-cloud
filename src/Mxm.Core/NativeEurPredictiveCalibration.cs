@@ -69,7 +69,7 @@ internal sealed partial class NativeEurAdaptiveEstimator
                   from ridge in new[]{.7,2.0}
                   from prior in new[]{3d,8d}
                   select new EurEstimatorCandidate(FormattableString.Invariant($"V2_H{half}_R{ridge}_P{prior}"),
-                      half,ridge,prior,prior==3d?.7:1.4,2,8){Predictive=true}).ToArray();
+                      half,ridge,prior,prior==3d ? .7 : 1.4,2,8){Predictive=true}).ToArray();
 
         Validation[] Forward(EurEstimatorCandidate p,long[] clocks)
         {
