@@ -1,0 +1,9 @@
+{
+  "study": "OFFICIAL_HISTORY_MONETARY_WINDOWS_1",
+  "priorHistoryReceiptSha256": "f9dbd072f9d3241cce12fc4f433f1869ebcea03797425890840a0fba8bb8eae2",
+  "olderWeekIndices": [5, 6, 7, 8, 29, 30, 31, 32],
+  "olderBarPeriods": ["M5", "M15"],
+  "tickSampleOffsetMs": 140400000,
+  "tickSampleDurationMs": 1800000,
+  "maxAdditionalMarkets": 12
+}

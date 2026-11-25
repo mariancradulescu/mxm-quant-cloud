@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 
 from . import owner_eur_universe_next as prior
+from . import owner_eur_rollover_continuity as rollover
 from . import owner_source_history_expand as extension
 from . import owner_source_history_use as history
 from . import source_history_universe as source
@@ -29,7 +30,7 @@ PREVIOUS_SHA = "cba7e1ad451c74a661e4e07f34e84ca914fbda95ed14e46365b4389136a3c5aa
 OUT = Path("owner-history-continuation")
 
 
-def selection():
+def selection(registered=None):
     original = prior.verified(Path("original-source-history/receipt.json"), history.RECEIPT_SHA)
     census = prior.verified(Path("eer1-economic/source-census.json"), prior.CENSUS_SHA)
     previous = prior.verified(Path("verified-tranche/universe-verified.json"), PREVIOUS_SHA)
@@ -37,6 +38,17 @@ def selection():
     known.update(previous["newClosedBarSymbols"])
     roster = {r["name"]: r for r in original["contractRoster"] if r["contractStatus"] == source.VERIFIED}
     need(len(known) == previous["knownHistoricalAfter"], "HISTORY_CONTINUATION_REGISTRY")
+    if registered is not None:
+        last = prior.verified(Path("verified-continuation/history-continuation-verified.json"), registered["priorHistoryReceiptSha256"])
+        need(last["historyBefore"] == len(known) and last["packetsReconciled"] == last["requests"] and
+             last["readbackBrokerRequests"] == last["orders"] == 0 and not last["cloudActivated"], "HISTORY_CONTINUATION_PREVIOUS_SCOPE")
+        known.update(last["newClosedBarSymbols"])
+        need(len(known) == last["historyAfter"], "HISTORY_CONTINUATION_PREVIOUS_COVERAGE")
+        enabled = {r["symbol"] for r in census["universe"] if r["currentEnabled"]}
+        remaining = {r["symbolId"]: r for r in roster.values() if r["name"] in enabled and
+                     r["name"] not in known and r["tradingMode"] == 0 and (r.get("minVolume") or 0) > 0}
+        ids = source.selected_ids(remaining, limit=registered["maxAdditionalMarkets"])
+        return known, [roster[k] for k in TEMPORAL_SYMBOLS], [remaining[i] for i in ids]
     groups = {}
     for name, quote in sorted(previous["marginProbes"].items()):
         if name in known or name not in roster or "buyEur" not in quote or "sellEur" not in quote:
@@ -87,7 +99,42 @@ def tick_samples(journal, account, sid, at):
     return result
 
 
-def collect(journal, account, plan):
+def collect_monetary_windows(journal, account, plan, registered):
+    known, temporal, candidates = plan
+    dates = {}
+    for row in temporal:
+        name, sid = row["name"], row["symbolId"]
+        dates[name] = {}
+        for week in registered["olderWeekIndices"]:
+            start = START + week * WEEK
+            periods = {period: historical_week(journal, account, sid, start, period)
+                       for period in registered["olderBarPeriods"]}
+            at = start + registered["tickSampleOffsetMs"]
+            end = at + registered["tickSampleDurationMs"] - 1
+            ticks = {}
+            for side in (model.BID, model.ASK):
+                rows, leaves = rollover.tick_window(journal.query, account, sid, side, at, end, [32])
+                ticks[model.ProtoOAQuoteType.Name(side)] = dict(rows=len(rows),
+                    CompletePages=bool(leaves) and all(leaf[2] in ("VERIFIED_COMPLETE_PAGE", "PROVIDER_NO_QUOTES") for leaf in leaves),
+                    PageStatuses=dict(Counter(leaf[2] for leaf in leaves)))
+            dates[name][str(week)] = dict(weekFrom=start, weekTo=start+WEEK, barPeriods=periods,
+                tickFrom=at, tickThrough=end, tickSides=ticks,
+                TwoSidedObserved=all(s["CompletePages"] and s["rows"] > 0 for s in ticks.values()))
+        print("OFFICIAL_HISTORY_TEMPORAL_WINDOWS", name, len(dates[name]), flush=True)
+    coverage = {}
+    for row in candidates:
+        coverage[row["name"]] = {period: extension.timeframe(journal, account, row["symbolId"], period)[1]["closedRows"]
+                                 for period in source.PERIODS}
+    new = sorted(name for name, periods in coverage.items() if any(periods.values()))
+    return dict(study=registered["study"], temporal=dates, coverage=coverage, newClosedBarSymbols=new,
+        historyBefore=len(known), historyAfter=len(known | set(new)),
+        independentExposureStatus="UNATTESTED", executionContinuityCertified=False,
+        fullHistoricalCostsCertified=False, orders=0, economicEvaluations=0, cloudActivated=False)
+
+
+def collect(journal, account, plan, registered=None):
+    if registered is not None:
+        return collect_monetary_windows(journal, account, plan, registered)
     known, temporal, candidates = plan
     expansion = {}
     # Reuse the previously attested margin. The next bar sample does not depend on an economic scoring gate.
@@ -114,8 +161,20 @@ def collect(journal, account, plan):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("stage", choices=("plan", "capture", "verify"))
-    stage = parser.parse_args().stage
-    plan = selection()
+    parser.add_argument("--registered-continuation", type=Path)
+    args = parser.parse_args()
+    stage = args.stage
+    registered = None
+    if args.registered_continuation is not None:
+        raw = args.registered_continuation.read_bytes()
+        registered = json.loads(raw)
+        indices = registered["olderWeekIndices"]
+        offset, duration = registered["tickSampleOffsetMs"], registered["tickSampleDurationMs"]
+        need(indices == sorted(set(indices)) and all(0 <= i < WEEKS and i not in SAMPLES for i in indices) and
+             all(p in source.PERIODS for p in registered["olderBarPeriods"]) and 0 <= offset < offset+duration <= WEEK and
+             registered["maxAdditionalMarkets"] > 0, "HISTORY_CONTINUATION_REGISTERED_WINDOWS")
+        registered["protocolSha256"] = source.digest(raw)
+    plan = selection(registered)
     if stage == "plan":
         print(dict(known=len(plan[0]), temporal=[r["name"] for r in plan[1]], additional=[r["name"] for r in plan[2]]))
         return
@@ -127,10 +186,12 @@ def main():
         try:
             account = authenticate(transport)
             journal = source.Journal(transport, account)
-            report = collect(journal, account, plan)
+            report = collect(journal, account, plan, registered)
         finally:
             transport.close()
         report.update(runId=rid, requests=len(journal.packets))
+        if registered is not None:
+            report["protocolSha256"] = registered["protocolSha256"]
         raw = source.canonical(dict(report=report, packets=journal.packets))
         cipher = seal_new(raw, checked_public(Path("new-recipient-output"), rid), rid)
         OUT.mkdir(exist_ok=False)
@@ -150,13 +211,16 @@ def main():
     account = source.decode(packets[0]["reqType"], packets[0]["req"]).ctidTraderAccountId
     need(source.original_account(account), "HISTORY_CONTINUATION_ACCOUNT")
     journal = source.ReadbackJournal(packets)
-    result = collect(journal, account, plan)
+    result = collect(journal, account, plan, registered)
     result.update(runId=rid, requests=len(packets))
+    if registered is not None:
+        result["protocolSha256"] = registered["protocolSha256"]
     need(journal.index == len(packets) and result == recovered["report"] and
          receipt == dict(result, ciphertextSha256=source.digest(cipher), plaintextSha256=source.digest(raw)),
          "HISTORY_CONTINUATION_CUSTODY_PARITY")
     receipt.update(packetsReconciled=journal.index, readbackBrokerRequests=0)
-    Path("history-continuation-verified.json").write_bytes(source.canonical(receipt))
+    report_path = "history-monetary-windows-verified.json" if registered is not None else "history-continuation-verified.json"
+    Path(report_path).write_bytes(source.canonical(receipt))
 
 
 if __name__ == "__main__":
