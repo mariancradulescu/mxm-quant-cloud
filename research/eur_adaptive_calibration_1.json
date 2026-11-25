@@ -1,0 +1,159 @@
+{
+  "Study": "EUR_ADAPTIVE_CALIBRATION_1",
+  "Exposure": "PROJECT_EXPOSED_CONDITIONAL_DEVELOPMENT",
+  "SourceProtocolSha256": "2ac5e2da090ce4c69f4791affc54424766749630e16522e6672285ad46c98a3c",
+  "EvidenceManifestSha256": "bd4a063bef5876e649876faea5a4b602b8852483774f48c99881131e8b4082b9",
+  "InitialFitFrom": 1792972800000,
+  "TestBoundaries": [
+    1793577600000,
+    1794182400000,
+    1794787200000,
+    1795392000000
+  ],
+  "Stresses": [
+    0,
+    0.5,
+    1
+  ],
+  "StopWitness": {
+    "Symbol": "NatGas",
+    "Side": -1,
+    "OriginalFillAt": 1795015515000,
+    "OriginalCloseAt": 1795019115000,
+    "StopDistance": 0.014,
+    "FirstTradeTouchAt": 1795016231791
+  },
+  "Calibrations": [
+    {
+      "Id": "ALL_TICKS_STRUCTURE",
+      "Profile": {
+        "CaptureStudyDiagnostics": true,
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "LearnFromOpportunityEpisodes": true,
+        "ObserveIntentExecutionOnTicks": true,
+        "IncludeRecoveredStructure": true
+      }
+    },
+    {
+      "Id": "CLOSED_BAR_FAMILY_DIRECTION",
+      "Profile": {
+        "CaptureStudyDiagnostics": true,
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "LearnFromOpportunityEpisodes": true,
+        "ObserveIntentExecutionOnTicks": true,
+        "IncludeRecoveredStructure": true,
+        "ObserveFamilyDirectionsOnClosedBars": true
+      }
+    },
+    {
+      "Id": "CLOSED_BAR_FAMILY_DIRECTION_NEAR_TARGET",
+      "Profile": {
+        "CaptureStudyDiagnostics": true,
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "LearnFromOpportunityEpisodes": true,
+        "ObserveIntentExecutionOnTicks": true,
+        "IncludeRecoveredStructure": true,
+        "ObserveFamilyDirectionsOnClosedBars": true,
+        "DistributionTargetRanges": 1.5
+      }
+    }
+  ],
+  "Trials": [
+    {
+      "Id": "CASH_CONTROL",
+      "Policy": "EUR_GENERAL_CASH",
+      "Calibration": "ALL_TICKS_STRUCTURE"
+    },
+    {
+      "Id": "LOCAL4_BROAD",
+      "Policy": "EUR_GENERAL_SELECT",
+      "Calibration": "CLOSED_BAR_FAMILY_DIRECTION",
+      "UseRecoveredLocalPayoff": true,
+      "UseAdaptivePayoff": false,
+      "UseExtendedLocalPayoff": false
+    },
+    {
+      "Id": "ADAPTIVE_LOCAL_BROAD",
+      "Policy": "EUR_GENERAL_SELECT",
+      "Calibration": "CLOSED_BAR_FAMILY_DIRECTION",
+      "UseRecoveredLocalPayoff": true,
+      "UseAdaptivePayoff": true,
+      "UseExtendedLocalPayoff": false
+    },
+    {
+      "Id": "ADAPTIVE_FULL_BROAD",
+      "Policy": "EUR_GENERAL_SELECT",
+      "Calibration": "CLOSED_BAR_FAMILY_DIRECTION",
+      "UseRecoveredLocalPayoff": true,
+      "UseAdaptivePayoff": true,
+      "UseExtendedLocalPayoff": true
+    },
+    {
+      "Id": "ADAPTIVE_FULL_NARROW",
+      "Policy": "EUR_GENERAL_SELECT",
+      "Calibration": "ALL_TICKS_STRUCTURE",
+      "UseRecoveredLocalPayoff": true,
+      "UseAdaptivePayoff": true,
+      "UseExtendedLocalPayoff": true
+    },
+    {
+      "Id": "ADAPTIVE_FULL_BROAD_ALLOCATION",
+      "Policy": "EUR_GENERAL_SELECT",
+      "Calibration": "CLOSED_BAR_FAMILY_DIRECTION",
+      "UseRecoveredLocalPayoff": true,
+      "UseAdaptivePayoff": true,
+      "UseExtendedLocalPayoff": true,
+      "UseAdaptiveAllocation": true
+    },
+    {
+      "Id": "ADAPTIVE_FULL_BROAD_MANAGEMENT",
+      "Policy": "EUR_GENERAL_SELECT",
+      "Calibration": "CLOSED_BAR_FAMILY_DIRECTION",
+      "UseRecoveredLocalPayoff": true,
+      "UseAdaptivePayoff": true,
+      "UseExtendedLocalPayoff": true,
+      "UseAdaptiveManagement": true
+    },
+    {
+      "Id": "ADAPTIVE_FULL_BROAD_GEOMETRY",
+      "Policy": "EUR_GENERAL_SELECT",
+      "Calibration": "CLOSED_BAR_FAMILY_DIRECTION_NEAR_TARGET",
+      "UseRecoveredLocalPayoff": true,
+      "UseAdaptivePayoff": true,
+      "UseExtendedLocalPayoff": true
+    },
+    {
+      "Id": "ADAPTIVE_FULL_BROAD_FEEDBACK",
+      "Policy": "EUR_GENERAL_SELECT",
+      "Calibration": "CLOSED_BAR_FAMILY_DIRECTION",
+      "UseRecoveredLocalPayoff": true,
+      "UseAdaptivePayoff": true,
+      "UseExtendedLocalPayoff": true,
+      "UseRealizedForecastFeedback": true
+    }
+  ],
+  "ArchivedControl": {
+    "Run": 45674352625,
+    "Artifact": 15053582243,
+    "ArchiveSha256": "48161242683fece3a6e5ae9bf48cc3efd40f4fc2338be735e2b52fc5620d9b88",
+    "ProtocolSha256": "5084bd9e7dfce5b21363dc318082758ab151bbe60b489a98f4704c089b2a48c4"
+  },
+  "TrialGroups": {
+    "ESTIMATORS": [
+      "CASH_CONTROL",
+      "LOCAL4_BROAD",
+      "ADAPTIVE_LOCAL_BROAD",
+      "ADAPTIVE_FULL_BROAD",
+      "ADAPTIVE_FULL_NARROW"
+    ],
+    "PORTFOLIO": [
+      "ADAPTIVE_FULL_BROAD_ALLOCATION",
+      "ADAPTIVE_FULL_BROAD_MANAGEMENT",
+      "ADAPTIVE_FULL_BROAD_GEOMETRY",
+      "ADAPTIVE_FULL_BROAD_FEEDBACK"
+    ]
+  }
+}

@@ -17,7 +17,7 @@ REPLAY = "src/Mxm.Replay/bin/Release/net8.0/Mxm.Replay.dll"
 KEY = "R3_CUSTODY_PRIVATE_KEY_PEM"
 
 
-def run(prepared, checkpoint, previous, phase, report):
+def run(prepared, checkpoint, previous, phase, report, protocol=None):
     private_key = os.environ[KEY].encode()
     with tempfile.TemporaryDirectory(prefix="checkpoint-", dir=prepared) as temp:
         work = Path(temp)
@@ -30,7 +30,7 @@ def run(prepared, checkpoint, previous, phase, report):
             plaintext = work / "next.json"
             env["MXM_ECONOMIC_CHECKPOINT_TO"] = str(plaintext)
             env["MXM_ECONOMIC_STOP_AFTER_PHASE"] = str(phase)
-        subprocess.run(["dotnet", REPLAY, "--owner-eur-historical-study", PROTOCOL,
+        subprocess.run(["dotnet", REPLAY, "--owner-eur-historical-study", str(protocol or PROTOCOL),
                         str(prepared / "source.json"), str(report), str(prepared / "verified-protection")],
                        env=env, check=True)
         if checkpoint is None:
@@ -49,13 +49,14 @@ def main():
     cli = argparse.ArgumentParser()
     cli.add_argument("prepared", type=Path)
     cli.add_argument("report", type=Path)
+    cli.add_argument("--protocol", type=Path)
     cli.add_argument("--previous", type=Path)
     cli.add_argument("--checkpoint", type=Path)
     cli.add_argument("--phase", type=int)
     args = cli.parse_args()
     if (args.phase is None) != (args.checkpoint is None):
         cli.error("--phase and --checkpoint must be used together")
-    run(args.prepared, args.checkpoint, args.previous, args.phase, args.report)
+    run(args.prepared, args.checkpoint, args.previous, args.phase, args.report, args.protocol)
 
 
 if __name__ == "__main__":

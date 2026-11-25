@@ -150,6 +150,19 @@ public sealed partial class NativeUnifiedPortfolioEngine
             => new(id, item.Market.Symbol, item.Receipt.Units, item.Market.Quote.MarginPerUnit,
                 item.Geometry.InitialRiskEur, item.Signal.Family, true);
 
+        decimal CorrelatedRisk(EurCandidate candidate,IEnumerable<NativePendingCapitalGate.Commitment> commitments,
+            string preview="",EurCandidate? first=null)
+        {
+            decimal extra=0m;
+            foreach(var open in commitments)
+            {
+                if(!markets.TryGetValue(open.Symbol,out var peer))continue;
+                int side=open.PositionId==preview?first!.Signal.Side:plans[open.PositionId].Side;
+                extra+=CoMovement(candidate,peer,side)*Math.Min(candidate.Geometry.InitialRiskEur,open.ReservedStopRiskEur);
+            }
+            return extra;
+        }
+
         string? Rejection(EurCandidate candidate, EurCandidate? first = null)
         {
             // Preview an alternative without releasing any held or pending
@@ -157,14 +170,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
             const string preview = "GENERAL_PREVIEW";
             var projected = first is null ? new List<NativePendingCapitalGate.Commitment>(pending) :
                 pending.Append(Reserve(first, preview)).ToList();
-            decimal extra = 0m;
-            foreach (var open in held.Concat(projected))
-            {
-                if (!markets.TryGetValue(open.Symbol, out var peer)) continue;
-                int side = open.PositionId == preview ? first!.Signal.Side : plans[open.PositionId].Side;
-                extra += CoMovement(candidate, peer, side) * Math.Min(candidate.Geometry.InitialRiskEur, open.ReservedStopRiskEur);
-            }
-            var gate = AssessEurCandidate(capital, book, held, projected, candidate, extra);
+            var gate=AssessEurCandidate(capital,book,held,projected,candidate,
+                CorrelatedRisk(candidate,held.Concat(projected),preview,first));
             if (!gate.IsFinanceable) return EurRejectedCapital(gate.Status, book, capital);
 
             const string next = "GENERAL_NEXT";
@@ -180,7 +187,13 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 ? "WAIT_DRAWDOWN_RISK_BUDGET" : null;
         }
 
-        decimal Value(EurCandidate candidate) => candidate.Receipt.Payoff!.NetLowerEur;
+        decimal Net(EurCandidate candidate)=>candidate.Receipt.Payoff!.NetLowerEur;
+        decimal Value(EurCandidate candidate)
+        {
+            if(eurDevelopmentProfile?.UseAdaptiveAllocation!=true)return Net(candidate);
+            var risk=candidate.Geometry.InitialRiskEur+CorrelatedRisk(candidate,held.Concat(pending));
+            return Net(candidate)/risk;
+        }
         while (choices.Count > 0)
         {
             for (int i = choices.Count - 1; i >= 0; i--)
@@ -202,8 +215,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 if (attainable <= best) continue;
                 winner = item;
                 best = attainable;
-                displacement = (competing is null ? 0m : Value(competing)) -
-                    (companion is null ? 0m : Value(companion));
+                displacement = (competing is null ? 0m : Net(competing)) -
+                    (companion is null ? 0m : Net(companion));
             }
             admit(winner with { Receipt = winner.Receipt with { DisplacedAlternativeEur = displacement } });
             choices.Remove(winner);
@@ -224,6 +237,25 @@ public sealed partial class NativeUnifiedPortfolioEngine
         // and already earned P&L are sunk. No assumed fill or unknown carry.
         decimal? carry = NativePortfolioFunding.OfferDebit(market, side, position.Units, frame.At, FundingScenarioId);
         decimal? remaining = residual * position.Units * q.EurCredit - carry;
+        if(eurDevelopmentProfile?.UseAdaptiveManagement==true&&remaining is decimal upside&&displacement<0m&&
+            ObservedWindow(market,NativeBarTimeframe.H1,frame.At) is { } hourly&&
+            side*(hourly.Bars[^1].Close-hourly.Bars[0].Open)<0m)
+        {
+            // Value of continuing is measured against liquidation now. Entry
+            // fees are sunk. Use executable liquidation costs at each boundary.
+            decimal slip=q.LiquidationSlippagePerSide??position.SlippagePerSide;
+            decimal stop=NativeExecutableEconomics.ExitPrice(geometry.Stop,side,slip);
+            decimal current=NativeExecutableEconomics.ExitPrice(price,side,slip);
+            decimal downside=side*(current-stop)*position.Units*q.EurDebit+carry!.Value;
+            if(downside>0m&&upside<downside)
+            {
+                decimal lot=market.Contract.MinimumUnits,volumeStep=market.Contract.VolumeStepUnits;
+                decimal rest=position.Units-lot;
+                bool canReduce=!geometry.Reduced&&upside>0m&&lot>0m&&volumeStep>0m&&rest>=lot&&(rest-lot)%volumeStep==0m;
+                return new(canReduce?"EUR_ADVERSE_CONTINUATION_REDUCE":"EUR_ADVERSE_CONTINUATION_CLOSE",
+                    canReduce?lot:position.Units);
+            }
+        }
         if (displacement < 0m && (remaining is <= 0m || side * (market.M15[^1].Close - plan.Equilibrium) <= 0m))
             return new("INTEGRATED_EUR_GENERAL_THESIS_LOST_VALUE", position.Units);
 

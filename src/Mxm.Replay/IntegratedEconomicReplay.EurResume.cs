@@ -7,7 +7,7 @@ internal static partial class IntegratedEconomicReplay
     const string HistoricalStateVersion="EUR_HISTORICAL_REPLAY_V1";
 
     sealed record HistoricalReplayBinding(string Protocol,string Source,string Protection,string Scenario,string? Revision,
-        bool BoundedNeighbors,bool PairedDistribution,bool ReuseFrames);
+        bool BoundedNeighbors,bool PairedDistribution,bool ReuseFrames,string? TrialGroup=null);
     sealed record HistoricalStreamState(Dictionary<string,int> Counts,Dictionary<long,string> Availability);
     sealed record HistoricalReplayState(string Version,HistoricalReplayBinding Binding,int CompletedPhases,long LastClock,
         Dictionary<string,HistoricalStreamState> Streams,Dictionary<string,string> Probes,

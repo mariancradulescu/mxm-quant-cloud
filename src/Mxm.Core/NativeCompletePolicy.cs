@@ -116,7 +116,7 @@ public sealed record NativeCompleteDistribution(NativeCompleteSample[] Samples, 
             return (sample, distance, index);
         });
         IEnumerable<(NativeCompleteSample sample,decimal distance,int index)> ranked =
-            BoundedNeighbors && MaskedEconomicContext
+            BoundedNeighbors
                 ? DeferredBounded()
                 : candidates.OrderBy(v=>v.distance).ThenBy(v=>v.sample.DecisionAt)
                     .ThenBy(v=>v.sample.Symbol,StringComparer.Ordinal);

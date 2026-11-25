@@ -52,14 +52,42 @@ public static class NativeContextValueResearch
             for(int i=0;i<n;i++){double xi=i==0?1:x[r][i-1];a[i,n]+=xi*y[r];for(int j=0;j<n;j++)a[i,j]+=xi*(j==0?1:x[r][j-1]);}
         }
         for(int i=1;i<n;i++)a[i,i]+=16;
+        Solve(a,n,1);
+        var b=Enumerable.Range(0,n).Select(i=>a[i,n]).ToArray();if(b.Any(v=>!double.IsFinite(v)))throw new ArgumentException("CVP1_NONFINITE_MODEL");return b;
+    }
+    internal static (double[] Gross,double[] Net) WeightedRidgePair(
+        (double[] X,double Gross,double Net,double Weight)[] rows,double ridge)
+    {
+        int n=rows[0].X.Length;
+        var a=new double[n,n+2];
+        foreach(var row in rows)
+            for(int i=0;i<n;i++)
+            {
+                double v=row.Weight*row.X[i];
+                a[i,n]+=v*row.Gross;
+                a[i,n+1]+=v*row.Net;
+                for(int j=0;j<=i;j++)a[i,j]+=v*row.X[j];
+            }
+        for(int i=1;i<n;i++)
+        {
+            a[i,i]+=ridge;
+            for(int j=0;j<i;j++)a[j,i]=a[i,j];
+        }
+        Solve(a,n,2);
+        return (Enumerable.Range(0,n).Select(i=>a[i,n]).ToArray(),
+            Enumerable.Range(0,n).Select(i=>a[i,n+1]).ToArray());
+    }
+
+    static void Solve(double[,] a,int n,int targets)
+    {
         for(int i=0;i<n;i++)
         {
             int pivot=i;for(int r=i+1;r<n;r++)if(Math.Abs(a[r,i])>Math.Abs(a[pivot,i]))pivot=r;
             if(Math.Abs(a[pivot,i])<1e-14)throw new ArgumentException("CVP1_SINGULAR");
-            for(int j=i;j<=n;j++)(a[i,j],a[pivot,j])=(a[pivot,j],a[i,j]);
-            double d=a[i,i];for(int j=i;j<=n;j++)a[i,j]/=d;
-            for(int r=0;r<n;r++)if(r!=i){double k=a[r,i];for(int j=i;j<=n;j++)a[r,j]-=k*a[i,j];}
+            for(int j=i;j<n+targets;j++)(a[i,j],a[pivot,j])=(a[pivot,j],a[i,j]);
+            double d=a[i,i];for(int j=i;j<n+targets;j++)a[i,j]/=d;
+            for(int r=0;r<n;r++)if(r!=i){double k=a[r,i];for(int j=i;j<n+targets;j++)a[r,j]-=k*a[i,j];}
         }
-        var b=Enumerable.Range(0,n).Select(i=>a[i,n]).ToArray();if(b.Any(v=>!double.IsFinite(v)))throw new ArgumentException("CVP1_NONFINITE_MODEL");return b;
     }
+
 }

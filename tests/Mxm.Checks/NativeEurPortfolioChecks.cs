@@ -140,6 +140,7 @@ internal static class NativeEurPortfolioChecks
         check(NativeConditionalRollover.UsdToEur(bid with {At=charge+1},ask,charge) is null &&
             NativeConditionalRollover.MarketBid(bid with {Complete=false},charge,-1m) is null,
             "Conditional rollover rejects post-charge and incomplete witnesses");
+        AdaptiveEstimatorCausality(check);
         LateNetChangesRanking(check);
         ContractClocksAndDirectionalCosts(check);
         GeneralEurChoosesFundedCombination(check);
@@ -161,6 +162,40 @@ internal static class NativeEurPortfolioChecks
             opens.Length,i=>opens[i],Read);
         check(ready is {Ready:true,DailyCalendarBreaks:1}&&ready.Bars[1].OpenAt==opens[1]&&!tooEarly.Ready,
             "Daily EUR context retains a calendar gap and requires a witnessed active successor");
+    }
+
+    static void AdaptiveEstimatorCausality(Action<bool,string> check)
+    {
+        const long day=86_400_000L;
+        long start=Origin-Origin%day-day*9;
+        NativeEurDecisionContext Context(int i)=>new(i%3==0?"A":"B","CLASS",180,
+            Array.Empty<NativeEurBarState>(),0m,.10m,true)
+            {MarketState=Enumerable.Range(0,16).Select(k=>k==12?null:(decimal?)((i%3-1)*.40m+k*.01m)).ToArray()};
+        var rows=Enumerable.Range(0,96).Select(i=>
+        {
+            long decision=start+i/12*day+i%12*Step+15_000;
+            decimal gross=i%3==0?1.1m:.4m;
+            return new NativeEurCalibrationOutcome("row"+i,"FAMILY",1,decision+Step,decision+Step+1000,gross,gross-.2m,1m)
+            {DecisionAt=decision,Context=Context(i)};
+        }).ToArray();
+        long cut=start+9*day;
+        var set=new NativeEurCalibration(cut,Proof,rows);
+        var model=NativeEurAdaptiveEstimator.Fit(set,true);
+        var estimate=model.Payoff("FAMILY",1,Context(0),cut+Step,2m,.40m);
+        var future=rows[^1] with {PositionId="later",AvailableAt=cut+Step,NetEur=1200m,GrossEur=1400m};
+        var extra=NativeEurAdaptiveEstimator.Fit(set with {Outcomes=rows.Append(future).ToArray()},true);
+        check(estimate is {ReconciledEpisodes:96,ObservationDays:8} &&
+              estimate==extra.Payoff("FAMILY",1,Context(0),cut+Step,2m,.40m),
+            "Adaptive EUR fits only matured labels, while preserving all clustered training observations");
+        check(estimate is not null && estimate.NetMeanEur<=estimate.GrossMeanEur-.40m&&
+            model.Payoff("FAMILY",1,Context(0),cut,2m,.40m) is null,
+            "Adaptive EUR applies decimal executable costs and rejects same-clock model use");
+        var local=NativeEurAdaptiveEstimator.Fit(set,false);
+        var alternate=Context(0) with {MarketState=(decimal?[])Context(0).MarketState!.Clone()};
+        alternate.MarketState![8]=-4m;
+        check(local.Payoff("FAMILY",1,Context(0),cut+Step,2m,.40m)==
+              local.Payoff("FAMILY",1,alternate,cut+Step,2m,.40m),
+            "Local adaptive ablation uses no unregistered H1 feature or regime signal");
     }
 
     static void GeneralEurChoosesFundedCombination(Action<bool,string> check)
