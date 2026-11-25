@@ -23,10 +23,10 @@ OUT = Path("dense-monetary-protected")
 HOUR = 3600000
 
 
-def registered(symbol, window):
-    raw = PROTOCOL.read_bytes()
+def registered(symbol, window, protocol=PROTOCOL):
+    raw = protocol.read_bytes()
     plan = json.loads(raw)
-    need(plan["study"] == "OFFICIAL_EUR_DENSE_MONETARY_2" and
+    need(plan["study"] in ("OFFICIAL_EUR_DENSE_MONETARY_2", "OFFICIAL_EUR_DENSE_MONETARY_3") and
          plan["scope"] == "READ_ONLY_HISTORICAL_QUOTES_NOT_HISTORICAL_TARIFF_CERTIFICATION" and
          plan["symbols"] == list(continuation.TEMPORAL_SYMBOLS[:1]) + ["US500", "XAUUSD", "SpotBrent"] and
          plan["partitionHours"] == 24 and plan["requestBlockHours"] == 1 and
@@ -113,8 +113,9 @@ def main():
     parser.add_argument("stage", choices=("plan", "capture", "verify"))
     parser.add_argument("symbol")
     parser.add_argument("window")
+    parser.add_argument("--protocol", type=Path, default=PROTOCOL)
     args = parser.parse_args()
-    plan, digest, sid, start = registered(args.symbol, args.window)
+    plan, digest, sid, start = registered(args.symbol, args.window, args.protocol)
     if args.stage == "plan":
         print(plan["study"], args.symbol, args.window, start, digest)
         return
