@@ -1,0 +1,8 @@
+{
+  "Study": "EUR_PREDICTIVE_CALIBRATION_2",
+  "ProtocolSha256": "7f1feef7c3986a6e9ca47d33a8c02f2b5120bf47229d6227888320efe4f56ded",
+  "ArchivedControlRun": 45697450509,
+  "TrialCount": 12,
+  "Mode": "OWNER_EXPOSED_DEVELOPMENT_NO_BROKER_REQUESTS",
+  "OriginalsImmutable": true
+}
