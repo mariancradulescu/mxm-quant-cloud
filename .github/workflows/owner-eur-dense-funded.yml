@@ -25,8 +25,8 @@ jobs:
           dotnet-version: '8.0.x'
       - run: python -m pip install -r research/requirements.txt
       - run: python -m research.owner_eur_dense_funded --help
-      - run: python -m unittest research.test_owner_eur_dense_monetary research.test_owner_eur_checkpoint research.test_merge_eur_scenarios
       - run: dotnet build src/Mxm.Replay -c Release
+      - run: python -m unittest research.test_owner_eur_dense_monetary research.test_owner_eur_checkpoint research.test_merge_eur_scenarios
       - run: dotnet run --project tests/Mxm.Checks -c Release
   evidence:
     needs: technical
