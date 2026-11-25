@@ -1,5 +1,11 @@
 name: OWNER EUR contextual net isolated technical recovery
 on:
+  pull_request:
+    paths:
+      - 'research/merge_eur_scenarios.py'
+      - 'research/test_merge_eur_scenarios.py'
+      - 'src/Mxm.Replay/IntegratedEconomicReplay.EurHistorical.cs'
+      - '.github/workflows/owner-eur-contextual-net-recovery.yml'
   push:
     branches: [main]
     paths: ['research/eur_contextual_net_1_recovery_execution.json']
@@ -7,8 +13,20 @@ permissions:
   actions: read
   contents: read
 jobs:
+  technical:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - run: python -m unittest research.test_merge_eur_scenarios
+      - run: dotnet build src/Mxm.Replay -c Release
   evidence:
-    if: github.run_attempt == 1 && github.actor == 'mariancradulescu'
+    needs: technical
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.run_attempt == 1 && github.actor == 'mariancradulescu'
     strategy:
       fail-fast: false
       matrix:
