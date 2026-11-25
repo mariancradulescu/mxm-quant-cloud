@@ -6,7 +6,7 @@ on:
       - 'research/owner_eur_gap_evidence.py'
   push:
     branches: [main]
-    paths: ['ops/owner-eur-official-gap-evidence-once.txt']
+    paths: ['ops/owner-eur-official-gap-evidence-once.txt', 'ops/owner-eur-integrate-verified-cells-once.txt']
 permissions:
   contents: read
   actions: read
@@ -16,6 +16,7 @@ jobs:
     timeout-minutes: 8
     outputs:
       activate: ${{ steps.marker.outputs.activate }}
+      mode: ${{ steps.marker.outputs.mode }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -35,6 +36,12 @@ jobs:
           [[ "$GITHUB_EVENT_NAME" == push ]] || exit 0
           marker=ops/owner-eur-official-gap-evidence-once.txt
           subject=OWNER_EUR_OFFICIAL_GAP_EVIDENCE_20261125
+          mode=capture
+          if [[ "$(git log -1 --format=%s)" == OWNER_EUR_INTEGRATE_VERIFIED_CELLS_20261125 ]]; then
+            marker=ops/owner-eur-integrate-verified-cells-once.txt
+            subject=OWNER_EUR_INTEGRATE_VERIFIED_CELLS_20261125
+            mode=integrate
+          fi
           [[ "$GITHUB_REF" == refs/heads/main && "$GITHUB_RUN_ATTEMPT" == 1 &&
              "$GITHUB_ACTOR" == mariancradulescu &&
              "$(git log -1 --format=%s)" == "$subject" &&
@@ -42,9 +49,10 @@ jobs:
              -z "$(git log -1 HEAD^ -- "$marker")" ]]
           cmp -s "$marker" <(printf '%s\n' "$subject")
           echo 'activate=true' >> "$GITHUB_OUTPUT"
+          echo "mode=$mode" >> "$GITHUB_OUTPUT"
   recipient:
     needs: verify
-    if: needs.verify.outputs.activate == 'true'
+    if: needs.verify.outputs.activate == 'true' && needs.verify.outputs.mode == 'capture'
     environment: mxm-r3-custody-v1
     runs-on: ubuntu-24.04
     timeout-minutes: 8
@@ -67,7 +75,7 @@ jobs:
           if-no-files-found: error
   capture:
     needs: [verify, recipient]
-    if: needs.verify.outputs.activate == 'true'
+    if: needs.verify.outputs.activate == 'true' && needs.verify.outputs.mode == 'capture'
     environment: mxm-r3-pepperstone-v1
     concurrency:
       group: mxm-existing-oauth-read-only
@@ -119,7 +127,7 @@ jobs:
           if-no-files-found: error
   readback:
     needs: [verify, capture]
-    if: needs.verify.outputs.activate == 'true'
+    if: ${{ always() && needs.verify.outputs.activate == 'true' && (needs.capture.result == 'success' || needs.verify.outputs.mode == 'integrate') }}
     environment: mxm-r3-custody-v1
     runs-on: ubuntu-24.04
     timeout-minutes: 12
@@ -150,15 +158,37 @@ jobs:
           run-id: 45396314675
           github-token: ${{ github.token }}
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        if: needs.verify.outputs.mode == 'capture'
         with:
           name: owner-eur-gap-official-original
           path: eur-gap-evidence
-      - run: python -m research.owner_eur_gap_evidence --readback
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        if: needs.verify.outputs.mode == 'integrate'
+        with:
+          name: owner-eur-gap-official-original
+          path: eur-gap-evidence
+          run-id: 45541671931
+          github-token: ${{ github.token }}
+      - run: |
+          if [[ "$EUR_GAP_MODE" == integrate ]]; then
+            python -m research.owner_eur_gap_evidence --integrate-verified-cells
+          else
+            [[ "$EUR_GAP_MODE" == capture ]]
+            python -m research.owner_eur_gap_evidence --readback
+          fi
         env:
+          EUR_GAP_MODE: ${{ needs.verify.outputs.mode }}
           R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: owner-eur-gap-and-contract-timeline
           path: eur-gap-evidence/gap-and-contract-timeline.json
+          retention-days: 90
+          if-no-files-found: error
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: needs.verify.outputs.mode == 'integrate'
+        with:
+          name: owner-eur-chronological-coverage-updated
+          path: eur-gap-evidence/integrated-coverage-matrix.json
           retention-days: 90
           if-no-files-found: error

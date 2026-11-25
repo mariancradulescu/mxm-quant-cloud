@@ -4,6 +4,7 @@ from decimal import Decimal
 import json
 import os
 import sys
+from itertools import groupby
 from pathlib import Path
 
 from . import owner_official_eur_source as wire
@@ -22,6 +23,7 @@ START = src.END - 7*src.DAY
 SAMPLE_INTERVAL = 6*60_000
 SAMPLE_INTERVALS = 5
 MAX_PAGES = 710
+ORIGINAL_GAP_RUN = "45541671931"
 
 
 def verified_plan():
@@ -55,7 +57,7 @@ def verified_plan():
     return sorted(selected, key=lambda row:row["id"])
 
 
-def collect_cells(plan, account, request):
+def collect_cells(plan, account, request, observed_spans=None):
     receipts = {}
     attempted = 0
     halted = False
@@ -102,6 +104,8 @@ def collect_cells(plan, account, request):
                     need(b[0] not in accepted,"EUR_GAP_DUPLICATE_CLOSED_BAR")
                     accepted.add(b[0])
             by_period[period] = dict(closedBars=len(accepted), requests=for_bounds, diagnostics=dict(diagnostics))
+            if observed_spans is not None and accepted:
+                observed_spans.setdefault(item["symbol"], {})[period] = wire.observed_bar_span(period, accepted)
     return receipts, attempted
 
 
@@ -154,8 +158,84 @@ def capture():
         acquisitionInterrupted=interrupted)))
 
 
-def readback():
-    run = os.environ["GITHUB_RUN_ID"]
+def intersect(first, second):
+    """Intersect observed half-open spans. Calendar breaks stay visible."""
+    i = j = 0
+    result = []
+    while i < len(first) and j < len(second):
+        a, b = first[i]
+        c, d = second[j]
+        left, right = max(a,c), min(b,d)
+        if left < right:
+            result.append((left,right))
+        if b <= d:
+            i += 1
+        if d <= b:
+            j += 1
+    return result
+
+
+def coalesced(intervals):
+    result = []
+    for start, stop in intervals:
+        if result and start <= result[-1][1]:
+            left, right = result[-1]
+            result[-1] = (left,max(right,stop))
+        else:
+            result.append((start,stop))
+    return result
+
+
+def integrate_coverage(spans, horizon_start, horizon_end, original_run):
+    base = json.loads(dated.MATRIX.read_bytes())
+    counts = Counter()
+    matches = Counter()
+    edges = []
+    for row in base["matrix"]:
+        symbol = row["symbol"]
+        for period, span in spans.get(symbol, {}).items():
+            need(row["timeframes"][period] is None, "EUR_GAP_MATRIX_DUPLICATE_CELL")
+            row["timeframes"][period] = dict(span, evidenceRun=original_run)
+            row["warmup"][period] = span["closedBars"]
+            counts[period] += span["closedBars"]
+        frames = row["timeframes"]
+        if not any(frames.values()):
+            continue
+        matches["marketsWithBars"] += 1
+        simultaneous = [(horizon_start,horizon_end)]
+        prior = {}
+        for period, frame in frames.items():
+            width = src.PERIODS[period]*60_000
+            intervals = frame["observedIntervals"] if frame else []
+            prior[period] = sum(max(0, (min(horizon_start, stop)-start)//width) for start,stop in intervals)
+            simultaneous = intersect(simultaneous,coalesced(intervals))
+        if all(frames.values()):
+            matches["marketsWithSevenTimeframes"] += 1
+        if simultaneous:
+            matches["marketsWithSevenTimeframesInWindow"] += 1
+            for first, last in simultaneous:
+                edges.extend(((first,1),(last,-1)))
+        row["registeredWindow"] = dict(previousClosedBars=prior,missingTimeframes=[
+            p for p,frame in frames.items() if frame is None or not intersect(
+                [(horizon_start,horizon_end)],frame["observedIntervals"])],
+            simultaneousObservedBarIntervals=simultaneous)
+    minutes = 0
+    active = 0
+    last = horizon_start
+    for time, grouped in groupby(sorted(edges),key=lambda e:e[0]):
+        if active >= 2:
+            minutes += time-last
+        active += sum(delta for _, delta in grouped)
+        last = time
+    return dict(base, integratedGapRun=original_run, priorMatrixSha256=dated.MATRIX_SHA256,
+        window=[horizon_start,horizon_end], addedClosedBarsByTimeframe=dict(counts),
+        coverageWithClocks=matches["marketsWithBars"], overlapSummary=dict(matches),
+        simultaneousSevenTimeframePriceMinutesAtLeastTwoMarkets=minutes//60_000,
+        pricedPortfolioEligibilityCertified=False, economicEvaluations=0, orders=0, cloudActivated=False)
+
+
+def readback(integrate=False):
+    run = ORIGINAL_GAP_RUN if integrate else os.environ["GITHUB_RUN_ID"]
     private = os.environ["R3_CUSTODY_PRIVATE_KEY_PEM"].encode()
     receipt = json.loads((OUT/"receipt.json").read_bytes())
     sealed = (OUT/"original.sealed").read_bytes()
@@ -168,8 +248,9 @@ def readback():
     account = src.decode(data["contracts"][0]["reqType"],data["contracts"][0]["req"]).ctidTraderAccountId
     need(src.original_account(account),"EUR_GAP_ACCOUNT_BINDING")
     journal = src.ReadbackJournal(data["historical"])
+    spans = {} if integrate else None
     if journal.packets:
-        cells, tries = collect_cells(plan,account,journal.query)
+        cells, tries = collect_cells(plan,account,journal.query,spans)
         need(journal.index==len(journal.packets) and data["cells"]==cells and data["historyRequests"]==tries,
              "EUR_GAP_EXACT_REQUEST_RECONCILIATION")
     else:
@@ -211,6 +292,9 @@ def readback():
         brokerNotices=len(data["notices"]),historicalTariffsCertified=False,
         observationIntervalsEstablishHistoricalContinuity=False, orders=0,cloudActivated=False)
     (OUT/"gap-and-contract-timeline.json").write_bytes(src.canonical(report)+b"\n")
+    if integrate:
+        matrix = integrate_coverage(spans,START,src.END,run)
+        (OUT/"integrated-coverage-matrix.json").write_bytes(src.canonical(matrix)+b"\n")
     print("EUR_GAP_PROTECTED_READBACK_VERIFIED",flush=True)
 
 
@@ -218,6 +302,8 @@ if __name__=="__main__":
     try:
         if sys.argv[1:]==["--readback"]:
             readback()
+        elif sys.argv[1:]==["--integrate-verified-cells"]:
+            readback(integrate=True)
         elif not sys.argv[1:]:
             capture()
         else:

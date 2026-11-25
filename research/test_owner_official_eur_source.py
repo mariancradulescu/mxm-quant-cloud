@@ -1,12 +1,37 @@
 import unittest
+import json
 from datetime import date, datetime, timezone
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
+from . import owner_eur_gap_evidence as gaps
 from . import owner_official_eur_source as o
 from .ctrader_proto import OpenApiMessages_pb2 as m
 
 
 class OfficialEurSourceChecks(unittest.TestCase):
+    def test_gap_matrix_preserves_originals_and_counts_real_overlap(self):
+        minute = o.MINUTE
+        start = 86_400_000
+        width = {p: n*minute for p,n in o.source.PERIODS.items()}
+        bar_series = {p:o.observed_bar_span(p,{start-width[p],start,start+width[p]}) for p in width}
+        market_a = dict(symbol="A",timeframes=dict(bar_series,M1=None),warmup={})
+        market_b = dict(symbol="B",timeframes=bar_series,warmup={})
+        with TemporaryDirectory() as folder:
+            src = Path(folder)/"original.json"
+            src.write_text(json.dumps(dict(matrix=[market_a,market_b])))
+            filled = o.observed_bar_span("M1",{start,start+minute})
+            with patch.object(gaps.dated,"MATRIX",src):
+                merged = gaps.integrate_coverage({"A":{"M1":filled}},start,start+2*minute,"fixture")
+                self.assertEqual(merged["addedClosedBarsByTimeframe"],{"M1":2})
+                self.assertEqual(merged["overlapSummary"]["marketsWithSevenTimeframesInWindow"],2)
+                self.assertEqual(merged["simultaneousSevenTimeframePriceMinutesAtLeastTwoMarkets"],2)
+                self.assertEqual(merged["matrix"][1]["registeredWindow"]["previousClosedBars"]["D1"],1)
+                self.assertIsNone(json.loads(src.read_text())["matrix"][0]["timeframes"]["M1"])
+                with self.assertRaisesRegex(Exception,"EUR_GAP_MATRIX_DUPLICATE_CELL"):
+                    gaps.integrate_coverage({"B":{"M1":filled}},start,start+2*minute,"fixture")
+
     def test_last_wire_guard_intercepts_only_account_bound_reads(self):
         transport=o.OfficialEvidenceTransport()
         transport.bound=314
