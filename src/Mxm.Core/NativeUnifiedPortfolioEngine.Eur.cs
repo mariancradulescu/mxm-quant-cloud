@@ -164,19 +164,21 @@ public sealed partial class NativeUnifiedPortfolioEngine
         eurHistory.Clear();
         eurCalibration=calibration;
         foreach(var outcome in calibration.Outcomes)AddEurOutcome(outcome);
-        if(eurDevelopmentProfile is { UseRecoveredLocalPayoff:true })
+        if(eurDevelopmentProfile is { UseRecoveredLocalPayoff:true } profile)
         {
             localEurPayoff.Clear();
             foreach(var (key,history) in eurHistory)
             {
                 var features=history.Where(o=>o.DecisionAt.HasValue)
-                    .Select(o=>(Outcome:o,State:LocalEurPayoffFeatures(o.Context)))
+                    .Select(o=>(Outcome:o,State:LocalEurPayoffFeatures(o.Context,profile.UseExtendedLocalPayoff)))
                     .Where(x=>x.State is not null).ToArray();
                 NativeCompleteDistribution Fit(Func<NativeEurCalibrationOutcome,decimal> value)
                 {
                     var samples=features.Select(x=>new NativeCompleteSample(x.Outcome.Context!.Symbol,
-                        x.Outcome.DecisionAt!.Value,x.Outcome.AvailableAt,x.State!,value(x.Outcome)/x.Outcome.RiskEur)).ToArray();
-                    return new NativeCompleteDistribution(samples,WithoutResidence:false).Calibrate(samples);
+                        x.Outcome.DecisionAt!.Value,x.Outcome.AvailableAt,x.State!,value(x.Outcome)/x.Outcome.RiskEur)
+                        {AssetClass=profile.UseExtendedLocalPayoff?x.Outcome.Context!.AssetClass:null}).ToArray();
+                    return (new NativeCompleteDistribution(samples,WithoutResidence:false)
+                        {MaskedEconomicContext=profile.UseExtendedLocalPayoff}).Calibrate(samples);
                 }
                 localEurPayoff.Add(key,(Fit(o=>o.GrossEur),Fit(o=>o.NetEur)));
             }
@@ -185,20 +187,35 @@ public sealed partial class NativeUnifiedPortfolioEngine
 
     // Use common completed M5/M15 features from the registered state. A row
     // with absent features remains outside this local estimator's sample.
-    static decimal[]? LocalEurPayoffFeatures(NativeEurDecisionContext? context)
-        =>context?.MarketState is { Length:GeneralStateSize } state && state[2] is decimal move5 &&
-            state[3] is decimal range5 && state[4] is decimal move15 && state[5] is decimal range15
-            ?new[]{move5,range5,move15,range15}:null;
+    static decimal[]? LocalEurPayoffFeatures(NativeEurDecisionContext? context,bool extended=false)
+    {
+        if(context?.MarketState is not { Length:GeneralStateSize } state)return null;
+        if(!extended)
+            return state[2] is decimal move5 && state[3] is decimal range5 &&
+                state[4] is decimal move15 && state[5] is decimal range15
+                ?new[]{move5,range5,move15,range15}:null;
+        if(!state.Any(v=>v.HasValue))return null;
+        // All already-closed timeframe windows plus the existing M1 volume and
+        // aligned peer-H1 state. Session is circular; cost/risk is bounded.
+        // Shared-book committed margin is deliberately not a predictor of an
+        // isolated episode's payoff; allocation is handled by the common book.
+        double phase=2d*Math.PI*context.UtcMinute/1440d;
+        decimal cost=Math.Max(0m,context.CostRiskFraction);
+        var raw=state.Concat(new decimal?[]{(decimal)Math.Sin(phase),(decimal)Math.Cos(phase),
+            cost/(1m+cost)}).ToArray();
+        return raw.SelectMany(v=>new[]{v??0m,v.HasValue?1m:0m}).ToArray();
+    }
 
     NativeEurPayoff? RecoveredLocalPayoff(string family,int side,long at,decimal risk,decimal cost,
         NativeEurDecisionContext? context,Action<string>? diagnostic)
     {
-        if(LocalEurPayoffFeatures(context) is not { } features)
+        bool extended=eurDevelopmentProfile?.UseExtendedLocalPayoff==true;
+        if(LocalEurPayoffFeatures(context,extended) is not { } features)
         {diagnostic?.Invoke("LOCAL_CONTEXT_MISSING");return null;}
         if(!localEurPayoff.TryGetValue((family,side),out var model))
         {diagnostic?.Invoke("NO_FAMILY_DIRECTION_HISTORY");return null;}
-        var gross=model.Gross.Predict(features,at,risk);
-        var net=model.Net.Predict(features,at,risk,out var range);
+        var gross=model.Gross.Predict(features,at,risk,out _,context?.Symbol,context?.AssetClass);
+        var net=model.Net.Predict(features,at,risk,out var range,context?.Symbol,context?.AssetClass);
         if(gross is null||net is null)
         {diagnostic?.Invoke("LOCAL_DISTRIBUTION_SUPPORT");return null;}
         decimal netLower=Math.Min(net.Lower,gross.Lower-cost);
@@ -206,7 +223,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
             netLower<=0m?"CURRENT_COST_FLOOR":"PAYOFF_PASSES");
         return new NativeEurPayoff(net.Observations,net.Days,gross.Mean,gross.Lower,
             Math.Min(net.Mean,gross.Mean-cost),netLower,net.PositiveProbability,range.Minimum,range.Maximum)
-            {Cohort="RECOVERED_LOCAL_COMPLETE_POSITION_DISTRIBUTION"};
+            {Cohort=extended?"EXTENDED_MASKED_CONTEXT_LOCAL_DISTRIBUTION":"RECOVERED_LOCAL_COMPLETE_POSITION_DISTRIBUTION"};
     }
 
     // Compare CASH against paired, settled cash outcomes at candidate risk.

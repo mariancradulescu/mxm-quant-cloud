@@ -21,6 +21,10 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
     public bool UseRecoveredLocalPayoff { get; init; }
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool UseExtendedLocalPayoff { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool ObserveFamilyDirectionsOnClosedBars { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
     public bool ModelFundingAtPriorClosedSessionQuote { get; init; }
 
     internal string GeometryIdentity => FormattableString.Invariant(
@@ -28,14 +32,17 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
         (ModeledStopLatencyMs is long latency ? FormattableString.Invariant($"/Trade/{latency}") : "") +
         (ObserveIntentExecutionOnTicks?"/TICK_INTENTS":"") +
         (IncludeRecoveredStructure?"/RANGE_TRANSITION+EQUILIBRIUM_REPAIR":"") +
-        (ModelFundingAtPriorClosedSessionQuote?"/CLOSED_SESSION_FUNDING":"");
+        (ModelFundingAtPriorClosedSessionQuote?"/CLOSED_SESSION_FUNDING":"") +
+        (ObserveFamilyDirectionsOnClosedBars?"/CLOSED_BAR_FAMILY_DIRECTION_OBSERVATION":"");
 
     internal void Verify()
     {
         if (DistributionTargetRanges <= 0m || (!UseAvailableContext && DistributionTargetRanges != 2m) ||
             MinimumDays < 2 || MinimumEpisodes < MinimumDays ||
             DayPenalty < 0m || StopReserveMultiplier < 1m || ModeledStopLatencyMs is <= 0L ||
-            (LearnFromOpportunityEpisodes || ObserveIntentExecutionOnTicks) && ModeledStopLatencyMs is null)
+            (LearnFromOpportunityEpisodes || ObserveIntentExecutionOnTicks) && ModeledStopLatencyMs is null ||
+            UseExtendedLocalPayoff&&!UseRecoveredLocalPayoff ||
+            ObserveFamilyDirectionsOnClosedBars&&!LearnFromOpportunityEpisodes)
             throw new ArgumentException("EUR_REGISTERED_DEVELOPMENT_PROFILE");
     }
 }

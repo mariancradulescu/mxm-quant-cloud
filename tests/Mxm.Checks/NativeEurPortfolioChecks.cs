@@ -192,6 +192,25 @@ internal static class NativeEurPortfolioChecks
             check(revisable.ModelSummary==beforeRecalibration,"future calibration is rejected without changing the EUR book");
         }
 
+        check(NativeCompleteDistribution.ContextDistance(new[]{0m,1m},new[]{0m,0m})>
+            NativeCompleteDistribution.ContextDistance(new[]{0m,1m},new[]{0m,1m}),
+            "Extended local distance distinguishes observed zero from missing context");
+        var contextSamples=Enumerable.Range(1,8).SelectMany(i=>Enumerable.Range(0,8).SelectMany(j=>new[]{
+            new NativeCompleteSample("A",Origin-i*day+j*Step,Origin-i*day+(j+1)*Step,new[]{0m,1m},1m){AssetClass="CLASS_A"},
+            new NativeCompleteSample("B",Origin-i*day+j*Step,Origin-i*day+(j+1)*Step,new[]{0m,1m},-1m){AssetClass="CLASS_B"}
+        })).Append(new NativeCompleteSample("A",Origin-Step,Origin,new[]{0m,1m},1000m){AssetClass="CLASS_A"}).ToArray();
+        var contextDistribution=new NativeCompleteDistribution(contextSamples,false){MaskedEconomicContext=true};
+        var positive=contextDistribution.Predict(new[]{0m,1m},Origin,1m,out _,"A","CLASS_A");
+        var negative=contextDistribution.Predict(new[]{0m,1m},Origin,1m,out _,"B","CLASS_B");
+        check(positive?.Mean==1m&&negative?.Mean==-1m,
+            "Extended local prediction ranks prior contextual samples and excludes settlement at decision clock");
+        var extendedProfile=available with {UseRecoveredLocalPayoff=true,UseExtendedLocalPayoff=true};
+        var extendedBook=new NativeUnifiedPortfolioEngine(NativeUnifiedPortfolioEngine.EurGeneralSelect,eurDevelopmentProfile:extendedProfile);
+        extendedBook.LoadEurCalibration(recoveredModel with {Outcomes=observations.Select(o=>o with {DecisionAt=o.ClosedAt-Step}).ToArray()});
+        extendedBook.Advance(sparseFrame);
+        check(extendedBook.EurOpportunityReceipts.Any(o=>o.Payoff?.Cohort=="EXTENDED_MASKED_CONTEXT_LOCAL_DISTRIBUTION"),
+            "Extended local payoff can use a causal sparse frame in the common EUR book");
+
         var tickProfile=available with {ModeledStopLatencyMs=100L};
         var tickBook=new NativeUnifiedPortfolioEngine(NativeUnifiedPortfolioEngine.EurGeneralProbe,eurDevelopmentProfile:tickProfile);
         tickBook.Advance(sparseFrame);

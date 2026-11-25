@@ -5,7 +5,11 @@ using System.Linq;
 namespace Mxm.Core;
 
 public sealed record NativeQuoteResidence(decimal Mean, decimal LateChange, decimal MidDisplacement);
-public sealed record NativeCompleteSample(string Symbol, long DecisionAt, long SettledAt, decimal[] Features, decimal OutcomeR);
+public sealed record NativeCompleteSample(string Symbol, long DecisionAt, long SettledAt, decimal[] Features, decimal OutcomeR)
+{
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? AssetClass { get; init; }
+}
 public sealed record NativeCompletePrediction(decimal Mean, decimal Lower, decimal PositiveProbability,
     decimal P10, decimal P50, decimal P90, int Observations, int Days);
 public sealed record NativeCompleteHold(long ObservedAt, long BarCloseAt, decimal[] Features, decimal ScaleEur,
@@ -17,11 +21,16 @@ public sealed record NativeCompleteProbe(string Symbol, int Side, long At, bool 
 public sealed record NativeCompleteDistribution(NativeCompleteSample[] Samples, bool WithoutResidence,
     decimal BiasR = 0m, decimal UncertaintyR = 0m)
 {
+    // Opt-in only: values and presence flags are interleaved. Legacy FPE/PAV/SCP
+    // distributions keep their original feature distance and serialization.
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool MaskedEconomicContext { get; init; }
+
     public NativeCompletePrediction? Predict(decimal[] features, long clock, decimal scale)
         =>Predict(features,clock,scale,out _);
 
     internal NativeCompletePrediction? Predict(decimal[] features,long clock,decimal scale,
-        out (decimal Minimum,decimal Maximum) range)
+        out (decimal Minimum,decimal Maximum) range,string? symbol=null,string? assetClass=null)
     {
         range=default;
         if (scale <= 0m) throw new ArgumentException("COMPLETE_POLICY_RISK_SCALE");
@@ -30,11 +39,14 @@ public sealed record NativeCompleteDistribution(NativeCompleteSample[] Samples, 
         {
             if (sample.Features.Length != features.Length) throw new ArgumentException("COMPLETE_POLICY_FEATURE_COUNT");
             decimal distance = 0m;
-            for (int i = first; i < features.Length; i++)
-            {
-                decimal delta = features[i] - sample.Features[i];
-                distance += delta * delta;
-            }
+            if(MaskedEconomicContext)
+                distance=ContextDistance(features,sample.Features,symbol,sample.Symbol,assetClass,sample.AssetClass);
+            else
+                for (int i = first; i < features.Length; i++)
+                {
+                    decimal delta = features[i] - sample.Features[i];
+                    distance += delta * delta;
+                }
             return (sample, distance);
         }).OrderBy(v => v.distance).ThenBy(v => v.sample.DecisionAt).ThenBy(v => v.sample.Symbol, StringComparer.Ordinal);
         var days = new Dictionary<long, int>();
@@ -67,10 +79,34 @@ public sealed record NativeCompleteDistribution(NativeCompleteSample[] Samples, 
             Quantile(.10m), Quantile(.50m), Quantile(.90m), values.Count, days.Count);
     }
 
+    internal static decimal ContextDistance(decimal[] target,decimal[] observed,string? symbol=null,
+        string? observedSymbol=null,string? assetClass=null,string? observedClass=null)
+    {
+        if(target.Length!=observed.Length||target.Length%2!=0)
+            throw new ArgumentException("COMPLETE_POLICY_MASKED_FEATURE_COUNT");
+        decimal sum=0m;
+        int available=0;
+        for(int i=0;i<target.Length;i+=2)
+        {
+            bool a=target[i+1]==1m,b=observed[i+1]==1m;
+            if(!a&&!b)continue;
+            available++;
+            if(a!=b){sum+=1m;continue;}
+            decimal delta=Math.Clamp((target[i]-observed[i])/2m,-1m,1m);
+            sum+=delta*delta;
+        }
+        // Equal-weight blocks for market state, instrument and official class.
+        // Missing context is not the same observation as an actual zero.
+        decimal distance=available>0?sum/available:1m;
+        if(symbol is not null&&observedSymbol is not null&&symbol!=observedSymbol)distance+=1m;
+        if(assetClass is not null&&observedClass is not null&&assetClass!=observedClass)distance+=1m;
+        return distance;
+    }
+
     public NativeCompleteDistribution Calibrate(IEnumerable<NativeCompleteSample> observations)
     {
         var errors = observations.Select(row =>
-            (row.DecisionAt, Predicted: Predict(row.Features, row.DecisionAt, 1m), row.OutcomeR))
+            (row.DecisionAt, Predicted: Predict(row.Features,row.DecisionAt,1m,out _,row.Symbol,row.AssetClass), row.OutcomeR))
             .Where(row => row.Predicted is not null)
             .GroupBy(row => row.DecisionAt / NativeCompletePolicy.Day)
             .Select(g => g.Average(row => row.OutcomeR - row.Predicted!.Mean)).ToArray();
