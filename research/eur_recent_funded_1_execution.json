@@ -1,0 +1,9 @@
+{
+  "Study": "EUR_RECENT_FUNDED_1",
+  "SourceRun": 45716198383,
+  "SourceRevision": "bd7d403a2da0469472b2984252be91db7bedc2bd",
+  "SourceArtifact": 15075408433,
+  "SourceArchiveSha256": "6af35361b6f66cc3b90653d056b5ce0456317cf317335add204fa5740816804c",
+  "ProtocolSha256": "793bbb70bd2801d867ee15ea4cdda77f1152e60cbacb555f9ff48f1c95ecaced",
+  "ValidatedRevision": "624b0dd5f47c832415f0855031d3ecf774f40997"
+}
