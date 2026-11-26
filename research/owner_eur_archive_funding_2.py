@@ -104,7 +104,8 @@ def materialize(p,digest,work,receipt_path,key,rid):
     protocol=json.loads((work/"protocol.json").read_bytes())
     old_receipt=json.loads(receipt_path.read_bytes())
     old_plan=json.loads(archive.REGISTRY.read_bytes())
-    original,_,names=archive.verified_scope(old_plan,key)
+    original=json.loads((archive.PUBLIC_DIR/"source.json").read_bytes())
+    names=old_plan["Instruments"]
     terms,account=archive.official_terms(original,names,key)
     receipt,acquired=verify(p,digest,key,rid)
     verified=json.loads(Path("targeted-funding-verified.json").read_bytes())
@@ -128,7 +129,7 @@ def materialize(p,digest,work,receipt_path,key,rid):
     for cal in protocol["Calibrations"]:
         cal["Profile"]["ModelFundingAtPriorClosedSessionQuote"]=True
     joint=dict(next(t for t in protocol["Trials"] if t["Id"]=="V3_RANKED_RISK_RESIZE"),
-               Id="V3_JOINT_ALLOCATION_MANAGEMENT",UseAdaptiveAllocation=True,UseAdaptiveManagement=True)
+               Id="V3_JOINT_ALLOCATION_MANAGEMENT",UseAdaptiveAllocation=True,UseAdaptiveManagement=True,UseJointMonetaryAllocation=True)
     protocol["Trials"].append(joint)
     need([t["Id"] for t in protocol["Trials"]]==p["Trials"],"TARGET_FUNDING_TRIALS")
     protocol["Study"]=p["Study"]
