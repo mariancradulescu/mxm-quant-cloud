@@ -1,0 +1,47 @@
+{
+  "Study": "OFFICIAL_BREADTH_EXTENSION_3_SPANS",
+  "SourceRun": 45829391256,
+  "SourceRegistrySha256": "068c6a903c943bb868e2a623e77d4c2659547466b95ae9129f6afd56a9c104de",
+  "Artifacts": [
+    {
+      "Id": 15122428422,
+      "Name": "breadth-extension-3-source-verified-summary",
+      "Sha256": "13742ca539dc994f7228da3ec44aafe6ca5fd75723a75e6783d460cdf5a658aa"
+    },
+    {
+      "Id": 15122288271,
+      "Name": "breadth-extension-3-source-protected-3",
+      "Sha256": "d4cc640565be91cfad9da4a04bf50b257b42cd561d2a0377e481d91cd1cf39d9"
+    },
+    {
+      "Id": 15122228081,
+      "Name": "breadth-extension-3-source-protected-2",
+      "Sha256": "1447cd29baf4cddcd4cefc53698ee634281a2a410b88abe7d0a8e50a1a29833c"
+    },
+    {
+      "Id": 15122116444,
+      "Name": "breadth-extension-3-source-metadata",
+      "Sha256": "e70cdf0733a4d7c44ef5c0692da5cbd9af3c69ba4b0dfedf0442d5eb87a29ced"
+    },
+    {
+      "Id": 15122007622,
+      "Name": "breadth-extension-3-source-protected-1",
+      "Sha256": "d181ea489a3d74c22970c7a555e332bfd9444133424f270e06d747f3d2a58ce8"
+    },
+    {
+      "Id": 15121617246,
+      "Name": "breadth-extension-3-source-protected-0",
+      "Sha256": "58727f84059a33f8eaf2da21a356406ea9c3dad529abddd605ee3be5d69067d5"
+    },
+    {
+      "Id": 15121103902,
+      "Name": "breadth-extension-3-source-protected-4",
+      "Sha256": "9e21709e54b981c0fdcb317eefbba67116e84e47a77c7144ed1cf093d6759163"
+    }
+  ],
+  "SourceBrokerRequests": 0,
+  "EconomicPolicyExecutions": 0,
+  "Orders": 0,
+  "CloudActivated": false,
+  "IndependentConfirmationCertified": false
+}
