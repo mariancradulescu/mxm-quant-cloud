@@ -75,13 +75,13 @@ internal sealed partial class NativeEurAdaptiveEstimator
     // Same causal forecasts are scored for each candidate, including the cash
     // decision for unsupported rows. The last dates are reserved for error
     // calibration; they do not participate in candidate selection.
-    static NativeEurAdaptiveEstimator FitPredictive(NativeEurCalibration calibration,bool extended,bool economic,bool selectionAware,bool forecastBands)
+    static NativeEurAdaptiveEstimator FitPredictive(NativeEurCalibration calibration,bool extended,bool economic,bool selectionAware,bool forecastBands,bool activity)
     {
         using var profile=NativeEconomicProfiler.Measure("eur.predictive_fit");
         if(!extended)throw new ArgumentException("EUR_PREDICTIVE_REQUIRES_EXTENDED");
         var rows=calibration.Outcomes.Where(o=>o.AvailableAt<=calibration.ObservationThrough&&
                 o.DecisionAt.HasValue&&o.Context?.MarketState is {Length:16})
-            .Select(o=>new Row(o,o.Context!,o.DecisionAt!.Value/Day,Values(o.Context!,true,true))).ToArray();
+            .Select(o=>new Row(o,o.Context!,o.DecisionAt!.Value/Day,Values(o.Context!,true,true,activity))).ToArray();
         var dates=rows.Select(x=>x.Day).Distinct().OrderBy(x=>x).Skip(2).TakeLast(12).ToArray();
         int reserved=Math.Min(dates.Length,Math.Max(2,dates.Length/3));
         var selection=dates.Take(dates.Length-reserved).ToArray();
@@ -95,7 +95,7 @@ internal sealed partial class NativeEurAdaptiveEstimator
                   select new EurEstimatorCandidate(selectionAware
                       ?FormattableString.Invariant($"V3_H{half}_R{ridge}_P{prior}_S{slow}")
                       :FormattableString.Invariant($"V2_H{half}_R{ridge}_P{prior}"),
-                      half,ridge,prior,slow,2,8){Predictive=true}).ToArray();
+                      half,ridge,prior,slow,2,8){Predictive=true,ClosedBarActivity=activity}).ToArray();
 
         Validation[] Forward(EurEstimatorCandidate p,long[] clocks)
         {
@@ -306,7 +306,7 @@ internal sealed partial class NativeEurAdaptiveEstimator
         decimal risk,decimal cost,NativeEurForecastAdjustment? feedback)
     {
         if(risk<=0)return null;
-        var (g,n)=Estimate(model,context,Values(context,true,true),selected);
+        var (g,n)=Estimate(model,context,Values(context,true,true,selected.ClosedBarActivity),selected);
         string scope="POOLED_OUT_OF_TIME";
         ErrorDistribution? error=pooledErrors;
         if(predictiveErrors.TryGetValue((family,side),out var cells))
