@@ -57,5 +57,35 @@ internal static class NativeEconomicMechanismChecks
             "Causal cost/risk bands and estimates exclude future outcomes");
         check(NativeEconomicMechanisms.EntryQualityPayoff(rows,"F",1,context with {CostRiskFraction=.9m},at,1m,.1m,20,3,0m,true) is null,
             "Unsupported cost band abstains rather than borrowing an unrelated payoff");
+
+        var close=market.M5[^1].Close;
+        var near=market with {Quote=market.Quote with {Bid=close,Ask=close+.01m}};
+        var moved=near with {Quote=near.Quote with {Bid=close+.02m,Ask=close+.03m}};
+        var anchored=NativeEconomicMechanisms.Describe(NativeEconomicMechanisms.Follow,near,at,4m,
+            geometryTimeframe:"M5",stopRanges:1m,closedStructure:true).Single();
+        var later=NativeEconomicMechanisms.Describe(NativeEconomicMechanisms.Follow,moved,at,4m,
+            geometryTimeframe:"M5",stopRanges:1m,closedStructure:true).Single();
+        check(anchored.Stop==later.Stop&&anchored.Target==later.Target&&anchored.Stop<close,
+            "Closed-structure stop and economic destination do not drift with executable entry");
+        var profile=new NativeEurDevelopmentProfile(UseAvailableContext:true)
+        {
+            EconomicMechanism=NativeEconomicMechanisms.Follow,EconomicManagement="CAPTURE_VALUE",
+            EconomicGeometryTimeframe="M5",EconomicStopRanges=1m,EconomicManagementTimeframe="M5",
+            AnchorEconomicGeometryToClosedStructure=true,KeepAdmissionRiskAtFill=true,ResizeWithinAdmissionRiskAtFill=true
+        };
+        profile.Verify();
+        check(profile.GeometryIdentity.Contains("CLOSED_STRUCTURE_ANCHOR")&&profile.GeometryIdentity.Contains("MECHANISM_KEEP_RISK"),
+            "Distinct economic mechanisms may reuse admission-risk guard with independent geometry identity");
+        var fx=context with {AssetClass="FX"};
+        var peers=new[]{"GBPUSD","USDJPY"}.SelectMany(symbol=>rows.Select(row=>row with
+            {PositionId=symbol+row.PositionId,Context=fx with {Symbol=symbol}})).ToArray();
+        var peer=NativeEconomicMechanisms.LeaveSymbolOutPayoff(peers,"F",1,fx,at,1m,.1m,20,3,0m);
+        var contamination=peers.Concat(rows.Select(row=>row with {Context=fx,GrossEur=10000m,NetEur=10000m}))
+            .Append(peers[0] with {AvailableAt=at+1,GrossEur=100000m,NetEur=100000m});
+        check(peer is {SupportedPeers:2,MeanNetEur:.4m}&&peer==NativeEconomicMechanisms.LeaveSymbolOutPayoff(
+            contamination,"F",1,fx,at,1m,.1m,20,3,0m),
+            "Leave-symbol-out forecast excludes target and future outcomes, normalizes only same-class supported peers");
+        check(NativeEconomicMechanisms.LeaveSymbolOutPayoff(peers,"F",1,fx with {AssetClass="METAL"},at,1m,.1m,20,3,0m) is null,
+            "Peer estimate cannot transfer across unrelated classes");
     }
 }
