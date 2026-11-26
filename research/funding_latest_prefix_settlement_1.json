@@ -1,0 +1,53 @@
+{
+  "Study": "FUNDING_LATEST_PREFIX_SETTLEMENT_1",
+  "LookbackMs": 345600000,
+  "EconomicRun": 45769642512,
+  "EconomicArtifact": 15095141869,
+  "EconomicSha256": "dc4733026987b951e7043d8fc1ddc64e88d914e562c70c18b4b8466af4b3976a",
+  "Trial": "RANGE_CONTINUATION__BRACKET",
+  "ChargeClocks": [
+    1788559200000,
+    1788818400000
+  ],
+  "Targets": [
+    {
+      "Symbol": "AAPL.US",
+      "Side": "BID",
+      "At": 1788559200000
+    },
+    {
+      "Symbol": "AAPL.US",
+      "Side": "BID",
+      "At": 1788818400000
+    },
+    {
+      "Symbol": "EURUSD",
+      "Side": "BID",
+      "At": 1788559200000
+    },
+    {
+      "Symbol": "EURUSD",
+      "Side": "ASK",
+      "At": 1788559200000
+    },
+    {
+      "Symbol": "EURUSD",
+      "Side": "BID",
+      "At": 1788818400000
+    },
+    {
+      "Symbol": "EURUSD",
+      "Side": "ASK",
+      "At": 1788818400000
+    },
+    {
+      "Symbol": "US500",
+      "Side": "BID",
+      "At": 1788818400000
+    }
+  ],
+  "EconomicPolicyReruns": 0,
+  "Orders": 0,
+  "CloudActivated": false,
+  "Scope": "SOURCE_PREFIX_READBACK_AND_FROZEN_CLOSED_EPISODE_CONDITIONAL_SETTLEMENT"
+}

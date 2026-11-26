@@ -16,6 +16,17 @@ internal static partial class IntegratedEconomicReplay
         int? AccountType,int? MoneyDigits,int? PriceDigits);
     sealed record DatedRolloverQuote(long At,bool RequestedCoverage,long? BidAt,long? AskAt,decimal? Bid,decimal? Ask)
     {
+        [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+        public NativeHistoricalFundingPrefix? LatestBidPrefix { get; init; }
+        [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+        public NativeHistoricalFundingPrefix? LatestAskPrefix { get; init; }
+        public decimal? FundingPrice(bool ask,long legacyAge,long prefixAge)
+        {
+            long? stamp=ask?AskAt:BidAt;decimal? price=ask?Ask:Bid;
+            decimal? legacy=RequestedCoverage&&price is >0m&&stamp is >0L&&stamp<=At&&At-stamp<=legacyAge?price:null;
+            decimal? prefix=(ask?LatestAskPrefix:LatestBidPrefix)?.PriceAtCharge(At,prefixAge);
+            return legacy.HasValue&&prefix.HasValue&&legacy!=prefix?null:prefix??legacy;
+        }
         public decimal? WitnessedBid=>RequestedCoverage&&Bid is >0m&&Recent(BidAt)?Bid:null;
         public NativeOriginalFxRate? EurConversion(string asset)
         {
