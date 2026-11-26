@@ -501,10 +501,12 @@ public sealed partial class NativeUnifiedPortfolioEngine
             var marketState=IsEurGeneral?DescribeGeneralState(market,frame,s.Side):null;
             var volatility=eurDevelopmentProfile?.CaptureVolatilityContext==true?DescribeRelativeVolatility(market,frame.At):null;
             var activityContext=eurDevelopmentProfile?.CaptureClosedBarActivity==true?DescribeClosedBarActivity(market,frame.At,s.Side):null;
-            var unitsOffered=(market.EurMargins??Array.Empty<NativeEurMarginObservation>())
+            var witnessedUnits=(market.EurMargins??Array.Empty<NativeEurMarginObservation>())
                 .Where(x=>x.Side==s.Side&&x.Units>0m).Select(x=>x.Units)
-                .Append(market.Contract.MinimumUnits).Distinct()
-                .Where(units=>(!frame.ObservationEpisodeOnly&&eurDevelopmentProfile?.MinimumContractVolumeOnly!=true)||
+                .Append(market.Contract.MinimumUnits).Distinct().OrderBy(x=>x).ToArray();
+            var unitsOffered=frame.ObservationEpisodeOnly&&eurDevelopmentProfile?.EconomicOpportunityVolumeIndex is int volumeIndex
+                ?witnessedUnits.Skip(volumeIndex).Take(1)
+                :witnessedUnits.Where(units=>(!frame.ObservationEpisodeOnly&&eurDevelopmentProfile?.MinimumContractVolumeOnly!=true)||
                     units==market.Contract.MinimumUnits).OrderByDescending(x=>x);
             foreach(var units in unitsOffered)
             {
@@ -527,7 +529,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 var payoff=risk is >0m&&(IsEurRank||eurDevelopmentProfile is null)?EurPayoff(s.Family,s.Side,risk.Value,roundTripCost+debit!.Value,
                     policy is EurContextRank or EurGeneralSelect?context:null,CaptureEurDiagnostics?ScoreDiagnostic:null,at):null;
                 if(eurDevelopmentProfile?.EconomicMechanism==NativeEconomicMechanisms.Transition&&risk is >0m&&debit.HasValue)
-                    payoff=NativeEconomicMechanisms.TransitionPayoff(market,at,s.Side,units,roundTripCost+debit.Value);
+                    payoff=NativeEconomicMechanisms.TransitionPayoff(market,at,s.Side,units,roundTripCost+debit.Value,
+                        eurDevelopmentProfile.EconomicGeometryTimeframe);
                 var receipt=new NativeEurOpportunity(at,market.Symbol,s.Family,s.Side,units,grossTarget,grossRisk,
                     roundTripCost,debit,margin?.MarginEur,risk,capital.HeldMarginEur,capital.PendingOpenMarginEur,
                     capital.ResearchAdmissionEquityEur,payoff,"ASSESS")

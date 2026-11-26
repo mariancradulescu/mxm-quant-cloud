@@ -9,6 +9,8 @@ if(args is ["--owner-eer1-extended",var eerInput,var eerReport,var eerCalibratio
     return IntegratedEconomicReplay.RunEer1(eerInput,eerReport,eerCalibrations);
 if(args is ["--owner-eur-general",var generalPhase,var generalInput,var generalOutput,var generalModels])
     return IntegratedEconomicReplay.RunGeneralEur(generalPhase,generalInput,generalOutput,generalModels);
+if(args is ["--owner-opportunity-screen",var screenProtocol,var screenSource,var screenReport,var screenProtection])
+    return IntegratedEconomicReplay.RunOpportunityScreen(screenProtocol,screenSource,screenReport,screenProtection);
 if(args is ["--owner-eur-historical-study",var historicalProtocol,var historicalSource,var historicalReport])
     return IntegratedEconomicReplay.RunHistoricalEur(historicalProtocol,historicalSource,historicalReport);
 if(args is ["--owner-eur-historical-study",var protectionProtocol,var protectionSource,var protectionReport,var protectionTape])

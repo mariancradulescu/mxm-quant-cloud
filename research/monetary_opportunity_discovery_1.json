@@ -1,0 +1,900 @@
+{
+  "Study": "MONETARY_OPPORTUNITY_DISCOVERY_1",
+  "Exposure": "PROJECT_EXPOSED_CONDITIONAL_DEVELOPMENT",
+  "OriginalMechanismRun": 45769642512,
+  "OriginalMechanismArtifact": 15095141869,
+  "OriginalMechanismSha256": "dc4733026987b951e7043d8fc1ddc64e88d914e562c70c18b4b8466af4b3976a",
+  "MechanismFundingArtifact": 15094116850,
+  "MechanismFundingSha256": "2afc6c82045b920587aa22ee2a43dd1ff01d4ec7909a168a1d9f214694150bed",
+  "PrefixRun": 45775907825,
+  "PrefixArtifact": 15096546294,
+  "PrefixSha256": "64066bfb082178baf6d87b541d5fb5c092342f709cdbbfd5410ce251766f0213",
+  "Start": 1785110400000,
+  "SelectionFrom": 1787529600000,
+  "EvaluationFrom": 1789948800000,
+  "End": 1792972800000,
+  "SamplingIntervalMs": 3600000,
+  "Stresses": [
+    0,
+    0.5,
+    1
+  ],
+  "Instruments": [
+    "AAPL.US",
+    "AUDUSD",
+    "EURUSD",
+    "GBPUSD",
+    "SpotBrent",
+    "US500",
+    "XAUUSD"
+  ],
+  "Variants": [
+    {
+      "Id": "M5_FOLLOW__REFERENCE_BRACKET",
+      "Mechanism": "M5_FOLLOW",
+      "Reference": true,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "M5_FOLLOW",
+        "EconomicManagement": "BRACKET",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true
+      }
+    },
+    {
+      "Id": "M5_FOLLOW__REFERENCE_TRANSITION",
+      "Mechanism": "M5_FOLLOW",
+      "Reference": false,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "M5_FOLLOW",
+        "EconomicManagement": "TRANSITION_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true
+      }
+    },
+    {
+      "Id": "M5_FOLLOW__SPECIFIC_BRACKET",
+      "Mechanism": "M5_FOLLOW",
+      "Reference": false,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 2,
+        "EconomicMechanism": "M5_FOLLOW",
+        "EconomicManagement": "BRACKET",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "M15",
+        "EconomicStopRanges": 1
+      }
+    },
+    {
+      "Id": "M5_FOLLOW__SPECIFIC_TRANSITION",
+      "Mechanism": "M5_FOLLOW",
+      "Reference": false,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 2,
+        "EconomicMechanism": "M5_FOLLOW",
+        "EconomicManagement": "TRANSITION_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "M15",
+        "EconomicStopRanges": 1
+      }
+    },
+    {
+      "Id": "M5_FOLLOW__SPECIFIC_CAPTURE",
+      "Mechanism": "M5_FOLLOW",
+      "Reference": false,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 2,
+        "EconomicMechanism": "M5_FOLLOW",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "M15",
+        "EconomicStopRanges": 1
+      }
+    },
+    {
+      "Id": "M5_FOLLOW__ALTERNATE_CAPTURE",
+      "Mechanism": "M5_FOLLOW",
+      "Reference": false,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 2.5,
+        "EconomicMechanism": "M5_FOLLOW",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 0.75
+      }
+    },
+    {
+      "Id": "M5_FOLLOW__MARGINAL_VOLUME",
+      "Mechanism": "M5_FOLLOW",
+      "Reference": false,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 2,
+        "EconomicMechanism": "M5_FOLLOW",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": false,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "M15",
+        "EconomicStopRanges": 1,
+        "EconomicOpportunityVolumeIndex": 1
+      }
+    },
+    {
+      "Id": "M5_REVERSE__REFERENCE_BRACKET",
+      "Mechanism": "M5_REVERSE",
+      "Reference": true,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "M5_REVERSE",
+        "EconomicManagement": "BRACKET",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true
+      }
+    },
+    {
+      "Id": "M5_REVERSE__REFERENCE_TRANSITION",
+      "Mechanism": "M5_REVERSE",
+      "Reference": false,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "M5_REVERSE",
+        "EconomicManagement": "TRANSITION_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true
+      }
+    },
+    {
+      "Id": "M5_REVERSE__SPECIFIC_BRACKET",
+      "Mechanism": "M5_REVERSE",
+      "Reference": false,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 2,
+        "EconomicMechanism": "M5_REVERSE",
+        "EconomicManagement": "BRACKET",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "M5",
+        "EconomicStopRanges": 0.75
+      }
+    },
+    {
+      "Id": "M5_REVERSE__SPECIFIC_TRANSITION",
+      "Mechanism": "M5_REVERSE",
+      "Reference": false,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 2,
+        "EconomicMechanism": "M5_REVERSE",
+        "EconomicManagement": "TRANSITION_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "M5",
+        "EconomicStopRanges": 0.75
+      }
+    },
+    {
+      "Id": "M5_REVERSE__SPECIFIC_CAPTURE",
+      "Mechanism": "M5_REVERSE",
+      "Reference": false,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 2,
+        "EconomicMechanism": "M5_REVERSE",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "M5",
+        "EconomicStopRanges": 0.75
+      }
+    },
+    {
+      "Id": "M5_REVERSE__ALTERNATE_CAPTURE",
+      "Mechanism": "M5_REVERSE",
+      "Reference": false,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 2,
+        "EconomicMechanism": "M5_REVERSE",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "M15",
+        "EconomicStopRanges": 1
+      }
+    },
+    {
+      "Id": "M5_REVERSE__MARGINAL_VOLUME",
+      "Mechanism": "M5_REVERSE",
+      "Reference": false,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 2,
+        "EconomicMechanism": "M5_REVERSE",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": false,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "M5",
+        "EconomicStopRanges": 0.75,
+        "EconomicOpportunityVolumeIndex": 1
+      }
+    },
+    {
+      "Id": "RANGE_CONTINUATION__REFERENCE_BRACKET",
+      "Mechanism": "RANGE_CONTINUATION",
+      "Reference": true,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "RANGE_CONTINUATION",
+        "EconomicManagement": "BRACKET",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true
+      }
+    },
+    {
+      "Id": "RANGE_CONTINUATION__REFERENCE_TRANSITION",
+      "Mechanism": "RANGE_CONTINUATION",
+      "Reference": false,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "RANGE_CONTINUATION",
+        "EconomicManagement": "TRANSITION_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true
+      }
+    },
+    {
+      "Id": "RANGE_CONTINUATION__SPECIFIC_BRACKET",
+      "Mechanism": "RANGE_CONTINUATION",
+      "Reference": false,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 2,
+        "EconomicMechanism": "RANGE_CONTINUATION",
+        "EconomicManagement": "BRACKET",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "M15",
+        "EconomicStopRanges": 1
+      }
+    },
+    {
+      "Id": "RANGE_CONTINUATION__SPECIFIC_TRANSITION",
+      "Mechanism": "RANGE_CONTINUATION",
+      "Reference": false,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 2,
+        "EconomicMechanism": "RANGE_CONTINUATION",
+        "EconomicManagement": "TRANSITION_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "M15",
+        "EconomicStopRanges": 1
+      }
+    },
+    {
+      "Id": "RANGE_CONTINUATION__SPECIFIC_CAPTURE",
+      "Mechanism": "RANGE_CONTINUATION",
+      "Reference": false,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 2,
+        "EconomicMechanism": "RANGE_CONTINUATION",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "M15",
+        "EconomicStopRanges": 1
+      }
+    },
+    {
+      "Id": "RANGE_CONTINUATION__ALTERNATE_CAPTURE",
+      "Mechanism": "RANGE_CONTINUATION",
+      "Reference": false,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 3,
+        "EconomicMechanism": "RANGE_CONTINUATION",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 0.75
+      }
+    },
+    {
+      "Id": "RANGE_CONTINUATION__MARGINAL_VOLUME",
+      "Mechanism": "RANGE_CONTINUATION",
+      "Reference": false,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 2,
+        "EconomicMechanism": "RANGE_CONTINUATION",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": false,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "M15",
+        "EconomicStopRanges": 1,
+        "EconomicOpportunityVolumeIndex": 1
+      }
+    },
+    {
+      "Id": "EQUILIBRIUM_REVERSION__REFERENCE_BRACKET",
+      "Mechanism": "EQUILIBRIUM_REVERSION",
+      "Reference": true,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "EQUILIBRIUM_REVERSION",
+        "EconomicManagement": "BRACKET",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true
+      }
+    },
+    {
+      "Id": "EQUILIBRIUM_REVERSION__REFERENCE_TRANSITION",
+      "Mechanism": "EQUILIBRIUM_REVERSION",
+      "Reference": false,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "EQUILIBRIUM_REVERSION",
+        "EconomicManagement": "TRANSITION_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true
+      }
+    },
+    {
+      "Id": "EQUILIBRIUM_REVERSION__SPECIFIC_BRACKET",
+      "Mechanism": "EQUILIBRIUM_REVERSION",
+      "Reference": false,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "EQUILIBRIUM_REVERSION",
+        "EconomicManagement": "BRACKET",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 0.75
+      }
+    },
+    {
+      "Id": "EQUILIBRIUM_REVERSION__SPECIFIC_TRANSITION",
+      "Mechanism": "EQUILIBRIUM_REVERSION",
+      "Reference": false,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "EQUILIBRIUM_REVERSION",
+        "EconomicManagement": "TRANSITION_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 0.75
+      }
+    },
+    {
+      "Id": "EQUILIBRIUM_REVERSION__SPECIFIC_CAPTURE",
+      "Mechanism": "EQUILIBRIUM_REVERSION",
+      "Reference": false,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "EQUILIBRIUM_REVERSION",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 0.75
+      }
+    },
+    {
+      "Id": "EQUILIBRIUM_REVERSION__ALTERNATE_CAPTURE",
+      "Mechanism": "EQUILIBRIUM_REVERSION",
+      "Reference": false,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "EQUILIBRIUM_REVERSION",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H4",
+        "EconomicStopRanges": 0.5
+      }
+    },
+    {
+      "Id": "EQUILIBRIUM_REVERSION__MARGINAL_VOLUME",
+      "Mechanism": "EQUILIBRIUM_REVERSION",
+      "Reference": false,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "EQUILIBRIUM_REVERSION",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": false,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 0.75,
+        "EconomicOpportunityVolumeIndex": 1
+      }
+    },
+    {
+      "Id": "V33_MULTISCALE_ACTIVITY__REFERENCE_BRACKET",
+      "Mechanism": "V33_MULTISCALE_ACTIVITY",
+      "Reference": true,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "V33_MULTISCALE_ACTIVITY",
+        "EconomicManagement": "BRACKET",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true
+      }
+    },
+    {
+      "Id": "V33_MULTISCALE_ACTIVITY__REFERENCE_TRANSITION",
+      "Mechanism": "V33_MULTISCALE_ACTIVITY",
+      "Reference": false,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "V33_MULTISCALE_ACTIVITY",
+        "EconomicManagement": "TRANSITION_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true
+      }
+    },
+    {
+      "Id": "V33_MULTISCALE_ACTIVITY__SPECIFIC_BRACKET",
+      "Mechanism": "V33_MULTISCALE_ACTIVITY",
+      "Reference": false,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 2,
+        "EconomicMechanism": "V33_MULTISCALE_ACTIVITY",
+        "EconomicManagement": "BRACKET",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "M15",
+        "EconomicStopRanges": 1
+      }
+    },
+    {
+      "Id": "V33_MULTISCALE_ACTIVITY__SPECIFIC_TRANSITION",
+      "Mechanism": "V33_MULTISCALE_ACTIVITY",
+      "Reference": false,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 2,
+        "EconomicMechanism": "V33_MULTISCALE_ACTIVITY",
+        "EconomicManagement": "TRANSITION_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "M15",
+        "EconomicStopRanges": 1
+      }
+    },
+    {
+      "Id": "V33_MULTISCALE_ACTIVITY__SPECIFIC_CAPTURE",
+      "Mechanism": "V33_MULTISCALE_ACTIVITY",
+      "Reference": false,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 2,
+        "EconomicMechanism": "V33_MULTISCALE_ACTIVITY",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "M15",
+        "EconomicStopRanges": 1
+      }
+    },
+    {
+      "Id": "V33_MULTISCALE_ACTIVITY__ALTERNATE_CAPTURE",
+      "Mechanism": "V33_MULTISCALE_ACTIVITY",
+      "Reference": false,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 2.5,
+        "EconomicMechanism": "V33_MULTISCALE_ACTIVITY",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 0.75
+      }
+    },
+    {
+      "Id": "V33_MULTISCALE_ACTIVITY__MARGINAL_VOLUME",
+      "Mechanism": "V33_MULTISCALE_ACTIVITY",
+      "Reference": false,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 2,
+        "EconomicMechanism": "V33_MULTISCALE_ACTIVITY",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": false,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "M15",
+        "EconomicStopRanges": 1,
+        "EconomicOpportunityVolumeIndex": 1
+      }
+    },
+    {
+      "Id": "INTERMARKET_DISLOCATION__REFERENCE_BRACKET",
+      "Mechanism": "INTERMARKET_DISLOCATION",
+      "Reference": true,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "INTERMARKET_DISLOCATION",
+        "EconomicManagement": "BRACKET",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true
+      }
+    },
+    {
+      "Id": "INTERMARKET_DISLOCATION__REFERENCE_TRANSITION",
+      "Mechanism": "INTERMARKET_DISLOCATION",
+      "Reference": false,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "INTERMARKET_DISLOCATION",
+        "EconomicManagement": "TRANSITION_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true
+      }
+    },
+    {
+      "Id": "INTERMARKET_DISLOCATION__SPECIFIC_BRACKET",
+      "Mechanism": "INTERMARKET_DISLOCATION",
+      "Reference": false,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "INTERMARKET_DISLOCATION",
+        "EconomicManagement": "BRACKET",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 1
+      }
+    },
+    {
+      "Id": "INTERMARKET_DISLOCATION__SPECIFIC_TRANSITION",
+      "Mechanism": "INTERMARKET_DISLOCATION",
+      "Reference": false,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "INTERMARKET_DISLOCATION",
+        "EconomicManagement": "TRANSITION_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 1
+      }
+    },
+    {
+      "Id": "INTERMARKET_DISLOCATION__SPECIFIC_CAPTURE",
+      "Mechanism": "INTERMARKET_DISLOCATION",
+      "Reference": false,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "INTERMARKET_DISLOCATION",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 1
+      }
+    },
+    {
+      "Id": "INTERMARKET_DISLOCATION__ALTERNATE_CAPTURE",
+      "Mechanism": "INTERMARKET_DISLOCATION",
+      "Reference": false,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 2,
+        "EconomicMechanism": "INTERMARKET_DISLOCATION",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H4",
+        "EconomicStopRanges": 0.75
+      }
+    },
+    {
+      "Id": "INTERMARKET_DISLOCATION__MARGINAL_VOLUME",
+      "Mechanism": "INTERMARKET_DISLOCATION",
+      "Reference": false,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "INTERMARKET_DISLOCATION",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": false,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 1,
+        "EconomicOpportunityVolumeIndex": 1
+      }
+    },
+    {
+      "Id": "PAV1_LOCAL_TRANSITION__REFERENCE_BRACKET",
+      "Mechanism": "PAV1_LOCAL_TRANSITION",
+      "Reference": true,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "PAV1_LOCAL_TRANSITION",
+        "EconomicManagement": "BRACKET",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true
+      }
+    },
+    {
+      "Id": "PAV1_LOCAL_TRANSITION__REFERENCE_TRANSITION",
+      "Mechanism": "PAV1_LOCAL_TRANSITION",
+      "Reference": false,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "PAV1_LOCAL_TRANSITION",
+        "EconomicManagement": "TRANSITION_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true
+      }
+    },
+    {
+      "Id": "PAV1_LOCAL_TRANSITION__SPECIFIC_BRACKET",
+      "Mechanism": "PAV1_LOCAL_TRANSITION",
+      "Reference": false,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 2,
+        "EconomicMechanism": "PAV1_LOCAL_TRANSITION",
+        "EconomicManagement": "BRACKET",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "M15",
+        "EconomicStopRanges": 1
+      }
+    },
+    {
+      "Id": "PAV1_LOCAL_TRANSITION__SPECIFIC_TRANSITION",
+      "Mechanism": "PAV1_LOCAL_TRANSITION",
+      "Reference": false,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 2,
+        "EconomicMechanism": "PAV1_LOCAL_TRANSITION",
+        "EconomicManagement": "TRANSITION_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "M15",
+        "EconomicStopRanges": 1
+      }
+    },
+    {
+      "Id": "PAV1_LOCAL_TRANSITION__SPECIFIC_CAPTURE",
+      "Mechanism": "PAV1_LOCAL_TRANSITION",
+      "Reference": false,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 2,
+        "EconomicMechanism": "PAV1_LOCAL_TRANSITION",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "M15",
+        "EconomicStopRanges": 1
+      }
+    },
+    {
+      "Id": "PAV1_LOCAL_TRANSITION__ALTERNATE_CAPTURE",
+      "Mechanism": "PAV1_LOCAL_TRANSITION",
+      "Reference": false,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 2.5,
+        "EconomicMechanism": "PAV1_LOCAL_TRANSITION",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 0.75
+      }
+    },
+    {
+      "Id": "PAV1_LOCAL_TRANSITION__MARGINAL_VOLUME",
+      "Mechanism": "PAV1_LOCAL_TRANSITION",
+      "Reference": false,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 2,
+        "EconomicMechanism": "PAV1_LOCAL_TRANSITION",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": false,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "M15",
+        "EconomicStopRanges": 1,
+        "EconomicOpportunityVolumeIndex": 1
+      }
+    }
+  ],
+  "Orders": 0,
+  "CloudActivated": false,
+  "IndependentConfirmationCertified": false,
+  "PrefixProtectedArtifact": 15096506051,
+  "PrefixProtectedSha256": "4e40a5f2044b5c6bb4c3a10e4f6ae46c1198f479e17a992686ee15cd5b07a5bc",
+  "OriginalMechanismRevision": "ef21b35af4521bba1520b56825a9bcbd7f5627e2"
+}

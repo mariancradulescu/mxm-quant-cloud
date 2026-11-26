@@ -8,6 +8,9 @@ import unittest
 from .test_owner_eur_checkpoint import fixture
 from .owner_eur_checkpoint import REPLAY
 from .merge_economic_mechanisms import merge,comparison
+# Run the new standalone screen in the existing technical validation too.
+# The frozen original replay fixture and comparisons below are unchanged.
+from .test_monetary_opportunity_discovery import OpportunityDiscovery
 
 class MechanismReplay(unittest.TestCase):
     def test_registered_mechanisms_share_causal_replay_and_exact_partition_merge(self):
