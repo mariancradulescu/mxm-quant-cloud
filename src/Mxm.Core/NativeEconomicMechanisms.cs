@@ -38,6 +38,36 @@ public static class NativeEconomicMechanisms
         return advantage>0m?advantage:null;
     }
 
+    // Compare feasible remaining exposure against immediate CLOSE, without
+    // assigning an invented EUR return to released margin or risk. HOLD is
+    // excluded only by a witnessed portfolio constraint. Funding ceilings
+    // are conservative debits, not cash savings credited to the ledger.
+    public static decimal? ConstrainedReductionValue(decimal held,decimal close,
+        decimal minimum,decimal maximum,decimal step,decimal meanEurPerUnit,
+        decimal uncertaintyEurPerUnit,decimal? remainingDebit,decimal fullFee,
+        decimal closeFee,decimal remainingFee,decimal equity,decimal floor,
+        decimal otherMargin,decimal otherRisk,decimal marginPerUnit,
+        decimal fullRisk,decimal remainingRisk)
+    {
+        if(minimum<=0m||maximum<minimum||step<=0m||held<=0m||
+            equity<=0m||floor<0m||otherMargin<0m||otherRisk<0m||marginPerUnit<=0m||
+            fullRisk<0m||remainingRisk<0m||uncertaintyEurPerUnit<0m||
+            remainingDebit is not decimal debit||debit<0m||fullFee<0m||closeFee<0m||remainingFee<0m)
+            return null;
+        decimal remainder=held-close;
+        bool Legal(decimal units)=>units>=minimum&&units<=maximum&&(units-minimum)%step==0m;
+        if(!Legal(held)||!Legal(close)||!Legal(remainder)||remainingRisk>fullRisk)return null;
+        bool Fits(decimal cash,decimal units,decimal risk)=>cash>=floor&&
+            otherMargin+units*marginPerUnit<=cash*NativePendingCapitalGate.MaximumMarginFraction&&
+            otherRisk+risk<=cash*NativePendingCapitalGate.MaximumAggregateStopFraction&&
+            risk<=cash*NativePendingCapitalGate.MaximumTradeStopFraction&&cash-otherRisk-risk>=floor;
+        if(Fits(equity,held,fullRisk))return null; // HOLD remains an eligible alternative
+        decimal splitFee=closeFee+remainingFee-fullFee;
+        if(splitFee<0m||!Fits(equity-splitFee,remainder,remainingRisk))return null;
+        decimal lower=remainder*(meanEurPerUnit-uncertaintyEurPerUnit)-debit-splitFee;
+        return lower>0m?lower:null;
+    }
+
     internal static NativeBarWindow? Window(Ucp1MarketFrame m,NativeBarTimeframe tf,long at)
         =>m.ClosedBars?.DecisionAt==at?m.ClosedBars.Windows.SingleOrDefault(w=>w.Timeframe==tf&&w.Ready&&
             w.Bars.Length>=3&&w.Bars.All(b=>b.CloseAt<at)):null;
