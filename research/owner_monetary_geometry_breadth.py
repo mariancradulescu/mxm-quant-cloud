@@ -27,11 +27,11 @@ def registered():
          "GEOMETRY_BREADTH_REGISTRY")
     variants=p["Variants"]
     groups={v["Mechanism"] for v in variants}
-    need(len(variants)==35 and len(groups)==7 and len({v["Id"] for v in variants})==35,
+    need(len(variants)==42 and len(groups)==7 and len({v["Id"] for v in variants})==42,
          "GEOMETRY_BREADTH_VARIANTS")
     for m in groups:
         rows=[v for v in variants if v["Mechanism"]==m]
-        need(len(rows)==5 and sum(v["Reference"] for v in rows)==1 and
+        need(len(rows)==6 and sum(v["Reference"] for v in rows)==1 and
              all(v["MonetaryTraining"] and v["Profile"]["EconomicMechanism"]==m and
                  not v["Profile"].get("ModelFundingAtPriorClosedSessionQuote") for v in rows),
              "GEOMETRY_BREADTH_PROFILE")
