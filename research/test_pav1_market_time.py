@@ -73,6 +73,24 @@ class PavMarketTime(unittest.TestCase):
             part=next((root/'checkpoint').glob('part-*.sealed'));part.write_bytes(part.read_bytes()+b'X')
             with self.assertRaises(Exception):restore_checkpoint(root/'checkpoint',root/'corrupt',private,'1',expected)
 
+    def test_current_recipient_is_isolated_from_legacy_input_recipient(self):
+        import hashlib
+        from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.primitives.asymmetric import rsa
+        from .custody_new import emit_public
+        key=rsa.generate_private_key(public_exponent=65537,key_size=2048)
+        private=key.private_bytes(serialization.Encoding.PEM,serialization.PrivateFormat.PKCS8,serialization.NoEncryption())
+        previous=Path.cwd()
+        with tempfile.TemporaryDirectory() as tmp:
+            try:
+                os.chdir(tmp);work=Path('work');work.mkdir();(work/'source.json').write_bytes(b'{}')
+                emit_public(private,Path('new-recipient-output'),'1')
+                emit_public(private,Path('current-checkpoint-recipient'),'2')
+                with patch.dict(os.environ,GITHUB_RUN_ID='2'):seal_checkpoint(work,Path('checkpoint'))
+                restore_checkpoint(Path('checkpoint'),Path('restored'),private,'2',hashlib.sha256(b'{}').hexdigest())
+                self.assertEqual((Path('restored/source.json')).read_bytes(),b'{}')
+            finally:os.chdir(previous)
+
     def test_native_common_book_with_25_synthetic_markets(self):
         with tempfile.TemporaryDirectory() as tmp:
             work=Path(tmp);fixture(work);source=json.loads((work/'source.json').read_bytes())

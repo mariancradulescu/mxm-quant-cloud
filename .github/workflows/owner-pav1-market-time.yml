@@ -50,6 +50,7 @@ jobs:
       - run: python -m research.custody_new
         env:
           R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - run: mv new-recipient-output current-checkpoint-recipient
       - name: Pin exact original artifact identity and archive digest
         env:
           GH_TOKEN: ${{ github.token }}
