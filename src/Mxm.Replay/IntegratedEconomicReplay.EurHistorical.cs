@@ -31,6 +31,7 @@ internal static partial class IntegratedEconomicReplay
         public bool ArchivedSampledQuotes { get; init; }
         public Dictionary<string,string[]>? TrialGroups { get; init; }
         public HistoricalFundingWitness[]? FundingWitnesses { get; init; }
+        public bool EconomicMechanismComparison { get; init; }
     }
     sealed record HistoricalStopWitness(string Symbol,int Side,long OriginalFillAt,long OriginalCloseAt,
         decimal StopDistance,long FirstTradeTouchAt);
@@ -105,6 +106,9 @@ internal static partial class IntegratedEconomicReplay
             return new {Witness=witness,StrictEur=strict,ClosedSessionScenarioEur=conditional,
                 quoteBasis=StaleRolloverWitness(basis),ActualBrokerSettlementEur=(decimal?)null};
         }).ToArray();
+        object? preventiveFunding=protocol.EconomicMechanismComparison?PreventiveMechanismFunding(input,source):null;
+        if(preventiveFunding is not null)
+            Console.WriteLine("MECHANISM_FUNDING_PREFLIGHT "+JsonSerializer.Serialize(preventiveFunding,Json));
         // Selection is execution partitioning only: the original full protocol bytes,
         // scenario identity, all trials and all chronological folds remain unchanged.
         string? scenarioIndexText=Environment.GetEnvironmentVariable("MXM_ECONOMIC_SCENARIO_INDEX");
@@ -353,7 +357,15 @@ internal static partial class IntegratedEconomicReplay
                 Result=HistoricalBook(x.Book,boundaries)
             }).ToArray();
             var markets=streams.Values.Select(s=>new {s.Source.Market.Name,s.Source.CalendarStatus,s.Counts}).ToArray();
-            if(explain && protocol.TrialGroups is not null)output.Add(new {SpreadMultiplier=stress, CommissionAndDebitMultiplier=1m+stress,
+            if(explain&&protocol.EconomicMechanismComparison)output.Add(new {SpreadMultiplier=stress,CommissionAndDebitMultiplier=1m+stress,
+                TrialGroup=trialGroup,Fits=fitted,Trials=trialResults,Markets=markets,
+                MechanismEvidence=comparison.Select(p=>new {p.Trial.Id,Evidence=MechanismEvidence(p.Book)}).ToArray(),
+                PreventiveFunding=preventiveFunding,
+                CalibrationBooks=probes.Select(p=>new {Id=p.Key,Details=EconomicStudyDetails(p.Value,source,streams,p.Value.ExportEurCalibration())}).ToArray(),
+                OpportunityObservations=Array.Empty<object>(),
+                TrialDetails=comparison.Select(p=>new {p.Trial.Id,Details=EconomicStudyDetails(p.Book,source,streams),
+                    Forecasts=HistoricalForecasts(p.Book)}).ToArray()});
+            else if(explain && protocol.TrialGroups is not null)output.Add(new {SpreadMultiplier=stress, CommissionAndDebitMultiplier=1m+stress,
                 TrialGroup=trialGroup,Fits=fitted,Trials=trialResults,Markets=markets,
                 CalibrationBooks=probes.Select(p=>new {Id=p.Key,Details=EconomicStudyDetails(p.Value,source,streams,p.Value.ExportEurCalibration())}).ToArray(),
                 OpportunityObservations=observers.Select(p=>new {Id=p.Key,Details=p.Value.Report()}).ToArray(),
@@ -389,6 +401,27 @@ internal static partial class IntegratedEconomicReplay
         if(NativeEconomicProfiler.Enabled)
             Console.WriteLine("HISTORICAL_EUR_PROFILE_FINAL "+JsonSerializer.Serialize(NativeEconomicProfiler.Snapshot(),Json));
         return 0;
+    }
+
+    static object PreventiveMechanismFunding(EerInput input,EerEvidence source)
+        =>input.Markets.Select(m=>
+        {
+            var terms=m.Market.DatedDevelopment!;
+            var basis=new Dictionary<(string Symbol,long ChargeAt),long>();
+            decimal? Cost(int side)=>source.ModeledFunding(terms,new("PREFLIGHT",m.Market.Name,side,
+                terms.Contract.MinimumUnits,input.Start,0m,false,null,input.End-1,null),input.End-1,basis);
+            return new {Symbol=m.Market.Name,Long=Cost(1),Short=Cost(-1),
+                QuoteBasis=StaleRolloverWitness(basis),ConditionalScenarioOnly=true};
+        }).ToArray();
+
+    static object MechanismEvidence(NativeUnifiedPortfolioEngine book)
+    {
+        var reconciled=book.ReconciledModelEpisodes.ToDictionary(x=>x.PositionId);
+        return book.CompleteModelTrips.Select(t=>new {t.PositionId,t.Symbol,t.Family,t.Side,t.OpenAt,t.CloseAt,
+            t.GrossEur,NetEur=reconciled.GetValueOrDefault(t.PositionId)?.Evidence.ClosedNetEur,
+            MfeEur=t.EconomicEvidence?.SampledMfeEur,MaeEur=t.EconomicEvidence?.SampledMaeEur,
+            t.EconomicEvidence?.MarkCoverageComplete,t.EconomicEvidence?.UnknownMarkClocks,
+            t.EconomicEvidence?.DurationMs,t.ExitReason}).ToArray();
     }
 
     static object HistoricalForecasts(NativeUnifiedPortfolioEngine book)

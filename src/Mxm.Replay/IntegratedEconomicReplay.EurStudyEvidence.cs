@@ -113,7 +113,7 @@ internal static partial class IntegratedEconomicReplay
             var describe=descriptor??=ResearchEpisode();
             foreach(var market in frame.Markets)
             {
-                var offers=describe.DescribeEurGeneral(market,frame.At);
+                var offers=describe.DescribeEurGeneral(market,frame.At,frame);
                 Count("SIGNALS",offers.Length);
                 if(offers.Length==0)continue;
                 if(!broad&&active.ContainsKey(new(market.Symbol,"",0)))

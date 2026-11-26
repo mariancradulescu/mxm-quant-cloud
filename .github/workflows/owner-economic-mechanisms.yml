@@ -1,0 +1,231 @@
+name: OWNER fundamental economic mechanism comparison
+on:
+  pull_request:
+    paths: ['src/**', 'tests/**', 'research/owner_economic_mechanisms.py', 'research/test_owner_economic_mechanisms.py', 'research/economic_mechanisms_1.json', 'research/merge_economic_mechanisms.py', '.github/workflows/owner-economic-mechanisms.yml']
+  push:
+    branches: [main]
+    paths: ['research/economic_mechanisms_1.json']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  technical:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - run: dotnet build src/Mxm.Replay -c Release
+      - run: python -m unittest research.test_owner_economic_mechanisms research.test_owner_eur_archive_funding_2
+      - run: python -m unittest research.test_economic_mechanism_replay
+      - run: dotnet run --project tests/Mxm.Checks -c Release
+  plan:
+    needs: technical
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.actor == 'mariancradulescu' && github.run_attempt == 1
+    environment: mxm-r3-custody-v1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - name: Download and verify preserved authentic source archives
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python -m research.owner_eur_recent_archive download
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: funded-action-history-source-public
+          path: integrated-source-public
+          run-id: 44824462289
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: source-history-public-receipt
+          path: original-source-history
+          run-id: 45396314675
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: target-funding-protected
+          path: targeted-funding
+          run-id: 45759378427
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: target-funding-verified
+          run-id: 45759378427
+          github-token: ${{ github.token }}
+      - name: Audit all contractual financing clocks before economic decisions
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+        run: python -m research.owner_economic_mechanisms plan --work "$RUNNER_TEMP/mechanism-plan" --receipt prior-source.json
+      - run: python -m research.custody_new
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: mechanism-funding-plan
+          path: |
+            funding-plan.json
+            new-recipient-output/
+          retention-days: 90
+          if-no-files-found: error
+  capture:
+    needs: plan
+    environment: mxm-r3-pepperstone-v1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    concurrency:
+      group: mxm-existing-oauth-read-only
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: mechanism-funding-plan
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: source-history-public-receipt
+          path: original-source-history
+          run-id: 45396314675
+          github-token: ${{ github.token }}
+      - name: Read only missing charge marks and official class identities
+        env:
+          R3_CTRADER_CLIENT_ID: ${{ secrets.R3_CTRADER_CLIENT_ID }}
+          R3_CTRADER_CLIENT_SECRET: ${{ secrets.R3_CTRADER_CLIENT_SECRET }}
+          R3_CTRADER_ACCESS_TOKEN: ${{ secrets.R3_CTRADER_ACCESS_TOKEN }}
+        run: python -m research.owner_economic_mechanisms capture
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: mechanism-funding-protected
+          path: mechanism-funding/
+          retention-days: 90
+          if-no-files-found: error
+  evidence:
+    needs: capture
+    environment: mxm-r3-custody-v1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [G0, G1, G2, G3, G4, G5, G6]
+    env:
+      MXM_ECONOMIC_TRIAL_GROUP: ${{ matrix.group }}
+      MXM_ECONOMIC_RECEIPT_DIRECTORY: window-receipts
+      MXM_ECONOMIC_BOUNDED_NEIGHBORS: 1
+      MXM_ECONOMIC_PAIRED_DISTRIBUTION: 1
+      MXM_ECONOMIC_REUSE_FRAMES: 1
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - run: dotnet build src/Mxm.Replay -c Release
+      - name: Download and verify preserved authentic source archives
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python -m research.owner_eur_recent_archive download
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: funded-action-history-source-public
+          path: integrated-source-public
+          run-id: 44824462289
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: source-history-public-receipt
+          path: original-source-history
+          run-id: 45396314675
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: target-funding-protected
+          path: targeted-funding
+          run-id: 45759378427
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: target-funding-verified
+          run-id: 45759378427
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: mechanism-funding-protected
+          path: mechanism-funding
+      - name: Verify packets and materialize comparison with complete financing audit
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+        run: python -m research.owner_economic_mechanisms materialize --work "$RUNNER_TEMP/mechanism-private" --receipt mechanism-source.json
+      - name: Evaluate causal mechanisms through one continuous funded ledger per trial
+        run: dotnet src/Mxm.Replay/bin/Release/net8.0/Mxm.Replay.dll --owner-eur-historical-study "$RUNNER_TEMP/mechanism-private/protocol.json" "$RUNNER_TEMP/mechanism-private/source.json" mechanism-result.json "$RUNNER_TEMP/mechanism-private/verified-protection"
+      - name: Bind source and preserve every cost scenario
+        run: |
+          cp "$RUNNER_TEMP/mechanism-private/protocol.json" materialized-protocol.json
+          python - <<'PYCODE'
+          import json
+          from pathlib import Path
+          from research.merge_eur_scenarios import read,exact_json
+          report=read(Path('mechanism-result.json'))
+          source=read(Path('mechanism-source.json'))
+          assert report['Summary']['SourceSha256']==source['SourceSha256']
+          assert report['Summary']['ProtocolSha256']==source['ProtocolSha256']
+          for index,result in enumerate(report['Summary']['Results']):
+              child=dict(report,Summary=dict(report['Summary'],Results=[result]))
+              Path(f'scenario-{index}.json').write_text(exact_json(child)+'\n')
+          PYCODE
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: mechanism-result-${{ matrix.group }}
+          path: |
+            scenario-*.json
+            mechanism-source.json
+            materialized-protocol.json
+            window-receipts/*.json
+          retention-days: 90
+          if-no-files-found: error
+  combine:
+    needs: evidence
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          pattern: mechanism-result-*
+          path: partitions
+      - run: python -m research.merge_economic_mechanisms partitions mechanism-report
+      - run: python -m research.eur_common_book_performance mechanism-report/economic.json mechanism-report/performance.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: economic-mechanisms-1-complete
+          path: mechanism-report/
+          retention-days: 90
+          if-no-files-found: error

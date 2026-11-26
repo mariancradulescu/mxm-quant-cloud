@@ -65,6 +65,13 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
     public bool CaptureClosedBarActivity { get; init; }
 
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? EconomicMechanism { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? EconomicManagement { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool MinimumContractVolumeOnly { get; init; }
+
     internal string GeometryIdentity => FormattableString.Invariant(
         $"{UseAvailableContext}/{DistributionTargetRanges:G29}/{StopReserveMultiplier:G29}") +
         (ModeledStopLatencyMs is long latency ? FormattableString.Invariant($"/Trade/{latency}") : "") +
@@ -73,10 +80,15 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
         (ModelFundingAtPriorClosedSessionQuote?"/CLOSED_SESSION_FUNDING":"") +
         (ObserveFamilyDirectionsOnClosedBars?"/CLOSED_BAR_FAMILY_DIRECTION_OBSERVATION":"") +
         (CaptureVolatilityContext?"/CLOSED_BAR_RELATIVE_VOLATILITY_V2":"") +
-        (CaptureClosedBarActivity?"/CLOSED_BAR_ACTIVITY_V1":"");
+        (CaptureClosedBarActivity?"/CLOSED_BAR_ACTIVITY_V1":"") +
+        (EconomicMechanism is not null?$"/MECHANISM:{EconomicMechanism}/MANAGEMENT:{EconomicManagement}/MINIMUM:{MinimumContractVolumeOnly}":"");
 
     internal void Verify()
     {
+        if(EconomicMechanism is not null&&(!NativeEconomicMechanisms.All.Contains(EconomicMechanism,StringComparer.Ordinal)||
+            !NativeEconomicMechanisms.Management.Contains(EconomicManagement,StringComparer.Ordinal)||UseAdaptivePayoff||
+            LearnFromOpportunityEpisodes||!UseAvailableContext)||EconomicManagement is not null&&EconomicMechanism is null)
+            throw new ArgumentException("EUR_DISTINCT_MECHANISM_PROFILE");
         if (DistributionTargetRanges <= 0m || (!UseAvailableContext && DistributionTargetRanges != 2m) ||
             MinimumDays < 2 || MinimumEpisodes < MinimumDays ||
             DayPenalty < 0m || StopReserveMultiplier < 1m || ModeledStopLatencyMs is <= 0L ||

@@ -24,6 +24,14 @@ A material limitation records its exact scope and source, with a verification an
 
 ## 3. Research and validation
 
+OWNER intervention of 26 November 2026 after `EUR_RECENT_ARCHIVE_FUNDING_2`:
+the existing configurations are economically rejected. Prioritize comparative
+discovery of distinct mechanisms, real monetary recurrence and robust funded
+lifecycle performance. Recover useful V3.3, PAV1 and SCP1 mechanisms as substantive
+alternatives, not merely more V3 features. Audit all applicable financing clocks
+preventively. The [active intervention and comparison protocol](OWNER_ECONOMIC_MECHANISMS_20261126.md)
+records the new work; prior results and valid implementations remain preserved.
+
 Register the actual trial family, source identity, information availability, fitted quantities, benchmark, splits, financial assumptions, selection rule and outputs. A separate identity is sufficient to examine an improved configuration, reproduce a result or isolate a technical defect. Keep trial records and negative outcomes. Distinguish development, chronological tests inside development, and independent confirmation. Exposed data remain useful for development. Uncertain exposure stays unqualified for independent confirmation.
 
 Use chronological fit and test, walk-forward updates where warranted, regime and instrument sensitivity, neighboring configurations, complexity control and trial-count/multiple-selection treatment appropriate to the question. Guard crossing labels and dependent samples using justified boundaries. Compare NET and capital with CASH and relevant funded controls on aligned clocks and contracts. Use genuinely independent evidence for promotion, even where the within-development comparison is later than its own fit. No universal minimum sample, fixed split, test statistic or significance threshold applies to every family. [Probability of backtest overfitting](https://escholarship.org/uc/item/4w1110bb) · [Backtest overfitting in financial markets](https://escholarship.org/uc/item/4hn4t174)
