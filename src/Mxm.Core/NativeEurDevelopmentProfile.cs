@@ -88,6 +88,16 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
     public bool OptimizeEconomicOpportunityVolume { get; init; }
 
+    // Separate identities preserve the original geometry/fill experiment.
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool MatchEconomicTransitionHorizonAtFill { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public int EconomicStructureLookbackBars { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool ConfirmEconomicEntryOnM5 { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool OptimizeTransitionNetVolume { get; init; }
+
     internal string GeometryIdentity => FormattableString.Invariant(
         $"{UseAvailableContext}/{DistributionTargetRanges:G29}/{StopReserveMultiplier:G29}") +
         (ModeledStopLatencyMs is long latency ? FormattableString.Invariant($"/Trade/{latency}") : "") +
@@ -102,11 +112,23 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
         (EconomicOpportunityVolumeIndex is int volume?FormattableString.Invariant($"/OBSERVED_VOLUME_INDEX:{volume}"):"") +
         (AnchorEconomicGeometryToClosedStructure?"/CLOSED_STRUCTURE_ANCHOR":"") +
         (OptimizeEconomicOpportunityVolume?"/OBSERVED_VOLUME_NET_REWARD_RISK":"") +
+        (MatchEconomicTransitionHorizonAtFill?"/MATCH_TRANSITION_HORIZON_AT_FILL":"") +
+        (EconomicStructureLookbackBars>0?$"/SWING_BARS:{EconomicStructureLookbackBars}/M5_TRUE_RANGE_BUFFER":"") +
+        (ConfirmEconomicEntryOnM5?"/M5_ENTRY_CONFIRMATION":"") +
+        (OptimizeTransitionNetVolume?"/JOINT_EXPECTED_TRANSITION_NET_VOLUME":"") +
         (EconomicManagementTimeframe is not null?$"/MANAGEMENT_TIMEFRAME:{EconomicManagementTimeframe}":"") +
         (EconomicMechanism is not null&&KeepAdmissionRiskAtFill?$"/MECHANISM_KEEP_RISK/RESIZE:{ResizeWithinAdmissionRiskAtFill}":"");
 
     internal void Verify()
     {
+        if(MatchEconomicTransitionHorizonAtFill&&(EconomicMechanism is null||EconomicGeometryTimeframe is null)||
+            EconomicStructureLookbackBars!=0&&(EconomicStructureLookbackBars<2||EconomicStructureLookbackBars>16||
+                !AnchorEconomicGeometryToClosedStructure)||
+            ConfirmEconomicEntryOnM5&&EconomicMechanism is null||
+            OptimizeTransitionNetVolume&&(EconomicMechanism!=NativeEconomicMechanisms.Transition||
+                MinimumContractVolumeOnly||OptimizeEconomicOpportunityVolume||EconomicOpportunityVolumeIndex is not null||
+                !MatchEconomicTransitionHorizonAtFill||!KeepAdmissionRiskAtFill||!ResizeWithinAdmissionRiskAtFill))
+            throw new ArgumentException("EUR_CAUSAL_LIFECYCLE_PROFILE");
         if(OptimizeEconomicOpportunityVolume&&(EconomicMechanism is null||MinimumContractVolumeOnly||EconomicOpportunityVolumeIndex is not null||!KeepAdmissionRiskAtFill||!ResizeWithinAdmissionRiskAtFill)||
             AnchorEconomicGeometryToClosedStructure&&(EconomicMechanism is null||EconomicGeometryTimeframe is null)||
             EconomicManagementTimeframe is not null&&(EconomicMechanism is null||EconomicManagement=="BRACKET"||

@@ -20,7 +20,8 @@ internal static partial class IntegratedEconomicReplay
         Ucp1Episode? Trip=null,long? FirstPositiveAt=null,long? FirstNegativeAt=null,long? PeakAt=null,
         int PositiveClocks=0,int NegativeClocks=0,int UnknownClocks=0,long? ResolvedAt=null,
         decimal? ClosedGrossEur=null,decimal? ClosedNetEur=null,long? ClosedAvailableAt=null,
-        NativeEconomicMechanisms.PeerForecast? PeerScore=null,string? FillReasons=null,decimal? FilledUnits=null);
+        NativeEconomicMechanisms.PeerForecast? PeerScore=null,string? FillReasons=null,decimal? FilledUnits=null,
+        NativeFundingExposure[]? OutstandingFunding=null);
     sealed record ScreenActive(ScreenAttempt Attempt,NativeUnifiedPortfolioEngine Book);
 
     // Isolated, actual native lifecycle observations. Each attempt gets its own
@@ -28,7 +29,7 @@ internal static partial class IntegratedEconomicReplay
     sealed class OpportunityScreenState(OpportunityVariant variant,string scenario,decimal stress,
         EerEvidence source,EerProtectionTape protection,Dictionary<string,EerStream> streams,long interval,
         IEnumerable<NativeEurCalibrationOutcome>? seed=null,
-        OpportunityScreenState? trainer=null,OpportunityScreenState? priorTrainer=null)
+        OpportunityScreenState? trainer=null,OpportunityScreenState? priorTrainer=null,bool lifecycle=false)
     {
         readonly Dictionary<string,ScreenActive> active=new(StringComparer.Ordinal);
         readonly List<ScreenAttempt> attempts=new();
@@ -138,7 +139,9 @@ internal static partial class IntegratedEconomicReplay
                 attempts.Add(item.Attempt with {Status=closedNet is null?"UNKNOWN_CLOSED":
                     label is null?"RECONCILED_NOT_LEARNING_ELIGIBLE":"RECONCILED",
                     ClosedGrossEur=trip.GrossEur,ClosedNetEur=closedNet,ClosedAvailableAt=settled?.AvailableAt,
-                    Label=label,Trip=trip,ResolvedAt=frame.At,FilledUnits=variant.MonetaryTraining?book.OriginalModelEvents.SingleOrDefault(e=>e.Kind=="OPEN_FILL")?.Units:null,FirstPositiveAt=positive.FirstOrDefault()?.At,
+                    Label=label,Trip=trip,ResolvedAt=frame.At,
+                    OutstandingFunding=lifecycle?book.FundingExposureSnapshot().Where(x=>!x.ExactInLedger).ToArray():null,
+                    FilledUnits=variant.MonetaryTraining?book.OriginalModelEvents.SingleOrDefault(e=>e.Kind=="OPEN_FILL")?.Units:null,FirstPositiveAt=positive.FirstOrDefault()?.At,
                     FirstNegativeAt=negative.FirstOrDefault()?.At,
                     PeakAt=known.OrderByDescending(x=>x.FundingCapital!.ConditionalEquityEur).FirstOrDefault()?.At,
                     PositiveClocks=positive.Length,NegativeClocks=negative.Length,UnknownClocks=path.Length-known.Length});
@@ -198,7 +201,7 @@ internal static partial class IntegratedEconomicReplay
                         kv.Key.Family==receipt.Family&&kv.Key.Side==receipt.Side&&streams[kv.Key.Symbol].Source.Market.OfficialAssetClass==peerContext.AssetClass)
                         .SelectMany(kv=>kv.Value),receipt.Family,receipt.Side,
                         peerContext,frame.At,receipt.ReservedRiskEur.Value,receipt.KnownRoundTripCostEur+peerCarry,
-                        variant.Profile.MinimumEpisodes,variant.Profile.MinimumDays,variant.Profile.DayPenalty);
+                        variant.Profile.MinimumEpisodes,variant.Profile.MinimumDays,variant.Profile.DayPenalty,lifecycle);
                 active.Add(symbol,new(attempt with {Entry=receipt,Score=score,PeerScore=peer},episode));
             }
         }
@@ -304,7 +307,7 @@ internal static partial class IntegratedEconomicReplay
         };
     }
 
-    static object BreadthQuality(ScreenAttempt[] rows,Dictionary<string,EerStream> streams)
+    static object BreadthQuality(ScreenAttempt[] rows,Dictionary<string,EerStream> streams,bool lifecycle=false)
     {
         object Summarize(ScreenAttempt[] cohort)
         {
@@ -325,12 +328,16 @@ internal static partial class IntegratedEconomicReplay
                     settled.Sum(x=>x.ClosedNetEur!.Value)/settled.Sum(x=>x.Entry!.ReservedRiskEur??0m):(decimal?)null,
                 FastClosures=settled.Count(x=>x.Trip!.CloseAt-x.Trip.OpenAt<300_000L),
                 FillRefusals=cohort.Where(x=>x.FillReasons is not null).GroupBy(x=>x.FillReasons!).ToDictionary(g=>g.Key,g=>g.Count()),
+                CausalReasons=lifecycle?ScreenReasons(cohort):null,
                 PeerForecasts=predicted.Length,
                 PeerForecastMeanAbsoluteErrorEur=predicted.Length==0?(decimal?)null:
                     predicted.Average(x=>Math.Abs(x.PeerScore!.MeanNetEur-x.ClosedNetEur!.Value)),
                 PeerPositiveLowerForecasts=predicted.Count(x=>x.PeerScore!.WorstNetLowerEur>0m&&x.PeerScore.WorstGrossLowerEur>0m),
                 PeerPositiveLowerRealizedNetEur=predicted.Where(x=>x.PeerScore!.WorstNetLowerEur>0m&&x.PeerScore.WorstGrossLowerEur>0m)
-                    .Sum(x=>x.ClosedNetEur!.Value)
+                    .Sum(x=>x.ClosedNetEur!.Value),
+                BalancedPeerPositiveLowerForecasts=lifecycle?(int?)predicted.Count(x=>x.PeerScore!.BalancedNetLowerEur>0m&&x.PeerScore.BalancedGrossLowerEur>0m):null,
+                BalancedPeerPositiveLowerRealizedNetEur=lifecycle?(decimal?)predicted.Where(x=>x.PeerScore!.BalancedNetLowerEur>0m&&x.PeerScore.BalancedGrossLowerEur>0m)
+                    .Sum(x=>x.ClosedNetEur!.Value):null
             };
         }
         return new
@@ -350,7 +357,9 @@ internal static partial class IntegratedEconomicReplay
         var plan=JsonSerializer.Deserialize<OpportunityScreenPlan>(planBytes,Json)??throw new ArgumentException("OPPORTUNITY_SCREEN_PLAN");
         var input=JsonSerializer.Deserialize<EerInput>(sourceBytes,Json)??throw new ArgumentException("OPPORTUNITY_SCREEN_SOURCE");
         bool entryQuality=plan.Study=="MONETARY_ENTRY_QUALITY_2";
-        bool breadth=plan.Study=="MONETARY_GEOMETRY_BREADTH_1";
+        bool lifecycle=plan.Study=="MONETARY_CAUSAL_LIFECYCLE_1";
+        bool originalBreadth=plan.Study=="MONETARY_GEOMETRY_BREADTH_1";
+        bool breadth=originalBreadth||lifecycle;
         if((!entryQuality&&!breadth&&plan.Study!="MONETARY_OPPORTUNITY_DISCOVERY_1")||plan.Exposure!=ExposedDevelopment||
             input.ProtocolSha256!=plan.SourceProtocolSha256||input.EvidenceManifestSha256!=plan.EvidenceManifestSha256||
             input.SourceAcquiredAt<input.End||plan.Start<input.Start||plan.End>input.End||
@@ -368,7 +377,9 @@ internal static partial class IntegratedEconomicReplay
         string mechanism=Environment.GetEnvironmentVariable("MXM_OPPORTUNITY_MECHANISM")??throw new ArgumentException("OPPORTUNITY_SCREEN_PARTITION");
         var variants=plan.Variants.Where(x=>x.Mechanism==mechanism).ToArray();
         if(variants.Length==0||variants.Count(v=>v.Reference)!=1||
-            (breadth&&(variants.Length!=6||variants.Any(v=>v.GateMode is not null||!v.MonetaryTraining)))||
+            (originalBreadth&&(variants.Length!=6||variants.Any(v=>v.GateMode is not null||!v.MonetaryTraining)))||
+            (lifecycle&&(variants.Any(v=>v.GateMode is not null||!v.MonetaryTraining||
+                !v.Profile.KeepAdmissionRiskAtFill||!v.Profile.ResizeWithinAdmissionRiskAtFill)))||
             (entryQuality&&(variants.Count(v=>v.MonetaryTraining)!=1||
                 variants.Any(v=>v.Reference!=v.MonetaryTraining||v.Reference!=(v.GateMode is null))||
                 !variants.Where(v=>!v.Reference).Select(v=>v.GateMode).OrderBy(x=>x).SequenceEqual(new[]{"CORRECTED","COST_BAND","LEGACY_MARKS"})||
@@ -382,7 +393,7 @@ internal static partial class IntegratedEconomicReplay
         {
             if(!entryQuality)return choices.Select(v=>new OpportunityScreenState(v,scenario,stress,source,protection,streams,
                 plan.SamplingIntervalMs,previous?.Single(s=>s.Variant.Id==v.Id).MaturedBefore(plan.EvaluationFrom),
-                priorTrainer:breadth?previous?.Single(s=>s.Variant.Id==v.Id):null)).ToArray();
+                priorTrainer:breadth?previous?.Single(s=>s.Variant.Id==v.Id):null,lifecycle:lifecycle)).ToArray();
             var reference=choices.Single(v=>v.Reference);
             var prior=previous?.Single(s=>s.Variant.Reference);
             var trainer=new OpportunityScreenState(reference,scenario,stress,source,protection,streams,plan.SamplingIntervalMs,
@@ -396,6 +407,16 @@ internal static partial class IntegratedEconomicReplay
             var streams=input.Markets.ToDictionary(m=>m.Market.Name,m=>new EerStream(m),StringComparer.Ordinal);
             return (Stress:stress,Scenario:scenario,Streams:streams,States:BuildStates(variants,scenario,stress,streams));
         }).ToArray();
+        // Every registered alternative also gets ONE continuous EUR300 book
+        // across all markets, from selection through the later interval.
+        // No per-instrument capital and no reset at the evaluation boundary.
+        var common=lifecycle?runs.SelectMany(r=>variants.Select(v=>(r.Stress,r.Scenario,r.Streams,Id:v.Id,
+            Book:new NativeUnifiedPortfolioEngine(NativeUnifiedPortfolioEngine.EurGeneralProbe,
+                fundingScenarioId:r.Scenario,eurDevelopmentProfile:v.Profile)))
+            .Append((r.Stress,r.Scenario,r.Streams,Id:"CASH_CONTROL",
+                Book:new NativeUnifiedPortfolioEngine(NativeUnifiedPortfolioEngine.EurGeneralCash,
+                    fundingScenarioId:r.Scenario,eurDevelopmentProfile:variants.Single(v=>v.Reference).Profile))))
+            .ToArray():Array.Empty<(decimal Stress,string Scenario,Dictionary<string,EerStream> Streams,string Id,NativeUnifiedPortfolioEngine Book)>();
         void Observe(long from,long to)
         {
             long n=0;
@@ -408,6 +429,13 @@ internal static partial class IntegratedEconomicReplay
                         .OfType<Ucp1MarketFrame>().ToArray();
                     var frame=new Ucp1Frame(at,frames);
                     foreach(var state in run.States)state.Advance(frame);
+                    if(lifecycle&&at>=plan.SelectionFrom)
+                        foreach(var item in common.Where(c=>c.Stress==run.Stress))
+                        {
+                            protection.Between(item.Book,at-1,source,run.Streams,run.Scenario,run.Stress);
+                            source.Advance(item.Book,frame with {Protection=protection.GridCoverage(item.Book,at)},
+                                run.Streams,run.Scenario,run.Stress);
+                        }
                 }
                 if(++n%288==0)Console.WriteLine($"OPPORTUNITY_SCREEN {mechanism} clock={at} processed={n} total={(to-from)/EurStep} through={to}");
             }
@@ -421,10 +449,10 @@ internal static partial class IntegratedEconomicReplay
             var baseline=r.States.Single(x=>x.Variant.Reference).Rows(plan.SelectionFrom,plan.EvaluationFrom);
             var capture=r.States.SingleOrDefault(x=>x.Variant.Id.EndsWith("__SPECIFIC_CAPTURE",StringComparison.Ordinal));
             return new {r.Stress,s.Variant.Id,Raw=ScreenStats(rows,false),Scp1=ScreenStats(rows,true),
-                Reasons=ScreenReasons(rows),TrainingEvidence=entryQuality&&s.Variant.Reference?s.TrainingEvidence():null,
+                Reasons=ScreenReasons(rows),TrainingEvidence=lifecycle||entryQuality&&s.Variant.Reference?s.TrainingEvidence():null,
                 MonetaryQuality=entryQuality||breadth?MonetaryQuality(rows,plan.SelectionFrom,plan.EvaluationFrom):null,
-                BreadthQuality=breadth?BreadthQuality(rows,streams:r.Streams):null,PairedReference=PairedScreen(rows,baseline),
-                PairedStructureRisk=breadth?PairedScreen(rows,r.States.Single(x=>x.Variant.Id.EndsWith("__STRUCTURE_RISK",StringComparison.Ordinal)).Rows(plan.SelectionFrom,plan.EvaluationFrom)):null,
+                BreadthQuality=breadth?BreadthQuality(rows,streams:r.Streams,lifecycle:lifecycle):null,PairedReference=PairedScreen(rows,baseline),
+                PairedStructureRisk=originalBreadth?PairedScreen(rows,r.States.Single(x=>x.Variant.Id.EndsWith("__STRUCTURE_RISK",StringComparison.Ordinal)).Rows(plan.SelectionFrom,plan.EvaluationFrom)):null,
                 PairedMarginalVolume=s.Variant.Id.EndsWith("__MARGINAL_VOLUME",StringComparison.Ordinal)&&capture is not null
                     ?PairedScreen(rows,capture.Rows(plan.SelectionFrom,plan.EvaluationFrom)):null};
         })).ToArray();
@@ -466,10 +494,10 @@ internal static partial class IntegratedEconomicReplay
             var baseline=r.States.Single(x=>x.Variant.Reference).Rows(plan.EvaluationFrom,plan.End);
             var capture=r.States.SingleOrDefault(x=>x.Variant.Id.EndsWith("__SPECIFIC_CAPTURE",StringComparison.Ordinal));
             return new {r.Stress,s.Variant.Id,Raw=ScreenStats(rows,false),Scp1=ScreenStats(rows,true),
-                Reasons=ScreenReasons(rows),TrainingEvidence=entryQuality&&s.Variant.Reference?s.TrainingEvidence():null,
+                Reasons=ScreenReasons(rows),TrainingEvidence=lifecycle||entryQuality&&s.Variant.Reference?s.TrainingEvidence():null,
                 MonetaryQuality=entryQuality||breadth?MonetaryQuality(rows,plan.EvaluationFrom,plan.End):null,
-                BreadthQuality=breadth?BreadthQuality(rows,streams:r.Streams):null,PairedReference=PairedScreen(rows,baseline),
-                PairedStructureRisk=breadth?PairedScreen(rows,r.States.Single(x=>x.Variant.Id.EndsWith("__STRUCTURE_RISK",StringComparison.Ordinal)).Rows(plan.EvaluationFrom,plan.End)):null,
+                BreadthQuality=breadth?BreadthQuality(rows,streams:r.Streams,lifecycle:lifecycle):null,PairedReference=PairedScreen(rows,baseline),
+                PairedStructureRisk=originalBreadth?PairedScreen(rows,r.States.Single(x=>x.Variant.Id.EndsWith("__STRUCTURE_RISK",StringComparison.Ordinal)).Rows(plan.EvaluationFrom,plan.End)):null,
                 PairedMarginalVolume=s.Variant.Id.EndsWith("__MARGINAL_VOLUME",StringComparison.Ordinal)&&capture is not null
                     ?PairedScreen(rows,capture.Rows(plan.EvaluationFrom,plan.End)):null,
                 Episodes=rows.Where(a=>a.Entry is not null).Select(a=>new
@@ -478,6 +506,8 @@ internal static partial class IntegratedEconomicReplay
                     FillUnits=breadth?a.FilledUnits:null,AssetClass=breadth?a.Entry.Context?.AssetClass:null,
                     CostRiskFraction=breadth?a.Entry.Context?.CostRiskFraction:null,a.PeerScore,a.FillReasons,
                     a.Entry.KnownRoundTripCostEur,a.Entry.CurrentMarginEstimateEur,
+                    StopAtAdmission=lifecycle?a.Entry.ProtectiveStop:null,TargetAtAdmission=lifecycle?a.Entry.PriceTarget:null,
+                    a.OutstandingFunding,
                     RiskAtFillEur=a.Trip?.EntryRiskEur,Gap=a.Trip?.CrossedUnknownHistory,PartialReduction=a.Trip?.Integrated?.PartialReduction,
                     ScoreNetLowerEur=a.Score?.NetLowerEur,ScoreGrossLowerEur=a.Score?.GrossLowerEur,Scp1Admitted=ScpAdmits(a),
                     AvailableAt=a.ClosedAvailableAt,NetEur=a.ClosedNetEur,GrossEur=a.ClosedGrossEur,
@@ -501,7 +531,17 @@ internal static partial class IntegratedEconomicReplay
             CompleteDaysBasis="OBSERVED_MONETARY_CLOCKS_WITH_NO_UNRESOLVED_ADMITTED_EPISODES",
             SelectionObjective="WORST_STRESS_MIN_COMPLETE_DAY_CLUSTER_LOWER_AND_ALL_KNOWN_NET_PER_REGISTERED_DAY_CONDITIONAL_SUBTOTAL",
             MfeBasis="SAMPLED_REALIZED_EPISODE_PATH_NOT_EXECUTABLE_MAXIMUM",
-            SharedPortfolioEvaluations=0,IndependentConfirmationCertified=false,Orders=0,CloudActivated=false,SourceBrokerRequests=0
+            CommonBooks=lifecycle?common.Select(c=>new {c.Stress,c.Id,
+                Result=HistoricalBook(c.Book,new[]{plan.SelectionFrom,plan.EvaluationFrom,plan.End}),
+                KnownClosedNetSubtotalEur=c.Book.ReconciledModelEpisodes.Sum(e=>e.Evidence.ClosedNetEur??0m),
+                UnresolvedFunding=c.Book.FundingExposureSnapshot().Where(f=>!f.ExactInLedger).ToArray(),
+                Evidence=MechanismEvidence(c.Book)}).ToArray():null,
+            CommonBookBasis=lifecycle?"CONTINUOUS_EUR300_ALL_MARKETS_SELECTION_THROUGH_EVALUATION_NO_RESET_M5_DECISIONS; ALL_REGISTERED_DIAGNOSTICS; ISOLATED_SELECTION_DOES_NOT_CERTIFY_PORTFOLIO":null,
+            PreventiveFunding=lifecycle?PreventiveMechanismFunding(input,source):null,
+            InstrumentConstraints=lifecycle?input.Markets.Select(m=>new {m.Market.Name,m.Market.OfficialAssetClass,
+                m.Market.Contract.MinimumUnits,m.Market.Contract.VolumeStepUnits,m.Market.Margin,
+                m.Market.TradingMode,m.Market.ShortAllowed}).ToArray():null,
+            SharedPortfolioEvaluations=common.Length,IndependentConfirmationCertified=false,Orders=0,CloudActivated=false,SourceBrokerRequests=0
         },Json));
         return 0;
     }

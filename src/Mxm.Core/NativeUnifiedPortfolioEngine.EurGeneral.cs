@@ -24,7 +24,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
         NativeIntegratedCandidate[] candidates;
         if(eurDevelopmentProfile is {EconomicMechanism:{ } mechanism} distinct)
             candidates=NativeEconomicMechanisms.Describe(mechanism,market,at,distinct.DistributionTargetRanges,sharedFrame,
-                distinct.EconomicGeometryTimeframe,distinct.EconomicStopRanges,distinct.AnchorEconomicGeometryToClosedStructure);
+                distinct.EconomicGeometryTimeframe,distinct.EconomicStopRanges,distinct.AnchorEconomicGeometryToClosedStructure,
+                distinct.EconomicStructureLookbackBars,distinct.ConfirmEconomicEntryOnM5);
         else if(eurDevelopmentProfile is {UseAvailableContext:true} profile)
         {
             if(ObservedWindow(market,NativeBarTimeframe.M5,at) is not { } m5||
@@ -235,7 +236,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
             var risk=candidate.Geometry.InitialRiskEur+CorrelatedRisk(candidate,held.Concat(pending));
             return Net(candidate)/risk;
         }
-        if(eurDevelopmentProfile?.UseJointMonetaryAllocation==true)
+        if(eurDevelopmentProfile?.UseJointMonetaryAllocation==true||eurDevelopmentProfile?.OptimizeTransitionNetVolume==true)
         {
             // Preview whole financeable sets under the same held+pending
             // and post-fill protections. A requested close never frees cash.

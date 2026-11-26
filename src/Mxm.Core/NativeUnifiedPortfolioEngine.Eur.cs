@@ -504,7 +504,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
             var witnessedUnits=(market.EurMargins??Array.Empty<NativeEurMarginObservation>())
                 .Where(x=>x.Side==s.Side&&x.Units>0m).Select(x=>x.Units)
                 .Append(market.Contract.MinimumUnits).Distinct().OrderBy(x=>x).ToArray();
-            var unitsOffered=frame.ObservationEpisodeOnly&&eurDevelopmentProfile?.OptimizeEconomicOpportunityVolume==true
+            var unitsOffered=eurDevelopmentProfile?.OptimizeTransitionNetVolume==true||
+                frame.ObservationEpisodeOnly&&eurDevelopmentProfile?.OptimizeEconomicOpportunityVolume==true
                 ?witnessedUnits
                 :frame.ObservationEpisodeOnly&&eurDevelopmentProfile?.EconomicOpportunityVolumeIndex is int volumeIndex
                 ?witnessedUnits.Skip(volumeIndex).Take(1)
@@ -573,7 +574,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
             Trace(receipt,s.Side>0?"LONG_PENDING":"SHORT_PENDING");
             if(CaptureEurDiagnostics)RecordEurRiskObservation(at,"ADMISSION",frame,id);
         }
-        if(policy is EurGeneralSelect or EurGeneralPooled)
+        if(policy is EurGeneralSelect or EurGeneralPooled||eurDevelopmentProfile?.OptimizeTransitionNetVolume==true)
             AllocateGeneralEur(frame,book,capital,held,pending,choices,Admit,Trace);
         else
         {

@@ -87,5 +87,59 @@ internal static class NativeEconomicMechanismChecks
             "Leave-symbol-out forecast excludes target and future outcomes, normalizes only same-class supported peers");
         check(NativeEconomicMechanisms.LeaveSymbolOutPayoff(peers,"F",1,fx with {AssetClass="METAL"},at,1m,.1m,20,3,0m) is null,
             "Peer estimate cannot transfer across unrelated classes");
+        var balanced=NativeEconomicMechanisms.LeaveSymbolOutPayoff(peers,"F",1,fx,at,1m,.1m,20,3,1.645m,true);
+        check(balanced is {BalancedNetLowerEur:>0m}&&balanced==NativeEconomicMechanisms.LeaveSymbolOutPayoff(
+            contamination,"F",1,fx,at,1m,.1m,20,3,1.645m,true),
+            "Balanced peer diagnostic keeps local-day uncertainty and excludes target/future labels");
+        var swing=NativeEconomicMechanisms.Describe(NativeEconomicMechanisms.Follow,near,at,4m,
+            geometryTimeframe:"M5",stopRanges:1m,closedStructure:true,structureLookback:3).Single();
+        var swingLater=NativeEconomicMechanisms.Describe(NativeEconomicMechanisms.Follow,moved,at,4m,
+            geometryTimeframe:"M5",stopRanges:1m,closedStructure:true,structureLookback:3).Single();
+        check(swing.Stop<anchored.Stop&&swing.Target==anchored.Target&&swing.Stop==swingLater.Stop&&swing.Target==swingLater.Target,
+            "Swing invalidation uses three closed bars and observed M5 noise; destination and stop stay stationary");
+        var opposite=near with {ClosedBars=new(at,windows.Select(w=>w.Timeframe!=NativeBarTimeframe.M15?w:w with
+            {Bars=w.Bars.Select((bar,i)=>bar with {Close=102m-i*.1m,High=103m,Low=99m}).ToArray()}).ToArray())};
+        opposite=opposite with {M15=opposite.ClosedBars!.For(NativeBarTimeframe.M15).Bars};
+        check(NativeEconomicMechanisms.Describe(NativeEconomicMechanisms.Follow,opposite,at,4m,
+            geometryTimeframe:"M15",stopRanges:1m).Length==1&&
+            NativeEconomicMechanisms.Describe(NativeEconomicMechanisms.Follow,opposite,at,4m,
+                geometryTimeframe:"M15",stopRanges:1m,confirmM5:true).Length==0,
+            "Closed M5 timing confirmation detects a contrary entry direction without future bars");
+
+        // H1 continuation is positive, M15 continuation negative. This exact
+        // native pending/fill pair proves the former horizon mismatch and its
+        // opt-in correction, rather than merely checking a serialized flag.
+        var opposingWindows=windows.Select(w=>w.Timeframe!=NativeBarTimeframe.M15?w:w with
+            {Bars=w.Bars.Select((bar,i)=>bar with {Close=102m-i*.1m,Open=102m-i*.1m,High=103m,Low=99m}).ToArray()}).ToArray();
+        Ucp1Frame Clock(long time)
+        {
+            var m=market with {Quote=market.Quote with {At=time},EurDatedMarginScenario=true,
+                ClosedBars=new(time,opposingWindows),M15=opposingWindows.Single(w=>w.Timeframe==NativeBarTimeframe.M15).Bars,
+                EurMargins=new[]{new NativeEurMarginObservation(1,1m,1m,at-1,new string('a',64)),
+                    new NativeEurMarginObservation(1,2m,2m,at-1,new string('a',64))},
+                FundingOffers=new[]{1m,2m}.Select(units=>new NativeFundingOfferEvidence(market.Symbol,1,units,
+                    time,time,time+300000L,time+300000L,0m,new string('a',64))).ToArray()};
+            return new(time,new[]{m});
+        }
+        var transitionProfile=new NativeEurDevelopmentProfile(UseAvailableContext:true)
+        {EconomicMechanism=NativeEconomicMechanisms.Transition,EconomicManagement="BRACKET",
+            EconomicGeometryTimeframe="H1",EconomicStopRanges=.75m,MinimumContractVolumeOnly=true,
+            KeepAdmissionRiskAtFill=true,ResizeWithinAdmissionRiskAtFill=true};
+        var oldClock=new NativeUnifiedPortfolioEngine(NativeUnifiedPortfolioEngine.EurGeneralProbe,eurDevelopmentProfile:transitionProfile);
+        var sameClock=new NativeUnifiedPortfolioEngine(NativeUnifiedPortfolioEngine.EurGeneralProbe,
+            eurDevelopmentProfile:transitionProfile with {MatchEconomicTransitionHorizonAtFill=true});
+        oldClock.Advance(Clock(at));sameClock.Advance(Clock(at));
+        check(oldClock.ModelSummary.PendingIntents==1&&sameClock.ModelSummary.PendingIntents==1,
+            "Both registered PAV1 variants admit the same positive H1 transition");
+        oldClock.Advance(Clock(at+1000));sameClock.Advance(Clock(at+1000));
+        check(oldClock.ModelSummary.OpenPositions==0&&sameClock.ModelSummary.OpenPositions==1,
+            "Matched H1 fill revalidates H1 monetary evidence while legacy M15 rejects the same intent");
+        var marginal=new NativeUnifiedPortfolioEngine(NativeUnifiedPortfolioEngine.EurGeneralProbe,
+            eurDevelopmentProfile:transitionProfile with {MatchEconomicTransitionHorizonAtFill=true,
+                MinimumContractVolumeOnly=false,OptimizeTransitionNetVolume=true});
+        marginal.Advance(Clock(at));
+        check(marginal.OriginalModelEvents.Count(e=>e.Kind=="REQUEST_OPEN")==1&&
+            marginal.OriginalModelEvents.Single(e=>e.Kind=="REQUEST_OPEN").Units==2m,
+            "Marginal transition NET search chooses one evidenced legal amount with highest financed monetary value");
     }
 }
