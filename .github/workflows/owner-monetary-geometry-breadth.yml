@@ -218,7 +218,7 @@ jobs:
           r=json.loads((p/"opportunity-result.json").read_bytes())
           s=json.loads((p/"opportunity-source.json").read_bytes())
           assert all(r[k]==s[k] for k in ("SourceSha256","ProtocolSha256","EvidenceManifestSha256"))
-          assert r["RegisteredMarketCount"]==21 and len(r["HeldOut"])==15
+          assert r["RegisteredMarketCount"]==21 and len(r["HeldOut"])==18
           assert r["Orders"]==r["SharedPortfolioEvaluations"]==r["SourceBrokerRequests"]==0
           assert r["CloudActivated"] is r["IndependentConfirmationCertified"] is False
           print("GEOMETRY_PARTITION_COMPLETE",r["Mechanism"],r["SelectedDecision"],flush=True)
@@ -245,7 +245,7 @@ jobs:
           r=json.loads((p/"opportunity-result.json").read_bytes())
           s=json.loads((p/"opportunity-source.json").read_bytes())
           assert all(r[k]==s[k] for k in ("SourceSha256","ProtocolSha256","EvidenceManifestSha256"))
-          assert r["RegisteredMarketCount"]==21 and len(r["HeldOut"])==15
+          assert r["RegisteredMarketCount"]==21 and len(r["HeldOut"])==18
           assert r["Orders"]==r["SharedPortfolioEvaluations"]==r["SourceBrokerRequests"]==0
           assert r["CloudActivated"] is r["IndependentConfirmationCertified"] is False
           print("GEOMETRY_PARTITION_COMPLETE",r["Mechanism"],r["SelectedDecision"],flush=True)
@@ -272,7 +272,7 @@ jobs:
           r=json.loads((p/"opportunity-result.json").read_bytes())
           s=json.loads((p/"opportunity-source.json").read_bytes())
           assert all(r[k]==s[k] for k in ("SourceSha256","ProtocolSha256","EvidenceManifestSha256"))
-          assert r["RegisteredMarketCount"]==21 and len(r["HeldOut"])==15
+          assert r["RegisteredMarketCount"]==21 and len(r["HeldOut"])==18
           assert r["Orders"]==r["SharedPortfolioEvaluations"]==r["SourceBrokerRequests"]==0
           assert r["CloudActivated"] is r["IndependentConfirmationCertified"] is False
           print("GEOMETRY_PARTITION_COMPLETE",r["Mechanism"],r["SelectedDecision"],flush=True)
@@ -299,7 +299,7 @@ jobs:
           r=json.loads((p/"opportunity-result.json").read_bytes())
           s=json.loads((p/"opportunity-source.json").read_bytes())
           assert all(r[k]==s[k] for k in ("SourceSha256","ProtocolSha256","EvidenceManifestSha256"))
-          assert r["RegisteredMarketCount"]==21 and len(r["HeldOut"])==15
+          assert r["RegisteredMarketCount"]==21 and len(r["HeldOut"])==18
           assert r["Orders"]==r["SharedPortfolioEvaluations"]==r["SourceBrokerRequests"]==0
           assert r["CloudActivated"] is r["IndependentConfirmationCertified"] is False
           print("GEOMETRY_PARTITION_COMPLETE",r["Mechanism"],r["SelectedDecision"],flush=True)
@@ -326,7 +326,7 @@ jobs:
           r=json.loads((p/"opportunity-result.json").read_bytes())
           s=json.loads((p/"opportunity-source.json").read_bytes())
           assert all(r[k]==s[k] for k in ("SourceSha256","ProtocolSha256","EvidenceManifestSha256"))
-          assert r["RegisteredMarketCount"]==21 and len(r["HeldOut"])==15
+          assert r["RegisteredMarketCount"]==21 and len(r["HeldOut"])==18
           assert r["Orders"]==r["SharedPortfolioEvaluations"]==r["SourceBrokerRequests"]==0
           assert r["CloudActivated"] is r["IndependentConfirmationCertified"] is False
           print("GEOMETRY_PARTITION_COMPLETE",r["Mechanism"],r["SelectedDecision"],flush=True)
@@ -353,7 +353,7 @@ jobs:
           r=json.loads((p/"opportunity-result.json").read_bytes())
           s=json.loads((p/"opportunity-source.json").read_bytes())
           assert all(r[k]==s[k] for k in ("SourceSha256","ProtocolSha256","EvidenceManifestSha256"))
-          assert r["RegisteredMarketCount"]==21 and len(r["HeldOut"])==15
+          assert r["RegisteredMarketCount"]==21 and len(r["HeldOut"])==18
           assert r["Orders"]==r["SharedPortfolioEvaluations"]==r["SourceBrokerRequests"]==0
           assert r["CloudActivated"] is r["IndependentConfirmationCertified"] is False
           print("GEOMETRY_PARTITION_COMPLETE",r["Mechanism"],r["SelectedDecision"],flush=True)
@@ -380,7 +380,7 @@ jobs:
           r=json.loads((p/"opportunity-result.json").read_bytes())
           s=json.loads((p/"opportunity-source.json").read_bytes())
           assert all(r[k]==s[k] for k in ("SourceSha256","ProtocolSha256","EvidenceManifestSha256"))
-          assert r["RegisteredMarketCount"]==21 and len(r["HeldOut"])==15
+          assert r["RegisteredMarketCount"]==21 and len(r["HeldOut"])==18
           assert r["Orders"]==r["SharedPortfolioEvaluations"]==r["SourceBrokerRequests"]==0
           assert r["CloudActivated"] is r["IndependentConfirmationCertified"] is False
           print("GEOMETRY_PARTITION_COMPLETE",r["Mechanism"],r["SelectedDecision"],flush=True)
@@ -416,7 +416,7 @@ jobs:
               for name in ("opportunity-protocol.json","opportunity-source.json"):
                   assert (path.parent/name).read_bytes()==(first/name).read_bytes()
               result=read(path)
-              assert result["RegisteredMarketCount"]==21 and len(result["HeldOut"])==15
+              assert result["RegisteredMarketCount"]==21 and len(result["HeldOut"])==18
               results.append(result)
           assert {r["Mechanism"] for r in results}=={v["Mechanism"] for v in plan["Variants"]}
           out=Path("geometry-report");out.mkdir()
