@@ -25,6 +25,27 @@ internal sealed partial class NativeEurAdaptiveEstimator
     bool economicSelection;
     bool selectionAwareCalibration;
     bool selectedResidualSupport;
+    readonly Dictionary<(string Family,int Side),double[]> forecastBandCuts=new();
+
+    // The band is defined by the raw ex ante prediction in risk units,
+    // including the executable gross-minus-cost upper bound. Realized NET
+    // never determines the band of a row. Cuts are frozen before residual dates.
+    static double ForecastNet(Validation x)=>Math.Min(x.Row.Net-x.NetError,
+        x.Row.Gross-x.GrossError-(double)x.Row.Context.CostRiskFraction);
+    static IEnumerable<string> ForecastScopes(NativeEurDecisionContext c,double forecast,double[] cuts,RegimeCuts? regime)
+    {
+        if(cuts.Length!=2)yield break;
+        string band="FORECAST_NET_R:"+Bucket(forecast,cuts);
+        yield return band;
+        if(c.AssetClass is { } asset)yield return "CLASS:"+asset+"/"+band;
+        yield return "SYMBOL:"+c.Symbol+"/"+band;
+        if(regime is not null)
+        {
+            string key=PredictiveRegime(c,regime);
+            yield return "REGIME:"+key+"/"+band;
+            yield return "SYMBOL_REGIME:"+c.Symbol+":"+key+"/"+band;
+        }
+    }
 
     static double[] Terciles(IEnumerable<double?> values)
     {
@@ -54,7 +75,7 @@ internal sealed partial class NativeEurAdaptiveEstimator
     // Same causal forecasts are scored for each candidate, including the cash
     // decision for unsupported rows. The last dates are reserved for error
     // calibration; they do not participate in candidate selection.
-    static NativeEurAdaptiveEstimator FitPredictive(NativeEurCalibration calibration,bool extended,bool economic,bool selectionAware)
+    static NativeEurAdaptiveEstimator FitPredictive(NativeEurCalibration calibration,bool extended,bool economic,bool selectionAware,bool forecastBands)
     {
         using var profile=NativeEconomicProfiler.Measure("eur.predictive_fit");
         if(!extended)throw new ArgumentException("EUR_PREDICTIVE_REQUIRES_EXTENDED");
@@ -140,6 +161,15 @@ internal sealed partial class NativeEurAdaptiveEstimator
         var output=new NativeEurAdaptiveEstimator(fitted,winner.Parameters,calibration.ObservationThrough,
             scores.Select(x=>x.Score).ToArray())
             {selectionDates=selection,errorDates=errorDays,economicSelection=economic,selectionAwareCalibration=selectionAware};
+        if(forecastBands)
+        {
+            foreach(var g in Forward(winner.Parameters,selection).Where(x=>x.Supported)
+                .GroupBy(x=>x.Row.Group))
+            {
+                if(g.Select(x=>x.Row.Day).Distinct().Count()<2)continue;
+                output.forecastBandCuts.Add(g.Key,Terciles(g.Select(x=>(double?)ForecastNet(x))));
+            }
+        }
         var held=Forward(winner.Parameters,errorDays).Where(x=>x.Supported).ToArray();
         if(selectionAware)
         {
@@ -164,7 +194,14 @@ internal sealed partial class NativeEurAdaptiveEstimator
             if(groupWeights.Select(x=>x.Day).Distinct().Count()<2)continue;
             var baseline=new ErrorDistribution(groupWeights);
             var cells=new Dictionary<string,ErrorDistribution>(StringComparer.Ordinal);
-            foreach(var cell in group.SelectMany(e=>ScopeKeys(e.Row.Context,true,model.Scale.Regime)
+            IEnumerable<string> Keys(Validation v)
+            {
+                var baselineKeys=ScopeKeys(v.Row.Context,true,model.Scale.Regime);
+                return output.forecastBandCuts.TryGetValue(group.Key,out var cuts)
+                    ?baselineKeys.Concat(ForecastScopes(v.Row.Context,ForecastNet(v),cuts,model.Scale.Regime))
+                    :baselineKeys;
+            }
+            foreach(var cell in group.SelectMany(e=>Keys(e)
                     .Select(k=>(Key:k,Error:e))).GroupBy(x=>x.Key,StringComparer.Ordinal))
             {
                 var local=Weighted(cell.Select(x=>x.Error),calibration.ObservationThrough/Day,winner.Parameters.HalfLifeDays);
@@ -269,18 +306,21 @@ internal sealed partial class NativeEurAdaptiveEstimator
         decimal risk,decimal cost,NativeEurForecastAdjustment? feedback)
     {
         if(risk<=0)return null;
+        var (g,n)=Estimate(model,context,Values(context,true,true),selected);
         string scope="POOLED_OUT_OF_TIME";
         ErrorDistribution? error=pooledErrors;
         if(predictiveErrors.TryGetValue((family,side),out var cells))
         {
             error=cells.Base;scope="FAMILY_DIRECTION_OUT_OF_TIME";
-            foreach(var key in ScopeKeys(context,true,model.Scale.Regime).Reverse())
+            var keys=ScopeKeys(context,true,model.Scale.Regime);
+            if(forecastBandCuts.TryGetValue((family,side),out var cuts))
+                keys=keys.Concat(ForecastScopes(context,Math.Min(n,g-(double)context.CostRiskFraction),cuts,model.Scale.Regime));
+            foreach(var key in keys.Reverse())
                 if(cells.Cells.TryGetValue(key,out var cell))
                 {error=cell;scope=key;break;}
         }
         if(error is null)return null; // never substitute training residuals
         if(selectionAwareCalibration)scope=(selectedResidualSupport?"RANKED_OUT_OF_TIME/":"ALL_OUT_OF_TIME_FALLBACK/")+scope;
-        var (g,n)=Estimate(model,context,Values(context,true,true),selected);
         g+=feedback?.Gross??0; n+=feedback?.Net??0;
         double grossSem=error.GrossSem+(feedback?.GrossSem??0),netSem=error.NetSem+(feedback?.NetSem??0);
         double grossMean=g+error.Gross.Mean,netMean=n+error.Net.Mean;
