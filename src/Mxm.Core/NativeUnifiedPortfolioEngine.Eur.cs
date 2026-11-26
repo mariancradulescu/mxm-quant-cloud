@@ -52,6 +52,8 @@ public sealed record NativeEurCalibrationOutcome(string PositionId,string Family
     public NativeEurDecisionContext? Context { get; init; }
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public long? DecisionAt { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? EconomicManagement { get; init; }
 }
 public sealed record NativeEurCalibration(long ObservationThrough,string LedgerEventChainSha256,
     NativeEurCalibrationOutcome[] Outcomes)
@@ -82,6 +84,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
     readonly List<Ucp1EurDecisionActivity> eurDecisionActivity=new();
     internal Ucp1EurDecisionActivity[] EurDecisionActivity => eurDecisionActivity.ToArray();
     NativeEurCalibration? eurCalibration;
+    readonly Dictionary<(string Symbol,string Family,int Side,int? Regime),NativeCausalManagementSelection.Choice> eurManagementChoices=new();
     NativeEurAdaptiveEstimator? adaptivePayoff;
     sealed record EurRealizedForecastError(string Symbol,string Family,int Side,long AvailableAt,decimal GrossR,decimal NetR);
     readonly Dictionary<(string Symbol,string Family,int Side),List<EurRealizedForecastError>> eurRealizedErrors=new();
@@ -193,10 +196,13 @@ public sealed partial class NativeUnifiedPortfolioEngine
             calibration.Outcomes.Select(o=>o.PositionId).Distinct(StringComparer.Ordinal)
                 .Count()!=calibration.Outcomes.Length||
             calibration.Outcomes.Any(o=>o.AvailableAt>calibration.ObservationThrough||
+                eurDevelopmentProfile?.SelectEconomicManagementCausally==true&&
+                    o.EconomicManagement is not ("TRANSITION_VALUE" or NativeEconomicMechanisms.MonetaryReduce)||
                 o.ClosedAt<=0||o.AvailableAt<o.ClosedAt||o.RiskEur<=0m||o.Side is not (-1 or 1)||
                 o.DecisionAt is long decision&&(decision<=0L||decision>=o.ClosedAt)))
             throw new ArgumentException("EUR_CALIBRATION_INVALID_CAUSAL_OUTCOME");
         eurHistory.Clear();
+        eurManagementChoices.Clear();
         eurCalibration=calibration;
         foreach(var outcome in calibration.Outcomes)AddEurOutcome(outcome);
         if(eurDevelopmentProfile is {UseAdaptivePayoff:true} adaptive)
@@ -310,8 +316,24 @@ public sealed partial class NativeUnifiedPortfolioEngine
     // The currently evidenced closing cost can make a historical outcome worse.
     // Taking the smaller NET avoids crediting a cheaper historical tariff and
     // avoids charging the same cost twice. Use day means as the sample unit.
+    NativeCausalManagementSelection.Choice CausalManagement(string family,int side,NativeEurDecisionContext context,long at)
+    {
+        var profile=eurDevelopmentProfile!;
+        int? regime=context.ClosedStates.SingleOrDefault(x=>x.Timeframe==NativeBarTimeframe.H1)?.Direction;
+        var key=(context.Symbol,family,side,regime);
+        // Ranking books retain a frozen matured calibration between updates.
+        // This derived cache is discarded on every update or checkpoint restore.
+        bool cache=eurCalibration is not null&&eurCalibration.ObservationThrough<at;
+        if(cache&&eurManagementChoices.TryGetValue(key,out var prior))return prior;
+        var rows=eurHistory.GetValueOrDefault((family,side))??new List<NativeEurCalibrationOutcome>();
+        var choice=NativeEconomicMechanisms.SelectManagement(rows,family,side,context,at,
+            profile.MinimumEpisodes,profile.MinimumDays,profile.DayPenalty);
+        if(cache)eurManagementChoices[key]=choice;
+        return choice;
+    }
+
     internal NativeEurPayoff? EurPayoff(string family,int side,decimal candidateRiskEur,decimal currentCostFloorEur,
-        NativeEurDecisionContext? target=null,Action<string>? diagnostic=null,long? decisionAt=null)
+        NativeEurDecisionContext? target=null,Action<string>? diagnostic=null,long? decisionAt=null,string? managementOverride=null)
     {
         if(eurDevelopmentProfile is {UseAdaptivePayoff:true} && decisionAt is long adaptiveClock)
         {
@@ -327,8 +349,16 @@ public sealed partial class NativeUnifiedPortfolioEngine
         }
         if(eurDevelopmentProfile is {EconomicMechanism:NativeEconomicMechanisms.Scored} scored&&
             decisionAt is long scoredAt&&target is not null)
-            return NativeEconomicMechanisms.LifecyclePayoff(eurHistory.Values.SelectMany(x=>x),family,side,target,
+        {
+            IEnumerable<NativeEurCalibrationOutcome> scoredHistory=eurHistory.GetValueOrDefault((family,side))??new List<NativeEurCalibrationOutcome>();
+            if(scored.SelectEconomicManagementCausally)
+            {
+                string management=managementOverride??CausalManagement(family,side,target,scoredAt).Management;
+                scoredHistory=scoredHistory.Where(x=>x.EconomicManagement==management);
+            }
+            return NativeEconomicMechanisms.LifecyclePayoff(scoredHistory,family,side,target,
                 scoredAt,candidateRiskEur,currentCostFloorEur,scored.MinimumEpisodes,scored.MinimumDays,scored.DayPenalty);
+        }
         if(eurDevelopmentProfile is { UseRecoveredLocalPayoff:true } && decisionAt is long at)
             return RecoveredLocalPayoff(family,side,at,candidateRiskEur,currentCostFloorEur,target,diagnostic);
         int minEpisodes=eurDevelopmentProfile?.MinimumEpisodes??20;
@@ -598,6 +628,12 @@ public sealed partial class NativeUnifiedPortfolioEngine
             var market=choice.Market;
             var receipt=choice.Receipt;
             decimal units=receipt.Units, margin=market.Quote.MarginPerUnit;
+            if(eurDevelopmentProfile is {SelectEconomicManagementCausally:true} actionProfile&&receipt.Context is { } context)
+            {
+                var selected=CausalManagement(s.Family,s.Side,context,at);
+                choice=choice with {Geometry=choice.Geometry with {SelectedEconomicManagement=selected.Management}};
+                Count("EUR_CAUSAL_MANAGEMENT_"+selected.Management);
+            }
             string id="UCP1/"+policy+"/"+market.Symbol+"/"+s.Family+"/"+at;
             Apply(Event("REQUEST_OPEN",at,id,market.Symbol,s.Side,units,margin:margin,
                 slip:market.SlippagePerSideQuote,reason:"NATIVE_CONDITIONAL_SELECTION") with

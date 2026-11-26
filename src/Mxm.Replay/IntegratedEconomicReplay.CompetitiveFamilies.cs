@@ -4,33 +4,36 @@ using Mxm.Core;
 internal static partial class IntegratedEconomicReplay
 {
     public static int RunCompetitiveFamilies(string protocolPath,string sourcePath,string directory,
-        string protectionDirectory,string stressText)
+        string protectionDirectory,string stressText,bool causalManagementStudy=false)
     {
         var pb=File.ReadAllBytes(protocolPath);var sb=File.ReadAllBytes(sourcePath);
         var p=JsonSerializer.Deserialize<PavMarketPlan>(pb,Json)!;
         var input=JsonSerializer.Deserialize<EerInput>(sb,Json)!;
         decimal stress=decimal.Parse(stressText,System.Globalization.CultureInfo.InvariantCulture);
         string planHash=GeneralSha(pb),sourceHash=GeneralSha(sb);
-        if(p.Study!="MONETARY_COMPETITIVE_FAMILIES_1"||p.Exposure!=ExposedDevelopment||
+        if(p.Study!=(causalManagementStudy?"MONETARY_CAUSAL_MANAGEMENT_1":"MONETARY_COMPETITIVE_FAMILIES_1")||p.Exposure!=ExposedDevelopment||
             p.Start!=input.Start||p.End!=input.End||p.SourceProtocolSha256!=input.ProtocolSha256||
             p.EvidenceManifestSha256!=input.EvidenceManifestSha256||input.Markets.Length!=29||
             input.Markets.Select(m=>m.Market.Name).Distinct().Count()!=29||
             !(p.Start<p.SelectionFrom&&p.SelectionFrom<p.EvaluationFrom&&p.EvaluationFrom<p.End)||
             !p.Stresses.SequenceEqual(new[]{0m,.5m,1m})||!p.Stresses.Contains(stress)||
-            p.Variants.Length!=2||p.Variants.Select(v=>v.Id).Distinct().Count()!=2||
+            p.Variants.Length!=(causalManagementStudy?3:2)||p.Variants.Select(v=>v.Id).Distinct().Count()!=p.Variants.Length||
             p.Variants.Any(v=>v.UniverseCount!=29||!v.Profile.CompeteEconomicFamilies||
                 !v.Profile.LearnFromOpportunityEpisodes||!v.Profile.ObserveFamilyDirectionsOnClosedBars||
                 !v.Profile.UseMarketTimeFxValuation||!v.Profile.ReserveObservedBarGaps)||
             !p.Variants.Select(v=>v.Profile.EconomicManagement).ToHashSet().SetEquals(
                 new[]{"TRANSITION_VALUE",NativeEconomicMechanisms.MonetaryReduce}))
             throw new InvalidDataException("COMPETITIVE_FAMILY_STUDY_BINDING");
+        if(causalManagementStudy&&p.Variants.Count(v=>v.Profile.SelectEconomicManagementCausally)!=1||
+            !causalManagementStudy&&p.Variants.Any(v=>v.Profile.SelectEconomicManagementCausally))
+            throw new InvalidDataException("CAUSAL_MANAGEMENT_VARIANT_BINDING");
         Directory.CreateDirectory(directory);
         string scenario=EerHash(planHash+"|"+FormattableString.Invariant($"{stress:G29}"));
         var tape=new EerProtectionTape(protectionDirectory);
         var source=new EerEvidence(input){MarketTimeFx=true,ValuationTape=tape};
         var streams=input.Markets.ToDictionary(m=>m.Market.Name,m=>new EerStream(m),StringComparer.Ordinal);
         var cases=p.Variants.Select(v=>(v.Id,Profile:v.Profile,
-            Observer:new EurOpportunityObserver(v.Profile,scenario,stress,source,tape,streams),
+            Observer:v.Profile.SelectEconomicManagementCausally?null:new EurOpportunityObserver(v.Profile,scenario,stress,source,tape,streams),
             Book:new NativeUnifiedPortfolioEngine(NativeUnifiedPortfolioEngine.EurGeneralSelect,
                 fundingScenarioId:scenario,eurDevelopmentProfile:v.Profile))).ToArray();
         var cash=new NativeUnifiedPortfolioEngine(NativeUnifiedPortfolioEngine.EurGeneralCash,
@@ -51,7 +54,7 @@ internal static partial class IntegratedEconomicReplay
                         tape.Between(c.Book,at-1,source,streams,scenario,stress);
                         source.Advance(c.Book,frame with {Protection=tape.GridCoverage(c.Book,at)},streams,scenario,stress);
                     }
-                foreach(var c in cases)c.Observer.Advance(frame);
+                foreach(var c in cases)c.Observer?.Advance(frame);
                 if(++clocks%288==0)Console.WriteLine($"COMPETITIVE_FAMILIES_PROGRESS stress={stress} at={at} trade={trade} observations={clocks}");
             }
         }
@@ -59,7 +62,17 @@ internal static partial class IntegratedEconomicReplay
         {
             foreach(var c in cases)
             {
-                var model=c.Observer.Export();
+                var model=c.Observer?.Export();
+                if(model is null)
+                {
+                    var labels=cases.Where(x=>x.Observer is not null).SelectMany(x=>x.Observer!.Export().Outcomes.Select(o=>o with
+                        {PositionId=o.PositionId+"/"+x.Profile.EconomicManagement,EconomicManagement=x.Profile.EconomicManagement}))
+                        .OrderBy(o=>o.ClosedAt).ThenBy(o=>o.PositionId,StringComparer.Ordinal).ToArray();
+                    model=new NativeEurCalibration(cases.Where(x=>x.Observer is not null).Min(x=>x.Observer!.Export().ObservationThrough),
+                        GeneralSha(JsonSerializer.SerializeToUtf8Bytes(labels,Json)),labels)
+                    {FundingScenarioId=scenario,OpportunitySchema=NativeUnifiedPortfolioEngine.EurGeneralSchema,
+                        DevelopmentGeometry=c.Profile.GeometryIdentity,OpportunityEpisodeLabels=true};
+                }
                 if(model.ObservationThrough>=at||model.Outcomes.Any(x=>x.AvailableAt>=at))
                     throw new InvalidDataException("COMPETITIVE_FUTURE_CALIBRATION");
                 if(initial)c.Book.LoadEurCalibration(model);else c.Book.UpdateEurResearchCalibration(model);
@@ -73,8 +86,8 @@ internal static partial class IntegratedEconomicReplay
         {
             var root=Path.Combine(directory,"checkpoints",phase);Directory.CreateDirectory(root);
             foreach(var c in books)File.WriteAllText(Path.Combine(root,c.Id+".json"),c.Book.HistoricalEurCheckpoint());
-            foreach(var c in cases)File.WriteAllBytes(Path.Combine(root,c.Id+"-observer.json"),
-                JsonSerializer.SerializeToUtf8Bytes(c.Observer.Checkpoint(),NativeHistoricalCheckpointJson.Options));
+            foreach(var c in cases.Where(x=>x.Observer is not null))File.WriteAllBytes(Path.Combine(root,c.Id+"-observer.json"),
+                JsonSerializer.SerializeToUtf8Bytes(c.Observer!.Checkpoint(),NativeHistoricalCheckpointJson.Options));
             Console.WriteLine($"COMPETITIVE_FAMILIES_CHECKPOINT {stress} {phase}");
         }
         Observe(p.Start,p.SelectionFrom,false);
@@ -102,8 +115,8 @@ internal static partial class IntegratedEconomicReplay
                 HeldOutMonetary=PavCashScore(c.Book,p.EvaluationFrom,p.End),
                 Details=EconomicStudyDetails(c.Book,source,streams)}).ToArray(),
             SourceAvailability=streams.Values.Select(s=>new {s.Source.Market.Name,s.Counts}).ToArray(),
-            ObserverReceipts=cases.Select(c=>new {c.Id,Report=c.Observer.Report()}).ToArray(),
-            SharedPortfolioEvaluations=3,SharedCapitalEur=300,
+            ObserverReceipts=cases.Where(c=>c.Observer is not null).Select(c=>new {c.Id,Report=c.Observer!.Report()}).ToArray(),
+            SharedPortfolioEvaluations=books.Length,SharedCapitalEur=300,
             Scope="SEVEN_FAMILY_COMPETITION_IN_EACH_COMMON_BOOK; HOURLY_CAUSAL_SHADOW_LABELS; WEEKLY_WALK_FORWARD",
             OriginalResultsModified=false,SourceBrokerRequests=0,Orders=0,CloudActivated=false,
             IndependentConfirmationCertified=false,EconomicPromotionCertified=false};

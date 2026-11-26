@@ -113,6 +113,9 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
     public bool CompeteEconomicFamilies { get; init; }
 
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool SelectEconomicManagementCausally { get; init; }
+
     internal string GeometryIdentity => FormattableString.Invariant(
         $"{UseAvailableContext}/{DistributionTargetRanges:G29}/{StopReserveMultiplier:G29}") +
         (ModeledStopLatencyMs is long latency ? FormattableString.Invariant($"/Trade/{latency}") : "") +
@@ -138,11 +141,15 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
         (ReserveObservedBarGaps?"/OBSERVED_GAP_RESERVE":"") +
         (AllocatePav1AtMinimumVolume?"/PAV1_MINIMUM_VOLUME_MONETARY_ALLOCATION":"") +
         (CompeteEconomicFamilies?"/SEVEN_FAMILY_CAUSAL_COMMON_BOOK_V1":"") +
+        (SelectEconomicManagementCausally?"/MATURED_PAIRED_MANAGEMENT_CHOICE_V1":"") +
         (EconomicManagementTimeframe is not null?$"/MANAGEMENT_TIMEFRAME:{EconomicManagementTimeframe}":"") +
         (EconomicMechanism is not null&&KeepAdmissionRiskAtFill?$"/MECHANISM_KEEP_RISK/RESIZE:{ResizeWithinAdmissionRiskAtFill}":"");
 
     internal void Verify()
     {
+        if(SelectEconomicManagementCausally&&(!CompeteEconomicFamilies||!LearnFromOpportunityEpisodes||
+            EconomicManagement!="TRANSITION_VALUE"))
+            throw new ArgumentException("EUR_CAUSAL_MANAGEMENT_PROFILE");
         if(CompeteEconomicFamilies&&(EconomicMechanism!=NativeEconomicMechanisms.Scored||
             !UseAvailableContext||!KeepAdmissionRiskAtFill||!ResizeWithinAdmissionRiskAtFill||
             !ObserveIntentExecutionOnTicks||EconomicGeometryTimeframe is null||

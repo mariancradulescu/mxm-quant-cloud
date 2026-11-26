@@ -328,14 +328,15 @@ public sealed partial class NativeUnifiedPortfolioEngine
         if(eurDevelopmentProfile?.EconomicMechanism is not null)
         {
             if(residual<=0m)return new("INTEGRATED_MECHANISM_TARGET",position.Units);
-            if(eurDevelopmentProfile.EconomicManagement=="BRACKET")return null;
+            string? management=geometry.SelectedEconomicManagement??eurDevelopmentProfile.EconomicManagement;
+            if(management=="BRACKET")return null;
             decimal? debit=NativePortfolioFunding.OfferDebit(market,side,position.Units,frame.At,FundingScenarioId);
             if(debit is null||NativeEconomicMechanisms.Continuation(market,frame.At,eurDevelopmentProfile.EconomicManagementTimeframe??eurDevelopmentProfile.EconomicGeometryTimeframe,
                 eurDevelopmentProfile.Pav1TransitionBars) is not { } transition)return null;
             decimal change=side*transition.Mean*position.Units;
             decimal value=change*(change>=0m?q.EurCredit:q.EurDebit)-debit.Value;
             decimal uncertainty=transition.Sem*position.Units*q.EurDebit;
-            if(eurDevelopmentProfile.EconomicManagement==NativeEconomicMechanisms.MonetaryReduce)
+            if(management==NativeEconomicMechanisms.MonetaryReduce)
             {
                 // Do not use differences of funding ceilings as a guaranteed
                 // monetary saving. First compare actual common-book constraints.
@@ -399,7 +400,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 return value+uncertainty<0m?new("INTEGRATED_MECHANISM_NEGATIVE_CONTINUATION",position.Units):null;
             }
             if(value+uncertainty<0m)return new("INTEGRATED_MECHANISM_NEGATIVE_CONTINUATION",position.Units);
-            if(eurDevelopmentProfile.EconomicManagement=="CAPTURE_VALUE"&&position.EntryQuote is { } entry&&
+            if(management=="CAPTURE_VALUE"&&position.EntryQuote is { } entry&&
                 position.EntryPrice is decimal entryPrice)
             {
                 // Immediate executable liquidation is the alternative to HOLD.
