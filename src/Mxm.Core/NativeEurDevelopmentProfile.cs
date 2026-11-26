@@ -53,6 +53,9 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
     public bool ResizeWithinAdmissionRiskAtFill { get; init; }
 
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool UseJointMonetaryAllocation { get; init; }
+
     internal string GeometryIdentity => FormattableString.Invariant(
         $"{UseAvailableContext}/{DistributionTargetRanges:G29}/{StopReserveMultiplier:G29}") +
         (ModeledStopLatencyMs is long latency ? FormattableString.Invariant($"/Trade/{latency}") : "") +
@@ -77,6 +80,7 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
             RevalidatePredictiveVolatilityAtFill&&!UsePredictiveCalibration||
             KeepAdmissionRiskAtFill&&!UsePredictiveCalibration||
             ResizeWithinAdmissionRiskAtFill&&!KeepAdmissionRiskAtFill||
+            UseJointMonetaryAllocation&&!UsePredictiveCalibration||
             (UseAdaptiveAllocation||UseAdaptiveManagement||UseRealizedForecastFeedback)&&!UseAdaptivePayoff)
             throw new ArgumentException("EUR_REGISTERED_DEVELOPMENT_PROFILE");
     }
