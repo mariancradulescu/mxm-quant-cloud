@@ -215,4 +215,26 @@ public static class NativeEconomicMechanisms
         var estimate=LifecyclePayoff(band,family,side,context,at,risk,cost,minimumEpisodes,minimumDays,penalty);
         return estimate is null?null:estimate with {Cohort=estimate.Cohort+FormattableString.Invariant($"/CAUSAL_COST_MEDIAN:{median:G29}/LOWER:{lower}")};
     }
+
+    internal sealed record PeerForecast(int SupportedPeers,decimal MeanGrossEur,decimal MeanNetEur,
+        decimal WorstGrossLowerEur,decimal WorstNetLowerEur);
+
+    // Independent per-instrument forecasts in the same authenticated class.
+    // Normalize by ex-ante monetary risk, use the target's actual cost and
+    // causal cost band, and never let a target instrument train its own peer
+    // prediction. A prediction is a diagnostic, not authorization to trade.
+    internal static PeerForecast? LeaveSymbolOutPayoff(IEnumerable<NativeEurCalibrationOutcome> outcomes,
+        string family,int side,NativeEurDecisionContext context,long at,decimal risk,decimal cost,
+        int minimumEpisodes,int minimumDays,decimal penalty)
+    {
+        if(string.IsNullOrWhiteSpace(context.AssetClass)||risk<=0m)return null;
+        var estimates=outcomes.Where(x=>x.AvailableAt<at&&x.RiskEur>0m&&x.Family==family&&x.Side==side&&
+            x.Context?.AssetClass==context.AssetClass&&x.Context.Symbol!=context.Symbol)
+            .GroupBy(x=>x.Context!.Symbol,StringComparer.Ordinal)
+            .Select(g=>EntryQualityPayoff(g,family,side,context with {Symbol=g.Key},at,risk,cost,
+                minimumEpisodes,minimumDays,penalty,true)).OfType<NativeEurPayoff>().ToArray();
+        if(estimates.Length<2)return null;
+        return new(estimates.Length,estimates.Average(e=>e.GrossMeanEur),estimates.Average(e=>e.NetMeanEur),
+            estimates.Min(e=>e.GrossLowerEur),estimates.Min(e=>e.NetLowerEur));
+    }
 }
