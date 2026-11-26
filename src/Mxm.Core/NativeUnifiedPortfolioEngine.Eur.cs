@@ -504,7 +504,9 @@ public sealed partial class NativeUnifiedPortfolioEngine
             var witnessedUnits=(market.EurMargins??Array.Empty<NativeEurMarginObservation>())
                 .Where(x=>x.Side==s.Side&&x.Units>0m).Select(x=>x.Units)
                 .Append(market.Contract.MinimumUnits).Distinct().OrderBy(x=>x).ToArray();
-            var unitsOffered=frame.ObservationEpisodeOnly&&eurDevelopmentProfile?.EconomicOpportunityVolumeIndex is int volumeIndex
+            var unitsOffered=frame.ObservationEpisodeOnly&&eurDevelopmentProfile?.OptimizeEconomicOpportunityVolume==true
+                ?witnessedUnits
+                :frame.ObservationEpisodeOnly&&eurDevelopmentProfile?.EconomicOpportunityVolumeIndex is int volumeIndex
                 ?witnessedUnits.Skip(volumeIndex).Take(1)
                 :witnessedUnits.Where(units=>(!frame.ObservationEpisodeOnly&&eurDevelopmentProfile?.MinimumContractVolumeOnly!=true)||
                     units==market.Contract.MinimumUnits).OrderByDescending(x=>x);
@@ -577,11 +579,21 @@ public sealed partial class NativeUnifiedPortfolioEngine
         {
             IEnumerable<EurCandidate> ranked=IsEurRank?choices.OrderByDescending(x=>x.Receipt.Payoff!.NetLowerEur):
                 policy==EurGeneralProbe?choices.OrderBy(x=>ProbeKey(x.Receipt),StringComparer.Ordinal):choices;
+            bool optimizeVolume=frame.ObservationEpisodeOnly&&eurDevelopmentProfile?.OptimizeEconomicOpportunityVolume==true;
+            if(optimizeVolume)
+            {
+                if(options.Count!=1)throw new InvalidOperationException("EUR_OPTIMIZED_VOLUME_REQUIRES_ONE_ISOLATED_SIGNAL");
+                // This is a geometric target reward/risk comparison, not a
+                // learned expected NET forecast. Prefer lower risk on ties.
+                ranked=choices.OrderByDescending(x=>x.Receipt.ConditionalNetRewardRisk)
+                    .ThenBy(x=>x.Geometry.InitialRiskEur).ThenBy(x=>x.Receipt.Units);
+            }
             foreach(var choice in ranked)
             {
                 var gate=AssessEurCandidate(capital,book,held,pending,choice);
                 if(!gate.IsFinanceable){Trace(choice.Receipt,EurRejectedCapital(gate.Status,book,capital));continue;}
                 Admit(choice);
+                if(optimizeVolume)break; // one isolated entry, never multiple volume orders
             }
         }
         if(activity is not null&&options.Count>0)eurDecisionActivity.Add(new(at,options.Count,admitted-admittedBefore,activity));
