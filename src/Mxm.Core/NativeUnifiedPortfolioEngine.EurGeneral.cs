@@ -348,15 +348,15 @@ public sealed partial class NativeUnifiedPortfolioEngine
                     decimal meanPerUnit=side*transition.Mean;
                     meanPerUnit*=meanPerUnit>=0m?q.EurCredit:q.EurDebit;
                     decimal fullFee=Fee(q,position.Units,-side);
-                    foreach(decimal rest in offers.Select(f=>f.Units).Distinct().OrderBy(u=>u))
+                    foreach(decimal retainedUnits in offers.Select(f=>f.Units).Distinct().OrderBy(u=>u))
                     {
-                        if(rest<=0m||rest>=position.Units||fullHorizon is null||Horizon(rest)!=fullHorizon)continue;
-                        decimal close=position.Units-rest;
-                        var remainderDebit=NativePortfolioFunding.OfferDebit(market,side,rest,frame.At,FundingScenarioId);
+                        if(retainedUnits<=0m||retainedUnits>=position.Units||fullHorizon is null||Horizon(retainedUnits)!=fullHorizon)continue;
+                        decimal close=position.Units-retainedUnits;
+                        var remainderDebit=NativePortfolioFunding.OfferDebit(market,side,retainedUnits,frame.At,FundingScenarioId);
                         var advantage=NativeEconomicMechanisms.PartialReductionAdvantage(position.Units,close,
                             market.Contract.MinimumUnits,market.Contract.MaximumUnits,market.Contract.VolumeStepUnits,
                             meanPerUnit,transition.Sem*q.EurDebit,debit.Value,remainderDebit,fullFee,
-                            Fee(q,close,-side),Fee(q,rest,-side));
+                            Fee(q,close,-side),Fee(q,retainedUnits,-side));
                         if(advantage is decimal candidate&&candidate>best){best=candidate;closeUnits=close;}
                     }
                 }
