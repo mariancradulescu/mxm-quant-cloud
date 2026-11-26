@@ -24,10 +24,6 @@
     {
       "Symbol": "EURUSD",
       "At": 1787349600000
-    },
-    {
-      "Symbol": "EURUSD",
-      "At": 1787522400000
     }
   ],
   "LookbackMs": 7200000,
@@ -41,5 +37,9 @@
     "V3_JOINT_ALLOCATION_MANAGEMENT"
   ],
   "ClosedSessionScenario": true,
-  "OriginalsImmutable": true
+  "OriginalsImmutable": true,
+  "ExcludedWeekendClocks": [
+    1787436000000,
+    1787522400000
+  ]
 }
