@@ -110,6 +110,7 @@ def materialize(p,digest,work,receipt_path,key,rid):
     receipt,acquired=verify(p,digest,key,rid)
     verified=json.loads(Path("targeted-funding-verified.json").read_bytes())
     need(verified==receipt,"TARGET_FUNDING_PUBLIC_READBACK")
+    need(terms["EURUSD"][0]["ChargeSwapAtWeekends"] is False,"TARGET_FUNDING_ARCHIVED_WEEKEND_POLICY")
     minutes=eer.charge_clocks({n:v[0] for n,v in terms.items()})
     for entry in source["Markets"]:
         name=entry["Market"]["Name"]
@@ -133,7 +134,7 @@ def materialize(p,digest,work,receipt_path,key,rid):
     protocol["Trials"].append(joint)
     need([t["Id"] for t in protocol["Trials"]]==p["Trials"],"TARGET_FUNDING_TRIALS")
     protocol["Study"]=p["Study"]
-    protocol["TrialGroups"]={"ARCHIVE":p["Trials"]}
+    protocol["TrialGroups"]={"CONTROL":p["Trials"][:3],"RISK_JOINT":p["Trials"][3:]}
     protocol["FundingWitnesses"]=witnesses
     proof=dict(Original=old_receipt["Proof"],TargetedReceipt=receipt,ConflictingMarks=conflicts,
                FundingBasis="CONDITIONAL_ORIGINAL_CONTRACT_AND_AUTHENTIC_PRIOR_CLOSED_SESSION_QUOTE_NOT_BROKER_SETTLEMENT")
