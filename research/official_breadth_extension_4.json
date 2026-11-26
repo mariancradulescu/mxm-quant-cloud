@@ -1,0 +1,79 @@
+{
+  "Study": "OFFICIAL_BREADTH_EXTENSION_4_EARLIER_EXECUTION",
+  "Exposure": "DEVELOPMENT_ONLY_NO_INDEPENDENT_CLAIM",
+  "PriorCensusSha256": "0fece43b54d788666fa139141adbf3f9cd07d708b3665adc704cafd39cdf0882",
+  "ExistingUniverse": [
+    "AAPL.US",
+    "AAPL.US-24",
+    "AAXJ.US",
+    "ACWI.US",
+    "AMD.US",
+    "BTCUSD",
+    "CN50",
+    "Coffee",
+    "Copper",
+    "Cotton",
+    "DOTUSD",
+    "ETHUSD",
+    "EURJPY",
+    "EURUSD",
+    "GBPUSD",
+    "GER40-F",
+    "GOOG.US-24",
+    "HK50-F",
+    "LTCUSD",
+    "NatGas",
+    "SpotBrent",
+    "SpotCrude",
+    "Sugar",
+    "US500",
+    "USDJPY",
+    "USDX",
+    "XAGUSD",
+    "XAUUSD",
+    "XPDUSD"
+  ],
+  "Base": [],
+  "New": [
+    "Gasoline",
+    "SNAP.US-24",
+    "BRF.US",
+    "JPN225-F"
+  ],
+  "Windows": [
+    {
+      "Id": "NOV25_26_ANNUAL_CONTEXT",
+      "From": "2026-11-25",
+      "To": "2026-11-26"
+    },
+    {
+      "Id": "NOV2025_10",
+      "From": "2025-11-10",
+      "To": "2025-11-11"
+    },
+    {
+      "Id": "FEB2026_09",
+      "From": "2026-02-09",
+      "To": "2026-02-10"
+    },
+    {
+      "Id": "MAY2026_11",
+      "From": "2026-05-11",
+      "To": "2026-05-12"
+    },
+    {
+      "Id": "AUG2026_10",
+      "From": "2026-08-10",
+      "To": "2026-08-11"
+    }
+  ],
+  "WarmFrom": "2025-11-01",
+  "PageHours": 4,
+  "PerPartitionMaxRequests": 1000,
+  "PerPartitionSeconds": 1080,
+  "PerSidePageBudget": 450,
+  "SelectionBasis": "Next four original pending census names after 29 captured markets; no performance filter. Latest completed day first for annual bars; four fixed earlier Monday execution windows at quarterly spacing, selected for coverage rather than outcomes. Earlier windows are distinct source coverage, not continuous annual independent confirmation.",
+  "Orders": 0,
+  "CloudActivated": false,
+  "IndependentConfirmationCertified": false
+}
