@@ -1,0 +1,55 @@
+{
+  "Study": "OFFICIAL_BREADTH_EXTENSION_3",
+  "Exposure": "DEVELOPMENT_ONLY_NO_INDEPENDENT_CLAIM",
+  "PriorCensusSha256": "0fece43b54d788666fa139141adbf3f9cd07d708b3665adc704cafd39cdf0882",
+  "ExistingUniverse": [
+    "AAPL.US",
+    "AAPL.US-24",
+    "AAXJ.US",
+    "ACWI.US",
+    "AMD.US",
+    "BTCUSD",
+    "CN50",
+    "Coffee",
+    "Cotton",
+    "ETHUSD",
+    "EURJPY",
+    "EURUSD",
+    "GBPUSD",
+    "GER40-F",
+    "GOOG.US-24",
+    "HK50-F",
+    "LTCUSD",
+    "NatGas",
+    "SpotBrent",
+    "SpotCrude",
+    "Sugar",
+    "US500",
+    "USDJPY",
+    "XAGUSD",
+    "XAUUSD"
+  ],
+  "Base": [],
+  "New": [
+    "USDX",
+    "XPDUSD",
+    "Copper",
+    "DOTUSD"
+  ],
+  "Windows": [
+    {
+      "Id": "NOV25_26",
+      "From": "2026-11-25",
+      "To": "2026-11-26"
+    }
+  ],
+  "WarmFrom": "2025-11-01",
+  "PageHours": 4,
+  "PerPartitionMaxRequests": 1000,
+  "PerPartitionSeconds": 1080,
+  "PerSidePageBudget": 450,
+  "SelectionBasis": "Next four pending census names after excluding the 25 previously captured markets; immutable census order, no performance filter. Recover seven official bar timeframes over more than twelve months and the next fully closed day of execution/conversion/protection ticks. The Nov25-26 window extends all prior execution captures, so route observations are additional evidence. Historic tariff continuity and a complete twelve-month economic confirmation are not implied by bar collection.",
+  "Orders": 0,
+  "CloudActivated": false,
+  "IndependentConfirmationCertified": false
+}
