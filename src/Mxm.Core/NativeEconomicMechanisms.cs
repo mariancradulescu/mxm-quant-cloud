@@ -54,7 +54,7 @@ public static class NativeEconomicMechanisms
     }
 
     internal static NativeIntegratedCandidate[] Describe(string mechanism,Ucp1MarketFrame m,long at,
-        decimal targetRanges,Ucp1Frame? frame=null)
+        decimal targetRanges,Ucp1Frame? frame=null,string? geometryTimeframe=null,decimal? stopRanges=null)
     {
         if(!All.Contains(mechanism,StringComparer.Ordinal))throw new ArgumentException("ECONOMIC_MECHANISM_UNKNOWN");
         var w=Window(m,NativeBarTimeframe.M5,at);
@@ -62,19 +62,24 @@ public static class NativeEconomicMechanisms
             return Array.Empty<NativeIntegratedCandidate>();
         if(mechanism==Scored)
             return All.Where(x=>x is not (Scored or Transition))
-                .SelectMany(x=>Describe(x,m,at,targetRanges,frame)).ToArray();
+                .SelectMany(x=>Describe(x,m,at,targetRanges,frame,geometryTimeframe,stopRanges)).ToArray();
         var b=w.Bars;decimal tick=m.EurTickSize.Value,atr=Math.Max(tick,Atr(b));
+        var geometry=geometryTimeframe is null?w:Window(m,Enum.Parse<NativeBarTimeframe>(geometryTimeframe),at);
+        if(geometry is null)return Array.Empty<NativeIntegratedCandidate>();
+        var gb=geometry.Bars;decimal geometryAtr=Math.Max(tick,Atr(gb));
         int side=0;decimal? destination=null;
         var h=Window(m,NativeBarTimeframe.H1,at);
         var z=Window(m,NativeBarTimeframe.M15,at);
         int shortDirection=Math.Sign(b[^1].Close-b[^2].Close);
         switch(mechanism)
         {
-            case Follow:side=shortDirection;break;
-            case Reverse:side=-shortDirection;break;
+            case Follow:side=Math.Sign(gb[^1].Close-gb[^2].Close);break;
+            case Reverse:side=-Math.Sign(gb[^1].Close-gb[^2].Close);
+                if(geometryTimeframe is not null&&side*(gb[^2].Close-gb[^1].Close)>0m)destination=gb[^2].Close;
+                break;
             case Range:
-                decimal high=b[..^1].Max(x=>x.High),low=b[..^1].Min(x=>x.Low);
-                side=b[^1].Close>high?1:b[^1].Close<low?-1:0;
+                decimal high=gb[..^1].Max(x=>x.High),low=gb[..^1].Min(x=>x.Low);
+                side=gb[^1].Close>high?1:gb[^1].Close<low?-1:0;
                 if(z is null||h is null||side*(z.Bars[^1].Close-z.Bars[0].Open)<=0m||
                     side*(h.Bars[^1].Close-h.Bars[0].Open)<=0m)side=0;
                 break;
@@ -121,11 +126,19 @@ public static class NativeEconomicMechanisms
         }
         if(side==0)return Array.Empty<NativeIntegratedCandidate>();
         decimal entry=side>0?m.Quote.Ask:m.Quote.Bid,exit=side>0?m.Quote.Bid:m.Quote.Ask;
-        decimal stop=Tick(exit-side*atr,tick,side<0);
-        decimal target=Tick(destination??entry+side*targetRanges*atr,tick,side>0);
+        decimal stop=Tick(exit-side*geometryAtr*(stopRanges??1m),tick,side<0);
+        // Reverse uses the preceding closed price as a natural repair
+        // destination only when it is still ahead of the executable entry.
+        // Otherwise the registered range extension remains a separate hypothesis.
+        if(mechanism==Reverse&&destination is decimal repair)
+        {
+            if(side*(repair-entry)<=0m)destination=null;
+            else destination=entry+side*Math.Max(side*(repair-entry),targetRanges*geometryAtr);
+        }
+        decimal target=Tick(destination??entry+side*targetRanges*geometryAtr,tick,side>0);
         return stop>0m&&target>0m&&side*(exit-stop)>0m&&side*(target-entry)>0m&&
             NativeIntegratedLifecycle.ProtectionCompatible(side,stop,target,m)
-            ?new[]{new NativeIntegratedCandidate(mechanism,side,stop,target,atr,b[^1].CloseAt)}
+            ?new[]{new NativeIntegratedCandidate(mechanism,side,stop,target,geometryAtr,b[^1].CloseAt)}
             :Array.Empty<NativeIntegratedCandidate>();
     }
 
