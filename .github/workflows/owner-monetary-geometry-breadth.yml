@@ -1,0 +1,434 @@
+name: OWNER monetary geometry and 21-market breadth
+on:
+  pull_request:
+    paths: ['src/**', 'tests/**', 'research/monetary_geometry_breadth_1.json', 'research/owner_monetary_geometry_breadth.py', 'research/test_monetary_geometry_breadth.py', '.github/workflows/owner-monetary-geometry-breadth.yml']
+  push:
+    branches: [main]
+    paths: ['research/monetary_geometry_breadth_1.json']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  technical:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - run: dotnet build src/Mxm.Replay -c Release
+      - run: python -m unittest research.test_monetary_geometry_breadth research.test_monetary_entry_quality research.test_monetary_opportunity_discovery research.test_owner_eur_recent_funded
+      - run: dotnet run --project tests/Mxm.Checks -c Release
+  screen:
+    needs: technical
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.actor == 'mariancradulescu' && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    environment: mxm-r3-custody-v1
+    timeout-minutes: 350
+    env:
+      MXM_ECONOMIC_REUSE_FRAMES: 1
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - run: dotnet build src/Mxm.Replay -c Release
+      - name: Pin exact original artifact identity and archive digest
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/"$GITHUB_REPOSITORY"/actions/artifacts/15000522105 > /tmp/eer1-artifact.json
+          python -c 'import json; a=json.load(open("/tmp/eer1-artifact.json")); assert a["id"]==15000522105 and a["workflow_run"]["id"]==45555613548 and a["size_in_bytes"]==233873730 and a["digest"]=="sha256:107b2bc43e6ff25a5799e253b0ab6ee718ad5b88ef3bb3211d84ad6c20b87a5b" and not a["expired"]'
+          gh api repos/"$GITHUB_REPOSITORY"/actions/artifacts/15000522105/zip > /tmp/eer1-original.zip
+          echo '107b2bc43e6ff25a5799e253b0ab6ee718ad5b88ef3bb3211d84ad6c20b87a5b  /tmp/eer1-original.zip' | sha256sum -c -
+          unzip -q /tmp/eer1-original.zip -d eer1-source
+          rm /tmp/eer1-original.zip
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: owner-eur-conditional-source-verified
+          path: pilot-source
+          run-id: 45552716026
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: source-history-public-receipt
+          path: original-source-history
+          run-id: 45396314675
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: source-history-original-sealed
+          path: original-source-history
+          run-id: 45396314675
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: owner-history-extension-sealed-and-receipt
+          path: previous-extension
+          run-id: 45409527714
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: sealed-source
+          path: bdp-source
+          run-id: 41724643418
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: sealed-source
+          path: aip-source
+          run-id: 41735441128
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: hxc1-original-historical-encrypted-source
+          path: mde1-hxc1-source
+          run-id: 43817213663
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: xmh2-complete-274day-m15-encrypted-source
+          path: mde1-xmh2-source
+          run-id: 44352570167
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: p05-new-live-readonly-authentic-source-sealed
+          path: p05-sealed
+          run-id: 45134137836
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: p05-new-live-readonly-aggregate-public
+          path: p05-public
+          run-id: 45134137836
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: owner-eur-gap-official-original
+          path: prior-gap
+          run-id: 45541671931
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: owner-eur-rollover-official-original
+          path: prior-rollover
+          run-id: 45549613144
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: integrated-full-session-custody
+          path: integrated-sealed-source
+          run-id: 44687919474
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: integrated-full-session-source-public
+          path: integrated-source-public
+          run-id: 44687919474
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: closed-market-original-ciphertext
+          path: closed-market-source
+          run-id: 44733062339
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: closed-market-original-source-public
+          path: closed-market-source
+          run-id: 44733062339
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: hxc1-original-historical-encrypted-source
+          path: hxc1-original
+          run-id: 43817213663
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: recent-source-input
+          run-id: 45716198383
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: recent-source-metadata
+          path: recent-metadata
+          run-id: 45716198383
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: recent-source-plan
+          run-id: 45716198383
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: recent-source-verified-summary
+          run-id: 45716198383
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          pattern: recent-source-protected-*
+          path: recent-protected
+          run-id: 45716198383
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          pattern: recent-source-verified-*
+          path: recent-verified
+          run-id: 45716198383
+          github-token: ${{ github.token }}
+      - name: Verify the exact original 21-market and entry-quality archives
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python -m research.owner_monetary_geometry_breadth download
+      - name: Reconstruct original authenticated source once
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+        run: python -m research.owner_eer1_readback --prepare-protection-recovery "$RUNNER_TEMP/eur-private"
+      - name: Bind all 21 markets byte-identically to new protocol
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+        run: python -m research.owner_monetary_geometry_breadth materialize --work "$RUNNER_TEMP/eur-private" --receipt geometry-source.json
+      - name: Economic geometry partition 1/7 M5_FOLLOW
+        env:
+          MXM_OPPORTUNITY_MECHANISM: M5_FOLLOW
+        run: |
+          set -euo pipefail
+          mkdir -p partitions/M5_FOLLOW
+          dotnet src/Mxm.Replay/bin/Release/net8.0/Mxm.Replay.dll --owner-opportunity-screen "$RUNNER_TEMP/eur-private/opportunity-protocol.json" "$RUNNER_TEMP/eur-private/source.json" partitions/M5_FOLLOW/opportunity-result.json "$RUNNER_TEMP/eur-private/verified-protection"
+          cp geometry-source.json partitions/M5_FOLLOW/opportunity-source.json
+          cp "$RUNNER_TEMP/eur-private/opportunity-protocol.json" partitions/M5_FOLLOW/opportunity-protocol.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path("partitions/M5_FOLLOW")
+          r=json.loads((p/"opportunity-result.json").read_bytes())
+          s=json.loads((p/"opportunity-source.json").read_bytes())
+          assert all(r[k]==s[k] for k in ("SourceSha256","ProtocolSha256","EvidenceManifestSha256"))
+          assert r["RegisteredMarketCount"]==21 and len(r["HeldOut"])==18
+          assert r["Orders"]==r["SharedPortfolioEvaluations"]==r["SourceBrokerRequests"]==0
+          assert r["CloudActivated"] is r["IndependentConfirmationCertified"] is False
+          print("GEOMETRY_PARTITION_COMPLETE",r["Mechanism"],r["SelectedDecision"],flush=True)
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: geometry-breadth-M5_FOLLOW
+          path: partitions/M5_FOLLOW/
+          if-no-files-found: error
+          retention-days: 90
+      - name: Economic geometry partition 2/7 M5_REVERSE
+        env:
+          MXM_OPPORTUNITY_MECHANISM: M5_REVERSE
+        run: |
+          set -euo pipefail
+          mkdir -p partitions/M5_REVERSE
+          dotnet src/Mxm.Replay/bin/Release/net8.0/Mxm.Replay.dll --owner-opportunity-screen "$RUNNER_TEMP/eur-private/opportunity-protocol.json" "$RUNNER_TEMP/eur-private/source.json" partitions/M5_REVERSE/opportunity-result.json "$RUNNER_TEMP/eur-private/verified-protection"
+          cp geometry-source.json partitions/M5_REVERSE/opportunity-source.json
+          cp "$RUNNER_TEMP/eur-private/opportunity-protocol.json" partitions/M5_REVERSE/opportunity-protocol.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path("partitions/M5_REVERSE")
+          r=json.loads((p/"opportunity-result.json").read_bytes())
+          s=json.loads((p/"opportunity-source.json").read_bytes())
+          assert all(r[k]==s[k] for k in ("SourceSha256","ProtocolSha256","EvidenceManifestSha256"))
+          assert r["RegisteredMarketCount"]==21 and len(r["HeldOut"])==18
+          assert r["Orders"]==r["SharedPortfolioEvaluations"]==r["SourceBrokerRequests"]==0
+          assert r["CloudActivated"] is r["IndependentConfirmationCertified"] is False
+          print("GEOMETRY_PARTITION_COMPLETE",r["Mechanism"],r["SelectedDecision"],flush=True)
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: geometry-breadth-M5_REVERSE
+          path: partitions/M5_REVERSE/
+          if-no-files-found: error
+          retention-days: 90
+      - name: Economic geometry partition 3/7 RANGE_CONTINUATION
+        env:
+          MXM_OPPORTUNITY_MECHANISM: RANGE_CONTINUATION
+        run: |
+          set -euo pipefail
+          mkdir -p partitions/RANGE_CONTINUATION
+          dotnet src/Mxm.Replay/bin/Release/net8.0/Mxm.Replay.dll --owner-opportunity-screen "$RUNNER_TEMP/eur-private/opportunity-protocol.json" "$RUNNER_TEMP/eur-private/source.json" partitions/RANGE_CONTINUATION/opportunity-result.json "$RUNNER_TEMP/eur-private/verified-protection"
+          cp geometry-source.json partitions/RANGE_CONTINUATION/opportunity-source.json
+          cp "$RUNNER_TEMP/eur-private/opportunity-protocol.json" partitions/RANGE_CONTINUATION/opportunity-protocol.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path("partitions/RANGE_CONTINUATION")
+          r=json.loads((p/"opportunity-result.json").read_bytes())
+          s=json.loads((p/"opportunity-source.json").read_bytes())
+          assert all(r[k]==s[k] for k in ("SourceSha256","ProtocolSha256","EvidenceManifestSha256"))
+          assert r["RegisteredMarketCount"]==21 and len(r["HeldOut"])==18
+          assert r["Orders"]==r["SharedPortfolioEvaluations"]==r["SourceBrokerRequests"]==0
+          assert r["CloudActivated"] is r["IndependentConfirmationCertified"] is False
+          print("GEOMETRY_PARTITION_COMPLETE",r["Mechanism"],r["SelectedDecision"],flush=True)
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: geometry-breadth-RANGE_CONTINUATION
+          path: partitions/RANGE_CONTINUATION/
+          if-no-files-found: error
+          retention-days: 90
+      - name: Economic geometry partition 4/7 EQUILIBRIUM_REVERSION
+        env:
+          MXM_OPPORTUNITY_MECHANISM: EQUILIBRIUM_REVERSION
+        run: |
+          set -euo pipefail
+          mkdir -p partitions/EQUILIBRIUM_REVERSION
+          dotnet src/Mxm.Replay/bin/Release/net8.0/Mxm.Replay.dll --owner-opportunity-screen "$RUNNER_TEMP/eur-private/opportunity-protocol.json" "$RUNNER_TEMP/eur-private/source.json" partitions/EQUILIBRIUM_REVERSION/opportunity-result.json "$RUNNER_TEMP/eur-private/verified-protection"
+          cp geometry-source.json partitions/EQUILIBRIUM_REVERSION/opportunity-source.json
+          cp "$RUNNER_TEMP/eur-private/opportunity-protocol.json" partitions/EQUILIBRIUM_REVERSION/opportunity-protocol.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path("partitions/EQUILIBRIUM_REVERSION")
+          r=json.loads((p/"opportunity-result.json").read_bytes())
+          s=json.loads((p/"opportunity-source.json").read_bytes())
+          assert all(r[k]==s[k] for k in ("SourceSha256","ProtocolSha256","EvidenceManifestSha256"))
+          assert r["RegisteredMarketCount"]==21 and len(r["HeldOut"])==18
+          assert r["Orders"]==r["SharedPortfolioEvaluations"]==r["SourceBrokerRequests"]==0
+          assert r["CloudActivated"] is r["IndependentConfirmationCertified"] is False
+          print("GEOMETRY_PARTITION_COMPLETE",r["Mechanism"],r["SelectedDecision"],flush=True)
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: geometry-breadth-EQUILIBRIUM_REVERSION
+          path: partitions/EQUILIBRIUM_REVERSION/
+          if-no-files-found: error
+          retention-days: 90
+      - name: Economic geometry partition 5/7 V33_MULTISCALE_ACTIVITY
+        env:
+          MXM_OPPORTUNITY_MECHANISM: V33_MULTISCALE_ACTIVITY
+        run: |
+          set -euo pipefail
+          mkdir -p partitions/V33_MULTISCALE_ACTIVITY
+          dotnet src/Mxm.Replay/bin/Release/net8.0/Mxm.Replay.dll --owner-opportunity-screen "$RUNNER_TEMP/eur-private/opportunity-protocol.json" "$RUNNER_TEMP/eur-private/source.json" partitions/V33_MULTISCALE_ACTIVITY/opportunity-result.json "$RUNNER_TEMP/eur-private/verified-protection"
+          cp geometry-source.json partitions/V33_MULTISCALE_ACTIVITY/opportunity-source.json
+          cp "$RUNNER_TEMP/eur-private/opportunity-protocol.json" partitions/V33_MULTISCALE_ACTIVITY/opportunity-protocol.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path("partitions/V33_MULTISCALE_ACTIVITY")
+          r=json.loads((p/"opportunity-result.json").read_bytes())
+          s=json.loads((p/"opportunity-source.json").read_bytes())
+          assert all(r[k]==s[k] for k in ("SourceSha256","ProtocolSha256","EvidenceManifestSha256"))
+          assert r["RegisteredMarketCount"]==21 and len(r["HeldOut"])==18
+          assert r["Orders"]==r["SharedPortfolioEvaluations"]==r["SourceBrokerRequests"]==0
+          assert r["CloudActivated"] is r["IndependentConfirmationCertified"] is False
+          print("GEOMETRY_PARTITION_COMPLETE",r["Mechanism"],r["SelectedDecision"],flush=True)
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: geometry-breadth-V33_MULTISCALE_ACTIVITY
+          path: partitions/V33_MULTISCALE_ACTIVITY/
+          if-no-files-found: error
+          retention-days: 90
+      - name: Economic geometry partition 6/7 INTERMARKET_DISLOCATION
+        env:
+          MXM_OPPORTUNITY_MECHANISM: INTERMARKET_DISLOCATION
+        run: |
+          set -euo pipefail
+          mkdir -p partitions/INTERMARKET_DISLOCATION
+          dotnet src/Mxm.Replay/bin/Release/net8.0/Mxm.Replay.dll --owner-opportunity-screen "$RUNNER_TEMP/eur-private/opportunity-protocol.json" "$RUNNER_TEMP/eur-private/source.json" partitions/INTERMARKET_DISLOCATION/opportunity-result.json "$RUNNER_TEMP/eur-private/verified-protection"
+          cp geometry-source.json partitions/INTERMARKET_DISLOCATION/opportunity-source.json
+          cp "$RUNNER_TEMP/eur-private/opportunity-protocol.json" partitions/INTERMARKET_DISLOCATION/opportunity-protocol.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path("partitions/INTERMARKET_DISLOCATION")
+          r=json.loads((p/"opportunity-result.json").read_bytes())
+          s=json.loads((p/"opportunity-source.json").read_bytes())
+          assert all(r[k]==s[k] for k in ("SourceSha256","ProtocolSha256","EvidenceManifestSha256"))
+          assert r["RegisteredMarketCount"]==21 and len(r["HeldOut"])==18
+          assert r["Orders"]==r["SharedPortfolioEvaluations"]==r["SourceBrokerRequests"]==0
+          assert r["CloudActivated"] is r["IndependentConfirmationCertified"] is False
+          print("GEOMETRY_PARTITION_COMPLETE",r["Mechanism"],r["SelectedDecision"],flush=True)
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: geometry-breadth-INTERMARKET_DISLOCATION
+          path: partitions/INTERMARKET_DISLOCATION/
+          if-no-files-found: error
+          retention-days: 90
+      - name: Economic geometry partition 7/7 PAV1_LOCAL_TRANSITION
+        env:
+          MXM_OPPORTUNITY_MECHANISM: PAV1_LOCAL_TRANSITION
+        run: |
+          set -euo pipefail
+          mkdir -p partitions/PAV1_LOCAL_TRANSITION
+          dotnet src/Mxm.Replay/bin/Release/net8.0/Mxm.Replay.dll --owner-opportunity-screen "$RUNNER_TEMP/eur-private/opportunity-protocol.json" "$RUNNER_TEMP/eur-private/source.json" partitions/PAV1_LOCAL_TRANSITION/opportunity-result.json "$RUNNER_TEMP/eur-private/verified-protection"
+          cp geometry-source.json partitions/PAV1_LOCAL_TRANSITION/opportunity-source.json
+          cp "$RUNNER_TEMP/eur-private/opportunity-protocol.json" partitions/PAV1_LOCAL_TRANSITION/opportunity-protocol.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path("partitions/PAV1_LOCAL_TRANSITION")
+          r=json.loads((p/"opportunity-result.json").read_bytes())
+          s=json.loads((p/"opportunity-source.json").read_bytes())
+          assert all(r[k]==s[k] for k in ("SourceSha256","ProtocolSha256","EvidenceManifestSha256"))
+          assert r["RegisteredMarketCount"]==21 and len(r["HeldOut"])==18
+          assert r["Orders"]==r["SharedPortfolioEvaluations"]==r["SourceBrokerRequests"]==0
+          assert r["CloudActivated"] is r["IndependentConfirmationCertified"] is False
+          print("GEOMETRY_PARTITION_COMPLETE",r["Mechanism"],r["SelectedDecision"],flush=True)
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: geometry-breadth-PAV1_LOCAL_TRANSITION
+          path: partitions/PAV1_LOCAL_TRANSITION/
+          if-no-files-found: error
+          retention-days: 90
+  combine:
+    needs: screen
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          pattern: geometry-breadth-*
+          path: partitions
+      - name: Reconcile complete breadth and geometry study
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from research.merge_eur_scenarios import read,exact_json
+          roots=sorted(Path("partitions").glob("*/opportunity-result.json"))
+          assert len(roots)==7
+          first=roots[0].parent
+          plan=read(first/"opportunity-protocol.json")
+          results=[]
+          for path in roots:
+              for name in ("opportunity-protocol.json","opportunity-source.json"):
+                  assert (path.parent/name).read_bytes()==(first/name).read_bytes()
+              result=read(path)
+              assert result["RegisteredMarketCount"]==21 and len(result["HeldOut"])==18
+              results.append(result)
+          assert {r["Mechanism"] for r in results}=={v["Mechanism"] for v in plan["Variants"]}
+          out=Path("geometry-report");out.mkdir()
+          for name in ("opportunity-protocol.json","opportunity-source.json"):
+              (out/name).write_bytes((first/name).read_bytes())
+          (out/"economic-opportunities.json").write_text(exact_json(dict(Study=plan["Study"],Results=results,
+              SharedPortfolioEvaluations=0,IndependentConfirmationCertified=False,Orders=0,CloudActivated=False))+"\n")
+          for r in results: print(r["Mechanism"],r["SelectedDecision"])
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: monetary-geometry-breadth-1-complete
+          path: geometry-report/
+          if-no-files-found: error
+          retention-days: 90

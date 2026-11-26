@@ -80,6 +80,14 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public int? EconomicOpportunityVolumeIndex { get; init; }
 
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool AnchorEconomicGeometryToClosedStructure { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? EconomicManagementTimeframe { get; init; }
+
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool OptimizeEconomicOpportunityVolume { get; init; }
+
     internal string GeometryIdentity => FormattableString.Invariant(
         $"{UseAvailableContext}/{DistributionTargetRanges:G29}/{StopReserveMultiplier:G29}") +
         (ModeledStopLatencyMs is long latency ? FormattableString.Invariant($"/Trade/{latency}") : "") +
@@ -91,11 +99,19 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
         (CaptureClosedBarActivity?"/CLOSED_BAR_ACTIVITY_V1":"") +
         (EconomicMechanism is not null?$"/MECHANISM:{EconomicMechanism}/MANAGEMENT:{EconomicManagement}/MINIMUM:{MinimumContractVolumeOnly}":"") +
         (EconomicGeometryTimeframe is not null?FormattableString.Invariant($"/GEOMETRY:{EconomicGeometryTimeframe}/{EconomicStopRanges:G29}"):"") +
-        (EconomicOpportunityVolumeIndex is int volume?FormattableString.Invariant($"/OBSERVED_VOLUME_INDEX:{volume}"):"");
+        (EconomicOpportunityVolumeIndex is int volume?FormattableString.Invariant($"/OBSERVED_VOLUME_INDEX:{volume}"):"") +
+        (AnchorEconomicGeometryToClosedStructure?"/CLOSED_STRUCTURE_ANCHOR":"") +
+        (OptimizeEconomicOpportunityVolume?"/OBSERVED_VOLUME_NET_REWARD_RISK":"") +
+        (EconomicManagementTimeframe is not null?$"/MANAGEMENT_TIMEFRAME:{EconomicManagementTimeframe}":"") +
+        (EconomicMechanism is not null&&KeepAdmissionRiskAtFill?$"/MECHANISM_KEEP_RISK/RESIZE:{ResizeWithinAdmissionRiskAtFill}":"");
 
     internal void Verify()
     {
-        if(EconomicGeometryTimeframe is not null&&
+        if(OptimizeEconomicOpportunityVolume&&(EconomicMechanism is null||MinimumContractVolumeOnly||EconomicOpportunityVolumeIndex is not null||!KeepAdmissionRiskAtFill||!ResizeWithinAdmissionRiskAtFill)||
+            AnchorEconomicGeometryToClosedStructure&&(EconomicMechanism is null||EconomicGeometryTimeframe is null)||
+            EconomicManagementTimeframe is not null&&(EconomicMechanism is null||EconomicManagement=="BRACKET"||
+                !Enum.TryParse<NativeBarTimeframe>(EconomicManagementTimeframe,out var mtf)||!NativeClosedMarketContext.CoverageWindows.Any(x=>x.Timeframe==mtf))||
+            EconomicGeometryTimeframe is not null&&
             (EconomicMechanism is null||!Enum.TryParse<NativeBarTimeframe>(EconomicGeometryTimeframe,out var tf)||
              !NativeClosedMarketContext.CoverageWindows.Any(x=>x.Timeframe==tf)||EconomicStopRanges is not >0m)||
             EconomicGeometryTimeframe is null&&EconomicStopRanges is not null||
@@ -117,7 +133,7 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
             UseEconomicEstimatorObjective&&!UsePredictiveCalibration||
             UseSelectionAwarePredictiveGrid&&(!UsePredictiveCalibration||!UseEconomicEstimatorObjective)||
             RevalidatePredictiveVolatilityAtFill&&!UsePredictiveCalibration||
-            KeepAdmissionRiskAtFill&&!UsePredictiveCalibration||
+            KeepAdmissionRiskAtFill&&!UsePredictiveCalibration&&EconomicMechanism is null||
             ResizeWithinAdmissionRiskAtFill&&!KeepAdmissionRiskAtFill||
             UseJointMonetaryAllocation&&!UsePredictiveCalibration||
             JointMonetarySearchWidth<0||JointMonetarySearchWidth>0&&!UseJointMonetaryAllocation||

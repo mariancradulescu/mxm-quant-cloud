@@ -54,7 +54,7 @@ public static class NativeEconomicMechanisms
     }
 
     internal static NativeIntegratedCandidate[] Describe(string mechanism,Ucp1MarketFrame m,long at,
-        decimal targetRanges,Ucp1Frame? frame=null,string? geometryTimeframe=null,decimal? stopRanges=null)
+        decimal targetRanges,Ucp1Frame? frame=null,string? geometryTimeframe=null,decimal? stopRanges=null,bool closedStructure=false)
     {
         if(!All.Contains(mechanism,StringComparer.Ordinal))throw new ArgumentException("ECONOMIC_MECHANISM_UNKNOWN");
         var w=Window(m,NativeBarTimeframe.M5,at);
@@ -62,7 +62,7 @@ public static class NativeEconomicMechanisms
             return Array.Empty<NativeIntegratedCandidate>();
         if(mechanism==Scored)
             return All.Where(x=>x is not (Scored or Transition))
-                .SelectMany(x=>Describe(x,m,at,targetRanges,frame,geometryTimeframe,stopRanges)).ToArray();
+                .SelectMany(x=>Describe(x,m,at,targetRanges,frame,geometryTimeframe,stopRanges,closedStructure)).ToArray();
         var b=w.Bars;decimal tick=m.EurTickSize.Value,atr=Math.Max(tick,Atr(b));
         var geometry=geometryTimeframe is null?w:Window(m,Enum.Parse<NativeBarTimeframe>(geometryTimeframe),at);
         if(geometry is null)return Array.Empty<NativeIntegratedCandidate>();
@@ -145,6 +145,21 @@ public static class NativeEconomicMechanisms
             if(side*(repair-entry)<=0m)destination=null;
             else destination=entry+side*Math.Max(side*(repair-entry),targetRanges*geometryAtr);
         }
+        // The alternative stop belongs to the completed signal structure,
+        // not to the moving executable entry. Favorable movement can improve
+        // reward/risk; adverse entry cannot push the economic destination away.
+        if(closedStructure)
+        {
+            decimal boundary=side>0?Math.Min(gb[^1].Low,b[^1].Low):Math.Max(gb[^1].High,b[^1].High);
+            stop=Tick(boundary-side*tick,tick,side<0);
+            decimal anchor=gb[^1].Close;
+            if(mechanism==Reverse)
+            {
+                decimal repairDistance=side*(gb[^2].Close-anchor);
+                destination=anchor+side*Math.Max(repairDistance,targetRanges*geometryAtr);
+            }
+            else destination??=anchor+side*targetRanges*geometryAtr;
+        }
         decimal target=Tick(destination??entry+side*targetRanges*geometryAtr,tick,side>0);
         return stop>0m&&target>0m&&side*(exit-stop)>0m&&side*(target-entry)>0m&&
             NativeIntegratedLifecycle.ProtectionCompatible(side,stop,target,m)
@@ -199,5 +214,27 @@ public static class NativeEconomicMechanisms
         var band=local.Where(x=>(x.Context!.CostRiskFraction<=median)==lower).ToArray();
         var estimate=LifecyclePayoff(band,family,side,context,at,risk,cost,minimumEpisodes,minimumDays,penalty);
         return estimate is null?null:estimate with {Cohort=estimate.Cohort+FormattableString.Invariant($"/CAUSAL_COST_MEDIAN:{median:G29}/LOWER:{lower}")};
+    }
+
+    internal sealed record PeerForecast(int SupportedPeers,decimal MeanGrossEur,decimal MeanNetEur,
+        decimal WorstGrossLowerEur,decimal WorstNetLowerEur);
+
+    // Independent per-instrument forecasts in the same authenticated class.
+    // Normalize by ex-ante monetary risk, use the target's actual cost and
+    // causal cost band, and never let a target instrument train its own peer
+    // prediction. A prediction is a diagnostic, not authorization to trade.
+    internal static PeerForecast? LeaveSymbolOutPayoff(IEnumerable<NativeEurCalibrationOutcome> outcomes,
+        string family,int side,NativeEurDecisionContext context,long at,decimal risk,decimal cost,
+        int minimumEpisodes,int minimumDays,decimal penalty)
+    {
+        if(string.IsNullOrWhiteSpace(context.AssetClass)||risk<=0m)return null;
+        var estimates=outcomes.Where(x=>x.AvailableAt<at&&x.RiskEur>0m&&x.Family==family&&x.Side==side&&
+            x.Context?.AssetClass==context.AssetClass&&x.Context.Symbol!=context.Symbol)
+            .GroupBy(x=>x.Context!.Symbol,StringComparer.Ordinal)
+            .Select(g=>EntryQualityPayoff(g,family,side,context with {Symbol=g.Key},at,risk,cost,
+                minimumEpisodes,minimumDays,penalty,true)).OfType<NativeEurPayoff>().ToArray();
+        if(estimates.Length<2)return null;
+        return new(estimates.Length,estimates.Average(e=>e.GrossMeanEur),estimates.Average(e=>e.NetMeanEur),
+            estimates.Min(e=>e.GrossLowerEur),estimates.Min(e=>e.NetLowerEur));
     }
 }
