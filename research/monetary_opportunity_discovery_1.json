@@ -893,5 +893,8 @@
   ],
   "Orders": 0,
   "CloudActivated": false,
-  "IndependentConfirmationCertified": false
+  "IndependentConfirmationCertified": false,
+  "PrefixProtectedArtifact": 15096506051,
+  "PrefixProtectedSha256": "4e40a5f2044b5c6bb4c3a10e4f6ae46c1198f479e17a992686ee15cd5b07a5bc",
+  "OriginalMechanismRevision": "ef21b35af4521bba1520b56825a9bcbd7f5627e2"
 }
