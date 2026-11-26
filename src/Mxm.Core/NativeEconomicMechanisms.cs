@@ -85,10 +85,14 @@ public static class NativeEconomicMechanisms
                 break;
             case Equilibrium:
                 if(h is null||z is null)break;
-                decimal center=h.Bars.Average(x=>(x.High+x.Low+x.Close)/3m);
-                // Require an observed turn back toward the closed hourly center.
+                var anchor=geometryTimeframe is null?h:geometry;
+                decimal center=anchor.Bars.Average(x=>(x.High+x.Low+x.Close)/3m);
+                // Natural equilibrium destination on the registered anchor horizon.
+                // In the new mode the observed M15 turn and executable target
+                // economics replace the common M5 amplitude threshold.
                 side=Math.Sign(center-b[^1].Close);
-                if(side!=shortDirection||Math.Abs(center-b[^1].Close)<atr)side=0;
+                int turn=geometryTimeframe is null?shortDirection:Math.Sign(z.Bars[^1].Close-z.Bars[^2].Close);
+                if(side!=turn||geometryTimeframe is null&&Math.Abs(center-b[^1].Close)<atr)side=0;
                 else destination=center;
                 break;
             case Activity:
@@ -111,13 +115,19 @@ public static class NativeEconomicMechanisms
                 // Official class and aligned clocks are required. Missing class
                 // identity cannot be replaced by an assumed economic relationship.
                 if(h is null||frame is null||m.OfficialAssetClass is null)break;
+                var relative=geometryTimeframe is null?h:geometry;
                 var peers=frame.Markets.Where(p=>p.Symbol!=m.Symbol&&p.OfficialAssetClass==m.OfficialAssetClass)
-                    .Select(p=>Window(p,NativeBarTimeframe.H1,at)).OfType<NativeBarWindow>()
-                    .Where(p=>p.ExpectedCloseAt==h.ExpectedCloseAt).ToArray();
+                    .Select(p=>Window(p,relative.Timeframe,at)).OfType<NativeBarWindow>()
+                    .Where(p=>p.ExpectedCloseAt==relative.ExpectedCloseAt).ToArray();
                 if(peers.Length<2)break;
                 decimal Move(NativeBarWindow p)=>(p.Bars[^1].Close-p.Bars[0].Open)/p.Bars[0].Open;
-                decimal difference=Move(h)-peers.Average(Move);
-                if(Math.Abs(difference)>Atr(h.Bars)/h.Bars[^1].Close)side=-Math.Sign(difference);
+                decimal peerMove=peers.Average(Move),difference=Move(relative)-peerMove;
+                if(Math.Abs(difference)>Atr(relative.Bars)/relative.Bars[^1].Close)
+                {
+                    side=-Math.Sign(difference);
+                    if(geometryTimeframe is not null)
+                        destination=relative.Bars[0].Open*(1m+peerMove);
+                }
                 break;
             case Transition:
                 if(Continuation(m,at,geometryTimeframe) is { } transition&&Math.Abs(transition.Mean)>transition.Sem)
