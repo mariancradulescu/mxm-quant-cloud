@@ -10,7 +10,8 @@ internal static partial class IntegratedEconomicReplay
     sealed record ScreenAttempt(long At,string Symbol,string Family,int Side,string Status,
         NativeEurOpportunity? Entry=null,NativeEurPayoff? Score=null,NativeEurCalibrationOutcome? Label=null,
         Ucp1Episode? Trip=null,long? FirstPositiveAt=null,long? FirstNegativeAt=null,long? PeakAt=null,
-        int PositiveClocks=0,int NegativeClocks=0,int UnknownClocks=0,long? ResolvedAt=null);
+        int PositiveClocks=0,int NegativeClocks=0,int UnknownClocks=0,long? ResolvedAt=null,
+        decimal? ClosedGrossEur=null,decimal? ClosedNetEur=null,long? ClosedAvailableAt=null);
     sealed record ScreenActive(ScreenAttempt Attempt,NativeUnifiedPortfolioEngine Book);
 
     // Isolated, actual native lifecycle observations. Each attempt gets its own
@@ -47,6 +48,8 @@ internal static partial class IntegratedEconomicReplay
                     attempts.Add(item.Attempt with {Status="UNFILLED",ResolvedAt=frame.At});
                     continue;
                 }
+                var settled=book.ReconciledModelEpisodes.SingleOrDefault();
+                decimal? closedNet=settled?.Evidence.ClosedNetEur;
                 var label=book.ExportEurCalibration().Outcomes.SingleOrDefault();
                 // A complete price path and reconciled funding are both required for a selection label.
                 if(trip.CrossedUnknownHistory||trip.EconomicEvidence?.MarkCoverageComplete!=true)label=null;
@@ -64,7 +67,9 @@ internal static partial class IntegratedEconomicReplay
                 var known=path.Where(x=>x.FundingCapital?.ConditionalEquityEur is not null).ToArray();
                 var positive=known.Where(x=>x.FundingCapital!.ConditionalEquityEur>300m).ToArray();
                 var negative=known.Where(x=>x.FundingCapital!.ConditionalEquityEur<300m).ToArray();
-                attempts.Add(item.Attempt with {Status=label is null?"UNKNOWN_CLOSED":"RECONCILED",
+                attempts.Add(item.Attempt with {Status=closedNet is null?"UNKNOWN_CLOSED":
+                    label is null?"RECONCILED_NOT_LEARNING_ELIGIBLE":"RECONCILED",
+                    ClosedGrossEur=trip.GrossEur,ClosedNetEur=closedNet,ClosedAvailableAt=settled?.AvailableAt,
                     Label=label,Trip=trip,ResolvedAt=frame.At,FirstPositiveAt=positive.FirstOrDefault()?.At,
                     FirstNegativeAt=negative.FirstOrDefault()?.At,
                     PeakAt=known.OrderByDescending(x=>x.FundingCapital!.ConditionalEquityEur).FirstOrDefault()?.At,
@@ -114,15 +119,16 @@ internal static partial class IntegratedEconomicReplay
         public ScreenAttempt[] Rows(long from,long to)
             =>attempts.Concat(active.Values.Select(x=>x.Attempt with {Status="RIGHT_CENSORED"}))
                 .Where(x=>from<=x.At&&x.At<to)
-                .Select(x=>(x.Label is { } l&&l.AvailableAt>=to)||x.ResolvedAt>=to||x.Trip is { } t&&t.CloseAt>=to
+                .Select(x=>(x.Label is { } l&&l.AvailableAt>=to)||x.ResolvedAt>=to||x.ClosedAvailableAt>=to||x.Trip is { } t&&t.CloseAt>=to
                     ?x with {Status="RIGHT_CENSORED",Label=null,Trip=null,FirstPositiveAt=null,FirstNegativeAt=null,
-                        PeakAt=null,PositiveClocks=0,NegativeClocks=0,UnknownClocks=0,ResolvedAt=null}:x).ToArray();
+                        PeakAt=null,PositiveClocks=0,NegativeClocks=0,UnknownClocks=0,ResolvedAt=null,
+                        ClosedGrossEur=null,ClosedNetEur=null,ClosedAvailableAt=null}:x).ToArray();
     }
 
     static bool ScpAdmits(ScreenAttempt a)=>a.Score is {GrossLowerEur:>0m,NetLowerEur:>0m};
     sealed record OpportunityStats(int Attempts,int NoFrame,int NoSignal,int Overlap,int NotAdmitted,
-        int Admitted,int Unfilled,int Censored,int UnknownClosed,int KnownClosed,int PositiveNet,
-        decimal GrossEur,decimal NetEur,decimal CostEur,decimal? MeanNetEur,decimal? MeanMfeEur,
+        int Admitted,int Unfilled,int Censored,int UnknownClosed,int KnownClosed,int KnownClosedIncompletePath,int LearningEligible,int PositiveNet,
+        decimal ClosedGrossAllEur,decimal GrossEur,decimal NetEur,decimal CostEur,decimal? MeanNetEur,decimal? MeanMfeEur,
         decimal? MeanMaeEur,decimal? GrossToSampledMfe,decimal? MeanDurationMinutes,int CompleteDays,
         decimal? MeanDailyNetEur,decimal? DailyNetLowerEur,int ProfitableDays,int ScoreUnsupported,int ScoreNonpositive,
         int ScoreAdmitted,decimal? MeanConditionalWinEur,decimal? MeanConditionalLossEur);
@@ -130,43 +136,50 @@ internal static partial class IntegratedEconomicReplay
     {
         bool Admits(ScreenAttempt a)=>a.Entry is not null&&(!scored||ScpAdmits(a));
         var admitted=rows.Where(Admits).ToArray();
-        var known=admitted.Where(a=>a.Label is not null&&a.Trip is not null).ToArray();
-        decimal gross=known.Sum(a=>a.Label!.GrossEur),net=known.Sum(a=>a.Label!.NetEur);
-        decimal mfe=known.Sum(a=>Math.Max(0m,a.Trip!.SampledMfeEur));
+        // Cash reconciliation and completeness of the sampled price path are
+        // different evidence dimensions. Preserve the known modeled losses
+        // on incomplete paths in selection and reporting; only learning labels
+        // and excursion statistics require verified price paths.
+        var known=admitted.Where(a=>a.ClosedNetEur.HasValue&&a.Trip is not null).ToArray();
+        var complete=known.Where(a=>!a.Trip!.CrossedUnknownHistory&&a.Trip.EconomicEvidence?.MarkCoverageComplete==true).ToArray();
+        decimal gross=known.Sum(a=>a.ClosedGrossEur!.Value),net=known.Sum(a=>a.ClosedNetEur!.Value);
+        decimal mfe=complete.Sum(a=>Math.Max(0m,a.Trip!.EconomicEvidence!.SampledMfeEur??0m));
         var days=rows.Where(a=>!a.Status.StartsWith("NO_MONETARY_FRAME:",StringComparison.Ordinal)).GroupBy(a=>a.At/HistoricalDay)
-            .Where(day=>day.All(a=>!Admits(a)||a.Label is not null||a.Status=="UNFILLED"))
-            .Select(day=>day.Where(a=>Admits(a)&&a.Label is not null).Sum(a=>a.Label!.NetEur)).ToArray();
+            .Where(day=>day.All(a=>!Admits(a)||a.ClosedNetEur.HasValue||a.Status=="UNFILLED"))
+            .Select(day=>day.Where(a=>Admits(a)&&a.ClosedNetEur.HasValue).Sum(a=>a.ClosedNetEur!.Value)).ToArray();
         decimal? mean=days.Length==0?null:days.Average();
         decimal? lower=days.Length<2?null:mean!.Value-1.645m*(decimal)Math.Sqrt(days.Sum(d=>Math.Pow((double)(d-mean.Value),2))/
             (days.Length*(days.Length-1d)));
-        var wins=known.Where(a=>a.Label!.NetEur>0m).ToArray();
-        var losses=known.Where(a=>a.Label!.NetEur<0m).ToArray();
+        var wins=known.Where(a=>a.ClosedNetEur>0m).ToArray();
+        var losses=known.Where(a=>a.ClosedNetEur<0m).ToArray();
         return new(rows.Length,rows.Count(a=>a.Status.StartsWith("NO_MONETARY_FRAME:",StringComparison.Ordinal)),rows.Count(a=>a.Status=="WAIT_NO_SIGNAL"),
             rows.Count(a=>a.Status=="WAIT_ISOLATED_OVERLAP"),rows.Count(a=>a.Status.StartsWith("WAIT_NOT_ADMITTED:",StringComparison.Ordinal)),
             admitted.Length,admitted.Count(a=>a.Status=="UNFILLED"),admitted.Count(a=>a.Status=="RIGHT_CENSORED"),
-            admitted.Count(a=>a.Status=="UNKNOWN_CLOSED"),known.Length,wins.Length,gross,net,gross-net,
-            known.Length==0?null:net/known.Length,known.Length==0?null:known.Average(a=>a.Trip!.SampledMfeEur),
-            known.Length==0?null:known.Average(a=>a.Trip!.SampledMaeEur),mfe>0m?gross/mfe:null,
+            admitted.Count(a=>a.Status=="UNKNOWN_CLOSED"),known.Length,known.Length-complete.Length,
+            known.Count(a=>a.Label is not null),wins.Length,admitted.Sum(a=>a.ClosedGrossEur??0m),gross,net,gross-net,
+            known.Length==0?null:net/known.Length,complete.Length==0?null:complete.Average(a=>a.Trip!.EconomicEvidence!.SampledMfeEur),
+            complete.Length==0?null:complete.Average(a=>a.Trip!.EconomicEvidence!.SampledMaeEur),
+            mfe>0m?complete.Sum(a=>a.ClosedGrossEur!.Value)/mfe:null,
             known.Length==0?null:known.Average(a=>(a.Trip!.CloseAt-a.Trip.OpenAt)/60000m),
             days.Length,mean,lower,days.Count(x=>x>0m),rows.Count(a=>a.Entry is not null&&a.Score is null),
             rows.Count(a=>a.Entry is not null&&a.Score is not null&&!ScpAdmits(a)),rows.Count(ScpAdmits),
-            wins.Length==0?null:wins.Average(a=>a.Label!.NetEur),losses.Length==0?null:losses.Average(a=>a.Label!.NetEur));
+            wins.Length==0?null:wins.Average(a=>a.ClosedNetEur!.Value),losses.Length==0?null:losses.Average(a=>a.ClosedNetEur!.Value));
     }
 
     static object PairedScreen(ScreenAttempt[] candidate,ScreenAttempt[] reference)
     {
-        var a=candidate.Where(x=>x.Label is not null).ToDictionary(x=>(x.At,x.Symbol,x.Family,x.Side));
-        var b=reference.Where(x=>x.Label is not null).ToDictionary(x=>(x.At,x.Symbol,x.Family,x.Side));
+        var a=candidate.Where(x=>x.ClosedNetEur.HasValue).ToDictionary(x=>(x.At,x.Symbol,x.Family,x.Side));
+        var b=reference.Where(x=>x.ClosedNetEur.HasValue).ToDictionary(x=>(x.At,x.Symbol,x.Family,x.Side));
         var common=a.Keys.Intersect(b.Keys).ToArray();
         return new
         {
             MatchedDecisionSymbolFamilySide=common.Length,CandidateOnly=a.Count-common.Length,ReferenceOnly=b.Count-common.Length,
-            MatchedGrossDifferenceEur=common.Length==0?(decimal?)null:common.Sum(k=>a[k].Label!.GrossEur-b[k].Label!.GrossEur),
-            MatchedNetDifferenceEur=common.Length==0?(decimal?)null:common.Sum(k=>a[k].Label!.NetEur-b[k].Label!.NetEur),
+            MatchedGrossDifferenceEur=common.Length==0?(decimal?)null:common.Sum(k=>a[k].ClosedGrossEur!.Value-b[k].ClosedGrossEur!.Value),
+            MatchedNetDifferenceEur=common.Length==0?(decimal?)null:common.Sum(k=>a[k].ClosedNetEur!.Value-b[k].ClosedNetEur!.Value),
             MatchedEntryUnitsDifference=common.Length==0?(decimal?)null:common.Sum(k=>a[k].Entry!.Units-b[k].Entry!.Units),
             MatchedMeanDurationDifferenceMinutes=common.Length==0?(decimal?)null:common.Average(k=>
                 ((a[k].Trip!.CloseAt-a[k].Trip!.OpenAt)-(b[k].Trip!.CloseAt-b[k].Trip!.OpenAt))/60000m),
-            ConditionalMatchedClosedPathsOnly=true,UnmatchedOrUnknownNotImputed=true
+            ConditionalMatchedReconciledClosedEpisodesOnly=true,UnmatchedOrUnknownNotImputed=true
         };
     }
 
@@ -277,8 +290,9 @@ internal static partial class IntegratedEconomicReplay
                     a.Entry.KnownRoundTripCostEur,a.Entry.CurrentMarginEstimateEur,
                     RiskAtFillEur=a.Trip?.EntryRiskEur,Gap=a.Trip?.CrossedUnknownHistory,PartialReduction=a.Trip?.Integrated?.PartialReduction,
                     ScoreNetLowerEur=a.Score?.NetLowerEur,ScoreGrossLowerEur=a.Score?.GrossLowerEur,Scp1Admitted=ScpAdmits(a),
-                    AvailableAt=a.Label?.AvailableAt,NetEur=a.Label?.NetEur,GrossEur=a.Label?.GrossEur,
-                    OpenAt=a.Trip?.OpenAt,CloseAt=a.Trip?.CloseAt,SampledMfeEur=a.Trip?.SampledMfeEur,SampledMaeEur=a.Trip?.SampledMaeEur,
+                    AvailableAt=a.ClosedAvailableAt,NetEur=a.ClosedNetEur,GrossEur=a.ClosedGrossEur,
+                    LearningEligible=a.Label is not null,MarkCoverageComplete=a.Trip?.EconomicEvidence?.MarkCoverageComplete,
+                    OpenAt=a.Trip?.OpenAt,CloseAt=a.Trip?.CloseAt,SampledMfeEur=a.Trip?.EconomicEvidence?.SampledMfeEur,SampledMaeEur=a.Trip?.EconomicEvidence?.SampledMaeEur,
                     ExitReason=a.Trip?.ExitReason,FirstBarrier=a.Trip?.Integrated?.FirstObservedBarrier,
                     a.FirstPositiveAt,a.FirstNegativeAt,a.PeakAt,a.PositiveClocks,a.NegativeClocks,a.UnknownClocks
                 }).ToArray()};
@@ -292,6 +306,7 @@ internal static partial class IntegratedEconomicReplay
             HeldOut=held,Scp1Scope="CAUSAL_SHADOW_GATE_ON_ISOLATED_EPISODES_NOT_COMMON_BOOK",
             Scp1OverlapLimitation="SHADOW_WAIT_DOES_NOT_RELEASE_RAW_OBSERVER_SLOT; NOT_AN_EXECUTED_SCORED_POLICY",
             Missingness="NO_FRAME_AND_UNRESOLVED_EXCLUDED_FROM_CONDITIONAL_MEANS; CENSORED_NOT_ZERO",
+            MonetarySelectionBasis="ALL_RECONCILED_CLOSED_MODEL_NET_INCLUDING_INCOMPLETE_PRICE_PATHS; LEARNING_AND_EXCURSION_SUBSET_SEPARATE",
             CompleteDaysBasis="OBSERVED_MONETARY_CLOCKS_WITH_NO_UNRESOLVED_ADMITTED_EPISODES",
             MfeBasis="SAMPLED_REALIZED_EPISODE_PATH_NOT_EXECUTABLE_MAXIMUM",
             SharedPortfolioEvaluations=0,IndependentConfirmationCertified=false,Orders=0,CloudActivated=false,SourceBrokerRequests=0
