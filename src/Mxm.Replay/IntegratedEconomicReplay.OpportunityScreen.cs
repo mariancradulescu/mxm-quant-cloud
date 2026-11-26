@@ -3,7 +3,13 @@ using Mxm.Core;
 
 internal static partial class IntegratedEconomicReplay
 {
-    sealed record OpportunityVariant(string Id,string Mechanism,NativeEurDevelopmentProfile Profile,bool Reference);
+    sealed record OpportunityVariant(string Id,string Mechanism,NativeEurDevelopmentProfile Profile,bool Reference)
+    {
+        [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+        public string? GateMode { get; init; }
+        [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+        public bool MonetaryTraining { get; init; }
+    }
     sealed record OpportunityScreenPlan(string Study,string Exposure,string SourceProtocolSha256,string EvidenceManifestSha256,
         long Start,long SelectionFrom,long EvaluationFrom,long End,long SamplingIntervalMs,
         decimal[] Stresses,OpportunityVariant[] Variants);
@@ -18,7 +24,8 @@ internal static partial class IntegratedEconomicReplay
     // model book solely to observe a counterfactual; this is NOT common equity.
     sealed class OpportunityScreenState(OpportunityVariant variant,string scenario,decimal stress,
         EerEvidence source,EerProtectionTape protection,Dictionary<string,EerStream> streams,long interval,
-        IEnumerable<NativeEurCalibrationOutcome>? seed=null)
+        IEnumerable<NativeEurCalibrationOutcome>? seed=null,
+        OpportunityScreenState? trainer=null,OpportunityScreenState? priorTrainer=null)
     {
         readonly Dictionary<string,ScreenActive> active=new(StringComparer.Ordinal);
         readonly List<ScreenAttempt> attempts=new();
@@ -26,6 +33,48 @@ internal static partial class IntegratedEconomicReplay
         readonly Dictionary<(string Symbol,string Family,int Side),List<NativeEurCalibrationOutcome>> histories=
             (seed??Array.Empty<NativeEurCalibrationOutcome>()).Where(l=>l.Context is not null)
                 .GroupBy(l=>(l.Context!.Symbol,l.Family,l.Side)).ToDictionary(g=>g.Key,g=>g.ToList());
+        readonly Dictionary<(string Symbol,string Family,int Side),List<NativeEurCalibrationOutcome>> monetary=
+            priorTrainer?.CopyHistory(false)??new();
+        readonly Dictionary<(string Symbol,string Family,int Side),List<NativeEurCalibrationOutcome>> noGap=
+            priorTrainer?.CopyHistory(true)??new();
+        Dictionary<(string Symbol,string Family,int Side),List<NativeEurCalibrationOutcome>> CopyHistory(bool gapFree)
+            =>(gapFree?noGap:monetary).ToDictionary(x=>x.Key,x=>x.Value.ToList());
+        static void AddLabel(Dictionary<(string Symbol,string Family,int Side),List<NativeEurCalibrationOutcome>> table,
+            NativeEurCalibrationOutcome label)
+        {
+            if(label.Context is null)return;
+            var key=(label.Context.Symbol,label.Family,label.Side);
+            if(!table.TryGetValue(key,out var rows))table.Add(key,rows=new());
+            rows.Add(label);
+        }
+
+        NativeEurPayoff? GateScore(NativeEurOpportunity receipt,long at,out string reason)
+        {
+            reason="WAIT_SCORE_UNSUPPORTED";
+            if(trainer is null||receipt.Context is not { } context||receipt.ReservedRiskEur is not >0m||
+                receipt.NextManagementFundingCeilingEur is not decimal carry)return null;
+            var key=(receipt.Symbol,receipt.Family,receipt.Side);
+            decimal risk=receipt.ReservedRiskEur.Value,cost=receipt.KnownRoundTripCostEur+carry;
+            var p=variant.Profile;
+            NativeEurPayoff? Estimate(Dictionary<(string Symbol,string Family,int Side),List<NativeEurCalibrationOutcome>> table,bool band)
+                =>table.TryGetValue(key,out var rows)?NativeEconomicMechanisms.EntryQualityPayoff(rows,receipt.Family,
+                    receipt.Side,context,at,risk,cost,p.MinimumEpisodes,p.MinimumDays,p.DayPenalty,band):null;
+            bool band=variant.GateMode=="COST_BAND";
+            var score=Estimate(variant.GateMode=="LEGACY_MARKS"?trainer.histories:trainer.monetary,band);
+            if(score is null)return null;
+            // Require corroboration without unknown-history exposures for the
+            // corrected gates. Missing support is not evidence of zero return.
+            if(variant.GateMode!="LEGACY_MARKS")
+            {
+                var corroboration=Estimate(trainer.noGap,band);
+                if(corroboration is null){reason="WAIT_SCORE_GAP_FREE_UNSUPPORTED";return null;}
+                if(corroboration.GrossLowerEur<=0m||corroboration.NetLowerEur<=0m)
+                {reason="WAIT_SCORE_GAP_FREE_NONPOSITIVE";return null;}
+            }
+            reason=score.GrossLowerEur>0m&&score.NetLowerEur>0m?"ADMIT_SCORE":"WAIT_SCORE_NONPOSITIVE";
+            return score;
+        }
+
         readonly NativeUnifiedPortfolioEngine descriptor=new(NativeUnifiedPortfolioEngine.EurGeneralProbe,
             fundingScenarioId:scenario,eurDevelopmentProfile:variant.Profile);
         public OpportunityVariant Variant=>variant;
@@ -51,6 +100,18 @@ internal static partial class IntegratedEconomicReplay
                 var settled=book.ReconciledModelEpisodes.SingleOrDefault();
                 decimal? closedNet=settled?.Evidence.ClosedNetEur;
                 var label=book.ExportEurCalibration().Outcomes.SingleOrDefault();
+                // Matured modeled cash outcomes are useful even if the trade
+                // ended before the first excursion observation. Admission
+                // risk is the ex-ante scale; realized stop overruns remain.
+                if(variant.MonetaryTraining&&settled is {Evidence:{ClosedGrossEur:decimal actualGross,ClosedNetEur:decimal actualNet}}&&
+                    item.Attempt.Entry is {ReservedRiskEur:>0m,Context:{ } entryContext} entry)
+                {
+                    var cashLabel=new NativeEurCalibrationOutcome(trip.PositionId,trip.Family,trip.Side,
+                        trip.CloseAt,settled.AvailableAt,actualGross,actualNet,entry.ReservedRiskEur!.Value)
+                        {Context=entryContext,DecisionAt=item.Attempt.At};
+                    AddLabel(monetary,cashLabel);
+                    if(!trip.CrossedUnknownHistory)AddLabel(noGap,cashLabel);
+                }
                 // A complete price path and reconciled funding are both required for a selection label.
                 if(trip.CrossedUnknownHistory||trip.EconomicEvidence?.MarkCoverageComplete!=true)label=null;
                 if(label is not null)
@@ -112,6 +173,17 @@ internal static partial class IntegratedEconomicReplay
                     score=NativeEconomicMechanisms.LifecyclePayoff(history,offer.Family,offer.Side,context,frame.At,
                         receipt.ReservedRiskEur.Value,receipt.KnownRoundTripCostEur+carry,
                         variant.Profile.MinimumEpisodes,variant.Profile.MinimumDays,variant.Profile.DayPenalty);
+                if(variant.GateMode is not null)
+                {
+                    score=GateScore(receipt,frame.At,out string reason);
+                    if(reason!="ADMIT_SCORE")
+                    {
+                        // The unexecuted trial intent is discarded; WAIT
+                        // occupies no observer slot and cannot generate a label.
+                        attempts.Add(attempt with {Status=reason,Score=score});
+                        continue;
+                    }
+                }
                 active.Add(symbol,new(attempt with {Entry=receipt,Score=score},episode));
             }
         }
@@ -191,11 +263,12 @@ internal static partial class IntegratedEconomicReplay
         byte[] planBytes=File.ReadAllBytes(protocolPath),sourceBytes=File.ReadAllBytes(sourcePath);
         var plan=JsonSerializer.Deserialize<OpportunityScreenPlan>(planBytes,Json)??throw new ArgumentException("OPPORTUNITY_SCREEN_PLAN");
         var input=JsonSerializer.Deserialize<EerInput>(sourceBytes,Json)??throw new ArgumentException("OPPORTUNITY_SCREEN_SOURCE");
-        if(plan.Study!="MONETARY_OPPORTUNITY_DISCOVERY_1"||plan.Exposure!=ExposedDevelopment||
+        bool entryQuality=plan.Study=="MONETARY_ENTRY_QUALITY_2";
+        if((!entryQuality&&plan.Study!="MONETARY_OPPORTUNITY_DISCOVERY_1")||plan.Exposure!=ExposedDevelopment||
             input.ProtocolSha256!=plan.SourceProtocolSha256||input.EvidenceManifestSha256!=plan.EvidenceManifestSha256||
             input.SourceAcquiredAt<input.End||plan.Start<input.Start||plan.End>input.End||
             !(plan.Start<plan.SelectionFrom&&plan.SelectionFrom<plan.EvaluationFrom&&plan.EvaluationFrom<plan.End)||
-            plan.SamplingIntervalMs!=3600000L||!plan.Stresses.SequenceEqual(new[]{0m,.5m,1m})||
+            plan.SamplingIntervalMs!=(entryQuality?1800000L:3600000L)||!plan.Stresses.SequenceEqual(new[]{0m,.5m,1m})||
             new[]{plan.Start,plan.SelectionFrom,plan.EvaluationFrom,plan.End}.Any(x=>x%HistoricalDay!=0)||
             input.Markets.Any(m=>m.Market.DatedDevelopment?.Contract.OriginalBrokerAuthenticated!=true||
                 m.ClosedRolloverClocks is null||m.CalendarStatus is null||!VerifiedGrid(m.ScheduledClocks)||!VerifiedGrid(m.AmbiguousCalendarClocks))||
@@ -207,16 +280,32 @@ internal static partial class IntegratedEconomicReplay
             throw new ArgumentException("OPPORTUNITY_SCREEN_BINDING");
         string mechanism=Environment.GetEnvironmentVariable("MXM_OPPORTUNITY_MECHANISM")??throw new ArgumentException("OPPORTUNITY_SCREEN_PARTITION");
         var variants=plan.Variants.Where(x=>x.Mechanism==mechanism).ToArray();
-        if(variants.Length==0||variants.Count(v=>v.Reference)!=1)throw new ArgumentException("OPPORTUNITY_SCREEN_VARIANTS");
+        if(variants.Length==0||variants.Count(v=>v.Reference)!=1||
+            (entryQuality&&(variants.Count(v=>v.MonetaryTraining)!=1||
+                variants.Any(v=>v.Reference!=v.MonetaryTraining||v.Reference!=(v.GateMode is null))||
+                !variants.Where(v=>!v.Reference).Select(v=>v.GateMode).OrderBy(x=>x).SequenceEqual(new[]{"CORRECTED","COST_BAND","LEGACY_MARKS"})||
+                variants.Any(v=>v.Profile!=variants[0].Profile))))
+            throw new ArgumentException("OPPORTUNITY_SCREEN_VARIANTS");
         string planHash=GeneralSha(planBytes),sourceHash=GeneralSha(sourceBytes);
         var source=new EerEvidence(input);
         var protection=new EerProtectionTape(protectionDirectory);
+        OpportunityScreenState[] BuildStates(OpportunityVariant[] choices,string scenario,decimal stress,
+            Dictionary<string,EerStream> streams,OpportunityScreenState[]? previous=null)
+        {
+            if(!entryQuality)return choices.Select(v=>new OpportunityScreenState(v,scenario,stress,source,protection,streams,
+                plan.SamplingIntervalMs,previous?.Single(s=>s.Variant.Id==v.Id).MaturedBefore(plan.EvaluationFrom))).ToArray();
+            var reference=choices.Single(v=>v.Reference);
+            var prior=previous?.Single(s=>s.Variant.Reference);
+            var trainer=new OpportunityScreenState(reference,scenario,stress,source,protection,streams,plan.SamplingIntervalMs,
+                prior?.MaturedBefore(plan.EvaluationFrom),priorTrainer:prior);
+            return new[]{trainer}.Concat(choices.Where(v=>!v.Reference).Select(v=>new OpportunityScreenState(v,scenario,stress,
+                source,protection,streams,plan.SamplingIntervalMs,trainer:trainer))).ToArray();
+        }
         var runs=plan.Stresses.Select(stress=>
         {
             string scenario=EerHash(planHash+"|"+FormattableString.Invariant($"{stress:G29}"));
             var streams=input.Markets.ToDictionary(m=>m.Market.Name,m=>new EerStream(m),StringComparer.Ordinal);
-            return (Stress:stress,Scenario:scenario,Streams:streams,States:variants.Select(v=>
-                new OpportunityScreenState(v,scenario,stress,source,protection,streams,plan.SamplingIntervalMs)).ToArray());
+            return (Stress:stress,Scenario:scenario,Streams:streams,States:BuildStates(variants,scenario,stress,streams));
         }).ToArray();
         void Observe(long from,long to)
         {
@@ -249,7 +338,7 @@ internal static partial class IntegratedEconomicReplay
         })).ToArray();
         // Same candidate is selected across all cost scenarios. WAIT remains
         // a zero-exposure alternative; negative champions are diagnostics only.
-        var candidates=variants.SelectMany(v=>new[]{false,true}.Select(scored=>
+        var candidates=variants.Where(v=>!entryQuality||!v.Reference).SelectMany(v=>(entryQuality?new[]{false}:new[]{false,true}).Select(scored=>
         {
             var stats=selection.Where(s=>s.Id==v.Id).Select(s=>scored?s.Scp1:s.Raw).ToArray();
             decimal calendarDays=(plan.EvaluationFrom-plan.SelectionFrom)/(decimal)HistoricalDay;
@@ -266,7 +355,7 @@ internal static partial class IntegratedEconomicReplay
         var bestRaw=ordered.FirstOrDefault(c=>!c.Scored);
         var bestScp=ordered.FirstOrDefault(c=>c.Scored);
         var accepted=ordered.FirstOrDefault(c=>c.Score>0m&&c.KnownGrossPositive);
-        var selected=variants.Where(v=>v.Reference||v.Id==bestRaw?.Id||v.Id==bestScp?.Id||v.Id==accepted?.Id).ToArray();
+        var selected=entryQuality?variants:variants.Where(v=>v.Reference||v.Id==bestRaw?.Id||v.Id==bestScp?.Id||v.Id==accepted?.Id).ToArray();
         if(selected.Any(v=>v.Id.EndsWith("__MARGINAL_VOLUME",StringComparison.Ordinal)))
             selected=selected.Concat(variants.Where(v=>v.Id.EndsWith("__SPECIFIC_CAPTURE",StringComparison.Ordinal)))
                 .DistinctBy(v=>v.Id).ToArray();
@@ -275,9 +364,7 @@ internal static partial class IntegratedEconomicReplay
         for(int i=0;i<runs.Length;i++)
         {
             var r=runs[i];
-            runs[i]=(r.Stress,r.Scenario,r.Streams,selected.Select(v=>
-                new OpportunityScreenState(v,r.Scenario,r.Stress,source,protection,r.Streams,plan.SamplingIntervalMs,
-                    r.States.Single(s=>s.Variant.Id==v.Id).MaturedBefore(plan.EvaluationFrom))).ToArray());
+            runs[i]=(r.Stress,r.Scenario,r.Streams,BuildStates(selected,r.Scenario,r.Stress,r.Streams,r.States));
         }
         Observe(plan.EvaluationFrom,plan.End);
         var held=runs.SelectMany(r=>r.States.Select(s=>
@@ -308,8 +395,8 @@ internal static partial class IntegratedEconomicReplay
             plan.SamplingIntervalMs,ProtocolSha256=planHash,SourceSha256=sourceHash,input.EvidenceManifestSha256,
             Variants=variants,Fit=fit,Selection=selection,Candidates=candidates,BestRawDiagnostic=bestRaw,
             BestScp1Diagnostic=bestScp,SelectedDecision=accepted is null?"WAIT":accepted.Id+(accepted.Scored?"/SCP1":"/RAW"),
-            HeldOut=held,Scp1Scope="CAUSAL_SHADOW_GATE_ON_ISOLATED_EPISODES_NOT_COMMON_BOOK",
-            Scp1OverlapLimitation="SHADOW_WAIT_DOES_NOT_RELEASE_RAW_OBSERVER_SLOT; NOT_AN_EXECUTED_SCORED_POLICY",
+            HeldOut=held,Scp1Scope=entryQuality?"EXECUTED_ISOLATED_GATES_RAW_COLUMN; SCP1_COLUMN_SHADOW_DIAGNOSTIC":"CAUSAL_SHADOW_GATE_ON_ISOLATED_EPISODES_NOT_COMMON_BOOK",
+            Scp1OverlapLimitation=entryQuality?"EXECUTED_GATE_WAIT_RELEASES_SLOT; TRAINER_IS_SEPARATE":"SHADOW_WAIT_DOES_NOT_RELEASE_RAW_OBSERVER_SLOT; NOT_AN_EXECUTED_SCORED_POLICY",
             Missingness="NO_FRAME_AND_UNRESOLVED_EXCLUDED_FROM_CONDITIONAL_MEANS; CENSORED_NOT_ZERO",
             MonetarySelectionBasis="ALL_RECONCILED_CLOSED_MODEL_NET_INCLUDING_INCOMPLETE_PRICE_PATHS; LEARNING_AND_EXCURSION_SUBSET_SEPARATE",
             CompleteDaysBasis="OBSERVED_MONETARY_CLOCKS_WITH_NO_UNRESOLVED_ADMITTED_EPISODES",
