@@ -11,7 +11,8 @@ import json
 import os
 from pathlib import Path
 import subprocess
-import tarfile
+import gzip
+import hashlib
 
 from . import owner_monetary_causal_lifecycle as prior
 from . import owner_eur_recent_archive as archive
@@ -176,24 +177,78 @@ def materialize(p,digest,work,receipt_path):
 
 
 def seal_checkpoint(work,folder):
-    """One reusable normalized source cache and resumable native book snapshots."""
+    """Bounded-memory encrypted file pieces; immutable source pieces are reused."""
     if not (work/'source.json').is_file():
         print('PAV_MT_NO_NORMALIZED_SOURCE_CHECKPOINT_BEFORE_SOURCE_PREPARATION',flush=True)
         return
     folder=Path(folder);folder.mkdir(exist_ok=True)
-    archive_path=work/'checkpoint.tar.gz'
-    with tarfile.open(archive_path,'w:gz') as tar:
-        for name in ('source.json','pav-market-protocol.json','verified-protection'):
-            if (work/name).exists():tar.add(work/name,arcname=name)
-        for case in sorted(Path('market-partitions').glob('*/checkpoints')):
-            tar.add(case,arcname=str(case))
-    rid=os.environ['GITHUB_RUN_ID'];clear=archive_path.read_bytes()
-    cipher=seal_new(clear,custody_new.checked_public(Path('new-recipient-output'),rid),rid)
-    (folder/'checkpoint.sealed').write_bytes(cipher)
-    (folder/'checkpoint-receipt.json').write_bytes(src.canonical(dict(Study='PAV1_MARKET_TIME_FX_1',RunId=rid,
-        CipherSha256=src.digest(cipher),PlainArchiveSha256=src.digest(clear),SourceSha256=src.digest((work/'source.json').read_bytes()),
-        Format='GZIP_TAR_NORMALIZED_AUTHENTIC_SOURCE_AND_NATIVE_COMMON_BOOK_CHECKPOINTS',Orders=0,CloudActivated=False)))
-    archive_path.unlink();print('PAV_MT_SEALED_CHECKPOINT',len(cipher),flush=True)
+    rid=os.environ['GITHUB_RUN_ID'];public=custody_new.checked_public(Path('new-recipient-output'),rid)
+    manifest_path=folder/'checkpoint-receipt.json'
+    old=json.loads(manifest_path.read_bytes()) if manifest_path.exists() else {}
+    need(not old or old.get('RunId')==rid,'PAV_MT_CHECKPOINT_RUN_BINDING')
+    previous={f['Path']:f for f in old.get('Files',[])};files=[]
+    part_number=max((int(f.stem.split('-')[1]) for f in folder.glob('part-*.sealed')),default=-1)+1
+    paths=[]
+    for name in ('source.json','pav-market-protocol.json','verified-protection'):
+        root=work/name
+        paths.extend((f,str(f.relative_to(work))) for f in ([root] if root.is_file() else sorted(root.rglob('*'))) if f.is_file())
+    paths.extend((f,str(f)) for root in sorted(Path('market-partitions').glob('*/checkpoints')) for f in sorted(root.rglob('*')) if f.is_file())
+    def file_sha(path):
+        digest=hashlib.sha256()
+        with path.open('rb') as f:
+            for chunk in iter(lambda:f.read(1048576),b''):digest.update(chunk)
+        return digest.hexdigest()
+    def record(complete):
+        manifest=dict(Study='PAV1_MARKET_TIME_FX_1',RunId=rid,Schema='MXM_BOUNDED_FILE_CHECKPOINT_V1',Complete=complete,
+            Files=files,ExpectedFiles=len(paths),SourceSha256=next((f['Sha256'] for f in files if f['Path']=='source.json'),None),
+            MaximumPlainChunkBytes=33554432,Orders=0,CloudActivated=False)
+        raw=src.canonical(manifest)
+        sealed=seal_new(gzip.compress(raw,compresslevel=1,mtime=0),public,rid)
+        (folder/'manifest.sealed').write_bytes(sealed)
+        manifest['ManifestCipherSha256']=src.digest(sealed)
+        tmp=manifest_path.with_suffix('.tmp');tmp.write_bytes(src.canonical(manifest));tmp.replace(manifest_path)
+    for path,relative in paths:
+        need(not path.is_symlink(),'PAV_MT_CHECKPOINT_NO_SYMLINK')
+        digest=file_sha(path);prior=previous.get(relative)
+        if prior and prior['Sha256']==digest and all((folder/p['File']).is_file() and
+                file_sha(folder/p['File'])==p['CipherSha256'] for p in prior['Parts']):
+            files.append(prior);record(False);print('PAV_MT_CHECKPOINT_REUSED',relative,flush=True);continue
+        parts=[];offset=0
+        with path.open('rb') as source:
+            for chunk in iter(lambda:source.read(33554432),b''):
+                clear=gzip.compress(chunk,compresslevel=1,mtime=0);cipher=seal_new(clear,public,rid)
+                name=f'part-{part_number:06d}.sealed';part_number+=1
+                (folder/name).write_bytes(cipher)
+                parts.append(dict(File=name,Offset=offset,Bytes=len(chunk),PlainSha256=src.digest(chunk),CipherSha256=src.digest(cipher)))
+                offset+=len(chunk)
+                print('PAV_MT_CHECKPOINT_PROGRESS',relative,offset,path.stat().st_size,flush=True)
+        files.append(dict(Path=relative,Bytes=offset,Sha256=digest,Parts=parts));record(False)
+    record(True);print('PAV_MT_BOUNDED_CHECKPOINT_COMPLETE',len(files),'files',flush=True)
+
+
+def restore_checkpoint(folder,destination,key,run,expected_source_sha256):
+    """Verify the encrypted manifest and every part before exposing a source."""
+    from .custody import unseal_new
+    folder=Path(folder);destination=Path(destination)
+    public=json.loads((folder/'checkpoint-receipt.json').read_bytes());sealed=(folder/'manifest.sealed').read_bytes()
+    need(src.digest(sealed)==public['ManifestCipherSha256'],'PAV_MT_CHECKPOINT_MANIFEST_HASH')
+    manifest=json.loads(gzip.decompress(unseal_new(sealed,key,run)))
+    need(manifest['RunId']==run and manifest['Complete'] and manifest['SourceSha256']==expected_source_sha256 and
+         len(manifest['Files'])==manifest['ExpectedFiles'],'PAV_MT_CHECKPOINT_SOURCE_BINDING')
+    destination.mkdir(mode=0o700)
+    for row in manifest['Files']:
+        relative=Path(row['Path']);need(not relative.is_absolute() and '..' not in relative.parts,'PAV_MT_CHECKPOINT_SAFE_PATH')
+        path=destination/relative;path.parent.mkdir(parents=True,exist_ok=True);digest=hashlib.sha256();offset=0
+        with path.open('xb') as target:
+            for part in row['Parts']:
+                name=Path(part['File']);need(name.name==str(name),'PAV_MT_CHECKPOINT_PART_PATH')
+                cipher=(folder/name).read_bytes();need(src.digest(cipher)==part['CipherSha256'],'PAV_MT_CHECKPOINT_CIPHER_HASH')
+                clear=gzip.decompress(unseal_new(cipher,key,run))
+                need(part['Offset']==offset and len(clear)==part['Bytes'] and src.digest(clear)==part['PlainSha256'],
+                     'PAV_MT_CHECKPOINT_PART_INTEGRITY')
+                target.write(clear);digest.update(clear);offset+=len(clear)
+        need(offset==row['Bytes'] and digest.hexdigest()==row['Sha256'],'PAV_MT_CHECKPOINT_FILE_INTEGRITY')
+    need(src.digest((destination/'source.json').read_bytes())==expected_source_sha256,'PAV_MT_RESTORED_SOURCE_IDENTITY')
 
 
 def partition(p,work,stress):

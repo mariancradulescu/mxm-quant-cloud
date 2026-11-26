@@ -4,7 +4,7 @@ on:
     paths: ['research/official_breadth_extension_3_spans.json', 'research/owner_official_breadth_spans.py', 'research/test_official_breadth_spans.py', '.github/workflows/owner-official-breadth-spans.yml']
   push:
     branches: [main]
-    paths: ['research/official_breadth_extension_3_spans.json']
+    paths: ['research/official_breadth_extension_3_spans.json', 'ops/breadth-3-spans-recovery-1.txt']
 permissions:
   contents: read
   actions: read

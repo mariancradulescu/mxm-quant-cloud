@@ -1,0 +1,8 @@
+PAV1_MARKET_TIME_FX_1_TECHNICAL_RECOVERY_2
+Run 45830428357 conserved the exact original source proof and resolved all ten
+frozen conditional funding books, artifact 15121234243. The monolithic source
+checkpoint failed before every portfolio step; all economic evaluations skipped.
+Preserve original artifacts and economic registration 5c3639991f6292b887c416115d17e70c2f4d308f15168610b3f6d3c8bee19045.
+Use bounded encrypted pieces and a verified restore path. A reusable source
+cache is best effort because immutable source archives already preserve inputs.
+No repeated broker collection, orders, Cloud activation or economic promotion.
