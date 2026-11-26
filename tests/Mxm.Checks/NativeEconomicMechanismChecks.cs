@@ -25,7 +25,19 @@ internal static class NativeEconomicMechanismChecks
             decimal uncertainty=.05m,decimal? remainderDebit=.1m,decimal remainderFee=.1m,decimal closeFee=.1m)
             =>NativeEconomicMechanisms.PartialReductionAdvantage(held,close,min,10m,step,.5m,
                 uncertainty,2m,remainderDebit,.2m,closeFee,remainderFee);
-        check(Reduction()==.35m,"Reduction dominates HOLD and CLOSE only under witnessed conditional economics");
+        check(Reduction()==.35m,"Synthetic nonlinear funding arithmetic, not broker evidence or a portfolio decision");
+        check(Reduction(remainderDebit:1m) is null,"Proportional funding cannot make partial close strictly dominate both endpoints");
+        decimal? Constrained(decimal equity=100m,decimal otherMargin=40m,decimal otherRisk=2m,
+            decimal? funding=.1m,decimal fee=.1m,decimal uncertainty=.05m)
+            =>NativeEconomicMechanisms.ConstrainedReductionValue(2m,1m,1m,10m,1m,.5m,
+                uncertainty,funding,.2m,fee,.1m,equity,50m,otherMargin,otherRisk,20m,2m,1m);
+        check(Constrained()==.35m,"Positive residual is financeable when full exposure violates actual common-book limits");
+        check(Constrained(otherMargin:20m,equity:200m) is null,"No partial close when HOLD fits all constraints");
+        check(Constrained(otherMargin:65m) is null,"Cannot release an insufficient amount of margin");
+        check(Constrained(otherRisk:4.5m) is null,"Cannot leave the aggregate stop reservation above its cap");
+        check(Constrained(funding:null) is null,"No constrained reduction on missing residual financing");
+        check(Constrained(uncertainty:.5m) is null,"No residual with a nonpositive conservative continuation");
+        check(Constrained(fee:.5m) is null,"Additional split costs can erase the residual benefit");
         check(Reduction(held:1m) is null,"Minimum-volume position cannot be partially closed");
         check(Reduction(held:2.5m,close:1m) is null,"Residual volume must remain on the contract grid");
         check(Reduction(step:0m) is null,"Invalid volume increments cannot authorize reductions");
