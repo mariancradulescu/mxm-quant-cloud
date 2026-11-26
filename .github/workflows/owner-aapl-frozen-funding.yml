@@ -23,6 +23,7 @@ jobs:
         with:
           dotnet-version: '8.0.x'
       - run: dotnet build src/Mxm.Replay -c Release
+      - run: dotnet build research/NativeFundingSettlement -c Release
       - run: python -m unittest research.test_funding_latest_prefix
       - run: python -m py_compile research/owner_aapl_frozen_funding.py
   prepare:
