@@ -1,0 +1,15 @@
+{
+  "Study": "PAV1_CLOSED_FUNDING_RECOVERY_1",
+  "OriginalEconomicRun": 45806288995,
+  "OriginalEconomicArtifact": 15110537502,
+  "OriginalEconomicSha256": "103dafb7e2692abf02a2bf714301237d46e6df098da3e8c907a498b377cc0267",
+  "OriginalMetadataRun": 45716198383,
+  "OriginalMetadataCipherSha256": "7cbfc40f55b9437c188d6bacb79cdec7200b50e368875a78e2ad38d93e108360",
+  "Symbol": "ETHUSD",
+  "LookbackMs": 345600000,
+  "MaximumFxAgeMs": 7200000,
+  "EconomicPolicyReruns": 0,
+  "Orders": 0,
+  "CloudActivated": false,
+  "IndependentConfirmationCertified": false
+}
