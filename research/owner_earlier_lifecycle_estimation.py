@@ -38,10 +38,10 @@ def prepare(work):
     key=os.environ['R3_CUSTODY_PRIVATE_KEY_PEM'].encode()
     p,digest=funding.registered()
     funding.materialize(p,digest,work,Path('earlier-parent-source.json'),key,str(FUNDING_RUN))
-    parent=read('earlier-parent-source.json')
+    parent=read(Path('earlier-parent-source.json'))
     need(sha(work/'source.json')==parent['SourceSha256'],'EARLIER_PARENT_SOURCE_BINDING')
     # Pin official class identities from the original census; no inferred class.
-    archive.download_archive(CENSUS_ARTIFACT,45555613548,CENSUS_SHA,Path('earlier-census'))
+    archive.download_archive(CENSUS_ARTIFACT,45568679560,CENSUS_SHA,Path('earlier-census'))
     census=Path('earlier-census/source-census.json')
     need(sha(census)==CENSUS_CONTENT_SHA,'EARLIER_CENSUS_CONTENT')
     classes={x['symbol']:x['officialClass'] for x in read(census)['universe']}
@@ -75,7 +75,7 @@ def prepare(work):
         if folder.is_dir():shutil.rmtree(folder)
 
 def cache(work):
-    receipt=read('earlier-report/source-receipt.json')
+    receipt=read(Path('earlier-report/source-receipt.json'))
     public,_=derive_recipient(os.environ['R3_CUSTODY_PRIVATE_KEY_PEM'].encode())
     files=[(work/'earlier-source.json','source.json'),(work/'earlier-plan.json','pav-market-protocol.json')]
     files.extend((p,str(p.relative_to(work))) for p in sorted((work/'verified-protection').iterdir()) if p.is_file())
@@ -83,7 +83,7 @@ def cache(work):
         receipt['SourceSha256'],protocol_sha=receipt['ProtocolSha256'])
 
 def evaluate(work):
-    receipt=read('earlier-report/source-receipt.json');report=Path('earlier-report')
+    receipt=read(Path('earlier-report/source-receipt.json'));report=Path('earlier-report')
     need(sha(work/'earlier-source.json')==receipt['SourceSha256'] and
          sha(work/'earlier-plan.json')==receipt['ProtocolSha256'],'EARLIER_SOURCE_BINDING')
     results=[];start=time.monotonic()
@@ -106,7 +106,7 @@ def evaluate(work):
 def conserve():
     root=Path('earlier-partitions');files=sorted(root.glob('*/checkpoints/**/*.json'))
     if not files:return
-    receipt=read('earlier-report/source-receipt.json')
+    receipt=read(Path('earlier-report/source-receipt.json'))
     public,_=derive_recipient(os.environ['R3_CUSTODY_PRIVATE_KEY_PEM'].encode())
     seal_files([(p,str(p.relative_to(root))) for p in files],'earlier-sealed-books',public,os.environ['GITHUB_RUN_ID'],
         STUDY,receipt['SourceSha256'],complete=Path('earlier-report/summary.json').exists(),protocol_sha=receipt['ProtocolSha256'])
