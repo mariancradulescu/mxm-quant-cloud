@@ -331,38 +331,62 @@ public sealed partial class NativeUnifiedPortfolioEngine
             decimal uncertainty=transition.Sem*position.Units*q.EurDebit;
             if(eurDevelopmentProfile.EconomicManagement==NativeEconomicMechanisms.MonetaryReduce)
             {
-                // A separate research profile; legacy management is unchanged.
-                // The same causal continuation applies to all mechanism families.
+                // Do not use differences of funding ceilings as a guaranteed
+                // monetary saving. First compare actual common-book constraints.
                 decimal best=0m,closeUnits=0m;
-                if(!geometry.Reduced&&fundingReserves is not null&&!fundingReserves.IsOutstanding(position.Id))
+                if(!geometry.Reduced&&fundingReserves is not null&&!fundingReserves.IsOutstanding(position.Id)&&
+                    capital?.ResearchAdmissionEquityEur is decimal equity&&equity>0m&&capital.HeldMarginEur.HasValue&&
+                    !model.Ledger.PendingSnapshot().Any(x=>x.Kind=="REQUEST_CLOSE"))
                 {
-                    var offers=market.FundingOffers??Array.Empty<NativeFundingOfferEvidence>();
-                    long? Horizon(decimal units)
+                    var commitments=Cpe1Commitments(false,frame).Concat(Cpe1Commitments(true,frame)).ToArray();
+                    var own=commitments.SingleOrDefault(x=>x.PositionId==position.Id);
+                    if(own is not null&&own.Units==position.Units)
                     {
-                        var rows=offers.Where(f=>f.ScenarioId==FundingScenarioId&&f.Symbol==market.Symbol&&
-                            f.Side==side&&f.Units==units&&f.AvailableAt>0&&f.AvailableAt<=frame.At&&
-                            f.EffectiveFrom>0&&f.EffectiveFrom<=frame.At).Take(2).ToArray();
-                        return rows.Length==1?rows[0].NextScheduledManagementAt:null;
-                    }
-                    long? fullHorizon=Horizon(position.Units);
-                    decimal meanPerUnit=side*transition.Mean;
-                    meanPerUnit*=meanPerUnit>=0m?q.EurCredit:q.EurDebit;
-                    decimal fullFee=Fee(q,position.Units,-side);
-                    foreach(decimal retainedUnits in offers.Select(f=>f.Units).Distinct().OrderBy(u=>u))
-                    {
-                        if(retainedUnits<=0m||retainedUnits>=position.Units||fullHorizon is null||Horizon(retainedUnits)!=fullHorizon)continue;
-                        decimal close=position.Units-retainedUnits;
-                        var remainderDebit=NativePortfolioFunding.OfferDebit(market,side,retainedUnits,frame.At,FundingScenarioId);
-                        var advantage=NativeEconomicMechanisms.PartialReductionAdvantage(position.Units,close,
-                            market.Contract.MinimumUnits,market.Contract.MaximumUnits,market.Contract.VolumeStepUnits,
-                            meanPerUnit,transition.Sem*q.EurDebit,debit.Value,remainderDebit,fullFee,
-                            Fee(q,close,-side),Fee(q,retainedUnits,-side));
-                        if(advantage is decimal candidate&&candidate>best){best=candidate;closeUnits=close;}
+                        decimal otherMargin=commitments.Where(x=>x.PositionId!=position.Id).Sum(x=>x.MarginEur);
+                        decimal otherRisk=commitments.Where(x=>x.PositionId!=position.Id).Sum(x=>x.ReservedStopRiskEur);
+                        decimal floor=model.Ledger.Summary(frame.At).ObservedPeakEur*(1m-OwnerRiskAuthority.MaximumSystemDrawdown);
+                        var offers=market.FundingOffers??Array.Empty<NativeFundingOfferEvidence>();
+                        long? Horizon(decimal units)
+                        {
+                            var rows=offers.Where(f=>f.ScenarioId==FundingScenarioId&&f.Symbol==market.Symbol&&
+                                f.Side==side&&f.Units==units&&f.AvailableAt>0&&f.AvailableAt<=frame.At&&
+                                f.EffectiveFrom>0&&f.EffectiveFrom<=frame.At).Take(2).ToArray();
+                            return rows.Length==1?rows[0].NextScheduledManagementAt:null;
+                        }
+                        long? fullHorizon=Horizon(position.Units);
+                        decimal meanPerUnit=side*transition.Mean;
+                        meanPerUnit=Math.Min(meanPerUnit,residual);
+                        meanPerUnit*=meanPerUnit>=0m?q.EurCredit:q.EurDebit;
+                        decimal fullFee=Fee(q,position.Units,-side);
+                        decimal slip=q.LiquidationSlippagePerSide??position.SlippagePerSide;
+                        decimal stopDistance=Math.Max(0m,side*(price-geometry.Stop))+slip+geometry.GapReservePerUnitQuote;
+                        decimal riskPerUnit=stopDistance*q.EurDebit;
+                        decimal fullRisk=Math.Max(own.ReservedStopRiskEur,riskPerUnit*position.Units+fullFee+debit.Value);
+                        foreach(decimal retainedUnits in offers.Select(f=>f.Units).Distinct().OrderBy(u=>u))
+                        {
+                            if(retainedUnits<=0m||retainedUnits>=position.Units||fullHorizon is null||
+                                Horizon(retainedUnits)!=fullHorizon||EurMargin(market,side,retainedUnits,frame.At) is null)continue;
+                            decimal close=position.Units-retainedUnits;
+                            var remainderDebit=NativePortfolioFunding.OfferDebit(market,side,retainedUnits,frame.At,FundingScenarioId);
+                            if(remainderDebit is not decimal residualDebit)continue;
+                            decimal residualFee=Fee(q,retainedUnits,-side);
+                            // The common ledger releases booked risk proportionally.
+                            // Do not accept a residual that exceeds that reserve.
+                            decimal residualRisk=riskPerUnit*retainedUnits+residualFee+residualDebit;
+                            decimal reservedResidual=own.ReservedStopRiskEur*retainedUnits/position.Units;
+                            if(residualRisk>reservedResidual)continue;
+                            var advantage=NativeEconomicMechanisms.ConstrainedReductionValue(position.Units,close,
+                                market.Contract.MinimumUnits,market.Contract.MaximumUnits,market.Contract.VolumeStepUnits,
+                                meanPerUnit,transition.Sem*q.EurDebit,residualDebit,fullFee,
+                                Fee(q,close,-side),residualFee,equity,floor,otherMargin,otherRisk,own.MarginPerUnit,
+                                fullRisk,reservedResidual);
+                            if(advantage is decimal candidate&&candidate>best){best=candidate;closeUnits=close;}
+                        }
                     }
                 }
                 if(closeUnits>0m)
                 {
-                    Count("EUR_MONETARY_REDUCE_CONDITIONAL_DOMINANCE");
+                    Count("EUR_MONETARY_REDUCE_FEASIBLE_POSITIVE_RESIDUAL");
                     return new(NativeSimulatedCloseLifecycle.AdaptiveContinuationReduction,closeUnits);
                 }
                 Count("EUR_MONETARY_REDUCE_NO_EVIDENCED_DOMINANCE");
