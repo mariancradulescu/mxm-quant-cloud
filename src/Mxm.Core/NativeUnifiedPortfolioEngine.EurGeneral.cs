@@ -210,6 +210,52 @@ public sealed partial class NativeUnifiedPortfolioEngine
             var risk=candidate.Geometry.InitialRiskEur+CorrelatedRisk(candidate,held.Concat(pending));
             return Net(candidate)/risk;
         }
+        if(eurDevelopmentProfile?.UseJointMonetaryAllocation==true)
+        {
+            // Preview whole financeable sets under the same held+pending
+            // and post-fill protections. A requested close never frees cash.
+            bool Feasible(EurCandidate candidate,IReadOnlyList<EurCandidate> previous)
+            {
+                var projected=new List<NativePendingCapitalGate.Commitment>(pending);
+                var sides=new Dictionary<string,int>(StringComparer.Ordinal);
+                for(int i=0;i<previous.Count;i++)
+                {
+                    string id="JOINT_PREVIEW_"+i;
+                    projected.Add(Reserve(previous[i],id));
+                    sides.Add(id,previous[i].Signal.Side);
+                }
+                decimal extra=0m;
+                foreach(var exposure in held.Concat(projected))
+                {
+                    if(!markets.TryGetValue(exposure.Symbol,out var peer))continue;
+                    int side=sides.TryGetValue(exposure.PositionId,out int simulated)?simulated:plans[exposure.PositionId].Side;
+                    extra+=CoMovement(candidate,peer,side)*Math.Min(candidate.Geometry.InitialRiskEur,exposure.ReservedStopRiskEur);
+                }
+                var gate=AssessEurCandidate(capital,book,held,projected,candidate,extra);
+                if(!gate.IsFinanceable)return false;
+                const string next="JOINT_NEXT";
+                projected.Add(Reserve(candidate,next));
+                var q=candidate.Market.Quote;
+                var guard=NativePostFillCapitalGuard.Assess(capital.ResearchAdmissionEquityEur,held,projected,
+                    next,candidate.Signal.Side,q,candidate.Market.SlippagePerSideQuote,
+                    candidate.Receipt.NextManagementFundingCeilingEur!.Value,q.LiquidationSlippagePerSide);
+                decimal floor=book.ObservedPeakEur*(1m-OwnerRiskAuthority.MaximumSystemDrawdown);
+                return guard.Allowed&&Math.Min(guard.ProjectedPostFillLiquidationEquityEur,
+                    guard.PreFillLiquidationEquityEur-gate.ReservedRiskAfterEur)>=floor;
+            }
+            for(int i=choices.Count-1;i>=0;i--)
+                if(Rejection(choices[i]) is { } reason)
+                {trace(choices[i].Receipt,reason);choices.RemoveAt(i);}
+            var selected=NativeEurMonetaryAllocation.Search(choices,x=>x.Market.Symbol,Net,Feasible,8);
+            foreach(var item in selected.Items)
+            {
+                if(Rejection(item) is { } reason){trace(item.Receipt,reason);continue;}
+                admit(item);
+            }
+            foreach(var item in choices.Where(x=>!selected.Items.Contains(x)))
+                trace(item.Receipt,"WAIT_JOINT_MONETARY_ALTERNATIVE");
+            return;
+        }
         while (choices.Count > 0)
         {
             for (int i = choices.Count - 1; i >= 0; i--)

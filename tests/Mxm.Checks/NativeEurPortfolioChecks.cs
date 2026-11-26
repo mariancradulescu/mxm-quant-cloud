@@ -27,6 +27,19 @@ internal static class NativeEurPortfolioChecks
 
     internal static void Run(Action<bool,string> check)
     {
+        // A higher standalone payoff need not be the best funded set.
+        var joint=new[]{(Symbol:"A",Net:6m,Margin:6m),(Symbol:"B",Net:4m,Margin:3m),
+            (Symbol:"C",Net:4m,Margin:3m),(Symbol:"D",Net:4m,Margin:3m),
+            (Symbol:"B",Net:5m,Margin:6m),(Symbol:"E",Net:-1m,Margin:1m)};
+        var selected=NativeEurMonetaryAllocation.Search(joint,x=>x.Symbol,x=>x.Net,
+            (item,others)=>item.Margin+others.Sum(x=>x.Margin)<=9m,8);
+        check(selected.ValueEur==12m&&selected.Items.Select(x=>x.Symbol).OrderBy(x=>x)
+            .SequenceEqual(new[]{"B","C","D"}),
+            "Joint monetary search compares feasible sets, legal alternatives and WAIT");
+        var empty=NativeEurMonetaryAllocation.Search(joint,x=>x.Symbol,x=>x.Net,(item,others)=>false,4);
+        check(empty.Items.Length==0&&empty.ValueEur==0m,
+            "Joint monetary search never creates an infeasible or negative value position");
+
         foreach(bool masked in new[]{false,true})
         {
             var grossRows=Enumerable.Range(0,240).Select(i=>
