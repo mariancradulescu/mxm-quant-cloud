@@ -52,6 +52,7 @@ def download(p):
     old,_=prior.registered();prior.download(old)
     for prefix,folder in [('OriginalCausal','original-causal'),('Funding','original-funding'),('Conversion','original-conversion')]:
         archive.download_archive(p[prefix+'Artifact'],p[prefix+'Run'],p[prefix+'Sha256'],Path(folder))
+    Path('extension-source').mkdir(mode=0o700)
     for a in p['ExtensionArtifacts']:
         archive.download_archive(a['Id'],a['Run'],a['Sha256'],Path('extension-source')/a['Name'])
     need(read(Path('original-causal/economic-lifecycle.json'))['Study']=='MONETARY_CAUSAL_LIFECYCLE_1',
@@ -166,6 +167,8 @@ def materialize(p,digest,work,receipt_path):
     receipt_path.write_bytes(src.canonical(dict(Study=p['Study'],Proof=proof,SourceSha256=src.digest(raw),ProtocolSha256=src.digest(plan_raw),
         EvidenceManifestSha256=source['EvidenceManifestSha256'],SourceBrokerRequests=0,Orders=0,CloudActivated=False,IndependentConfirmationCertified=False)))
     eur=next(m for m in source['Markets'] if m['Market']['Name']=='EURUSD')
+    need(eur['CalendarStatus'] in ('CONDITIONAL_OFFICIAL_SNAPSHOT','PARTIALLY_SUPPORTED_SNAPSHOT') and
+         eur['ScheduledClocks'] is not None and eur['AmbiguousCalendarClocks'] is not None,'PAV_MT_OFFICIAL_FX_CALENDAR_SCOPE')
     native['MarketTimeCalendar']=dict(From=p['Start'],Through=p['End']+7*recent.DAY,OpenClocks=eur['ScheduledClocks'],
         AmbiguousClocks=eur['AmbiguousCalendarClocks'],EvidenceSha256=src.digest(src.canonical(eur)))
     Path('pav-market-funding-input.json').write_text(exact_json(native)+'\n')
@@ -174,6 +177,9 @@ def materialize(p,digest,work,receipt_path):
 
 def seal_checkpoint(work,folder):
     """One reusable normalized source cache and resumable native book snapshots."""
+    if not (work/'source.json').is_file():
+        print('PAV_MT_NO_NORMALIZED_SOURCE_CHECKPOINT_BEFORE_SOURCE_PREPARATION',flush=True)
+        return
     folder=Path(folder);folder.mkdir(exist_ok=True)
     archive_path=work/'checkpoint.tar.gz'
     with tarfile.open(archive_path,'w:gz') as tar:
