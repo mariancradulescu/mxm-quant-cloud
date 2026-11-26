@@ -236,12 +236,17 @@ jobs:
               found[i]=row
               m=markets[r["target"]["symbol"]]
               m["requests"]+=r["requests"]; m["marks"]+=r["monetaryMarks"]; m["fundingMarks"]+=r["fundingMarks"]
-              m["windows"].append(r["target"]["window"])
-              m["barCoverage"]=r["barCoverage"]
+              m["windows"].append(dict(Window=r["target"]["window"],From=r["target"]["fromInclusive"],
+                  Through=r["target"]["throughExclusive"],MonetaryMarks=r["monetaryMarks"],
+                  FundingMarks=r["fundingMarks"],BarCoverage=r["barCoverage"]))
+              if r["target"]["window"]=="NOV25_26_ANNUAL_CONTEXT":m["AnnualContextBarCoverage"]=r["barCoverage"]
+          for m in markets.values():
+              m["windows"].sort(key=lambda w:(w["From"],w["Through"]))
           out=dict(Study="OFFICIAL_BREADTH_EXTENSION_4_EARLIER_EXECUTION",protocolSha256=plan["protocolSha256"],
                    planned=len(plan["partitions"]),verified=len(found),pending=[i for i in range(len(plan["partitions"])) if i not in found],
-                   economicCoverage={name:("AUTHENTIC_BARS_AND_MONETARY_MARKS_COLLECTED" if name in markets and markets[name]["marks"]>0 and
-                       len(markets[name].get("barCoverage",{}))==7 and all(v["closedRows"]>0 for v in markets[name]["barCoverage"].values())
+                   economicCoverage={name:("AUTHENTIC_BARS_AND_MONETARY_MARKS_COLLECTED" if name in markets and any(w["MonetaryMarks"]>0 and
+                       len(w["BarCoverage"])==7 and all(v["closedRows"]>0 for v in w["BarCoverage"].values())
+                       for w in markets[name]["windows"])
                        else "VERIFIED_RESPONSE_WITH_INCOMPLETE_ECONOMIC_COVERAGE" if name in markets else plan["states"][name]) for name in plan["chosen"]},
                    markets=dict(markets),receipts=[found[i] for i in sorted(found)],orders=0,cloudActivated=False,
                    historicalTermsCertified=False,independentConfirmationCertified=False)
