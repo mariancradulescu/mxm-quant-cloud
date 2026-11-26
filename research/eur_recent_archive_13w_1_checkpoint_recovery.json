@@ -1,0 +1,23 @@
+{
+  "Study": "EUR_RECENT_ARCHIVE_13W_1",
+  "ProtocolSha256": "2661371dd2ca7ee314d03143e83d8819637ceace0f48bf5c6cf974cc4ac159ad",
+  "OriginalRun": 44824462289,
+  "RecoveryRun": 44910122403,
+  "ValidatedRevision": "e92399426718bb8b95e041e37aee30c31e971d89",
+  "ReplayRun": 45749454629,
+  "ReplayRevision": "eb783bd6076ddb153872a419fb565fb629b98cdb",
+  "Checkpoints": {
+    "0": {
+      "Artifact": 15085064979,
+      "ArchiveSha256": "dcc6f2d259e777947aa89d05738a52aa22b939d9985304c14ea378319f5a729c"
+    },
+    "1": {
+      "Artifact": 15085468063,
+      "ArchiveSha256": "828eae86f9849c70047ecc83441003054e2ad3f90d7a00c6bba5ed57b34a2e96"
+    },
+    "2": {
+      "Artifact": 15085019039,
+      "ArchiveSha256": "c48137304dc969c5d0951bc30aba0f5667cebc9d4f627c6f7cc0290544639542"
+    }
+  }
+}
