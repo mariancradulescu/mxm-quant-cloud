@@ -13,6 +13,8 @@ if(args is ["--owner-pav1-market-time",var pmProtocol,var pmSource,var pmDirecto
     return IntegratedEconomicReplay.RunPavMarketTime(pmProtocol,pmSource,pmDirectory,pmTape,pmStress);
 if(args is ["--owner-monetary-reduce-common-book",var mrProtocol,var mrSource,var mrDirectory,var mrTape,var mrStress])
     return IntegratedEconomicReplay.RunPavMarketTime(mrProtocol,mrSource,mrDirectory,mrTape,mrStress,monetaryReduceStudy:true);
+if(args is ["--owner-goog-open-funding",var gfSource,var gfTape,var gfReport,var gfWitness,var gfOutput])
+    return IntegratedEconomicReplay.RunGoogOpenFunding(gfSource,gfTape,gfReport,gfWitness,gfOutput);
 if(args is ["--owner-aapl-frozen-funding",var afSource,var afTape,var afReport,var afNewReports,var afWitness,var afOutput])
     return IntegratedEconomicReplay.RunAaplFrozenFunding(afSource,afTape,afReport,afNewReports,afWitness,afOutput);
 if(args is ["--owner-opportunity-screen",var screenProtocol,var screenSource,var screenReport,var screenProtection])
