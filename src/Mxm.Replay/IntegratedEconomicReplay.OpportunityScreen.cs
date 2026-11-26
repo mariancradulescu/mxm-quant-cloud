@@ -20,7 +20,7 @@ internal static partial class IntegratedEconomicReplay
         Ucp1Episode? Trip=null,long? FirstPositiveAt=null,long? FirstNegativeAt=null,long? PeakAt=null,
         int PositiveClocks=0,int NegativeClocks=0,int UnknownClocks=0,long? ResolvedAt=null,
         decimal? ClosedGrossEur=null,decimal? ClosedNetEur=null,long? ClosedAvailableAt=null,
-        NativeEconomicMechanisms.PeerForecast? PeerScore=null,string? FillReasons=null);
+        NativeEconomicMechanisms.PeerForecast? PeerScore=null,string? FillReasons=null,decimal? FilledUnits=null);
     sealed record ScreenActive(ScreenAttempt Attempt,NativeUnifiedPortfolioEngine Book);
 
     // Isolated, actual native lifecycle observations. Each attempt gets its own
@@ -138,7 +138,7 @@ internal static partial class IntegratedEconomicReplay
                 attempts.Add(item.Attempt with {Status=closedNet is null?"UNKNOWN_CLOSED":
                     label is null?"RECONCILED_NOT_LEARNING_ELIGIBLE":"RECONCILED",
                     ClosedGrossEur=trip.GrossEur,ClosedNetEur=closedNet,ClosedAvailableAt=settled?.AvailableAt,
-                    Label=label,Trip=trip,ResolvedAt=frame.At,FirstPositiveAt=positive.FirstOrDefault()?.At,
+                    Label=label,Trip=trip,ResolvedAt=frame.At,FilledUnits=variant.MonetaryTraining?book.OriginalModelEvents.SingleOrDefault(e=>e.Kind=="OPEN_FILL")?.Units:null,FirstPositiveAt=positive.FirstOrDefault()?.At,
                     FirstNegativeAt=negative.FirstOrDefault()?.At,
                     PeakAt=known.OrderByDescending(x=>x.FundingCapital!.ConditionalEquityEur).FirstOrDefault()?.At,
                     PositiveClocks=positive.Length,NegativeClocks=negative.Length,UnknownClocks=path.Length-known.Length});
@@ -194,7 +194,9 @@ internal static partial class IntegratedEconomicReplay
                 NativeEconomicMechanisms.PeerForecast? peer=null;
                 if(variant.PeerTransferDiagnostic&&receipt.Context is { } peerContext&&receipt.ReservedRiskEur is >0m&&
                     receipt.NextManagementFundingCeilingEur is decimal peerCarry)
-                    peer=NativeEconomicMechanisms.LeaveSymbolOutPayoff(noGap.Values.SelectMany(x=>x),receipt.Family,receipt.Side,
+                    peer=NativeEconomicMechanisms.LeaveSymbolOutPayoff(noGap.Where(kv=>kv.Key.Symbol!=receipt.Symbol&&
+                        kv.Key.Family==receipt.Family&&kv.Key.Side==receipt.Side&&streams[kv.Key.Symbol].Source.Market.OfficialAssetClass==peerContext.AssetClass)
+                        .SelectMany(kv=>kv.Value),receipt.Family,receipt.Side,
                         peerContext,frame.At,receipt.ReservedRiskEur.Value,receipt.KnownRoundTripCostEur+peerCarry,
                         variant.Profile.MinimumEpisodes,variant.Profile.MinimumDays,variant.Profile.DayPenalty);
                 active.Add(symbol,new(attempt with {Entry=receipt,Score=score,PeerScore=peer},episode));
@@ -206,7 +208,7 @@ internal static partial class IntegratedEconomicReplay
                 .Where(x=>from<=x.At&&x.At<to)
                 .Select(x=>(x.Label is { } l&&l.AvailableAt>=to)||x.ResolvedAt>=to||x.ClosedAvailableAt>=to||x.Trip is { } t&&t.CloseAt>=to
                     ?x with {Status="RIGHT_CENSORED",Label=null,Trip=null,FirstPositiveAt=null,FirstNegativeAt=null,
-                        PeakAt=null,PositiveClocks=0,NegativeClocks=0,UnknownClocks=0,ResolvedAt=null,FillReasons=null,
+                        PeakAt=null,PositiveClocks=0,NegativeClocks=0,UnknownClocks=0,ResolvedAt=null,FillReasons=null,FilledUnits=null,
                         ClosedGrossEur=null,ClosedNetEur=null,ClosedAvailableAt=null}:x).ToArray();
     }
 
@@ -317,6 +319,10 @@ internal static partial class IntegratedEconomicReplay
                 NetPerEpisode=settled.Length==0?(decimal?)null:settled.Average(x=>x.ClosedNetEur!.Value),
                 RiskGrowthAtFill=settled.Count(x=>x.Trip!.EntryRiskEur>x.Entry!.ReservedRiskEur),
                 RiskGrowthEur=settled.Sum(x=>Math.Max(0m,x.Trip!.EntryRiskEur-(x.Entry!.ReservedRiskEur??0m))),
+                ActualResizedFills=settled.Count(x=>x.FilledUnits is decimal filled&&filled<x.Entry!.Units),
+                MeanConditionalRewardRisk=settled.Length==0?null:settled.Average(x=>x.Entry!.ConditionalNetRewardRisk),
+                KnownNetPerReservedRisk=settled.Sum(x=>x.Entry!.ReservedRiskEur??0m)>0m?
+                    settled.Sum(x=>x.ClosedNetEur!.Value)/settled.Sum(x=>x.Entry!.ReservedRiskEur??0m):(decimal?)null,
                 FastClosures=settled.Count(x=>x.Trip!.CloseAt-x.Trip.OpenAt<300_000L),
                 FillRefusals=cohort.Where(x=>x.FillReasons is not null).GroupBy(x=>x.FillReasons!).ToDictionary(g=>g.Key,g=>g.Count()),
                 PeerForecasts=predicted.Length,
@@ -418,6 +424,7 @@ internal static partial class IntegratedEconomicReplay
                 Reasons=ScreenReasons(rows),TrainingEvidence=entryQuality&&s.Variant.Reference?s.TrainingEvidence():null,
                 MonetaryQuality=entryQuality||breadth?MonetaryQuality(rows,plan.SelectionFrom,plan.EvaluationFrom):null,
                 BreadthQuality=breadth?BreadthQuality(rows,streams:r.Streams):null,PairedReference=PairedScreen(rows,baseline),
+                PairedStructureRisk=breadth?PairedScreen(rows,r.States.Single(x=>x.Variant.Id.EndsWith("__STRUCTURE_RISK",StringComparison.Ordinal)).Rows(plan.SelectionFrom,plan.EvaluationFrom)):null,
                 PairedMarginalVolume=s.Variant.Id.EndsWith("__MARGINAL_VOLUME",StringComparison.Ordinal)&&capture is not null
                     ?PairedScreen(rows,capture.Rows(plan.SelectionFrom,plan.EvaluationFrom)):null};
         })).ToArray();
@@ -433,13 +440,14 @@ internal static partial class IntegratedEconomicReplay
             // explicitly not a bound on the unknown monetary remainder.
             decimal? score=stats.All(s=>s.KnownClosed>0&&s.DailyNetLowerEur.HasValue)
                 ?stats.Min(s=>Math.Min(s.DailyNetLowerEur!.Value,s.NetEur/calendarDays)):null;
-            return new {v.Id,Scored=scored,Score=score,KnownGrossPositive=stats.All(s=>s.GrossEur>0m)};
+            return new {v.Id,Scored=scored,Score=score,KnownGrossPositive=stats.All(s=>s.GrossEur>0m),
+                WorstStressMeanNetPerEpisode=breadth&&stats.All(s=>s.MeanNetEur.HasValue)?stats.Min(s=>s.MeanNetEur):null};
         })).ToArray();
         var ordered=candidates.Where(c=>c.Score.HasValue)
             .OrderByDescending(c=>c.Score).ThenBy(c=>c.Id,StringComparer.Ordinal).ThenBy(c=>c.Scored).ToArray();
         var bestRaw=ordered.FirstOrDefault(c=>!c.Scored);
         var bestScp=ordered.FirstOrDefault(c=>c.Scored);
-        var accepted=ordered.FirstOrDefault(c=>c.Score>0m&&c.KnownGrossPositive);
+        var accepted=ordered.FirstOrDefault(c=>c.Score>0m&&c.KnownGrossPositive&&(!breadth||c.WorstStressMeanNetPerEpisode>0m));
         var selected=entryQuality||breadth?variants:variants.Where(v=>v.Reference||v.Id==bestRaw?.Id||v.Id==bestScp?.Id||v.Id==accepted?.Id).ToArray();
         if(selected.Any(v=>v.Id.EndsWith("__MARGINAL_VOLUME",StringComparison.Ordinal)))
             selected=selected.Concat(variants.Where(v=>v.Id.EndsWith("__SPECIFIC_CAPTURE",StringComparison.Ordinal)))
@@ -461,12 +469,13 @@ internal static partial class IntegratedEconomicReplay
                 Reasons=ScreenReasons(rows),TrainingEvidence=entryQuality&&s.Variant.Reference?s.TrainingEvidence():null,
                 MonetaryQuality=entryQuality||breadth?MonetaryQuality(rows,plan.EvaluationFrom,plan.End):null,
                 BreadthQuality=breadth?BreadthQuality(rows,streams:r.Streams):null,PairedReference=PairedScreen(rows,baseline),
+                PairedStructureRisk=breadth?PairedScreen(rows,r.States.Single(x=>x.Variant.Id.EndsWith("__STRUCTURE_RISK",StringComparison.Ordinal)).Rows(plan.EvaluationFrom,plan.End)):null,
                 PairedMarginalVolume=s.Variant.Id.EndsWith("__MARGINAL_VOLUME",StringComparison.Ordinal)&&capture is not null
                     ?PairedScreen(rows,capture.Rows(plan.EvaluationFrom,plan.End)):null,
                 Episodes=rows.Where(a=>a.Entry is not null).Select(a=>new
                 {
                     a.At,a.Symbol,a.Family,a.Side,a.Status,Units=a.Entry!.Units,a.Entry.ReservedRiskEur,
-                    FillUnits=breadth?a.Trip?.Units:null,AssetClass=breadth?a.Entry.Context?.AssetClass:null,
+                    FillUnits=breadth?a.FilledUnits:null,AssetClass=breadth?a.Entry.Context?.AssetClass:null,
                     CostRiskFraction=breadth?a.Entry.Context?.CostRiskFraction:null,a.PeerScore,a.FillReasons,
                     a.Entry.KnownRoundTripCostEur,a.Entry.CurrentMarginEstimateEur,
                     RiskAtFillEur=a.Trip?.EntryRiskEur,Gap=a.Trip?.CrossedUnknownHistory,PartialReduction=a.Trip?.Integrated?.PartialReduction,
