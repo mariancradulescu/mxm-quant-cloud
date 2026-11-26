@@ -182,7 +182,7 @@ def seal_checkpoint(work,folder):
         print('PAV_MT_NO_NORMALIZED_SOURCE_CHECKPOINT_BEFORE_SOURCE_PREPARATION',flush=True)
         return
     folder=Path(folder);folder.mkdir(exist_ok=True)
-    rid=os.environ['GITHUB_RUN_ID'];public=custody_new.checked_public(Path('new-recipient-output'),rid)
+    rid=os.environ['GITHUB_RUN_ID'];public=custody_new.checked_public(Path('current-checkpoint-recipient'),rid)
     manifest_path=folder/'checkpoint-receipt.json'
     old=json.loads(manifest_path.read_bytes()) if manifest_path.exists() else {}
     need(not old or old.get('RunId')==rid,'PAV_MT_CHECKPOINT_RUN_BINDING')
