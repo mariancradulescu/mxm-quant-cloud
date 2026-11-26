@@ -35,7 +35,7 @@ internal static partial class IntegratedEconomicReplay
                 fundingScenarioId:scenario,eurDevelopmentProfile:v.Profile))).ToArray();
         var cash=new NativeUnifiedPortfolioEngine(NativeUnifiedPortfolioEngine.EurGeneralCash,
             fundingScenarioId:scenario,eurDevelopmentProfile:p.Variants[0].Profile);
-        var books=cases.Select(c=>(c.Id,c.Book)).Append(("CASH_MARKET_TIME",cash)).ToArray();
+        (string Id,NativeUnifiedPortfolioEngine Book)[] books=cases.Select(c=>(Id:c.Id,Book:c.Book)).Append((Id:"CASH_MARKET_TIME",Book:cash)).ToArray();
         var fits=new List<object>();
         void Observe(long from,long through,bool trade)
         {
