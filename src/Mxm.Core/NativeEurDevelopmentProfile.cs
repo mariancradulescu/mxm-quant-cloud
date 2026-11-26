@@ -62,6 +62,8 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
     public int JointMonetarySearchWidth { get; init; }
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
     public bool UseForecastBandCalibration { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool CaptureClosedBarActivity { get; init; }
 
     internal string GeometryIdentity => FormattableString.Invariant(
         $"{UseAvailableContext}/{DistributionTargetRanges:G29}/{StopReserveMultiplier:G29}") +
@@ -70,7 +72,8 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
         (IncludeRecoveredStructure?"/RANGE_TRANSITION+EQUILIBRIUM_REPAIR":"") +
         (ModelFundingAtPriorClosedSessionQuote?"/CLOSED_SESSION_FUNDING":"") +
         (ObserveFamilyDirectionsOnClosedBars?"/CLOSED_BAR_FAMILY_DIRECTION_OBSERVATION":"") +
-        (CaptureVolatilityContext?"/CLOSED_BAR_RELATIVE_VOLATILITY_V2":"");
+        (CaptureVolatilityContext?"/CLOSED_BAR_RELATIVE_VOLATILITY_V2":"") +
+        (CaptureClosedBarActivity?"/CLOSED_BAR_ACTIVITY_V1":"");
 
     internal void Verify()
     {
