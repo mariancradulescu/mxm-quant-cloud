@@ -32,7 +32,7 @@ internal static class NativeEurPortfolioChecks
             (Symbol:"C",Net:4m,Margin:3m),(Symbol:"D",Net:4m,Margin:3m),
             (Symbol:"B",Net:5m,Margin:6m),(Symbol:"E",Net:-1m,Margin:1m)};
         var selected=NativeEurMonetaryAllocation.Search(joint,x=>x.Symbol,x=>x.Net,
-            (item,others)=>item.Margin+others.Sum(x=>x.Margin)<=9m,4);
+            (item,others)=>item.Margin+others.Sum(x=>x.Margin)<=9m,8);
         check(selected.ValueEur==12m&&selected.Items.Select(x=>x.Symbol).OrderBy(x=>x)
             .SequenceEqual(new[]{"B","C","D"}),
             "Joint monetary search compares feasible sets, legal alternatives and WAIT");
