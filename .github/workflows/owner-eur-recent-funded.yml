@@ -10,6 +10,7 @@ on:
     branches: [main]
     paths:
       - 'research/eur_recent_funded_1_execution.json'
+      - 'research/eur_recent_funded_1_execution_recovery.json'
   workflow_run:
     workflows: ['OWNER recent continuous official history and universe expansion']
     branches: [main]
@@ -27,6 +28,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
+          fetch-depth: 2
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.12'
@@ -56,13 +58,17 @@ jobs:
           archive_sha256 = "6af35361b6f66cc3b90653d056b5ce0456317cf317335add204fa5740816804c"
           assert run_id == 45716198383 and revision == "bd7d403a2da0469472b2984252be91db7bedc2bd"
           if os.environ["GITHUB_EVENT_NAME"] == "push":
-              marker_path = "research/eur_recent_funded_1_execution.json"
-              marker = json.loads(Path(marker_path).read_bytes())
               event = json.loads(Path(os.environ["GITHUB_EVENT_PATH"]).read_bytes())
-              assert len(event["commits"]) == 1 and marker_path in event["commits"][0]["added"]
+              before = subprocess.check_output(["git", "rev-parse", "HEAD^"], text=True).strip()
+              assert event["before"] == before and event["after"] == os.environ["GITHUB_SHA"]
+              status, marker_path = subprocess.check_output(
+                  ["git", "diff", "--name-status", before, "HEAD"], text=True).strip().split("\t")
+              assert status == "A" and marker_path in ("research/eur_recent_funded_1_execution.json",
+                  "research/eur_recent_funded_1_execution_recovery.json")
+              marker = json.loads(Path(marker_path).read_bytes())
               expected = dict(Study=study["Study"], SourceRun=run_id, SourceRevision=revision,
                               SourceArtifact=artifact_id, SourceArchiveSha256=archive_sha256,
-                              ProtocolSha256=sha256(protocol).hexdigest(), ValidatedRevision=event["before"])
+                              ProtocolSha256=sha256(protocol).hexdigest(), ValidatedRevision=before)
               assert marker == expected, "RECENT_FUNDED_EXECUTION_BINDING"
 
           run = json.loads(api(f"/actions/runs/{run_id}"))
