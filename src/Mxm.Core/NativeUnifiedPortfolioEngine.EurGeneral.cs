@@ -24,7 +24,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
         NativeIntegratedCandidate[] candidates;
         if(eurDevelopmentProfile is {EconomicMechanism:{ } mechanism} distinct)
             candidates=NativeEconomicMechanisms.Describe(mechanism,market,at,distinct.DistributionTargetRanges,sharedFrame,
-                distinct.EconomicGeometryTimeframe,distinct.EconomicStopRanges);
+                distinct.EconomicGeometryTimeframe,distinct.EconomicStopRanges,distinct.AnchorEconomicGeometryToClosedStructure);
         else if(eurDevelopmentProfile is {UseAvailableContext:true} profile)
         {
             if(ObservedWindow(market,NativeBarTimeframe.M5,at) is not { } m5||
@@ -323,7 +323,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
             if(residual<=0m)return new("INTEGRATED_MECHANISM_TARGET",position.Units);
             if(eurDevelopmentProfile.EconomicManagement=="BRACKET")return null;
             decimal? debit=NativePortfolioFunding.OfferDebit(market,side,position.Units,frame.At,FundingScenarioId);
-            if(debit is null||NativeEconomicMechanisms.Continuation(market,frame.At,eurDevelopmentProfile.EconomicGeometryTimeframe) is not { } transition)return null;
+            if(debit is null||NativeEconomicMechanisms.Continuation(market,frame.At,eurDevelopmentProfile.EconomicManagementTimeframe??eurDevelopmentProfile.EconomicGeometryTimeframe) is not { } transition)return null;
             decimal change=side*transition.Mean*position.Units;
             decimal value=change*(change>=0m?q.EurCredit:q.EurDebit)-debit.Value;
             decimal uncertainty=transition.Sem*position.Units*q.EurDebit;
