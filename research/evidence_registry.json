@@ -3337,5 +3337,63 @@
     "continuousFloatingDrawdownCertified": false,
     "promotion": false,
     "result": "docs/ORX1_RESTRICTED_RECORDED_OPPORTUNITY_RESULT_20261118.md"
+  },
+  "monetaryCausalLifecycle1": {
+    "protocol": "research/monetary_causal_lifecycle_1.json",
+    "protocolCommit": "9a85d8f5bcf7faf94cfab3d6dbf5db58630d22ae",
+    "status": "DEVELOPMENT_COMPLETE_ALL_SELECTIONS_WAIT_NO_PROMOTION",
+    "originalRun": 45806288995,
+    "originalArtifact": 15111217102,
+    "archiveSha256": "86dfa0c1bab775f48c9f30c92d78ac7874f473b49617d8775e279adec39df991",
+    "result": "docs/MONETARY_CAUSAL_LIFECYCLE_1_RESULT.md",
+    "receipt": "docs/MONETARY_CAUSAL_LIFECYCLE_1_RECEIPT.json",
+    "globalCalendarExposed": true,
+    "calendar": [
+      "2026-10-26",
+      "2026-11-25"
+    ],
+    "sourceUniverseCount": 21,
+    "independentConfirmation": false,
+    "ordersSubmitted": 0,
+    "cloudActivated": false
+  },
+  "officialBreadthExtension2": {
+    "protocol": "research/official_breadth_extension_2.json",
+    "status": "AUTHENTIC_SOURCE_VERIFIED",
+    "originalRun": 45806558835,
+    "summaryArtifact": 15110472209,
+    "archiveSha256": "4e618d35472afbd53e5e298283d05f27dea5bc017dd6e8d32f38e224bc28a09f",
+    "instruments": [
+      "AAPL.US-24",
+      "ACWI.US",
+      "HK50-F",
+      "USDJPY"
+    ],
+    "barCalendar": [
+      "2026-11-01",
+      "2026-11-25"
+    ],
+    "tickCalendar": [
+      "2026-11-23",
+      "2026-11-25"
+    ],
+    "disabledConversionRecoveryRun": 45807657683,
+    "disabledConversionRecoveryArtifact": 15111021234,
+    "globalCalendarExposed": true,
+    "independentConfirmation": false,
+    "ordersSubmitted": 0,
+    "cloudActivated": false
+  },
+  "pav1ClosedFundingRecovery1": {
+    "protocol": "research/pav1_closed_funding_recovery_1.json",
+    "status": "SOURCE_VERIFIED_STRICT_FX_AGE_REMAINS_UNRESOLVED",
+    "originalRun": 45809712511,
+    "originalArtifact": 15112060159,
+    "archiveSha256": "6eacb33a6456b4cff65d02805fcd4dc650163b6bc46da2cc570c80400f2c0786",
+    "financialPolicyReruns": 0,
+    "originalUnknownEquityRestored": false,
+    "independentConfirmation": false,
+    "ordersSubmitted": 0,
+    "cloudActivated": false
   }
 }
