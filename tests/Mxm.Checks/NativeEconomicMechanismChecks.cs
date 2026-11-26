@@ -85,6 +85,10 @@ internal static class NativeEconomicMechanismChecks
             "Centered lifecycle measures historical NET dispersion about its own mean before current cost cap");
         check(centered==NativeCenteredLifecycle.Estimate(rows.Append(rows[0] with {AvailableAt=at,GrossEur=1000m}),
             "F",1,context,at,1m,.3m,20,3,1.645m,false),"Centered lifecycle excludes future and current clock labels");
+        var unitEstimate=NativeCenteredLifecycle.Estimate(rows,"F",1,context,at,1m,0m,20,3,1.645m,false);
+        check(NativeCenteredLifecycle.Reprice(unitEstimate,2m,.6m)==NativeCenteredLifecycle.Estimate(
+            rows,"F",1,context,at,2m,.6m,20,3,1.645m,false),
+            "Cached normalized statistics retain candidate-specific costs and volume risk scale");
         var transferPeers=rows.Select((row,i)=>row with {Context=context with {Symbol=i%2==0?"A":"B",AssetClass="FX"}}).ToArray();
         var targetContext=context with {AssetClass="FX"};
         check(NativeCenteredLifecycle.Estimate(transferPeers,"F",1,targetContext,at,1m,.1m,20,3,0m,true)

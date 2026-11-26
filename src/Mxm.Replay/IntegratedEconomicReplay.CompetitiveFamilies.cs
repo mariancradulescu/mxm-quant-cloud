@@ -100,7 +100,9 @@ internal static partial class IntegratedEconomicReplay
         {
             var root=Path.Combine(directory,"checkpoints",phase);Directory.CreateDirectory(root);
             foreach(var c in books)File.WriteAllText(Path.Combine(root,c.Id+".json"),c.Book.HistoricalEurCheckpoint());
-            foreach(var c in cases.Where(x=>x.Observer is not null))File.WriteAllBytes(Path.Combine(root,c.Id+"-observer.json"),
+            var observers=cases.Where(x=>x.Observer is not null);
+            if(estimatorStudy)observers=observers.GroupBy(x=>x.Observer).Select(g=>g.First());
+            foreach(var c in observers)File.WriteAllBytes(Path.Combine(root,c.Id+"-observer.json"),
                 JsonSerializer.SerializeToUtf8Bytes(c.Observer!.Checkpoint(),NativeHistoricalCheckpointJson.Options));
             Console.WriteLine($"COMPETITIVE_FAMILIES_CHECKPOINT {stress} {phase}");
         }
@@ -129,7 +131,8 @@ internal static partial class IntegratedEconomicReplay
                 HeldOutMonetary=PavCashScore(c.Book,p.EvaluationFrom,p.End),
                 Details=EconomicStudyDetails(c.Book,source,streams)}).ToArray(),
             SourceAvailability=streams.Values.Select(s=>new {s.Source.Market.Name,s.Counts}).ToArray(),
-            ObserverReceipts=cases.Where(c=>c.Observer is not null).Select(c=>new {c.Id,Report=c.Observer!.Report()}).ToArray(),
+            ObserverReceipts=(estimatorStudy?cases.Where(c=>c.Observer is not null).GroupBy(c=>c.Observer).Select(g=>g.First()):
+                cases.Where(c=>c.Observer is not null)).Select(c=>new {c.Id,Report=c.Observer!.Report()}).ToArray(),
             SharedPortfolioEvaluations=books.Length,SharedCapitalEur=300,
             Scope="SEVEN_FAMILY_COMPETITION_IN_EACH_COMMON_BOOK; HOURLY_CAUSAL_SHADOW_LABELS; WEEKLY_WALK_FORWARD",
             OriginalResultsModified=false,SourceBrokerRequests=0,Orders=0,CloudActivated=false,

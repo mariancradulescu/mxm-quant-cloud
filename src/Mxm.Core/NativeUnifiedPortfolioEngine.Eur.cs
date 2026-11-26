@@ -85,6 +85,9 @@ public sealed partial class NativeUnifiedPortfolioEngine
     internal Ucp1EurDecisionActivity[] EurDecisionActivity => eurDecisionActivity.ToArray();
     NativeEurCalibration? eurCalibration;
     readonly Dictionary<(string Symbol,string Family,int Side,int? Regime),NativeCausalManagementSelection.Choice> eurManagementChoices=new();
+    // Normalized daily statistics are invariant across candidate volumes and
+    // executable fee schedules within one frozen causal calibration.
+    readonly Dictionary<(string Symbol,string? AssetClass,string Family,int Side,int? Regime),NativeEurPayoff?> eurCenteredPayoffs=new();
     NativeEurAdaptiveEstimator? adaptivePayoff;
     sealed record EurRealizedForecastError(string Symbol,string Family,int Side,long AvailableAt,decimal GrossR,decimal NetR);
     readonly Dictionary<(string Symbol,string Family,int Side),List<EurRealizedForecastError>> eurRealizedErrors=new();
@@ -203,6 +206,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
             throw new ArgumentException("EUR_CALIBRATION_INVALID_CAUSAL_OUTCOME");
         eurHistory.Clear();
         eurManagementChoices.Clear();
+        eurCenteredPayoffs.Clear();
         eurCalibration=calibration;
         foreach(var outcome in calibration.Outcomes)AddEurOutcome(outcome);
         if(eurDevelopmentProfile is {UseAdaptivePayoff:true} adaptive)
@@ -357,9 +361,21 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 scoredHistory=scoredHistory.Where(x=>x.EconomicManagement==management);
             }
             if(scored.LifecycleEstimator is { } estimator)
-                return NativeCenteredLifecycle.Estimate(scoredHistory,family,side,target,scoredAt,
-                    candidateRiskEur,currentCostFloorEur,scored.MinimumEpisodes,scored.MinimumDays,
-                    scored.DayPenalty,estimator=="CENTERED_TRANSFER",diagnostic);
+            {
+                if(candidateRiskEur<=0m||currentCostFloorEur<0m)return null;
+                int? regime=target.ClosedStates.SingleOrDefault(x=>x.Timeframe==NativeBarTimeframe.H1)?.Direction;
+                var key=(target.Symbol,target.AssetClass,family,side,regime);
+                bool cache=eurCalibration is not null&&eurCalibration.ObservationThrough<scoredAt;
+                NativeEurPayoff? normalized;
+                if(!cache||!eurCenteredPayoffs.TryGetValue(key,out normalized))
+                {
+                    normalized=NativeCenteredLifecycle.Estimate(scoredHistory,family,side,target,scoredAt,
+                        1m,0m,scored.MinimumEpisodes,scored.MinimumDays,scored.DayPenalty,
+                        estimator=="CENTERED_TRANSFER");
+                    if(cache)eurCenteredPayoffs[key]=normalized;
+                }
+                return NativeCenteredLifecycle.Reprice(normalized,candidateRiskEur,currentCostFloorEur,diagnostic);
+            }
             return NativeEconomicMechanisms.LifecyclePayoff(scoredHistory,family,side,target,
                 scoredAt,candidateRiskEur,currentCostFloorEur,scored.MinimumEpisodes,scored.MinimumDays,scored.DayPenalty);
         }

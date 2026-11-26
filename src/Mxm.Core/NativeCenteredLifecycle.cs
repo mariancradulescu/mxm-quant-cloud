@@ -4,6 +4,20 @@ namespace Mxm.Core;
 // Do not measure dispersion around a cost-capped mean of a different series.
 internal static class NativeCenteredLifecycle
 {
+    internal static NativeEurPayoff? Reprice(NativeEurPayoff? normalized,decimal risk,decimal cost,Action<string>? diagnostic=null)
+    {
+        if(normalized is null||risk<=0m||cost<0m)
+        {diagnostic?.Invoke("CENTERED_INSUFFICIENT_SUPPORT");return null;}
+        decimal gross=normalized.GrossMeanEur*risk,grossLower=normalized.GrossLowerEur*risk;
+        decimal net=Math.Min(normalized.NetMeanEur*risk,gross-cost);
+        decimal netLower=Math.Min(normalized.NetLowerEur*risk,grossLower-cost);
+        diagnostic?.Invoke(normalized.Cohort!);
+        diagnostic?.Invoke(grossLower<=0m?"CENTERED_GROSS_LOWER_NONPOSITIVE":
+            netLower<=0m?"CENTERED_NET_LOWER_NONPOSITIVE":"CENTERED_POSITIVE");
+        return normalized with {GrossMeanEur=gross,GrossLowerEur=grossLower,NetMeanEur=net,NetLowerEur=netLower,
+            NetWorstEur=normalized.NetWorstEur*risk,NetBestEur=normalized.NetBestEur*risk};
+    }
+
     internal static NativeEurPayoff? Estimate(IEnumerable<NativeEurCalibrationOutcome> history,
         string family,int side,NativeEurDecisionContext context,long at,decimal risk,decimal cost,
         int minimumEpisodes,int minimumDays,decimal penalty,bool transfer,Action<string>? diagnostic=null)
