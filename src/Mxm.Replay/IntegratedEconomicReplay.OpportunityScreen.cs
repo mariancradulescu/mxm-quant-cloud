@@ -77,7 +77,8 @@ internal static partial class IntegratedEconomicReplay
             {
                 if(!available.TryGetValue(symbol,out var market))
                 {
-                    attempts.Add(new(frame.At,symbol,variant.Mechanism,0,"NO_MONETARY_FRAME"));
+                    attempts.Add(new(frame.At,symbol,variant.Mechanism,0,"NO_MONETARY_FRAME:"+
+                        streams[symbol].Availability.GetValueOrDefault(frame.At,"UNOBSERVED")));
                     continue;
                 }
                 var offers=descriptor.DescribeEurGeneral(market,frame.At,frame);
@@ -132,7 +133,7 @@ internal static partial class IntegratedEconomicReplay
         var known=admitted.Where(a=>a.Label is not null&&a.Trip is not null).ToArray();
         decimal gross=known.Sum(a=>a.Label!.GrossEur),net=known.Sum(a=>a.Label!.NetEur);
         decimal mfe=known.Sum(a=>Math.Max(0m,a.Trip!.SampledMfeEur));
-        var days=rows.Where(a=>a.Status!="NO_MONETARY_FRAME").GroupBy(a=>a.At/HistoricalDay)
+        var days=rows.Where(a=>!a.Status.StartsWith("NO_MONETARY_FRAME:",StringComparison.Ordinal)).GroupBy(a=>a.At/HistoricalDay)
             .Where(day=>day.All(a=>!Admits(a)||a.Label is not null||a.Status=="UNFILLED"))
             .Select(day=>day.Where(a=>Admits(a)&&a.Label is not null).Sum(a=>a.Label!.NetEur)).ToArray();
         decimal? mean=days.Length==0?null:days.Average();
@@ -140,7 +141,7 @@ internal static partial class IntegratedEconomicReplay
             (days.Length*(days.Length-1d)));
         var wins=known.Where(a=>a.Label!.NetEur>0m).ToArray();
         var losses=known.Where(a=>a.Label!.NetEur<0m).ToArray();
-        return new(rows.Length,rows.Count(a=>a.Status=="NO_MONETARY_FRAME"),rows.Count(a=>a.Status=="WAIT_NO_SIGNAL"),
+        return new(rows.Length,rows.Count(a=>a.Status.StartsWith("NO_MONETARY_FRAME:",StringComparison.Ordinal)),rows.Count(a=>a.Status=="WAIT_NO_SIGNAL"),
             rows.Count(a=>a.Status=="WAIT_ISOLATED_OVERLAP"),rows.Count(a=>a.Status.StartsWith("WAIT_NOT_ADMITTED:",StringComparison.Ordinal)),
             admitted.Length,admitted.Count(a=>a.Status=="UNFILLED"),admitted.Count(a=>a.Status=="RIGHT_CENSORED"),
             admitted.Count(a=>a.Status=="UNKNOWN_CLOSED"),known.Length,wins.Length,gross,net,gross-net,
@@ -151,6 +152,25 @@ internal static partial class IntegratedEconomicReplay
             rows.Count(a=>a.Entry is not null&&a.Score is not null&&!ScpAdmits(a)),rows.Count(ScpAdmits),
             wins.Length==0?null:wins.Average(a=>a.Label!.NetEur),losses.Length==0?null:losses.Average(a=>a.Label!.NetEur));
     }
+
+    static object PairedScreen(ScreenAttempt[] candidate,ScreenAttempt[] reference)
+    {
+        var a=candidate.Where(x=>x.Label is not null).ToDictionary(x=>(x.At,x.Symbol,x.Family,x.Side));
+        var b=reference.Where(x=>x.Label is not null).ToDictionary(x=>(x.At,x.Symbol,x.Family,x.Side));
+        var common=a.Keys.Intersect(b.Keys).ToArray();
+        return new
+        {
+            MatchedDecisionSymbolFamilySide=common.Length,CandidateOnly=a.Count-common.Length,ReferenceOnly=b.Count-common.Length,
+            MatchedGrossDifferenceEur=common.Length==0?(decimal?)null:common.Sum(k=>a[k].Label!.GrossEur-b[k].Label!.GrossEur),
+            MatchedNetDifferenceEur=common.Length==0?(decimal?)null:common.Sum(k=>a[k].Label!.NetEur-b[k].Label!.NetEur),
+            MatchedEntryUnitsDifference=common.Length==0?(decimal?)null:common.Sum(k=>a[k].Entry!.Units-b[k].Entry!.Units),
+            MatchedMeanDurationDifferenceMinutes=common.Length==0?(decimal?)null:common.Average(k=>
+                ((a[k].Trip!.CloseAt-a[k].Trip!.OpenAt)-(b[k].Trip!.CloseAt-b[k].Trip!.OpenAt))/60000m),
+            ConditionalMatchedClosedPathsOnly=true,UnmatchedOrUnknownNotImputed=true
+        };
+    }
+
+    static object ScreenReasons(ScreenAttempt[] rows)=>rows.GroupBy(x=>x.Status).ToDictionary(g=>g.Key,g=>g.Count(),StringComparer.Ordinal);
 
     public static int RunOpportunityScreen(string protocolPath,string sourcePath,string reportPath,string protectionDirectory)
     {
@@ -204,9 +224,16 @@ internal static partial class IntegratedEconomicReplay
         Observe(plan.Start,plan.EvaluationFrom);
         var fit=runs.SelectMany(r=>r.States.Select(s=>new {r.Stress,s.Variant.Id,Raw=ScreenStats(s.Rows(plan.Start,plan.SelectionFrom),false),
             Scp1=ScreenStats(s.Rows(plan.Start,plan.SelectionFrom),true)})).ToArray();
-        var selection=runs.SelectMany(r=>r.States.Select(s=>new {r.Stress,s.Variant.Id,
-            Raw=ScreenStats(s.Rows(plan.SelectionFrom,plan.EvaluationFrom),false),
-            Scp1=ScreenStats(s.Rows(plan.SelectionFrom,plan.EvaluationFrom),true)})).ToArray();
+        var selection=runs.SelectMany(r=>r.States.Select(s=>
+        {
+            var rows=s.Rows(plan.SelectionFrom,plan.EvaluationFrom);
+            var baseline=r.States.Single(x=>x.Variant.Reference).Rows(plan.SelectionFrom,plan.EvaluationFrom);
+            var capture=r.States.SingleOrDefault(x=>x.Variant.Id.EndsWith("__SPECIFIC_CAPTURE",StringComparison.Ordinal));
+            return new {r.Stress,s.Variant.Id,Raw=ScreenStats(rows,false),Scp1=ScreenStats(rows,true),
+                Reasons=ScreenReasons(rows),PairedReference=PairedScreen(rows,baseline),
+                PairedMarginalVolume=s.Variant.Id.EndsWith("__MARGINAL_VOLUME",StringComparison.Ordinal)&&capture is not null
+                    ?PairedScreen(rows,capture.Rows(plan.SelectionFrom,plan.EvaluationFrom)):null};
+        })).ToArray();
         // Same candidate is selected across all cost scenarios. WAIT remains
         // a zero-exposure alternative; negative champions are diagnostics only.
         var candidates=variants.SelectMany(v=>new[]{false,true}.Select(scored=>
@@ -222,6 +249,9 @@ internal static partial class IntegratedEconomicReplay
         var bestScp=ordered.FirstOrDefault(c=>c.Scored);
         var accepted=ordered.FirstOrDefault(c=>c.Score>0m&&c.KnownGrossPositive);
         var selected=variants.Where(v=>v.Reference||v.Id==bestRaw?.Id||v.Id==bestScp?.Id||v.Id==accepted?.Id).ToArray();
+        if(selected.Any(v=>v.Id.EndsWith("__MARGINAL_VOLUME",StringComparison.Ordinal)))
+            selected=selected.Concat(variants.Where(v=>v.Id.EndsWith("__SPECIFIC_CAPTURE",StringComparison.Ordinal)))
+                .DistinctBy(v=>v.Id).ToArray();
         // New independent episode cohorts begin at the chronological holdout.
         // No open pre-boundary attempt is treated as a closed outcome.
         for(int i=0;i<runs.Length;i++)
@@ -235,11 +265,17 @@ internal static partial class IntegratedEconomicReplay
         var held=runs.SelectMany(r=>r.States.Select(s=>
         {
             var rows=s.Rows(plan.EvaluationFrom,plan.End);
+            var baseline=r.States.Single(x=>x.Variant.Reference).Rows(plan.EvaluationFrom,plan.End);
+            var capture=r.States.SingleOrDefault(x=>x.Variant.Id.EndsWith("__SPECIFIC_CAPTURE",StringComparison.Ordinal));
             return new {r.Stress,s.Variant.Id,Raw=ScreenStats(rows,false),Scp1=ScreenStats(rows,true),
+                Reasons=ScreenReasons(rows),PairedReference=PairedScreen(rows,baseline),
+                PairedMarginalVolume=s.Variant.Id.EndsWith("__MARGINAL_VOLUME",StringComparison.Ordinal)&&capture is not null
+                    ?PairedScreen(rows,capture.Rows(plan.EvaluationFrom,plan.End)):null,
                 Episodes=rows.Where(a=>a.Entry is not null).Select(a=>new
                 {
                     a.At,a.Symbol,a.Family,a.Side,a.Status,Units=a.Entry!.Units,a.Entry.ReservedRiskEur,
                     a.Entry.KnownRoundTripCostEur,a.Entry.CurrentMarginEstimateEur,
+                    RiskAtFillEur=a.Trip?.EntryRiskEur,Gap=a.Trip?.CrossedUnknownHistory,PartialReduction=a.Trip?.Integrated?.PartialReduction,
                     ScoreNetLowerEur=a.Score?.NetLowerEur,ScoreGrossLowerEur=a.Score?.GrossLowerEur,Scp1Admitted=ScpAdmits(a),
                     AvailableAt=a.Label?.AvailableAt,NetEur=a.Label?.NetEur,GrossEur=a.Label?.GrossEur,
                     OpenAt=a.Trip?.OpenAt,CloseAt=a.Trip?.CloseAt,SampledMfeEur=a.Trip?.SampledMfeEur,SampledMaeEur=a.Trip?.SampledMaeEur,
