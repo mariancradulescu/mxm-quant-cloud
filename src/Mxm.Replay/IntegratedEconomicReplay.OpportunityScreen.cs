@@ -10,7 +10,7 @@ internal static partial class IntegratedEconomicReplay
     sealed record ScreenAttempt(long At,string Symbol,string Family,int Side,string Status,
         NativeEurOpportunity? Entry=null,NativeEurPayoff? Score=null,NativeEurCalibrationOutcome? Label=null,
         Ucp1Episode? Trip=null,long? FirstPositiveAt=null,long? FirstNegativeAt=null,long? PeakAt=null,
-        int PositiveClocks=0,int NegativeClocks=0,int UnknownClocks=0);
+        int PositiveClocks=0,int NegativeClocks=0,int UnknownClocks=0,long? ResolvedAt=null);
     sealed record ScreenActive(ScreenAttempt Attempt,NativeUnifiedPortfolioEngine Book);
 
     // Isolated, actual native lifecycle observations. Each attempt gets its own
@@ -44,7 +44,7 @@ internal static partial class IntegratedEconomicReplay
                 var trip=book.CompleteModelTrips.SingleOrDefault();
                 if(trip is null)
                 {
-                    attempts.Add(item.Attempt with {Status="UNFILLED"});
+                    attempts.Add(item.Attempt with {Status="UNFILLED",ResolvedAt=frame.At});
                     continue;
                 }
                 var label=book.ExportEurCalibration().Outcomes.SingleOrDefault();
@@ -65,7 +65,7 @@ internal static partial class IntegratedEconomicReplay
                 var positive=known.Where(x=>x.FundingCapital!.ConditionalEquityEur>300m).ToArray();
                 var negative=known.Where(x=>x.FundingCapital!.ConditionalEquityEur<300m).ToArray();
                 attempts.Add(item.Attempt with {Status=label is null?"UNKNOWN_CLOSED":"RECONCILED",
-                    Label=label,Trip=trip,FirstPositiveAt=positive.FirstOrDefault()?.At,
+                    Label=label,Trip=trip,ResolvedAt=frame.At,FirstPositiveAt=positive.FirstOrDefault()?.At,
                     FirstNegativeAt=negative.FirstOrDefault()?.At,
                     PeakAt=known.OrderByDescending(x=>x.FundingCapital!.ConditionalEquityEur).FirstOrDefault()?.At,
                     PositiveClocks=positive.Length,NegativeClocks=negative.Length,UnknownClocks=path.Length-known.Length});
@@ -113,9 +113,9 @@ internal static partial class IntegratedEconomicReplay
         public ScreenAttempt[] Rows(long from,long to)
             =>attempts.Concat(active.Values.Select(x=>x.Attempt with {Status="RIGHT_CENSORED"}))
                 .Where(x=>from<=x.At&&x.At<to)
-                .Select(x=>(x.Label is { } l&&l.AvailableAt>=to)||x.Trip is { } t&&t.CloseAt>=to
+                .Select(x=>(x.Label is { } l&&l.AvailableAt>=to)||x.ResolvedAt>=to||x.Trip is { } t&&t.CloseAt>=to
                     ?x with {Status="RIGHT_CENSORED",Label=null,Trip=null,FirstPositiveAt=null,FirstNegativeAt=null,
-                        PeakAt=null,PositiveClocks=0,NegativeClocks=0,UnknownClocks=0}:x).ToArray();
+                        PeakAt=null,PositiveClocks=0,NegativeClocks=0,UnknownClocks=0,ResolvedAt=null}:x).ToArray();
     }
 
     static bool ScpAdmits(ScreenAttempt a)=>a.Score is {GrossLowerEur:>0m,NetLowerEur:>0m};
@@ -254,6 +254,7 @@ internal static partial class IntegratedEconomicReplay
             Variants=variants,Fit=fit,Selection=selection,Candidates=candidates,BestRawDiagnostic=bestRaw,
             BestScp1Diagnostic=bestScp,SelectedDecision=accepted is null?"WAIT":accepted.Id+(accepted.Scored?"/SCP1":"/RAW"),
             HeldOut=held,Scp1Scope="CAUSAL_SHADOW_GATE_ON_ISOLATED_EPISODES_NOT_COMMON_BOOK",
+            Scp1OverlapLimitation="SHADOW_WAIT_DOES_NOT_RELEASE_RAW_OBSERVER_SLOT; NOT_AN_EXECUTED_SCORED_POLICY",
             Missingness="NO_FRAME_AND_UNRESOLVED_EXCLUDED_FROM_CONDITIONAL_MEANS; CENSORED_NOT_ZERO",
             CompleteDaysBasis="OBSERVED_MONETARY_CLOCKS_WITH_NO_UNRESOLVED_ADMITTED_EPISODES",
             MfeBasis="SAMPLED_REALIZED_EPISODE_PATH_NOT_EXECUTABLE_MAXIMUM",
