@@ -54,7 +54,8 @@ public static class NativeEconomicMechanisms
     }
 
     internal static NativeIntegratedCandidate[] Describe(string mechanism,Ucp1MarketFrame m,long at,
-        decimal targetRanges,Ucp1Frame? frame=null,string? geometryTimeframe=null,decimal? stopRanges=null,bool closedStructure=false)
+        decimal targetRanges,Ucp1Frame? frame=null,string? geometryTimeframe=null,decimal? stopRanges=null,bool closedStructure=false,
+        int structureLookback=0,bool confirmM5=false)
     {
         if(!All.Contains(mechanism,StringComparer.Ordinal))throw new ArgumentException("ECONOMIC_MECHANISM_UNKNOWN");
         var w=Window(m,NativeBarTimeframe.M5,at);
@@ -62,7 +63,7 @@ public static class NativeEconomicMechanisms
             return Array.Empty<NativeIntegratedCandidate>();
         if(mechanism==Scored)
             return All.Where(x=>x is not (Scored or Transition))
-                .SelectMany(x=>Describe(x,m,at,targetRanges,frame,geometryTimeframe,stopRanges,closedStructure)).ToArray();
+                .SelectMany(x=>Describe(x,m,at,targetRanges,frame,geometryTimeframe,stopRanges,closedStructure,structureLookback,confirmM5)).ToArray();
         var b=w.Bars;decimal tick=m.EurTickSize.Value,atr=Math.Max(tick,Atr(b));
         var geometry=geometryTimeframe is null?w:Window(m,Enum.Parse<NativeBarTimeframe>(geometryTimeframe),at);
         if(geometry is null)return Array.Empty<NativeIntegratedCandidate>();
@@ -135,6 +136,7 @@ public static class NativeEconomicMechanisms
                 break;
         }
         if(side==0)return Array.Empty<NativeIntegratedCandidate>();
+        if(confirmM5&&side*shortDirection<=0)return Array.Empty<NativeIntegratedCandidate>();
         decimal entry=side>0?m.Quote.Ask:m.Quote.Bid,exit=side>0?m.Quote.Bid:m.Quote.Ask;
         decimal stop=Tick(exit-side*geometryAtr*(stopRanges??1m),tick,side<0);
         // Reverse uses the preceding closed price as a natural repair
@@ -150,8 +152,14 @@ public static class NativeEconomicMechanisms
         // reward/risk; adverse entry cannot push the economic destination away.
         if(closedStructure)
         {
-            decimal boundary=side>0?Math.Min(gb[^1].Low,b[^1].Low):Math.Max(gb[^1].High,b[^1].High);
-            stop=Tick(boundary-side*tick,tick,side<0);
+            if(structureLookback>gb.Length)return Array.Empty<NativeIntegratedCandidate>();
+            var structure=structureLookback>0?gb.TakeLast(structureLookback).ToArray():new[]{gb[^1]};
+            decimal boundary=side>0?Math.Min(structure.Min(x=>x.Low),b[^1].Low):Math.Max(structure.Max(x=>x.High),b[^1].High);
+            // Swing invalidation and current completed M5 noise have distinct
+            // horizons. The buffer is an observed true range, never a fitted
+            // duration or an entry-relative stop expansion. Target stays fixed.
+            decimal buffer=structureLookback>0?Math.Max(tick,atr):tick;
+            stop=Tick(boundary-side*buffer,tick,side<0);
             decimal anchor=gb[^1].Close;
             if(mechanism==Reverse)
             {
@@ -217,7 +225,13 @@ public static class NativeEconomicMechanisms
     }
 
     internal sealed record PeerForecast(int SupportedPeers,decimal MeanGrossEur,decimal MeanNetEur,
-        decimal WorstGrossLowerEur,decimal WorstNetLowerEur);
+        decimal WorstGrossLowerEur,decimal WorstNetLowerEur)
+    {
+        [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+        public decimal? BalancedGrossLowerEur { get; init; }
+        [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+        public decimal? BalancedNetLowerEur { get; init; }
+    }
 
     // Independent per-instrument forecasts in the same authenticated class.
     // Normalize by ex-ante monetary risk, use the target's actual cost and
@@ -225,7 +239,7 @@ public static class NativeEconomicMechanisms
     // prediction. A prediction is a diagnostic, not authorization to trade.
     internal static PeerForecast? LeaveSymbolOutPayoff(IEnumerable<NativeEurCalibrationOutcome> outcomes,
         string family,int side,NativeEurDecisionContext context,long at,decimal risk,decimal cost,
-        int minimumEpisodes,int minimumDays,decimal penalty)
+        int minimumEpisodes,int minimumDays,decimal penalty,bool balanced=false)
     {
         if(string.IsNullOrWhiteSpace(context.AssetClass)||risk<=0m)return null;
         var estimates=outcomes.Where(x=>x.AvailableAt<at&&x.RiskEur>0m&&x.Family==family&&x.Side==side&&
@@ -234,7 +248,22 @@ public static class NativeEconomicMechanisms
             .Select(g=>EntryQualityPayoff(g,family,side,context with {Symbol=g.Key},at,risk,cost,
                 minimumEpisodes,minimumDays,penalty,true)).OfType<NativeEurPayoff>().ToArray();
         if(estimates.Length<2)return null;
-        return new(estimates.Length,estimates.Average(e=>e.GrossMeanEur),estimates.Average(e=>e.NetMeanEur),
+        var forecast=new PeerForecast(estimates.Length,estimates.Average(e=>e.GrossMeanEur),estimates.Average(e=>e.NetMeanEur),
             estimates.Min(e=>e.GrossLowerEur),estimates.Min(e=>e.NetLowerEur));
+        if(!balanced)return forecast;
+        // Equal instrument weights, with both local day uncertainty and
+        // between-instrument uncertainty retained. Diagnostic only; preserve
+        // the worst-peer comparison and never change native admission gates.
+        decimal Dispersion(Func<NativeEurPayoff,decimal> value)
+        {
+            decimal mean=estimates.Average(value);
+            return penalty*(decimal)Math.Sqrt(estimates.Sum(e=>Math.Pow((double)(value(e)-mean),2))/
+                (estimates.Length*(estimates.Length-1d)));
+        }
+        return forecast with
+        {
+            BalancedGrossLowerEur=estimates.Average(e=>e.GrossLowerEur)-Dispersion(e=>e.GrossMeanEur),
+            BalancedNetLowerEur=estimates.Average(e=>e.NetLowerEur)-Dispersion(e=>e.NetMeanEur)
+        };
     }
 }

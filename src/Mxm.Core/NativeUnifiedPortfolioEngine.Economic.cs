@@ -347,8 +347,15 @@ public sealed partial class NativeUnifiedPortfolioEngine
         {
             decimal transitionCost=Math.Max(0m,-NativeExecutableEconomics.EstimateNet(q,q,plan.Side,units,
                 bracket.Entry,plan.Side>0?q.Bid:q.Ask,q.LiquidationSlippagePerSide??intent.SlippagePerSide));
-            if(NativeEconomicMechanisms.TransitionPayoff(observed,frame.At,plan.Side,units,transitionCost+debit)
-                is not {GrossLowerEur:>0m,NetLowerEur:>0m})return null;
+            string? horizon=eurDevelopmentProfile.MatchEconomicTransitionHorizonAtFill
+                ?eurDevelopmentProfile.EconomicGeometryTimeframe:null;
+            if(NativeEconomicMechanisms.TransitionPayoff(observed,frame.At,plan.Side,units,transitionCost+debit,horizon)
+                is not {GrossLowerEur:>0m,NetLowerEur:>0m})
+            {
+                if(eurDevelopmentProfile.MatchEconomicTransitionHorizonAtFill)
+                    Count("EUR_FILL_TRANSITION_PAYOFF_UNSUPPORTED_OR_NONPOSITIVE");
+                return null;
+            }
         }
         if(policy is EurGeneralSelect or EurGeneralPooled)
         {
