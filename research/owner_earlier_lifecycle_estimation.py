@@ -43,7 +43,7 @@ def prepare(work):
     archive.download_archive(14681397091,44824462289,'06c0181ba732c8fcf70ffe554d532522daa2e5af6e83336baad665028aeae5ed',archive.PUBLIC_DIR)
     archive.download_archive(15089595339,FUNDING_RUN,'262d22935f6f6dbea29d3f8c99982500165047739cb7b055df8f6d35232085e9',Path('earlier-target-input'))
     shutil.copytree('earlier-target-input/original-source-history','original-source-history')
-    archive.download_archive(15088981784,FUNDING_RUN,'7b91a8319bcd228298f4748635b23db5f90eddb70f1b4a12e9b644b1c4236147',funding.OUT)
+    archive.download_archive(15088981784,FUNDING_RUN,'7b91a8319bcd228298f4748635b23db4f90eddb70f1b4a12e9b644b1c4236147',funding.OUT)
     archive.download_archive(15088689993,FUNDING_RUN,'fb6ed9e5662914bd5269a1ee439062b40d86a1d1eb237219e5ecb616835ddba2',Path('earlier-target-verified'))
     shutil.copyfile('earlier-target-verified/targeted-funding-verified.json','targeted-funding-verified.json')
     key=os.environ['R3_CUSTODY_PRIVATE_KEY_PEM'].encode()
