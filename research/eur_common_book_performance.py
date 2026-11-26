@@ -22,8 +22,8 @@ def performance(result):
                 if x["EquityEur"] is not None and x["UsedMarginEur"] is not None and x["PendingMarginEur"] is not None]
             mean_margin=sum(margin_samples)/Decimal(len(margin_samples)) if margin_samples else None
             rows.append(dict(Stress=scenario["SpreadMultiplier"],Trial=t["Id"],Closed=r["Closed"],
-                GrossEur=gross,NetEur=net,ClosedNetReturnPct=100*net/capital if net is not None else None,
-                TerminalNetEur=terminal,TerminalReturnPct=100*terminal/capital if terminal is not None else None,
+                GrossEur=gross,NetEur=net,ClosedNetReturnPct=Decimal(100)*net/capital if net is not None else None,
+                TerminalNetEur=terminal,TerminalReturnPct=Decimal(100)*terminal/capital if terminal is not None else None,
                 RegisteredWeeks=len(weeks),WeeksWithKnownNet=len(known),WeeksWithUnknownNet=len(wn)-len(known),
                 MeanWeeklyNetEur=sum(known)/Decimal(len(wn)) if complete and wn else None,
                 MedianWeeklyNetEur=median(known) if complete and wn else None,
