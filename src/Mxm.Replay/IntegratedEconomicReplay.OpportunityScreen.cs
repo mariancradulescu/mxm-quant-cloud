@@ -362,7 +362,7 @@ internal static partial class IntegratedEconomicReplay
         string mechanism=Environment.GetEnvironmentVariable("MXM_OPPORTUNITY_MECHANISM")??throw new ArgumentException("OPPORTUNITY_SCREEN_PARTITION");
         var variants=plan.Variants.Where(x=>x.Mechanism==mechanism).ToArray();
         if(variants.Length==0||variants.Count(v=>v.Reference)!=1||
-            (breadth&&(variants.Length!=5||variants.Any(v=>v.GateMode is not null||!v.MonetaryTraining)))||
+            (breadth&&(variants.Length!=6||variants.Any(v=>v.GateMode is not null||!v.MonetaryTraining)))||
             (entryQuality&&(variants.Count(v=>v.MonetaryTraining)!=1||
                 variants.Any(v=>v.Reference!=v.MonetaryTraining||v.Reference!=(v.GateMode is null))||
                 !variants.Where(v=>!v.Reference).Select(v=>v.GateMode).OrderBy(x=>x).SequenceEqual(new[]{"CORRECTED","COST_BAND","LEGACY_MARKS"})||
