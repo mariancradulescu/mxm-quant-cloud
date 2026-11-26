@@ -50,6 +50,8 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
     public bool RevalidatePredictiveVolatilityAtFill { get; init; }
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
     public bool KeepAdmissionRiskAtFill { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool ResizeWithinAdmissionRiskAtFill { get; init; }
 
     internal string GeometryIdentity => FormattableString.Invariant(
         $"{UseAvailableContext}/{DistributionTargetRanges:G29}/{StopReserveMultiplier:G29}") +
@@ -74,6 +76,7 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
             UseSelectionAwarePredictiveGrid&&(!UsePredictiveCalibration||!UseEconomicEstimatorObjective)||
             RevalidatePredictiveVolatilityAtFill&&!UsePredictiveCalibration||
             KeepAdmissionRiskAtFill&&!UsePredictiveCalibration||
+            ResizeWithinAdmissionRiskAtFill&&!KeepAdmissionRiskAtFill||
             (UseAdaptiveAllocation||UseAdaptiveManagement||UseRealizedForecastFeedback)&&!UseAdaptivePayoff)
             throw new ArgumentException("EUR_REGISTERED_DEVELOPMENT_PROFILE");
     }

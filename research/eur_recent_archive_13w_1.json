@@ -1,0 +1,34 @@
+{
+  "Study": "EUR_RECENT_ARCHIVE_13W_1",
+  "OriginalRun": 44824462289,
+  "RecoveryRun": 44910122403,
+  "OriginalArtifact": 14681352119,
+  "OriginalArchiveSha256": "5f6b232d2e8b892da3e9488399f65c72fe1bb2ff8c908dfff3e9f2661d81dec8",
+  "RecoveryArtifact": 14709905618,
+  "RecoveryArchiveSha256": "de2b998117180e9e364be5d9e7d81851449db4ab0a8dc8dee3e94244fa885f64",
+  "Instruments": [
+    "AAPL.US",
+    "AUDUSD",
+    "EURUSD",
+    "GBPUSD",
+    "SpotBrent",
+    "US500",
+    "XAUUSD"
+  ],
+  "InitialFitFrom": 1785110400000,
+  "TestBoundaries": [
+    1785715200000,
+    1787529600000,
+    1789344000000,
+    1791158400000,
+    1792972800000
+  ],
+  "TemplateSha256": "793bbb70bd2801d867ee15ea4cdda77f1152e60cbacb555f9ff48f1c95ecaced",
+  "Trials": [
+    "CASH_CONTROL",
+    "FINANCEABLE_PROBE",
+    "V3_RANKED_GEOMETRY",
+    "V3_RANKED_GEOMETRY_RISK",
+    "V3_RANKED_RISK_RESIZE"
+  ]
+}

@@ -174,6 +174,18 @@ try{highMarginBook.Apply(Journal("margin-fill",2000,"OPEN_FILL",price:10.01m,quo
 catch(InvalidOperationException){rejectsHigherCurrentMargin=true;}
 Check(rejectsHigherCurrentMargin && highMarginBook.Summary().OpenPositions==0 && highMarginBook.Summary().CashEur==300,
     "new native fill cannot use lower recorded margin when current causal margin is higher");
+var resizedBook=new NativeFundedLedger();
+resizedBook.Apply(Journal("resize-intent",1000,"REQUEST_OPEN") with
+    {Reason="NATIVE_CONDITIONAL_SELECTION",TracksLateFunding=true});
+var smallerFill=Journal("resize-fill",2000,"OPEN_FILL",units:1,price:10.01m,quotes:new[]{ledgerQuote}) with
+    {Reason="LATER_AUTHENTIC_QUOTE_CONDITIONAL_MODEL_FILL"};
+bool unboundSizeRejected=false;
+try {resizedBook.Apply(smallerFill);} catch(ArgumentException) {unboundSizeRejected=true;}
+Check(unboundSizeRejected&&resizedBook.Summary().PendingIntents==1,"a changed open quantity requires the model remainder receipt");
+resizedBook.Apply(smallerFill with {ModelOpenRemainderCancelled=true});
+resizedBook=NativeFundedLedger.Restore(resizedBook.Checkpoint());
+Check(resizedBook.PositionSnapshot().Single().Units==1m&&resizedBook.Summary().PendingIntents==0&&
+    resizedBook.Summary().CashEur==299.9m,"smaller funded open settles the actual fee and restores with no pending remainder");
 const long bdpSyntheticStart=1762128000000L;
 var bdpSyntheticBars=new List<ProgramBar>();
 void AddProgramWindow(long start,int count)

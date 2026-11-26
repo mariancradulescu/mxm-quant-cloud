@@ -23,6 +23,8 @@ public sealed record LedgerEvent(string EventId,long At,string Kind,string Posit
     public long? FundingFromExclusive { get; init; }
     [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingDefault)]
     public bool TracksLateFunding { get; init; }
+    [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingDefault)]
+    public bool ModelOpenRemainderCancelled { get; init; }
 }
 public sealed record LedgerPosition(string Id,string Symbol,int Side,decimal Units,decimal? EntryPrice,long EntryAt,
     decimal EntryFeeRemaining,decimal MarginPerUnit,decimal SlippagePerSide,LedgerQuote? EntryQuote,decimal FinancingRemaining,
@@ -65,6 +67,15 @@ public sealed partial class NativeFundedLedger
     decimal closedNetEur;
     decimal heldLateFundingEur;
     int completeRoundTrips;
+
+    bool ModeledOpenUnitsAgree(LedgerEvent request,LedgerEvent fill) =>
+        fill.ModelOpenRemainderCancelled
+            ?state.MonetaryDomain=="MODEL_REPLAY"&&request.TracksLateFunding&&
+                request.Reason=="NATIVE_CONDITIONAL_SELECTION"&&
+                fill.Reason=="LATER_AUTHENTIC_QUOTE_CONDITIONAL_MODEL_FILL"&&
+                fill.Units>0m&&fill.Units<request.Units
+            :fill.Units==request.Units;
+
     public NativeFundedLedger(long maximumStalenessMs=1000)
     {
         if(maximumStalenessMs<0)throw new ArgumentException("NATIVE_LEDGER_STALENESS");
@@ -252,7 +263,7 @@ public sealed partial class NativeFundedLedger
                 state.Pending[e.PositionId]=e with { Kind="REQUEST_CLOSE" };break;
             case "OPEN_FILL":
                 if(!state.Pending.TryGetValue(e.PositionId,out var request) || request.Kind!="REQUEST_OPEN" ||
-                    request.Symbol!=e.Symbol || request.Side!=e.Side || request.Units!=e.Units || e.At<request.At+request.LatencyMs ||
+                    request.Symbol!=e.Symbol || request.Side!=e.Side || !ModeledOpenUnitsAgree(request,e) || e.At<request.At+request.LatencyMs ||
                     e.ExecutionPrice<=0 || e.FeeEur<0 || e.MarginPerUnit<=0 || e.SlippagePerSide<0 || e.SlippagePerSide!=request.SlippagePerSide)
                     throw new ArgumentException("NATIVE_LEDGER_OPEN_FILL");
                 var entryQuote=Quote(quotes,e.Symbol,e.At);

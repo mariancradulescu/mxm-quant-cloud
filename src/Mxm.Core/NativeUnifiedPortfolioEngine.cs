@@ -613,7 +613,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
             decimal px=request.Side>0?q.Ask+request.SlippagePerSide:
                 q.Bid-request.SlippagePerSide;
             var plan=plans[request.PositionId];
-            var plannedFill=Cpe1?Cpe1RecheckFill(plan,request,model.Ledger.Summary(t),input,px,frame):
+            decimal fillUnits=request.Units;
+            var plannedFill=Cpe1?Cpe1RecheckFill(plan,request,model.Ledger.Summary(t),input,px,frame,out fillUnits):
                 CoherentIntegrated?CoherentFill(plan,input,model.Ledger.Summary(t),px):null;
             if(plan.Integrated is not null && (Cpe1 ? plannedFill is null :
                 !CoherentIntegrated
@@ -629,16 +630,17 @@ public sealed partial class NativeUnifiedPortfolioEngine
             }
             try
             {
+                bool resized=fillUnits!=request.Units;
                 Apply(Event("OPEN_FILL",t,request.PositionId,request.Symbol,
-                    request.Side,request.Units,px,Fee(q,request.Units,request.Side),
+                    request.Side,fillUnits,px,Fee(q,fillUnits,request.Side),
                     q.MarginPerUnit,request.SlippagePerSide,
-                    "LATER_AUTHENTIC_QUOTE_CONDITIONAL_MODEL_FILL"));
+                    "LATER_AUTHENTIC_QUOTE_CONDITIONAL_MODEL_FILL") with {ModelOpenRemainderCancelled=resized});
                 var p=plans[request.PositionId];
                 decimal risk=p.Integrated?.InitialRiskEur??(Math.Max(.00000001m,p.Atr*1.5m+
-                    q.Ask-q.Bid+2m*request.SlippagePerSide)*request.Units*q.EurDebit);
+                    q.Ask-q.Bid+2m*request.SlippagePerSide)*fillUnits*q.EurDebit);
                 var entry=px;
                 plans[request.PositionId]=p with {OpenAt=t,Entry=entry,
-                    Units=request.Units,RiskEur=Cpe1&&plannedFill is not null?
+                    Units=fillUnits,RiskEur=Cpe1&&plannedFill is not null?
                         plannedFill.InitialRiskEur:plannedFill?.Thesis?.StressedRiskAtFillEur??risk,Extreme=entry,
                     Stop=p.Integrated?.Stop??entry-request.Side*1.5m*p.Atr,LastObservedAt=t,
                     Integrated=plannedFill??p.Integrated,
@@ -646,10 +648,11 @@ public sealed partial class NativeUnifiedPortfolioEngine
                         request.At,t,request.EvidenceHash,
                         p.Family,1,plannedFill!.InitialRewardEur,
                         plannedFill!.InitialRiskEur,
-                        request.Side*request.Units*px,request.Units*q.MarginPerUnit,true)
+                        request.Side*fillUnits*px,fillUnits*q.MarginPerUnit,true)
                         { AdmissionProjectedRewardEur=p.Integrated!.InitialRewardEur,
                           AdmissionReservedRiskEur=p.Integrated!.InitialRiskEur } : p.EconomicEntry};
-                fundingReserves?.Open(request.PositionId,request.Symbol,request.Side,request.Units,t);
+                fundingReserves?.Open(request.PositionId,request.Symbol,request.Side,fillUnits,t);
+                if(resized)Count("EUR_FILL_VOLUME_REDUCED_TO_ADMISSION_BUDGET");
                 openFills++;
                 if(CaptureEurDiagnostics) RecordEurRiskObservation(t,between?"OPEN_FILL_TICK":"OPEN_FILL",frame,request.PositionId);
                 if(between)Count("EUR_OPEN_FILL_CONDITIONAL_TICK");
