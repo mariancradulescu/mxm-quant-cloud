@@ -20,6 +20,8 @@ internal static partial class IntegratedEconomicReplay
         public bool KeepAdmissionRiskAtFill { get; init; }
         public bool ResizeWithinAdmissionRiskAtFill { get; init; }
         public bool UseJointMonetaryAllocation { get; init; }
+        public int JointMonetarySearchWidth { get; init; }
+        public bool UseForecastBandCalibration { get; init; }
     }
     sealed record HistoricalFit(string Id,NativeEurDevelopmentProfile Profile);
     sealed record HistoricalPlan(string Study,string Exposure,string SourceProtocolSha256,string EvidenceManifestSha256,
@@ -157,7 +159,9 @@ internal static partial class IntegratedEconomicReplay
                     RevalidatePredictiveVolatilityAtFill=t.RevalidatePredictiveVolatilityAtFill,
                     KeepAdmissionRiskAtFill=t.KeepAdmissionRiskAtFill,
                     ResizeWithinAdmissionRiskAtFill=t.ResizeWithinAdmissionRiskAtFill,
-                    UseJointMonetaryAllocation=t.UseJointMonetaryAllocation};
+                    UseJointMonetaryAllocation=t.UseJointMonetaryAllocation,
+                    JointMonetarySearchWidth=t.JointMonetarySearchWidth,
+                    UseForecastBandCalibration=t.UseForecastBandCalibration};
                 return (Trial:t,Profile:profile,Book:new NativeUnifiedPortfolioEngine(t.Policy,
                     fundingScenarioId:scenario,eurDevelopmentProfile:profile));
             }).ToArray();

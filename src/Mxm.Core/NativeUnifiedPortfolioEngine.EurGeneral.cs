@@ -114,6 +114,28 @@ public sealed partial class NativeUnifiedPortfolioEngine
         }).ToArray();
     }
 
+    // Recover the useful V3.3 closed-bar impulse and relative tick activity
+    // without its old categorical thresholds or BPS objective. Each timeframe
+    // remains distinct and unavailable windows stay missing.
+    internal static decimal?[] DescribeClosedBarActivity(Ucp1MarketFrame market,long at,int side)
+    {
+        var result=new List<decimal?>(14);
+        foreach(var req in NativeClosedMarketContext.CoverageWindows)
+        {
+            var w=ObservedWindow(market,req.Timeframe,at);
+            if(w is null){result.Add(null);result.Add(null);continue;}
+            var last=w.Bars[^1];
+            var prior=w.Bars[^2];
+            decimal range=Math.Max(last.High-last.Low,
+                Math.Max(Math.Abs(last.High-prior.Close),Math.Abs(last.Low-prior.Close)));
+            decimal priorVolume=w.Bars.Take(w.Bars.Length-1).Average(b=>(decimal)b.TickVolume);
+            decimal sum=last.TickVolume+priorVolume;
+            result.Add(range>0m?side*(last.Close-prior.Close)/range:null);
+            result.Add(sum>0m?(last.TickVolume-priorVolume)/sum:null);
+        }
+        return result.ToArray();
+    }
+
     static string ProbeKey(NativeEurOpportunity offer)
     {
         var key = FormattableString.Invariant($"{offer.At}|{offer.Symbol}|{offer.Family}|{offer.Side}|{offer.Units:G29}");
@@ -246,7 +268,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
             for(int i=choices.Count-1;i>=0;i--)
                 if(Rejection(choices[i]) is { } reason)
                 {trace(choices[i].Receipt,reason);choices.RemoveAt(i);}
-            var selected=NativeEurMonetaryAllocation.Search(choices,x=>x.Market.Symbol,Net,Feasible,8);
+            var selected=NativeEurMonetaryAllocation.Search(choices,x=>x.Market.Symbol,Net,Feasible,
+                eurDevelopmentProfile.JointMonetarySearchWidth>0?eurDevelopmentProfile.JointMonetarySearchWidth:8);
             foreach(var item in selected.Items)
             {
                 if(Rejection(item) is { } reason){trace(item.Receipt,reason);continue;}

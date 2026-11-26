@@ -36,6 +36,10 @@ internal static class NativeEurPortfolioChecks
         check(selected.ValueEur==12m&&selected.Items.Select(x=>x.Symbol).OrderBy(x=>x)
             .SequenceEqual(new[]{"B","C","D"}),
             "Joint monetary search compares feasible sets, legal alternatives and WAIT");
+        var narrow=NativeEurMonetaryAllocation.Search(joint,x=>x.Symbol,x=>x.Net,
+            (item,others)=>item.Margin+others.Sum(x=>x.Margin)<=9m,1);
+        check(narrow.ValueEur==10m&&selected.ValueEur>narrow.ValueEur,
+            "Joint monetary beam width can change funded proxy utility; it is not a risk constraint");
         var empty=NativeEurMonetaryAllocation.Search(joint,x=>x.Symbol,x=>x.Net,(item,others)=>false,4);
         check(empty.Items.Length==0&&empty.ValueEur==0m,
             "Joint monetary search never creates an infeasible or negative value position");
@@ -267,6 +271,24 @@ internal static class NativeEurPortfolioChecks
         check(rankedPayoff?.PredictiveEvidence?.Scope.StartsWith("RANKED_OUT_OF_TIME/",StringComparison.Ordinal)==true&&
             rankedPayoff==rankedFuture.Payoff("FAMILY",1,Context(false),cut+Step,2m,.4m),
             "Ranked opportunity calibration uses separate out-of-time dates and excludes future outcomes");
+        var bands=NativeEurAdaptiveEstimator.Fit(set,true,true,true,true,true);
+        var bandsFuture=NativeEurAdaptiveEstimator.Fit(set with {Outcomes=rows.Append(future).ToArray()},
+            true,true,true,true,true);
+        var bandPayoff=bands.Payoff("FAMILY",1,Context(false),cut+Step,2m,.4m);
+        using var bandReceipt=System.Text.Json.JsonDocument.Parse(System.Text.Json.JsonSerializer.Serialize(bands.Receipt()));
+        check(bandPayoff is not null&&bandPayoff==bandsFuture.Payoff("FAMILY",1,Context(false),cut+Step,2m,.4m)&&
+            bandReceipt.RootElement.GetProperty("Objective").GetString()!.EndsWith("/FORECAST_BAND_RESIDUALS"),
+            "Forecast magnitude residual calibration uses only matured outcomes and disjoint chronological support");
+        NativeEurDecisionContext Activity(bool positive)=>Context(false) with
+        {
+            ClosedBarActivity=Enumerable.Range(0,14).Select(i=>(decimal?)(positive ? .8m : -.8m)).ToArray()
+        };
+        var activityRows=rows.Select((x,i)=>x with {Context=Activity(i%2!=0)}).ToArray();
+        var activityModel=NativeEurAdaptiveEstimator.Fit(set with {Outcomes=activityRows},true,true,true,true,false,true);
+        var favorableActivity=activityModel.Payoff("FAMILY",1,Activity(true),cut+Step,2m,.4m);
+        var adverseActivity=activityModel.Payoff("FAMILY",1,Activity(false),cut+Step,2m,.4m);
+        check(favorableActivity is not null&&adverseActivity is not null&&favorableActivity.NetMeanEur>adverseActivity.NetMeanEur,
+            "Recovered closed-bar activity can change monetary forecasts independently of volatility");
         var thin=NativeEurAdaptiveEstimator.Fit(set with {Outcomes=rows.Take(32).ToArray()},true,true);
         check(thin.Payoff("FAMILY",1,Context(false),cut+Step,2m,.4m) is null,
             "Predictive EUR does not substitute in-sample residuals when out-of-time support is absent");

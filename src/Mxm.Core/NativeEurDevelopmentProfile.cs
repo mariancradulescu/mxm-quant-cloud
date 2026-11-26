@@ -56,6 +56,15 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
     public bool UseJointMonetaryAllocation { get; init; }
 
+    // Zero preserves the registered eight-wide search. New studies may select
+    // any positive computational width without altering the OWNER risk gates.
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public int JointMonetarySearchWidth { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool UseForecastBandCalibration { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool CaptureClosedBarActivity { get; init; }
+
     internal string GeometryIdentity => FormattableString.Invariant(
         $"{UseAvailableContext}/{DistributionTargetRanges:G29}/{StopReserveMultiplier:G29}") +
         (ModeledStopLatencyMs is long latency ? FormattableString.Invariant($"/Trade/{latency}") : "") +
@@ -63,7 +72,8 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
         (IncludeRecoveredStructure?"/RANGE_TRANSITION+EQUILIBRIUM_REPAIR":"") +
         (ModelFundingAtPriorClosedSessionQuote?"/CLOSED_SESSION_FUNDING":"") +
         (ObserveFamilyDirectionsOnClosedBars?"/CLOSED_BAR_FAMILY_DIRECTION_OBSERVATION":"") +
-        (CaptureVolatilityContext?"/CLOSED_BAR_RELATIVE_VOLATILITY_V2":"");
+        (CaptureVolatilityContext?"/CLOSED_BAR_RELATIVE_VOLATILITY_V2":"") +
+        (CaptureClosedBarActivity?"/CLOSED_BAR_ACTIVITY_V1":"");
 
     internal void Verify()
     {
@@ -81,6 +91,8 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
             KeepAdmissionRiskAtFill&&!UsePredictiveCalibration||
             ResizeWithinAdmissionRiskAtFill&&!KeepAdmissionRiskAtFill||
             UseJointMonetaryAllocation&&!UsePredictiveCalibration||
+            JointMonetarySearchWidth<0||JointMonetarySearchWidth>0&&!UseJointMonetaryAllocation||
+            UseForecastBandCalibration&&!UseSelectionAwarePredictiveGrid||
             (UseAdaptiveAllocation||UseAdaptiveManagement||UseRealizedForecastFeedback)&&!UseAdaptivePayoff)
             throw new ArgumentException("EUR_REGISTERED_DEVELOPMENT_PROFILE");
     }
