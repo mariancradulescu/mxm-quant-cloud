@@ -1,0 +1,307 @@
+name: OWNER targeted archive funding reconciliation and economic development
+on:
+  pull_request:
+    paths:
+      - 'research/eur_recent_archive_funding_2.json'
+      - 'research/owner_eur_archive_funding_2.py'
+      - 'research/test_owner_eur_archive_funding_2.py'
+      - 'research/eur_common_book_performance.py'
+      - '.github/workflows/owner-eur-archive-funding-2.yml'
+  push:
+    branches: [main]
+    paths: ['research/eur_recent_archive_funding_2.json']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  technical:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - run: python -m unittest research.test_owner_eur_archive_funding_2 research.test_integrated_market_ticks research.test_official_symbol_calendar
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - run: dotnet build src/Mxm.Replay -c Release
+      - run: dotnet run --project tests/Mxm.Checks -c Release
+  prepare:
+    needs: technical
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.actor == 'mariancradulescu' && github.run_attempt == 1
+    environment: mxm-r3-custody-v1
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: source-history-public-receipt
+          path: original-source-history
+          run-id: 45396314675
+          github-token: ${{ github.token }}
+      - run: python -m research.custody_new
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - run: mkdir input && mv original-source-history new-recipient-output input/
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: target-funding-input
+          path: input/
+          retention-days: 90
+          if-no-files-found: error
+  capture:
+    needs: prepare
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.actor == 'mariancradulescu' && github.run_attempt == 1
+    environment: mxm-r3-pepperstone-v1
+    concurrency:
+      group: mxm-existing-oauth-read-only
+      cancel-in-progress: false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: target-funding-input
+      - run: python -m research.owner_eur_archive_funding_2 capture
+        env:
+          R3_CTRADER_CLIENT_ID: ${{ secrets.R3_CTRADER_CLIENT_ID }}
+          R3_CTRADER_CLIENT_SECRET: ${{ secrets.R3_CTRADER_CLIENT_SECRET }}
+          R3_CTRADER_ACCESS_TOKEN: ${{ secrets.R3_CTRADER_ACCESS_TOKEN }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: target-funding-protected
+          path: targeted-funding/
+          retention-days: 90
+          if-no-files-found: error
+  verify_targeted:
+    needs: capture
+    environment: mxm-r3-custody-v1
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: target-funding-input
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: target-funding-protected
+          path: targeted-funding
+      - run: python -m research.owner_eur_archive_funding_2 verify
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: target-funding-verified
+          path: targeted-funding-verified.json
+          retention-days: 90
+          if-no-files-found: error
+  evidence:
+    needs: verify_targeted
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment: mxm-r3-custody-v1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      matrix:
+        scenario: [0, 1, 2]
+    env:
+      MXM_ECONOMIC_SCENARIO_INDEX: ${{ matrix.scenario }}
+      MXM_ECONOMIC_TRIAL_GROUP: ARCHIVE
+      MXM_ECONOMIC_RECEIPT_DIRECTORY: window-receipts
+      MXM_ECONOMIC_BOUNDED_NEIGHBORS: 1
+      MXM_ECONOMIC_PAIRED_DISTRIBUTION: 1
+      MXM_ECONOMIC_REUSE_FRAMES: 1
+      CHECKPOINT_PREFIX: eur-funding-2-checkpoint-${{ matrix.scenario }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - run: dotnet build src/Mxm.Replay -c Release
+      - name: Verify and download the original and recovery archives
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python -m research.owner_eur_recent_archive download
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: funded-action-history-source-public
+          path: integrated-source-public
+          run-id: 44824462289
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: target-funding-input
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: target-funding-protected
+          path: targeted-funding
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: target-funding-verified
+      - name: Materialize seven verified markets and targeted financing evidence
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+        run: python -m research.owner_eur_archive_funding_2 materialize --work "$RUNNER_TEMP/eur-private" --receipt recent-archive-source.json
+      - name: Recover published encrypted chronological checkpoints on retry
+        id: resume
+        if: github.run_attempt > 1
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p window-receipts
+          if [[ "$GITHUB_RUN_ATTEMPT" != 1 ]]; then
+            gh api --paginate "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?per_page=100" --jq '.artifacts[] | select(.expired == false) | .name' > "$RUNNER_TEMP/checkpoints.txt"
+            for phase in 1 2 3 4; do
+              name="$CHECKPOINT_PREFIX-$phase"
+              if grep -Fxq "$name" "$RUNNER_TEMP/checkpoints.txt"; then
+                gh run download "$GITHUB_RUN_ID" --name "$name" --dir "checkpoints/$phase"
+                find "checkpoints/$phase" -name '*.json' -type f -exec cp {} window-receipts/ \;
+                echo "phase$phase=true" >> "$GITHUB_OUTPUT"
+              fi
+            done
+          fi
+      - name: Replay phase 1 and seal checkpoint
+        if: steps.resume.outputs.phase1 != 'true'
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+        run: python -m research.owner_eur_checkpoint "$RUNNER_TEMP/eur-private" recent-archive-result.json --protocol "$RUNNER_TEMP/eur-private/protocol.json" --phase 1 --checkpoint checkpoints/1
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: steps.resume.outputs.phase1 != 'true'
+        with:
+          name: ${{ env.CHECKPOINT_PREFIX }}-1
+          path: checkpoints/1
+          if-no-files-found: error
+          retention-days: 90
+      - name: Replay phase 2 and seal checkpoint
+        if: steps.resume.outputs.phase2 != 'true'
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+        run: python -m research.owner_eur_checkpoint "$RUNNER_TEMP/eur-private" recent-archive-result.json --protocol "$RUNNER_TEMP/eur-private/protocol.json" --previous checkpoints/1/checkpoint.sealed --phase 2 --checkpoint checkpoints/2
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: steps.resume.outputs.phase2 != 'true'
+        with:
+          name: ${{ env.CHECKPOINT_PREFIX }}-2
+          path: checkpoints/2
+          if-no-files-found: error
+          retention-days: 90
+      - name: Replay phase 3 and seal checkpoint
+        if: steps.resume.outputs.phase3 != 'true'
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+        run: python -m research.owner_eur_checkpoint "$RUNNER_TEMP/eur-private" recent-archive-result.json --protocol "$RUNNER_TEMP/eur-private/protocol.json" --previous checkpoints/2/checkpoint.sealed --phase 3 --checkpoint checkpoints/3
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: steps.resume.outputs.phase3 != 'true'
+        with:
+          name: ${{ env.CHECKPOINT_PREFIX }}-3
+          path: checkpoints/3
+          if-no-files-found: error
+          retention-days: 90
+      - name: Replay phase 4 and seal checkpoint
+        if: steps.resume.outputs.phase4 != 'true'
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+        run: python -m research.owner_eur_checkpoint "$RUNNER_TEMP/eur-private" recent-archive-result.json --protocol "$RUNNER_TEMP/eur-private/protocol.json" --previous checkpoints/3/checkpoint.sealed --phase 4 --checkpoint checkpoints/4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: steps.resume.outputs.phase4 != 'true'
+        with:
+          name: ${{ env.CHECKPOINT_PREFIX }}-4
+          path: checkpoints/4
+          if-no-files-found: error
+          retention-days: 90
+      - name: Complete the final test interval without resetting capital
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+        run: python -m research.owner_eur_checkpoint "$RUNNER_TEMP/eur-private" recent-archive-result.json --protocol "$RUNNER_TEMP/eur-private/protocol.json" --previous checkpoints/4/checkpoint.sealed
+      - name: Bind materialized protocol and source
+        run: |
+          cp "$RUNNER_TEMP/eur-private/protocol.json" materialized-protocol.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          s=json.loads(Path("recent-archive-result.json").read_bytes())["Summary"]
+          source=json.loads(Path("recent-archive-source.json").read_bytes())
+          assert s["SourceSha256"]==source["SourceSha256"] and s["ProtocolSha256"]==source["ProtocolSha256"]
+          assert s["EvidenceManifestSha256"]==source["EvidenceManifestSha256"] and s["Orders"]==s["SourceBrokerRequests"]==0
+          assert s["CloudActivated"] is s["IndependentConfirmationCertified"] is False
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: eur-funding-2-result-${{ matrix.scenario }}
+          path: |
+            recent-archive-result.json
+            recent-archive-source.json
+            materialized-protocol.json
+            window-receipts/*.json
+          if-no-files-found: error
+          retention-days: 90
+  combine:
+    needs: evidence
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          pattern: eur-funding-2-result-*
+          path: partitions
+      - name: Reconcile all common-book trials
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from research.merge_eur_adaptive import collect
+          from research.merge_eur_scenarios import exact_json
+          root=Path("partitions")
+          paths=sorted(root.glob("*/recent-archive-result.json"))
+          first=paths[0].parent
+          for path in paths:
+              for name in ("materialized-protocol.json","recent-archive-source.json"):
+                  assert (path.parent/name).read_bytes()==(first/name).read_bytes()
+          result=collect(first/"materialized-protocol.json",paths)
+          out=Path("recent-report");out.mkdir()
+          (out/"economic.json").write_text(exact_json(result)+"\n")
+          for name in ("materialized-protocol.json","recent-archive-source.json"):
+              (out/name).write_bytes((first/name).read_bytes())
+          for scenario in result["Summary"]["Results"]:
+              for trial in scenario["Trials"]:
+                  r=trial["Result"]
+                  print(scenario["SpreadMultiplier"],trial["Id"],r["Closed"],r["ClosedGrossEur"],r["ClosedNetEur"],r["Hard21AllFullRegisteredWeeks"])
+          PY
+          python -m research.eur_common_book_performance recent-report/economic.json recent-report/performance.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: eur-funding-2-complete
+          path: recent-report/
+          if-no-files-found: error
+          retention-days: 90
