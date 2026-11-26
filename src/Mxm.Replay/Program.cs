@@ -15,6 +15,8 @@ if(args is ["--owner-monetary-reduce-common-book",var mrProtocol,var mrSource,va
     return IntegratedEconomicReplay.RunPavMarketTime(mrProtocol,mrSource,mrDirectory,mrTape,mrStress,monetaryReduceStudy:true);
 if(args is ["--owner-opportunity-screen",var screenProtocol,var screenSource,var screenReport,var screenProtection])
     return IntegratedEconomicReplay.RunOpportunityScreen(screenProtocol,screenSource,screenReport,screenProtection);
+if(args is ["--owner-competitive-families",var cfProtocol,var cfSource,var cfDirectory,var cfTape,var cfStress])
+    return IntegratedEconomicReplay.RunCompetitiveFamilies(cfProtocol,cfSource,cfDirectory,cfTape,cfStress);
 if(args is ["--owner-eur-historical-study",var historicalProtocol,var historicalSource,var historicalReport])
     return IntegratedEconomicReplay.RunHistoricalEur(historicalProtocol,historicalSource,historicalReport);
 if(args is ["--owner-eur-historical-study",var protectionProtocol,var protectionSource,var protectionReport,var protectionTape])

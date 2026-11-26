@@ -108,7 +108,7 @@ internal static partial class IntegratedEconomicReplay
             // with a pre-outcome ordering, and observe at most one episode per
             // symbol at a time. Co-moving markets still share calendar days.
             bool broad=profile.ObserveFamilyDirectionsOnClosedBars;
-            if(!broad&&frame.At%3_600_000L!=EurOffset)return;
+            if((!broad||profile.CompeteEconomicFamilies)&&frame.At%3_600_000L!=EurOffset)return;
             using var signalProfile=NativeEconomicProfiler.Measure("observer.discover_and_admit");
             var describe=descriptor??=ResearchEpisode();
             foreach(var market in frame.Markets)
