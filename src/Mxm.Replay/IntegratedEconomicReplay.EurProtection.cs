@@ -37,10 +37,10 @@ internal static partial class IntegratedEconomicReplay
                 return lo<coverage.Length && coverage[lo].Start<=from && coverage[lo].End>=through;
             }
 
-            public Tick? QuoteAt(long at)
+            public Tick? QuoteAt(long at,long maximumAge=QuoteAgeMs)
             {
                 int i=LowerBound(at+1)-1;
-                if(i<0 || at-ticks[i].At>QuoteAgeMs || !Covers(ticks[i].At,at))return null;
+                if(i<0 || at-ticks[i].At>maximumAge || !Covers(ticks[i].At,at))return null;
                 var latest=ticks[i];
                 while(--i>=0 && ticks[i].At==latest.At)
                     if(ticks[i].Raw!=latest.Raw)return null;
@@ -113,6 +113,12 @@ internal static partial class IntegratedEconomicReplay
             if(Side(symbol,true).QuoteAt(at) is not { } bid || Side(symbol,false).QuoteAt(at) is not { } ask || ask.Raw<bid.Raw)
                 return null;
             return new(at,bid.At,ask.At,bid.Raw/100_000m,ask.Raw/100_000m,null!);
+        }
+
+        public NativeHistoricalFundingPrefix? LatestPrefix(string symbol,bool bid,long at)
+        {
+            var point=Side(symbol,bid).QuoteAt(at,345600000L);
+            return point is { } p?new("AUTHENTIC_LATEST_PREFIX",p.At,at,p.At,p.Raw/100000m,true,true):null;
         }
 
         public object AuditWitness(HistoricalStopWitness witness)

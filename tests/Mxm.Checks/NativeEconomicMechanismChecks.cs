@@ -141,5 +141,53 @@ internal static class NativeEconomicMechanismChecks
         check(marginal.OriginalModelEvents.Count(e=>e.Kind=="REQUEST_OPEN")==1&&
             marginal.OriginalModelEvents.Single(e=>e.Kind=="REQUEST_OPEN").Units==2m,
             "Marginal transition NET search chooses one evidenced legal amount with highest financed monetary value");
+        var corroborated=new NativeUnifiedPortfolioEngine(NativeUnifiedPortfolioEngine.EurGeneralProbe,
+            eurDevelopmentProfile:transitionProfile with {MatchEconomicTransitionHorizonAtFill=true,
+                MinimumContractVolumeOnly=false,OptimizeTransitionNetVolume=true,RequireMaturedCashForLargerVolume=true});
+        corroborated.Advance(Clock(at));
+        check(corroborated.OriginalModelEvents.Single(e=>e.Kind=="REQUEST_OPEN").Units==1m&&
+            corroborated.ResearchDecisionCounts.ContainsKey("EUR_PAV1_LARGER_VOLUME_NO_MATURED_MONETARY_EDGE"),
+            "Missing matured cash support rejects extra volume and preserves a minimum-volume entry");
+        var consensus=new NativeUnifiedPortfolioEngine(NativeUnifiedPortfolioEngine.EurGeneralProbe,
+            eurDevelopmentProfile:transitionProfile with {MatchEconomicTransitionHorizonAtFill=true,RequirePav1FastAgreement=true});
+        consensus.Advance(Clock(at));
+        check(consensus.ModelSummary.PendingIntents==0&&consensus.ResearchDecisionCounts.ContainsKey("EUR_PAV1_M15_ADMISSION_DISAGREEMENT"),
+            "Contrary M15 monetary evidence is detected at admission rather than creating known-unfillable H1 intents");
+        var extended=market with {EconomicTransitionWindows=windows.Where(w=>w.Timeframe is NativeBarTimeframe.H1 or NativeBarTimeframe.M15 or NativeBarTimeframe.M5)
+            .Select(w=>w with {RequiredBars=24,Bars=Enumerable.Range(0,24).Select(i=>w.Bars[^1] with
+                {OpenAt=w.Bars[^1].CloseAt-(24-i)*(long)w.Timeframe*60000L,
+                 CloseAt=w.Bars[^1].CloseAt-(23-i)*(long)w.Timeframe*60000L,Open=100m+i*.1m,
+                 Close=100m+i*.1m,High=101m+i*.1m,Low=99m+i*.1m}).ToArray()}).ToArray()};
+        check(NativeEconomicMechanisms.Continuation(extended,at,"H1",24) is {Count:>=2,Mean:>0m},
+            "Longer PAV1 history uses only adjacent transitions in the registered causal closed-bar window");
+        check(NativeEconomicMechanisms.Continuation(extended with {ClosedBars=extended.ClosedBars! with {DecisionAt=at-1}},at,"H1",24) is null,
+            "Extended transition evidence must bind to the same decision clock");
+        check(NativeEconomicMechanisms.Continuation(extended with {EconomicTransitionWindows=extended.EconomicTransitionWindows!
+            .Select(w=>w with {Bars=w.Bars.Append(w.Bars[^1] with {CloseAt=at+1}).ToArray()}).ToArray()},at,"H1",24) is null,
+            "A future bar invalidates an extended transition window rather than improving its estimate");
+        string scenario=new string('a',64);
+        var conditional=new NativeUnifiedPortfolioEngine(NativeUnifiedPortfolioEngine.EurGeneralProbe,fundingScenarioId:scenario,
+            eurDevelopmentProfile:transitionProfile with {MatchEconomicTransitionHorizonAtFill=true,UseMarketTimeFxValuation=true});
+        Ucp1Frame Bound(long time)=>Clock(time) with {Markets=Clock(time).Markets.Select(m=>m with
+            {FundingOffers=m.FundingOffers!.Select(f=>f with {ScenarioId=scenario}).ToArray()}).ToArray()};
+        conditional.Advance(Bound(at));conditional.Advance(Bound(at+1000));
+        var held=conditional.ModelSummary;
+        check(held.OpenPositions==1,"Conditional valuation fixture contains an actual native held position");
+        var quote=Clock(at+2000).Markets[0].Quote;
+        var mark=new Ucp1Frame(at+2000,Array.Empty<Ucp1MarketFrame>())
+            {ConditionalHoldingValuations=new[]{quote with {Bid=1m,Ask=2m}}};
+        conditional.Advance(mark);
+        check(conditional.ModelSummary.OpenPositions==1&&conditional.ModelSummary.PendingIntents==0&&
+            conditional.ModelSummary.CashEur==held.CashEur&&conditional.ModelSummary.LiquidationEquityEur<held.LiquidationEquityEur,
+            "Carried holding marks change conditional valuation but cannot fill, stop or close a position");
+        var recovered=NativeUnifiedPortfolioEngine.RestoreHistoricalEurCheckpoint(conditional.HistoricalEurCheckpoint());
+        var next=mark with {At=at+3000,ConditionalHoldingValuations=new[]{quote with {At=at+3000,Bid=2m,Ask=3m}}};
+        conditional.Advance(next);recovered.Advance(next);
+        check(recovered.ModelSummary.EventChainHash==conditional.ModelSummary.EventChainHash,
+            "Conditional valuation profile and common ledger resume exactly from a native checkpoint");
+        bool rejected=false;
+        try{recovered.Advance(next with {At=at+4000,ConditionalHoldingValuations=new[]{quote with {At=at+4000,Symbol="UNHELD"}}});}
+        catch(ArgumentException e){rejected=e.Message=="CONDITIONAL_HOLDING_VALUATION_BINDING";}
+        check(rejected,"Conditional holding valuation cannot be used for an unheld instrument");
     }
 }

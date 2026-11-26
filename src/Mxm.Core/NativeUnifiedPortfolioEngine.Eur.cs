@@ -485,6 +485,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
         var pending=Cpe1Commitments(true,frame).ToList();
         var choices=new List<EurCandidate>();
         int admittedBefore=admitted;
+        NativeEurCalibrationOutcome[]? maturedCash=null;
         var activity=CaptureEurDiagnostics?new Dictionary<string,int>(StringComparer.Ordinal):null;
         void ScoreDiagnostic(string state) => Count("EUR_PAYOFF_"+state);
         void Trace(NativeEurOpportunity o,string state)
@@ -524,7 +525,14 @@ public sealed partial class NativeUnifiedPortfolioEngine
                     q.LiquidationSlippagePerSide??market.SlippagePerSideQuote));
                 var margin=EurMargin(market,s.Side,units,at);
                 var debit=NativePortfolioFunding.OfferDebit(market,s.Side,units,at,FundingScenarioId);
-                decimal? risk=debit is decimal knownDebit?ReservedEurRisk(bracket.RiskEur,knownDebit):null;
+                decimal gap=0m;
+                if(eurDevelopmentProfile?.ReserveObservedBarGaps==true&&market.ClosedBars is { } bars)
+                {
+                    var w=market.EconomicTransitionWindows?.SingleOrDefault(x=>x.Timeframe==NativeBarTimeframe.H1&&x.Ready&&
+                        x.Bars.All(b=>b.CloseAt<at))??bars.Windows.SingleOrDefault(x=>x.Timeframe==NativeBarTimeframe.H1&&x.Ready);
+                    if(w is not null)gap=w.Bars.Skip(1).Select((b,i)=>Math.Abs(b.Open-w.Bars[i].Close)).DefaultIfEmpty(0m).Max();
+                }
+                decimal? risk=debit is decimal knownDebit?ReservedEurRisk(bracket.RiskEur,knownDebit)+gap*units*q.EurDebit:null;
                 var context=DescribeEurContext(market,at,s.Side,(capital.HeldMarginEur??0m)+pending.Sum(x=>x.MarginEur),
                     capital.ResearchAdmissionEquityEur,risk,roundTripCost);
                 if(context is not null&&marketState is not null)context=context with {MarketState=marketState,RelativeVolatility=volatility,ClosedBarActivity=activityContext};
@@ -533,7 +541,34 @@ public sealed partial class NativeUnifiedPortfolioEngine
                     policy is EurContextRank or EurGeneralSelect?context:null,CaptureEurDiagnostics?ScoreDiagnostic:null,at):null;
                 if(eurDevelopmentProfile?.EconomicMechanism==NativeEconomicMechanisms.Transition&&risk is >0m&&debit.HasValue)
                     payoff=NativeEconomicMechanisms.TransitionPayoff(market,at,s.Side,units,roundTripCost+debit.Value,
-                        eurDevelopmentProfile.EconomicGeometryTimeframe);
+                        eurDevelopmentProfile.EconomicGeometryTimeframe,eurDevelopmentProfile.Pav1TransitionBars);
+                if(eurDevelopmentProfile?.RequirePav1FastAgreement==true&&
+                    NativeEconomicMechanisms.TransitionPayoff(market,at,s.Side,units,roundTripCost+(debit??0m),"M15",eurDevelopmentProfile.Pav1TransitionBars)
+                        is not {GrossLowerEur:>0m,NetLowerEur:>0m})
+                {Count("EUR_PAV1_M15_ADMISSION_DISAGREEMENT");continue;}
+                if(eurDevelopmentProfile?.RequireMaturedCashForLargerVolume==true&&units>market.Contract.MinimumUnits)
+                {
+                    if(maturedCash is null)
+                    {
+                    var closed=CompleteModelTrips.ToDictionary(t=>t.PositionId,StringComparer.Ordinal);
+                    maturedCash=ReconciledModelEpisodes.Where(e=>e.AvailableAt<at&&e.Evidence.ClosedNetEur.HasValue&&closed.ContainsKey(e.PositionId))
+                        .Select(e=>
+                        {
+                            var trip=closed[e.PositionId];
+                            return new NativeEurCalibrationOutcome(trip.PositionId,trip.Family,trip.Side,trip.CloseAt,e.AvailableAt,
+                                e.Evidence.ClosedGrossEur??trip.GrossEur,e.Evidence.ClosedNetEur!.Value,
+                                trip.EconomicEntry?.AdmissionReservedRiskEur??trip.EntryRiskEur)
+                                {Context=trip.EurContext,DecisionAt=trip.EconomicEntry?.DecisionAt};
+                        }).ToArray();
+                    }
+                    var fitted=context is not null&&risk is >0m?NativeEconomicMechanisms.EntryQualityPayoff(maturedCash,s.Family,s.Side,
+                        context,at,risk.Value,roundTripCost+(debit??0m),eurDevelopmentProfile.MinimumEpisodes,
+                        eurDevelopmentProfile.MinimumDays,eurDevelopmentProfile.DayPenalty,true):null;
+                    if(fitted is not {GrossLowerEur:>0m,NetLowerEur:>0m})
+                    {Count("EUR_PAV1_LARGER_VOLUME_NO_MATURED_MONETARY_EDGE");continue;}
+                    if(payoff is not null)payoff=payoff with {GrossLowerEur=Math.Min(payoff.GrossLowerEur,fitted.GrossLowerEur),
+                        NetLowerEur=Math.Min(payoff.NetLowerEur,fitted.NetLowerEur),Cohort="PAV1_CORROBORATED_ACTUAL_MATURED_CASH_VOLUME"};
+                }
                 var receipt=new NativeEurOpportunity(at,market.Symbol,s.Family,s.Side,units,grossTarget,grossRisk,
                     roundTripCost,debit,margin?.MarginEur,risk,capital.HeldMarginEur,capital.PendingOpenMarginEur,
                     capital.ResearchAdmissionEquityEur,payoff,"ASSESS")
@@ -553,7 +588,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
                         ?"WAIT_RECONCILED_PAYOFF_EVIDENCE":null;
                 if(unavailable is not null){Trace(receipt,unavailable);continue;}
                 choices.Add(new(s,market,new NativeIntegratedPlan(levels.Stop,levels.Target,risk!.Value,
-                    bracket.RewardEur-debit!.Value){EntrySlippage=market.SlippagePerSideQuote},receipt));
+                    bracket.RewardEur-debit!.Value){EntrySlippage=market.SlippagePerSideQuote,GapReservePerUnitQuote=gap},receipt));
             }
         }
 
@@ -574,7 +609,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
             Trace(receipt,s.Side>0?"LONG_PENDING":"SHORT_PENDING");
             if(CaptureEurDiagnostics)RecordEurRiskObservation(at,"ADMISSION",frame,id);
         }
-        if(policy is EurGeneralSelect or EurGeneralPooled||eurDevelopmentProfile?.OptimizeTransitionNetVolume==true)
+        if(policy is EurGeneralSelect or EurGeneralPooled||eurDevelopmentProfile?.OptimizeTransitionNetVolume==true||
+            eurDevelopmentProfile?.AllocatePav1AtMinimumVolume==true)
             AllocateGeneralEur(frame,book,capital,held,pending,choices,Admit,Trace);
         else
         {
