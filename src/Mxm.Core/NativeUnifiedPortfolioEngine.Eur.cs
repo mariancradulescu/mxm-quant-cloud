@@ -501,10 +501,12 @@ public sealed partial class NativeUnifiedPortfolioEngine
             var marketState=IsEurGeneral?DescribeGeneralState(market,frame,s.Side):null;
             var volatility=eurDevelopmentProfile?.CaptureVolatilityContext==true?DescribeRelativeVolatility(market,frame.At):null;
             var activityContext=eurDevelopmentProfile?.CaptureClosedBarActivity==true?DescribeClosedBarActivity(market,frame.At,s.Side):null;
-            var unitsOffered=(market.EurMargins??Array.Empty<NativeEurMarginObservation>())
+            var witnessedUnits=(market.EurMargins??Array.Empty<NativeEurMarginObservation>())
                 .Where(x=>x.Side==s.Side&&x.Units>0m).Select(x=>x.Units)
-                .Append(market.Contract.MinimumUnits).Distinct()
-                .Where(units=>(!frame.ObservationEpisodeOnly&&eurDevelopmentProfile?.MinimumContractVolumeOnly!=true)||
+                .Append(market.Contract.MinimumUnits).Distinct().OrderBy(x=>x).ToArray();
+            var unitsOffered=frame.ObservationEpisodeOnly&&eurDevelopmentProfile?.EconomicOpportunityVolumeIndex is int volumeIndex
+                ?witnessedUnits.Skip(volumeIndex).Take(1)
+                :witnessedUnits.Where(units=>(!frame.ObservationEpisodeOnly&&eurDevelopmentProfile?.MinimumContractVolumeOnly!=true)||
                     units==market.Contract.MinimumUnits).OrderByDescending(x=>x);
             foreach(var units in unitsOffered)
             {
