@@ -116,6 +116,29 @@
       "PeerTransferDiagnostic": true
     },
     {
+      "Id": "EQUILIBRIUM_REVERSION__STRUCTURE_RISK_VOLUME",
+      "Mechanism": "EQUILIBRIUM_REVERSION",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "EQUILIBRIUM_REVERSION",
+        "EconomicManagement": "BRACKET",
+        "MinimumContractVolumeOnly": false,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 0.75,
+        "AnchorEconomicGeometryToClosedStructure": true,
+        "KeepAdmissionRiskAtFill": true,
+        "ResizeWithinAdmissionRiskAtFill": true,
+        "OptimizeEconomicOpportunityVolume": true
+      },
+      "Reference": false,
+      "MonetaryTraining": true,
+      "PeerTransferDiagnostic": false
+    },
+    {
       "Id": "EQUILIBRIUM_REVERSION__STRUCTURE_RISK_MANAGEMENT",
       "Mechanism": "EQUILIBRIUM_REVERSION",
       "Profile": {
@@ -216,6 +239,29 @@
       "Reference": false,
       "MonetaryTraining": true,
       "PeerTransferDiagnostic": true
+    },
+    {
+      "Id": "INTERMARKET_DISLOCATION__STRUCTURE_RISK_VOLUME",
+      "Mechanism": "INTERMARKET_DISLOCATION",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "INTERMARKET_DISLOCATION",
+        "EconomicManagement": "BRACKET",
+        "MinimumContractVolumeOnly": false,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 1,
+        "AnchorEconomicGeometryToClosedStructure": true,
+        "KeepAdmissionRiskAtFill": true,
+        "ResizeWithinAdmissionRiskAtFill": true,
+        "OptimizeEconomicOpportunityVolume": true
+      },
+      "Reference": false,
+      "MonetaryTraining": true,
+      "PeerTransferDiagnostic": false
     },
     {
       "Id": "INTERMARKET_DISLOCATION__STRUCTURE_RISK_MANAGEMENT",
@@ -320,6 +366,29 @@
       "PeerTransferDiagnostic": true
     },
     {
+      "Id": "M5_FOLLOW__STRUCTURE_RISK_VOLUME",
+      "Mechanism": "M5_FOLLOW",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "DistributionTargetRanges": 2.5,
+        "EconomicMechanism": "M5_FOLLOW",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": false,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 0.75,
+        "AnchorEconomicGeometryToClosedStructure": true,
+        "KeepAdmissionRiskAtFill": true,
+        "ResizeWithinAdmissionRiskAtFill": true,
+        "OptimizeEconomicOpportunityVolume": true
+      },
+      "Reference": false,
+      "MonetaryTraining": true,
+      "PeerTransferDiagnostic": false
+    },
+    {
       "Id": "M5_FOLLOW__STRUCTURE_RISK_MANAGEMENT",
       "Mechanism": "M5_FOLLOW",
       "Profile": {
@@ -420,6 +489,29 @@
       "Reference": false,
       "MonetaryTraining": true,
       "PeerTransferDiagnostic": true
+    },
+    {
+      "Id": "M5_REVERSE__STRUCTURE_RISK_VOLUME",
+      "Mechanism": "M5_REVERSE",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "DistributionTargetRanges": 2,
+        "EconomicMechanism": "M5_REVERSE",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": false,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "M15",
+        "EconomicStopRanges": 1,
+        "AnchorEconomicGeometryToClosedStructure": true,
+        "KeepAdmissionRiskAtFill": true,
+        "ResizeWithinAdmissionRiskAtFill": true,
+        "OptimizeEconomicOpportunityVolume": true
+      },
+      "Reference": false,
+      "MonetaryTraining": true,
+      "PeerTransferDiagnostic": false
     },
     {
       "Id": "M5_REVERSE__STRUCTURE_RISK_MANAGEMENT",
@@ -524,6 +616,29 @@
       "PeerTransferDiagnostic": true
     },
     {
+      "Id": "PAV1_LOCAL_TRANSITION__STRUCTURE_RISK_VOLUME",
+      "Mechanism": "PAV1_LOCAL_TRANSITION",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "DistributionTargetRanges": 2.5,
+        "EconomicMechanism": "PAV1_LOCAL_TRANSITION",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": false,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 0.75,
+        "AnchorEconomicGeometryToClosedStructure": true,
+        "KeepAdmissionRiskAtFill": true,
+        "ResizeWithinAdmissionRiskAtFill": true,
+        "OptimizeEconomicOpportunityVolume": true
+      },
+      "Reference": false,
+      "MonetaryTraining": true,
+      "PeerTransferDiagnostic": false
+    },
+    {
       "Id": "PAV1_LOCAL_TRANSITION__STRUCTURE_RISK_MANAGEMENT",
       "Mechanism": "PAV1_LOCAL_TRANSITION",
       "Profile": {
@@ -626,6 +741,29 @@
       "PeerTransferDiagnostic": true
     },
     {
+      "Id": "RANGE_CONTINUATION__STRUCTURE_RISK_VOLUME",
+      "Mechanism": "RANGE_CONTINUATION",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "DistributionTargetRanges": 2,
+        "EconomicMechanism": "RANGE_CONTINUATION",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": false,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "M15",
+        "EconomicStopRanges": 1,
+        "AnchorEconomicGeometryToClosedStructure": true,
+        "KeepAdmissionRiskAtFill": true,
+        "ResizeWithinAdmissionRiskAtFill": true,
+        "OptimizeEconomicOpportunityVolume": true
+      },
+      "Reference": false,
+      "MonetaryTraining": true,
+      "PeerTransferDiagnostic": false
+    },
+    {
       "Id": "RANGE_CONTINUATION__STRUCTURE_RISK_MANAGEMENT",
       "Mechanism": "RANGE_CONTINUATION",
       "Profile": {
@@ -726,6 +864,29 @@
       "Reference": false,
       "MonetaryTraining": true,
       "PeerTransferDiagnostic": true
+    },
+    {
+      "Id": "V33_MULTISCALE_ACTIVITY__STRUCTURE_RISK_VOLUME",
+      "Mechanism": "V33_MULTISCALE_ACTIVITY",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "DistributionTargetRanges": 2.5,
+        "EconomicMechanism": "V33_MULTISCALE_ACTIVITY",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": false,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 0.75,
+        "AnchorEconomicGeometryToClosedStructure": true,
+        "KeepAdmissionRiskAtFill": true,
+        "ResizeWithinAdmissionRiskAtFill": true,
+        "OptimizeEconomicOpportunityVolume": true
+      },
+      "Reference": false,
+      "MonetaryTraining": true,
+      "PeerTransferDiagnostic": false
     },
     {
       "Id": "V33_MULTISCALE_ACTIVITY__STRUCTURE_RISK_MANAGEMENT",
