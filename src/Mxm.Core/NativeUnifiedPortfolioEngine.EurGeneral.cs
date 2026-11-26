@@ -17,12 +17,14 @@ public sealed partial class NativeUnifiedPortfolioEngine
 
     bool IsEurGeneral => policy is EurGeneralProbe or EurGeneralSelect or EurGeneralPooled or EurGeneralCash;
 
-    internal Ucp1DecisionSignal[] DescribeEurGeneral(Ucp1MarketFrame market, long at)
+    internal Ucp1DecisionSignal[] DescribeEurGeneral(Ucp1MarketFrame market, long at,Ucp1Frame? sharedFrame=null)
     {
         if (market.Quote.At != at || market.EurTickSize is not decimal tick || !Cpe1Usable(market, at))
             return Array.Empty<Ucp1DecisionSignal>();
         NativeIntegratedCandidate[] candidates;
-        if(eurDevelopmentProfile is {UseAvailableContext:true} profile)
+        if(eurDevelopmentProfile is {EconomicMechanism:{ } mechanism} distinct)
+            candidates=NativeEconomicMechanisms.Describe(mechanism,market,at,distinct.DistributionTargetRanges,sharedFrame);
+        else if(eurDevelopmentProfile is {UseAvailableContext:true} profile)
         {
             if(ObservedWindow(market,NativeBarTimeframe.M5,at) is not { } m5||
                 ObservedWindow(market,NativeBarTimeframe.M15,at) is null||
@@ -315,6 +317,21 @@ public sealed partial class NativeUnifiedPortfolioEngine
         var q = market.Quote;
         int side = position.Side;
         decimal residual = side * (geometry.Target - price);
+        if(eurDevelopmentProfile?.EconomicMechanism is not null)
+        {
+            if(residual<=0m)return new("INTEGRATED_MECHANISM_TARGET",position.Units);
+            if(eurDevelopmentProfile.EconomicManagement=="BRACKET")return null;
+            decimal? debit=NativePortfolioFunding.OfferDebit(market,side,position.Units,frame.At,FundingScenarioId);
+            if(debit is null||NativeEconomicMechanisms.Continuation(market,frame.At) is not { } transition)return null;
+            decimal change=side*transition.Mean*position.Units;
+            decimal value=change*(change>=0m?q.EurCredit:q.EurDebit)-debit.Value;
+            decimal uncertainty=transition.Sem*position.Units*q.EurDebit;
+            if(value+uncertainty<0m)return new("INTEGRATED_MECHANISM_NEGATIVE_CONTINUATION",position.Units);
+            decimal minimum=market.Contract.MinimumUnits,volumeStep=market.Contract.VolumeStepUnits;
+            decimal rest=position.Units-minimum;
+            return value<0m&&!geometry.Reduced&&minimum>0m&&volumeStep>0m&&rest>=minimum&&(rest-minimum)%volumeStep==0m
+                ?new(NativeSimulatedCloseLifecycle.AdaptiveContinuationReduction,minimum):null;
+        }
         if (residual <= 0m)
             return ManageFundedTarget(plan, position, market, price, displacement);
 

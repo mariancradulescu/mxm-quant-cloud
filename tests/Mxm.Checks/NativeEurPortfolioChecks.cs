@@ -27,6 +27,7 @@ internal static class NativeEurPortfolioChecks
 
     internal static void Run(Action<bool,string> check)
     {
+        NativeEconomicMechanismChecks.Run(check);
         // A higher standalone payoff need not be the best funded set.
         var joint=new[]{(Symbol:"A",Net:6m,Margin:6m),(Symbol:"B",Net:4m,Margin:3m),
             (Symbol:"C",Net:4m,Margin:3m),(Symbol:"D",Net:4m,Margin:3m),

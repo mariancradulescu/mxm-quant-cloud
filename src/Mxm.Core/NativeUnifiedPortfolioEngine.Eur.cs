@@ -325,6 +325,10 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 estimate.NetLowerEur<=0m?"ADAPTIVE_NET_LOWER_NONPOSITIVE":"ADAPTIVE_PAYOFF_PASSES");
             return estimate;
         }
+        if(eurDevelopmentProfile is {EconomicMechanism:NativeEconomicMechanisms.Scored} scored&&
+            decisionAt is long scoredAt&&target is not null)
+            return NativeEconomicMechanisms.LifecyclePayoff(eurHistory.Values.SelectMany(x=>x),family,side,target,
+                scoredAt,candidateRiskEur,currentCostFloorEur,scored.MinimumEpisodes,scored.MinimumDays,scored.DayPenalty);
         if(eurDevelopmentProfile is { UseRecoveredLocalPayoff:true } && decisionAt is long at)
             return RecoveredLocalPayoff(family,side,at,candidateRiskEur,currentCostFloorEur,target,diagnostic);
         int minEpisodes=eurDevelopmentProfile?.MinimumEpisodes??20;
@@ -500,7 +504,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
             var unitsOffered=(market.EurMargins??Array.Empty<NativeEurMarginObservation>())
                 .Where(x=>x.Side==s.Side&&x.Units>0m).Select(x=>x.Units)
                 .Append(market.Contract.MinimumUnits).Distinct()
-                .Where(units=>!frame.ObservationEpisodeOnly||units==market.Contract.MinimumUnits).OrderByDescending(x=>x);
+                .Where(units=>(!frame.ObservationEpisodeOnly&&eurDevelopmentProfile?.MinimumContractVolumeOnly!=true)||
+                    units==market.Contract.MinimumUnits).OrderByDescending(x=>x);
             foreach(var units in unitsOffered)
             {
                 var q=market.Quote;
@@ -521,6 +526,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 if(CaptureEurDiagnostics&&policy==EurGeneralSelect&&context is null)ScoreDiagnostic("NO_CONTEXT");
                 var payoff=risk is >0m&&(IsEurRank||eurDevelopmentProfile is null)?EurPayoff(s.Family,s.Side,risk.Value,roundTripCost+debit!.Value,
                     policy is EurContextRank or EurGeneralSelect?context:null,CaptureEurDiagnostics?ScoreDiagnostic:null,at):null;
+                if(eurDevelopmentProfile?.EconomicMechanism==NativeEconomicMechanisms.Transition&&risk is >0m&&debit.HasValue)
+                    payoff=NativeEconomicMechanisms.TransitionPayoff(market,at,s.Side,units,roundTripCost+debit.Value);
                 var receipt=new NativeEurOpportunity(at,market.Symbol,s.Family,s.Side,units,grossTarget,grossRisk,
                     roundTripCost,debit,margin?.MarginEur,risk,capital.HeldMarginEur,capital.PendingOpenMarginEur,
                     capital.ResearchAdmissionEquityEur,payoff,"ASSESS")
@@ -535,7 +542,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
                     grossRisk<=0m||grossTarget<=0m||risk is not >0m||bracket.RewardEur<=debit.Value?"WAIT_PRICE_GEOMETRY":
                     policy is EurCash or EurGeneralCash?"WAIT_CASH":
                     capital.MaximumSampledFundingAdjustedDrawdown>=.28m?"WAIT_PORTFOLIO_DRAWDOWN":
-                    IsEurRank&&payoff is not {GrossLowerEur:>0m,NetLowerEur:>0m}
+                    (IsEurRank||eurDevelopmentProfile?.EconomicMechanism==NativeEconomicMechanisms.Transition)&&
+                        payoff is not {GrossLowerEur:>0m,NetLowerEur:>0m}
                         ?"WAIT_RECONCILED_PAYOFF_EVIDENCE":null;
                 if(unavailable is not null){Trace(receipt,unavailable);continue;}
                 choices.Add(new(s,market,new NativeIntegratedPlan(levels.Stop,levels.Target,risk!.Value,

@@ -343,6 +343,13 @@ public sealed partial class NativeUnifiedPortfolioEngine
             current.ObservedPeakEur*(1m-OwnerRiskAuthority.MaximumSystemDrawdown)))return null;
         if(IsEurGeneral&&guard.PreFillLiquidationEquityEur-guard.AggregateReservedRiskEur<
             current.ObservedPeakEur*(1m-OwnerRiskAuthority.MaximumSystemDrawdown))return null;
+        if(eurDevelopmentProfile?.EconomicMechanism==NativeEconomicMechanisms.Transition)
+        {
+            decimal transitionCost=Math.Max(0m,-NativeExecutableEconomics.EstimateNet(q,q,plan.Side,units,
+                bracket.Entry,plan.Side>0?q.Bid:q.Ask,q.LiquidationSlippagePerSide??intent.SlippagePerSide));
+            if(NativeEconomicMechanisms.TransitionPayoff(observed,frame.At,plan.Side,units,transitionCost+debit)
+                is not {GrossLowerEur:>0m,NetLowerEur:>0m})return null;
+        }
         if(policy is EurGeneralSelect or EurGeneralPooled)
         {
             decimal cost=Math.Max(0m,-NativeExecutableEconomics.EstimateNet(q,q,plan.Side,units,

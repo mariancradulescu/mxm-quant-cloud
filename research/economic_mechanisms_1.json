@@ -1,0 +1,406 @@
+{
+  "Study": "ECONOMIC_MECHANISMS_1",
+  "Exposure": "PROJECT_EXPOSED_CONDITIONAL_DEVELOPMENT",
+  "OriginalEconomicRun": 45759378427,
+  "OriginalEconomicArtifact": 15090893748,
+  "OriginalEconomicSha256": "102c7a89061bcf612cab48324fb9bffb2f0a18eb163cb26e78880a622285cfaa",
+  "Instruments": [
+    "AAPL.US",
+    "AUDUSD",
+    "EURUSD",
+    "GBPUSD",
+    "SpotBrent",
+    "US500",
+    "XAUUSD"
+  ],
+  "InitialFitFrom": 1785110400000,
+  "TestBoundaries": [
+    1785715200000,
+    1787529600000,
+    1789344000000,
+    1791158400000,
+    1792972800000
+  ],
+  "Stresses": [
+    0,
+    0.5,
+    1
+  ],
+  "Orders": 0,
+  "CloudActivated": false,
+  "IndependentConfirmationCertified": false,
+  "Calibrations": [
+    {
+      "Id": "M5_FOLLOW__BRACKET",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "CaptureStudyDiagnostics": true,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "M5_FOLLOW",
+        "EconomicManagement": "BRACKET",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true
+      }
+    },
+    {
+      "Id": "M5_FOLLOW__TRANSITION_VALUE",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "CaptureStudyDiagnostics": true,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "M5_FOLLOW",
+        "EconomicManagement": "TRANSITION_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true
+      }
+    },
+    {
+      "Id": "M5_REVERSE__BRACKET",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "CaptureStudyDiagnostics": true,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "M5_REVERSE",
+        "EconomicManagement": "BRACKET",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true
+      }
+    },
+    {
+      "Id": "M5_REVERSE__TRANSITION_VALUE",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "CaptureStudyDiagnostics": true,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "M5_REVERSE",
+        "EconomicManagement": "TRANSITION_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true
+      }
+    },
+    {
+      "Id": "RANGE_CONTINUATION__BRACKET",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "CaptureStudyDiagnostics": true,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "RANGE_CONTINUATION",
+        "EconomicManagement": "BRACKET",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true
+      }
+    },
+    {
+      "Id": "RANGE_CONTINUATION__TRANSITION_VALUE",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "CaptureStudyDiagnostics": true,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "RANGE_CONTINUATION",
+        "EconomicManagement": "TRANSITION_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true
+      }
+    },
+    {
+      "Id": "EQUILIBRIUM_REVERSION__BRACKET",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "CaptureStudyDiagnostics": true,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "EQUILIBRIUM_REVERSION",
+        "EconomicManagement": "BRACKET",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true
+      }
+    },
+    {
+      "Id": "EQUILIBRIUM_REVERSION__TRANSITION_VALUE",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "CaptureStudyDiagnostics": true,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "EQUILIBRIUM_REVERSION",
+        "EconomicManagement": "TRANSITION_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true
+      }
+    },
+    {
+      "Id": "V33_MULTISCALE_ACTIVITY__BRACKET",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "CaptureStudyDiagnostics": true,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "V33_MULTISCALE_ACTIVITY",
+        "EconomicManagement": "BRACKET",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true
+      }
+    },
+    {
+      "Id": "V33_MULTISCALE_ACTIVITY__TRANSITION_VALUE",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "CaptureStudyDiagnostics": true,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "V33_MULTISCALE_ACTIVITY",
+        "EconomicManagement": "TRANSITION_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true
+      }
+    },
+    {
+      "Id": "INTERMARKET_DISLOCATION__BRACKET",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "CaptureStudyDiagnostics": true,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "INTERMARKET_DISLOCATION",
+        "EconomicManagement": "BRACKET",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true
+      }
+    },
+    {
+      "Id": "INTERMARKET_DISLOCATION__TRANSITION_VALUE",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "CaptureStudyDiagnostics": true,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "INTERMARKET_DISLOCATION",
+        "EconomicManagement": "TRANSITION_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true
+      }
+    },
+    {
+      "Id": "PAV1_LOCAL_TRANSITION__BRACKET",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "CaptureStudyDiagnostics": true,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "PAV1_LOCAL_TRANSITION",
+        "EconomicManagement": "BRACKET",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true
+      }
+    },
+    {
+      "Id": "PAV1_LOCAL_TRANSITION__TRANSITION_VALUE",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "CaptureStudyDiagnostics": true,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "PAV1_LOCAL_TRANSITION",
+        "EconomicManagement": "TRANSITION_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true
+      }
+    },
+    {
+      "Id": "SCP1_LOCAL_LIFECYCLE__BRACKET",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "CaptureStudyDiagnostics": true,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "SCP1_LOCAL_LIFECYCLE",
+        "EconomicManagement": "BRACKET",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true
+      }
+    },
+    {
+      "Id": "SCP1_LOCAL_LIFECYCLE__TRANSITION_VALUE",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "CaptureStudyDiagnostics": true,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "SCP1_LOCAL_LIFECYCLE",
+        "EconomicManagement": "TRANSITION_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true
+      }
+    }
+  ],
+  "Trials": [
+    {
+      "Id": "CASH_CONTROL",
+      "Policy": "EUR_GENERAL_CASH",
+      "Calibration": "M5_FOLLOW__BRACKET"
+    },
+    {
+      "Id": "M5_FOLLOW__BRACKET",
+      "Policy": "EUR_GENERAL_PROBE",
+      "Calibration": "M5_FOLLOW__BRACKET"
+    },
+    {
+      "Id": "M5_FOLLOW__TRANSITION_VALUE",
+      "Policy": "EUR_GENERAL_PROBE",
+      "Calibration": "M5_FOLLOW__TRANSITION_VALUE"
+    },
+    {
+      "Id": "M5_REVERSE__BRACKET",
+      "Policy": "EUR_GENERAL_PROBE",
+      "Calibration": "M5_REVERSE__BRACKET"
+    },
+    {
+      "Id": "M5_REVERSE__TRANSITION_VALUE",
+      "Policy": "EUR_GENERAL_PROBE",
+      "Calibration": "M5_REVERSE__TRANSITION_VALUE"
+    },
+    {
+      "Id": "RANGE_CONTINUATION__BRACKET",
+      "Policy": "EUR_GENERAL_PROBE",
+      "Calibration": "RANGE_CONTINUATION__BRACKET"
+    },
+    {
+      "Id": "RANGE_CONTINUATION__TRANSITION_VALUE",
+      "Policy": "EUR_GENERAL_PROBE",
+      "Calibration": "RANGE_CONTINUATION__TRANSITION_VALUE"
+    },
+    {
+      "Id": "EQUILIBRIUM_REVERSION__BRACKET",
+      "Policy": "EUR_GENERAL_PROBE",
+      "Calibration": "EQUILIBRIUM_REVERSION__BRACKET"
+    },
+    {
+      "Id": "EQUILIBRIUM_REVERSION__TRANSITION_VALUE",
+      "Policy": "EUR_GENERAL_PROBE",
+      "Calibration": "EQUILIBRIUM_REVERSION__TRANSITION_VALUE"
+    },
+    {
+      "Id": "V33_MULTISCALE_ACTIVITY__BRACKET",
+      "Policy": "EUR_GENERAL_PROBE",
+      "Calibration": "V33_MULTISCALE_ACTIVITY__BRACKET"
+    },
+    {
+      "Id": "V33_MULTISCALE_ACTIVITY__TRANSITION_VALUE",
+      "Policy": "EUR_GENERAL_PROBE",
+      "Calibration": "V33_MULTISCALE_ACTIVITY__TRANSITION_VALUE"
+    },
+    {
+      "Id": "INTERMARKET_DISLOCATION__BRACKET",
+      "Policy": "EUR_GENERAL_PROBE",
+      "Calibration": "INTERMARKET_DISLOCATION__BRACKET"
+    },
+    {
+      "Id": "INTERMARKET_DISLOCATION__TRANSITION_VALUE",
+      "Policy": "EUR_GENERAL_PROBE",
+      "Calibration": "INTERMARKET_DISLOCATION__TRANSITION_VALUE"
+    },
+    {
+      "Id": "PAV1_LOCAL_TRANSITION__BRACKET",
+      "Policy": "EUR_GENERAL_PROBE",
+      "Calibration": "PAV1_LOCAL_TRANSITION__BRACKET"
+    },
+    {
+      "Id": "PAV1_LOCAL_TRANSITION__TRANSITION_VALUE",
+      "Policy": "EUR_GENERAL_PROBE",
+      "Calibration": "PAV1_LOCAL_TRANSITION__TRANSITION_VALUE"
+    },
+    {
+      "Id": "SCP1_LOCAL_LIFECYCLE__BRACKET",
+      "Policy": "EUR_GENERAL_SELECT",
+      "Calibration": "SCP1_LOCAL_LIFECYCLE__BRACKET"
+    },
+    {
+      "Id": "MULTI_MECHANISM_UNSCORED__BRACKET",
+      "Policy": "EUR_GENERAL_PROBE",
+      "Calibration": "SCP1_LOCAL_LIFECYCLE__BRACKET"
+    },
+    {
+      "Id": "SCP1_LOCAL_LIFECYCLE__TRANSITION_VALUE",
+      "Policy": "EUR_GENERAL_SELECT",
+      "Calibration": "SCP1_LOCAL_LIFECYCLE__TRANSITION_VALUE"
+    },
+    {
+      "Id": "MULTI_MECHANISM_UNSCORED__TRANSITION_VALUE",
+      "Policy": "EUR_GENERAL_PROBE",
+      "Calibration": "SCP1_LOCAL_LIFECYCLE__TRANSITION_VALUE"
+    }
+  ],
+  "TrialGroups": {
+    "G0": [
+      "CASH_CONTROL",
+      "M5_FOLLOW__BRACKET",
+      "M5_FOLLOW__TRANSITION_VALUE"
+    ],
+    "G1": [
+      "M5_REVERSE__BRACKET",
+      "M5_REVERSE__TRANSITION_VALUE",
+      "RANGE_CONTINUATION__BRACKET"
+    ],
+    "G2": [
+      "RANGE_CONTINUATION__TRANSITION_VALUE",
+      "EQUILIBRIUM_REVERSION__BRACKET",
+      "EQUILIBRIUM_REVERSION__TRANSITION_VALUE"
+    ],
+    "G3": [
+      "V33_MULTISCALE_ACTIVITY__BRACKET",
+      "V33_MULTISCALE_ACTIVITY__TRANSITION_VALUE",
+      "INTERMARKET_DISLOCATION__BRACKET"
+    ],
+    "G4": [
+      "INTERMARKET_DISLOCATION__TRANSITION_VALUE",
+      "PAV1_LOCAL_TRANSITION__BRACKET",
+      "PAV1_LOCAL_TRANSITION__TRANSITION_VALUE"
+    ],
+    "G5": [
+      "SCP1_LOCAL_LIFECYCLE__BRACKET",
+      "MULTI_MECHANISM_UNSCORED__BRACKET",
+      "SCP1_LOCAL_LIFECYCLE__TRANSITION_VALUE"
+    ],
+    "G6": [
+      "MULTI_MECHANISM_UNSCORED__TRANSITION_VALUE"
+    ]
+  }
+}

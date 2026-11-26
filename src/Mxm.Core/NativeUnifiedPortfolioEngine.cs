@@ -783,7 +783,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
                     {Count(fcp1?"FCP1_COMPLETED_M15_DECISION_CLOCK_STALE":
                         "SCP1_COMPLETED_M15_DECISION_CLOCK_STALE");continue;}
                 }
-                var signals=IsEurGeneral?DescribeEurGeneral(m,t):Ucp1CausalSignals.Describe(m,t);
+                var signals=IsEurGeneral?DescribeEurGeneral(m,t,frame):Ucp1CausalSignals.Describe(m,t);
                 if(signals.Length==0)continue;
                 long completed=signals[0].LastCompletedM5At;
                 if(lastSignalBar.GetValueOrDefault(m.Symbol)>=completed)continue;
