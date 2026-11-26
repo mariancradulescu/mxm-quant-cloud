@@ -1,0 +1,92 @@
+name: OWNER verified lifecycle book checkpoint shards without replay
+on:
+  pull_request:
+    paths: ['research/owner_lifecycle_checkpoint_shards.py', 'research/test_causal_source_shards.py', '.github/workflows/owner-lifecycle-checkpoint-shards.yml']
+  push:
+    branches: [main]
+    paths: ['research/owner_lifecycle_checkpoint_shards.py']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  technical:
+    runs-on: ubuntu-24.04
+    outputs:
+      new_repack: ${{ steps.scope.outputs.new_repack }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - id: scope
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          if [ "$EVENT_NAME" = push ] && git diff --diff-filter=A --name-only "$BEFORE" "$GITHUB_SHA" | grep -Fxq research/owner_lifecycle_checkpoint_shards.py; then
+            echo "new_repack=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "new_repack=false" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m unittest research.test_causal_source_shards
+  repack:
+    needs: technical
+    if: github.event_name == 'push' && needs.technical.outputs.new_repack == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - id: pack
+        name: Verify and shard existing ciphertext only
+        run: python -m research.owner_lifecycle_checkpoint_shards prepare
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - id: part0
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: lifecycle-book-data-0
+          path: source-shards/parts0/
+          compression-level: 0
+          retention-days: 90
+          if-no-files-found: error
+      - id: part1
+        if: fromJSON(steps.pack.outputs.groups) > 1
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: lifecycle-book-data-1
+          path: source-shards/parts1/
+          compression-level: 0
+          retention-days: 90
+          if-no-files-found: error
+      - id: part2
+        if: fromJSON(steps.pack.outputs.groups) > 2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: lifecycle-book-data-2
+          path: source-shards/parts2/
+          compression-level: 0
+          retention-days: 90
+          if-no-files-found: error
+      - name: Bind uploaded shard IDs and archive digests
+        run: python -m research.owner_lifecycle_checkpoint_shards receipt
+        env:
+          PART0_ID: ${{ steps.part0.outputs.artifact-id }}
+          PART0_SHA: ${{ steps.part0.outputs.artifact-digest }}
+          PART1_ID: ${{ steps.part1.outputs.artifact-id }}
+          PART1_SHA: ${{ steps.part1.outputs.artifact-digest }}
+          PART2_ID: ${{ steps.part2.outputs.artifact-id }}
+          PART2_SHA: ${{ steps.part2.outputs.artifact-digest }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: lifecycle-book-shard-metadata
+          path: source-shards/metadata/
+          retention-days: 90
+          if-no-files-found: error
