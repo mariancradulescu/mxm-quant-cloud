@@ -169,14 +169,18 @@ internal static partial class IntegratedEconomicReplay
             if(checkpointFrom is not null)
             {
                 using var file=File.OpenRead(checkpointFrom);
-                var state=JsonSerializer.Deserialize<HistoricalReplayState>(file)
+                var state=JsonSerializer.Deserialize<HistoricalReplayState>(file,NativeHistoricalCheckpointJson.Options)
                     ??throw new InvalidDataException("EUR_HISTORICAL_CHECKPOINT_REQUIRED");
                 completed=state.CompletedPhases;
                 string? originalRevision=Environment.GetEnvironmentVariable("MXM_ECONOMIC_PORTFOLIO_FIT_ORIGINAL_REVISION");
                 bool verifiedInitialState=originalRevision is {Length:40}&&originalRevision.All(Uri.IsHexDigit)&&
                     protocol.Study=="EUR_ADAPTIVE_CALIBRATION_1"&&trialGroup=="PORTFOLIO"&&completed==1&&
                     stopAfter==2&&state.Binding==(binding with {Revision=originalRevision});
-                if(state.Version!=HistoricalStateVersion||state.Binding!=binding&&!verifiedInitialState||completed<1||
+                string? archiveRevision=Environment.GetEnvironmentVariable("MXM_ECONOMIC_ARCHIVE_CHECKPOINT_ORIGINAL_REVISION");
+                bool verifiedArchiveState=archiveRevision is {Length:40}&&archiveRevision.All(Uri.IsHexDigit)&&
+                    protocol.Study=="EUR_RECENT_ARCHIVE_13W_1"&&trialGroup=="ARCHIVE"&&completed==3&&
+                    stopAfter==4&&state.Binding==(binding with {Revision=archiveRevision});
+                if(state.Version!=HistoricalStateVersion||state.Binding!=binding&&!verifiedInitialState&&!verifiedArchiveState||completed<1||
                     completed>=boundaries.Length||state.LastClock!=boundaries[completed-1]-EurStep+EurOffset||
                     state.Fits.Length!=completed-1||state.Streams.Count!=streams.Count||
                     state.Observers.Count!=observers.Count||state.Probes.Count!=probes.Count||

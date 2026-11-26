@@ -186,6 +186,20 @@ resizedBook.Apply(smallerFill with {ModelOpenRemainderCancelled=true});
 resizedBook=NativeFundedLedger.Restore(resizedBook.Checkpoint());
 Check(resizedBook.PositionSnapshot().Single().Units==1m&&resizedBook.Summary().PendingIntents==0&&
     resizedBook.Summary().CashEur==299.9m,"smaller funded open settles the actual fee and restores with no pending remainder");
+var historyJson=NativeHistoricalCheckpointJson.Options;
+var legacyHistory=new Dictionary<string,string>{{"BOOK","legacy"}};
+Check(System.Text.Json.JsonSerializer.Serialize(legacyHistory,historyJson)==
+    System.Text.Json.JsonSerializer.Serialize(legacyHistory),"short historical checkpoint payload keeps its legacy format");
+string longBook=new string('x',NativeHistoricalCheckpointJson.ChunkCharacters-1)+"\U0001F4C8"+"TAIL";
+using var fragmentedHistory=new MemoryStream();
+System.Text.Json.JsonSerializer.Serialize(fragmentedHistory,new Dictionary<string,string>{{"BOOK",longBook}},historyJson);
+fragmentedHistory.Position=0;
+using(var checkpointDocument=System.Text.Json.JsonDocument.Parse(fragmentedHistory))
+    Check(checkpointDocument.RootElement.GetProperty("BOOK").GetArrayLength()==2,
+        "historical checkpoint fragments large ledger text");
+fragmentedHistory.Position=0;
+Check(System.Text.Json.JsonSerializer.Deserialize<Dictionary<string,string>>(fragmentedHistory,historyJson)!["BOOK"]==longBook,
+    "historical checkpoint round trip preserves all ledger bytes and Unicode boundaries");
 const long bdpSyntheticStart=1762128000000L;
 var bdpSyntheticBars=new List<ProgramBar>();
 void AddProgramWindow(long start,int count)
