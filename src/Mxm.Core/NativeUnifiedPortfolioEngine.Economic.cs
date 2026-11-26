@@ -372,8 +372,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
                     ?DescribeRelativeVolatility(observed,frame.At):null,
                 ClosedBarActivity=eurDevelopmentProfile?.CaptureClosedBarActivity==true
                     ?DescribeClosedBarActivity(observed,frame.At,plan.Side):null};
-            if(EurPayoff(plan.Family,plan.Side,risk,cost+debit,policy==EurGeneralSelect?context:null,decisionAt:frame.At,
-                managementOverride:prior.SelectedEconomicManagement)
+            if(CompetitiveCandidatePayoff(observed,frame.At,plan.Family,plan.Side,units,risk,cost+debit,
+                policy==EurGeneralSelect?context:null,managementOverride:prior.SelectedEconomicManagement)
                 is not {GrossLowerEur:>0m,NetLowerEur:>0m})return null;
         }
         return prior with {InitialRiskEur=risk,InitialRewardEur=reward};
