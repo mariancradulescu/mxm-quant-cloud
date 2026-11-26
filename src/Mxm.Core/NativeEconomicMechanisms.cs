@@ -9,7 +9,7 @@ public static class NativeEconomicMechanisms
         Intermarket="INTERMARKET_DISLOCATION", Transition="PAV1_LOCAL_TRANSITION",
         Scored="SCP1_LOCAL_LIFECYCLE";
     public static readonly string[] All={Follow,Reverse,Range,Equilibrium,Activity,Intermarket,Transition,Scored};
-    public static readonly string[] Management={"BRACKET","TRANSITION_VALUE"};
+    public static readonly string[] Management={"BRACKET","TRANSITION_VALUE","CAPTURE_VALUE"};
 
     internal static NativeBarWindow? Window(Ucp1MarketFrame m,NativeBarTimeframe tf,long at)
         =>m.ClosedBars?.DecisionAt==at?m.ClosedBars.Windows.SingleOrDefault(w=>w.Timeframe==tf&&w.Ready&&
@@ -24,9 +24,9 @@ public static class NativeEconomicMechanisms
     // not a fixed future-horizon label. The current transition is never its own label.
     // This local price proxy is converted at the current contract/FX for decisions;
     // only funded ledger outcomes qualify NET. No cross-symbol return transfer.
-    internal static (decimal Mean,decimal Sem,int Count)? Continuation(Ucp1MarketFrame m,long at)
+    internal static (decimal Mean,decimal Sem,int Count)? Continuation(Ucp1MarketFrame m,long at,string? timeframe=null)
     {
-        var w=Window(m,NativeBarTimeframe.M15,at);
+        var w=Window(m,timeframe is null?NativeBarTimeframe.M15:Enum.Parse<NativeBarTimeframe>(timeframe),at);
         if(w is null)return null;
         var b=w.Bars; int state=Math.Sign(b[^1].Close-b[^2].Close);
         var changes=new List<decimal>();
@@ -42,9 +42,9 @@ public static class NativeEconomicMechanisms
     }
 
     internal static NativeEurPayoff? TransitionPayoff(Ucp1MarketFrame m,long at,int side,
-        decimal units,decimal cost)
+        decimal units,decimal cost,string? timeframe=null)
     {
-        if(Continuation(m,at) is not { } transition)return null;
+        if(Continuation(m,at,timeframe) is not { } transition)return null;
         var q=m.Quote;
         decimal mean=side*transition.Mean*units;
         decimal gross=mean*(mean>=0m?q.EurCredit:q.EurDebit),width=transition.Sem*units*q.EurDebit;
@@ -120,7 +120,7 @@ public static class NativeEconomicMechanisms
                 if(Math.Abs(difference)>Atr(h.Bars)/h.Bars[^1].Close)side=-Math.Sign(difference);
                 break;
             case Transition:
-                if(Continuation(m,at) is { } transition&&Math.Abs(transition.Mean)>transition.Sem)
+                if(Continuation(m,at,geometryTimeframe) is { } transition&&Math.Abs(transition.Mean)>transition.Sem)
                     side=Math.Sign(transition.Mean);
                 break;
         }
