@@ -350,7 +350,9 @@ public sealed partial class NativeUnifiedPortfolioEngine
             var context=DescribeEurContext(observed,frame.At,plan.Side,guard.TotalReservedMarginEur,equity,risk,cost);
             if(context is not null)context=context with {MarketState=DescribeGeneralState(observed,frame,plan.Side),
                 RelativeVolatility=eurDevelopmentProfile?.RevalidatePredictiveVolatilityAtFill==true
-                    ?DescribeRelativeVolatility(observed,frame.At):null};
+                    ?DescribeRelativeVolatility(observed,frame.At):null,
+                ClosedBarActivity=eurDevelopmentProfile?.CaptureClosedBarActivity==true
+                    ?DescribeClosedBarActivity(observed,frame.At,plan.Side):null};
             if(EurPayoff(plan.Family,plan.Side,risk,cost+debit,policy==EurGeneralSelect?context:null,decisionAt:frame.At)
                 is not {GrossLowerEur:>0m,NetLowerEur:>0m})return null;
         }
