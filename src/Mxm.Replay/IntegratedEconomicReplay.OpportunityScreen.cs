@@ -79,6 +79,8 @@ internal static partial class IntegratedEconomicReplay
             fundingScenarioId:scenario,eurDevelopmentProfile:variant.Profile);
         public OpportunityVariant Variant=>variant;
         public decimal Stress=>stress;
+        public object TrainingEvidence()=>new {AllReconciled=monetary.Values.Sum(x=>x.Count),
+            NoUnknownHistory=noGap.Values.Sum(x=>x.Count),LegacyMarks=histories.Values.Sum(x=>x.Count)};
         public NativeEurCalibrationOutcome[] MaturedBefore(long cutoff)=>labels.Where(x=>x.AvailableAt<cutoff).ToArray();
 
         public void Advance(Ucp1Frame frame)
@@ -116,6 +118,8 @@ internal static partial class IntegratedEconomicReplay
                 if(trip.CrossedUnknownHistory||trip.EconomicEvidence?.MarkCoverageComplete!=true)label=null;
                 if(label is not null)
                 {
+                    if(variant.MonetaryTraining&&item.Attempt.Entry is {ReservedRiskEur:>0m,Context:{ } trainingContext} trainingEntry)
+                        label=label with {RiskEur=trainingEntry.ReservedRiskEur!.Value,Context=trainingContext,DecisionAt=item.Attempt.At};
                     labels.Add(label);
                     if(label.Context is not null)
                     {
@@ -320,7 +324,7 @@ internal static partial class IntegratedEconomicReplay
                     var frame=new Ucp1Frame(at,frames);
                     foreach(var state in run.States)state.Advance(frame);
                 }
-                if(++n%288==0)Console.WriteLine($"OPPORTUNITY_SCREEN {mechanism} clock={at} processed={n} through={to}");
+                if(++n%288==0)Console.WriteLine($"OPPORTUNITY_SCREEN {mechanism} clock={at} processed={n} total={(to-from)/EurStep} through={to}");
             }
         }
         Observe(plan.Start,plan.EvaluationFrom);
@@ -332,7 +336,7 @@ internal static partial class IntegratedEconomicReplay
             var baseline=r.States.Single(x=>x.Variant.Reference).Rows(plan.SelectionFrom,plan.EvaluationFrom);
             var capture=r.States.SingleOrDefault(x=>x.Variant.Id.EndsWith("__SPECIFIC_CAPTURE",StringComparison.Ordinal));
             return new {r.Stress,s.Variant.Id,Raw=ScreenStats(rows,false),Scp1=ScreenStats(rows,true),
-                Reasons=ScreenReasons(rows),PairedReference=PairedScreen(rows,baseline),
+                Reasons=ScreenReasons(rows),TrainingEvidence=entryQuality?s.TrainingEvidence():null,PairedReference=PairedScreen(rows,baseline),
                 PairedMarginalVolume=s.Variant.Id.EndsWith("__MARGINAL_VOLUME",StringComparison.Ordinal)&&capture is not null
                     ?PairedScreen(rows,capture.Rows(plan.SelectionFrom,plan.EvaluationFrom)):null};
         })).ToArray();
@@ -373,7 +377,7 @@ internal static partial class IntegratedEconomicReplay
             var baseline=r.States.Single(x=>x.Variant.Reference).Rows(plan.EvaluationFrom,plan.End);
             var capture=r.States.SingleOrDefault(x=>x.Variant.Id.EndsWith("__SPECIFIC_CAPTURE",StringComparison.Ordinal));
             return new {r.Stress,s.Variant.Id,Raw=ScreenStats(rows,false),Scp1=ScreenStats(rows,true),
-                Reasons=ScreenReasons(rows),PairedReference=PairedScreen(rows,baseline),
+                Reasons=ScreenReasons(rows),TrainingEvidence=entryQuality?s.TrainingEvidence():null,PairedReference=PairedScreen(rows,baseline),
                 PairedMarginalVolume=s.Variant.Id.EndsWith("__MARGINAL_VOLUME",StringComparison.Ordinal)&&capture is not null
                     ?PairedScreen(rows,capture.Rows(plan.EvaluationFrom,plan.End)):null,
                 Episodes=rows.Where(a=>a.Entry is not null).Select(a=>new
@@ -395,7 +399,7 @@ internal static partial class IntegratedEconomicReplay
             plan.SamplingIntervalMs,ProtocolSha256=planHash,SourceSha256=sourceHash,input.EvidenceManifestSha256,
             Variants=variants,Fit=fit,Selection=selection,Candidates=candidates,BestRawDiagnostic=bestRaw,
             BestScp1Diagnostic=bestScp,SelectedDecision=accepted is null?"WAIT":accepted.Id+(accepted.Scored?"/SCP1":"/RAW"),
-            HeldOut=held,Scp1Scope=entryQuality?"EXECUTED_ISOLATED_GATES_RAW_COLUMN; SCP1_COLUMN_SHADOW_DIAGNOSTIC":"CAUSAL_SHADOW_GATE_ON_ISOLATED_EPISODES_NOT_COMMON_BOOK",
+            HeldOut=held,EntryQualityHypothesis=entryQuality?"MONETARY_LABELS_WITHOUT_MFE_REQUIREMENT_AND_ACTUAL_CAUSAL_ADMISSION_VS_WAIT":"LEGACY_SCREEN",Scp1Scope=entryQuality?"EXECUTED_ISOLATED_GATES_RAW_COLUMN; SCP1_COLUMN_SHADOW_DIAGNOSTIC":"CAUSAL_SHADOW_GATE_ON_ISOLATED_EPISODES_NOT_COMMON_BOOK",
             Scp1OverlapLimitation=entryQuality?"EXECUTED_GATE_WAIT_RELEASES_SLOT; TRAINER_IS_SEPARATE":"SHADOW_WAIT_DOES_NOT_RELEASE_RAW_OBSERVER_SLOT; NOT_AN_EXECUTED_SCORED_POLICY",
             Missingness="NO_FRAME_AND_UNRESOLVED_EXCLUDED_FROM_CONDITIONAL_MEANS; CENSORED_NOT_ZERO",
             MonetarySelectionBasis="ALL_RECONCILED_CLOSED_MODEL_NET_INCLUDING_INCOMPLETE_PRICE_PATHS; LEARNING_AND_EXCURSION_SUBSET_SEPARATE",
