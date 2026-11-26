@@ -329,6 +329,45 @@ public sealed partial class NativeUnifiedPortfolioEngine
             decimal change=side*transition.Mean*position.Units;
             decimal value=change*(change>=0m?q.EurCredit:q.EurDebit)-debit.Value;
             decimal uncertainty=transition.Sem*position.Units*q.EurDebit;
+            if(eurDevelopmentProfile.EconomicManagement==NativeEconomicMechanisms.MonetaryReduce)
+            {
+                // A separate research profile; legacy management is unchanged.
+                // The same causal continuation applies to all mechanism families.
+                decimal best=0m,closeUnits=0m;
+                if(!geometry.Reduced&&fundingReserves is not null&&!fundingReserves.IsOutstanding(position.Id))
+                {
+                    var offers=market.FundingOffers??Array.Empty<NativeFundingOfferEvidence>();
+                    long? Horizon(decimal units)
+                    {
+                        var rows=offers.Where(f=>f.ScenarioId==FundingScenarioId&&f.Symbol==market.Symbol&&
+                            f.Side==side&&f.Units==units&&f.AvailableAt>0&&f.AvailableAt<=frame.At&&
+                            f.EffectiveFrom>0&&f.EffectiveFrom<=frame.At).Take(2).ToArray();
+                        return rows.Length==1?rows[0].NextScheduledManagementAt:null;
+                    }
+                    long? fullHorizon=Horizon(position.Units);
+                    decimal meanPerUnit=side*transition.Mean;
+                    meanPerUnit*=meanPerUnit>=0m?q.EurCredit:q.EurDebit;
+                    decimal fullFee=Fee(q,position.Units,-side);
+                    foreach(decimal rest in offers.Select(f=>f.Units).Distinct().OrderBy(u=>u))
+                    {
+                        if(rest<=0m||rest>=position.Units||fullHorizon is null||Horizon(rest)!=fullHorizon)continue;
+                        decimal close=position.Units-rest;
+                        var remainderDebit=NativePortfolioFunding.OfferDebit(market,side,rest,frame.At,FundingScenarioId);
+                        var advantage=NativeEconomicMechanisms.PartialReductionAdvantage(position.Units,close,
+                            market.Contract.MinimumUnits,market.Contract.MaximumUnits,market.Contract.VolumeStepUnits,
+                            meanPerUnit,transition.Sem*q.EurDebit,debit.Value,remainderDebit,fullFee,
+                            Fee(q,close,-side),Fee(q,rest,-side));
+                        if(advantage is decimal candidate&&candidate>best){best=candidate;closeUnits=close;}
+                    }
+                }
+                if(closeUnits>0m)
+                {
+                    Count("EUR_MONETARY_REDUCE_CONDITIONAL_DOMINANCE");
+                    return new(NativeSimulatedCloseLifecycle.AdaptiveContinuationReduction,closeUnits);
+                }
+                Count("EUR_MONETARY_REDUCE_NO_EVIDENCED_DOMINANCE");
+                return value+uncertainty<0m?new("INTEGRATED_MECHANISM_NEGATIVE_CONTINUATION",position.Units):null;
+            }
             if(value+uncertainty<0m)return new("INTEGRATED_MECHANISM_NEGATIVE_CONTINUATION",position.Units);
             if(eurDevelopmentProfile.EconomicManagement=="CAPTURE_VALUE"&&position.EntryQuote is { } entry&&
                 position.EntryPrice is decimal entryPrice)
