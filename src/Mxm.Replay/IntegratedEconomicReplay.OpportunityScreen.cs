@@ -261,6 +261,38 @@ internal static partial class IntegratedEconomicReplay
 
     static object ScreenReasons(ScreenAttempt[] rows)=>rows.GroupBy(x=>x.Status).ToDictionary(g=>g.Key,g=>g.Count(),StringComparer.Ordinal);
 
+    static object MonetaryQuality(ScreenAttempt[] rows,long from,long to)
+    {
+        var settled=rows.Where(x=>x.ClosedNetEur.HasValue&&x.Trip is not null&&x.Entry is not null).ToArray();
+        object Subset(IEnumerable<ScreenAttempt> xs)
+        {
+            var a=xs.ToArray();
+            return new {Count=a.Length,GrossEur=a.Sum(x=>x.ClosedGrossEur!.Value),NetEur=a.Sum(x=>x.ClosedNetEur!.Value),
+                MeanNetEur=a.Length==0?(decimal?)null:a.Average(x=>x.ClosedNetEur!.Value)};
+        }
+        var over=settled.Where(x=>x.Entry!.ReservedRiskEur is decimal risk&&x.ClosedNetEur!.Value < -risk).ToArray();
+        const long week=604_800_000L;
+        return new
+        {
+            FastStopsUnderFiveMinutes=Subset(settled.Where(x=>x.Trip!.CloseAt-x.Trip.OpenAt<300_000L&&
+                x.Trip.ExitReason==NativeUnifiedPortfolioEngine.NativeStopModelReason)),
+            NoExcursionMark=Subset(settled.Where(x=>x.Trip!.EconomicEvidence?.SampledMfeEur is null)),
+            UnknownHistory=Subset(settled.Where(x=>x.Trip!.CrossedUnknownHistory)),
+            NoUnknownHistory=Subset(settled.Where(x=>!x.Trip!.CrossedUnknownHistory)),
+            RiskOverruns=over.Length,RiskOverrunEur=over.Sum(x=>-x.ClosedNetEur!.Value-x.Entry!.ReservedRiskEur!.Value),
+            WeeklyCohorts=Enumerable.Range(0,(int)((to-from+week-1)/week)).Select(i=>
+            {
+                long start=from+i*week,end=Math.Min(to,start+week);
+                var cohort=rows.Where(x=>x.At>=start&&x.At<end).ToArray();
+                var known=cohort.Where(x=>x.ClosedNetEur.HasValue).ToArray();
+                return new {From=start,Through=end,Admitted=cohort.Count(x=>x.Entry is not null),
+                    KnownClosed=known.Length,KnownNetEur=known.Sum(x=>x.ClosedNetEur!.Value),
+                    UnknownOrCensored=cohort.Count(x=>x.Status is "UNKNOWN_CLOSED" or "RIGHT_CENSORED"),
+                    ConditionalIsolatedObservations=true};
+            }).ToArray()
+        };
+    }
+
     public static int RunOpportunityScreen(string protocolPath,string sourcePath,string reportPath,string protectionDirectory)
     {
         if(File.Exists(reportPath))throw new IOException("OPPORTUNITY_SCREEN_REPORT_EXISTS");
@@ -336,7 +368,8 @@ internal static partial class IntegratedEconomicReplay
             var baseline=r.States.Single(x=>x.Variant.Reference).Rows(plan.SelectionFrom,plan.EvaluationFrom);
             var capture=r.States.SingleOrDefault(x=>x.Variant.Id.EndsWith("__SPECIFIC_CAPTURE",StringComparison.Ordinal));
             return new {r.Stress,s.Variant.Id,Raw=ScreenStats(rows,false),Scp1=ScreenStats(rows,true),
-                Reasons=ScreenReasons(rows),TrainingEvidence=entryQuality?s.TrainingEvidence():null,PairedReference=PairedScreen(rows,baseline),
+                Reasons=ScreenReasons(rows),TrainingEvidence=entryQuality&&s.Variant.Reference?s.TrainingEvidence():null,
+                MonetaryQuality=entryQuality?MonetaryQuality(rows,plan.SelectionFrom,plan.EvaluationFrom):null,PairedReference=PairedScreen(rows,baseline),
                 PairedMarginalVolume=s.Variant.Id.EndsWith("__MARGINAL_VOLUME",StringComparison.Ordinal)&&capture is not null
                     ?PairedScreen(rows,capture.Rows(plan.SelectionFrom,plan.EvaluationFrom)):null};
         })).ToArray();
@@ -377,7 +410,8 @@ internal static partial class IntegratedEconomicReplay
             var baseline=r.States.Single(x=>x.Variant.Reference).Rows(plan.EvaluationFrom,plan.End);
             var capture=r.States.SingleOrDefault(x=>x.Variant.Id.EndsWith("__SPECIFIC_CAPTURE",StringComparison.Ordinal));
             return new {r.Stress,s.Variant.Id,Raw=ScreenStats(rows,false),Scp1=ScreenStats(rows,true),
-                Reasons=ScreenReasons(rows),TrainingEvidence=entryQuality?s.TrainingEvidence():null,PairedReference=PairedScreen(rows,baseline),
+                Reasons=ScreenReasons(rows),TrainingEvidence=entryQuality&&s.Variant.Reference?s.TrainingEvidence():null,
+                MonetaryQuality=entryQuality?MonetaryQuality(rows,plan.EvaluationFrom,plan.End):null,PairedReference=PairedScreen(rows,baseline),
                 PairedMarginalVolume=s.Variant.Id.EndsWith("__MARGINAL_VOLUME",StringComparison.Ordinal)&&capture is not null
                     ?PairedScreen(rows,capture.Rows(plan.EvaluationFrom,plan.End)):null,
                 Episodes=rows.Where(a=>a.Entry is not null).Select(a=>new
