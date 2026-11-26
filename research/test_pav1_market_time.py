@@ -1,9 +1,10 @@
 """Causal common-book protocol and existing authentic-prefix reuse."""
-import copy,json
+import copy,json,os
+from unittest.mock import patch
 from pathlib import Path
 import subprocess,tempfile,unittest
 from .test_owner_eur_checkpoint import fixture,START,DAY
-from .owner_pav1_market_time import registered,select,add_funding_prefixes,REPLAY
+from .owner_pav1_market_time import registered,select,add_funding_prefixes,REPLAY,download,seal_checkpoint
 
 class PavMarketTime(unittest.TestCase):
     def test_registration_and_fixed_hypotheses(self):
@@ -20,6 +21,29 @@ class PavMarketTime(unittest.TestCase):
         self.assertEqual(select(data)['Decision'],'B')
         self.assertEqual(select([row('A',3),row('A',2),row('A',1,-1)])['Decision'],'WAIT')
         self.assertEqual(select([row('A',3),row('A',2)])['Decision'],'WAIT')
+
+    def test_archive_download_creates_nested_parent_before_archive_helper(self):
+        p,_=registered();previous=Path.cwd()
+        with tempfile.TemporaryDirectory() as tmp:
+            def fetch(artifact,run,digest,destination):
+                self.assertTrue(destination.parent.is_dir())
+                destination.mkdir()
+                if destination.name=='original-causal':
+                    (destination/'economic-lifecycle.json').write_text(json.dumps(dict(Study='MONETARY_CAUSAL_LIFECYCLE_1')))
+            try:
+                os.chdir(tmp)
+                with patch('research.owner_pav1_market_time.prior.registered',return_value=({},'')), \
+                     patch('research.owner_pav1_market_time.prior.download'), \
+                     patch('research.owner_pav1_market_time.archive.download_archive',side_effect=fetch) as called:
+                    download(p)
+                self.assertEqual(called.call_count,3+len(p['ExtensionArtifacts']))
+            finally:os.chdir(previous)
+
+    def test_preparation_failure_does_not_create_a_false_source_checkpoint(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            seal_checkpoint(root/'missing-work',root/'checkpoint')
+            self.assertFalse((root/'checkpoint').exists())
 
     def test_native_common_book_with_25_synthetic_markets(self):
         with tempfile.TemporaryDirectory() as tmp:

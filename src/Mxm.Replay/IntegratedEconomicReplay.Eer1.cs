@@ -93,7 +93,8 @@ internal static partial class IntegratedEconomicReplay
             tape=input.Tapes.ToDictionary(m=>m.Name,m=>m.Quotes.ToDictionary(q=>q.At),StringComparer.Ordinal);
             funding=input.Tapes.ToDictionary(m=>m.Name,m=>m.FundingQuotes.ToDictionary(q=>q.At),StringComparer.Ordinal);
             marketCalendars=input.Markets.ToDictionary(m=>m.Market.Name,StringComparer.Ordinal);
-            marketTimeCalendars=input.Markets.Where(m=>m.ScheduledClocks is not null&&m.AmbiguousCalendarClocks is not null)
+            marketTimeCalendars=input.Markets.Where(m=>m.ScheduledClocks is not null&&m.AmbiguousCalendarClocks is not null&&
+                m.CalendarStatus is "CONDITIONAL_OFFICIAL_SNAPSHOT" or "PARTIALLY_SUPPORTED_SNAPSHOT" or "SYNTHETIC_COMPLETE_CALENDAR")
                 .ToDictionary(m=>m.Market.Name,m=>new NativeMarketTimeCalendar(input.Start,input.End+7*HistoricalDay,
                     m.ScheduledClocks,m.AmbiguousCalendarClocks,EerHash(input.EvidenceManifestSha256+"|"+m.Market.Name)),StringComparer.Ordinal);
         }
