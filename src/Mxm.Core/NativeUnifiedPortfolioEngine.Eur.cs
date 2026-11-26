@@ -529,7 +529,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 var payoff=risk is >0m&&(IsEurRank||eurDevelopmentProfile is null)?EurPayoff(s.Family,s.Side,risk.Value,roundTripCost+debit!.Value,
                     policy is EurContextRank or EurGeneralSelect?context:null,CaptureEurDiagnostics?ScoreDiagnostic:null,at):null;
                 if(eurDevelopmentProfile?.EconomicMechanism==NativeEconomicMechanisms.Transition&&risk is >0m&&debit.HasValue)
-                    payoff=NativeEconomicMechanisms.TransitionPayoff(market,at,s.Side,units,roundTripCost+debit.Value);
+                    payoff=NativeEconomicMechanisms.TransitionPayoff(market,at,s.Side,units,roundTripCost+debit.Value,
+                        eurDevelopmentProfile.EconomicGeometryTimeframe);
                 var receipt=new NativeEurOpportunity(at,market.Symbol,s.Family,s.Side,units,grossTarget,grossRisk,
                     roundTripCost,debit,margin?.MarginEur,risk,capital.HeldMarginEur,capital.PendingOpenMarginEur,
                     capital.ResearchAdmissionEquityEur,payoff,"ASSESS")
