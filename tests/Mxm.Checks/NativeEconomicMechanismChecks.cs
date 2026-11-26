@@ -45,5 +45,17 @@ internal static class NativeEconomicMechanismChecks
             "SCP1 conditional win/loss magnitudes match funded realized EUR and exclude unmatured labels");
         check(NativeEconomicMechanisms.LifecyclePayoff(rows,"F",1,context with {Symbol="US500"},at,1m,.1m,20,3,0m) is null,
             "SCP1 lifecycle scores never transfer unsupported results across instruments");
+        // Identical admission risk scale. The early-stop cash loss has no
+        // excursion requirement; its modeled monetary value must change the estimate.
+        var fastLoss=rows[0] with {PositionId="FAST_STOP",GrossEur=-30m,NetEur=-31m};
+        var baseScore=NativeEconomicMechanisms.EntryQualityPayoff(rows,"F",1,context,at,1m,.1m,20,3,0m,false);
+        var corrected=NativeEconomicMechanisms.EntryQualityPayoff(rows.Append(fastLoss),"F",1,context,at,1m,.1m,20,3,0m,false);
+        check(baseScore is {NetLowerEur:>0m}&&corrected is {NetLowerEur:<0m},
+            "Settled fast-stop cash losses must affect entry quality even without excursion marks");
+        var band=NativeEconomicMechanisms.EntryQualityPayoff(rows,"F",1,context,at,1m,.1m,20,3,0m,true);
+        check(band is not null&&band==NativeEconomicMechanisms.EntryQualityPayoff(contaminated,"F",1,context,at,1m,.1m,20,3,0m,true),
+            "Causal cost/risk bands and estimates exclude future outcomes");
+        check(NativeEconomicMechanisms.EntryQualityPayoff(rows,"F",1,context with {CostRiskFraction=.9m},at,1m,.1m,20,3,0m,true) is null,
+            "Unsupported cost band abstains rather than borrowing an unrelated payoff");
     }
 }
