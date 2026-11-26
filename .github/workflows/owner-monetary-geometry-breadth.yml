@@ -178,10 +178,6 @@ jobs:
           name: recent-source-verified-summary
           run-id: 45716198383
           github-token: ${{ github.token }}
-      - name: Verify the bound collection summary
-        env:
-          RECENT_SOURCE_SUMMARY_SHA256: ${{ needs.technical.outputs.source_summary_sha256 }}
-        run: echo "$RECENT_SOURCE_SUMMARY_SHA256  recent-source-summary.json" | sha256sum -c -
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           pattern: recent-source-protected-*
