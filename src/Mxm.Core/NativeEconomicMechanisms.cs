@@ -9,7 +9,64 @@ public static class NativeEconomicMechanisms
         Intermarket="INTERMARKET_DISLOCATION", Transition="PAV1_LOCAL_TRANSITION",
         Scored="SCP1_LOCAL_LIFECYCLE";
     public static readonly string[] All={Follow,Reverse,Range,Equilibrium,Activity,Intermarket,Transition,Scored};
-    public static readonly string[] Management={"BRACKET","TRANSITION_VALUE","CAPTURE_VALUE"};
+    public const string MonetaryReduce="MONETARY_REDUCE";
+    public static readonly string[] Management={"BRACKET","TRANSITION_VALUE","CAPTURE_VALUE",MonetaryReduce};
+
+    // Conditional comparison at the current executable fee schedule and
+    // witnessed funding ceilings, not a promise of future settlement.
+    // A partial close must outperform both HOLD and CLOSE over the same
+    // continuation uncertainty interval. No extrapolation to missing volumes.
+    public static decimal? PartialReductionAdvantage(decimal held, decimal close,
+        decimal minimum, decimal maximum, decimal step, decimal meanEurPerUnit,
+        decimal uncertaintyEurPerUnit, decimal fullDebit, decimal? remainderDebit,
+        decimal fullFee, decimal closeFee, decimal remainderFee)
+    {
+        if(minimum<=0m||maximum<minimum||step<=0m||uncertaintyEurPerUnit<0m||
+            fullDebit<0m||remainderDebit is not decimal debit||debit<0m||
+            fullFee<0m||closeFee<0m||remainderFee<0m)return null;
+        decimal rest=held-close;
+        bool Legal(decimal units)=>units>=minimum&&units<=maximum&&(units-minimum)%step==0m;
+        if(!Legal(held)||!Legal(close)||!Legal(rest))return null;
+        // The existing common-book partial fill releases reserved risk
+        // proportionally. Reject a non-proportional residual cost burden.
+        if(debit>fullDebit*rest/held||remainderFee>fullFee*rest/held)return null;
+        decimal splitFee=closeFee+remainderFee-fullFee;
+        if(splitFee<0m)return null; // inconsistent fee schedule, no inferred credit
+        decimal vsClose=rest*(meanEurPerUnit-uncertaintyEurPerUnit)-debit-splitFee;
+        decimal vsHold=-close*(meanEurPerUnit+uncertaintyEurPerUnit)+fullDebit-debit-splitFee;
+        decimal advantage=Math.Min(vsClose,vsHold);
+        return advantage>0m?advantage:null;
+    }
+
+    // Compare feasible remaining exposure against immediate CLOSE, without
+    // assigning an invented EUR return to released margin or risk. HOLD is
+    // excluded only by a witnessed portfolio constraint. Funding ceilings
+    // are conservative debits, not cash savings credited to the ledger.
+    public static decimal? ConstrainedReductionValue(decimal held,decimal close,
+        decimal minimum,decimal maximum,decimal step,decimal meanEurPerUnit,
+        decimal uncertaintyEurPerUnit,decimal? remainingDebit,decimal fullFee,
+        decimal closeFee,decimal remainingFee,decimal equity,decimal floor,
+        decimal otherMargin,decimal otherRisk,decimal marginPerUnit,
+        decimal fullRisk,decimal remainingRisk)
+    {
+        if(minimum<=0m||maximum<minimum||step<=0m||held<=0m||
+            equity<=0m||floor<0m||otherMargin<0m||otherRisk<0m||marginPerUnit<=0m||
+            fullRisk<0m||remainingRisk<0m||uncertaintyEurPerUnit<0m||
+            remainingDebit is not decimal debit||debit<0m||fullFee<0m||closeFee<0m||remainingFee<0m)
+            return null;
+        decimal remainder=held-close;
+        bool Legal(decimal units)=>units>=minimum&&units<=maximum&&(units-minimum)%step==0m;
+        if(!Legal(held)||!Legal(close)||!Legal(remainder)||remainingRisk>fullRisk)return null;
+        bool Fits(decimal cash,decimal units,decimal risk)=>cash>=floor&&
+            otherMargin+units*marginPerUnit<=cash*NativePendingCapitalGate.MaximumMarginFraction&&
+            otherRisk+risk<=cash*NativePendingCapitalGate.MaximumAggregateStopFraction&&
+            risk<=cash*NativePendingCapitalGate.MaximumTradeStopFraction&&cash-otherRisk-risk>=floor;
+        if(Fits(equity,held,fullRisk))return null; // HOLD remains an eligible alternative
+        decimal splitFee=closeFee+remainingFee-fullFee;
+        if(splitFee<0m||!Fits(equity-splitFee,remainder,remainingRisk))return null;
+        decimal lower=remainder*(meanEurPerUnit-uncertaintyEurPerUnit)-debit-splitFee;
+        return lower>0m?lower:null;
+    }
 
     internal static NativeBarWindow? Window(Ucp1MarketFrame m,NativeBarTimeframe tf,long at)
         =>m.ClosedBars?.DecisionAt==at?m.ClosedBars.Windows.SingleOrDefault(w=>w.Timeframe==tf&&w.Ready&&
