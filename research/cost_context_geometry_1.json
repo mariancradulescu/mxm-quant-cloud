@@ -1,0 +1,14 @@
+{
+  "Study": "MONETARY_COST_CONTEXT_GEOMETRY_1",
+  "OriginalSourceSha256": "4336a525ad897bee1a280e2baff07dcd399606e25f9536d4a202bc2676d73b15",
+  "FundingRun": 45898797710,
+  "FundingArtifact": 15155405417,
+  "FundingArchiveSha256": "7e563b56693f9f6e101ed81b7fd1eb4db1b4bd8c8893b6486f4e327552517a7f",
+  "FundingRegistrySha256": "fb84702c31e13f0f4866ec47e5c9ad0d735e681baf569bb24dbf26a08036b530",
+  "RegisteredVariants": 7,
+  "RegisteredEvaluations": 24,
+  "Exposure": "PROJECT_EXPOSED_CONDITIONAL_DEVELOPMENT",
+  "Orders": 0,
+  "CloudActivated": false,
+  "IndependentConfirmationCertified": false
+}

@@ -93,6 +93,14 @@ internal static class NativeEconomicMechanismChecks
             "Hybrid PAV1 cannot credit an absent direct forecast");
         check(NativeCenteredLifecycle.Corroborate(centered,centered! with {NetLowerEur=-.1m}) is {NetLowerEur:-.1m},
             "Hybrid corroboration preserves a negative conservative forecast");
+        var highCostRows=rows.Select(r=>r with {Context=context with {CostRiskFraction=.6m}}).ToArray();
+        check(NativeCenteredLifecycle.Estimate(highCostRows,"F",1,context,at,1m,.1m,20,3,0m,true,costMatched:true) is null,
+            "Cost-context estimate does not transfer a mismatched execution-cost regime");
+        check(NativeCenteredLifecycle.Estimate(rows,"F",1,context,at,1m,.3m,20,3,1.645m,true,costMatched:true)
+            is {NetLowerEur:.2m},"Cost-matched historical outcomes retain the executable cost cap");
+        check(!NativePendingCapitalGate.StopAdjustedMarginFits(294.34m,204.52m,5m)&&
+            NativePendingCapitalGate.StopAdjustedMarginFits(294.34m,190m,5m),
+            "Reserve actual committed stop risk below original 70 percent margin ceiling");
         var transferPeers=rows.Select((row,i)=>row with {Context=context with {Symbol=i%2==0?"A":"B",AssetClass="FX"}}).ToArray();
         var targetContext=context with {AssetClass="FX"};
         check(NativeCenteredLifecycle.Estimate(transferPeers,"F",1,targetContext,at,1m,.1m,20,3,0m,true)
