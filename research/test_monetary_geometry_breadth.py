@@ -12,11 +12,12 @@ class GeometryBreadth(unittest.TestCase):
         self.assertEqual(len(p["Instruments"]),21)
         for mechanism in {v["Mechanism"] for v in p["Variants"]}:
             rows={v["Id"].split("__")[1]:v["Profile"] for v in p["Variants"] if v["Mechanism"]==mechanism}
-            self.assertEqual(set(rows),{"BASE","FILL_RISK","STRUCTURE","STRUCTURE_RISK","STRUCTURE_RISK_MANAGEMENT"})
+            self.assertEqual(set(rows),{"BASE","FILL_RISK","STRUCTURE","STRUCTURE_RISK","STRUCTURE_RISK_MANAGEMENT","STRUCTURE_RISK_VOLUME"})
             self.assertEqual(rows["FILL_RISK"],dict(rows["BASE"],KeepAdmissionRiskAtFill=True,ResizeWithinAdmissionRiskAtFill=True))
             self.assertEqual(rows["STRUCTURE"],dict(rows["BASE"],AnchorEconomicGeometryToClosedStructure=True))
             self.assertEqual(rows["STRUCTURE_RISK"],dict(rows["STRUCTURE"],KeepAdmissionRiskAtFill=True,ResizeWithinAdmissionRiskAtFill=True))
             self.assertEqual(rows["STRUCTURE_RISK_MANAGEMENT"]["EconomicManagementTimeframe"],"M5")
+            self.assertEqual(rows["STRUCTURE_RISK_VOLUME"],dict(rows["STRUCTURE_RISK"],MinimumContractVolumeOnly=False,OptimizeEconomicOpportunityVolume=True))
 
     def test_source_byte_identity_and_scope(self):
         p,_=registered()
@@ -48,8 +49,8 @@ class GeometryBreadth(unittest.TestCase):
             r=json.loads(report.read_bytes())
             self.assertEqual(r["Study"],p["Study"])
             self.assertEqual(r["RegisteredMarketCount"],2)
-            self.assertEqual(len(r["HeldOut"]),15)
-            self.assertEqual(len(r["Candidates"]),5)
+            self.assertEqual(len(r["HeldOut"]),18)
+            self.assertEqual(len(r["Candidates"]),6)
             self.assertEqual(r["Orders"],0)
             for h in r["HeldOut"]:
                 q=h["BreadthQuality"]
