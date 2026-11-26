@@ -335,7 +335,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 // No future MFE is referenced and already paid entry costs are sunk.
                 decimal now=NativeExecutableEconomics.EstimateNet(entry,q,side,position.Units,
                     entryPrice,price,q.LiquidationSlippagePerSide??position.SlippagePerSide)+position.FinancingRemaining;
-                if(now>0m&&value<=0m)
+                if(now>0m&&value<=0m&&!fundingReserves!.IsOutstanding(position.Id))
                     return new("INTEGRATED_MECHANISM_CAPTURE_NONPOSITIVE_CONTINUATION",position.Units);
             }
             decimal minimum=market.Contract.MinimumUnits,volumeStep=market.Contract.VolumeStepUnits;
