@@ -265,8 +265,9 @@ public sealed partial class NativeUnifiedPortfolioEngine
     }
 
     NativeIntegratedPlan? Cpe1RecheckFill(Ucp1Plan plan,LedgerEvent intent,
-        LedgerSummary current,Ucp1MarketFrame observed,decimal execution,Ucp1Frame frame)
+        LedgerSummary current,Ucp1MarketFrame observed,decimal execution,Ucp1Frame frame,out decimal fillUnits)
     {
+        fillUnits=plan.Units;
         var financial=Cpe1FundingCapital(current,frame);
         var equity=financial is null?current.LiquidationEquityEur:financial.ResearchAdmissionEquityEur;
         if(plan.Integrated is not { } prior || equity is not >0m ||
@@ -284,11 +285,33 @@ public sealed partial class NativeUnifiedPortfolioEngine
         }
         if((fundingReserves is null&&cpe1UnreconciledFunding) || !EurFrameFollows(observed,intent.At,q.At))
             return null; // No late fill after a missing M5 source clock.
-        if(OwnerEur && EurMargin(observed,plan.Side,plan.Units,q.At) is null)return null;
+
+        var full=Cpe1RecheckFillVolume(plan,prior,intent,current,observed,frame,equity.Value,plan.Units);
+        if(full is not null||eurDevelopmentProfile?.ResizeWithinAdmissionRiskAtFill!=true)
+            return full;
+        // Evaluate each evidenced smaller size with its own margin, fee floor,
+        // conversion and funding. The original stop and risk ceiling remain binding.
+        var alternatives=(observed.EurMargins??Array.Empty<NativeEurMarginObservation>())
+            .Where(m=>m.Side==plan.Side&&m.Units<plan.Units).Select(m=>m.Units).Distinct().OrderByDescending(x=>x);
+        foreach(var units in alternatives)
+        {
+            var smaller=Cpe1RecheckFillVolume(plan,prior,intent,current,observed,frame,equity.Value,units);
+            if(smaller is null)continue;
+            fillUnits=units;
+            return smaller;
+        }
+        return null;
+    }
+
+    NativeIntegratedPlan? Cpe1RecheckFillVolume(Ucp1Plan plan,NativeIntegratedPlan prior,LedgerEvent intent,
+        LedgerSummary current,Ucp1MarketFrame observed,Ucp1Frame frame,decimal equity,decimal units)
+    {
+        var q=observed.Quote;
+        if(OwnerEur && EurMargin(observed,plan.Side,units,q.At) is null)return null;
         var carriedDebit=fundingReserves is null?0m:
-            NativePortfolioFunding.OfferDebit(observed,plan.Side,plan.Units,q.At,FundingScenarioId);
+            NativePortfolioFunding.OfferDebit(observed,plan.Side,units,q.At,FundingScenarioId);
         if(carriedDebit is not decimal debit)return null;
-        var bracket=NativeExecutableEconomics.Bracket(q,plan.Side,plan.Units,
+        var bracket=NativeExecutableEconomics.Bracket(q,plan.Side,units,
             prior.Stop,prior.Target,intent.SlippagePerSide,
             q.LiquidationSlippagePerSide??intent.SlippagePerSide);
         var risk=ReservedEurRisk(bracket.RiskEur,debit);
@@ -307,7 +330,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
         // into postfill Held+Pending projected-equity verification.
         var pending=Cpe1Commitments(true,frame)
             .Select(x=>x.PositionId==plan.Id ?
-                x with {ReservedStopRiskEur=risk,
+                x with {Units=units,ReservedStopRiskEur=risk,
                         MarginPerUnit=Math.Max(x.MarginPerUnit,q.MarginPerUnit)}
                 : x).ToArray();
         if(!NativePendingCapitalGate.RevalidatePendingFill(
@@ -322,7 +345,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
             current.ObservedPeakEur*(1m-OwnerRiskAuthority.MaximumSystemDrawdown))return null;
         if(policy is EurGeneralSelect or EurGeneralPooled)
         {
-            decimal cost=Math.Max(0m,-NativeExecutableEconomics.EstimateNet(q,q,plan.Side,plan.Units,
+            decimal cost=Math.Max(0m,-NativeExecutableEconomics.EstimateNet(q,q,plan.Side,units,
                 bracket.Entry,plan.Side>0?q.Bid:q.Ask,q.LiquidationSlippagePerSide??intent.SlippagePerSide));
             var context=DescribeEurContext(observed,frame.At,plan.Side,guard.TotalReservedMarginEur,equity,risk,cost);
             if(context is not null)context=context with {MarketState=DescribeGeneralState(observed,frame,plan.Side),

@@ -18,6 +18,7 @@ internal static partial class IntegratedEconomicReplay
         public bool UseSelectionAwarePredictiveGrid { get; init; }
         public bool RevalidatePredictiveVolatilityAtFill { get; init; }
         public bool KeepAdmissionRiskAtFill { get; init; }
+        public bool ResizeWithinAdmissionRiskAtFill { get; init; }
     }
     sealed record HistoricalFit(string Id,NativeEurDevelopmentProfile Profile);
     sealed record HistoricalPlan(string Study,string Exposure,string SourceProtocolSha256,string EvidenceManifestSha256,
@@ -153,7 +154,8 @@ internal static partial class IntegratedEconomicReplay
                     UsePredictiveCalibration=t.UsePredictiveCalibration,UseEconomicEstimatorObjective=t.UseEconomicEstimatorObjective,
                     UseSelectionAwarePredictiveGrid=t.UseSelectionAwarePredictiveGrid,
                     RevalidatePredictiveVolatilityAtFill=t.RevalidatePredictiveVolatilityAtFill,
-                    KeepAdmissionRiskAtFill=t.KeepAdmissionRiskAtFill};
+                    KeepAdmissionRiskAtFill=t.KeepAdmissionRiskAtFill,
+                    ResizeWithinAdmissionRiskAtFill=t.ResizeWithinAdmissionRiskAtFill};
                 return (Trial:t,Profile:profile,Book:new NativeUnifiedPortfolioEngine(t.Policy,
                     fundingScenarioId:scenario,eurDevelopmentProfile:profile));
             }).ToArray();
