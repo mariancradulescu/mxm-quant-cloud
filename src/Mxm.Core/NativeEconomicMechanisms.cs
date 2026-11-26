@@ -54,7 +54,7 @@ public static class NativeEconomicMechanisms
     }
 
     internal static NativeIntegratedCandidate[] Describe(string mechanism,Ucp1MarketFrame m,long at,
-        decimal targetRanges,Ucp1Frame? frame=null,string? geometryTimeframe=null,decimal? stopRanges=null)
+        decimal targetRanges,Ucp1Frame? frame=null,string? geometryTimeframe=null,decimal? stopRanges=null,bool closedStructure=false)
     {
         if(!All.Contains(mechanism,StringComparer.Ordinal))throw new ArgumentException("ECONOMIC_MECHANISM_UNKNOWN");
         var w=Window(m,NativeBarTimeframe.M5,at);
@@ -62,7 +62,7 @@ public static class NativeEconomicMechanisms
             return Array.Empty<NativeIntegratedCandidate>();
         if(mechanism==Scored)
             return All.Where(x=>x is not (Scored or Transition))
-                .SelectMany(x=>Describe(x,m,at,targetRanges,frame,geometryTimeframe,stopRanges)).ToArray();
+                .SelectMany(x=>Describe(x,m,at,targetRanges,frame,geometryTimeframe,stopRanges,closedStructure)).ToArray();
         var b=w.Bars;decimal tick=m.EurTickSize.Value,atr=Math.Max(tick,Atr(b));
         var geometry=geometryTimeframe is null?w:Window(m,Enum.Parse<NativeBarTimeframe>(geometryTimeframe),at);
         if(geometry is null)return Array.Empty<NativeIntegratedCandidate>();
@@ -144,6 +144,21 @@ public static class NativeEconomicMechanisms
         {
             if(side*(repair-entry)<=0m)destination=null;
             else destination=entry+side*Math.Max(side*(repair-entry),targetRanges*geometryAtr);
+        }
+        // The alternative stop belongs to the completed signal structure,
+        // not to the moving executable entry. Favorable movement can improve
+        // reward/risk; adverse entry cannot push the economic destination away.
+        if(closedStructure)
+        {
+            decimal boundary=side>0?Math.Min(gb[^1].Low,b[^1].Low):Math.Max(gb[^1].High,b[^1].High);
+            stop=Tick(boundary-side*tick,tick,side<0);
+            decimal anchor=gb[^1].Close;
+            if(mechanism==Reverse)
+            {
+                decimal repairDistance=side*(gb[^2].Close-anchor);
+                destination=anchor+side*Math.Max(repairDistance,targetRanges*geometryAtr);
+            }
+            else destination??=anchor+side*targetRanges*geometryAtr;
         }
         decimal target=Tick(destination??entry+side*targetRanges*geometryAtr,tick,side>0);
         return stop>0m&&target>0m&&side*(exit-stop)>0m&&side*(target-entry)>0m&&
