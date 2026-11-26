@@ -23,7 +23,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
             return Array.Empty<Ucp1DecisionSignal>();
         NativeIntegratedCandidate[] candidates;
         if(eurDevelopmentProfile is {EconomicMechanism:{ } mechanism} distinct)
-            candidates=NativeEconomicMechanisms.Describe(mechanism,market,at,distinct.DistributionTargetRanges,sharedFrame);
+            candidates=NativeEconomicMechanisms.Describe(mechanism,market,at,distinct.DistributionTargetRanges,sharedFrame,
+                distinct.EconomicGeometryTimeframe,distinct.EconomicStopRanges);
         else if(eurDevelopmentProfile is {UseAvailableContext:true} profile)
         {
             if(ObservedWindow(market,NativeBarTimeframe.M5,at) is not { } m5||
