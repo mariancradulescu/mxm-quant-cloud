@@ -12,6 +12,10 @@ public static class NativeEconomicMechanisms
     public const string MonetaryReduce="MONETARY_REDUCE";
     public static readonly string[] Management={"BRACKET","TRANSITION_VALUE","CAPTURE_VALUE",MonetaryReduce};
 
+    internal static NativeCausalManagementSelection.Choice SelectManagement(IEnumerable<NativeEurCalibrationOutcome> history,
+        string family,int side,NativeEurDecisionContext context,long at,int pairs,int days,decimal penalty)
+        =>NativeCausalManagementSelection.Select(history,family,side,context,at,pairs,days,penalty);
+
     // Conditional comparison at the current executable fee schedule and
     // witnessed funding ceilings, not a promise of future settlement.
     // A partial close must outperform both HOLD and CLOSE over the same

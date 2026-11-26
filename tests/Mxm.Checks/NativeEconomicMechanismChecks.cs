@@ -80,6 +80,23 @@ internal static class NativeEconomicMechanismChecks
             at-(i/10+1)*86_400_000L,at-(i/10+1)*86_400_000L+1, i%2==0?2m:-1m,i%2==0?1.9m:-1.1m,1m)
             {Context=context}).ToArray();
         var payoff=NativeEconomicMechanisms.LifecyclePayoff(rows,"F",1,context,at,1m,.1m,20,3,0m);
+        var managementBase=rows.Select((r,i)=>r with {DecisionAt=r.ClosedAt-1000L-i,EconomicManagement="TRANSITION_VALUE"}).ToArray();
+        var managementAlt=managementBase.Select(r=>r with {PositionId=r.PositionId+"/REDUCE",NetEur=r.NetEur+.5m,
+            EconomicManagement=NativeEconomicMechanisms.MonetaryReduce}).ToArray();
+        NativeCausalManagementSelection.Choice Choose(IEnumerable<NativeEurCalibrationOutcome> values)
+            =>NativeCausalManagementSelection.Select(values,"F",1,context,at,20,3,1.645m);
+        check(Choose(managementBase.Concat(managementAlt)) is {Management:NativeEconomicMechanisms.MonetaryReduce,Pairs:30,LowerDeltaR:.5m},
+            "Management switches only on matured same-entry day-clustered positive incremental NET");
+        check(Choose(managementBase.Concat(managementAlt.Select(r=>r with {NetEur=r.NetEur-1m}))).Management=="TRANSITION_VALUE",
+            "Inferior monetary reduction is never forced on a family");
+        check(Choose(managementBase.Concat(managementAlt.Select(r=>r with {AvailableAt=at}))) is {Management:"TRANSITION_VALUE",Pairs:0},
+            "Management selection excludes the current clock and future outcomes");
+        check(Choose(managementBase.Concat(managementAlt.Select(r=>r with {RiskEur=2m}))).Pairs==0,
+            "Management comparisons reject unequal initial risks");
+        check(Choose(managementBase.Concat(managementAlt.Select(r=>r with {Context=context with {Symbol="OTHER"}}))).Pairs==0,
+            "Unrelated instruments never select management for this symbol");
+        check(Choose(managementBase.Concat(managementAlt).Append(managementAlt[0] with {PositionId="DUPLICATE"})).Pairs==29,
+            "Duplicate alternative outcomes invalidate their pair instead of adding weight");
         var contaminated=rows.Append(rows[0] with {PositionId="FUTURE",AvailableAt=at+1,GrossEur=100000m}).ToArray();
         check(payoff is {GrossMeanEur:.5m,NetMeanEur:.4m}&&payoff==NativeEconomicMechanisms.LifecyclePayoff(
             contaminated,"F",1,context,at,1m,.1m,20,3,0m),
