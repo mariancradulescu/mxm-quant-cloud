@@ -128,14 +128,15 @@ jobs:
       fail-fast: false
       matrix:
         scenario: [0, 1, 2]
+        group: [CONTROL, RISK_JOINT]
     env:
       MXM_ECONOMIC_SCENARIO_INDEX: ${{ matrix.scenario }}
-      MXM_ECONOMIC_TRIAL_GROUP: ARCHIVE
+      MXM_ECONOMIC_TRIAL_GROUP: ${{ matrix.group }}
       MXM_ECONOMIC_RECEIPT_DIRECTORY: window-receipts
       MXM_ECONOMIC_BOUNDED_NEIGHBORS: 1
       MXM_ECONOMIC_PAIRED_DISTRIBUTION: 1
       MXM_ECONOMIC_REUSE_FRAMES: 1
-      CHECKPOINT_PREFIX: eur-funding-2-checkpoint-${{ matrix.scenario }}
+      CHECKPOINT_PREFIX: eur-funding-2-checkpoint-${{ matrix.scenario }}-${{ matrix.group }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -257,7 +258,7 @@ jobs:
           PY
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: eur-funding-2-result-${{ matrix.scenario }}
+          name: eur-funding-2-result-${{ matrix.scenario }}-${{ matrix.group }}
           path: |
             recent-archive-result.json
             recent-archive-source.json
