@@ -1,0 +1,17 @@
+{
+  "Study": "OFFICIAL_DISABLED_CONVERSION_HISTORY_1",
+  "Exposure": "DEVELOPMENT_ONLY_NO_INDEPENDENT_CLAIM",
+  "OriginalMetadataRun": 45806558835,
+  "OriginalMetadataProtocolSha256": "f883b883841411f282d848d09927ed2a6e656055d02335650c02bf8fac303e69",
+  "Symbol": "USDHKD",
+  "RequiredBy": "HK50-F",
+  "From": "2026-11-23",
+  "To": "2026-11-25",
+  "PageHours": 4,
+  "PerPartitionMaxRequests": 1000,
+  "PerPartitionSeconds": 1080,
+  "PerSidePageBudget": 450,
+  "Orders": 0,
+  "CloudActivated": false,
+  "IndependentConfirmationCertified": false
+}
