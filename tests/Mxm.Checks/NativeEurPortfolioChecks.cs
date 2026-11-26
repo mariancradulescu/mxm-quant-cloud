@@ -28,6 +28,13 @@ internal static class NativeEurPortfolioChecks
     internal static void Run(Action<bool,string> check)
     {
         NativeEconomicMechanismChecks.Run(check);
+        var fundingPrefix=new NativeHistoricalFundingPrefix("AUTHENTIC_LATEST_PREFIX",Origin-345600000L,Origin,
+            Origin-266400000L,200m,true,true);
+        check(fundingPrefix.PriceAtCharge(Origin,345600000L)==200m&&fundingPrefix.PriceAtCharge(Origin,7200000L) is null,
+            "Authentic latest tick prefix can support holiday financing while preserving the tighter FX age");
+        check((fundingPrefix with {LeadingTimestampComplete=false}).PriceAtCharge(Origin,345600000L) is null&&
+            (fundingPrefix with {At=Origin+1}).PriceAtCharge(Origin,345600000L) is null,
+            "Funding prefix rejects incomplete leading timestamps and future quotes");
         // A higher standalone payoff need not be the best funded set.
         var joint=new[]{(Symbol:"A",Net:6m,Margin:6m),(Symbol:"B",Net:4m,Margin:3m),
             (Symbol:"C",Net:4m,Margin:3m),(Symbol:"D",Net:4m,Margin:3m),

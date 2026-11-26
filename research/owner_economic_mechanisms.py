@@ -39,11 +39,23 @@ def original(work,receipt):
     previous.materialize(p,digest,work,receipt,os.environ["R3_CUSTODY_PRIVATE_KEY_PEM"].encode(),OLD_RUN)
 
 def valid_mark(q,at,both):
-    if not q or q.get("RequestedCoverage") is not True:return False
+    if not q:return False
+    values={}
     for side in ("Bid","Ask") if both else ("Bid",):
-        if q.get(side) is None or Decimal(str(q[side]))<=0 or not 0<q.get(side+"At",0)<=at or at-q[side+"At"]>7200000:
-            return False
-    return not both or Decimal(str(q["Ask"]))>=Decimal(str(q["Bid"]))
+        legacy=q.get(side) if q.get("RequestedCoverage") is True and q.get(side) is not None and \
+            0<q.get(side+"At",0)<=at and at-q[side+"At"]<=7200000 else None
+        prefix=q.get('Latest'+side+'Prefix')
+        value=None
+        if prefix and prefix.get('Status')=='AUTHENTIC_LATEST_PREFIX' and prefix.get('PrefixNewestFirst') is True and \
+                prefix.get('LeadingTimestampComplete') is True and prefix.get('SearchThrough')==at and \
+                0<=prefix.get('SearchFrom',-1)<=prefix.get('At',-1)<=at and \
+                at-prefix['At']<=(7200000 if both else 345600000):
+            value=prefix.get('Price')
+        if value is not None and legacy is not None and Decimal(str(value))!=Decimal(str(legacy)):return False
+        value=value if value is not None else legacy
+        if value is None or Decimal(str(value))<=0:return False
+        values[side]=Decimal(str(value))
+    return not both or values['Ask']>=values['Bid']
 
 def closed_session_mark(entry,tape,at):
     if at not in set(entry.get("ClosedRolloverClocks",[])):return None

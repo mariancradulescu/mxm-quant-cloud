@@ -127,9 +127,9 @@ internal static partial class IntegratedEconomicReplay
                 if(charge)
                 {
                     var q=FundingAt(h.Symbol,at);
-                    if(q is {RequestedCoverage:true,Bid:>0m,Ask:>0m,BidAt:>0L,AskAt:>0L} &&
-                       q.BidAt<=at&&q.AskAt<=at&&at-q.BidAt<=7_200_000L&&at-q.AskAt<=7_200_000L&&q.Ask>=q.Bid)
-                    {bid=q.Bid.Value;ask=q.Ask.Value;}
+                    if(q?.FundingPrice(false,7_200_000L,7_200_000L) is decimal fb&&
+                       q.FundingPrice(true,7_200_000L,7_200_000L) is decimal fa&&fa>=fb)
+                    {bid=fb;ask=fa;}
                     else if(priorClocks is not null && LastClosedSessionMark(h.Symbol,at) is { } prior)
                     {bid=prior.Bid;ask=prior.Ask;priorClocks[(h.Symbol,at)]=prior.At;}
                     else return null;
@@ -157,7 +157,7 @@ internal static partial class IntegratedEconomicReplay
             Dictionary<(string Symbol,long ChargeAt),long>? priorClocks=null)
         {
             var q=FundingAt(name,at);
-            decimal? bid=q is {RequestedCoverage:true,Bid:>0m,BidAt:>0L}&&q.BidAt<=at&&at-q.BidAt<=7_200_000L?q.Bid:null;
+            decimal? bid=q?.FundingPrice(false,7_200_000L,345_600_000L);
             if(bid is null && priorClocks is not null && LastClosedSessionMark(name,at) is { } prior)
             {bid=prior.Bid;priorClocks[(name,at)]=prior.At;}
             return new(bid,ConversionAt(asset,at,true,priorClocks:priorClocks));
