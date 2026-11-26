@@ -1,0 +1,152 @@
+name: OWNER monetary entry quality and fast-stop learning
+on:
+  pull_request:
+    paths: ['src/**', 'tests/**', 'research/monetary_entry_quality_2.json', 'research/owner_monetary_entry_quality.py', 'research/test_monetary_entry_quality.py', 'research/owner_economic_mechanisms.py', '.github/workflows/owner-monetary-entry-quality.yml']
+  push:
+    branches: [main]
+    paths: ['research/monetary_entry_quality_2.json']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  technical:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - run: dotnet build src/Mxm.Replay -c Release
+      - run: python -m unittest research.test_monetary_entry_quality research.test_monetary_opportunity_discovery research.test_owner_economic_mechanisms
+      - run: python -m unittest research.test_economic_mechanism_replay
+      - run: dotnet run --project tests/Mxm.Checks -c Release
+  screen:
+    needs: technical
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.actor == 'mariancradulescu' && github.run_attempt == 1
+    environment: mxm-r3-custody-v1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      matrix:
+        mechanism: [M5_FOLLOW, M5_REVERSE, RANGE_CONTINUATION, EQUILIBRIUM_REVERSION, V33_MULTISCALE_ACTIVITY, INTERMARKET_DISLOCATION, PAV1_LOCAL_TRANSITION]
+    env:
+      MXM_OPPORTUNITY_MECHANISM: ${{ matrix.mechanism }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - run: dotnet build src/Mxm.Replay -c Release
+      - name: Download and verify preserved authentic source archives
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python -m research.owner_eur_recent_archive download
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: funded-action-history-source-public
+          path: integrated-source-public
+          run-id: 44824462289
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: source-history-public-receipt
+          path: original-source-history
+          run-id: 45396314675
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: target-funding-protected
+          path: targeted-funding
+          run-id: 45759378427
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: target-funding-verified
+          run-id: 45759378427
+          github-token: ${{ github.token }}
+      - name: Download exact protected funding archives and verified prefix overlay
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python -m research.owner_monetary_entry_quality download
+      - name: Reconcile original packets and prefix evidence without broker requests
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+        run: python -m research.owner_monetary_entry_quality materialize --work "$RUNNER_TEMP/opportunity-private" --receipt opportunity-source.json
+      - name: Screen isolated native opportunity lifecycles and select on earlier clocks only
+        run: dotnet src/Mxm.Replay/bin/Release/net8.0/Mxm.Replay.dll --owner-opportunity-screen "$RUNNER_TEMP/opportunity-private/opportunity-protocol.json" "$RUNNER_TEMP/opportunity-private/source.json" opportunity-result.json "$RUNNER_TEMP/opportunity-private/verified-protection"
+      - name: Verify source and protocol identities
+        run: |
+          cp "$RUNNER_TEMP/opportunity-private/opportunity-protocol.json" opportunity-protocol.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          s=json.loads(Path("opportunity-source.json").read_bytes())
+          r=json.loads(Path("opportunity-result.json").read_bytes())
+          assert all(r[k]==s[k] for k in ("SourceSha256","ProtocolSha256","EvidenceManifestSha256"))
+          assert r["Orders"]==r["SharedPortfolioEvaluations"]==r["SourceBrokerRequests"]==0
+          assert r["CloudActivated"] is r["IndependentConfirmationCertified"] is False
+          print("OPPORTUNITY_SCREEN_RESULT",r["Mechanism"],r["SelectedDecision"])
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: entry-quality-screen-${{ matrix.mechanism }}
+          path: |
+            opportunity-result.json
+            opportunity-source.json
+            opportunity-protocol.json
+          if-no-files-found: error
+          retention-days: 90
+  combine:
+    needs: screen
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          pattern: entry-quality-screen-*
+          path: partitions
+      - name: Reconcile all mechanism partitions without portfolio rerun
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from research.merge_eur_scenarios import read,exact_json
+          roots=sorted(Path("partitions").glob("*/opportunity-result.json"))
+          assert len(roots)==7
+          first=roots[0].parent
+          plan=read(first/"opportunity-protocol.json")
+          results=[]
+          for path in roots:
+              for name in ("opportunity-protocol.json","opportunity-source.json"):
+                  assert (path.parent/name).read_bytes()==(first/name).read_bytes()
+              results.append(read(path))
+          assert {r["Mechanism"] for r in results}=={v["Mechanism"] for v in plan["Variants"]}
+          out=Path("opportunity-report");out.mkdir()
+          for name in ("opportunity-protocol.json","opportunity-source.json"):
+              (out/name).write_bytes((first/name).read_bytes())
+          (out/"economic-opportunities.json").write_text(exact_json(dict(Study=plan["Study"],Results=results,
+              SharedPortfolioEvaluations=0,IndependentConfirmationCertified=False,Orders=0,CloudActivated=False))+"\n")
+          for r in results:
+              print(r["Mechanism"],r["SelectedDecision"])
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: monetary-entry-quality-2-complete
+          path: opportunity-report/
+          retention-days: 90
+          if-no-files-found: error

@@ -1,0 +1,576 @@
+{
+  "Study": "MONETARY_ENTRY_QUALITY_2",
+  "Exposure": "PROJECT_EXPOSED_CONDITIONAL_DEVELOPMENT",
+  "OriginalMechanismRun": 45769642512,
+  "OriginalMechanismArtifact": 15095141869,
+  "OriginalMechanismSha256": "dc4733026987b951e7043d8fc1ddc64e88d914e562c70c18b4b8466af4b3976a",
+  "MechanismFundingArtifact": 15094116850,
+  "MechanismFundingSha256": "2afc6c82045b920587aa22ee2a43dd1ff01d4ec7909a168a1d9f214694150bed",
+  "PrefixRun": 45775907825,
+  "PrefixArtifact": 15096546294,
+  "PrefixSha256": "64066bfb082178baf6d87b541d5fb5c092342f709cdbbfd5410ce251766f0213",
+  "Start": 1785110400000,
+  "SelectionFrom": 1787529600000,
+  "EvaluationFrom": 1789948800000,
+  "End": 1792972800000,
+  "SamplingIntervalMs": 1800000,
+  "Stresses": [
+    0,
+    0.5,
+    1
+  ],
+  "Instruments": [
+    "AAPL.US",
+    "AUDUSD",
+    "EURUSD",
+    "GBPUSD",
+    "SpotBrent",
+    "US500",
+    "XAUUSD"
+  ],
+  "Variants": [
+    {
+      "Id": "EQUILIBRIUM_REVERSION__TRAINER",
+      "Mechanism": "EQUILIBRIUM_REVERSION",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "EQUILIBRIUM_REVERSION",
+        "EconomicManagement": "BRACKET",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 0.75
+      },
+      "Reference": true,
+      "MonetaryTraining": true
+    },
+    {
+      "Id": "EQUILIBRIUM_REVERSION__LEGACY_MARKS",
+      "Mechanism": "EQUILIBRIUM_REVERSION",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "EQUILIBRIUM_REVERSION",
+        "EconomicManagement": "BRACKET",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 0.75
+      },
+      "Reference": false,
+      "GateMode": "LEGACY_MARKS"
+    },
+    {
+      "Id": "EQUILIBRIUM_REVERSION__CORRECTED",
+      "Mechanism": "EQUILIBRIUM_REVERSION",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "EQUILIBRIUM_REVERSION",
+        "EconomicManagement": "BRACKET",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 0.75
+      },
+      "Reference": false,
+      "GateMode": "CORRECTED"
+    },
+    {
+      "Id": "EQUILIBRIUM_REVERSION__COST_BAND",
+      "Mechanism": "EQUILIBRIUM_REVERSION",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "EQUILIBRIUM_REVERSION",
+        "EconomicManagement": "BRACKET",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 0.75
+      },
+      "Reference": false,
+      "GateMode": "COST_BAND"
+    },
+    {
+      "Id": "INTERMARKET_DISLOCATION__TRAINER",
+      "Mechanism": "INTERMARKET_DISLOCATION",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "INTERMARKET_DISLOCATION",
+        "EconomicManagement": "BRACKET",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 1
+      },
+      "Reference": true,
+      "MonetaryTraining": true
+    },
+    {
+      "Id": "INTERMARKET_DISLOCATION__LEGACY_MARKS",
+      "Mechanism": "INTERMARKET_DISLOCATION",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "INTERMARKET_DISLOCATION",
+        "EconomicManagement": "BRACKET",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 1
+      },
+      "Reference": false,
+      "GateMode": "LEGACY_MARKS"
+    },
+    {
+      "Id": "INTERMARKET_DISLOCATION__CORRECTED",
+      "Mechanism": "INTERMARKET_DISLOCATION",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "INTERMARKET_DISLOCATION",
+        "EconomicManagement": "BRACKET",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 1
+      },
+      "Reference": false,
+      "GateMode": "CORRECTED"
+    },
+    {
+      "Id": "INTERMARKET_DISLOCATION__COST_BAND",
+      "Mechanism": "INTERMARKET_DISLOCATION",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 1.5,
+        "EconomicMechanism": "INTERMARKET_DISLOCATION",
+        "EconomicManagement": "BRACKET",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 1
+      },
+      "Reference": false,
+      "GateMode": "COST_BAND"
+    },
+    {
+      "Id": "M5_FOLLOW__TRAINER",
+      "Mechanism": "M5_FOLLOW",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 2.5,
+        "EconomicMechanism": "M5_FOLLOW",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 0.75
+      },
+      "Reference": true,
+      "MonetaryTraining": true
+    },
+    {
+      "Id": "M5_FOLLOW__LEGACY_MARKS",
+      "Mechanism": "M5_FOLLOW",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 2.5,
+        "EconomicMechanism": "M5_FOLLOW",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 0.75
+      },
+      "Reference": false,
+      "GateMode": "LEGACY_MARKS"
+    },
+    {
+      "Id": "M5_FOLLOW__CORRECTED",
+      "Mechanism": "M5_FOLLOW",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 2.5,
+        "EconomicMechanism": "M5_FOLLOW",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 0.75
+      },
+      "Reference": false,
+      "GateMode": "CORRECTED"
+    },
+    {
+      "Id": "M5_FOLLOW__COST_BAND",
+      "Mechanism": "M5_FOLLOW",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 2.5,
+        "EconomicMechanism": "M5_FOLLOW",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 0.75
+      },
+      "Reference": false,
+      "GateMode": "COST_BAND"
+    },
+    {
+      "Id": "M5_REVERSE__TRAINER",
+      "Mechanism": "M5_REVERSE",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 2,
+        "EconomicMechanism": "M5_REVERSE",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "M15",
+        "EconomicStopRanges": 1
+      },
+      "Reference": true,
+      "MonetaryTraining": true
+    },
+    {
+      "Id": "M5_REVERSE__LEGACY_MARKS",
+      "Mechanism": "M5_REVERSE",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 2,
+        "EconomicMechanism": "M5_REVERSE",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "M15",
+        "EconomicStopRanges": 1
+      },
+      "Reference": false,
+      "GateMode": "LEGACY_MARKS"
+    },
+    {
+      "Id": "M5_REVERSE__CORRECTED",
+      "Mechanism": "M5_REVERSE",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 2,
+        "EconomicMechanism": "M5_REVERSE",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "M15",
+        "EconomicStopRanges": 1
+      },
+      "Reference": false,
+      "GateMode": "CORRECTED"
+    },
+    {
+      "Id": "M5_REVERSE__COST_BAND",
+      "Mechanism": "M5_REVERSE",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 2,
+        "EconomicMechanism": "M5_REVERSE",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "M15",
+        "EconomicStopRanges": 1
+      },
+      "Reference": false,
+      "GateMode": "COST_BAND"
+    },
+    {
+      "Id": "PAV1_LOCAL_TRANSITION__TRAINER",
+      "Mechanism": "PAV1_LOCAL_TRANSITION",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 2.5,
+        "EconomicMechanism": "PAV1_LOCAL_TRANSITION",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 0.75
+      },
+      "Reference": true,
+      "MonetaryTraining": true
+    },
+    {
+      "Id": "PAV1_LOCAL_TRANSITION__LEGACY_MARKS",
+      "Mechanism": "PAV1_LOCAL_TRANSITION",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 2.5,
+        "EconomicMechanism": "PAV1_LOCAL_TRANSITION",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 0.75
+      },
+      "Reference": false,
+      "GateMode": "LEGACY_MARKS"
+    },
+    {
+      "Id": "PAV1_LOCAL_TRANSITION__CORRECTED",
+      "Mechanism": "PAV1_LOCAL_TRANSITION",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 2.5,
+        "EconomicMechanism": "PAV1_LOCAL_TRANSITION",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 0.75
+      },
+      "Reference": false,
+      "GateMode": "CORRECTED"
+    },
+    {
+      "Id": "PAV1_LOCAL_TRANSITION__COST_BAND",
+      "Mechanism": "PAV1_LOCAL_TRANSITION",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 2.5,
+        "EconomicMechanism": "PAV1_LOCAL_TRANSITION",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 0.75
+      },
+      "Reference": false,
+      "GateMode": "COST_BAND"
+    },
+    {
+      "Id": "RANGE_CONTINUATION__TRAINER",
+      "Mechanism": "RANGE_CONTINUATION",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 2,
+        "EconomicMechanism": "RANGE_CONTINUATION",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "M15",
+        "EconomicStopRanges": 1
+      },
+      "Reference": true,
+      "MonetaryTraining": true
+    },
+    {
+      "Id": "RANGE_CONTINUATION__LEGACY_MARKS",
+      "Mechanism": "RANGE_CONTINUATION",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 2,
+        "EconomicMechanism": "RANGE_CONTINUATION",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "M15",
+        "EconomicStopRanges": 1
+      },
+      "Reference": false,
+      "GateMode": "LEGACY_MARKS"
+    },
+    {
+      "Id": "RANGE_CONTINUATION__CORRECTED",
+      "Mechanism": "RANGE_CONTINUATION",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 2,
+        "EconomicMechanism": "RANGE_CONTINUATION",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "M15",
+        "EconomicStopRanges": 1
+      },
+      "Reference": false,
+      "GateMode": "CORRECTED"
+    },
+    {
+      "Id": "RANGE_CONTINUATION__COST_BAND",
+      "Mechanism": "RANGE_CONTINUATION",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 2,
+        "EconomicMechanism": "RANGE_CONTINUATION",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "M15",
+        "EconomicStopRanges": 1
+      },
+      "Reference": false,
+      "GateMode": "COST_BAND"
+    },
+    {
+      "Id": "V33_MULTISCALE_ACTIVITY__TRAINER",
+      "Mechanism": "V33_MULTISCALE_ACTIVITY",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 2.5,
+        "EconomicMechanism": "V33_MULTISCALE_ACTIVITY",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 0.75
+      },
+      "Reference": true,
+      "MonetaryTraining": true
+    },
+    {
+      "Id": "V33_MULTISCALE_ACTIVITY__LEGACY_MARKS",
+      "Mechanism": "V33_MULTISCALE_ACTIVITY",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 2.5,
+        "EconomicMechanism": "V33_MULTISCALE_ACTIVITY",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 0.75
+      },
+      "Reference": false,
+      "GateMode": "LEGACY_MARKS"
+    },
+    {
+      "Id": "V33_MULTISCALE_ACTIVITY__CORRECTED",
+      "Mechanism": "V33_MULTISCALE_ACTIVITY",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 2.5,
+        "EconomicMechanism": "V33_MULTISCALE_ACTIVITY",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 0.75
+      },
+      "Reference": false,
+      "GateMode": "CORRECTED"
+    },
+    {
+      "Id": "V33_MULTISCALE_ACTIVITY__COST_BAND",
+      "Mechanism": "V33_MULTISCALE_ACTIVITY",
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "ModelFundingAtPriorClosedSessionQuote": true,
+        "DistributionTargetRanges": 2.5,
+        "EconomicMechanism": "V33_MULTISCALE_ACTIVITY",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 0.75
+      },
+      "Reference": false,
+      "GateMode": "COST_BAND"
+    }
+  ],
+  "Orders": 0,
+  "CloudActivated": false,
+  "IndependentConfirmationCertified": false,
+  "PrefixProtectedArtifact": 15096506051,
+  "PrefixProtectedSha256": "4e40a5f2044b5c6bb4c3a10e4f6ae46c1198f479e17a992686ee15cd5b07a5bc",
+  "OriginalMechanismRevision": "ef21b35af4521bba1520b56825a9bcbd7f5627e2",
+  "DiscoveryOriginalRun": 45786083388,
+  "DiscoveryOriginalArtifact": 15101501689,
+  "DiscoveryOriginalSha256": "c43ab3cf9dfa001ebfa795a3477b6986cb0f247c9271d164ea389116593e90ee",
+  "GeometryBasis": "EXPOSED_SELECTION_DIAGNOSTIC_NOT_CERTIFIED",
+  "Hypothesis": "Correct monetary-label survivorship and compare executable causal gates; cost/risk median learned only from matured outcomes. All seven mechanisms retained; 30-minute research sample, M5 lifecycle decisions."
+}
