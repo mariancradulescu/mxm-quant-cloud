@@ -356,6 +356,10 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 string management=managementOverride??CausalManagement(family,side,target,scoredAt).Management;
                 scoredHistory=scoredHistory.Where(x=>x.EconomicManagement==management);
             }
+            if(scored.LifecycleEstimator is { } estimator)
+                return NativeCenteredLifecycle.Estimate(scoredHistory,family,side,target,scoredAt,
+                    candidateRiskEur,currentCostFloorEur,scored.MinimumEpisodes,scored.MinimumDays,
+                    scored.DayPenalty,estimator=="CENTERED_TRANSFER",diagnostic);
             return NativeEconomicMechanisms.LifecyclePayoff(scoredHistory,family,side,target,
                 scoredAt,candidateRiskEur,currentCostFloorEur,scored.MinimumEpisodes,scored.MinimumDays,scored.DayPenalty);
         }
@@ -568,7 +572,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 if(context is not null&&marketState is not null)context=context with {MarketState=marketState,RelativeVolatility=volatility,ClosedBarActivity=activityContext};
                 if(CaptureEurDiagnostics&&policy==EurGeneralSelect&&context is null)ScoreDiagnostic("NO_CONTEXT");
                 var payoff=risk is >0m&&(IsEurRank||eurDevelopmentProfile is null)?EurPayoff(s.Family,s.Side,risk.Value,roundTripCost+debit!.Value,
-                    policy is EurContextRank or EurGeneralSelect?context:null,CaptureEurDiagnostics?ScoreDiagnostic:null,at):null;
+                    policy is EurContextRank or EurGeneralSelect?context:null,CaptureEurDiagnostics||eurDevelopmentProfile?.LifecycleEstimator is not null?ScoreDiagnostic:null,at):null;
                 if(eurDevelopmentProfile?.EconomicMechanism==NativeEconomicMechanisms.Transition&&risk is >0m&&debit.HasValue)
                     payoff=NativeEconomicMechanisms.TransitionPayoff(market,at,s.Side,units,roundTripCost+debit.Value,
                         eurDevelopmentProfile.EconomicGeometryTimeframe,eurDevelopmentProfile.Pav1TransitionBars);

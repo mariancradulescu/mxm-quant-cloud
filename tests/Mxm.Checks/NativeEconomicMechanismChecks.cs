@@ -80,6 +80,20 @@ internal static class NativeEconomicMechanismChecks
             at-(i/10+1)*86_400_000L,at-(i/10+1)*86_400_000L+1, i%2==0?2m:-1m,i%2==0?1.9m:-1.1m,1m)
             {Context=context}).ToArray();
         var payoff=NativeEconomicMechanisms.LifecyclePayoff(rows,"F",1,context,at,1m,.1m,20,3,0m);
+        var centered=NativeCenteredLifecycle.Estimate(rows,"F",1,context,at,1m,.3m,20,3,1.645m,false);
+        check(centered is {NetMeanEur:.2m,NetLowerEur:.2m},
+            "Centered lifecycle measures historical NET dispersion about its own mean before current cost cap");
+        check(centered==NativeCenteredLifecycle.Estimate(rows.Append(rows[0] with {AvailableAt=at,GrossEur=1000m}),
+            "F",1,context,at,1m,.3m,20,3,1.645m,false),"Centered lifecycle excludes future and current clock labels");
+        var peers=rows.Select((row,i)=>row with {Context=context with {Symbol=i%2==0?"A":"B",AssetClass="FX"}}).ToArray();
+        var targetContext=context with {AssetClass="FX"};
+        check(NativeCenteredLifecycle.Estimate(peers,"F",1,targetContext,at,1m,.1m,20,3,0m,true)
+            is {Cohort:"CENTERED_CLASS_OTHER_SYMBOLS_REGIME"},"Transfer requires authenticated class and two other symbols");
+        check(NativeCenteredLifecycle.Estimate(peers,"F",1,targetContext,at,1m,.1m,20,3,0m,false) is null,
+            "Local-only ablation cannot borrow peer outcomes");
+        var localLoss=rows.Select(row=>row with {GrossEur=-1m,NetEur=-1.1m,Context=targetContext});
+        check(NativeCenteredLifecycle.Estimate(localLoss.Concat(peers),"F",1,targetContext,at,1m,.1m,20,3,0m,true)
+            is {NetLowerEur:<0m,Cohort:"CENTERED_LOCAL_REGIME"},"Supported losing local cohort never falls back to peers");
         var managementBase=rows.Select((r,i)=>r with {DecisionAt=r.ClosedAt-1000L-i,EconomicManagement="TRANSITION_VALUE"}).ToArray();
         var managementAlt=managementBase.Select(r=>r with {PositionId=r.PositionId+"/REDUCE",NetEur=r.NetEur+.5m,
             EconomicManagement=NativeEconomicMechanisms.MonetaryReduce}).ToArray();

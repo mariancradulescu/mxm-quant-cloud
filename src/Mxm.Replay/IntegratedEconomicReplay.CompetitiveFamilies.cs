@@ -4,20 +4,20 @@ using Mxm.Core;
 internal static partial class IntegratedEconomicReplay
 {
     public static int RunCompetitiveFamilies(string protocolPath,string sourcePath,string directory,
-        string protectionDirectory,string stressText,bool causalManagementStudy=false)
+        string protectionDirectory,string stressText,bool causalManagementStudy=false,bool estimatorStudy=false)
     {
         var pb=File.ReadAllBytes(protocolPath);var sb=File.ReadAllBytes(sourcePath);
         var p=JsonSerializer.Deserialize<PavMarketPlan>(pb,Json)!;
         var input=JsonSerializer.Deserialize<EerInput>(sb,Json)!;
         decimal stress=decimal.Parse(stressText,System.Globalization.CultureInfo.InvariantCulture);
         string planHash=GeneralSha(pb),sourceHash=GeneralSha(sb);
-        if(p.Study!=(causalManagementStudy?"MONETARY_CAUSAL_MANAGEMENT_1":"MONETARY_COMPETITIVE_FAMILIES_1")||p.Exposure!=ExposedDevelopment||
+        if(p.Study!=(estimatorStudy?"MONETARY_LIFECYCLE_ESTIMATION_1":causalManagementStudy?"MONETARY_CAUSAL_MANAGEMENT_1":"MONETARY_COMPETITIVE_FAMILIES_1")||p.Exposure!=ExposedDevelopment||
             p.Start!=input.Start||p.End!=input.End||p.SourceProtocolSha256!=input.ProtocolSha256||
             p.EvidenceManifestSha256!=input.EvidenceManifestSha256||input.Markets.Length!=29||
             input.Markets.Select(m=>m.Market.Name).Distinct().Count()!=29||
             !(p.Start<p.SelectionFrom&&p.SelectionFrom<p.EvaluationFrom&&p.EvaluationFrom<p.End)||
             !p.Stresses.SequenceEqual(new[]{0m,.5m,1m})||!p.Stresses.Contains(stress)||
-            p.Variants.Length!=(causalManagementStudy?3:2)||p.Variants.Select(v=>v.Id).Distinct().Count()!=p.Variants.Length||
+            p.Variants.Length!=(estimatorStudy?4:causalManagementStudy?3:2)||p.Variants.Select(v=>v.Id).Distinct().Count()!=p.Variants.Length||
             p.Variants.Any(v=>v.UniverseCount!=29||!v.Profile.CompeteEconomicFamilies||
                 !v.Profile.LearnFromOpportunityEpisodes||!v.Profile.ObserveFamilyDirectionsOnClosedBars||
                 !v.Profile.UseMarketTimeFxValuation||!v.Profile.ReserveObservedBarGaps)||
@@ -27,13 +27,26 @@ internal static partial class IntegratedEconomicReplay
         if(causalManagementStudy&&p.Variants.Count(v=>v.Profile.SelectEconomicManagementCausally)!=1||
             !causalManagementStudy&&p.Variants.Any(v=>v.Profile.SelectEconomicManagementCausally))
             throw new InvalidDataException("CAUSAL_MANAGEMENT_VARIANT_BINDING");
+        if(estimatorStudy&&p.Variants.Any(v=>v.Profile.LifecycleEstimator is null)||
+            !estimatorStudy&&p.Variants.Any(v=>v.Profile.LifecycleEstimator is not null))
+            throw new InvalidDataException("LIFECYCLE_ESTIMATOR_STUDY_BINDING");
         Directory.CreateDirectory(directory);
         string scenario=EerHash(planHash+"|"+FormattableString.Invariant($"{stress:G29}"));
         var tape=new EerProtectionTape(protectionDirectory);
         var source=new EerEvidence(input){MarketTimeFx=true,ValuationTape=tape};
         var streams=input.Markets.ToDictionary(m=>m.Market.Name,m=>new EerStream(m),StringComparer.Ordinal);
+        var sharedObservers=new Dictionary<string,EurOpportunityObserver>(StringComparer.Ordinal);
+        EurOpportunityObserver? Observer(NativeEurDevelopmentProfile profile)
+        {
+            if(profile.SelectEconomicManagementCausally)return null;
+            if(!estimatorStudy)return new(profile,scenario,stress,source,tape,streams);
+            string key=profile.GeometryIdentity;
+            if(!sharedObservers.TryGetValue(key,out var observer))
+                sharedObservers.Add(key,observer=new(profile,scenario,stress,source,tape,streams));
+            return observer;
+        }
         var cases=p.Variants.Select(v=>(v.Id,Profile:v.Profile,
-            Observer:v.Profile.SelectEconomicManagementCausally?null:new EurOpportunityObserver(v.Profile,scenario,stress,source,tape,streams),
+            Observer:Observer(v.Profile),
             Book:new NativeUnifiedPortfolioEngine(NativeUnifiedPortfolioEngine.EurGeneralSelect,
                 fundingScenarioId:scenario,eurDevelopmentProfile:v.Profile))).ToArray();
         var cash=new NativeUnifiedPortfolioEngine(NativeUnifiedPortfolioEngine.EurGeneralCash,
@@ -54,7 +67,8 @@ internal static partial class IntegratedEconomicReplay
                         tape.Between(c.Book,at-1,source,streams,scenario,stress);
                         source.Advance(c.Book,frame with {Protection=tape.GridCoverage(c.Book,at)},streams,scenario,stress);
                     }
-                foreach(var c in cases)c.Observer?.Advance(frame);
+                if(estimatorStudy){foreach(var observer in sharedObservers.Values)observer.Advance(frame);}
+                else foreach(var c in cases)c.Observer?.Advance(frame);
                 if(++clocks%288==0)Console.WriteLine($"COMPETITIVE_FAMILIES_PROGRESS stress={stress} at={at} trade={trade} observations={clocks}");
             }
         }

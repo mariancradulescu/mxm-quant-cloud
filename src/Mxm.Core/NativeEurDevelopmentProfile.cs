@@ -116,6 +116,10 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
     public bool SelectEconomicManagementCausally { get; init; }
 
+    // Selection-only hypothesis. It does not change shadow lifecycle geometry.
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? LifecycleEstimator { get; init; }
+
     internal string GeometryIdentity => FormattableString.Invariant(
         $"{UseAvailableContext}/{DistributionTargetRanges:G29}/{StopReserveMultiplier:G29}") +
         (ModeledStopLatencyMs is long latency ? FormattableString.Invariant($"/Trade/{latency}") : "") +
@@ -147,6 +151,9 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
 
     internal void Verify()
     {
+        if(LifecycleEstimator is not null&&(!CompeteEconomicFamilies||
+            SelectEconomicManagementCausally||LifecycleEstimator is not ("CENTERED_LOCAL" or "CENTERED_TRANSFER")))
+            throw new ArgumentException("EUR_LIFECYCLE_ESTIMATOR_PROFILE");
         if(SelectEconomicManagementCausally&&(!CompeteEconomicFamilies||!LearnFromOpportunityEpisodes||
             EconomicManagement!="TRANSITION_VALUE"))
             throw new ArgumentException("EUR_CAUSAL_MANAGEMENT_PROFILE");

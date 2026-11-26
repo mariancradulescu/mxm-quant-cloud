@@ -19,6 +19,8 @@ if(args is ["--owner-opportunity-screen",var screenProtocol,var screenSource,var
     return IntegratedEconomicReplay.RunOpportunityScreen(screenProtocol,screenSource,screenReport,screenProtection);
 if(args is ["--owner-competitive-families",var cfProtocol,var cfSource,var cfDirectory,var cfTape,var cfStress])
     return IntegratedEconomicReplay.RunCompetitiveFamilies(cfProtocol,cfSource,cfDirectory,cfTape,cfStress);
+if(args is ["--owner-lifecycle-estimation",var leProtocol,var leSource,var leDirectory,var leTape,var leStress])
+    return IntegratedEconomicReplay.RunCompetitiveFamilies(leProtocol,leSource,leDirectory,leTape,leStress,estimatorStudy:true);
 if(args is ["--owner-causal-management",var cmProtocol,var cmSource,var cmDirectory,var cmTape,var cmStress])
     return IntegratedEconomicReplay.RunCompetitiveFamilies(cmProtocol,cmSource,cmDirectory,cmTape,cmStress,causalManagementStudy:true);
 if(args is ["--owner-eur-historical-study",var historicalProtocol,var historicalSource,var historicalReport])
