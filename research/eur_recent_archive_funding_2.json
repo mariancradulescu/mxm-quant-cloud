@@ -1,0 +1,45 @@
+{
+  "Study": "EUR_RECENT_ARCHIVE_FUNDING_2",
+  "OriginalEconomicRun": 45753017182,
+  "OriginalEconomicArtifact": 15087333761,
+  "OriginalEconomicSha256": "0a4c2a4ddace1618f36ded25241b6ee15824b0af6a0a047c8f0b55dbb46243ee",
+  "Scope": "CONDITIONAL_ARCHIVED_CONTRACTS_NO_HISTORICAL_TARIFF_OR_SETTLEMENT_CERTIFICATION",
+  "Targets": [
+    {
+      "Symbol": "AAPL.US",
+      "At": 1785794400000
+    },
+    {
+      "Symbol": "US500",
+      "At": 1785794400000
+    },
+    {
+      "Symbol": "US500",
+      "At": 1785880800000
+    },
+    {
+      "Symbol": "US500",
+      "At": 1785967200000
+    },
+    {
+      "Symbol": "EURUSD",
+      "At": 1787349600000
+    },
+    {
+      "Symbol": "EURUSD",
+      "At": 1787522400000
+    }
+  ],
+  "LookbackMs": 7200000,
+  "PageBudgetPerSide": 64,
+  "Trials": [
+    "CASH_CONTROL",
+    "FINANCEABLE_PROBE",
+    "V3_RANKED_GEOMETRY",
+    "V3_RANKED_GEOMETRY_RISK",
+    "V3_RANKED_RISK_RESIZE",
+    "V3_JOINT_ALLOCATION_MANAGEMENT"
+  ],
+  "ClosedSessionScenario": true,
+  "OriginalsImmutable": true
+}
