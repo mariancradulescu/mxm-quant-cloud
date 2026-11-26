@@ -26,8 +26,8 @@ def registered():
     raw=REGISTRY.read_bytes()
     p=json.loads(raw)
     need(p["Study"]=="EUR_RECENT_ARCHIVE_FUNDING_2" and p["LookbackMs"]==7200000 and
-         0<p["PageBudgetPerSide"]<=64 and len(p["Targets"])==6 and
-         len({(x["Symbol"],x["At"]) for x in p["Targets"]})==6,"TARGET_FUNDING_SCOPE")
+         0<p["PageBudgetPerSide"]<=64 and len(p["Targets"])==5 and
+         len({(x["Symbol"],x["At"]) for x in p["Targets"]})==5,"TARGET_FUNDING_SCOPE")
     old=json.loads(archive.REGISTRY.read_bytes())
     need(all(x["Symbol"] in old["Instruments"] and old["InitialFitFrom"]<=x["At"]<old["TestBoundaries"][-1]
              and datetime.fromtimestamp(x["At"]/1000,timezone.utc).weekday()<5 for x in p["Targets"]),
@@ -93,8 +93,8 @@ def merge_rollover(old,new):
         if not q["RequestedCoverage"]:continue
         if prior.get("RequestedCoverage") and any(k in prior and k in q and Decimal(str(prior[k]))!=Decimal(str(q[k]))
             for k in ("Bid","Ask","BidAt","AskAt")):
-            conflicts.append(at);continue
-        by_clock[at]=dict(prior,**q)
+            conflicts.append(at);by_clock[at]={"At":at,"RequestedCoverage":False};continue
+        by_clock[at]=dict(prior,**q) if prior.get("RequestedCoverage") else q
     return sorted(by_clock.values(),key=lambda x:x["At"]),conflicts
 
 def materialize(p,digest,work,receipt_path,key,rid):
