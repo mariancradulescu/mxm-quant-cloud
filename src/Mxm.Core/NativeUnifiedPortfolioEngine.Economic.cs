@@ -341,6 +341,10 @@ public sealed partial class NativeUnifiedPortfolioEngine
             IsEurGeneral?q.LiquidationSlippagePerSide:null);
         if(!guard.Allowed || (fundingReserves is not null && guard.ProjectedPostFillLiquidationEquityEur <
             current.ObservedPeakEur*(1m-OwnerRiskAuthority.MaximumSystemDrawdown)))return null;
+        if(eurDevelopmentProfile?.ReserveMarginForStopRisk==true&&
+            !NativePendingCapitalGate.StopAdjustedMarginFits(guard.ProjectedPostFillLiquidationEquityEur,
+                guard.TotalReservedMarginEur,guard.AggregateReservedRiskEur))
+        {Count("EUR_FILL_STOP_ADJUSTED_MARGIN_CAP");return null;}
         if(IsEurGeneral&&guard.PreFillLiquidationEquityEur-guard.AggregateReservedRiskEur<
             current.ObservedPeakEur*(1m-OwnerRiskAuthority.MaximumSystemDrawdown))return null;
         if(eurDevelopmentProfile?.EconomicMechanism==NativeEconomicMechanisms.Transition)

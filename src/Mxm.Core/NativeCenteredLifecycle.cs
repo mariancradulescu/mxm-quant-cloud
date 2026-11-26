@@ -28,20 +28,36 @@ internal static class NativeCenteredLifecycle
             NetWorstEur=normalized.NetWorstEur*risk,NetBestEur=normalized.NetBestEur*risk};
     }
 
+    // Predeclared dimensionless bands compare historical execution-cost burden
+    // at the actual candidate risk, without reducing its executable fees.
+    internal static int CostBand(decimal costRisk)=>costRisk<=.1m?0:costRisk<=.25m?1:costRisk<=.5m?2:3;
     internal static NativeEurPayoff? Estimate(IEnumerable<NativeEurCalibrationOutcome> history,
         string family,int side,NativeEurDecisionContext context,long at,decimal risk,decimal cost,
-        int minimumEpisodes,int minimumDays,decimal penalty,bool transfer,Action<string>? diagnostic=null)
+        int minimumEpisodes,int minimumDays,decimal penalty,bool transfer,Action<string>? diagnostic=null,bool costMatched=false)
     {
         if(risk<=0m||cost<0m||minimumEpisodes<minimumDays||minimumDays<2||penalty<0m)return null;
         int? Regime(NativeEurDecisionContext c)=>c.ClosedStates.SingleOrDefault(x=>x.Timeframe==NativeBarTimeframe.H1)?.Direction;
+        int? FastRegime(NativeEurDecisionContext x)=>x.ClosedStates.SingleOrDefault(s=>s.Timeframe==NativeBarTimeframe.M15)?.Direction;
         int? regime=Regime(context);
         var valid=history.Where(x=>x.AvailableAt<at&&x.ClosedAt<=x.AvailableAt&&x.RiskEur>0m&&
             x.Family==family&&x.Side==side&&x.Context is not null).ToArray();
         bool Supported(NativeEurCalibrationOutcome[] rows)=>rows.Length>=minimumEpisodes&&
             rows.Select(x=>x.ClosedAt/86_400_000L).Distinct().Take(minimumDays).Count()==minimumDays;
+        if(costMatched)
+        {
+            if(context.CostRiskFraction<0m)return null;
+            int band=CostBand(context.CostRiskFraction);
+            valid=valid.Where(x=>x.Context!.CostRiskFraction>=0m&&CostBand(x.Context.CostRiskFraction)==band).ToArray();
+        }
         var local=valid.Where(x=>x.Context!.Symbol==context.Symbol).ToArray();
         var pool=local.Where(x=>Regime(x.Context!)==regime).ToArray();
         string cohort="LOCAL_REGIME";
+        if(costMatched)
+        {
+            int? fast=FastRegime(context);
+            var close=pool.Where(x=>FastRegime(x.Context!)==fast).ToArray();
+            if(Supported(close)){pool=close;cohort="LOCAL_H1_M15_REGIME";}
+        }
         // Hierarchy uses support ONLY. Never abandon a supported losing cohort
         // for a profitable one. No cross-family or cross-direction transfer.
         if(!Supported(pool)&&transfer)
@@ -55,7 +71,8 @@ internal static class NativeCenteredLifecycle
                 if(pool.Select(x=>x.Context!.Symbol).Distinct().Take(2).Count()<2)pool=Array.Empty<NativeEurCalibrationOutcome>();
             }
         }
-        if(!Supported(pool)){diagnostic?.Invoke("CENTERED_INSUFFICIENT_SUPPORT");return null;}
+        if(!Supported(pool)){diagnostic?.Invoke(costMatched?"COST_CONTEXT_INSUFFICIENT_SUPPORT":"CENTERED_INSUFFICIENT_SUPPORT");return null;}
+        if(costMatched)cohort+=":COST_BAND_"+CostBand(context.CostRiskFraction);
         // Equal day weights and equal symbol weights within each day.
         var daily=pool.GroupBy(x=>x.ClosedAt/86_400_000L).Select(day=>
         {

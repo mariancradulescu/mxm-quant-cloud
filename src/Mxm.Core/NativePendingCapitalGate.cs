@@ -16,6 +16,11 @@ public static class NativePendingCapitalGate
     public const decimal MaximumAggregateStopFraction = .05m;
     public const decimal MaximumTradeStopFraction = .015m;
 
+    // Extra headroom is a function of committed monetary stop risk; the
+    // original 70% gate remains unchanged and still applies independently.
+    public static bool StopAdjustedMarginFits(decimal equity,decimal margin,decimal reservedRisk)
+        =>equity>reservedRisk&&margin>=0m&&reservedRisk>=0m&&margin<=(equity-reservedRisk)*MaximumMarginFraction;
+
     public sealed record Commitment(string PositionId,string Symbol,decimal Units,
         decimal MarginPerUnit,decimal ReservedStopRiskEur,
         string RiskClass,bool IsPendingOpen)

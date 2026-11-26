@@ -228,6 +228,9 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 next, candidate.Signal.Side, quote, candidate.Market.SlippagePerSideQuote,
                 candidate.Receipt.NextManagementFundingCeilingEur!.Value, quote.LiquidationSlippagePerSide);
             if (!check.Allowed) return "WAIT_" + check.Reason;
+            if(eurDevelopmentProfile?.ReserveMarginForStopRisk==true&&
+                !NativePendingCapitalGate.StopAdjustedMarginFits(check.ProjectedPostFillLiquidationEquityEur,
+                    check.TotalReservedMarginEur,gate.ReservedRiskAfterEur))return "WAIT_STOP_ADJUSTED_POST_FILL_MARGIN";
             decimal floor = book.ObservedPeakEur * (1m - OwnerRiskAuthority.MaximumSystemDrawdown);
             return Math.Min(check.ProjectedPostFillLiquidationEquityEur,
                 check.PreFillLiquidationEquityEur - gate.ReservedRiskAfterEur) < floor
@@ -272,7 +275,9 @@ public sealed partial class NativeUnifiedPortfolioEngine
                     next,candidate.Signal.Side,q,candidate.Market.SlippagePerSideQuote,
                     candidate.Receipt.NextManagementFundingCeilingEur!.Value,q.LiquidationSlippagePerSide);
                 decimal floor=book.ObservedPeakEur*(1m-OwnerRiskAuthority.MaximumSystemDrawdown);
-                return guard.Allowed&&Math.Min(guard.ProjectedPostFillLiquidationEquityEur,
+                return guard.Allowed&&(eurDevelopmentProfile?.ReserveMarginForStopRisk!=true||
+                    NativePendingCapitalGate.StopAdjustedMarginFits(guard.ProjectedPostFillLiquidationEquityEur,
+                        guard.TotalReservedMarginEur,gate.ReservedRiskAfterEur))&&Math.Min(guard.ProjectedPostFillLiquidationEquityEur,
                     guard.PreFillLiquidationEquityEur-gate.ReservedRiskAfterEur)>=floor;
             }
             for(int i=choices.Count-1;i>=0;i--)

@@ -122,6 +122,9 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public string? Pav1CompetitiveForecast { get; init; }
 
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool ReserveMarginForStopRisk { get; init; }
+
     internal string GeometryIdentity => FormattableString.Invariant(
         $"{UseAvailableContext}/{DistributionTargetRanges:G29}/{StopReserveMultiplier:G29}") +
         (ModeledStopLatencyMs is long latency ? FormattableString.Invariant($"/Trade/{latency}") : "") +
@@ -145,6 +148,7 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
         (Pav1TransitionBars>0?$"/PAV1_TRANSITION_BARS:{Pav1TransitionBars}":"") +
         (RequireMaturedCashForLargerVolume?"/MATURED_CASH_MARGINAL_VOLUME":"") +
         (ReserveObservedBarGaps?"/OBSERVED_GAP_RESERVE":"") +
+        (ReserveMarginForStopRisk?"/STOP_ADJUSTED_MARGIN_HEADROOM":"") +
         (AllocatePav1AtMinimumVolume?"/PAV1_MINIMUM_VOLUME_MONETARY_ALLOCATION":"") +
         (CompeteEconomicFamilies?"/SEVEN_FAMILY_CAUSAL_COMMON_BOOK_V1":"") +
         (SelectEconomicManagementCausally?"/MATURED_PAIRED_MANAGEMENT_CHOICE_V1":"") +
@@ -153,11 +157,12 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
 
     internal void Verify()
     {
+        if(ReserveMarginForStopRisk&&!CompeteEconomicFamilies)throw new ArgumentException("EUR_STOP_ADJUSTED_MARGIN_PROFILE");
         if(Pav1CompetitiveForecast is not null&&(!CompeteEconomicFamilies||LifecycleEstimator is null||
             Pav1CompetitiveForecast is not ("DIRECT" or "CORROBORATED")))
             throw new ArgumentException("EUR_PAV1_COMPETITIVE_FORECAST_PROFILE");
         if(LifecycleEstimator is not null&&(!CompeteEconomicFamilies||
-            SelectEconomicManagementCausally||LifecycleEstimator is not ("CENTERED_LOCAL" or "CENTERED_TRANSFER")))
+            SelectEconomicManagementCausally||LifecycleEstimator is not ("CENTERED_LOCAL" or "CENTERED_TRANSFER" or "CENTERED_COST_CONTEXT")))
             throw new ArgumentException("EUR_LIFECYCLE_ESTIMATOR_PROFILE");
         if(SelectEconomicManagementCausally&&(!CompeteEconomicFamilies||!LearnFromOpportunityEpisodes||
             EconomicManagement!="TRANSITION_VALUE"))

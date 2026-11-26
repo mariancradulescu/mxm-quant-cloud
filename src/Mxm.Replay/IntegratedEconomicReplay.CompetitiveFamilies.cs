@@ -9,19 +9,21 @@ internal static partial class IntegratedEconomicReplay
         var pb=File.ReadAllBytes(protocolPath);var sb=File.ReadAllBytes(sourcePath);
         var p=JsonSerializer.Deserialize<PavMarketPlan>(pb,Json)!;
         var input=JsonSerializer.Deserialize<EerInput>(sb,Json)!;
+        bool costStudy=estimatorStudy&&!earlierEstimatorStudy&&p.Study=="MONETARY_COST_CONTEXT_GEOMETRY_1";
         decimal stress=decimal.Parse(stressText,System.Globalization.CultureInfo.InvariantCulture);
         string planHash=GeneralSha(pb),sourceHash=GeneralSha(sb);
-        if(p.Study!=(earlierEstimatorStudy?"MONETARY_EARLIER_LIFECYCLE_ESTIMATION_1":estimatorStudy?"MONETARY_LIFECYCLE_ESTIMATION_1":causalManagementStudy?"MONETARY_CAUSAL_MANAGEMENT_1":"MONETARY_COMPETITIVE_FAMILIES_1")||p.Exposure!=ExposedDevelopment||
+        if(p.Study!=(costStudy?"MONETARY_COST_CONTEXT_GEOMETRY_1":earlierEstimatorStudy?"MONETARY_EARLIER_LIFECYCLE_ESTIMATION_1":estimatorStudy?"MONETARY_LIFECYCLE_ESTIMATION_1":causalManagementStudy?"MONETARY_CAUSAL_MANAGEMENT_1":"MONETARY_COMPETITIVE_FAMILIES_1")||p.Exposure!=ExposedDevelopment||
             p.Start!=input.Start||p.End!=input.End||p.SourceProtocolSha256!=input.ProtocolSha256||
             p.EvidenceManifestSha256!=input.EvidenceManifestSha256||input.Markets.Length!=(earlierEstimatorStudy?7:29)||
             input.Markets.Select(m=>m.Market.Name).Distinct().Count()!=input.Markets.Length||
             !(p.Start<p.SelectionFrom&&p.SelectionFrom<p.EvaluationFrom&&p.EvaluationFrom<p.End)||
             !p.Stresses.SequenceEqual(new[]{0m,.5m,1m})||!p.Stresses.Contains(stress)||
-            p.Variants.Length!=(earlierEstimatorStudy?9:estimatorStudy?5:causalManagementStudy?3:2)||p.Variants.Select(v=>v.Id).Distinct().Count()!=p.Variants.Length||
+            p.Variants.Length!=(costStudy?7:earlierEstimatorStudy?9:estimatorStudy?5:causalManagementStudy?3:2)||p.Variants.Select(v=>v.Id).Distinct().Count()!=p.Variants.Length||
             p.Variants.Any(v=>v.UniverseCount!=input.Markets.Length||!v.Profile.CompeteEconomicFamilies||
                 !v.Profile.LearnFromOpportunityEpisodes||!v.Profile.ObserveFamilyDirectionsOnClosedBars||
                 !v.Profile.UseMarketTimeFxValuation||!v.Profile.ReserveObservedBarGaps)||
             !p.Variants.Select(v=>v.Profile.EconomicManagement).ToHashSet().SetEquals(
+                costStudy?new[]{"TRANSITION_VALUE",NativeEconomicMechanisms.MonetaryReduce,"CAPTURE_VALUE"}:
                 new[]{"TRANSITION_VALUE",NativeEconomicMechanisms.MonetaryReduce}))
             throw new InvalidDataException("COMPETITIVE_FAMILY_STUDY_BINDING");
         if(causalManagementStudy&&p.Variants.Count(v=>v.Profile.SelectEconomicManagementCausally)!=1||
@@ -31,8 +33,12 @@ internal static partial class IntegratedEconomicReplay
             !p.OriginalInstruments.Order().SequenceEqual(input.Markets.Select(m=>m.Market.Name).Order())))
             throw new InvalidDataException("EARLIER_ESTIMATOR_UNIVERSE_BINDING");
         if(earlierEstimatorStudy&&p.Variants.Count(v=>v.Profile.Pav1CompetitiveForecast is not null)!=3||
-            !earlierEstimatorStudy&&p.Variants.Any(v=>v.Profile.Pav1CompetitiveForecast is not null))
+            !earlierEstimatorStudy&&!costStudy&&p.Variants.Any(v=>v.Profile.Pav1CompetitiveForecast is not null))
             throw new InvalidDataException("EARLIER_PAV1_FORECAST_ABLATION_BINDING");
+        if(costStudy&&(p.Variants.Any(v=>!v.Profile.ReserveMarginForStopRisk)||
+            p.Variants.Count(v=>v.Profile.LifecycleEstimator=="CENTERED_COST_CONTEXT")!=6)||
+            !costStudy&&p.Variants.Any(v=>v.Profile.ReserveMarginForStopRisk||v.Profile.LifecycleEstimator=="CENTERED_COST_CONTEXT"))
+            throw new InvalidDataException("COST_CONTEXT_GEOMETRY_BINDING");
         if(estimatorStudy&&p.Variants.Any(v=>v.Profile.LifecycleEstimator is null)||
             !estimatorStudy&&p.Variants.Any(v=>v.Profile.LifecycleEstimator is not null))
             throw new InvalidDataException("LIFECYCLE_ESTIMATOR_STUDY_BINDING");

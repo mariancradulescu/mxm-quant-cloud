@@ -87,7 +87,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
     readonly Dictionary<(string Symbol,string Family,int Side,int? Regime),NativeCausalManagementSelection.Choice> eurManagementChoices=new();
     // Normalized daily statistics are invariant across candidate volumes and
     // executable fee schedules within one frozen causal calibration.
-    readonly Dictionary<(string Symbol,string? AssetClass,string Family,int Side,int? Regime),NativeEurPayoff?> eurCenteredPayoffs=new();
+    readonly Dictionary<(string Symbol,string? AssetClass,string Family,int Side,int? Regime,int? Fast,int? CostBand),NativeEurPayoff?> eurCenteredPayoffs=new();
     NativeEurAdaptiveEstimator? adaptivePayoff;
     sealed record EurRealizedForecastError(string Symbol,string Family,int Side,long AvailableAt,decimal GrossR,decimal NetR);
     readonly Dictionary<(string Symbol,string Family,int Side),List<EurRealizedForecastError>> eurRealizedErrors=new();
@@ -381,14 +381,17 @@ public sealed partial class NativeUnifiedPortfolioEngine
             {
                 if(candidateRiskEur<=0m||currentCostFloorEur<0m)return null;
                 int? regime=target.ClosedStates.SingleOrDefault(x=>x.Timeframe==NativeBarTimeframe.H1)?.Direction;
-                var key=(target.Symbol,target.AssetClass,family,side,regime);
+                bool matched=estimator=="CENTERED_COST_CONTEXT";
+                int? fast=matched?target.ClosedStates.SingleOrDefault(x=>x.Timeframe==NativeBarTimeframe.M15)?.Direction:null;
+                int? costBand=matched?NativeCenteredLifecycle.CostBand(target.CostRiskFraction):null;
+                var key=(target.Symbol,target.AssetClass,family,side,regime,fast,costBand);
                 bool cache=eurCalibration is not null&&eurCalibration.ObservationThrough<scoredAt;
                 NativeEurPayoff? normalized;
                 if(!cache||!eurCenteredPayoffs.TryGetValue(key,out normalized))
                 {
                     normalized=NativeCenteredLifecycle.Estimate(scoredHistory,family,side,target,scoredAt,
                         1m,0m,scored.MinimumEpisodes,scored.MinimumDays,scored.DayPenalty,
-                        estimator=="CENTERED_TRANSFER");
+                        estimator!="CENTERED_LOCAL",costMatched:matched);
                     if(cache)eurCenteredPayoffs[key]=normalized;
                 }
                 return NativeCenteredLifecycle.Reprice(normalized,candidateRiskEur,currentCostFloorEur,diagnostic);
@@ -713,15 +716,19 @@ public sealed partial class NativeUnifiedPortfolioEngine
     static (decimal Stop,decimal Target)? EurLevels(Ucp1DecisionSignal signal,Ucp1MarketFrame market)
         =>signal.GeneralGeometry is { } geometry?(geometry.Stop,geometry.Target):Cpe1Levels(signal,market);
 
-    static NativePendingCapitalGate.Admission AssessEurCandidate(NativeFundingCapital capital,LedgerSummary book,
+    NativePendingCapitalGate.Admission AssessEurCandidate(NativeFundingCapital capital,LedgerSummary book,
         NativePendingCapitalGate.Commitment[] held,List<NativePendingCapitalGate.Commitment> pending,
         EurCandidate choice,decimal extraRisk=0m)
     {
         var market=choice.Market;
         decimal units=choice.Receipt.Units;
-        return NativePendingCapitalGate.Assess(capital.ResearchAdmissionEquityEur,book.UsedMarginEur is not null,
+        var gate=NativePendingCapitalGate.Assess(capital.ResearchAdmissionEquityEur,book.UsedMarginEur is not null,
             held,pending,new(market.Symbol,choice.Signal.Family,units,market.Contract.VolumeStepUnits,units,
                 market.Quote.MarginPerUnit,choice.Geometry.InitialRiskEur/units,extraRisk));
+        if(gate.IsFinanceable&&eurDevelopmentProfile?.ReserveMarginForStopRisk==true&&
+            !NativePendingCapitalGate.StopAdjustedMarginFits(gate.EquityEur,gate.ReservedMarginAfterEur,gate.ReservedRiskAfterEur))
+            return gate with {IsFinanceable=false,Status="PENDING_PLUS_HELD_STOP_ADJUSTED_MARGIN_CAP"};
+        return gate;
     }
 
     NativeModelCloseInstruction? ManageFundedTarget(Ucp1Plan plan,LedgerPosition position,
