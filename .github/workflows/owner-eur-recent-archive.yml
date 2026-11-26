@@ -9,6 +9,7 @@ on:
     branches: [main]
     paths:
       - 'research/eur_recent_archive_13w_1_execution.json'
+      - 'research/eur_recent_archive_13w_1_checkpoint_recovery.json'
 permissions:
   contents: read
   actions: read
@@ -17,6 +18,7 @@ jobs:
     runs-on: ubuntu-24.04
     outputs:
       execute: ${{ steps.launch.outputs.execute }}
+      resume_revision: ${{ steps.launch.outputs.resume_revision }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -36,22 +38,43 @@ jobs:
       - name: Verify the registered execution commit
         id: launch
         if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.actor == 'mariancradulescu'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           python - <<'PYLAUNCH'
-          import hashlib, json, os, subprocess
+          import hashlib, json, os, re, subprocess
           from pathlib import Path
-          path="research/eur_recent_archive_13w_1_execution.json"
           parent=subprocess.check_output(["git","rev-parse","HEAD^"],text=True).strip()
           change=subprocess.check_output(["git","diff","--name-status",parent,"HEAD"],text=True)
-          assert change.strip()=="A\t"+path
+          action,path=change.strip().split("\t")
+          assert action=="A" and path in ("research/eur_recent_archive_13w_1_execution.json",
+                                          "research/eur_recent_archive_13w_1_checkpoint_recovery.json")
           raw=Path("research/eur_recent_archive_13w_1.json").read_bytes()
           registration=json.loads(raw)
           marker=json.loads(Path(path).read_bytes())
-          assert marker==dict(Study=registration["Study"],ProtocolSha256=hashlib.sha256(raw).hexdigest(),
-                              OriginalRun=registration["OriginalRun"],RecoveryRun=registration["RecoveryRun"],
-                              ValidatedRevision=parent)
+          expected=dict(Study=registration["Study"],ProtocolSha256=hashlib.sha256(raw).hexdigest(),
+                        OriginalRun=registration["OriginalRun"],RecoveryRun=registration["RecoveryRun"],
+                        ValidatedRevision=parent)
+          revision=""
+          if path.endswith("_checkpoint_recovery.json"):
+              run_id=45749454629
+              revision="eb783bd6076ddb153872a419fb565fb629b98cdb"
+              checkpoints=marker["Checkpoints"]
+              assert set(checkpoints)=={"0","1","2"} and all(
+                  type(entry["Artifact"]) is int and re.fullmatch("[0-9a-f]{64}",entry["ArchiveSha256"])
+                  for entry in checkpoints.values())
+              expected.update(ReplayRun=run_id,ReplayRevision=revision,Checkpoints=checkpoints)
+              endpoint=f"repos/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{run_id}"
+              run=json.loads(subprocess.check_output(["gh","api",endpoint]))
+              assert run["status"]=="completed" and run["conclusion"]=="failure" and run["head_sha"]==revision
+              jobs=json.loads(subprocess.check_output(["gh","api",endpoint+"/jobs"]))["jobs"]
+              failed={j["name"] for j in jobs if j["conclusion"]=="failure" and any(
+                  s["name"]=="Replay phase 4 and seal checkpoint" and s["conclusion"]=="failure" for s in j["steps"])}
+              assert failed=={f"evidence ({scenario})" for scenario in checkpoints}
+          assert marker==expected
           with open(os.environ["GITHUB_OUTPUT"],"a") as output:
               output.write("execute=true\n")
+              output.write(f"resume_revision={revision}\n")
           PYLAUNCH
   evidence:
     needs: technical
@@ -66,6 +89,7 @@ jobs:
     env:
       MXM_ECONOMIC_SCENARIO_INDEX: ${{ matrix.scenario }}
       MXM_ECONOMIC_TRIAL_GROUP: ARCHIVE
+      MXM_ECONOMIC_ARCHIVE_CHECKPOINT_ORIGINAL_REVISION: ${{ needs.technical.outputs.resume_revision }}
       MXM_ECONOMIC_RECEIPT_DIRECTORY: window-receipts
       MXM_ECONOMIC_BOUNDED_NEIGHBORS: 1
       MXM_ECONOMIC_PAIRED_DISTRIBUTION: 1
@@ -99,21 +123,28 @@ jobs:
         run: python -m research.owner_eur_recent_archive materialize --work "$RUNNER_TEMP/eur-private" --receipt recent-archive-source.json
       - name: Recover published encrypted chronological checkpoints on retry
         id: resume
-        if: github.run_attempt > 1
+        if: github.run_attempt > 1 || needs.technical.outputs.resume_revision != ''
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           mkdir -p window-receipts
-          gh api --paginate "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?per_page=100" --jq '.artifacts[] | select(.expired == false) | .name' > "$RUNNER_TEMP/checkpoints.txt"
-          for phase in 1 2 3 4; do
-            name="$CHECKPOINT_PREFIX-$phase"
-            if grep -Fxq "$name" "$RUNNER_TEMP/checkpoints.txt"; then
-              gh run download "$GITHUB_RUN_ID" --name "$name" --dir "checkpoints/$phase"
-              find "checkpoints/$phase" -name '*.json' -type f -exec cp {} window-receipts/ \;
-              echo "phase$phase=true" >> "$GITHUB_OUTPUT"
-            fi
-          done
+          if [[ -n "$MXM_ECONOMIC_ARCHIVE_CHECKPOINT_ORIGINAL_REVISION" ]]; then
+            python -m research.owner_eur_recent_archive restore
+            find checkpoints/3 -name '*.json' -type f -exec cp {} window-receipts/ \;
+            for phase in 1 2 3; do echo "phase$phase=true" >> "$GITHUB_OUTPUT"; done
+          fi
+          if [[ "$GITHUB_RUN_ATTEMPT" != 1 ]]; then
+            gh api --paginate "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?per_page=100" --jq '.artifacts[] | select(.expired == false) | .name' > "$RUNNER_TEMP/checkpoints.txt"
+            for phase in 1 2 3 4; do
+              name="$CHECKPOINT_PREFIX-$phase"
+              if grep -Fxq "$name" "$RUNNER_TEMP/checkpoints.txt"; then
+                gh run download "$GITHUB_RUN_ID" --name "$name" --dir "checkpoints/$phase"
+                find "checkpoints/$phase" -name '*.json' -type f -exec cp {} window-receipts/ \;
+                echo "phase$phase=true" >> "$GITHUB_OUTPUT"
+              fi
+            done
+          fi
       - name: Replay phase 1 and seal checkpoint
         if: steps.resume.outputs.phase1 != 'true'
         env:

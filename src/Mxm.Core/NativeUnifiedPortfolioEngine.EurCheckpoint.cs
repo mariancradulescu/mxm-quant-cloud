@@ -67,12 +67,13 @@ public sealed partial class NativeUnifiedPortfolioEngine
             eurMarginExceedances.ToArray(),cpe1History.Select(x=>x.Value.ResearchState(x.Key)).ToArray(),
             cpe1ScoredEpisodes.ToArray(),UsePairedDistribution?pairedEurPayoff.Select(x=>
                 new EurPairedCalibrationState(x.Key.Family,x.Key.Side,x.Value.Residuals)).ToArray():null,
-            researchPlanOrder?.Checkpoint(),eurRealizedErrors.Count==0?null:eurRealizedErrors.Values.SelectMany(x=>x).ToArray()));
+            researchPlanOrder?.Checkpoint(),eurRealizedErrors.Count==0?null:eurRealizedErrors.Values.SelectMany(x=>x).ToArray()),
+            NativeHistoricalCheckpointJson.Options);
     }
 
     internal static NativeUnifiedPortfolioEngine RestoreHistoricalEurCheckpoint(string checkpoint)
     {
-        var s=JsonSerializer.Deserialize<EurResearchState>(checkpoint)
+        var s=JsonSerializer.Deserialize<EurResearchState>(checkpoint,NativeHistoricalCheckpointJson.Options)
             ??throw new ArgumentException("EUR_HISTORICAL_CHECKPOINT_REQUIRED");
         if(s.Version!=EurResearchCheckpointVersion)
             throw new ArgumentException("EUR_HISTORICAL_CHECKPOINT_VERSION");

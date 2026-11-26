@@ -24,6 +24,7 @@ from .integrated_market_source import CIPHER_DIR, FUNDED_HISTORY, HOUR, PUBLIC_D
 
 REGISTRY = Path("research/eur_recent_archive_13w_1.json")
 TEMPLATE = Path("research/eur_recent_funded_1.json")
+RECOVERY = Path("research/eur_recent_archive_13w_1_checkpoint_recovery.json")
 
 
 def download_archive(artifact_id, run_id, expected_hash, destination):
@@ -139,7 +140,7 @@ def materialize(plan_raw, work, receipt):
     manifest_hash = source.digest(source.canonical(proof))
     private = dict(Start=start, FitEnd=plan["TestBoundaries"][0], End=end,
                    ProtocolSha256=source_protocol, EvidenceManifestSha256=manifest_hash,
-                   EngineRevision=os.environ["GITHUB_SHA"],
+                   EngineRevision=os.environ.get("MXM_ECONOMIC_ARCHIVE_CHECKPOINT_ORIGINAL_REVISION") or os.environ["GITHUB_SHA"],
                    SourceAcquiredAt=max(row[0]["ObservedAtUtcMs"] for row in terms_by_market.values()),
                    Markets=markets, Tapes=tapes, Routes={"USD": [dict(Symbol="EURUSD", BaseAsset="EUR", QuoteAsset="USD")]})
     controls = {t["Id"]: t for t in template["Trials"]}
@@ -161,7 +162,7 @@ def materialize(plan_raw, work, receipt):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("stage", choices=("download", "materialize"))
+    parser.add_argument("stage", choices=("download", "materialize", "restore"))
     parser.add_argument("--work", type=Path)
     parser.add_argument("--receipt", type=Path)
     args = parser.parse_args()
@@ -170,6 +171,16 @@ def main():
         plan = json.loads(raw)
         download_archive(plan["OriginalArtifact"], plan["OriginalRun"], plan["OriginalArchiveSha256"], CIPHER_DIR)
         download_archive(plan["RecoveryArtifact"], plan["RecoveryRun"], plan["RecoveryArchiveSha256"], prior.RECOVERY_DIR)
+    elif args.stage == "restore":
+        marker = json.loads(RECOVERY.read_bytes())
+        need(source.digest(raw) == marker["ProtocolSha256"] and
+             marker["ReplayRevision"] == os.environ["MXM_ECONOMIC_ARCHIVE_CHECKPOINT_ORIGINAL_REVISION"],
+             "EUR_RECENT_ARCHIVE_RESUME_REGISTRATION")
+        selected = marker["Checkpoints"][os.environ["MXM_ECONOMIC_SCENARIO_INDEX"]]
+        destination = Path("checkpoints/3")
+        destination.parent.mkdir(exist_ok=True)
+        download_archive(selected["Artifact"], marker["ReplayRun"], selected["ArchiveSha256"], destination)
+        need((destination / "checkpoint.sealed").is_file(), "EUR_RECENT_ARCHIVE_MISSING_PHASE3")
     else:
         materialize(raw, args.work, args.receipt)
 

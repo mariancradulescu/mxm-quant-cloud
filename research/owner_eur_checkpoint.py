@@ -1,6 +1,7 @@
 """Run a chronological section and seal its state with the existing custody key."""
 import argparse
 import gzip
+from io import BytesIO
 import os
 from pathlib import Path
 import shutil
@@ -24,7 +25,9 @@ def run(prepared, checkpoint, previous, phase, report, protocol=None):
         env = {k: v for k, v in os.environ.items() if k != KEY}
         if previous is not None:
             restored = work / "previous.json"
-            restored.write_bytes(gzip.decompress(unseal(previous.read_bytes(), private_key)))
+            compressed = BytesIO(unseal(previous.read_bytes(), private_key))
+            with gzip.GzipFile(fileobj=compressed, mode="rb") as archive, restored.open("xb") as stream:
+                shutil.copyfileobj(archive, stream)
             env["MXM_ECONOMIC_CHECKPOINT_FROM"] = str(restored)
         if checkpoint is not None:
             plaintext = work / "next.json"
@@ -38,7 +41,11 @@ def run(prepared, checkpoint, previous, phase, report, protocol=None):
         public_key = serialization.load_pem_private_key(private_key, password=None).public_key().public_bytes(
             serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo)
         checkpoint.mkdir(parents=True, exist_ok=False)
-        envelope = seal(gzip.compress(plaintext.read_bytes(), compresslevel=3, mtime=0), public_key)
+        compressed_path = work / "next.json.gz"
+        with plaintext.open("rb") as state, compressed_path.open("xb") as stream:
+            with gzip.GzipFile(filename="", fileobj=stream, mode="wb", compresslevel=3, mtime=0) as archive:
+                shutil.copyfileobj(state, archive)
+        envelope = seal(compressed_path.read_bytes(), public_key)
         with (checkpoint / "checkpoint.sealed").open("xb") as output:
             output.write(envelope)
         for receipt in sorted(Path(os.environ["MXM_ECONOMIC_RECEIPT_DIRECTORY"]).glob("*.json")):

@@ -29,7 +29,7 @@ internal static partial class IntegratedEconomicReplay
         string temporary=path+".tmp";
         using(var file=new FileStream(temporary,FileMode.CreateNew,FileAccess.Write))
         {
-            JsonSerializer.Serialize(file,state);
+            JsonSerializer.Serialize(file,state,NativeHistoricalCheckpointJson.Options);
             file.Flush(true);
         }
         File.Move(temporary,path);
