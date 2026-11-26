@@ -252,8 +252,13 @@ internal static partial class IntegratedEconomicReplay
         var candidates=variants.SelectMany(v=>new[]{false,true}.Select(scored=>
         {
             var stats=selection.Where(s=>s.Id==v.Id).Select(s=>scored?s.Scp1:s.Raw).ToArray();
+            decimal calendarDays=(plan.EvaluationFrom-plan.SelectionFrom)/(decimal)HistoricalDay;
+            // The complete-day uncertainty statistic must not hide known
+            // losses from days with another unresolved episode. Include all
+            // known reconciled NET as a period-normalized subtotal; it is
+            // explicitly not a bound on the unknown monetary remainder.
             decimal? score=stats.All(s=>s.KnownClosed>0&&s.DailyNetLowerEur.HasValue)
-                ?stats.Min(s=>s.DailyNetLowerEur):null;
+                ?stats.Min(s=>Math.Min(s.DailyNetLowerEur!.Value,s.NetEur/calendarDays)):null;
             return new {v.Id,Scored=scored,Score=score,KnownGrossPositive=stats.All(s=>s.GrossEur>0m)};
         })).ToArray();
         var ordered=candidates.Where(c=>c.Score.HasValue)
@@ -308,6 +313,7 @@ internal static partial class IntegratedEconomicReplay
             Missingness="NO_FRAME_AND_UNRESOLVED_EXCLUDED_FROM_CONDITIONAL_MEANS; CENSORED_NOT_ZERO",
             MonetarySelectionBasis="ALL_RECONCILED_CLOSED_MODEL_NET_INCLUDING_INCOMPLETE_PRICE_PATHS; LEARNING_AND_EXCURSION_SUBSET_SEPARATE",
             CompleteDaysBasis="OBSERVED_MONETARY_CLOCKS_WITH_NO_UNRESOLVED_ADMITTED_EPISODES",
+            SelectionObjective="WORST_STRESS_MIN_COMPLETE_DAY_CLUSTER_LOWER_AND_ALL_KNOWN_NET_PER_REGISTERED_DAY_CONDITIONAL_SUBTOTAL",
             MfeBasis="SAMPLED_REALIZED_EPISODE_PATH_NOT_EXECUTABLE_MAXIMUM",
             SharedPortfolioEvaluations=0,IndependentConfirmationCertified=false,Orders=0,CloudActivated=false,SourceBrokerRequests=0
         },Json));
