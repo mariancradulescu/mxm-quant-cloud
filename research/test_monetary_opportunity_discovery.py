@@ -47,6 +47,10 @@ class OpportunityDiscovery(unittest.TestCase):
             self.assertEqual(len(result["Selection"]),6)
             self.assertGreater(sum(x["Raw"]["Admitted"] for x in result["Selection"]),0)
             for h in result["HeldOut"]:
+                self.assertEqual(h["Raw"]["KnownClosed"],sum(e["NetEur"] is not None for e in h["Episodes"]))
+                self.assertEqual(h["Raw"]["KnownClosedIncompletePath"],sum(e["NetEur"] is not None and
+                    (e["Gap"] or e["MarkCoverageComplete"] is not True) for e in h["Episodes"]))
+                self.assertEqual(h["Raw"]["LearningEligible"],sum(e["LearningEligible"] for e in h["Episodes"]))
                 for e in h["Episodes"]:
                     self.assertGreaterEqual(e["At"],plan["EvaluationFrom"])
                     self.assertLess(e["At"],END)
