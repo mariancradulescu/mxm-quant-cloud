@@ -246,7 +246,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
             for(int i=choices.Count-1;i>=0;i--)
                 if(Rejection(choices[i]) is { } reason)
                 {trace(choices[i].Receipt,reason);choices.RemoveAt(i);}
-            var selected=NativeEurMonetaryAllocation.Search(choices,x=>x.Market.Symbol,Net,Feasible,4);
+            var selected=NativeEurMonetaryAllocation.Search(choices,x=>x.Market.Symbol,Net,Feasible,8);
             foreach(var item in selected.Items)
             {
                 if(Rejection(item) is { } reason){trace(item.Receipt,reason);continue;}
