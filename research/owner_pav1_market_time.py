@@ -226,7 +226,7 @@ def seal_checkpoint(work,folder):
     record(True);print('PAV_MT_BOUNDED_CHECKPOINT_COMPLETE',len(files),'files',flush=True)
 
 
-def restore_checkpoint(folder,destination,key,run,expected_source_sha256):
+def restore_checkpoint(folder,destination,key,run,expected_source_sha256,source_only=False):
     """Verify the encrypted manifest and every part before exposing a source."""
     from .custody import unseal_new
     folder=Path(folder);destination=Path(destination)
@@ -236,7 +236,15 @@ def restore_checkpoint(folder,destination,key,run,expected_source_sha256):
     need(manifest['RunId']==run and manifest['Complete'] and manifest['SourceSha256']==expected_source_sha256 and
          len(manifest['Files'])==manifest['ExpectedFiles'],'PAV_MT_CHECKPOINT_SOURCE_BINDING')
     destination.mkdir(mode=0o700)
-    for row in manifest['Files']:
+    rows=manifest['Files']
+    if source_only:
+        # The caller pins and verifies the entire archive SHA. Old book states
+        # need not be decrypted again to reuse normalized source and tapes.
+        rows=[row for row in rows if row['Path'] in ('source.json','pav-market-protocol.json')
+              or row['Path'].startswith('verified-protection/')]
+        need({'source.json','pav-market-protocol.json'}<={row['Path'] for row in rows},'PAV_MT_SOURCE_ONLY_SCOPE')
+        print('PAV_MT_SOURCE_ONLY_RESTORE',len(rows),'of',len(manifest['Files']),flush=True)
+    for row in rows:
         relative=Path(row['Path']);need(not relative.is_absolute() and '..' not in relative.parts,'PAV_MT_CHECKPOINT_SAFE_PATH')
         path=destination/relative;path.parent.mkdir(parents=True,exist_ok=True);digest=hashlib.sha256();offset=0
         with path.open('xb') as target:
@@ -248,7 +256,8 @@ def restore_checkpoint(folder,destination,key,run,expected_source_sha256):
                      'PAV_MT_CHECKPOINT_PART_INTEGRITY')
                 target.write(clear);digest.update(clear);offset+=len(clear)
         need(offset==row['Bytes'] and digest.hexdigest()==row['Sha256'],'PAV_MT_CHECKPOINT_FILE_INTEGRITY')
-    need(src.digest((destination/'source.json').read_bytes())==expected_source_sha256,'PAV_MT_RESTORED_SOURCE_IDENTITY')
+    with (destination/'source.json').open('rb') as source:
+        need(hashlib.file_digest(source,'sha256').hexdigest()==expected_source_sha256,'PAV_MT_RESTORED_SOURCE_IDENTITY')
 
 
 def partition(p,work,stress):

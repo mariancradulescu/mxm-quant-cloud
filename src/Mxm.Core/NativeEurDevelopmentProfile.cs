@@ -110,6 +110,9 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
     public bool AllocatePav1AtMinimumVolume { get; init; }
 
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool CompeteEconomicFamilies { get; init; }
+
     internal string GeometryIdentity => FormattableString.Invariant(
         $"{UseAvailableContext}/{DistributionTargetRanges:G29}/{StopReserveMultiplier:G29}") +
         (ModeledStopLatencyMs is long latency ? FormattableString.Invariant($"/Trade/{latency}") : "") +
@@ -134,15 +137,21 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
         (RequireMaturedCashForLargerVolume?"/MATURED_CASH_MARGINAL_VOLUME":"") +
         (ReserveObservedBarGaps?"/OBSERVED_GAP_RESERVE":"") +
         (AllocatePav1AtMinimumVolume?"/PAV1_MINIMUM_VOLUME_MONETARY_ALLOCATION":"") +
+        (CompeteEconomicFamilies?"/SEVEN_FAMILY_CAUSAL_COMMON_BOOK_V1":"") +
         (EconomicManagementTimeframe is not null?$"/MANAGEMENT_TIMEFRAME:{EconomicManagementTimeframe}":"") +
         (EconomicMechanism is not null&&KeepAdmissionRiskAtFill?$"/MECHANISM_KEEP_RISK/RESIZE:{ResizeWithinAdmissionRiskAtFill}":"");
 
     internal void Verify()
     {
+        if(CompeteEconomicFamilies&&(EconomicMechanism!=NativeEconomicMechanisms.Scored||
+            !UseAvailableContext||!KeepAdmissionRiskAtFill||!ResizeWithinAdmissionRiskAtFill||
+            !ObserveIntentExecutionOnTicks||EconomicGeometryTimeframe is null||
+            LearnFromOpportunityEpisodes&&!ObserveFamilyDirectionsOnClosedBars))
+            throw new ArgumentException("EUR_COMPETITIVE_FAMILY_PROFILE");
         if(AllocatePav1AtMinimumVolume&&(EconomicMechanism!=NativeEconomicMechanisms.Transition||
             !MinimumContractVolumeOnly||!MatchEconomicTransitionHorizonAtFill||!KeepAdmissionRiskAtFill||!ResizeWithinAdmissionRiskAtFill))
             throw new ArgumentException("PAV1_MINIMUM_MONETARY_ALLOCATION");
-        if((RequirePav1FastAgreement||Pav1TransitionBars>0||RequireMaturedCashForLargerVolume||ReserveObservedBarGaps)&&
+        if((RequirePav1FastAgreement||Pav1TransitionBars>0||RequireMaturedCashForLargerVolume||ReserveObservedBarGaps&&!CompeteEconomicFamilies)&&
             EconomicMechanism!=NativeEconomicMechanisms.Transition||
             Pav1TransitionBars!=0&&Pav1TransitionBars is not (24 or 72)||
             RequireMaturedCashForLargerVolume&&!OptimizeTransitionNetVolume)
@@ -168,7 +177,7 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
             throw new ArgumentException("EUR_MECHANISM_GEOMETRY_OR_VOLUME");
         if(EconomicMechanism is not null&&(!NativeEconomicMechanisms.All.Contains(EconomicMechanism,StringComparer.Ordinal)||
             !NativeEconomicMechanisms.Management.Contains(EconomicManagement,StringComparer.Ordinal)||UseAdaptivePayoff||
-            LearnFromOpportunityEpisodes||!UseAvailableContext)||EconomicManagement is not null&&EconomicMechanism is null)
+            LearnFromOpportunityEpisodes&&!CompeteEconomicFamilies||!UseAvailableContext)||EconomicManagement is not null&&EconomicMechanism is null)
             throw new ArgumentException("EUR_DISTINCT_MECHANISM_PROFILE");
         if (DistributionTargetRanges <= 0m || (!UseAvailableContext && DistributionTargetRanges != 2m) ||
             MinimumDays < 2 || MinimumEpisodes < MinimumDays ||

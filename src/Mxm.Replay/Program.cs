@@ -17,6 +17,8 @@ if(args is ["--owner-aapl-frozen-funding",var afSource,var afTape,var afReport,v
     return IntegratedEconomicReplay.RunAaplFrozenFunding(afSource,afTape,afReport,afNewReports,afWitness,afOutput);
 if(args is ["--owner-opportunity-screen",var screenProtocol,var screenSource,var screenReport,var screenProtection])
     return IntegratedEconomicReplay.RunOpportunityScreen(screenProtocol,screenSource,screenReport,screenProtection);
+if(args is ["--owner-competitive-families",var cfProtocol,var cfSource,var cfDirectory,var cfTape,var cfStress])
+    return IntegratedEconomicReplay.RunCompetitiveFamilies(cfProtocol,cfSource,cfDirectory,cfTape,cfStress);
 if(args is ["--owner-eur-historical-study",var historicalProtocol,var historicalSource,var historicalReport])
     return IntegratedEconomicReplay.RunHistoricalEur(historicalProtocol,historicalSource,historicalReport);
 if(args is ["--owner-eur-historical-study",var protectionProtocol,var protectionSource,var protectionReport,var protectionTape])

@@ -45,6 +45,22 @@ internal static class NativeEconomicMechanismChecks
         check(Reduction(remainderFee:.2m) is null,"Nonproportional remaining fees cannot release proportional risk");
         check(Reduction(closeFee:.5m) is null,"Split fees can remove the conditional economic advantage");
         check(Reduction(uncertainty:.5m) is null,"Uncertain continuation cannot establish partial-close dominance");
+        var jointProfile=new NativeEurDevelopmentProfile(UseAvailableContext:true)
+        {EconomicMechanism=NativeEconomicMechanisms.Scored,EconomicManagement="TRANSITION_VALUE",
+            CompeteEconomicFamilies=true,ObserveIntentExecutionOnTicks=true,ModeledStopLatencyMs=100,
+            EconomicGeometryTimeframe="H1",EconomicStopRanges=.75m,KeepAdmissionRiskAtFill=true,
+            ResizeWithinAdmissionRiskAtFill=true,ReserveObservedBarGaps=true};
+        var jointBook=new NativeUnifiedPortfolioEngine(NativeUnifiedPortfolioEngine.EurGeneralProbe,
+            eurDevelopmentProfile:jointProfile);
+        var jointSignals=jointBook.DescribeEurGeneral(market,at,new(at,new[]{market}));
+        check(jointSignals.Any(s=>s.Family==NativeEconomicMechanisms.Transition)&&
+            jointSignals.Any(s=>s.Family==NativeEconomicMechanisms.Follow)&&
+            jointSignals.Select(s=>s.Family).Distinct().Count()>1,
+            "Opt-in shared family discovery retains PAV1 and competing distinct families");
+        check(new NativeUnifiedPortfolioEngine(NativeUnifiedPortfolioEngine.EurGeneralProbe,
+            eurDevelopmentProfile:jointProfile with {CompeteEconomicFamilies=false,ReserveObservedBarGaps=false})
+            .DescribeEurGeneral(market,at,new(at,new[]{market})).All(s=>s.Family!=NativeEconomicMechanisms.Transition),
+            "Frozen scored mechanism still excludes the new transition family");
         var follow=NativeEconomicMechanisms.Describe(NativeEconomicMechanisms.Follow,market,at,1.5m);
         var reverse=NativeEconomicMechanisms.Describe(NativeEconomicMechanisms.Reverse,market,at,1.5m);
         check(follow.Single().Side==1&&reverse.Single().Side==-1,
