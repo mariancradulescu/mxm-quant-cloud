@@ -66,12 +66,6 @@ jobs:
         with:
           dotnet-version: '8.0.x'
       - run: dotnet build src/Mxm.Replay -c Release
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: source-history-public-receipt
-          path: original-source-history
-          run-id: 45396314675
-          github-token: ${{ github.token }}
       - name: Materialize previously verified earlier 13-week source once
         run: python -m research.owner_earlier_lifecycle_estimation prepare --work "$RUNNER_TEMP/earlier-private"
         env:
