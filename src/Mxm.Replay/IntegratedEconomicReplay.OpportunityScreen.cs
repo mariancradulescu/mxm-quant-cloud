@@ -98,7 +98,7 @@ internal static partial class IntegratedEconomicReplay
                     attempts.Add(attempt with {Status="WAIT_NOT_ADMITTED:"+reasons});continue;
                 }
                 var receipt=episode.EurOpportunityReceipts.SingleOrDefault(x=>x.At==frame.At&&
-                    x.Symbol==symbol&&x.Family==offer.Family&&x.Side==offer.Side&&x.Decision is "LONG_PENDING" or "SHORT_PENDING");
+                    x.Symbol==symbol&&x.Family==offer.Family&&x.Side==offer.Side&&(x.Decision is "LONG_PENDING" or "SHORT_PENDING"));
                 if(receipt is null)throw new InvalidOperationException("OPPORTUNITY_SCREEN_ADMISSION_RECEIPT");
                 NativeEurPayoff? score=null;
                 if(receipt.Context is { } context&&receipt.ReservedRiskEur is >0m&&receipt.NextManagementFundingCeilingEur is decimal carry&&
@@ -113,7 +113,7 @@ internal static partial class IntegratedEconomicReplay
         public ScreenAttempt[] Rows(long from,long to)
             =>attempts.Concat(active.Values.Select(x=>x.Attempt with {Status="RIGHT_CENSORED"}))
                 .Where(x=>from<=x.At&&x.At<to)
-                .Select(x=>x.Label is { } l&&l.AvailableAt>=to
+                .Select(x=>(x.Label is { } l&&l.AvailableAt>=to)||x.Trip is { } t&&t.CloseAt>=to
                     ?x with {Status="RIGHT_CENSORED",Label=null,Trip=null,FirstPositiveAt=null,FirstNegativeAt=null,
                         PeakAt=null,PositiveClocks=0,NegativeClocks=0,UnknownClocks=0}:x).ToArray();
     }
@@ -241,9 +241,9 @@ internal static partial class IntegratedEconomicReplay
                     a.At,a.Symbol,a.Family,a.Side,a.Status,Units=a.Entry!.Units,a.Entry.ReservedRiskEur,
                     a.Entry.KnownRoundTripCostEur,a.Entry.CurrentMarginEstimateEur,
                     ScoreNetLowerEur=a.Score?.NetLowerEur,ScoreGrossLowerEur=a.Score?.GrossLowerEur,Scp1Admitted=ScpAdmits(a),
-                    a.Label?.AvailableAt,NetEur=a.Label?.NetEur,GrossEur=a.Label?.GrossEur,
-                    a.Trip?.OpenAt,a.Trip?.CloseAt,a.Trip?.SampledMfeEur,a.Trip?.SampledMaeEur,
-                    a.Trip?.ExitReason,FirstBarrier=a.Trip?.Integrated?.FirstObservedBarrier,
+                    AvailableAt=a.Label?.AvailableAt,NetEur=a.Label?.NetEur,GrossEur=a.Label?.GrossEur,
+                    OpenAt=a.Trip?.OpenAt,CloseAt=a.Trip?.CloseAt,SampledMfeEur=a.Trip?.SampledMfeEur,SampledMaeEur=a.Trip?.SampledMaeEur,
+                    ExitReason=a.Trip?.ExitReason,FirstBarrier=a.Trip?.Integrated?.FirstObservedBarrier,
                     a.FirstPositiveAt,a.FirstNegativeAt,a.PeakAt,a.PositiveClocks,a.NegativeClocks,a.UnknownClocks
                 }).ToArray()};
         })).ToArray();
