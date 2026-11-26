@@ -1,0 +1,26 @@
+name: OWNER verify completed public diagnostic and earlier normalized receipt
+on:
+  pull_request:
+    paths: ['research/owner_public_artifact_receipt_1.py', '.github/workflows/owner-public-artifact-receipt-1.yml']
+  push:
+    branches: [main]
+    paths: ['research/owner_public_artifact_receipt_1.py']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - run: python -m research.owner_public_artifact_receipt_1 check
+      - if: github.event_name == 'push' && github.run_attempt == 1
+        run: python -m research.owner_public_artifact_receipt_1 read
+        env:
+          GH_TOKEN: ${{ github.token }}
