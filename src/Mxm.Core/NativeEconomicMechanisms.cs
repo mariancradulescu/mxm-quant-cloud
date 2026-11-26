@@ -181,4 +181,23 @@ public static class NativeEconomicMechanisms
             rows.Max(x=>x.NetEur/x.RiskEur)*risk)
             {Cohort=$"SCP1_SAME_SYMBOL_REGIME/PWIN={probability:G6}/WIN_R={win:G6}/LOSS_R={loss:G6}"};
     }
+    // Separate monetary settlement from excursion sampling. All rows are
+    // conditional modeled outcomes, not broker execution certifications.
+    internal static NativeEurPayoff? EntryQualityPayoff(IEnumerable<NativeEurCalibrationOutcome> outcomes,
+        string family,int side,NativeEurDecisionContext context,long at,decimal risk,decimal cost,
+        int minimumEpisodes,int minimumDays,decimal penalty,bool costBand)
+    {
+        var local=outcomes.Where(x=>x.AvailableAt<at&&x.RiskEur>0m&&x.Family==family&&x.Side==side&&
+            x.Context?.Symbol==context.Symbol).ToArray();
+        if(!costBand)return LifecyclePayoff(local,family,side,context,at,risk,cost,minimumEpisodes,minimumDays,penalty);
+        int? regime=context.ClosedStates.SingleOrDefault(x=>x.Timeframe==NativeBarTimeframe.H1)?.Direction;
+        local=local.Where(x=>x.Context!.ClosedStates.SingleOrDefault(s=>s.Timeframe==NativeBarTimeframe.H1)?.Direction==regime).ToArray();
+        if(local.Length<minimumEpisodes)return null;
+        var costs=local.Select(x=>x.Context!.CostRiskFraction).OrderBy(x=>x).ToArray();
+        decimal median=costs[costs.Length/2];
+        bool lower=context.CostRiskFraction<=median;
+        var band=local.Where(x=>(x.Context!.CostRiskFraction<=median)==lower).ToArray();
+        var estimate=LifecyclePayoff(band,family,side,context,at,risk,cost,minimumEpisodes,minimumDays,penalty);
+        return estimate is null?null:estimate with {Cohort=estimate.Cohort+FormattableString.Invariant($"/CAUSAL_COST_MEDIAN:{median:G29}/LOWER:{lower}")};
+    }
 }
