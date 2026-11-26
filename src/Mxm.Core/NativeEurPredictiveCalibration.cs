@@ -25,13 +25,14 @@ internal sealed partial class NativeEurAdaptiveEstimator
     bool economicSelection;
     bool selectionAwareCalibration;
     bool selectedResidualSupport;
+    bool forecastBandCalibration;
     readonly Dictionary<(string Family,int Side),double[]> forecastBandCuts=new();
 
     // The band is defined by the raw ex ante prediction in risk units,
     // including the executable gross-minus-cost upper bound. Realized NET
     // never determines the band of a row. Cuts are frozen before residual dates.
-    static double ForecastNet(Validation x)=>Math.Min(x.Row.Net-x.NetError,
-        x.Row.Gross-x.GrossError-(double)x.Row.Context.CostRiskFraction);
+    static double ForecastNet(Validation x)=>Math.Min(x.NetPrediction,
+        x.GrossPrediction-(double)x.Row.Context.CostRiskFraction);
     static IEnumerable<string> ForecastScopes(NativeEurDecisionContext c,double forecast,double[] cuts,RegimeCuts? regime)
     {
         if(cuts.Length!=2)yield break;
@@ -108,7 +109,8 @@ internal sealed partial class NativeEurAdaptiveEstimator
                 {
                     bool supported=models.TryGetValue(row.Group,out var model);
                     var pred=supported?Estimate(model!,row.Context,row.Features,p):(0d,0d);
-                    result.Add(new(row,row.Gross-pred.Item1,row.Net-pred.Item2,supported));
+                    result.Add(new(row,row.Gross-pred.Item1,row.Net-pred.Item2,supported)
+                    {GrossPrediction=pred.Item1,NetPrediction=pred.Item2});
                 }
             }
             return result.ToArray();
@@ -160,7 +162,8 @@ internal sealed partial class NativeEurAdaptiveEstimator
         var fitted=FitGroups(rows,calibration.ObservationThrough,winner.Parameters,true);
         var output=new NativeEurAdaptiveEstimator(fitted,winner.Parameters,calibration.ObservationThrough,
             scores.Select(x=>x.Score).ToArray())
-            {selectionDates=selection,errorDates=errorDays,economicSelection=economic,selectionAwareCalibration=selectionAware};
+            {selectionDates=selection,errorDates=errorDays,economicSelection=economic,selectionAwareCalibration=selectionAware,
+                forecastBandCalibration=forecastBands};
         if(forecastBands)
         {
             foreach(var g in Forward(winner.Parameters,selection).Where(x=>x.Supported)
@@ -345,7 +348,8 @@ internal sealed partial class NativeEurAdaptiveEstimator
     object PredictiveReceipt()=>new
     {
         Selected=selected,ObservationThrough=fittedThrough,Grid=scores,
-        Objective=selectionAwareCalibration?"DAY_CLOCK_RANKED_MONETARY_CASH_ALTERNATIVE":economicSelection?"DAY_SYMBOL_SIGN_DECISION_NET_UTILITY":"DAY_SYMBOL_PREDICTION_LOSS",
+        Objective=selectionAwareCalibration?("DAY_CLOCK_RANKED_MONETARY_CASH_ALTERNATIVE"+
+            (forecastBandCalibration?"/FORECAST_BAND_RESIDUALS":"")):economicSelection?"DAY_SYMBOL_SIGN_DECISION_NET_UTILITY":"DAY_SYMBOL_PREDICTION_LOSS",
         SelectionDays=selectionDates,ResidualCalibrationDays=errorDates,
         PooledValidationDays=pooledErrors?.Days??0,PooledValidationLabels=pooledErrors?.Labels??0,
         Groups=groups.Select(x=>new {x.Key.Family,x.Key.Side,x.Value.Days,x.Value.Labels,
