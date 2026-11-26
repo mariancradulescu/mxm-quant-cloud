@@ -42,7 +42,11 @@ internal sealed partial class NativeEurAdaptiveEstimator
     sealed record ErrorBand(double GrossBias,double GrossWidth,double NetBias,double NetWidth);
     sealed record GroupModel(Normalization Scale,double[] Gross,double[] Net,Dictionary<string,ScopeResidual> Scopes,
         int Days,int Labels,double PositiveFraction,decimal MinimumNetR,decimal MaximumNetR,ErrorBand Errors);
-    sealed record Validation(Row Row,double GrossError,double NetError,bool Supported=true);
+    sealed record Validation(Row Row,double GrossError,double NetError,bool Supported=true)
+    {
+        public double GrossPrediction { get; init; }
+        public double NetPrediction { get; init; }
+    }
 
     readonly Dictionary<(string Family,int Side),GroupModel> groups;
     readonly EurEstimatorCandidate selected;
