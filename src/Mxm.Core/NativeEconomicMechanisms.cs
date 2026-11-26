@@ -24,11 +24,13 @@ public static class NativeEconomicMechanisms
     // not a fixed future-horizon label. The current transition is never its own label.
     // This local price proxy is converted at the current contract/FX for decisions;
     // only funded ledger outcomes qualify NET. No cross-symbol return transfer.
-    internal static (decimal Mean,decimal Sem,int Count)? Continuation(Ucp1MarketFrame m,long at,string? timeframe=null)
+    internal static (decimal Mean,decimal Sem,int Count)? Continuation(Ucp1MarketFrame m,long at,string? timeframe=null,int lookback=0)
     {
-        var w=Window(m,timeframe is null?NativeBarTimeframe.M15:Enum.Parse<NativeBarTimeframe>(timeframe),at);
+        var tf=timeframe is null?NativeBarTimeframe.M15:Enum.Parse<NativeBarTimeframe>(timeframe);
+        var w=lookback>0?(m.ClosedBars?.DecisionAt==at?m.EconomicTransitionWindows?.SingleOrDefault(x=>x.Timeframe==tf&&x.Ready&&
+            x.Bars.Length>=lookback&&x.Bars.All(b=>b.CloseAt<at)):null):Window(m,tf,at);
         if(w is null)return null;
-        var b=w.Bars; int state=Math.Sign(b[^1].Close-b[^2].Close);
+        var b=lookback>0?w.Bars.TakeLast(lookback).ToArray():w.Bars; int state=Math.Sign(b[^1].Close-b[^2].Close);
         var changes=new List<decimal>();
         for(int i=2;i<b.Length;i++)
             if(b[i-2].CloseAt==b[i-1].OpenAt&&b[i-1].CloseAt==b[i].OpenAt&&
@@ -42,9 +44,9 @@ public static class NativeEconomicMechanisms
     }
 
     internal static NativeEurPayoff? TransitionPayoff(Ucp1MarketFrame m,long at,int side,
-        decimal units,decimal cost,string? timeframe=null)
+        decimal units,decimal cost,string? timeframe=null,int lookback=0)
     {
-        if(Continuation(m,at,timeframe) is not { } transition)return null;
+        if(Continuation(m,at,timeframe,lookback) is not { } transition)return null;
         var q=m.Quote;
         decimal mean=side*transition.Mean*units;
         decimal gross=mean*(mean>=0m?q.EurCredit:q.EurDebit),width=transition.Sem*units*q.EurDebit;
@@ -55,7 +57,7 @@ public static class NativeEconomicMechanisms
 
     internal static NativeIntegratedCandidate[] Describe(string mechanism,Ucp1MarketFrame m,long at,
         decimal targetRanges,Ucp1Frame? frame=null,string? geometryTimeframe=null,decimal? stopRanges=null,bool closedStructure=false,
-        int structureLookback=0,bool confirmM5=false)
+        int structureLookback=0,bool confirmM5=false,int transitionLookback=0)
     {
         if(!All.Contains(mechanism,StringComparer.Ordinal))throw new ArgumentException("ECONOMIC_MECHANISM_UNKNOWN");
         var w=Window(m,NativeBarTimeframe.M5,at);
@@ -131,7 +133,7 @@ public static class NativeEconomicMechanisms
                 }
                 break;
             case Transition:
-                if(Continuation(m,at,geometryTimeframe) is { } transition&&Math.Abs(transition.Mean)>transition.Sem)
+                if(Continuation(m,at,geometryTimeframe,transitionLookback) is { } transition&&Math.Abs(transition.Mean)>transition.Sem)
                     side=Math.Sign(transition.Mean);
                 break;
         }

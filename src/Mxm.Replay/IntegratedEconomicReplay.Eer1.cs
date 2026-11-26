@@ -15,7 +15,10 @@ internal static partial class IntegratedEconomicReplay
     }
     sealed record EerInput(long Start,long FitEnd,long End,string ProtocolSha256,string EngineRevision,
         string EvidenceManifestSha256,long SourceAcquiredAt,EerMarket[] Markets,EerTape[] Tapes,
-        Dictionary<string,EerHop[]> Routes);
+        Dictionary<string,EerHop[]> Routes)
+    {
+        public bool ExtendedEconomicContext { get; init; }
+    }
     sealed class EerStream
     {
         public EerMarket Source;
@@ -63,10 +66,17 @@ internal static partial class IntegratedEconomicReplay
         readonly Dictionary<string,Dictionary<long,SourceQuote>> tape;
         readonly Dictionary<string,Dictionary<long,DatedRolloverQuote>> funding;
         readonly Dictionary<string,EerMarket> marketCalendars;
+        readonly Dictionary<string,NativeMarketTimeCalendar> marketTimeCalendars;
+        public bool MarketTimeFx { get; init; }
+        public EerProtectionTape? ValuationTape { get; init; }
+        public Dictionary<string,int> FxEvidenceCounts { get; }=new(StringComparer.Ordinal);
+        public Dictionary<string,NativeMarketTimePrice> ClosedPriceWitnesses { get; }=new(StringComparer.Ordinal);
+        void FxCount(string reason)=>FxEvidenceCounts[reason]=FxEvidenceCounts.GetValueOrDefault(reason)+1;
         bool reuseCurrentFrames;
         readonly Dictionary<(string Asset,long At,bool Tick),NativeOriginalFxRate?> clockConversions=new();
         readonly Dictionary<(string Symbol,long At,decimal Stress),Ucp1MarketFrame?> protectionMarks=new();
         readonly Dictionary<(string Symbol,long At,string Scenario,decimal Stress),Ucp1MarketFrame?> intentMarks=new();
+        readonly Dictionary<(string Symbol,long At),NativeBarWindow[]> transitionWindows=new();
 
         public void BeginHistoricalClock()
         {
@@ -74,6 +84,7 @@ internal static partial class IntegratedEconomicReplay
             clockConversions.Clear();
             protectionMarks.Clear();
             intentMarks.Clear();
+            transitionWindows.Clear();
         }
 
         public EerEvidence(EerInput input)
@@ -82,9 +93,78 @@ internal static partial class IntegratedEconomicReplay
             tape=input.Tapes.ToDictionary(m=>m.Name,m=>m.Quotes.ToDictionary(q=>q.At),StringComparer.Ordinal);
             funding=input.Tapes.ToDictionary(m=>m.Name,m=>m.FundingQuotes.ToDictionary(q=>q.At),StringComparer.Ordinal);
             marketCalendars=input.Markets.ToDictionary(m=>m.Market.Name,StringComparer.Ordinal);
+            marketTimeCalendars=input.Markets.Where(m=>m.ScheduledClocks is not null&&m.AmbiguousCalendarClocks is not null)
+                .ToDictionary(m=>m.Market.Name,m=>new NativeMarketTimeCalendar(input.Start,input.End+7*HistoricalDay,
+                    m.ScheduledClocks,m.AmbiguousCalendarClocks,EerHash(input.EvidenceManifestSha256+"|"+m.Market.Name)),StringComparer.Ordinal);
         }
         public SourceQuote? At(string name,long at)=>tape.GetValueOrDefault(name)?.GetValueOrDefault(at);
         public DatedRolloverQuote? FundingAt(string name,long at)=>funding.GetValueOrDefault(name)?.GetValueOrDefault(at);
+
+        bool VerifiedClosedNow(string name,long at)
+        {
+            if(at<Input.Start||at>=Input.End+7*HistoricalDay||marketTimeCalendars.GetValueOrDefault(name)?.Valid!=true||
+                marketCalendars.GetValueOrDefault(name) is not {ScheduledClocks:{ } opened,AmbiguousCalendarClocks:{ } ambiguous})return false;
+            long grid=at-(at-EurOffset)%EurStep;
+            return Array.BinarySearch(opened,grid)<0&&Array.BinarySearch(ambiguous,grid)<0;
+        }
+
+        NativeMarketTimePrice? MarketPrice(string name,bool bid,long at,NativeHistoricalFundingPrefix? prefix=null)
+        {
+            prefix??=ValuationTape?.LatestPrefix(name,bid,at);
+            var point=prefix is null?null:NativeMarketTimeFx.Resolve(prefix,at,marketTimeCalendars.GetValueOrDefault(name));
+            if(point?.UsedClosedSessions==true)
+            {FxCount("VERIFIED_CLOSED_SESSION_PRICE");ClosedPriceWitnesses[FormattableString.Invariant($"{name}/{(bid?"BID":"ASK")}/{at}")]=point;}
+            else if(point is null)FxCount("MARKET_TIME_PRICE_UNSUPPORTED");
+            return point;
+        }
+
+        public LedgerQuote[] HoldingValuations(NativeUnifiedPortfolioEngine book,Ucp1Frame frame,decimal stress)
+        {
+            if(!MarketTimeFx)return Array.Empty<LedgerQuote>();
+            var observed=frame.Markets.Select(m=>m.Symbol).ToHashSet(StringComparer.Ordinal);
+            var quotes=new List<LedgerQuote>();
+            foreach(string name in book.ProtectionWatches().Select(w=>w.Symbol).Distinct(StringComparer.Ordinal))
+            {
+                if(observed.Contains(name)||!marketCalendars.TryGetValue(name,out var m)||
+                    m.ScheduledClocks is null||m.AmbiguousCalendarClocks is null)continue;
+                if(!VerifiedClosedNow(name,frame.At))continue;
+                if(MarketPrice(name,true,frame.At) is not { } bid||MarketPrice(name,false,frame.At) is not { } ask||ask.Price<bid.Price||
+                    m.Market.DatedDevelopment is not { } terms||ConversionAt(terms.Contract.QuoteAsset,frame.At,false,ValuationTape) is not { } fx)continue;
+                var usd=ConversionAt("USD",frame.At,false,ValuationTape);
+                var min=terms.Contract.MinimumCommissionAsset is { } fee?ConversionAt(fee,frame.At,false,ValuationTape):null;
+                decimal margin=terms.Margin.Where(x=>x.Units>0).Select(x=>Math.Max(x.BuyMargin,x.SellMargin)/x.Units).DefaultIfEmpty().Max();
+                if(margin<=0m)continue;
+                try
+                {
+                    decimal slip=(ask.Price-bid.Price)*stress;
+                    var q=NativeBrokerContractCosts.QuoteBothDirections(terms.Contract,new(frame.At,bid.Price,ask.Price,
+                        fx.CreditToEur,fx.DebitToEur,usd?.DebitToEur??0m,min?.DebitToEur,margin*terms.Contract.MinimumUnits,
+                        terms.Contract.MinimumUnits,slip)).Quote;
+                    quotes.Add(q with {LiquidationSlippagePerSide=slip,ExitFeePerUnit=q.ExitFeePerUnit*(1m+stress),
+                        ExitFeeFloor=q.ExitFeeFloor*(1m+stress),SellFeePerUnit=q.SellFeePerUnit*(1m+stress)});
+                    FxCount("CLOSED_HOLDING_CONDITIONAL_VALUATION_NO_EXECUTION");
+                }
+                catch(ArgumentException){FxCount("CLOSED_HOLDING_COST_UNSUPPORTED");}
+            }
+            return quotes.ToArray();
+        }
+
+        NativeBarWindow[]? TransitionWindows(SourceMarket market,long at)
+        {
+            if(!Input.ExtendedEconomicContext)return null;
+            if(transitionWindows.TryGetValue((market.Name,at),out var cached))return cached;
+            NativeBarWindow Window(NativeBarTimeframe tf,NativeClosedMarketBar[] bars)
+            {
+                int lo=0,hi=bars.Length;
+                while(lo<hi){int mid=lo+(hi-lo)/2;if(bars[mid].CloseAt<at)lo=mid+1;else hi=mid;}
+                var rows=bars[Math.Max(0,lo-72)..lo];
+                return new(tf,72,rows.LastOrDefault()?.CloseAt??0,at,"AUTHENTIC_EXTENDED_TRANSITION_CONTEXT",
+                    rows.Length>=24?NativeBarStatus.Ready:NativeBarStatus.InsufficientHistory,rows);
+            }
+            var result=new[]{Window(NativeBarTimeframe.H1,market.H1),Window(NativeBarTimeframe.M15,market.M15),Window(NativeBarTimeframe.M5,market.M5)};
+            transitionWindows.Add((market.Name,at),result);
+            return result;
+        }
         SourceQuote? LastClosedSessionMark(string name,long at)
         {
             if(marketCalendars.GetValueOrDefault(name) is not { ClosedRolloverClocks:{ } closed,ScheduledClocks:{ } schedule } market ||
@@ -132,16 +212,21 @@ internal static partial class IntegratedEconomicReplay
                     {bid=fb;ask=fa;}
                     else if(priorClocks is not null && LastClosedSessionMark(h.Symbol,at) is { } prior)
                     {bid=prior.Bid;ask=prior.Ask;priorClocks[(h.Symbol,at)]=prior.At;}
+                    else if(MarketTimeFx&&MarketPrice(h.Symbol,true,at,q?.LatestBidPrefix) is { } mb&&
+                        MarketPrice(h.Symbol,false,at,q?.LatestAskPrefix) is { } ma&&ma.Price>=mb.Price)
+                    {bid=mb.Price;ask=ma.Price;}
                     else return null;
                 }
                 else
                 {
-                    var q=protection?.QuoteAt(h.Symbol,at)??At(h.Symbol,at);
+                    var q=protection?.QuoteAt(h.Symbol,at)??(MarketTimeFx?ValuationTape?.QuoteAt(h.Symbol,at):null)??At(h.Symbol,at);
                     if(q is null && protection is not null)
                         q=At(h.Symbol,(at-EurOffset)/EurStep*EurStep+EurOffset);
-                    if(q is null||!Fresh(q,at,30_000L))return null;
-                    bid=q.Bid;ask=q.Ask;
-                    hops.Add(new(h.Symbol,h.BaseAsset,h.QuoteAsset,Math.Min(q.BidAt,q.AskAt),bid,ask,true));
+                    if(q is not null&&Fresh(q,at,30_000L))
+                    {bid=q.Bid;ask=q.Ask;hops.Add(new(h.Symbol,h.BaseAsset,h.QuoteAsset,Math.Min(q.BidAt,q.AskAt),bid,ask,true));}
+                    else if(MarketTimeFx&&VerifiedClosedNow(h.Symbol,at)&&MarketPrice(h.Symbol,true,at) is { } mb&&MarketPrice(h.Symbol,false,at) is { } ma&&ma.Price>=mb.Price)
+                    {bid=mb.Price;ask=ma.Price;}
+                    else return null;
                 }
                 if(string.IsNullOrWhiteSpace(h.BaseAsset)||string.IsNullOrWhiteSpace(h.QuoteAsset)||h.BaseAsset==h.QuoteAsset)return null;
                 if(h.BaseAsset==current){credit*=bid;debit*=ask;current=h.QuoteAsset;}
@@ -150,7 +235,7 @@ internal static partial class IntegratedEconomicReplay
                 if(!visited.Add(current))return null;
             }
             if(current!="EUR"||credit<=0m||debit<credit)return null;
-            return charge?new(credit,debit,route.Select(h=>h.Symbol).ToArray()):
+            return charge||MarketTimeFx?new(credit,debit,route.Select(h=>h.Symbol).ToArray()):
                 NativeBrokerContractCosts.ComposeCausalQuoteToEur(asset,at,hops);
         }
         public NativeObservedRolloverQuote Charge(string name,string asset,long at,
@@ -160,6 +245,7 @@ internal static partial class IntegratedEconomicReplay
             decimal? bid=q?.FundingPrice(false,7_200_000L,345_600_000L);
             if(bid is null && priorClocks is not null && LastClosedSessionMark(name,at) is { } prior)
             {bid=prior.Bid;priorClocks[(name,at)]=prior.At;}
+            if(bid is null&&MarketTimeFx)bid=MarketPrice(name,true,at,q?.LatestBidPrefix)?.Price;
             return new(bid,ConversionAt(asset,at,true,priorClocks:priorClocks));
         }
 
@@ -212,7 +298,7 @@ internal static partial class IntegratedEconomicReplay
             stream.Mark(at,"MONETARY_FRAME");
             return new(m.Name,quote,c,context.For(NativeBarTimeframe.M5).Bars,context.For(NativeBarTimeframe.M15).Bars,
                 slip,"AUTHENTIC_QUOTES_EXPLICIT_RETROSPECTIVE_TERMS_SCENARIO")
-                {ClosedBars=context,OfficialAssetClass=m.OfficialAssetClass,EurDatedMarginScenario=true,
+                {ClosedBars=context,EconomicTransitionWindows=TransitionWindows(m,at),OfficialAssetClass=m.OfficialAssetClass,EurDatedMarginScenario=true,
                  EurMargins=margins,FundingOffers=offers,EurTickSize=general?m.TickSize:null};
         }
         public void Advance(NativeUnifiedPortfolioEngine book,Ucp1Frame frame,
@@ -236,7 +322,8 @@ internal static partial class IntegratedEconomicReplay
                          SourceAcquiredAt=Input.SourceAcquiredAt});
                 }
             }
-            book.Advance(frame with {FundingEvidence=evidence.ToArray()});
+            book.Advance(frame with {FundingEvidence=evidence.ToArray(),
+                ConditionalHoldingValuations=MarketTimeFx?HoldingValuations(book,frame,stress):frame.ConditionalHoldingValuations});
         }
 
         public Ucp1MarketFrame? ProtectionMark(EerProtectionTape tape,EerMarket market,long at,decimal stress)
@@ -300,7 +387,7 @@ internal static partial class IntegratedEconomicReplay
             return seen with
             {
                 M5=context.For(NativeBarTimeframe.M5).Bars,M15=context.For(NativeBarTimeframe.M15).Bars,
-                ClosedBars=context,OfficialAssetClass=market.OfficialAssetClass,EurDatedMarginScenario=true,
+                ClosedBars=context,EconomicTransitionWindows=TransitionWindows(market,at),OfficialAssetClass=market.OfficialAssetClass,EurDatedMarginScenario=true,
                 EurMargins=margins,FundingOffers=ManagementFunding(margins,terms,market.Name,at,through,scenario,stress,q.Bid,fx),
                 EurTickSize=market.TickSize
             };

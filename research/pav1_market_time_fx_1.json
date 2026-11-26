@@ -1,0 +1,445 @@
+{
+  "Exposure": "PROJECT_EXPOSED_CONDITIONAL_DEVELOPMENT",
+  "Start": 1792972800000,
+  "SelectionFrom": 1793577600000,
+  "EvaluationFrom": 1794787200000,
+  "End": 1795564800000,
+  "Stresses": [
+    0,
+    0.5,
+    1
+  ],
+  "Study": "PAV1_MARKET_TIME_FX_1",
+  "OriginalInstruments": [
+    "AAPL.US",
+    "AAXJ.US",
+    "AMD.US",
+    "BTCUSD",
+    "CN50",
+    "Coffee",
+    "Cotton",
+    "ETHUSD",
+    "EURJPY",
+    "EURUSD",
+    "GBPUSD",
+    "GER40-F",
+    "GOOG.US-24",
+    "LTCUSD",
+    "NatGas",
+    "SpotBrent",
+    "SpotCrude",
+    "Sugar",
+    "US500",
+    "XAGUSD",
+    "XAUUSD"
+  ],
+  "Instruments": [
+    "AAPL.US",
+    "AAPL.US-24",
+    "AAXJ.US",
+    "ACWI.US",
+    "AMD.US",
+    "BTCUSD",
+    "CN50",
+    "Coffee",
+    "Cotton",
+    "ETHUSD",
+    "EURJPY",
+    "EURUSD",
+    "GBPUSD",
+    "GER40-F",
+    "GOOG.US-24",
+    "HK50-F",
+    "LTCUSD",
+    "NatGas",
+    "SpotBrent",
+    "SpotCrude",
+    "Sugar",
+    "US500",
+    "USDJPY",
+    "XAGUSD",
+    "XAUUSD"
+  ],
+  "Variants": [
+    {
+      "Id": "STRICT21_RISK_CONTROL",
+      "UniverseCount": 21,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "DistributionTargetRanges": 2.5,
+        "EconomicMechanism": "PAV1_LOCAL_TRANSITION",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 0.75,
+        "KeepAdmissionRiskAtFill": true,
+        "ResizeWithinAdmissionRiskAtFill": true
+      }
+    },
+    {
+      "Id": "MT21_RISK_CONTROL",
+      "UniverseCount": 21,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "DistributionTargetRanges": 2.5,
+        "EconomicMechanism": "PAV1_LOCAL_TRANSITION",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 0.75,
+        "KeepAdmissionRiskAtFill": true,
+        "ResizeWithinAdmissionRiskAtFill": true,
+        "UseMarketTimeFxValuation": true
+      }
+    },
+    {
+      "Id": "MT25_RISK_CONTROL",
+      "UniverseCount": 25,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "DistributionTargetRanges": 2.5,
+        "EconomicMechanism": "PAV1_LOCAL_TRANSITION",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 0.75,
+        "KeepAdmissionRiskAtFill": true,
+        "ResizeWithinAdmissionRiskAtFill": true,
+        "UseMarketTimeFxValuation": true
+      }
+    },
+    {
+      "Id": "MT25_CLOCK",
+      "UniverseCount": 25,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "DistributionTargetRanges": 2.5,
+        "EconomicMechanism": "PAV1_LOCAL_TRANSITION",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 0.75,
+        "KeepAdmissionRiskAtFill": true,
+        "ResizeWithinAdmissionRiskAtFill": true,
+        "MatchEconomicTransitionHorizonAtFill": true,
+        "UseMarketTimeFxValuation": true
+      }
+    },
+    {
+      "Id": "MT25_CONSENSUS",
+      "UniverseCount": 25,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "DistributionTargetRanges": 2.5,
+        "EconomicMechanism": "PAV1_LOCAL_TRANSITION",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 0.75,
+        "KeepAdmissionRiskAtFill": true,
+        "ResizeWithinAdmissionRiskAtFill": true,
+        "MatchEconomicTransitionHorizonAtFill": true,
+        "UseMarketTimeFxValuation": true,
+        "RequirePav1FastAgreement": true
+      }
+    },
+    {
+      "Id": "MT25_H1_24",
+      "UniverseCount": 25,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "DistributionTargetRanges": 2.5,
+        "EconomicMechanism": "PAV1_LOCAL_TRANSITION",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 0.75,
+        "KeepAdmissionRiskAtFill": true,
+        "ResizeWithinAdmissionRiskAtFill": true,
+        "MatchEconomicTransitionHorizonAtFill": true,
+        "UseMarketTimeFxValuation": true,
+        "Pav1TransitionBars": 24
+      }
+    },
+    {
+      "Id": "MT25_H1_72",
+      "UniverseCount": 25,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "DistributionTargetRanges": 2.5,
+        "EconomicMechanism": "PAV1_LOCAL_TRANSITION",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 0.75,
+        "KeepAdmissionRiskAtFill": true,
+        "ResizeWithinAdmissionRiskAtFill": true,
+        "MatchEconomicTransitionHorizonAtFill": true,
+        "UseMarketTimeFxValuation": true,
+        "Pav1TransitionBars": 72
+      }
+    },
+    {
+      "Id": "MT25_CONSENSUS_72",
+      "UniverseCount": 25,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "DistributionTargetRanges": 2.5,
+        "EconomicMechanism": "PAV1_LOCAL_TRANSITION",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 0.75,
+        "KeepAdmissionRiskAtFill": true,
+        "ResizeWithinAdmissionRiskAtFill": true,
+        "MatchEconomicTransitionHorizonAtFill": true,
+        "UseMarketTimeFxValuation": true,
+        "Pav1TransitionBars": 72,
+        "RequirePav1FastAgreement": true
+      }
+    },
+    {
+      "Id": "MT25_GAP_RESERVE",
+      "UniverseCount": 25,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "DistributionTargetRanges": 2.5,
+        "EconomicMechanism": "PAV1_LOCAL_TRANSITION",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 0.75,
+        "KeepAdmissionRiskAtFill": true,
+        "ResizeWithinAdmissionRiskAtFill": true,
+        "MatchEconomicTransitionHorizonAtFill": true,
+        "UseMarketTimeFxValuation": true,
+        "ReserveObservedBarGaps": true
+      }
+    },
+    {
+      "Id": "MT25_ALLOC_MIN",
+      "UniverseCount": 25,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "DistributionTargetRanges": 2.5,
+        "EconomicMechanism": "PAV1_LOCAL_TRANSITION",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 0.75,
+        "KeepAdmissionRiskAtFill": true,
+        "ResizeWithinAdmissionRiskAtFill": true,
+        "MatchEconomicTransitionHorizonAtFill": true,
+        "UseMarketTimeFxValuation": true,
+        "AllocatePav1AtMinimumVolume": true
+      }
+    },
+    {
+      "Id": "MT25_CASH_VOLUME",
+      "UniverseCount": 25,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "DistributionTargetRanges": 2.5,
+        "EconomicMechanism": "PAV1_LOCAL_TRANSITION",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": false,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 0.75,
+        "KeepAdmissionRiskAtFill": true,
+        "ResizeWithinAdmissionRiskAtFill": true,
+        "MatchEconomicTransitionHorizonAtFill": true,
+        "UseMarketTimeFxValuation": true,
+        "OptimizeTransitionNetVolume": true,
+        "RequireMaturedCashForLargerVolume": true
+      }
+    },
+    {
+      "Id": "MT25_CASH_VOLUME_72",
+      "UniverseCount": 25,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "DistributionTargetRanges": 2.5,
+        "EconomicMechanism": "PAV1_LOCAL_TRANSITION",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": false,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 0.75,
+        "KeepAdmissionRiskAtFill": true,
+        "ResizeWithinAdmissionRiskAtFill": true,
+        "MatchEconomicTransitionHorizonAtFill": true,
+        "UseMarketTimeFxValuation": true,
+        "OptimizeTransitionNetVolume": true,
+        "RequireMaturedCashForLargerVolume": true,
+        "Pav1TransitionBars": 72
+      }
+    },
+    {
+      "Id": "MT25_CAPTURE_M5",
+      "UniverseCount": 25,
+      "Profile": {
+        "UseAvailableContext": true,
+        "ModeledStopLatencyMs": 100,
+        "ObserveIntentExecutionOnTicks": true,
+        "DistributionTargetRanges": 2.5,
+        "EconomicMechanism": "PAV1_LOCAL_TRANSITION",
+        "EconomicManagement": "CAPTURE_VALUE",
+        "MinimumContractVolumeOnly": true,
+        "CaptureClosedBarActivity": true,
+        "EconomicGeometryTimeframe": "H1",
+        "EconomicStopRanges": 0.75,
+        "KeepAdmissionRiskAtFill": true,
+        "ResizeWithinAdmissionRiskAtFill": true,
+        "MatchEconomicTransitionHorizonAtFill": true,
+        "UseMarketTimeFxValuation": true,
+        "EconomicManagementTimeframe": "M5"
+      }
+    }
+  ],
+  "OriginalCausalRun": 45806288995,
+  "OriginalCausalArtifact": 15111217102,
+  "OriginalCausalRevision": "9a85d8f5bcf7faf94cfab3d6dbf5db58630d22ae",
+  "OriginalCausalSha256": "86dfa0c1bab775f48c9f30c92d78ac7874f473b49617d8775e279adec39df991",
+  "FundingRun": 45809712511,
+  "FundingArtifact": 15112060159,
+  "FundingSha256": "6eacb33a6456b4cff65d02805fcd4dc650163b6bc46da2cc570c80400f2c0786",
+  "ConversionRun": 45807657683,
+  "ConversionArtifact": 15110881280,
+  "ConversionSha256": "88caa7c29e649f8691a057b1de80791edd7d41ea54cb20a66cb9523be6109baf",
+  "ExtensionRun": 45806558835,
+  "ExtensionArtifacts": [
+    {
+      "Id": 15111130893,
+      "Run": 45806558835,
+      "Name": "breadth-extension-source-protected-5",
+      "Sha256": "6b0168af182d3e7abe1053d6b607c9949849bbef9105cfef6a2b91c54e1d1da9"
+    },
+    {
+      "Id": 15110851269,
+      "Run": 45806558835,
+      "Name": "breadth-extension-source-verified-3",
+      "Sha256": "3661bcddd6997545f59cf1ad3e6fd3c273ea07f951e2bff58b6e7394f660c86b"
+    },
+    {
+      "Id": 15110820140,
+      "Run": 45806558835,
+      "Name": "breadth-extension-source-protected-0",
+      "Sha256": "5945a257ac85e7fcfb25d83c651bf6dd4e1d3816b810df3604412801ec2c91b5"
+    },
+    {
+      "Id": 15110786783,
+      "Run": 45806558835,
+      "Name": "breadth-extension-source-verified-1",
+      "Sha256": "f6bff4ad1afac6c79aa84dc4c382abf6c9e1be7482fb46042fe00eae925c4228"
+    },
+    {
+      "Id": 15110771945,
+      "Run": 45806558835,
+      "Name": "breadth-extension-source-verified-5",
+      "Sha256": "d71f3ae9e7243b2bcc2ace87a0c7bce52b6318eecfb9c139a8e15b79478416a4"
+    },
+    {
+      "Id": 15110675895,
+      "Run": 45806558835,
+      "Name": "breadth-extension-source-protected-2",
+      "Sha256": "b182466e5e2cdb16a785e2441fc372c2e665446f6ff4f23fe6b8d884ff3505d8"
+    },
+    {
+      "Id": 15110472209,
+      "Run": 45806558835,
+      "Name": "breadth-extension-source-verified-summary",
+      "Sha256": "4e618d35472afbd53e5e298283d05f27dea5bc017dd6e8d32f38e224bc28a09f"
+    },
+    {
+      "Id": 15110261933,
+      "Run": 45806558835,
+      "Name": "breadth-extension-source-protected-4",
+      "Sha256": "4bf7681f230cf3f6428c3f6e396efd7490665bcc28a5bce100106388c1bbb99e"
+    },
+    {
+      "Id": 15110202069,
+      "Run": 45806558835,
+      "Name": "breadth-extension-source-protected-3",
+      "Sha256": "eb3440c769e2355d651ba937272853c3b6f782eea106d969462ddb33a671388a"
+    },
+    {
+      "Id": 15110058451,
+      "Run": 45806558835,
+      "Name": "breadth-extension-source-verified-0",
+      "Sha256": "946daa11d5a5299c15f4e6ff37654dc33f92ac64accc1d217581a5b17d9807c9"
+    },
+    {
+      "Id": 15110026241,
+      "Run": 45806558835,
+      "Name": "breadth-extension-source-plan",
+      "Sha256": "7c48cf90492fcc5d37df91edce8c8a55347d81f821da15377bb9bb3945e40348"
+    },
+    {
+      "Id": 15109631861,
+      "Run": 45806558835,
+      "Name": "breadth-extension-source-metadata",
+      "Sha256": "6a44a3cc0b5f4beaca71307b103bad1761d0f60e62ee17a1bd73ad672ba65503"
+    },
+    {
+      "Id": 15109468384,
+      "Run": 45806558835,
+      "Name": "breadth-extension-source-verified-4",
+      "Sha256": "b39320f15f3891a5dd63386a35bdc974f882287d8c85c30572de3c7fefd13de4"
+    },
+    {
+      "Id": 15109453525,
+      "Run": 45806558835,
+      "Name": "breadth-extension-source-verified-2",
+      "Sha256": "433dc6e7433c5155047b6628ccffce288d5735c94e321c123ac7b70d80a50fc6"
+    },
+    {
+      "Id": 15109373192,
+      "Run": 45806558835,
+      "Name": "breadth-extension-source-protected-1",
+      "Sha256": "fb00980a3daa8fc88de3243b54d9b8600750a6bab2cd149e2f75fada0638c15c"
+    }
+  ],
+  "MaximumOpenFxAgeMs": 7200000,
+  "MaximumWallFxAgeMs": 345600000,
+  "SharedCapitalEur": 300,
+  "SelectionRule": "AT_NOV16_BEFORE_LATER_OUTCOMES_WORST_STRESS_MIN_DAY_NET_LOWER_CLOSED_NET_AND_TERMINAL_CONDITIONAL_EQUITY_PER_REGISTERED_DAY; CASH_IF_NOT_POSITIVE_GROSS_AND_NET; SAME_VARIANT_ACROSS_STRESSES",
+  "EvidenceScope": "ALL_DATES_PROJECT_EXPOSED; NO_NEW_INDEPENDENT_CONFIRMATION; CURRENT_TARIFF_AND_CALENDAR_SNAPSHOTS_CONDITIONAL",
+  "Orders": 0,
+  "CloudActivated": false,
+  "IndependentConfirmationCertified": false
+}

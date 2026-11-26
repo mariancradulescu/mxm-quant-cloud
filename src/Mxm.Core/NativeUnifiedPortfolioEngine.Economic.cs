@@ -314,7 +314,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
         var bracket=NativeExecutableEconomics.Bracket(q,plan.Side,units,
             prior.Stop,prior.Target,intent.SlippagePerSide,
             q.LiquidationSlippagePerSide??intent.SlippagePerSide);
-        var risk=ReservedEurRisk(bracket.RiskEur,debit);
+        var risk=ReservedEurRisk(bracket.RiskEur,debit)+prior.GapReservePerUnitQuote*units*q.EurDebit;
         var reward=bracket.RewardEur-debit;
         if(bracket.RiskEur<=0m||reward<=0m)return null;
         // Registered ablation: no post-admission enlargement of the same
@@ -349,13 +349,18 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 bracket.Entry,plan.Side>0?q.Bid:q.Ask,q.LiquidationSlippagePerSide??intent.SlippagePerSide));
             string? horizon=eurDevelopmentProfile.MatchEconomicTransitionHorizonAtFill
                 ?eurDevelopmentProfile.EconomicGeometryTimeframe:null;
-            if(NativeEconomicMechanisms.TransitionPayoff(observed,frame.At,plan.Side,units,transitionCost+debit,horizon)
+            if(NativeEconomicMechanisms.TransitionPayoff(observed,frame.At,plan.Side,units,transitionCost+debit,horizon,
+                    eurDevelopmentProfile.Pav1TransitionBars)
                 is not {GrossLowerEur:>0m,NetLowerEur:>0m})
             {
                 if(eurDevelopmentProfile.MatchEconomicTransitionHorizonAtFill)
                     Count("EUR_FILL_TRANSITION_PAYOFF_UNSUPPORTED_OR_NONPOSITIVE");
                 return null;
             }
+            if(eurDevelopmentProfile.RequirePav1FastAgreement&&
+                NativeEconomicMechanisms.TransitionPayoff(observed,frame.At,plan.Side,units,transitionCost+debit,"M15",
+                    eurDevelopmentProfile.Pav1TransitionBars) is not {GrossLowerEur:>0m,NetLowerEur:>0m})
+            {Count("EUR_PAV1_M15_FILL_DISAGREEMENT");return null;}
         }
         if(policy is EurGeneralSelect or EurGeneralPooled)
         {

@@ -19,6 +19,8 @@ public sealed record Ucp1MarketFrame(
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public NativeBarContext? ClosedBars { get; init; }
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public NativeBarWindow[]? EconomicTransitionWindows { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public NativeFundingOfferEvidence[]? FundingOffers { get; init; }
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public NativeEurMarginObservation[]? EurMargins { get; init; }
@@ -40,6 +42,9 @@ public sealed record Ucp1Frame(long At,Ucp1MarketFrame[] Markets,
     public NativeAccruedFundingEvidence[]? FundingEvidence { get; init; }
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public Ucp1ProtectionObservation? Protection { get; init; }
+    // Conditional holding valuations cannot fill, trigger or generate signals.
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public LedgerQuote[]? ConditionalHoldingValuations { get; init; }
     internal Ucp1DecisionSignal? OpportunityToObserve { get; init; }
     internal bool ObservationEpisodeOnly { get; init; }
 }
@@ -540,8 +545,14 @@ public sealed partial class NativeUnifiedPortfolioEngine
         fundingReserves?.Validate(t,fundingEvidence);
         ReadBroker(frame.Broker);
         var by=frame.Markets.ToDictionary(m=>m.Symbol,StringComparer.Ordinal);
-        var quotes=frame.Markets.OrderBy(x=>x.Symbol,StringComparer.Ordinal)
-            .Select(x=>x.Quote).ToArray();
+        var conditional=frame.ConditionalHoldingValuations??Array.Empty<LedgerQuote>();
+        if(conditional.Length>0&&(FundingScenarioId is null||eurDevelopmentProfile?.UseMarketTimeFxValuation!=true||
+            conditional.Any(q=>q.At!=t||by.ContainsKey(q.Symbol)||
+                !model.Ledger.PositionSnapshot().Any(p=>p.Symbol==q.Symbol))||
+            conditional.Select(q=>q.Symbol).Distinct(StringComparer.Ordinal).Count()!=conditional.Length))
+            throw new ArgumentException("CONDITIONAL_HOLDING_VALUATION_BINDING");
+        var quotes=frame.Markets.Select(x=>x.Quote).Concat(conditional)
+            .OrderBy(x=>x.Symbol,StringComparer.Ordinal).ToArray();
         Apply(Event("MARK",t,reason:"AUTHENTIC_SOURCE_OR_PLATFORM_OBSERVATION",
             quotes:quotes));
         var start=model.Ledger.Summary(t);

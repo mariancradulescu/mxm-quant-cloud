@@ -5,6 +5,7 @@ if (args is ["--cpe1-technical-parity"])
     return;
 }
 var passed = 0;
+NativeMarketTimeFxChecks.Run(Check);
 NativePendingCapitalGateChecks.Run(Check);
 NativePostFillCapitalGuardChecks.Run(Check);
 NativeRvc1JointResidualChecks.Run(Check);

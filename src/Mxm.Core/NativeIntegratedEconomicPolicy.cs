@@ -36,6 +36,8 @@ public sealed record NativeIntegratedPlan(decimal Stop, decimal Target,
     public NativeCompleteEntry? CompletePolicy { get; init; }
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public decimal? EntrySlippage { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public decimal GapReservePerUnitQuote { get; init; }
 }
 
 public sealed record NativeIntegratedEpisode(decimal InitialPlannedRewardEur,

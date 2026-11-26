@@ -97,6 +97,18 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
     public bool ConfirmEconomicEntryOnM5 { get; init; }
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
     public bool OptimizeTransitionNetVolume { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool UseMarketTimeFxValuation { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool RequirePav1FastAgreement { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public int Pav1TransitionBars { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool RequireMaturedCashForLargerVolume { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool ReserveObservedBarGaps { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool AllocatePav1AtMinimumVolume { get; init; }
 
     internal string GeometryIdentity => FormattableString.Invariant(
         $"{UseAvailableContext}/{DistributionTargetRanges:G29}/{StopReserveMultiplier:G29}") +
@@ -116,11 +128,25 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
         (EconomicStructureLookbackBars>0?$"/SWING_BARS:{EconomicStructureLookbackBars}/M5_TRUE_RANGE_BUFFER":"") +
         (ConfirmEconomicEntryOnM5?"/M5_ENTRY_CONFIRMATION":"") +
         (OptimizeTransitionNetVolume?"/JOINT_EXPECTED_TRANSITION_NET_VOLUME":"") +
+        (UseMarketTimeFxValuation?"/CONDITIONAL_MARKET_TIME_FX":"") +
+        (RequirePav1FastAgreement?"/PAV1_M15_AGREEMENT":"") +
+        (Pav1TransitionBars>0?$"/PAV1_TRANSITION_BARS:{Pav1TransitionBars}":"") +
+        (RequireMaturedCashForLargerVolume?"/MATURED_CASH_MARGINAL_VOLUME":"") +
+        (ReserveObservedBarGaps?"/OBSERVED_GAP_RESERVE":"") +
+        (AllocatePav1AtMinimumVolume?"/PAV1_MINIMUM_VOLUME_MONETARY_ALLOCATION":"") +
         (EconomicManagementTimeframe is not null?$"/MANAGEMENT_TIMEFRAME:{EconomicManagementTimeframe}":"") +
         (EconomicMechanism is not null&&KeepAdmissionRiskAtFill?$"/MECHANISM_KEEP_RISK/RESIZE:{ResizeWithinAdmissionRiskAtFill}":"");
 
     internal void Verify()
     {
+        if(AllocatePav1AtMinimumVolume&&(EconomicMechanism!=NativeEconomicMechanisms.Transition||
+            !MinimumContractVolumeOnly||!MatchEconomicTransitionHorizonAtFill||!KeepAdmissionRiskAtFill||!ResizeWithinAdmissionRiskAtFill))
+            throw new ArgumentException("PAV1_MINIMUM_MONETARY_ALLOCATION");
+        if((RequirePav1FastAgreement||Pav1TransitionBars>0||RequireMaturedCashForLargerVolume||ReserveObservedBarGaps)&&
+            EconomicMechanism!=NativeEconomicMechanisms.Transition||
+            Pav1TransitionBars!=0&&Pav1TransitionBars is not (24 or 72)||
+            RequireMaturedCashForLargerVolume&&!OptimizeTransitionNetVolume)
+            throw new ArgumentException("PAV1_REGISTERED_MONETARY_PROFILE");
         if(MatchEconomicTransitionHorizonAtFill&&(EconomicMechanism is null||EconomicGeometryTimeframe is null)||
             EconomicStructureLookbackBars!=0&&(EconomicStructureLookbackBars<2||EconomicStructureLookbackBars>16||
                 !AnchorEconomicGeometryToClosedStructure)||
