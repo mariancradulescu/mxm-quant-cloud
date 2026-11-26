@@ -72,6 +72,14 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
     public bool MinimumContractVolumeOnly { get; init; }
 
+    // Optional research geometry. Null fields preserve every frozen original.
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? EconomicGeometryTimeframe { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public decimal? EconomicStopRanges { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public int? EconomicOpportunityVolumeIndex { get; init; }
+
     internal string GeometryIdentity => FormattableString.Invariant(
         $"{UseAvailableContext}/{DistributionTargetRanges:G29}/{StopReserveMultiplier:G29}") +
         (ModeledStopLatencyMs is long latency ? FormattableString.Invariant($"/Trade/{latency}") : "") +
@@ -81,10 +89,19 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
         (ObserveFamilyDirectionsOnClosedBars?"/CLOSED_BAR_FAMILY_DIRECTION_OBSERVATION":"") +
         (CaptureVolatilityContext?"/CLOSED_BAR_RELATIVE_VOLATILITY_V2":"") +
         (CaptureClosedBarActivity?"/CLOSED_BAR_ACTIVITY_V1":"") +
-        (EconomicMechanism is not null?$"/MECHANISM:{EconomicMechanism}/MANAGEMENT:{EconomicManagement}/MINIMUM:{MinimumContractVolumeOnly}":"");
+        (EconomicMechanism is not null?$"/MECHANISM:{EconomicMechanism}/MANAGEMENT:{EconomicManagement}/MINIMUM:{MinimumContractVolumeOnly}":"") +
+        (EconomicGeometryTimeframe is not null?FormattableString.Invariant($"/GEOMETRY:{EconomicGeometryTimeframe}/{EconomicStopRanges:G29}"):"") +
+        (EconomicOpportunityVolumeIndex is int volume?FormattableString.Invariant($"/OBSERVED_VOLUME_INDEX:{volume}"):"");
 
     internal void Verify()
     {
+        if(EconomicGeometryTimeframe is not null&&
+            (EconomicMechanism is null||!Enum.TryParse<NativeBarTimeframe>(EconomicGeometryTimeframe,out var tf)||
+             !NativeClosedMarketContext.CoverageWindows.Any(x=>x.Timeframe==tf)||EconomicStopRanges is not >0m)||
+            EconomicGeometryTimeframe is null&&EconomicStopRanges is not null||
+            EconomicOpportunityVolumeIndex is <0||
+            EconomicOpportunityVolumeIndex is not null&&(EconomicMechanism is null||MinimumContractVolumeOnly))
+            throw new ArgumentException("EUR_MECHANISM_GEOMETRY_OR_VOLUME");
         if(EconomicMechanism is not null&&(!NativeEconomicMechanisms.All.Contains(EconomicMechanism,StringComparer.Ordinal)||
             !NativeEconomicMechanisms.Management.Contains(EconomicManagement,StringComparer.Ordinal)||UseAdaptivePayoff||
             LearnFromOpportunityEpisodes||!UseAvailableContext)||EconomicManagement is not null&&EconomicMechanism is null)
