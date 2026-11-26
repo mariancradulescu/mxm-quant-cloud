@@ -119,6 +119,8 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
     // Selection-only hypothesis. It does not change shadow lifecycle geometry.
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public string? LifecycleEstimator { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? Pav1CompetitiveForecast { get; init; }
 
     internal string GeometryIdentity => FormattableString.Invariant(
         $"{UseAvailableContext}/{DistributionTargetRanges:G29}/{StopReserveMultiplier:G29}") +
@@ -151,6 +153,9 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
 
     internal void Verify()
     {
+        if(Pav1CompetitiveForecast is not null&&(!CompeteEconomicFamilies||LifecycleEstimator is null||
+            Pav1CompetitiveForecast is not ("DIRECT" or "CORROBORATED")))
+            throw new ArgumentException("EUR_PAV1_COMPETITIVE_FORECAST_PROFILE");
         if(LifecycleEstimator is not null&&(!CompeteEconomicFamilies||
             SelectEconomicManagementCausally||LifecycleEstimator is not ("CENTERED_LOCAL" or "CENTERED_TRANSFER")))
             throw new ArgumentException("EUR_LIFECYCLE_ESTIMATOR_PROFILE");

@@ -61,7 +61,7 @@ def restore(work):
         DownloadAndCipherVerifySeconds=round(downloaded-started,3),RestoreSeconds=round(time.monotonic()-downloaded,3),
         SourceReconstructionExecutions=0,SourceBrokerRequests=0,Orders=0,CloudActivated=False))
 
-def corrected_selection(rows):
+def corrected_selection(rows,penalty=Decimal('2.72')):
     # Predeclared conservative one-sided normal Bonferroni diagnostic across
     # five variants and three cost stresses; not an independence certificate.
     # Keep original HARD21/risk constraints; selection sees no held-out results.
@@ -73,7 +73,7 @@ def corrected_selection(rows):
         if m['Score'] is not None and len(days)>1 and all(x is not None for x in days):
             mean=sum(days)/len(days)
             sem=Decimal(str(math.sqrt(float(sum((x-mean)**2 for x in days)/(len(days)*(len(days)-1))))))
-            m['Score']=min(m['Score'],mean-Decimal('2.72')*sem)
+            m['Score']=min(m['Score'],mean-penalty*sem)
     return select(rows)
 
 def evaluate(work):

@@ -89,6 +89,10 @@ internal static class NativeEconomicMechanismChecks
         check(NativeCenteredLifecycle.Reprice(unitEstimate,2m,.6m)==NativeCenteredLifecycle.Estimate(
             rows,"F",1,context,at,2m,.6m,20,3,1.645m,false),
             "Cached normalized statistics retain candidate-specific costs and volume risk scale");
+        check(NativeCenteredLifecycle.Corroborate(centered,null) is null,
+            "Hybrid PAV1 cannot credit an absent direct forecast");
+        check(NativeCenteredLifecycle.Corroborate(centered,centered! with {NetLowerEur=-.1m}) is {NetLowerEur:-.1m},
+            "Hybrid corroboration preserves a negative conservative forecast");
         var transferPeers=rows.Select((row,i)=>row with {Context=context with {Symbol=i%2==0?"A":"B",AssetClass="FX"}}).ToArray();
         var targetContext=context with {AssetClass="FX"};
         check(NativeCenteredLifecycle.Estimate(transferPeers,"F",1,targetContext,at,1m,.1m,20,3,0m,true)

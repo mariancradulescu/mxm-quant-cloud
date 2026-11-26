@@ -3,6 +3,7 @@ Restore exact original archives once, normalize and conserve the child source.
 Never execute the old V3 policy or claim independent annual qualification.
 """
 import argparse,os,shutil,subprocess,time
+from decimal import Decimal
 from pathlib import Path
 from . import owner_eur_recent_archive as archive
 from . import owner_eur_archive_funding_2 as funding
@@ -22,7 +23,17 @@ CENSUS_CONTENT_SHA='0fece43b54d788666fa139141adbf3f9cd07d708b3665adc704cafd39cdf
 
 def write(path,obj):Path(path).write_text(exact_json(obj)+'\n')
 def variants():
-    return [dict(v,UniverseCount=7) for v in estimator_variants()]
+    rows=[dict(v,UniverseCount=7) for v in estimator_variants()]
+    base=next(v['Profile'] for v in rows if v['Id']=='TRANSFER_SUPPORT_SENSITIVITY')
+    for name,mode,management in (
+        ('TARGET25_LIFECYCLE',None,'TRANSITION_VALUE'),
+        ('TARGET25_DIRECT_PAV1','DIRECT','TRANSITION_VALUE'),
+        ('TARGET25_CORROBORATED_PAV1','CORROBORATED','TRANSITION_VALUE'),
+        ('TARGET25_DIRECT_REDUCE','DIRECT','MONETARY_REDUCE')):
+        profile=dict(base,DistributionTargetRanges=Decimal('2.5'),EconomicManagement=management)
+        if mode is not None:profile['Pav1CompetitiveForecast']=mode
+        rows.append(dict(Id=name,UniverseCount=7,Profile=profile))
+    return rows
 
 def prepare(work):
     start=time.monotonic()
@@ -92,13 +103,14 @@ def evaluate(work):
         subprocess.run(['dotnet',REPLAY,'--owner-earlier-lifecycle-estimation',str(work/'earlier-plan.json'),
                         str(work/'earlier-source.json'),str(out),str(work/'verified-protection'),stress],check=True)
         result=read(out/'result.json')
-        need(result['Study']==STUDY and result['SharedPortfolioEvaluations']==6 and
+        need(result['Study']==STUDY and result['SharedPortfolioEvaluations']==10 and
              result['SourceSha256']==receipt['SourceSha256'] and result['ProtocolSha256']==receipt['ProtocolSha256']
              and result['Orders']==0 and not result['CloudActivated'],'EARLIER_RESULT_BINDING')
         results.append(result);(report/('S'+str(i)+'.json')).write_bytes((out/'result.json').read_bytes())
         print('EARLIER_SCENARIO_COMPLETE',i,flush=True)
-    write(report/'summary.json',dict(Study=STUDY,SharedPortfolioEvaluations=18,
-        Selection=corrected_selection([r for x in results for r in x['Selection']]),
+    write(report/'summary.json',dict(Study=STUDY,SharedPortfolioEvaluations=30,
+        Selection=corrected_selection([r for x in results for r in x['Selection']],Decimal('2.90')),
+        SelectionMultiplicity=27,SelectionPenalty=Decimal('2.90'),
         SourceSha256=receipt['SourceSha256'],ProtocolSha256=receipt['ProtocolSha256'],
         EvaluationSeconds=round(time.monotonic()-start,3),PriorHistoryExposed=True,
         Orders=0,CloudActivated=False,IndependentConfirmationCertified=False,EconomicPromotionCertified=False))
@@ -114,7 +126,7 @@ def conserve():
 def main():
     p=argparse.ArgumentParser();p.add_argument('stage',choices=('check','prepare','cache','evaluate','conserve'))
     p.add_argument('--work',type=Path);a=p.parse_args()
-    if a.stage=='check':need(len(variants())==5 and all(v['UniverseCount']==7 for v in variants()),'EARLIER_VARIANTS')
+    if a.stage=='check':need(len(variants())==9 and all(v['UniverseCount']==7 for v in variants()),'EARLIER_VARIANTS')
     elif a.stage=='prepare':prepare(a.work)
     elif a.stage=='cache':cache(a.work)
     elif a.stage=='evaluate':evaluate(a.work)

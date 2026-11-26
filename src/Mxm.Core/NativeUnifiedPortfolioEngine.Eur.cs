@@ -336,6 +336,23 @@ public sealed partial class NativeUnifiedPortfolioEngine
         return choice;
     }
 
+    NativeEurPayoff? CompetitiveCandidatePayoff(Ucp1MarketFrame market,long at,string family,int side,
+        decimal units,decimal risk,decimal cost,NativeEurDecisionContext? context,Action<string>? diagnostic=null,
+        string? managementOverride=null)
+    {
+        if(eurDevelopmentProfile is {Pav1CompetitiveForecast:{ } mode} profile&&family==NativeEconomicMechanisms.Transition)
+        {
+            var direct=NativeEconomicMechanisms.TransitionPayoff(market,at,side,units,cost,
+                profile.EconomicGeometryTimeframe,profile.Pav1TransitionBars);
+            diagnostic?.Invoke(direct is {GrossLowerEur:>0m,NetLowerEur:>0m}
+                ?"PAV1_COMPETITIVE_DIRECT_POSITIVE":"PAV1_COMPETITIVE_DIRECT_UNSUPPORTED_OR_NONPOSITIVE");
+            if(mode=="DIRECT")return direct;
+            var empirical=EurPayoff(family,side,risk,cost,context,diagnostic,at,managementOverride);
+            return NativeCenteredLifecycle.Corroborate(empirical,direct);
+        }
+        return EurPayoff(family,side,risk,cost,context,diagnostic,at,managementOverride);
+    }
+
     internal NativeEurPayoff? EurPayoff(string family,int side,decimal candidateRiskEur,decimal currentCostFloorEur,
         NativeEurDecisionContext? target=null,Action<string>? diagnostic=null,long? decisionAt=null,string? managementOverride=null)
     {
@@ -587,8 +604,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
                     capital.ResearchAdmissionEquityEur,risk,roundTripCost);
                 if(context is not null&&marketState is not null)context=context with {MarketState=marketState,RelativeVolatility=volatility,ClosedBarActivity=activityContext};
                 if(CaptureEurDiagnostics&&policy==EurGeneralSelect&&context is null)ScoreDiagnostic("NO_CONTEXT");
-                var payoff=risk is >0m&&(IsEurRank||eurDevelopmentProfile is null)?EurPayoff(s.Family,s.Side,risk.Value,roundTripCost+debit!.Value,
-                    policy is EurContextRank or EurGeneralSelect?context:null,CaptureEurDiagnostics||eurDevelopmentProfile?.LifecycleEstimator is not null?ScoreDiagnostic:null,at):null;
+                var payoff=risk is >0m&&(IsEurRank||eurDevelopmentProfile is null)?CompetitiveCandidatePayoff(market,at,s.Family,s.Side,units,risk.Value,roundTripCost+debit!.Value,
+                    policy is EurContextRank or EurGeneralSelect?context:null,CaptureEurDiagnostics||eurDevelopmentProfile?.LifecycleEstimator is not null?ScoreDiagnostic:null):null;
                 if(eurDevelopmentProfile?.EconomicMechanism==NativeEconomicMechanisms.Transition&&risk is >0m&&debit.HasValue)
                     payoff=NativeEconomicMechanisms.TransitionPayoff(market,at,s.Side,units,roundTripCost+debit.Value,
                         eurDevelopmentProfile.EconomicGeometryTimeframe,eurDevelopmentProfile.Pav1TransitionBars);

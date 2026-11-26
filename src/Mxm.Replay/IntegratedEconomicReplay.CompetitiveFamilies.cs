@@ -17,7 +17,7 @@ internal static partial class IntegratedEconomicReplay
             input.Markets.Select(m=>m.Market.Name).Distinct().Count()!=input.Markets.Length||
             !(p.Start<p.SelectionFrom&&p.SelectionFrom<p.EvaluationFrom&&p.EvaluationFrom<p.End)||
             !p.Stresses.SequenceEqual(new[]{0m,.5m,1m})||!p.Stresses.Contains(stress)||
-            p.Variants.Length!=(estimatorStudy?5:causalManagementStudy?3:2)||p.Variants.Select(v=>v.Id).Distinct().Count()!=p.Variants.Length||
+            p.Variants.Length!=(earlierEstimatorStudy?9:estimatorStudy?5:causalManagementStudy?3:2)||p.Variants.Select(v=>v.Id).Distinct().Count()!=p.Variants.Length||
             p.Variants.Any(v=>v.UniverseCount!=input.Markets.Length||!v.Profile.CompeteEconomicFamilies||
                 !v.Profile.LearnFromOpportunityEpisodes||!v.Profile.ObserveFamilyDirectionsOnClosedBars||
                 !v.Profile.UseMarketTimeFxValuation||!v.Profile.ReserveObservedBarGaps)||
@@ -30,6 +30,9 @@ internal static partial class IntegratedEconomicReplay
         if(earlierEstimatorStudy&&(!estimatorStudy||input.Markets.Length!=7||
             !p.OriginalInstruments.Order().SequenceEqual(input.Markets.Select(m=>m.Market.Name).Order())))
             throw new InvalidDataException("EARLIER_ESTIMATOR_UNIVERSE_BINDING");
+        if(earlierEstimatorStudy&&p.Variants.Count(v=>v.Profile.Pav1CompetitiveForecast is not null)!=3||
+            !earlierEstimatorStudy&&p.Variants.Any(v=>v.Profile.Pav1CompetitiveForecast is not null))
+            throw new InvalidDataException("EARLIER_PAV1_FORECAST_ABLATION_BINDING");
         if(estimatorStudy&&p.Variants.Any(v=>v.Profile.LifecycleEstimator is null)||
             !estimatorStudy&&p.Variants.Any(v=>v.Profile.LifecycleEstimator is not null))
             throw new InvalidDataException("LIFECYCLE_ESTIMATOR_STUDY_BINDING");

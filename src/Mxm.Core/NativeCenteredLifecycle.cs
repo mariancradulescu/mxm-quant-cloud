@@ -4,6 +4,16 @@ namespace Mxm.Core;
 // Do not measure dispersion around a cost-capped mean of a different series.
 internal static class NativeCenteredLifecycle
 {
+    // Both estimates already use the same current units and monetary costs.
+    // Do not sum overlapping forecasts or assume their errors independent.
+    internal static NativeEurPayoff? Corroborate(NativeEurPayoff? empirical,NativeEurPayoff? direct)
+        =>empirical is null||direct is null?null:empirical with
+        {GrossMeanEur=Math.Min(empirical.GrossMeanEur,direct.GrossMeanEur),
+         GrossLowerEur=Math.Min(empirical.GrossLowerEur,direct.GrossLowerEur),
+         NetMeanEur=Math.Min(empirical.NetMeanEur,direct.NetMeanEur),
+         NetLowerEur=Math.Min(empirical.NetLowerEur,direct.NetLowerEur),
+         Cohort=empirical.Cohort+"/CORROBORATED_PAV1_DIRECT_PRICE_PROXY"};
+
     internal static NativeEurPayoff? Reprice(NativeEurPayoff? normalized,decimal risk,decimal cost,Action<string>? diagnostic=null)
     {
         if(normalized is null||risk<=0m||cost<0m)

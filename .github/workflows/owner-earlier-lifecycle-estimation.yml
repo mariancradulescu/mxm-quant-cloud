@@ -87,7 +87,7 @@ jobs:
           path: earlier-normalized-source/
           retention-days: 90
           if-no-files-found: error
-      - name: Execute eighteen new common-book evaluations
+      - name: Execute thirty new common-book evaluations
         run: python -m research.owner_earlier_lifecycle_estimation evaluate --work "$RUNNER_TEMP/earlier-private"
       - name: Publish economic results and progress
         if: always()
