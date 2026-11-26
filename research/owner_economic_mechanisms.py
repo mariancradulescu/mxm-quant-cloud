@@ -64,11 +64,12 @@ def financing_plan(source):
     targets=set();audits=[]
     for name,entry in entries.items():
         terms=entry["Market"]["DatedDevelopment"];c=terms["Contract"]
-        need(c["SwapPeriodHours"]==24 and isinstance(c.get("ChargeSwapAtWeekends"),bool) and
-             terms["AccountSwapFree"] is False and c.get("SkipSwapPeriods") is not None,
-             "MECHANISM_UNSUPPORTED_CONTRACT_SCHEDULE")
-        minute=c["SwapTimeUtcMinute"]
-        need(isinstance(minute,int) and 0<=minute<1440,"MECHANISM_CHARGE_CLOCK")
+        minute=c.get("SwapTimeUtcMinute")
+        if not (c.get("SwapPeriodHours")==24 and isinstance(c.get("ChargeSwapAtWeekends"),bool) and
+                terms.get("AccountSwapFree") is False and c.get("SkipSwapPeriods") is not None and
+                isinstance(minute,int) and 0<=minute<1440):
+            audits.append(dict(Symbol=name,Status="CONTRACT_SCHEDULE_UNRESOLVED",Requirements=[]))
+            continue # Preserve the exact gap; common C# guards decide this market.
         # All eligible clocks are audited preventively, regardless of old trades.
         # Skip periods depend on entry time; collecting this superset is safe.
         for day in range(source["Start"],source["End"],DAY):
@@ -77,7 +78,9 @@ def financing_plan(source):
             if all(c.get(k) is not None and Decimal(str(c[k]))==0 for k in ("LongSwap","ShortSwap")):continue
             needs=[(name,False)] if c["SwapCalculationType"]==1 else []
             currency=c["QuoteAsset"]
-            need(currency=="EUR" or currency in source["Routes"],"MECHANISM_FX_ROUTE")
+            if currency!="EUR" and currency not in source["Routes"]:
+                audits.append(dict(Symbol=name,ChargeAt=at,Status="CONVERSION_ROUTE_UNCOLLECTED",Requirements=[]))
+                continue
             needs += [(hop["Symbol"],True) for hop in source["Routes"].get(currency,[])]
             status=[]
             for symbol,both in needs:

@@ -26,6 +26,13 @@ class PreventiveFunding(unittest.TestCase):
         self.assertFalse(valid_mark(dict(q,BidAt=at+1),at,False))
         self.assertFalse(valid_mark(dict(q,Bid='4'),at,True))
         self.assertFalse(valid_mark(dict(q,BidAt=at-7200001),at,False))
+    def test_one_missing_contract_does_not_block_other_instruments(self):
+        source=self.fixture()
+        source['Markets'][0]['Market']['DatedDevelopment']['Contract']['SwapTimeUtcMinute']=None
+        plan=financing_plan(source)
+        self.assertEqual(plan['Audit'][0]['Status'],'CONTRACT_SCHEDULE_UNRESOLVED')
+        self.assertEqual(len(plan['Targets']),5)
+        self.assertTrue(all(x['Symbol']=='EURUSD' for x in plan['Targets']))
     def test_closed_session_fallback_requires_official_calendar_and_fresh_prior_mark(self):
         at=10_000_000;prior=at-900000
         q=dict(At=prior,Bid='2',Ask='3',BidAt=prior,AskAt=prior)
