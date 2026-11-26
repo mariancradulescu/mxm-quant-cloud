@@ -323,11 +323,21 @@ public sealed partial class NativeUnifiedPortfolioEngine
             if(residual<=0m)return new("INTEGRATED_MECHANISM_TARGET",position.Units);
             if(eurDevelopmentProfile.EconomicManagement=="BRACKET")return null;
             decimal? debit=NativePortfolioFunding.OfferDebit(market,side,position.Units,frame.At,FundingScenarioId);
-            if(debit is null||NativeEconomicMechanisms.Continuation(market,frame.At) is not { } transition)return null;
+            if(debit is null||NativeEconomicMechanisms.Continuation(market,frame.At,eurDevelopmentProfile.EconomicGeometryTimeframe) is not { } transition)return null;
             decimal change=side*transition.Mean*position.Units;
             decimal value=change*(change>=0m?q.EurCredit:q.EurDebit)-debit.Value;
             decimal uncertainty=transition.Sem*position.Units*q.EurDebit;
             if(value+uncertainty<0m)return new("INTEGRATED_MECHANISM_NEGATIVE_CONTINUATION",position.Units);
+            if(eurDevelopmentProfile.EconomicManagement=="CAPTURE_VALUE"&&position.EntryQuote is { } entry&&
+                position.EntryPrice is decimal entryPrice)
+            {
+                // Immediate executable liquidation is the alternative to HOLD.
+                // No future MFE is referenced and already paid entry costs are sunk.
+                decimal now=NativeExecutableEconomics.EstimateNet(entry,q,side,position.Units,
+                    entryPrice,price,q.LiquidationSlippagePerSide??position.SlippagePerSide)+position.FinancingRemaining;
+                if(now>0m&&value<=0m)
+                    return new("INTEGRATED_MECHANISM_CAPTURE_NONPOSITIVE_CONTINUATION",position.Units);
+            }
             decimal minimum=market.Contract.MinimumUnits,volumeStep=market.Contract.VolumeStepUnits;
             decimal rest=position.Units-minimum;
             return value<0m&&!geometry.Reduced&&minimum>0m&&volumeStep>0m&&rest>=minimum&&(rest-minimum)%volumeStep==0m
