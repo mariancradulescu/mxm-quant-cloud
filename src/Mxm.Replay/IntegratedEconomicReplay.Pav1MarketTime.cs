@@ -43,7 +43,7 @@ internal static partial class IntegratedEconomicReplay
             Limitation="RESEARCH_ONLY_DAY_CLUSTER_STATISTIC; NO_INDEPENDENT_CONFIRMATION; TERMINAL_EQUITY_INCLUDES_OPEN_HOLDINGS"};
     }
 
-    public static int RunPavMarketTime(string protocolPath,string sourcePath,string directory,string protectionDirectory,string stressText)
+    public static int RunPavMarketTime(string protocolPath,string sourcePath,string directory,string protectionDirectory,string stressText,bool monetaryReduceStudy=false)
     {
         var planBytes=File.ReadAllBytes(protocolPath);var sourceBytes=File.ReadAllBytes(sourcePath);
         var p=JsonSerializer.Deserialize<PavMarketPlan>(planBytes,Json)!;
@@ -51,19 +51,30 @@ internal static partial class IntegratedEconomicReplay
         decimal stress=decimal.Parse(stressText,System.Globalization.CultureInfo.InvariantCulture);
         bool Grid(long[]? rows)=>rows is null||rows.SequenceEqual(rows.OrderBy(x=>x).Distinct())&&
             rows.All(t=>t>=input.Start&&t<input.End+7*HistoricalDay&&t%EurStep==EurOffset);
-        if(p.Study!="PAV1_MARKET_TIME_FX_1"||p.Exposure!="PROJECT_EXPOSED_CONDITIONAL_DEVELOPMENT"||
+        if(p.Study!=(monetaryReduceStudy?"MONETARY_REDUCE_COMMON_BOOK_1":"PAV1_MARKET_TIME_FX_1")||
+            p.Exposure!="PROJECT_EXPOSED_CONDITIONAL_DEVELOPMENT"||
             p.SourceProtocolSha256!=input.ProtocolSha256||p.EvidenceManifestSha256!=input.EvidenceManifestSha256||
             p.Start!=input.Start||p.End!=input.End||!(p.Start<p.SelectionFrom&&p.SelectionFrom<p.EvaluationFrom&&p.EvaluationFrom<p.End)||
             input.Markets.Length!=25||p.OriginalInstruments.Length!=21||p.OriginalInstruments.Distinct().Count()!=21||
             p.OriginalInstruments.Any(n=>!input.Markets.Any(m=>m.Market.Name==n))||!input.ExtendedEconomicContext||
             !p.Stresses.SequenceEqual(new[]{0m,.5m,1m})||!p.Stresses.Contains(stress)||
-            p.Variants.Length!=13||p.Variants.Select(v=>v.Id).Distinct().Count()!=13||
+            p.Variants.Length!=(monetaryReduceStudy?14:13)||
+            p.Variants.Select(v=>v.Id).Distinct().Count()!=p.Variants.Length||
             input.Markets.Any(m=>!Grid(m.ScheduledClocks)||!Grid(m.AmbiguousCalendarClocks))||
-            p.Variants.Any(v=>v.UniverseCount is not (21 or 25)||v.Profile.EconomicMechanism!=NativeEconomicMechanisms.Transition||
+            p.Variants.Any(v=>v.UniverseCount is not (21 or 25)||
+                (!monetaryReduceStudy&&v.Profile.EconomicMechanism!=NativeEconomicMechanisms.Transition)||
+                (monetaryReduceStudy&&(v.UniverseCount!=25||!v.Profile.UseMarketTimeFxValuation||
+                    v.Profile.MinimumContractVolumeOnly||
+                    v.Profile.EconomicManagement is not ("TRANSITION_VALUE" or NativeEconomicMechanisms.MonetaryReduce)))||
                 !v.Profile.KeepAdmissionRiskAtFill||!v.Profile.ResizeWithinAdmissionRiskAtFill||
                 v.Profile.ModelFundingAtPriorClosedSessionQuote||!v.Profile.ObserveIntentExecutionOnTicks||v.Profile.ModeledStopLatencyMs is null||
                 v.Profile.LearnFromOpportunityEpisodes||v.Profile.CaptureStudyDiagnostics))
             throw new ArgumentException("PAV1_MARKET_TIME_BINDING");
+        if(monetaryReduceStudy&&(p.Variants.GroupBy(v=>v.Profile.EconomicMechanism).Count()!=7||
+            p.Variants.GroupBy(v=>v.Profile.EconomicMechanism).Any(g=>g.Count()!=2||
+                !g.Any(v=>v.Profile.EconomicManagement==NativeEconomicMechanisms.MonetaryReduce)||
+                !g.Any(v=>v.Profile.EconomicManagement=="TRANSITION_VALUE"))))
+            throw new ArgumentException("MONETARY_REDUCE_PAIRED_FAMILY_BINDING");
         string planHash=GeneralSha(planBytes),sourceHash=GeneralSha(sourceBytes);
         Directory.CreateDirectory(directory);
         var tape=new EerProtectionTape(protectionDirectory);
@@ -76,7 +87,7 @@ internal static partial class IntegratedEconomicReplay
             return new PavMarketCase(v,new NativeUnifiedPortfolioEngine(NativeUnifiedPortfolioEngine.EurGeneralProbe,
                 fundingScenarioId:scenario,eurDevelopmentProfile:v.Profile),sources[v.Profile.UseMarketTimeFxValuation?1:0],streamsByCount[v.UniverseCount],scenario);
         }).ToList();
-        foreach(bool conditional in new[]{false,true})
+        foreach(bool conditional in monetaryReduceStudy?new[]{true}:new[]{false,true})
         {
             var profile=p.Variants.First(v=>v.Profile.UseMarketTimeFxValuation==conditional).Profile;
             var v=new PavMarketVariant(conditional?"CASH_MARKET_TIME":"CASH_STRICT",25,profile);
@@ -104,14 +115,14 @@ internal static partial class IntegratedEconomicReplay
                     tape.Between(c.Book,at-1,c.Source,c.Streams,c.Scenario,stress);
                     c.Source.Advance(c.Book,frame with {Protection=tape.GridCoverage(c.Book,at)},c.Streams,c.Scenario,stress);
                 }
-                if(++processed%288==0)Console.WriteLine($"PAV1_MARKET_TIME_PROGRESS stress={stressText} clock={at} clocks={processed} books={cases.Count}");
+                if(++processed%288==0)Console.WriteLine($"{(monetaryReduceStudy?p.Study:"PAV1_MARKET_TIME")}_PROGRESS stress={stressText} clock={at} clocks={processed} books={cases.Count}");
             }
         }
         void Checkpoint(string phase)
         {
             var root=Path.Combine(directory,"checkpoints",phase);Directory.CreateDirectory(root);
             foreach(var c in cases)File.WriteAllText(Path.Combine(root,c.Variant.Id+".json"),c.Book.HistoricalEurCheckpoint());
-            Console.WriteLine($"PAV1_MARKET_TIME_CHECKPOINT stress={stressText} phase={phase} books={cases.Count}");
+            Console.WriteLine($"{(monetaryReduceStudy?p.Study:"PAV1_MARKET_TIME")}_CHECKPOINT stress={stressText} phase={phase} books={cases.Count}");
         }
         Observe(p.SelectionFrom,p.EvaluationFrom);
         var selection=cases.Select(c=>new {c.Variant.Id,Result=HistoricalBook(c.Book,new[]{p.SelectionFrom,p.EvaluationFrom}),
@@ -136,7 +147,7 @@ internal static partial class IntegratedEconomicReplay
             MarketExpansionBasis="FOUR_ADDITIONAL_MARKETS_ONLY_AT_AUTHENTIC_AVAILABLE_CLOCKS_NOV23_25; NO_BACKFILLED_QUOTES",
             OriginalResultsModified=false,SourceBrokerRequests=0,EconomicPromotionCertified=false,IndependentConfirmationCertified=false,Orders=0,CloudActivated=false};
         File.WriteAllBytes(Path.Combine(directory,"result.json"),JsonSerializer.SerializeToUtf8Bytes(output,Json));
-        Console.WriteLine($"PAV1_MARKET_TIME_COMPLETE stress={stressText} books={cases.Count}");
+        Console.WriteLine($"{(monetaryReduceStudy?p.Study:"PAV1_MARKET_TIME")}_COMPLETE stress={stressText} books={cases.Count}");
         return 0;
     }
 }
