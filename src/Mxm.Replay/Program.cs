@@ -11,6 +11,8 @@ if(args is ["--owner-eur-general",var generalPhase,var generalInput,var generalO
     return IntegratedEconomicReplay.RunGeneralEur(generalPhase,generalInput,generalOutput,generalModels);
 if(args is ["--owner-pav1-market-time",var pmProtocol,var pmSource,var pmDirectory,var pmTape,var pmStress])
     return IntegratedEconomicReplay.RunPavMarketTime(pmProtocol,pmSource,pmDirectory,pmTape,pmStress);
+if(args is ["--owner-monetary-reduce-common-book",var mrProtocol,var mrSource,var mrDirectory,var mrTape,var mrStress])
+    return IntegratedEconomicReplay.RunPavMarketTime(mrProtocol,mrSource,mrDirectory,mrTape,mrStress,monetaryReduceStudy:true);
 if(args is ["--owner-opportunity-screen",var screenProtocol,var screenSource,var screenReport,var screenProtection])
     return IntegratedEconomicReplay.RunOpportunityScreen(screenProtocol,screenSource,screenReport,screenProtection);
 if(args is ["--owner-eur-historical-study",var historicalProtocol,var historicalSource,var historicalReport])
