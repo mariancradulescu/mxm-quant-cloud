@@ -22,8 +22,13 @@ class CausalManagementChecks(unittest.TestCase):
         with self.assertRaises(Exception):apply_overlay(source,rows)
         future=self.rows();future[0]['Witness']['At']=future[0]['Target']['At']+1
         with self.assertRaises(Exception):apply_overlay(self.source(),future)
-        existing=self.source();existing['Tapes'][0]['FundingQuotes']=[dict(At=rows[0]['Target']['At'],Bid='100')]
+        existing=self.source();existing['Tapes'][0]['FundingQuotes']=[dict(At=rows[0]['Target']['At'],Bid='100',
+            BidAt=rows[0]['Target']['At'],RequestedCoverage=True)]
         with self.assertRaises(Exception):apply_overlay(existing,rows)
+        stale=self.source();stale['Tapes'][0]['FundingQuotes']=[dict(At=rows[0]['Target']['At'],Bid='100',
+            BidAt=rows[0]['Target']['At']-7200001,RequestedCoverage=True)]
+        apply_overlay(stale,rows)
+        self.assertEqual(stale['Tapes'][0]['FundingQuotes'][0]['Bid'],'100')
 
     def test_generic_source_cache_restores_exact_bytes_and_detects_tampering(self):
         from cryptography.hazmat.primitives import serialization

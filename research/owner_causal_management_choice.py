@@ -49,7 +49,10 @@ def apply_overlay(source,rows):
         else:
             q=dict(At=target['At'],RequestedCoverage=False,BidAt=None,AskAt=None,Bid=None,Ask=None)
             tape['FundingQuotes'].append(q)
-        need(q.get('LatestBidPrefix') is None and q.get('Bid') is None,'CAUSAL_OVERLAY_MUST_FILL_MISSING_ONLY')
+        stamp=q.get('BidAt');price=q.get('Bid')
+        legacy_valid=(q.get('RequestedCoverage',False) and price is not None and Decimal(str(price))>0
+            and stamp is not None and 0<stamp<=target['At'] and target['At']-stamp<=7200000)
+        need(q.get('LatestBidPrefix') is None and not legacy_valid,'CAUSAL_OVERLAY_MUST_FILL_MISSING_ONLY')
         q['LatestBidPrefix']=witness
     tape['FundingQuotes'].sort(key=lambda q:q['At'])
 
