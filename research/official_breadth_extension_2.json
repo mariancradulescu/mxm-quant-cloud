@@ -1,0 +1,18 @@
+{
+  "Study": "OFFICIAL_BREADTH_EXTENSION_2",
+  "Exposure": "DEVELOPMENT_ONLY_NO_INDEPENDENT_CLAIM",
+  "PriorCensusSha256": "0fece43b54d788666fa139141adbf3f9cd07d708b3665adc704cafd39cdf0882",
+  "ExistingUniverse": ["AAPL.US", "AAXJ.US", "AMD.US", "BTCUSD", "CN50", "Coffee", "Cotton", "ETHUSD", "EURJPY", "EURUSD", "GBPUSD", "GER40-F", "GOOG.US-24", "LTCUSD", "NatGas", "SpotBrent", "SpotCrude", "Sugar", "US500", "XAGUSD", "XAUUSD"],
+  "Base": [],
+  "New": ["AAPL.US-24", "ACWI.US", "HK50-F", "USDJPY"],
+  "Windows": [{"Id": "NOV23_25", "From": "2026-11-23", "To": "2026-11-25"}],
+  "WarmFrom": "2026-11-01",
+  "PageHours": 4,
+  "PerPartitionMaxRequests": 1000,
+  "PerPartitionSeconds": 1080,
+  "PerSidePageBudget": 450,
+  "SelectionBasis": "First four pending names in the immutable authenticated class-balanced census after excluding all 21 current economic markets. No performance filter. Reuse existing market history; collect seven bar timeframes, two latest closed days of execution/protection ticks, official terms, expected margins and official FX routes for additions.",
+  "Orders": 0,
+  "CloudActivated": false,
+  "IndependentConfirmationCertified": false
+}
