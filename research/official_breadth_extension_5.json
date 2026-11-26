@@ -1,0 +1,70 @@
+{
+  "Study": "OFFICIAL_BREADTH_EXTENSION_5_BRF_COMPLETION",
+  "Exposure": "DEVELOPMENT_ONLY_NO_INDEPENDENT_CLAIM",
+  "PriorCensusSha256": "0fece43b54d788666fa139141adbf3f9cd07d708b3665adc704cafd39cdf0882",
+  "ExistingUniverse": [
+    "AAPL.US",
+    "AAPL.US-24",
+    "AAXJ.US",
+    "ACWI.US",
+    "AMD.US",
+    "BRF.US",
+    "BTCUSD",
+    "CN50",
+    "Coffee",
+    "Copper",
+    "Cotton",
+    "DOTUSD",
+    "ETHUSD",
+    "EURJPY",
+    "EURUSD",
+    "GBPUSD",
+    "GER40-F",
+    "GOOG.US-24",
+    "Gasoline",
+    "HK50-F",
+    "JPN225-F",
+    "LTCUSD",
+    "NatGas",
+    "SNAP.US-24",
+    "SpotBrent",
+    "SpotCrude",
+    "Sugar",
+    "US500",
+    "USDJPY",
+    "USDX",
+    "XAGUSD",
+    "XAUUSD",
+    "XPDUSD"
+  ],
+  "Base": [
+    "BRF.US"
+  ],
+  "New": [
+    "AUDUSD",
+    "HK50",
+    "Corn",
+    "TRUMPUSD"
+  ],
+  "Windows": [
+    {
+      "Id": "NOV24_25_ANNUAL_CONTEXT",
+      "From": "2026-11-24",
+      "To": "2026-11-25"
+    },
+    {
+      "Id": "NOV17_24_BRF_COMPLETION",
+      "From": "2026-11-17",
+      "To": "2026-11-24"
+    }
+  ],
+  "WarmFrom": "2025-11-01",
+  "PageHours": 4,
+  "PerPartitionMaxRequests": 1000,
+  "PerPartitionSeconds": 1080,
+  "PerSidePageBudget": 450,
+  "SelectionBasis": "Next four pending original census names after 33 captured markets; no economic outcome filter. BRF.US targeted seven-day nonoverlapping recent window, using already collected annual bars rather than recollecting them. New markets receive annual bar context and seven additional days of execution history; no independent qualification.",
+  "Orders": 0,
+  "CloudActivated": false,
+  "IndependentConfirmationCertified": false
+}
