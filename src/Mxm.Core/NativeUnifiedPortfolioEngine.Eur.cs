@@ -582,7 +582,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
             bool optimizeVolume=frame.ObservationEpisodeOnly&&eurDevelopmentProfile?.OptimizeEconomicOpportunityVolume==true;
             if(optimizeVolume)
             {
-                if(options.Count!=1)throw new InvalidOperationException("EUR_OPTIMIZED_VOLUME_REQUIRES_ONE_ISOLATED_SIGNAL");
+                if(options.Count>1)throw new InvalidOperationException("EUR_OPTIMIZED_VOLUME_REQUIRES_ONE_ISOLATED_SIGNAL");
                 // This is a geometric target reward/risk comparison, not a
                 // learned expected NET forecast. Prefer lower risk on ties.
                 ranked=choices.OrderByDescending(x=>x.Receipt.ConditionalNetRewardRisk)
