@@ -155,8 +155,8 @@ def capture(plan,digest):
     (OUT/"receipt.json").write_bytes(canonical(dict(sealed=sealed,requests=len(packets),
         targetCount=len(target["Targets"]),Orders=0,CloudActivated=False)))
 
-def readback(plan,digest):
-    rid=os.environ["GITHUB_RUN_ID"];key=os.environ["R3_CUSTODY_PRIVATE_KEY_PEM"].encode()
+def readback(plan,digest,source_run=None):
+    rid=str(source_run) if source_run is not None else os.environ["GITHUB_RUN_ID"];key=os.environ["R3_CUSTODY_PRIVATE_KEY_PEM"].encode()
     receipt=json.loads((OUT/"receipt.json").read_bytes());data=eer.unpack(OUT,receipt["sealed"],key,rid)
     need(data["runId"]==rid and data["protocolSha256"]==digest,"MECHANISM_PACKETS_BINDING")
     packets=data["packets"];account=src.decode(packets[0]["reqType"],packets[0]["req"]).ctidTraderAccountId
@@ -169,11 +169,11 @@ def readback(plan,digest):
          "MECHANISM_FULL_PACKET_READBACK")
     return data,max(x["availableAt"] for x in packets)
 
-def materialize(work,receipt_path,plan,digest):
+def materialize(work,receipt_path,plan,digest,source_run=None):
     original(work,receipt_path)
     source=json.loads((work/"source.json").read_bytes())
     previous_proof=json.loads(receipt_path.read_bytes())
-    data,acquired=readback(plan,digest)
+    data,acquired=readback(plan,digest,source_run)
     before=financing_plan(source)
     need(before=={k:v for k,v in data["plan"].items() if k!="RegistrySha256"},"MECHANISM_PREVENTIVE_SCOPE")
     clashes={}
