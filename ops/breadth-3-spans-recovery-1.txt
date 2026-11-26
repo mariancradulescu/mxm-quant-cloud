@@ -1,0 +1,6 @@
+OFFICIAL_BREADTH_EXTENSION_3_SPANS_RECOVERY_1
+Preserve source capture 45829391256 and failed source-only readback 45832679660.
+Nominal DOTUSD daily intervals overlap; no economic model was executed.
+Retain all original rows. Quarantine every member of overlapping nominal
+intervals from reusable context; do not guess actual daily closing times.
+Repeat only deterministic packet readback. No authentication or broker requests.

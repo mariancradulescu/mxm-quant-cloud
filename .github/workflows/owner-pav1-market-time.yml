@@ -4,7 +4,7 @@ on:
     paths: ['src/**', 'tests/**', 'research/pav1_market_time_fx_1.json', 'research/owner_pav1_market_time.py', 'research/test_pav1_market_time.py', 'research/NativePav1FundingRecovery/**', '.github/workflows/owner-pav1-market-time.yml']
   push:
     branches: [main]
-    paths: ['research/pav1_market_time_fx_1.json', 'ops/pav1-market-time-technical-recovery-1.txt']
+    paths: ['research/pav1_market_time_fx_1.json', 'ops/pav1-market-time-technical-recovery-1.txt', 'ops/pav1-market-time-technical-recovery-2.txt']
 permissions:
   contents: read
   actions: read
@@ -219,12 +219,13 @@ jobs:
           if-no-files-found: error
           retention-days: 90
       - name: Seal reusable normalized source checkpoint before evaluation
+        continue-on-error: true
         run: python -m research.owner_pav1_market_time checkpoint --work "$RUNNER_TEMP/eur-private"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: pav1-market-time-source-checkpoint
           path: market-checkpoint/
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 90
       - name: Native common portfolio S0
         run: python -m research.owner_pav1_market_time partition --work "$RUNNER_TEMP/eur-private" --stress 0

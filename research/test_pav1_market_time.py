@@ -4,7 +4,7 @@ from unittest.mock import patch
 from pathlib import Path
 import subprocess,tempfile,unittest
 from .test_owner_eur_checkpoint import fixture,START,DAY
-from .owner_pav1_market_time import registered,select,add_funding_prefixes,REPLAY,download,seal_checkpoint
+from .owner_pav1_market_time import registered,select,add_funding_prefixes,REPLAY,download,seal_checkpoint,restore_checkpoint
 
 class PavMarketTime(unittest.TestCase):
     def test_registration_and_fixed_hypotheses(self):
@@ -44,6 +44,34 @@ class PavMarketTime(unittest.TestCase):
             root=Path(tmp)
             seal_checkpoint(root/'missing-work',root/'checkpoint')
             self.assertFalse((root/'checkpoint').exists())
+
+    def test_fast_source_checkpoint_roundtrips_exact_source_and_binary_tapes(self):
+        import hashlib
+        from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.primitives.asymmetric import rsa
+        from .custody import unseal_new
+        key=rsa.generate_private_key(public_exponent=65537,key_size=2048)
+        private=key.private_bytes(serialization.Encoding.PEM,serialization.PrivateFormat.PKCS8,serialization.NoEncryption())
+        public=key.public_key().public_bytes(serialization.Encoding.PEM,serialization.PublicFormat.SubjectPublicKeyInfo)
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);work=root/'work';work.mkdir();(work/'verified-protection').mkdir()
+            files={'source.json':b'{"AuthoritativeSource":"SYNTHETIC"}', 'pav-market-protocol.json':b'{}',
+                   'verified-protection/test.ticks':bytes(range(256))*4}
+            for name,raw in files.items():(work/name).write_bytes(raw)
+            with patch.dict(os.environ,GITHUB_RUN_ID='1'),patch('research.owner_pav1_market_time.custody_new.checked_public',return_value=public):
+                seal_checkpoint(work,root/'checkpoint')
+            expected=hashlib.sha256(files['source.json']).hexdigest()
+            restore_checkpoint(root/'checkpoint',root/'restored',private,'1',expected)
+            for name,raw in files.items():self.assertEqual((root/'restored'/name).read_bytes(),raw)
+            receipt=json.loads((root/'checkpoint/checkpoint-receipt.json').read_bytes())
+            self.assertEqual(receipt['SourceSha256'],hashlib.sha256(files['source.json']).hexdigest())
+            self.assertTrue(receipt['Complete'])
+            before=list((root/'checkpoint').glob('part-*.sealed'))
+            with patch.dict(os.environ,GITHUB_RUN_ID='1'),patch('research.owner_pav1_market_time.custody_new.checked_public',return_value=public):
+                seal_checkpoint(work,root/'checkpoint')
+            self.assertEqual(before,list((root/'checkpoint').glob('part-*.sealed')))
+            part=next((root/'checkpoint').glob('part-*.sealed'));part.write_bytes(part.read_bytes()+b'X')
+            with self.assertRaises(Exception):restore_checkpoint(root/'checkpoint',root/'corrupt',private,'1',expected)
 
     def test_native_common_book_with_25_synthetic_markets(self):
         with tempfile.TemporaryDirectory() as tmp:

@@ -2,7 +2,7 @@
 No authentication, broker request, policy execution or altered source report.
 """
 import argparse
-import json,os,base64
+import json,os,base64,gzip
 from pathlib import Path
 from datetime import datetime,timezone
 from . import owner_eur_recent_continuous as recent
@@ -12,6 +12,7 @@ from . import owner_eur_recent_archive as archive
 from . import integrated_market_readback as marks
 from . import source_history_universe as src
 from .custody_new import checked_public
+from .custody import seal_new
 from .decode import need
 
 REGISTRY=Path('research/official_breadth_extension_3_spans.json')
@@ -28,6 +29,25 @@ def bounds(rows,period,end):
         CalendarSpanDays=(last-first)/recent.DAY if first is not None else None,
         ReachesTwelveMonthStart=first is not None and first<=end-365*recent.DAY,
         ContinuousCoverageCertified=False)
+
+
+def normalize_with_quarantine(rows):
+    bad=set()
+    overlaps=[]
+    for i,(left,right) in enumerate(zip(rows,rows[1:])):
+        if left[1]>right[0]:
+            bad.update((i,i+1))
+            overlaps.append(dict(LeftOpenAt=left[0],LeftNominalCloseAt=left[1],NextOpenAt=right[0],
+                NominalOverlapMs=left[1]-right[0]))
+    reusable=[r for i,r in enumerate(rows) if i not in bad]
+    return marks.normalized_bars(reusable),dict(OverlappingPairs=overlaps,QuarantinedRows=len(bad),
+        Basis='ALL_MEMBERS_OF_OVERLAPPING_NOMINAL_INTERVALS_PRESERVED_RAW_AND_EXCLUDED_FROM_REUSABLE_CONTEXT; NO_ASSUMED_CLOSE_TIME')
+
+
+def fast_seal(path,obj,recipient,run):
+    clear=gzip.compress(src.canonical(obj),compresslevel=1,mtime=0)
+    cipher=seal_new(clear,recipient,run);path.write_bytes(cipher)
+    return dict(file=path.name,plainSha256=src.digest(clear),cipherSha256=src.digest(cipher))
 
 
 def main():
@@ -53,7 +73,7 @@ def main():
     proof={r['report']['index']:r for r in summary['receipts']};out=Path('span-output');out.mkdir()
     private=Path(os.environ['RUNNER_TEMP'])/'breadth-span-private';private.mkdir(mode=0o700)
     tapes=private/'verified-protection';tapes.mkdir(mode=0o700)
-    sink=readback.protection_tick_sink(tapes,'eer1');data={};quotes={};funding={};reports=[]
+    sink=readback.protection_tick_sink(tapes,'eer1');data={};raw_bars={};quotes={};funding={};reports=[]
     for i,t in enumerate(receipt['summary']['partitions']):
         folder=root/f'breadth-extension-3-source-protected-{i}';row=json.loads((folder/'receipt.json').read_bytes())
         need(row['sealed']==proof[i]['sealed'],'BREADTH_SPAN_SEAL_BINDING')
@@ -64,15 +84,18 @@ def main():
         report.update(runId=run,protocolSha256=src.digest(plan_raw),index=i,requests=len(packets))
         need(journal.index==len(packets)==proof[i]['packetsReconciled'] and report==payload['report']==row['report']==proof[i]['report'],
              'BREADTH_SPAN_EXACT_ORIGINAL_PACKET_PARITY')
-        name=t['symbol'];data[name]={tf:marks.normalized_bars(series) for tf,series in bars.items()};quotes[name]=q;funding[name]=f
+        name=t['symbol'];data[name]={};quality={};raw_bars[name]=bars
+        for tf,series in bars.items():data[name][tf],quality[tf]=normalize_with_quarantine(series)
+        quotes[name]=q;funding[name]=f
         reports.append(dict(Symbol=name,Packets=journal.index,MonetaryMarks=len(q),FundingMarks=len(f),
             TickFrom=t['fromInclusive'],TickThrough=t['throughExclusive'],
-            BarCoverage={tf:bounds(series,tf,t['throughExclusive']) for tf,series in bars.items()}))
+            BarCoverage={tf:dict(bounds(series,tf,t['throughExclusive']),ReusableRows=len(data[name][tf]),
+                NominalIntervalQuality=quality[tf]) for tf,series in bars.items()}))
         print('BREADTH_SPAN_VERIFIED',i+1,len(receipt['summary']['partitions']),name,flush=True)
     normalized=dict(Study=p['Study'],SourceRun=p['SourceRun'],SourceRegistrySha256=src.digest(plan_raw),
-        Metadata=meta,Bars=data,Quotes=quotes,Funding=funding,Proof=reports,
+        Metadata=meta,Bars=data,OriginalNominalClosedRows=raw_bars,Quotes=quotes,Funding=funding,Proof=reports,
         ProtectionFiles={f.name:base64.b64encode(f.read_bytes()).decode() for f in sorted(tapes.iterdir())},SourceBrokerRequests=0,Orders=0,CloudActivated=False)
-    seal=eer.seal(out/'normalized-source.sealed',normalized,checked_public(Path('new-recipient-output'),os.environ['GITHUB_RUN_ID']),os.environ['GITHUB_RUN_ID'])
+    seal=fast_seal(out/'normalized-source.sealed',normalized,checked_public(Path('new-recipient-output'),os.environ['GITHUB_RUN_ID']),os.environ['GITHUB_RUN_ID'])
     # Binary protection tapes stay encrypted with normalized bars and metadata.
     # Future materialization does not have to decode the raw packet corpus again.
     report=dict(Study=p['Study'],SourceRun=p['SourceRun'],SourceRegistrySha256=src.digest(plan_raw),
