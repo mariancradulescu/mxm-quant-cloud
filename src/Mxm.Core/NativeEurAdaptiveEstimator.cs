@@ -9,6 +9,8 @@ internal sealed record EurEstimatorCandidate(string Id,int HalfLifeDays,double R
 {
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
     public bool Predictive { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool ClosedBarActivity { get; init; }
 }
 internal sealed record EurEstimatorScore(string Id,int ValidationDays,int Labels,double? Loss)
 {
@@ -66,7 +68,7 @@ internal sealed partial class NativeEurAdaptiveEstimator
             x.Value.Errors.NetBias,x.Value.Errors.NetWidth}).ToArray()
     };
 
-    static double?[] Values(NativeEurDecisionContext context,bool extended,bool predictive=false)
+    static double?[] Values(NativeEurDecisionContext context,bool extended,bool predictive=false,bool activity=false)
     {
         var state=context.MarketState!;
         var values=(extended?Extended:Local).Select(i=>(double?)state[i]).ToList();
@@ -82,6 +84,9 @@ internal sealed partial class NativeEurAdaptiveEstimator
                 var relative=context.RelativeVolatility is {Length:7} v?v[i]:null;
                 values.Add(relative is >0m?Math.Log((double)relative.Value):null);
             }
+        if(predictive&&activity)
+            for(int i=0;i<14;i++)
+                values.Add(context.ClosedBarActivity is {Length:14} a?(double?)a[i]:null);
         decimal cost=Math.Max(0m,context.CostRiskFraction);
         values.Add((double)(cost/(1m+cost)));
         return values.ToArray();
@@ -226,9 +231,9 @@ internal sealed partial class NativeEurAdaptiveEstimator
         return output;
     }
 
-    internal static NativeEurAdaptiveEstimator Fit(NativeEurCalibration calibration,bool extended,bool predictive=false,bool economicObjective=false,bool selectionAware=false,bool forecastBands=false)
+    internal static NativeEurAdaptiveEstimator Fit(NativeEurCalibration calibration,bool extended,bool predictive=false,bool economicObjective=false,bool selectionAware=false,bool forecastBands=false,bool activity=false)
     {
-        if(predictive)return FitPredictive(calibration,extended,economicObjective,selectionAware,forecastBands);
+        if(predictive)return FitPredictive(calibration,extended,economicObjective,selectionAware,forecastBands,activity);
         var rows=calibration.Outcomes.Where(o=>o.AvailableAt<=calibration.ObservationThrough&&
                 o.DecisionAt.HasValue&&o.Context?.MarketState is {Length:16})
             .Select(o=>new Row(o,o.Context!,o.DecisionAt!.Value/Day,Values(o.Context!,extended))).ToArray();
