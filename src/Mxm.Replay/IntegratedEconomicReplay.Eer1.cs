@@ -65,6 +65,7 @@ internal static partial class IntegratedEconomicReplay
         public long MinimumFundingHorizonMs {get;init;}
         public bool CaptureHoldingValuationGaps {get;init;}
         public bool RecoverFreshHoldingMarks {get;init;}
+        public bool RecoverFreshRegistryHoldingMarks {get;init;}
         public bool CaptureBetweenDecisionValuationGaps {get;init;}
         readonly HashSet<(string Symbol,long At,string Reason)> holdingValuationGaps=new();
         public object HoldingValuationGapReport()=>holdingValuationGaps.GroupBy(x=>new{x.Symbol,x.Reason})
@@ -131,9 +132,20 @@ internal static partial class IntegratedEconomicReplay
             return point;
         }
 
+        SourceQuote? FreshRegistryPair(string name,long at)
+        {
+            var bid=HeldRegistry?.At(name,true,at);var ask=HeldRegistry?.At(name,false,at);
+            return bid is not null&&ask is not null&&bid.At<=at&&ask.At<=at&&
+                at-bid.At<=30_000L&&at-ask.At<=30_000L&&bid.Price>0m&&ask.Price>=bid.Price
+                ?new SourceQuote(at,bid.At,ask.At,bid.Price,ask.Price,null!):null;
+        }
+
         public bool HasValuationPair(string name,long at)
         {
-            if(At(name,at) is { } q&&Fresh(q,at,30000L)||ValuationTape?.QuoteAt(name,at) is not null)return true;
+            // Planning only: proven fresh sides are already covered, even when
+            // cost/FX remains unresolved. Do not recollect those same sides.
+            if(At(name,at) is { } q&&Fresh(q,at,30000L)||ValuationTape?.QuoteAt(name,at) is not null||
+                FreshRegistryPair(name,at) is not null)return true;
             return VerifiedClosedNow(name,at)&&MarketPrice(name,true,at) is { } bid&&
                 MarketPrice(name,false,at) is { } ask&&ask.Price>=bid.Price;
         }
@@ -150,13 +162,15 @@ internal static partial class IntegratedEconomicReplay
             if(!marketCalendars.TryGetValue(name,out var market))return Missing("SOURCE_CONTRACT_NOT_PRESENT");
             if(market.Market.DatedDevelopment is not { } terms)return Missing("MISSING_DATED_TERMS");
             var grid=At(name,at);var tick=ValuationTape?.QuoteAt(name,at);
-            var rb=HeldRegistry?.At(name,true,at);var ra=HeldRegistry?.At(name,false,at);
-            if(rb is not null&&ra is not null&&at-rb.At<=30_000L&&at-ra.At<=30_000L&&ra.Price>=rb.Price)
+            if(FreshRegistryPair(name,at) is { } recovered)
             {
-                var recovered=new SourceQuote(at,rb.At,ra.At,rb.Price,ra.Price,null!);
-                if(tick is not null&&(tick.BidAt==rb.At&&tick.Bid!=rb.Price||tick.AskAt==ra.At&&tick.Ask!=ra.Price))
+                if(tick is not null&&(tick.BidAt==recovered.BidAt&&tick.Bid!=recovered.Bid||
+                    tick.AskAt==recovered.AskAt&&tick.Ask!=recovered.Ask))
                     return Missing("CONFLICTING_AUTHENTIC_RECOVERY_PAIR");
-                if(tick is null||Math.Min(rb.At,ra.At)>Math.Min(tick.BidAt,tick.AskAt))tick=recovered;
+                if(grid is not null&&(grid.BidAt==recovered.BidAt&&grid.Bid!=recovered.Bid||
+                    grid.AskAt==recovered.AskAt&&grid.Ask!=recovered.Ask))
+                    return Missing("CONFLICTING_AUTHENTIC_RECOVERY_PAIR");
+                if(tick is null||Math.Min(recovered.BidAt,recovered.AskAt)>Math.Min(tick.BidAt,tick.AskAt))tick=recovered;
             }
             if(grid is not null&&!Fresh(grid,at,30_000L))grid=null;
             if(tick is not null&&!Fresh(tick,at,30_000L))tick=null;
@@ -222,6 +236,20 @@ internal static partial class IntegratedEconomicReplay
                         holdingValuationGaps.Add((name,frame.At,between?"BETWEEN_DECISIONS/"+reason:reason));
                 }
                 if(observed.Contains(name))continue;
+                // Only the new registered experiment enables this path. An
+                // authenticated prefix can price an already held position but
+                // cannot create a market frame, signal or fill. Conflicts stay unknown.
+                if(RecoverFreshRegistryHoldingMarks&&FreshRegistryPair(name,frame.At) is not null)
+                {
+                    var mark=InspectHeldMark(name,frame.At,stress,includeQuote:true);
+                    if(mark.Quote is { } recoveredQuote)
+                    {
+                        quotes.Add(recoveredQuote);
+                        FxCount("FRESH_HELD_REGISTRY_VALUATION_NO_EXECUTION");
+                    }
+                    else Gap("REGISTRY_HELD_"+mark.Status);
+                    continue;
+                }
                 // An authenticated fresh tape mark is usable for held valuation only,
                 // even when no complete executable market frame exists. Never create
                 // a signal, execution or a synthetic price from a missing frame.
