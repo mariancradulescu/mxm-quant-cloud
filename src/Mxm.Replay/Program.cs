@@ -31,6 +31,8 @@ if(args is ["--owner-earlier-lifecycle-estimation",var elProtocol,var elSource,v
     return IntegratedEconomicReplay.RunCompetitiveFamilies(elProtocol,elSource,elDirectory,elTape,elStress,estimatorStudy:true,earlierEstimatorStudy:true);
 if(args is ["--owner-lifecycle-estimation",var leProtocol,var leSource,var leDirectory,var leTape,var leStress])
     return IntegratedEconomicReplay.RunCompetitiveFamilies(leProtocol,leSource,leDirectory,leTape,leStress,estimatorStudy:true);
+if(args is ["--owner-closed-path-information",var cpPlan,var cpSource,var cpTape,var cpOutput])
+    return IntegratedEconomicReplay.RunClosedPathInformation(cpPlan,cpSource,cpTape,cpOutput);
 if(args is ["--owner-controlled-recency",var crProtocol,var crSource,var crDirectory,var crTape,var crStress])
     return IntegratedEconomicReplay.RunCompetitiveFamilies(crProtocol,crSource,crDirectory,crTape,crStress,estimatorStudy:true,adaptiveStudy:true,controlledRecencyStudy:true);
 if(args is ["--owner-causal-recency-competition",var rcProtocol,var rcSource,var rcDirectory,var rcTape,var rcStress])

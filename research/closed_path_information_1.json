@@ -1,0 +1,18 @@
+{
+  "Study": "MONETARY_CLOSED_PATH_INFORMATION_1",
+  "Scopes": [
+    "earlier",
+    "recent"
+  ],
+  "HorizonMinutes": [
+    15,
+    30,
+    60
+  ],
+  "PortfolioEvaluated": false,
+  "FundingIncluded": false,
+  "Orders": 0,
+  "CloudActivated": false,
+  "Exposure": "PROJECT_EXPOSED_CONDITIONAL_DEVELOPMENT",
+  "Method": "NONOVERLAPPING_PAIRED_ACTUAL_MARKS_NO_TIME_EXIT_POLICY"
+}
