@@ -1,0 +1,10 @@
+{
+  "Study": "OWNER_HELD_EQUITY_READBACK_1",
+  "OriginalCaptureRun": 45973360072,
+  "OriginalCaptureHead": "f4dfb9afe4ce07d4d95d9f665e504adc3329325d",
+  "Scopes": ["earlier", "recent"],
+  "SourceBrokerRequests": 0,
+  "OriginalPoliciesReplayed": 0,
+  "Orders": 0,
+  "CloudActivated": false
+}

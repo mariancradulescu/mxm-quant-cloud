@@ -151,8 +151,8 @@ def restore_final_books(spec,folder,dest,key,source_sha):
   need(offset==row['Bytes'] and sha(path)==row['Sha256'],'HELD_BOOK_PLAINTEXT_HASH');paths.append(path)
  return paths
 
-def verify(work,scope):
- registered();p=read(CAPTURE/'receipt.json');rid=os.environ['GITHUB_RUN_ID'];key=os.environ['R3_CUSTODY_PRIVATE_KEY_PEM'].encode()
+def verify(work,scope,capture_run=None):
+ registered();p=read(CAPTURE/'receipt.json');rid=str(capture_run or os.environ['GITHUB_RUN_ID']);key=os.environ['R3_CUSTODY_PRIVATE_KEY_PEM'].encode()
  payload=eer.unpack(CAPTURE,p['sealed'],key,rid);targets=groups()
  need(payload['RunId']==rid and payload['Groups']==targets and p['PlanSha256']==src.digest(exact_json(targets).encode()),'HELD_CAPTURE_BINDING')
  packets=payload['Packets'];account=src.decode(packets[0]['reqType'],packets[0]['req']).ctidTraderAccountId
@@ -169,7 +169,7 @@ def verify(work,scope):
   srcpath=work/(study+'-source.json');source_sha=read(folder/'source-receipt.json')['SourceSha256']
   paths=restore_final_books(BOOKS[study,scope],work/(study+'-cipher'),work/(study+'-books'),key,source_sha)
   for path in paths:
-   stress=path.parts[-3];book_id=path.stem;out=REPORT/(scope+'-'+study+'-'+stress+'-'+book_id+'.json')
+   stress=path.parts[-4];book_id=path.stem;out=REPORT/(scope+'-'+study+'-'+stress+'-'+book_id+'.json')
    subprocess.run(['dotnet',REPLAY,'--owner-frozen-held-equity',str(srcpath),str(tape),str(registry),str(path),
     str(folder/(stress+'-result.json')),book_id,str(out)],check=True)
    r=read(out);results.append({k:v for k,v in r.items() if k!='Changes'})
@@ -183,9 +183,9 @@ def verify(work,scope):
   NewAdmissions=0,OriginalPoliciesReplayed=0,Orders=0,CloudActivated=False,IndependentConfirmationCertified=False))
 
 def main():
- p=argparse.ArgumentParser();p.add_argument('stage',choices=['check','prepare','capture','verify']);p.add_argument('--scope',choices=['earlier','recent']);p.add_argument('--work',type=Path);a=p.parse_args()
+ p=argparse.ArgumentParser();p.add_argument('stage',choices=['check','prepare','capture','verify']);p.add_argument('--scope',choices=['earlier','recent']);p.add_argument('--work',type=Path);p.add_argument('--capture-run',type=int);a=p.parse_args()
  if a.stage=='check':registered()
  elif a.stage=='prepare':prepare(a.work,a.scope)
  elif a.stage=='capture':capture()
- else:verify(a.work,a.scope)
+ else:verify(a.work,a.scope,a.capture_run)
 if __name__=='__main__':main()
