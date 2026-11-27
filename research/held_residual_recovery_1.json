@@ -1,0 +1,21 @@
+{
+  "Study": "OWNER_HELD_RESIDUAL_RECOVERY_1",
+  "Scope": "recent",
+  "ExpectedAdditionalWindows": 146,
+  "Inspection": {
+    "Run": 45992545196,
+    "Head": "da8eacb99b37af346a133eea55a559e5eb975afe",
+    "Artifact": 15195335939,
+    "ArchiveSha256": "dadd813286bd733390a7090b611f4e2ee0823a5c3d5898833a33e219d91d2f7f"
+  },
+  "Prior": {
+    "Run": 45983234609,
+    "Head": "2c09c5d3a68b877e1b750f2d364afc4a47ff725c",
+    "Artifact": 15193665248,
+    "ArchiveSha256": "bc2135886c49dd8504c75141bad1f2794756f7dad145bb5663e593e66d9352e3"
+  },
+  "Orders": 0,
+  "OriginalPoliciesReplayed": 0,
+  "CloudActivated": false,
+  "IndependentConfirmationCertified": false
+}
