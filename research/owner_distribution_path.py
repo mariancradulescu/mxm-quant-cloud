@@ -23,7 +23,7 @@ def normalized_arrays(rows):
  clocks={(int(x['OpenAt']),int(x['CloseAt'])) for x in normalized}
  return [r for r in rows if (r[0],r[1]) in clocks],quality
 
-def annual(work):
+def annual(work,causal_correction=False):
  p=check();work.mkdir(mode=0o700);key=os.environ['R3_CUSTODY_PRIVATE_KEY_PEM'].encode();records=[];proofs=[];money=[]
  for original in p['Sources']:
   tranche,run=original['tranche'],original['run'];root=work/str(tranche);root.mkdir()
@@ -59,7 +59,7 @@ def annual(work):
    print('ANNUAL_DISTRIBUTION_SOURCE_REUSED',name,journal.index,flush=True)
  need(len(records)==len({x['Symbol'] for x in records})==20,'PATH_ANNUAL_DISTINCT_UNIVERSE')
  source=work/'annual-input.json';source.write_text(json.dumps(records,separators=(',',':')));REPORT.mkdir()
- subprocess.run(['dotnet','run','--project','src/Mxm.PathResearch','-c','Release','--no-build','--','--distribution',str(source),str(REPORT/'annual-distribution.json')],check=True)
+ subprocess.run(['dotnet','run','--project','src/Mxm.PathResearch','-c','Release','--no-build','--','--distribution-causal' if causal_correction else '--distribution',str(source),str(REPORT/'annual-distribution.json')],check=True)
  r=read(REPORT/'annual-distribution.json');need(r['SourceSha256']==sha(source) and len(r['Markets'])==20 and not r['PortfolioEvaluated']
   and not r['IndependentConfirmationCertified'] and r['Orders']==0 and not r['CloudActivated'],'PATH_ANNUAL_RESULT_BINDING')
  (REPORT/'source-receipt.json').write_text(exact_json(dict(Study=p['Study'],SourceSha256=sha(source),Proofs=proofs,MonetaryInventory=money,
