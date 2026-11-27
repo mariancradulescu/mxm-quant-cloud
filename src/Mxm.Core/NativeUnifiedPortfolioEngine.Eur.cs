@@ -97,6 +97,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
     // executable fee schedules within one frozen causal calibration.
     readonly Dictionary<(string Symbol,string? AssetClass,string Family,int Side,int? Regime,int? Fast,int? CostBand),NativeEurPayoff?> eurCenteredPayoffs=new();
     readonly Dictionary<(string Symbol,string Family,int Side,decimal Cost),(long At,NativeEurPayoff? Payoff)> eurPathPayoffs=new();
+    long eurPathPayoffClock=-1;
     NativeEurAdaptiveEstimator? adaptivePayoff;
     sealed record EurRealizedForecastError(string Symbol,string Family,int Side,long AvailableAt,decimal GrossR,decimal NetR);
     readonly Dictionary<(string Symbol,string Family,int Side),List<EurRealizedForecastError>> eurRealizedErrors=new();
@@ -397,6 +398,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 if(candidateRiskEur<=0m||currentCostFloorEur<0m)return null;
                 if(estimator.StartsWith("DISTRIBUTION_",StringComparison.Ordinal))
                 {
+                    if(eurPathPayoffClock!=scoredAt){eurPathPayoffs.Clear();eurPathPayoffClock=scoredAt;}
                     var distributionKey=(target.Symbol,family,side,target.CostRiskFraction);
                     if(!eurPathPayoffs.TryGetValue(distributionKey,out var cached)||cached.At!=scoredAt)
                     {

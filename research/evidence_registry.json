@@ -3396,4 +3396,100 @@
     "ordersSubmitted": 0,
     "cloudActivated": false
   }
+,
+  "pathDistribution1": {
+  "status": "REGISTERED_EXPOSED_DEVELOPMENT_NO_INDEPENDENT_CLAIM",
+  "protocol": "research/OWNER_PATH_DISTRIBUTION_20261127.md",
+  "annualRegistry": "research/distribution_path_1.json",
+  "symbols": [
+    "AUDUSD",
+    "HK50",
+    "Corn",
+    "TRUMPUSD",
+    "AIXAd.DE",
+    "EIDO.US",
+    "XAUUSD-F",
+    "USDCHF",
+    "JPN225",
+    "AT1d.DE",
+    "USDX-F",
+    "GBPJPY",
+    "AUS200",
+    "III.GB",
+    "USTN2YR-F",
+    "USDCAD",
+    "GER40",
+    "ADM.GB",
+    "WTOIL-PERP",
+    "AUDJPY"
+  ],
+  "sources": [
+    {
+      "run": 45902693218,
+      "symbols": [
+        "AUDUSD",
+        "HK50",
+        "Corn",
+        "TRUMPUSD"
+      ],
+      "fromUtc": "2025-11-01",
+      "throughExclusive": 1795564800000
+    },
+    {
+      "run": 45939303538,
+      "symbols": [
+        "AIXAd.DE",
+        "EIDO.US",
+        "XAUUSD-F",
+        "USDCHF"
+      ],
+      "fromUtc": "2025-11-01",
+      "throughExclusive": 1795737600000
+    },
+    {
+      "run": 45948514996,
+      "symbols": [
+        "JPN225",
+        "AT1d.DE",
+        "USDX-F",
+        "GBPJPY"
+      ],
+      "fromUtc": "2025-11-01",
+      "throughExclusive": 1795564800000
+    },
+    {
+      "run": 45954516978,
+      "symbols": [
+        "AUS200",
+        "III.GB",
+        "USTN2YR-F",
+        "USDCAD"
+      ],
+      "fromUtc": "2025-11-01",
+      "throughExclusive": 1795651200000
+    },
+    {
+      "run": 45965041282,
+      "symbols": [
+        "GER40",
+        "ADM.GB",
+        "WTOIL-PERP",
+        "AUDJPY"
+      ],
+      "fromUtc": "2025-11-01",
+      "throughExclusive": 1795651200000
+    }
+  ],
+  "originalTechnicalRun": 45975718462,
+  "inputRecoveryRun": 45977053433,
+  "heldSourceCaptureRun": 45973360072,
+  "heldReadbackRun": 45977053461,
+  "conservativeWholeAnnualBarExposure": true,
+  "predictiveStatisticsAreNotCertifiedNet": true,
+  "independent": false,
+  "qualification": false,
+  "twelveMonthIndependentEconomicConfirmation": false,
+  "ordersSubmitted": 0,
+  "cloudActivated": false
+}
 }
