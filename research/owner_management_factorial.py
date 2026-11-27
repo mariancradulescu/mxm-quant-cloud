@@ -129,27 +129,47 @@ def prepare(work,scope):
     terminal_diagnosis(work,scope,p,source_path,work/'verified-protection',registry)
     return source_path,plan_path,registry
 
+def run_native(work,source,plan,registry,out,stress,enabled,log_path):
+    env=dict(os.environ,MXM_ECONOMIC_BOUNDED_NEIGHBORS=enabled,
+             MXM_ECONOMIC_PAIRED_DISTRIBUTION=enabled,MXM_ECONOMIC_PROFILE='1')
+    started=time.monotonic()
+    with log_path.open('w') as log:
+        process=subprocess.Popen(['dotnet',REPLAY,'--owner-path-distribution',str(plan),str(source),
+            str(out),str(work/'verified-protection'),stress,str(registry)],
+            env=env,stdout=subprocess.PIPE,text=True)
+        for line in process.stdout:
+            if line.startswith(('MXM_ECONOMIC_PROGRESS ','MXM_ECONOMIC_PROFILE ','COMPETITIVE_FAMILIES_')):
+                print(line.rstrip(),flush=True);log.write(line);log.flush()
+        need(process.wait()==0,'FACTORIAL_NATIVE_EXECUTION')
+    return round(time.monotonic()-started,3)
+
 def evaluate(work,scope):
     source,plan,registry=prepare(work,scope);receipt=read(REPORT/'source-receipt.json')
     results=[];timings=[]
     for i,stress in enumerate(STRESSES):
         out=PARTS/f'S{i}';out.mkdir(parents=True)
-        start=time.monotonic()
-        env=dict(os.environ,MXM_ECONOMIC_BOUNDED_NEIGHBORS='1',MXM_ECONOMIC_PAIRED_DISTRIBUTION='1',
-                 MXM_ECONOMIC_PROFILE='1')
-        with (REPORT/f'S{i}-progress.log').open('w') as log:
-            process=subprocess.Popen(['dotnet',REPLAY,'--owner-path-distribution',str(plan),str(source),
-                str(out),str(work/'verified-protection'),stress,str(registry)],
-                env=env,stdout=subprocess.PIPE,text=True)
-            for line in process.stdout:
-                if line.startswith(('MXM_ECONOMIC_PROGRESS ','MXM_ECONOMIC_PROFILE ','COMPETITIVE_FAMILIES_')):
-                    print(line.rstrip(),flush=True);log.write(line);log.flush()
-            need(process.wait()==0,'FACTORIAL_NATIVE_EXECUTION')
+        seconds=run_native(work,source,plan,registry,out,stress,'1',REPORT/f'S{i}-progress.log')
+        if scope=='earlier' and i==0:
+            # Entire new 7-market S0 portfolio run, same input bytes, same
+            # runner and instrumentation. Baseline is a technical comparison,
+            # not an additional selected candidate or a closed study rerun.
+            baseline=work/'technical-full-baseline';baseline.mkdir()
+            baseline_seconds=run_native(work,source,plan,registry,baseline,stress,'0',REPORT/'full-baseline-progress.log')
+            baseline_sha=sha(baseline/'result.json');optimized_sha=sha(out/'result.json')
+            need(baseline_sha==optimized_sha,'FACTORIAL_FULL_ENGINE_EXACT_PARITY')
+            write(REPORT/'full-engine-benchmark.json',dict(Scope=scope,Scenario=i,Markets=7,
+                Books=9,SourceSha256=receipt['SourceSha256'],ProtocolSha256=receipt['ProtocolSha256'],
+                BaselineSeconds=baseline_seconds,OptimizedSeconds=seconds,
+                Speedup=Decimal(str(baseline_seconds))/max(Decimal(str(seconds)),Decimal('0.001')),
+                ExactResultSha256=baseline_sha,ProfileEnabledBoth=True,OriginalPoliciesReplayed=0,
+                Orders=0,CloudActivated=False))
+            import shutil
+            shutil.rmtree(baseline)
         result=read(out/'result.json')
         need(result['Study']==STUDY and result['SharedPortfolioEvaluations']==9 and
              result['SourceSha256']==receipt['SourceSha256'] and result['ProtocolSha256']==receipt['ProtocolSha256'] and
              result['Orders']==0 and not result['CloudActivated'],'FACTORIAL_NATIVE_RESULT')
-        results.append(result);timings.append(round(time.monotonic()-start,3))
+        results.append(result);timings.append(seconds)
         for name in ('result.json','holding-valuation-gaps.json'):
             (REPORT/f'S{i}-{name}').write_bytes((out/name).read_bytes())
         print('FACTORIAL_SCENARIO_COMPLETE',scope,i+1,3,timings[-1],flush=True)
