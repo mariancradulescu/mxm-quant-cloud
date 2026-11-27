@@ -1,9 +1,23 @@
 using System.Text.Json;
 using System.Diagnostics;
+using System.Security.Cryptography;
 using Mxm.Core;
 
 internal static partial class IntegratedEconomicReplay
 {
+    sealed record FactorialCheckpointBinding(string Protocol,string Source,string Protection,string Registry,
+        string Scenario,string InputRevision,string? RunnerRevision,bool Bounded,bool Paired);
+    sealed record FactorialCheckpointState(string Version,FactorialCheckpointBinding Binding,int Phase,long Through,long LastClock,
+        Dictionary<string,HistoricalStreamState> Streams,Dictionary<string,string> Files,JsonElement[] Fits,
+        JsonElement? Selection,EerEvidence.HoldingGapCheckpoint[] HoldingGaps,Dictionary<string,int> FxCounts,
+        Dictionary<string,NativeMarketTimePrice> ClosedWitnesses,long Clocks,long MarketFrames,long BookAdvances,
+        long ObserverAdvances,long CalibrationFits,long CalibrationLabels);
+    static string FactorialFileSha(string path)
+    {
+        using var file=File.OpenRead(path);
+        return Convert.ToHexString(SHA256.HashData(file)).ToLowerInvariant();
+    }
+
     public static int RunCompetitiveFamilies(string protocolPath,string sourcePath,string directory,
         string protectionDirectory,string stressText,bool causalManagementStudy=false,bool estimatorStudy=false,bool earlierEstimatorStudy=false,
         bool boundaryStudy=false,bool multibarStudy=false,bool adaptiveStudy=false,bool controlledRecencyStudy=false,bool distributionStudy=false,string? valuationRegistryPath=null)
@@ -151,6 +165,32 @@ internal static partial class IntegratedEconomicReplay
             fundingScenarioId:scenario,eurDevelopmentProfile:p.Variants[0].Profile);
         (string Id,NativeUnifiedPortfolioEngine Book)[] books=cases.Select(c=>(Id:c.Id,Book:c.Book)).Append((Id:"CASH_MARKET_TIME",Book:cash)).ToArray();
         var fits=new List<object>();
+        long lastClock=-1;
+        string? resumeFrom=Environment.GetEnvironmentVariable("MXM_FACTORIAL_RESUME_FROM");
+        string? stopText=Environment.GetEnvironmentVariable("MXM_FACTORIAL_STOP_AFTER_PHASE");
+        if(!factorialStudy&&(resumeFrom is not null||stopText is not null))
+            throw new InvalidDataException("FACTORIAL_CHECKPOINT_STUDY_REQUIRED");
+        var phaseBoundaries=new List<long>{p.SelectionFrom};
+        while(phaseBoundaries[^1]<p.End)
+        {
+            long at=phaseBoundaries[^1],next=Math.Min(at+7*HistoricalDay,p.End);
+            if(at<p.EvaluationFrom&&next>p.EvaluationFrom)next=p.EvaluationFrom;
+            phaseBoundaries.Add(next);
+        }
+        int? stopAfter=null;
+        if(stopText is not null)
+        {
+            if(!int.TryParse(stopText,out int phase)||phase<0||phase>=phaseBoundaries.Count-1)
+                throw new InvalidDataException("FACTORIAL_CHECKPOINT_STOP_PHASE");
+            stopAfter=phase;
+        }
+        FactorialCheckpointBinding? binding=factorialStudy?new(planHash,sourceHash,
+            ProtectionFingerprint(protectionDirectory),FactorialFileSha(valuationRegistryPath!),scenario,input.EngineRevision,
+            Environment.GetEnvironmentVariable("GITHUB_SHA"),
+            Environment.GetEnvironmentVariable("MXM_ECONOMIC_BOUNDED_NEIGHBORS")=="1",
+            Environment.GetEnvironmentVariable("MXM_ECONOMIC_PAIRED_DISTRIBUTION")=="1"):null;
+        var distinctObservers=(estimatorStudy?cases.Where(x=>x.Observer is not null).GroupBy(x=>x.Observer).Select(g=>g.First()):
+            cases.Where(x=>x.Observer is not null)).ToArray();
         void Observe(long from,long through,bool trade)
         {
             int clocks=0;
@@ -179,7 +219,7 @@ internal static partial class IntegratedEconomicReplay
                     if(estimatorStudy){foreach(var observer in sharedObservers.Values){observer.Advance(frame);observerAdvances++;}}
                     else foreach(var c in cases)if(c.Observer is not null){c.Observer.Advance(frame);observerAdvances++;}
                 }
-                clocksProcessed++;
+                clocksProcessed++;lastClock=at;
                 Progress(stage,at,totalBooks:books.Length);
                 if(++clocks%288==0)Console.WriteLine($"COMPETITIVE_FAMILIES_PROGRESS stress={stress} at={at} trade={trade} observations={clocks}");
             }
@@ -216,26 +256,114 @@ internal static partial class IntegratedEconomicReplay
             }
             Progress("CALIBRATE_COMPLETE",at,cases.Length,cases.Length,force:true);
         }
-        void Checkpoint(string phase)
+        object? selection=null;
+        void Checkpoint(string phase,int? phaseIndex=null)
         {
             using var profile=NativeEconomicProfiler.Measure("replay.checkpoint");
             Progress("WRITE_CHECKPOINT",totalBooks:books.Length,force:true);
             var root=Path.Combine(directory,"checkpoints",phase);Directory.CreateDirectory(root);
             foreach(var c in books)File.WriteAllText(Path.Combine(root,c.Id+".json"),c.Book.HistoricalEurCheckpoint());
-            var observers=cases.Where(x=>x.Observer is not null);
-            if(estimatorStudy)observers=observers.GroupBy(x=>x.Observer).Select(g=>g.First());
-            foreach(var c in observers)File.WriteAllBytes(Path.Combine(root,c.Id+"-observer.json"),
+            foreach(var c in distinctObservers)File.WriteAllBytes(Path.Combine(root,c.Id+"-observer.json"),
                 JsonSerializer.SerializeToUtf8Bytes(c.Observer!.Checkpoint(),NativeHistoricalCheckpointJson.Options));
+            if(phaseIndex is int index)
+            {
+                var names=books.Select(x=>x.Id+".json").Concat(distinctObservers.Select(x=>x.Id+"-observer.json"));
+                var files=names.ToDictionary(x=>x,x=>FactorialFileSha(Path.Combine(root,x)),StringComparer.Ordinal);
+                var saved=new FactorialCheckpointState("FACTORIAL_REPLAY_V1",binding!,index,phaseBoundaries[index],lastClock,
+                    streams.ToDictionary(x=>x.Key,x=>new HistoricalStreamState(x.Value.Counts,x.Value.Availability),StringComparer.Ordinal),
+                    files,fits.Select(x=>JsonSerializer.SerializeToElement(x,Json)).ToArray(),
+                    selection is null?null:JsonSerializer.SerializeToElement(selection,Json),
+                    source.SaveHoldingGaps(),source.FxEvidenceCounts,source.ClosedPriceWitnesses,clocksProcessed,
+                    marketFrames,bookAdvances,observerAdvances,calibrationFits,calibrationLabels);
+                string temporary=Path.Combine(root,"resume.json.tmp");
+                using(var file=new FileStream(temporary,FileMode.Create,FileAccess.Write))
+                {
+                    JsonSerializer.Serialize(file,saved,Json);file.Flush(true);
+                }
+                File.Move(temporary,Path.Combine(root,"resume.json"),true);
+            }
             Console.WriteLine($"COMPETITIVE_FAMILIES_CHECKPOINT {stress} {phase}");
             Progress("CHECKPOINT_WRITTEN",totalBooks:books.Length,force:true);
         }
-        Observe(p.Start,p.SelectionFrom,false);
-        Fit(p.SelectionFrom,true);
-        long current=p.SelectionFrom;object? selection=null;
+        long current=p.SelectionFrom;int completedPhase=0;
+        if(resumeFrom is not null)
+        {
+            Progress("RESTORE_FACTORIAL_CHECKPOINT",force:true);
+            using var restoreProfile=NativeEconomicProfiler.Measure("replay.factorial_restore");
+            using var file=File.OpenRead(resumeFrom);
+            var saved=JsonSerializer.Deserialize<FactorialCheckpointState>(file,Json)
+                ??throw new InvalidDataException("FACTORIAL_CHECKPOINT_REQUIRED");
+            int phase=saved.Phase;
+            if(saved.Version!="FACTORIAL_REPLAY_V1"||saved.Binding!=binding||phase<0||
+                phase>=phaseBoundaries.Count-1||saved.Through!=phaseBoundaries[phase]||
+                saved.Fits.Length!=cases.Length*(phase+1)||saved.Streams.Count!=streams.Count||
+                saved.Selection.HasValue!=(saved.Through>=p.EvaluationFrom))
+                throw new InvalidDataException("FACTORIAL_CHECKPOINT_BINDING");
+            long from=phase==0?p.Start:phaseBoundaries[phase-1];
+            long expectedClock=from+EurOffset+(saved.Through-from-EurOffset-1)/EurStep*EurStep;
+            if(saved.LastClock!=expectedClock||saved.LastClock>=saved.Through)
+                throw new InvalidDataException("FACTORIAL_CHECKPOINT_CLOCK");
+            string root=Path.GetDirectoryName(Path.GetFullPath(resumeFrom))!;
+            var expectedFiles=books.Select(x=>x.Id+".json").Concat(distinctObservers.Select(x=>x.Id+"-observer.json"))
+                .Order(StringComparer.Ordinal).ToArray();
+            if(!saved.Files.Keys.Order(StringComparer.Ordinal).SequenceEqual(expectedFiles))
+                throw new InvalidDataException("FACTORIAL_CHECKPOINT_FILES");
+            string CheckedPath(string name)
+            {
+                string path=Path.Combine(root,name);
+                if(FactorialFileSha(path)!=saved.Files[name])throw new InvalidDataException("FACTORIAL_CHECKPOINT_FILE_SHA");
+                return path;
+            }
+            foreach(var (id,stream) in streams)
+            {
+                var state=saved.Streams[id];
+                if(state.Availability.Keys.Any(at=>at>saved.LastClock))
+                    throw new InvalidDataException("FACTORIAL_CHECKPOINT_STREAM_CLOCK");
+                stream.Counts=state.Counts;stream.Availability=state.Availability;
+            }
+            long bookClock=phase==0?-1:saved.LastClock;
+            for(int i=0;i<books.Length;i++)
+            {
+                var (id,book)=books[i];
+                var restored=RestoreHistoricalBook(File.ReadAllText(CheckedPath(id+".json")),book.PolicyName,scenario,bookClock);
+                books[i]=(id,restored);
+                if(i<cases.Length)
+                {
+                    var old=cases[i];cases[i]=(old.Id,old.Profile,old.Observer,restored);
+                }
+            }
+            foreach(var c in distinctObservers)
+            {
+                using var observerFile=File.OpenRead(CheckedPath(c.Id+"-observer.json"));
+                var state=JsonSerializer.Deserialize<ObserverCheckpoint>(observerFile,NativeHistoricalCheckpointJson.Options)
+                    ??throw new InvalidDataException("FACTORIAL_CHECKPOINT_OBSERVER");
+                c.Observer!.Restore(state,saved.LastClock);
+            }
+            source.RestoreHoldingGaps(saved.HoldingGaps,saved.LastClock);
+            foreach(var (key,value) in saved.FxCounts)source.FxEvidenceCounts.Add(key,value);
+            foreach(var (key,value) in saved.ClosedWitnesses)source.ClosedPriceWitnesses.Add(key,value);
+            fits.AddRange(saved.Fits.Select(x=>(object)x));
+            selection=saved.Selection.HasValue?(object)saved.Selection.Value:null;
+            completedPhase=phase;current=saved.Through;lastClock=saved.LastClock;
+            clocksProcessed=saved.Clocks;marketFrames=saved.MarketFrames;bookAdvances=saved.BookAdvances;
+            observerAdvances=saved.ObserverAdvances;calibrationFits=saved.CalibrationFits;calibrationLabels=saved.CalibrationLabels;
+            if(stopAfter.HasValue&&stopAfter.Value<=completedPhase)
+                throw new InvalidDataException("FACTORIAL_CHECKPOINT_STOP_NOT_FORWARD");
+            Progress("FACTORIAL_CHECKPOINT_RESTORED",current,totalBooks:books.Length,force:true);
+        }
+        else
+        {
+            Observe(p.Start,p.SelectionFrom,false);
+            Fit(p.SelectionFrom,true);
+            if(factorialStudy)
+            {
+                Checkpoint(current.ToString(System.Globalization.CultureInfo.InvariantCulture),0);
+                if(stopAfter==0)return 0;
+            }
+        }
         while(current<p.End)
         {
-            long next=Math.Min(current+7*HistoricalDay,p.End);
-            if(current<p.EvaluationFrom&&next>p.EvaluationFrom)next=p.EvaluationFrom;
+            long next=phaseBoundaries[completedPhase+1];
             Observe(current,next,true);
             if(next==p.EvaluationFrom)
             {
@@ -243,9 +371,21 @@ internal static partial class IntegratedEconomicReplay
                     Monetary=PavCashScore(c.Book,p.SelectionFrom,next)}).ToArray();
                 File.WriteAllBytes(Path.Combine(directory,"selection.json"),JsonSerializer.SerializeToUtf8Bytes(selection,Json));
             }
-            Checkpoint(next.ToString(System.Globalization.CultureInfo.InvariantCulture));
-            current=next;
-            if(current<p.End)Fit(current,false);
+            completedPhase++;
+            if(factorialStudy)
+            {
+                current=next;
+                // Save after calibration, so restarting never fits an already completed boundary.
+                if(current<p.End)Fit(current,false);
+                Checkpoint(current.ToString(System.Globalization.CultureInfo.InvariantCulture),completedPhase);
+                if(stopAfter==completedPhase)return 0;
+            }
+            else
+            {
+                Checkpoint(next.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                current=next;
+                if(current<p.End)Fit(current,false);
+            }
         }
         if(selection is null)throw new InvalidDataException("COMPETITIVE_SELECTION_NOT_CAPTURED");
         if(boundaryStudy)File.WriteAllBytes(Path.Combine(directory,"boundary-forecast-diagnostics.json"),
