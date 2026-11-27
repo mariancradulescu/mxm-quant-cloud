@@ -36,6 +36,7 @@ jobs:
           dotnet-version: '8.0.x'
       - run: python -m pip install -r research/requirements.txt
       - run: python -m py_compile research/owner_native_funding_recovery_2.py
+      - run: dotnet build research/NativeFundingSettlement -c Release
       - run: python -m unittest research.test_financing_preflight_calendar_2 research.test_funding_latest_prefix
       - run: dotnet build src/Mxm.Replay -c Release
       - run: dotnet build src/Mxm.Cloud -c Release
