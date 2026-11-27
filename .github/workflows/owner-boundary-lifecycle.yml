@@ -78,7 +78,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
-      - name: Execute thirty-six new common-book evaluations
+      - name: Execute forty-two new common-book evaluations
         run: python -m research.owner_boundary_lifecycle evaluate --work "$RUNNER_TEMP/boundary-private"
       - name: Publish economic results and progress
         if: always()

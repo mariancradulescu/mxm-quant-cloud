@@ -92,7 +92,7 @@ def apply_recovered_registry(source,registry,source_sha):
             need(prior.get('At')!=w['At'] or Decimal(str(prior['Price']))==Decimal(w['Price']),
                  'RECOVERY2_EXISTING_PREFIX_CONFLICT')
             retained+=1
-        elif q.get('RequestedCoverage') and stamp is not None and price is not None and price>0 and 0<stamp<=at and at-stamp<=7200000:
+        elif q.get('RequestedCoverage') and stamp is not None and price is not None and Decimal(str(price))>0 and 0<stamp<=at and at-stamp<=7200000:
             retained+=1
         else:q[field]=w;filled+=1
         quotes.sort(key=lambda q:q['At'])

@@ -154,6 +154,9 @@ public static class NativeEconomicMechanisms
             decimal Project(decimal x)=>now+(x-previous.Close)*scale;
             var value=BoundaryPathValueEur(side,now,stop,target,Project(label.Open),Project(label.High),
                 Project(label.Low),Project(label.Close),m.Quote.EurCredit,m.Quote.EurDebit);
+            // Dropping an invalid adverse projection could select away loss
+            // mass. An unsupported price-domain extrapolation has no forecast.
+            if(value is null)return null;
             if(value is decimal v)
             {
                 bool stopped=side>0?Project(label.Low)<=stop:Project(label.High)>=stop;

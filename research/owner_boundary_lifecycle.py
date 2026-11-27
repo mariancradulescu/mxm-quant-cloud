@@ -28,6 +28,9 @@ def variants():
     rows=[
         ('CONTROL_TRANSITION',base),
         ('CONTROL_MONETARY_REDUCE',dict(base,EconomicManagement='MONETARY_REDUCE')),
+        ('CONTROL_TARGET25_DIRECT_PAV1',dict(base,DistributionTargetRanges=Decimal('2.5'),Pav1CompetitiveForecast='DIRECT')),
+        ('CONTROL_TARGET25_DIRECT_REDUCE',dict(base,DistributionTargetRanges=Decimal('2.5'),
+            Pav1CompetitiveForecast='DIRECT',EconomicManagement='MONETARY_REDUCE')),
         ('BOUNDARY_M5_SUPPORT8',boundary),
         ('BOUNDARY_M5_SUPPORT4',dict(boundary,BoundaryMinimumSamples=4)),
         ('BOUNDARY_M5_SUPPORT16',dict(boundary,BoundaryMinimumSamples=16)),
@@ -41,8 +44,8 @@ def variants():
 
 def prepare(work):
     started=time.monotonic();p=read(REGISTRY)
-    need(p['Study']==STUDY and p['OriginalSourceSha256']==parent.SOURCE and p['RegisteredVariants']==11
-         and p['RegisteredEvaluations']==36 and p['Orders']==0 and not p['CloudActivated'],
+    need(p['Study']==STUDY and p['OriginalSourceSha256']==parent.SOURCE and p['RegisteredVariants']==13
+         and p['RegisteredEvaluations']==42 and p['Orders']==0 and not p['CloudActivated'],
          'BOUNDARY_REGISTRATION')
     parent.restore(work)
     source=read(work/'source.json');plan=read(work/'pav-market-protocol.json')
@@ -69,8 +72,12 @@ def prepare(work):
     plan.update(SourceProtocolSha256=protocol,EvidenceManifestSha256=evidence)
     write(work/'boundary-source.json',source);write(work/'boundary-plan.json',plan)
     REPORT.mkdir();write(REPORT/'registered-plan.json',plan)
+    write(work/'preventive-remaining.json',preventive)
+    subprocess.run(['dotnet',REPLAY,'--owner-funding-coverage',str(work/'boundary-source.json'),
+        str(work/'verified-protection'),str(work/'preventive-remaining.json'),str(REPORT/'native-funding-coverage.json')],check=True)
     write(REPORT/'source-receipt.json',dict(Study=STUDY,SourceSha256=sha(work/'boundary-source.json'),
         ProtocolSha256=sha(work/'boundary-plan.json'),Proof=proof,PreparationSeconds=round(time.monotonic()-started,3),
+        NativeFundingCoverageSha256=sha(REPORT/'native-funding-coverage.json'),
         Orders=0,CloudActivated=False))
 
 def evaluate(work):
@@ -83,16 +90,16 @@ def evaluate(work):
         subprocess.run(['dotnet',REPLAY,'--owner-boundary-lifecycle',str(work/'boundary-plan.json'),
             str(work/'boundary-source.json'),str(out),str(work/'verified-protection'),stress],check=True)
         result=read(out/'result.json')
-        need(result['Study']==STUDY and result['SharedPortfolioEvaluations']==12 and
+        need(result['Study']==STUDY and result['SharedPortfolioEvaluations']==14 and
              result['SourceSha256']==receipt['SourceSha256'] and result['ProtocolSha256']==receipt['ProtocolSha256']
              and result['Orders']==0 and not result['CloudActivated'],'BOUNDARY_RESULT_BINDING')
         results.append(result);(REPORT/f'S{i}.json').write_bytes((out/'result.json').read_bytes())
         (REPORT/f'S{i}-forecasts.json').write_bytes((out/'boundary-forecast-diagnostics.json').read_bytes())
         print('BOUNDARY_SCENARIO_COMPLETE',i,flush=True)
     rows=[r for result in results for r in result['Selection']]
-    write(REPORT/'summary.json',dict(Study=STUDY,SharedPortfolioEvaluations=36,
-        Selection=parent.corrected_selection(rows,Decimal('2.97')),SelectionMultiplicity=33,
-        SelectionPenalty=Decimal('2.97'),SourceSha256=receipt['SourceSha256'],ProtocolSha256=receipt['ProtocolSha256'],
+    write(REPORT/'summary.json',dict(Study=STUDY,SharedPortfolioEvaluations=42,
+        Selection=parent.corrected_selection(rows,Decimal('3.03')),SelectionMultiplicity=39,
+        SelectionPenalty=Decimal('3.03'),SourceSha256=receipt['SourceSha256'],ProtocolSha256=receipt['ProtocolSha256'],
         EvaluationSeconds=round(time.monotonic()-started,3),Orders=0,CloudActivated=False,
         DevelopmentOnly=True,IndependentConfirmationCertified=False,EconomicPromotionCertified=False))
 
@@ -109,10 +116,10 @@ def main():
     p=argparse.ArgumentParser();p.add_argument('stage',choices=('check','prepare','evaluate','conserve'))
     p.add_argument('--work',type=Path);a=p.parse_args()
     if a.stage=='check':
-        rows=variants();need(len(rows)==11 and len({r['Id'] for r in rows})==11,'BOUNDARY_VARIANTS')
+        rows=variants();need(len(rows)==13 and len({r['Id'] for r in rows})==13,'BOUNDARY_VARIANTS')
         need(all(r['Profile']['ReserveMarginForStopRisk'] and r['Profile']['CompeteEconomicFamilies']
              for r in rows),'BOUNDARY_COMMON_PROTECTIONS')
-        print('BOUNDARY_REGISTERED',len(rows),'VARIANTS; 36 COMMON BOOKS; ZERO ORDERS')
+        print('BOUNDARY_REGISTERED',len(rows),'VARIANTS; 42 COMMON BOOKS; ZERO ORDERS')
     elif a.stage=='prepare':prepare(a.work)
     elif a.stage=='evaluate':evaluate(a.work)
     else:conserve()

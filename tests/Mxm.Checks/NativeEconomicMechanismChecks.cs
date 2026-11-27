@@ -264,6 +264,27 @@ internal static class NativeEconomicMechanismChecks
         check(NativeEconomicMechanisms.BoundaryDistributionEur(extended with
             {ClosedBars=extended.ClosedBars! with {DecisionAt=at-1}},at,1,102m,100m,104m,"H1") is null,
             "Boundary forecasts reject context from a different decision clock");
+        NativeBarWindow Scaled(NativeBarWindow w)=>w with {Bars=w.Bars.Select(b=>b with
+            {Open=b.Open*10m,High=b.High*10m,Low=b.Low*10m,Close=b.Close*10m}).ToArray()};
+        var scaledBoundary=extended with {Quote=extended.Quote with
+            {EurCredit=extended.Quote.EurCredit/10m,EurDebit=extended.Quote.EurDebit/10m},
+            ClosedBars=extended.ClosedBars! with {Windows=extended.ClosedBars.Windows.Select(Scaled).ToArray()},
+            EconomicTransitionWindows=extended.EconomicTransitionWindows!.Select(Scaled).ToArray()};
+        var scaledForecast=NativeEconomicMechanisms.BoundaryDistributionEur(scaledBoundary,at,1,1020m,1000m,1040m,"H1");
+        check(scaledForecast is not null&&boundaryForecast is not null&&scaledForecast.Count==boundaryForecast.Count&&
+            Math.Abs(scaledForecast.Mean-boundaryForecast.Mean)<.000000001m&&
+            scaledForecast.StopProbability==boundaryForecast.StopProbability,
+            "Price denomination and its EUR conversion do not change a normalized monetary boundary forecast");
+        NativeBarWindow FutureBoundary(NativeBarWindow w)=>w with {Bars=w.Bars.Append(w.Bars[^1] with {CloseAt=at+1}).ToArray()};
+        check(NativeEconomicMechanisms.BoundaryDistributionEur(extended with
+            {ClosedBars=extended.ClosedBars! with {Windows=extended.ClosedBars.Windows.Select(FutureBoundary).ToArray()},
+             EconomicTransitionWindows=extended.EconomicTransitionWindows!.Select(FutureBoundary).ToArray()},
+            at,1,102m,100m,104m,"H1") is null,
+            "A future label invalidates boundary evidence rather than increasing support or its payoff");
+        var adverseProjection=extended with {EconomicTransitionWindows=extended.EconomicTransitionWindows!.Select(w=>w with
+            {Bars=w.Bars.Select((b,i)=>i==2?b with {Low=.001m}:b).ToArray()}).ToArray()};
+        check(NativeEconomicMechanisms.BoundaryDistributionEur(adverseProjection,at,1,100m,99m,101m,"H1") is null,
+            "An invalid adverse projection cannot be omitted to improve the empirical forecast");
         var forecastFunding=market with {FundingOffers=new[]{new NativeFundingOfferEvidence(market.Symbol,1,1m,
             at-1,at-1,at+300_000L,at+900_000L,.1m,new string('a',64))}};
         check(NativePortfolioFunding.OfferDebit(forecastFunding,1,1m,at,null,at+900_000L)==.1m&&

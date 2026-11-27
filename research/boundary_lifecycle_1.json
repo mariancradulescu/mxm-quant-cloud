@@ -1,0 +1,21 @@
+{
+  "Study": "MONETARY_BOUNDARY_LIFECYCLE_1",
+  "OriginalSourceSha256": "4336a525ad897bee1a280e2baff07dcd399606e25f9536d4a202bc2676d73b15",
+  "FundingRun": 45938256450,
+  "FundingArtifact": 15172246535,
+  "FundingArchiveSha256": "61ef7a266613eeadf4b0c39688c77d14fba094004f819aa9db01e5d38f43ad6b",
+  "FundingRegistrySha256": "70b9584c73efa7ddad357a42346287356074c6c341c02e9642a8ae79575a007f",
+  "RegisteredVariants": 13,
+  "RegisteredEvaluations": 42,
+  "Exposure": "PROJECT_EXPOSED_CONDITIONAL_DEVELOPMENT",
+  "OriginalFundingWindowsReconciled": 61,
+  "PreventiveDistinctTargets": 301,
+  "AuthenticPrefixes": 301,
+  "SourceBrokerRequests": 292,
+  "ConservativeFxAgeTargets": 16,
+  "Orders": 0,
+  "CloudActivated": false,
+  "IndependentConfirmationCertified": false,
+  "SelectionMultiplicity": 39,
+  "SelectionPenalty": 3.03
+}

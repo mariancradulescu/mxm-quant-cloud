@@ -19,7 +19,7 @@ internal static partial class IntegratedEconomicReplay
             input.Markets.Select(m=>m.Market.Name).Distinct().Count()!=input.Markets.Length||
             !(p.Start<p.SelectionFrom&&p.SelectionFrom<p.EvaluationFrom&&p.EvaluationFrom<p.End)||
             !p.Stresses.SequenceEqual(new[]{0m,.5m,1m})||!p.Stresses.Contains(stress)||
-            p.Variants.Length!=(boundaryStudy?11:costStudy?7:earlierEstimatorStudy?9:estimatorStudy?5:causalManagementStudy?3:2)||p.Variants.Select(v=>v.Id).Distinct().Count()!=p.Variants.Length||
+            p.Variants.Length!=(boundaryStudy?13:costStudy?7:earlierEstimatorStudy?9:estimatorStudy?5:causalManagementStudy?3:2)||p.Variants.Select(v=>v.Id).Distinct().Count()!=p.Variants.Length||
             p.Variants.Any(v=>v.UniverseCount!=input.Markets.Length||!v.Profile.CompeteEconomicFamilies||
                 !v.Profile.LearnFromOpportunityEpisodes||!v.Profile.ObserveFamilyDirectionsOnClosedBars||
                 !v.Profile.UseMarketTimeFxValuation||!v.Profile.ReserveObservedBarGaps)||
@@ -35,8 +35,11 @@ internal static partial class IntegratedEconomicReplay
             !p.OriginalInstruments.Order().SequenceEqual(input.Markets.Select(m=>m.Market.Name).Order())))
             throw new InvalidDataException("EARLIER_ESTIMATOR_UNIVERSE_BINDING");
         if(earlierEstimatorStudy&&p.Variants.Count(v=>v.Profile.Pav1CompetitiveForecast is not null)!=3||
-            !earlierEstimatorStudy&&!costStudy&&p.Variants.Any(v=>v.Profile.Pav1CompetitiveForecast is not null))
+            !earlierEstimatorStudy&&!costStudy&&!boundaryStudy&&p.Variants.Any(v=>v.Profile.Pav1CompetitiveForecast is not null))
             throw new InvalidDataException("EARLIER_PAV1_FORECAST_ABLATION_BINDING");
+        if(boundaryStudy&&(p.Variants.Count(v=>v.Profile.Pav1CompetitiveForecast=="DIRECT")!=2||
+            p.Variants.Any(v=>v.Profile.Pav1CompetitiveForecast is not (null or "DIRECT"))))
+            throw new InvalidDataException("BOUNDARY_RECOVERED_DIRECT_CONTROLS_BINDING");
         if(costStudy&&(p.Variants.Any(v=>!v.Profile.ReserveMarginForStopRisk)||
             p.Variants.Count(v=>v.Profile.LifecycleEstimator=="CENTERED_COST_CONTEXT")!=6)||
             !costStudy&&!boundaryStudy&&p.Variants.Any(v=>v.Profile.ReserveMarginForStopRisk||v.Profile.LifecycleEstimator=="CENTERED_COST_CONTEXT"))

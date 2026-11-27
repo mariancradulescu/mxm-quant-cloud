@@ -15,6 +15,8 @@ if(args is ["--owner-monetary-reduce-common-book",var mrProtocol,var mrSource,va
     return IntegratedEconomicReplay.RunPavMarketTime(mrProtocol,mrSource,mrDirectory,mrTape,mrStress,monetaryReduceStudy:true);
 if(args is ["--owner-funding-recovery-2",var frSource,var frTape,var frReports,var frWitness,var frOutput])
     return IntegratedEconomicReplay.RunOwnerFundingRecovery2(frSource,frTape,frReports,frWitness,frOutput);
+if(args is ["--owner-funding-coverage",var fcSource,var fcTape,var fcPlan,var fcOutput])
+    return IntegratedEconomicReplay.RunFundingCoverage(fcSource,fcTape,fcPlan,fcOutput);
 if(args is ["--owner-lifecycle-funding",var lfSource,var lfTape,var lfReports,var lfWitness,var lfOutput])
     return IntegratedEconomicReplay.RunLifecycleFunding(lfSource,lfTape,lfReports,lfWitness,lfOutput);
 if(args is ["--owner-goog-open-funding",var gfSource,var gfTape,var gfReport,var gfWitness,var gfOutput])
