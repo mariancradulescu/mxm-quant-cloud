@@ -63,6 +63,11 @@ internal static partial class IntegratedEconomicReplay
     sealed class EerEvidence
     {
         public long MinimumFundingHorizonMs {get;init;}
+        public bool CaptureHoldingValuationGaps {get;init;}
+        readonly HashSet<(string Symbol,long At,string Reason)> holdingValuationGaps=new();
+        public object HoldingValuationGapReport()=>holdingValuationGaps.GroupBy(x=>new{x.Symbol,x.Reason})
+            .OrderBy(g=>g.Key.Symbol,StringComparer.Ordinal).ThenBy(g=>g.Key.Reason,StringComparer.Ordinal)
+            .Select(g=>new{g.Key.Symbol,g.Key.Reason,Clocks=g.Select(x=>x.At).OrderBy(x=>x).ToArray()}).ToArray();
         public EerInput Input;
         readonly Dictionary<string,Dictionary<long,SourceQuote>> tape;
         readonly Dictionary<string,Dictionary<long,DatedRolloverQuote>> funding;
@@ -127,15 +132,26 @@ internal static partial class IntegratedEconomicReplay
             var quotes=new List<LedgerQuote>();
             foreach(string name in book.ProtectionWatches().Select(w=>w.Symbol).Distinct(StringComparer.Ordinal))
             {
-                if(observed.Contains(name)||!marketCalendars.TryGetValue(name,out var m)||
-                    m.ScheduledClocks is null||m.AmbiguousCalendarClocks is null)continue;
-                if(!VerifiedClosedNow(name,frame.At))continue;
-                if(MarketPrice(name,true,frame.At) is not { } bid||MarketPrice(name,false,frame.At) is not { } ask||ask.Price<bid.Price||
-                    m.Market.DatedDevelopment is not { } terms||ConversionAt(terms.Contract.QuoteAsset,frame.At,false,ValuationTape) is not { } fx)continue;
+                void Gap(string reason)
+                {
+                    if(CaptureHoldingValuationGaps&&frame.Protection?.BetweenDecisions!=true)
+                        holdingValuationGaps.Add((name,frame.At,reason));
+                }
+                if(observed.Contains(name))continue;
+                if(!marketCalendars.TryGetValue(name,out var m)||m.ScheduledClocks is null||m.AmbiguousCalendarClocks is null)
+                {Gap("MISSING_CONTRACT_CALENDAR");continue;}
+                if(!VerifiedClosedNow(name,frame.At))
+                {Gap("NO_EXECUTABLE_FRAME_AND_NOT_VERIFIED_CLOSED");continue;}
+                if(MarketPrice(name,true,frame.At) is not { } bid){Gap("MISSING_CLOSED_BID_WITNESS");continue;}
+                if(MarketPrice(name,false,frame.At) is not { } ask){Gap("MISSING_CLOSED_ASK_WITNESS");continue;}
+                if(ask.Price<bid.Price){Gap("INCONSISTENT_CLOSED_MARK");continue;}
+                if(m.Market.DatedDevelopment is not { } terms){Gap("MISSING_DATED_TERMS");continue;}
+                if(ConversionAt(terms.Contract.QuoteAsset,frame.At,false,ValuationTape) is not { } fx)
+                {Gap("MISSING_QUOTE_CONVERSION:"+terms.Contract.QuoteAsset);continue;}
                 var usd=ConversionAt("USD",frame.At,false,ValuationTape);
                 var min=terms.Contract.MinimumCommissionAsset is { } fee?ConversionAt(fee,frame.At,false,ValuationTape):null;
                 decimal margin=terms.Margin.Where(x=>x.Units>0).Select(x=>Math.Max(x.BuyMargin,x.SellMargin)/x.Units).DefaultIfEmpty().Max();
-                if(margin<=0m)continue;
+                if(margin<=0m){Gap("MISSING_MARGIN");continue;}
                 try
                 {
                     decimal slip=(ask.Price-bid.Price)*stress;
@@ -146,7 +162,7 @@ internal static partial class IntegratedEconomicReplay
                         ExitFeeFloor=q.ExitFeeFloor*(1m+stress),SellFeePerUnit=q.SellFeePerUnit*(1m+stress)});
                     FxCount("CLOSED_HOLDING_CONDITIONAL_VALUATION_NO_EXECUTION");
                 }
-                catch(ArgumentException){FxCount("CLOSED_HOLDING_COST_UNSUPPORTED");}
+                catch(ArgumentException){FxCount("CLOSED_HOLDING_COST_UNSUPPORTED");Gap("CLOSED_HOLDING_COST_UNSUPPORTED");}
             }
             return quotes.ToArray();
         }

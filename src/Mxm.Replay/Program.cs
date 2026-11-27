@@ -31,6 +31,8 @@ if(args is ["--owner-earlier-lifecycle-estimation",var elProtocol,var elSource,v
     return IntegratedEconomicReplay.RunCompetitiveFamilies(elProtocol,elSource,elDirectory,elTape,elStress,estimatorStudy:true,earlierEstimatorStudy:true);
 if(args is ["--owner-lifecycle-estimation",var leProtocol,var leSource,var leDirectory,var leTape,var leStress])
     return IntegratedEconomicReplay.RunCompetitiveFamilies(leProtocol,leSource,leDirectory,leTape,leStress,estimatorStudy:true);
+if(args is ["--owner-net-horizon-cross-context",var nhProtocol,var nhSource,var nhDirectory,var nhTape,var nhStress])
+    return IntegratedEconomicReplay.RunCompetitiveFamilies(nhProtocol,nhSource,nhDirectory,nhTape,nhStress,estimatorStudy:true,boundaryStudy:true,multibarStudy:true);
 if(args is ["--owner-boundary-lifecycle",var blProtocol,var blSource,var blDirectory,var blTape,var blStress])
     return IntegratedEconomicReplay.RunCompetitiveFamilies(blProtocol,blSource,blDirectory,blTape,blStress,estimatorStudy:true,boundaryStudy:true);
 if(args is ["--owner-causal-management",var cmProtocol,var cmSource,var cmDirectory,var cmTape,var cmStress])
