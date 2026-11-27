@@ -23,6 +23,7 @@ internal static class NativeReusableValuationChecks
             return r with {Symbol=i%3==0?"GBPUSD":"EURUSD",Side=i%2==0?"ASK":"BID",Witness=witness};
         }).Concat(new[]{r,r}).ToArray();
         var indexed=new NativeReusableValuationRegistry(rows);
+        var compact=new NativeReusableValuationRegistry(rows,compact:true);
         bool parity=true;
         foreach(string symbol in new[]{"EURUSD","GBPUSD","ABSENT"})
         foreach(bool bid in new[]{false,true})
@@ -34,9 +35,14 @@ internal static class NativeReusableValuationChecks
                 .Select(x=>x.Witness).ToArray();
             var expected=usable.Length==0||usable.Any(x=>x.At!=usable[0].At||x.Price!=usable[0].Price)
                 ?null:usable[0] with {SearchThrough=at};
-            parity&=indexed.At(symbol,bid,at)==expected;
+            parity&=indexed.At(symbol,bid,at)==expected&&compact.At(symbol,bid,at)==expected;
         }
         check(parity,"allocation-free registry equals original overlap semantics at every deterministic clock");
+        check(!NativeUnifiedPortfolioEngine.WitnessedPortfolioProtectionDue(null,.31m)&&
+            !NativeUnifiedPortfolioEngine.WitnessedPortfolioProtectionDue(220m,.2799m)&&
+            NativeUnifiedPortfolioEngine.WitnessedPortfolioProtectionDue(215m,.28m)&&
+            NativeUnifiedPortfolioEngine.WitnessedPortfolioProtectionDue(0m,.30m),
+            "witnessed risk guard retains the 28 percent preventive threshold and rejects unknown equity");
         var ledger=new NativeFundedLedger();var before=ledger.Checkpoint();
         var summary=ledger.InspectConditionalValuation(1000,Array.Empty<LedgerQuote>());
         check(summary.CashEur==300m&&summary.LiquidationEquityEur==300m&&ledger.Checkpoint()==before,

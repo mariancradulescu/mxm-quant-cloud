@@ -1,0 +1,41 @@
+{
+  "Study": "MONETARY_WITNESSED_RISK_GEOMETRY_1",
+  "Scopes": [
+    "earlier",
+    "recent"
+  ],
+  "Models": [
+    "CENTERED_GUARD",
+    "CENTERED_MANAGEMENT_GUARD",
+    "DISTRIBUTION_GUARD",
+    "DISTRIBUTION_MANAGEMENT_GUARD",
+    "PAV1_DIRECT_GUARD",
+    "PAV1_DIRECT_MANAGEMENT_GUARD",
+    "DISTRIBUTION_MANAGEMENT_TARGET_15",
+    "PAV1_DIRECT_MANAGEMENT_TARGET_15"
+  ],
+  "SharedCapitalEur": 300,
+  "CommonBookEvaluations": 54,
+  "SelectionMultiplicity": 48,
+  "SelectionPenalty": "3.2",
+  "RegistryBundle": "research/reusable_held_registry_bundle_20261127.json",
+  "RegistryRows": 3069541,
+  "FundingHorizonMs": 3600000,
+  "OriginalFactorial": {
+    "Run": 46033578807,
+    "EarlierArtifact": 15226950640,
+    "EarlierSha256": "69dbc2faee02cdbde1c9c8694ebc550f7c3774a572cafab6c88cc7df46abaacb",
+    "RecentArtifact": 15220467722,
+    "RecentSha256": "fc40a05b83c6a7652a2268f90f779649612040dc129d77736e2a216c151a773a"
+  },
+  "Guard": "Known conditional equity, preventive sampled DD >=28%, model-only close intent; existing native tick protection and later real executable quote; not continuous DD certification.",
+  "Geometry": "2.5 ATR matched controls and 1.5 target-range alternative for distribution and direct PAV1 management; seven families compete in every book. Selection uses earlier selection snapshots only.",
+  "Benchmark": "Recent S0 same runner uninterrupted compact registry + path preparation vs uninterrupted legacy; exact result and valuation gap SHA-256.",
+  "Orders": 0,
+  "CloudActivated": false,
+  "OriginalPoliciesReplayed": 0,
+  "SourceBrokerRequests": 0,
+  "IndependentConfirmationCertified": false,
+  "EconomicPromotionCertified": false,
+  "Exposure": "DEVELOPMENT_ONLY_NO_INDEPENDENT_CLAIM"
+}

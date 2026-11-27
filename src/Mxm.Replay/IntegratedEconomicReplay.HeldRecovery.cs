@@ -18,7 +18,7 @@ internal static partial class IntegratedEconomicReplay
         // row JSON DOM while allocating the typed rows and building their index.
         var envelope=JsonSerializer.Deserialize<ValuationRegistryEnvelope>(stream,Json);
         if(envelope?.Rows is null)throw new InvalidDataException("VALUATION_REGISTRY_ROWS_REQUIRED");
-        return new(envelope.Rows);
+        return new(envelope.Rows,compact:Environment.GetEnvironmentVariable("MXM_ECONOMIC_COMPACT_REGISTRY")=="1");
     }
 
     public static int RunHeldRecoveryPlan(string sourcePath,string tapePath,string demandsPath,string output,string? registryPath=null)
