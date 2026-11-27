@@ -64,6 +64,8 @@ internal static partial class IntegratedEconomicReplay
     {
         public long MinimumFundingHorizonMs {get;init;}
         public bool CaptureHoldingValuationGaps {get;init;}
+        public bool RecoverFreshHoldingMarks {get;init;}
+        public bool CaptureBetweenDecisionValuationGaps {get;init;}
         readonly HashSet<(string Symbol,long At,string Reason)> holdingValuationGaps=new();
         public object HoldingValuationGapReport()=>holdingValuationGaps.GroupBy(x=>new{x.Symbol,x.Reason})
             .OrderBy(g=>g.Key.Symbol,StringComparer.Ordinal).ThenBy(g=>g.Key.Reason,StringComparer.Ordinal)
@@ -134,16 +136,32 @@ internal static partial class IntegratedEconomicReplay
             {
                 void Gap(string reason)
                 {
-                    if(CaptureHoldingValuationGaps&&frame.Protection?.BetweenDecisions!=true)
-                        holdingValuationGaps.Add((name,frame.At,reason));
+                    bool between=frame.Protection?.BetweenDecisions==true;
+                    if(CaptureHoldingValuationGaps&&(!between||CaptureBetweenDecisionValuationGaps))
+                        holdingValuationGaps.Add((name,frame.At,between?"BETWEEN_DECISIONS/"+reason:reason));
                 }
                 if(observed.Contains(name))continue;
+                // An authenticated fresh tape mark is usable for held valuation only,
+                // even when no complete executable market frame exists. Never create
+                // a signal, execution or a synthetic price from a missing frame.
+                if(RecoverFreshHoldingMarks&&ValuationTape is { } observedTape&&
+                    marketCalendars.TryGetValue(name,out var holdingMarket)&&
+                    ProtectionMark(observedTape,holdingMarket,frame.At,stress) is { } fresh)
+                {
+                    quotes.Add(fresh.Quote);
+                    FxCount("FRESH_HELD_TAPE_VALUATION_NO_EXECUTION");
+                    continue;
+                }
                 if(!marketCalendars.TryGetValue(name,out var m)||m.ScheduledClocks is null||m.AmbiguousCalendarClocks is null)
                 {Gap("MISSING_CONTRACT_CALENDAR");continue;}
                 if(!VerifiedClosedNow(name,frame.At))
                 {Gap("NO_EXECUTABLE_FRAME_AND_NOT_VERIFIED_CLOSED");continue;}
-                if(MarketPrice(name,true,frame.At) is not { } bid){Gap("MISSING_CLOSED_BID_WITNESS");continue;}
-                if(MarketPrice(name,false,frame.At) is not { } ask){Gap("MISSING_CLOSED_ASK_WITNESS");continue;}
+                var bid=MarketPrice(name,true,frame.At);
+                if(!CaptureBetweenDecisionValuationGaps&&bid is null){Gap("MISSING_CLOSED_BID_WITNESS");continue;}
+                var ask=MarketPrice(name,false,frame.At);
+                if(bid is null)Gap("MISSING_CLOSED_BID_WITNESS");
+                if(ask is null)Gap("MISSING_CLOSED_ASK_WITNESS");
+                if(bid is null||ask is null)continue;
                 if(ask.Price<bid.Price){Gap("INCONSISTENT_CLOSED_MARK");continue;}
                 if(m.Market.DatedDevelopment is not { } terms){Gap("MISSING_DATED_TERMS");continue;}
                 if(ConversionAt(terms.Contract.QuoteAsset,frame.At,false,ValuationTape) is not { } fx)
