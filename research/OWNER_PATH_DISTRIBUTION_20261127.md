@@ -112,7 +112,27 @@ The completed recent half of [45993633142](https://github.com/mariancradulescu/m
 
 The candidate tail-capacity screen changes no decision or result in this recent comparison. There is no demonstrated incremental value for that screen here. Conditional management improves closed gross outcomes, but the positive S0 closed cash result is not a determined terminal result, does not meet HARD21 and becomes negative under both adverse-cost scenarios. It is not certified economic advantage. Full recent rows, sampled risk and selection scores are conserved in `path_distribution_recent_economic_receipt_20261127.json`.
 
-The earlier 15-book comparison remains in progress in the same registered execution. This evidence snapshot makes no claim about its unfinished results; the final monetary receipt will bind both completed halves.
+The earlier half completed SUCCESS in the same run, which is now fully SUCCESS with 4/4 jobs complete. Artifact 15202022040 was downloaded and independently rehashed: ZIP SHA-256 `2c7b7571c33605b7017b7d78bc8243807e3623798519558db1f369a410647998`. It contains eleven negative terminal NET results, one undetermined terminal result and three CASH controls; its chronological selector is also WAIT.
+
+| Earlier mechanism | S0 closed NET EUR | S1 closed NET EUR | S2 closed NET EUR | Terminal NET completeness | HARD21 |
+|---|---:|---:|---:|---|---|
+| CENTERED_CONTROL | -83.981001 | -84.009109 | -84.254518 | All three determined | None |
+| DISTRIBUTION_CONTEXT | -84.661147 | -81.697445 | -57.650754 | All three determined | None |
+| DISTRIBUTION_CONTEXT_TAIL | -84.661147 | -81.697445 | -57.650754 | All three determined | None |
+| DISTRIBUTION_CONTEXT_TAIL_MANAGEMENT | -73.990894 | -74.056866 | -69.672065 | S0/S1 determined; S2 undetermined | None |
+| CASH_MARKET_TIME | 0 | 0 | 0 | All three determined | None |
+
+| Completed scope | Books | Terminal NET positive | Terminal NET negative | Terminal NET undetermined | CASH | Chronological decision |
+|---|---:|---:|---:|---:|---:|---|
+| Earlier | 15 | 0 | 11 | 1 | 3 | WAIT |
+| Recent | 15 | 0 | 7 | 5 | 3 | WAIT |
+| Total | 30 | 0 | 18 | 6 | 6 | WAIT in both scopes |
+
+The tail-capacity screen produces identical common-book results to its unscreened distribution control in all six scope/scenario comparisons. It has no observed incremental effect here. Only the recent centered S0/S1 controls meet HARD21 across their registered weeks; both have negative closed NET and undetermined terminal NET. No distribution variant meets HARD21 in either scope. All 30 books have zero unreconciled funding windows, but six terminal valuations remain undetermined because held-position marking remains unresolved. Terminal cash reconciliation is checked only when flat; open-position charges and funding are not mislabeled as closed-episode profit.
+
+`path_distribution_economic_final_receipt_20261127.json` records every common-book row, both chronological selections, exact source/protocol hashes and the unchanged common registry binding. The public report archives preserve the native result details. Encrypted final books are conserved as artifacts 15201093006 (earlier, ZIP SHA-256 `71b8da05ae33d8ab63ed60ad1cac4cd007e3b8f4f00290f162166ab5ec0c207d`) and 15196428821 (recent, ZIP SHA-256 `ea1c823829bcc0e832989c96dec8fd39a1de7004f82bc55e4b8c41e09343cc78`). These sealed-book digests are GitHub artifact metadata bindings; the two public result archive digests were independently computed from downloaded bytes. No sealed plaintext or custody secret was downloaded locally.
+
+Both scopes remain development on exposed history and conditional archived contractual terms. The result supports retaining WAIT and rejects economic promotion; it does not support a new profitable strategy or a twelve-month independent NET certificate.
 
 ## Certification boundaries
 
