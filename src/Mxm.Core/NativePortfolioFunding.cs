@@ -264,13 +264,15 @@ internal sealed class NativePortfolioFunding
             };
     }
 
-    public static decimal? OfferDebit(Ucp1MarketFrame market,int side,decimal units,long at,string? scenarioId=null)
+    public static decimal? OfferDebit(Ucp1MarketFrame market,int side,decimal units,long at,string? scenarioId=null,
+        long minimumCoveredThrough=0)
     {
         // The source schedule supplies the next available management clock,
         // including any known market closure.
         var offers=market.FundingOffers?.Where(f=>f.ScenarioId==scenarioId && f.Symbol==market.Symbol && f.Side==side && f.Units==units &&
             f.AvailableAt>0 && f.AvailableAt<=at && f.EffectiveFrom>0 && f.EffectiveFrom<=at &&
             f.NextScheduledManagementAt>=at+300000L && f.CoveredThrough>=f.NextScheduledManagementAt &&
+            f.CoveredThrough>=minimumCoveredThrough &&
             f.MaximumDebitEur>=0m && ValidHash(f.SourceSha256)).Take(2).ToArray();
         return offers is {Length:1}?offers[0].MaximumDebitEur:null;
     }

@@ -10,7 +10,8 @@ public static class NativeEconomicMechanisms
         Scored="SCP1_LOCAL_LIFECYCLE";
     public static readonly string[] All={Follow,Reverse,Range,Equilibrium,Activity,Intermarket,Transition,Scored};
     public const string MonetaryReduce="MONETARY_REDUCE";
-    public static readonly string[] Management={"BRACKET","TRANSITION_VALUE","CAPTURE_VALUE",MonetaryReduce};
+    public const string BoundaryValue="BOUNDARY_VALUE", BoundaryReduce="BOUNDARY_VALUE_REDUCE";
+    public static readonly string[] Management={"BRACKET","TRANSITION_VALUE","CAPTURE_VALUE",MonetaryReduce,BoundaryValue,BoundaryReduce};
 
     internal static NativeCausalManagementSelection.Choice SelectManagement(IEnumerable<NativeEurCalibrationOutcome> history,
         string family,int side,NativeEurDecisionContext context,long at,int pairs,int days,decimal penalty)
@@ -102,6 +103,92 @@ public static class NativeEconomicMechanisms
         decimal sem=(decimal)Math.Sqrt(changes.Sum(x=>Math.Pow((double)(x-mean),2))/
             (changes.Count*(changes.Count-1d)));
         return (mean,sem,changes.Count);
+    }
+
+    // Conditional economic path projection using only adjacent completed
+    // bars. Both-boundary ambiguity is treated adversely; a gap through the
+    // stop uses the worse open. This is a causal forecast, not a tick fill.
+    internal static decimal? BoundaryPathValueEur(int side,decimal now,decimal stop,decimal target,
+        decimal open,decimal high,decimal low,decimal close,decimal credit,decimal debit)
+    {
+        if(side is not (1 or -1)||now<=0m||stop<=0m||target<=0m||
+            side*(now-stop)<=0m||side*(target-now)<=0m||low<=0m||
+            high<Math.Max(open,close)||low>Math.Min(open,close)||credit<=0m||debit<credit)return null;
+        bool stopped=side>0?low<=stop:high>=stop;
+        bool reached=side>0?high>=target:low<=target;
+        decimal exit=stopped?(side>0?Math.Min(stop,open):Math.Max(stop,open)):reached?target:close;
+        decimal change=side*(exit-now);
+        return change*(change>=0m?credit:debit);
+    }
+
+    internal sealed record BoundaryEstimate(decimal Mean,decimal Sem,int Count,int Days,
+        decimal StopProbability,decimal TargetProbability,decimal AmbiguousProbability,
+        long HorizonMs,long From,long Through);
+
+    internal static BoundaryEstimate? BoundaryDistributionEur(Ucp1MarketFrame m,long at,
+        int side,decimal now,decimal stop,decimal target,string? timeframe=null,
+        int minimumSamples=8,int minimumDays=1,bool normalize=true)
+    {
+        if(minimumSamples<3||minimumDays<1)return null;
+        var tf=timeframe is null?NativeBarTimeframe.M15:Enum.Parse<NativeBarTimeframe>(timeframe);
+        var w=m.ClosedBars?.DecisionAt==at?m.EconomicTransitionWindows?.Where(x=>x.Timeframe==tf&&x.Ready&&
+            x.Bars.Length>=3&&x.Bars.All(v=>v.CloseAt<at)).OrderByDescending(x=>x.Bars.Length).FirstOrDefault():null;
+        w??=Window(m,tf,at);
+        if(w is null)return null;
+        var bars=w.Bars;
+        if(bars[^2].CloseAt!=bars[^1].OpenAt)return null;
+        int state=Math.Sign(bars[^1].Close-bars[^2].Close);
+        decimal currentRange=TrueRange(bars[^1],bars[^2].Close);
+        if(currentRange<=0m)return null;
+        var values=new List<(decimal Value,long Day,long At)>();
+        int stops=0,targets=0,ambiguous=0;
+        for(int i=2;i<bars.Length;i++)
+        {
+            var previous=bars[i-1];var label=bars[i];
+            if(bars[i-2].CloseAt!=previous.OpenAt||previous.CloseAt!=label.OpenAt||
+                Math.Sign(previous.Close-bars[i-2].Close)!=state)continue;
+            decimal priorRange=TrueRange(previous,bars[i-2].Close);
+            if(priorRange<=0m)continue;
+            // Normalize using the range of the state bar, never the label.
+            decimal scale=normalize?currentRange/priorRange:1m;
+            decimal Project(decimal x)=>now+(x-previous.Close)*scale;
+            var value=BoundaryPathValueEur(side,now,stop,target,Project(label.Open),Project(label.High),
+                Project(label.Low),Project(label.Close),m.Quote.EurCredit,m.Quote.EurDebit);
+            // Dropping an invalid adverse projection could select away loss
+            // mass. An unsupported price-domain extrapolation has no forecast.
+            if(value is null)return null;
+            if(value is decimal v)
+            {
+                bool stopped=side>0?Project(label.Low)<=stop:Project(label.High)>=stop;
+                bool reached=side>0?Project(label.High)>=target:Project(label.Low)<=target;
+                if(stopped)stops++;
+                if(reached&&!stopped)targets++;
+                if(stopped&&reached)ambiguous++;
+                values.Add((v,label.CloseAt/86_400_000L,label.CloseAt));
+            }
+        }
+        var days=values.GroupBy(x=>x.Day).ToArray();
+        if(values.Count<minimumSamples||days.Length<minimumDays)return null;
+        decimal mean=values.Average(x=>x.Value);
+        decimal sem=(decimal)Math.Sqrt(values.Sum(x=>Math.Pow((double)(x.Value-mean),2))/
+            (values.Count*(values.Count-1d)));
+        if(days.Length>1)
+        {
+            decimal cluster=(decimal)Math.Sqrt(days.Sum(g=>Math.Pow((double)g.Sum(x=>x.Value-mean),2))*
+                days.Length/(days.Length-1d)/(values.Count*(double)values.Count));
+            sem=Math.Max(sem,cluster);
+        }
+        return new(mean,sem,values.Count,days.Length,stops/(decimal)values.Count,
+            targets/(decimal)values.Count,ambiguous/(decimal)values.Count,(long)tf*60_000L,
+            values.Min(x=>x.At),values.Max(x=>x.At));
+    }
+
+    internal static (decimal Mean,decimal Sem,int Count)? BoundaryContinuationEur(Ucp1MarketFrame m,long at,
+        int side,decimal now,decimal stop,decimal target,string? timeframe=null,int minimumSamples=8,
+        int minimumDays=1,bool normalize=true)
+    {
+        var value=BoundaryDistributionEur(m,at,side,now,stop,target,timeframe,minimumSamples,minimumDays,normalize);
+        return value is null?null:(value.Mean,value.Sem,value.Count);
     }
 
     internal static NativeEurPayoff? TransitionPayoff(Ucp1MarketFrame m,long at,int side,

@@ -62,6 +62,7 @@ internal static partial class IntegratedEconomicReplay
 
     sealed class EerEvidence
     {
+        public long MinimumFundingHorizonMs {get;init;}
         public EerInput Input;
         readonly Dictionary<string,Dictionary<long,SourceQuote>> tape;
         readonly Dictionary<string,Dictionary<long,DatedRolloverQuote>> funding;
@@ -310,7 +311,9 @@ internal static partial class IntegratedEconomicReplay
             }
             catch(ArgumentException){stream.Mark(at,"COMMISSION_OR_VOLUME_ROUTE_UNSUPPORTED");return null;}
             var margins=DatedMargins(t);
-            var offers=ManagementFunding(margins,t,m.Name,at,next.Value,scenario,stress,q.Bid,fx);
+            long fundingThrough=MinimumFundingHorizonMs>0?
+                stream.AtOrAfter(at+MinimumFundingHorizonMs,at)??next.Value:next.Value;
+            var offers=ManagementFunding(margins,t,m.Name,at,fundingThrough,scenario,stress,q.Bid,fx);
             if(offers.Length==0)stream.Count("UNKNOWN_SCENARIO_CARRY");
             else stream.Count(next.Value>at+EurStep?"CLOSURE_CARRY_RESERVED":"CARRY_RESERVED");
             var context=DatedEurContext(m,q);
@@ -408,7 +411,8 @@ internal static partial class IntegratedEconomicReplay
             {
                 M5=context.For(NativeBarTimeframe.M5).Bars,M15=context.For(NativeBarTimeframe.M15).Bars,
                 ClosedBars=context,EconomicTransitionWindows=TransitionWindows(market,at),OfficialAssetClass=market.OfficialAssetClass,EurDatedMarginScenario=true,
-                EurMargins=margins,FundingOffers=ManagementFunding(margins,terms,market.Name,at,through,scenario,stress,q.Bid,fx),
+                EurMargins=margins,FundingOffers=ManagementFunding(margins,terms,market.Name,at,
+                    MinimumFundingHorizonMs>0?stream.AtOrAfter(at+MinimumFundingHorizonMs,at)??through:through,scenario,stress,q.Bid,fx),
                 EurTickSize=market.TickSize
             };
         }

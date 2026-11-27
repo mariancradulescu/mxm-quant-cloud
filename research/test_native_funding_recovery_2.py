@@ -52,4 +52,15 @@ class PreventiveRecovery(unittest.TestCase):
         with self.assertRaisesRegex(Exception,'RECOVERY2_EXISTING_PREFIX_CONFLICT'):
             recovery.apply_recovered_registry(source,registry,'a'*64)
 
+    def test_original_decimal_string_quote_is_retained_under_new_witness_metadata(self):
+        at=1_000_000_000
+        q=dict(At=at,RequestedCoverage=True,BidAt=at-1000,Bid='200')
+        source=dict(Tapes=[dict(Name='AAPL.US',FundingQuotes=[q])])
+        w=dict(Status='AUTHENTIC_LATEST_PREFIX',SearchFrom=at-345600000,SearchThrough=at,
+            At=at-1000,Price='200',PrefixNewestFirst=True,LeadingTimestampComplete=True)
+        registry=dict(Study=recovery.STUDY,SourceSha256=['a'*64],Rows=[dict(
+            Target=dict(Symbol='AAPL.US',At=at,Side='BID'),Witness=w)],Orders=0,CloudActivated=False)
+        self.assertEqual(recovery.apply_recovered_registry(source,registry,'a'*64)['Retained'],1)
+        self.assertNotIn('LatestBidPrefix',q)
+
 if __name__=='__main__':unittest.main()
