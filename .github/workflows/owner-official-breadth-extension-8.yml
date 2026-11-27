@@ -1,0 +1,284 @@
+name: OWNER eighth official census tranche and overlapping historical windows
+on:
+  pull_request:
+    paths:
+      - 'research/official_breadth_extension_8.json'
+      - 'research/owner_official_breadth_extension_8.py'
+      - 'research/test_official_breadth_extension_8.py'
+      - '.github/workflows/owner-official-breadth-extension-8.yml'
+  push:
+    branches: [main]
+    paths: ['research/official_breadth_extension_8.json']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  technical:
+    runs-on: ubuntu-24.04
+    outputs:
+      new_source: ${{ steps.scope.outputs.new_source }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - id: scope
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          if [ "$EVENT_NAME" = push ] && git diff --diff-filter=A --name-only "$BEFORE" "$GITHUB_SHA" | grep -Fxq research/official_breadth_extension_8.json; then
+            echo "new_source=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "new_source=false" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - run: python -m unittest research.test_official_breadth_extension_8 research.test_owner_eur_recent_continuous
+  prepare:
+    needs: technical
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.actor == 'mariancradulescu' && github.run_attempt == 1 && needs.technical.outputs.new_source == 'true'
+    environment: mxm-r3-custody-v1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - name: Bind verified original census
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/"$GITHUB_REPOSITORY"/actions/artifacts/15000539686/zip > /tmp/census.zip
+          echo 'fec40efb292ebc71ccb26e82ea063b448f80d17b7330812e8f7ec3b1f6b15da8  /tmp/census.zip' | sha256sum -c -
+          mkdir -p eer1-economic
+          unzip -p /tmp/census.zip source-census.json > eer1-economic/source-census.json
+      - name: Verify the prior census tranche including partial coverage
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from research.owner_earlier_lifecycle_digest_recovery import verified_download
+          verified_download(15177200333,45948514996,'dd03ad39b70e07a06d045519c24b8b4e27502b41f0836df87d5ef311042d05ea',Path('prior-breadth-verified'))
+          PY
+      - run: python -m research.owner_official_breadth_extension_8 plan
+      - run: python -m research.custody_new
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - run: mkdir -p input && mv eer1-economic new-recipient-output prior-breadth-verified input/
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: breadth-extension-8-source-input
+          path: input/
+          retention-days: 7
+          if-no-files-found: error
+  metadata:
+    needs: prepare
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.actor == 'mariancradulescu' && github.run_attempt == 1
+    environment: mxm-r3-pepperstone-v1
+    concurrency:
+      group: mxm-existing-oauth-read-only
+      cancel-in-progress: false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: breadth-extension-8-source-input
+      - run: python -m research.owner_official_breadth_extension_8 metadata
+        env:
+          R3_CTRADER_CLIENT_ID: ${{ secrets.R3_CTRADER_CLIENT_ID }}
+          R3_CTRADER_CLIENT_SECRET: ${{ secrets.R3_CTRADER_CLIENT_SECRET }}
+          R3_CTRADER_ACCESS_TOKEN: ${{ secrets.R3_CTRADER_ACCESS_TOKEN }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: breadth-extension-8-source-metadata
+          path: recent-metadata/
+          retention-days: 90
+          if-no-files-found: error
+  verify_metadata:
+    needs: [prepare, metadata]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.actor == 'mariancradulescu' && github.run_attempt == 1
+    environment: mxm-r3-custody-v1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    outputs:
+      partitions: ${{ steps.verified.outputs.partitions }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: breadth-extension-8-source-input
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: breadth-extension-8-source-metadata
+          path: recent-metadata
+      - name: Reconcile authenticated terms and conversion routes
+        id: verified
+        run: python -m research.owner_official_breadth_extension_8 verify-metadata
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: breadth-extension-8-source-plan
+          path: recent-plan.json
+          retention-days: 90
+          if-no-files-found: error
+  collect:
+    needs: verify_metadata
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.actor == 'mariancradulescu' && github.run_attempt == 1
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        partition: ${{ fromJSON(needs.verify_metadata.outputs.partitions) }}
+    environment: mxm-r3-pepperstone-v1
+    concurrency:
+      group: mxm-existing-oauth-read-only
+      cancel-in-progress: false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: breadth-extension-8-source-input
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: breadth-extension-8-source-plan
+      - run: python -m research.owner_official_breadth_extension_8 capture --index "${{ matrix.partition }}"
+        env:
+          R3_CTRADER_CLIENT_ID: ${{ secrets.R3_CTRADER_CLIENT_ID }}
+          R3_CTRADER_CLIENT_SECRET: ${{ secrets.R3_CTRADER_CLIENT_SECRET }}
+          R3_CTRADER_ACCESS_TOKEN: ${{ secrets.R3_CTRADER_ACCESS_TOKEN }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: breadth-extension-8-source-protected-${{ matrix.partition }}
+          path: recent-source/
+          retention-days: 90
+          if-no-files-found: error
+  verify:
+    needs: [verify_metadata, collect]
+    if: always() && needs.verify_metadata.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        partition: ${{ fromJSON(needs.verify_metadata.outputs.partitions) }}
+    environment: mxm-r3-custody-v1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: breadth-extension-8-source-input
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: breadth-extension-8-source-plan
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: breadth-extension-8-source-protected-${{ matrix.partition }}
+          path: recent-source
+      - run: python -m research.owner_official_breadth_extension_8 verify --index "${{ matrix.partition }}"
+        env:
+          R3_CUSTODY_PRIVATE_KEY_PEM: ${{ secrets.R3_CUSTODY_PRIVATE_KEY_PEM }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: breadth-extension-8-source-verified-${{ matrix.partition }}
+          path: recent-verified.json
+          retention-days: 90
+          if-no-files-found: error
+  combine:
+    needs: [verify_metadata, verify]
+    if: always() && needs.verify_metadata.result == 'success' && github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r research/requirements.txt
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: breadth-extension-8-source-plan
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          pattern: breadth-extension-8-source-verified-*
+          path: partitions
+      - name: Report reconciled and pending source coverage
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from collections import defaultdict
+          plan=json.loads(Path("recent-plan.json").read_bytes())
+          rows=[json.loads(p.read_bytes()) for p in Path("partitions").glob("*/recent-verified.json")]
+          found={}
+          markets=defaultdict(lambda:dict(requests=0,marks=0,fundingMarks=0,windows=[]))
+          for row in rows:
+              r=row["report"]; i=r["index"]
+              assert i not in found and 0<=i<len(plan["partitions"]) and r["target"]==plan["partitions"][i]
+              assert r["protocolSha256"]==plan["protocolSha256"] and row["packetsReconciled"]==r["requests"]
+              assert row["readbackBrokerRequests"]==r["orders"]==0 and not r["cloudActivated"]
+              found[i]=row
+              m=markets[r["target"]["symbol"]]
+              m["requests"]+=r["requests"]; m["marks"]+=r["monetaryMarks"]; m["fundingMarks"]+=r["fundingMarks"]
+              m["windows"].append(dict(Window=r["target"]["window"],From=r["target"]["fromInclusive"],
+                  Through=r["target"]["throughExclusive"],MonetaryMarks=r["monetaryMarks"],
+                  FundingMarks=r["fundingMarks"],BarCoverage=r["barCoverage"]))
+              if r["target"]["window"]=="NOV24_26_ANNUAL_CONTEXT":m["AnnualContextBarCoverage"]=r["barCoverage"]
+          for m in markets.values():
+              m["windows"].sort(key=lambda w:(w["From"],w["Through"]))
+          out=dict(Study="OFFICIAL_BREADTH_EXTENSION_8",protocolSha256=plan["protocolSha256"],
+                   planned=len(plan["partitions"]),verified=len(found),pending=[i for i in range(len(plan["partitions"])) if i not in found],
+                   economicCoverage={name:("AUTHENTIC_BARS_AND_MONETARY_MARKS_COLLECTED" if name in markets and any(w["MonetaryMarks"]>0 and
+                       len(w["BarCoverage"])==7 and all(v["closedRows"]>0 for v in w["BarCoverage"].values())
+                       for w in markets[name]["windows"])
+                       else "VERIFIED_RESPONSE_WITH_INCOMPLETE_ECONOMIC_COVERAGE" if name in markets else plan["states"][name]) for name in plan["chosen"]},
+                   markets=dict(markets),receipts=[found[i] for i in sorted(found)],orders=0,cloudActivated=False,
+                   historicalTermsCertified=False,independentConfirmationCertified=False)
+          Path("breadth-extension-8-source-summary.json").write_text(json.dumps(out,sort_keys=True,separators=(",",":")))
+          print("RECENT_SOURCE_PARTITIONS",len(found),len(plan["partitions"]))
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: breadth-extension-8-source-verified-summary
+          path: breadth-extension-8-source-summary.json
+          retention-days: 90
+          if-no-files-found: error
+      - run: python -c 'import json; d=json.load(open("breadth-extension-8-source-summary.json")); assert not d["pending"]'
