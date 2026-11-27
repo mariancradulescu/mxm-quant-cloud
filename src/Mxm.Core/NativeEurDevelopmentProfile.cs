@@ -125,6 +125,9 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
     public bool ReserveMarginForStopRisk { get; init; }
 
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool RequireEconomicBoundaryEdge { get; init; }
+
     internal string GeometryIdentity => FormattableString.Invariant(
         $"{UseAvailableContext}/{DistributionTargetRanges:G29}/{StopReserveMultiplier:G29}") +
         (ModeledStopLatencyMs is long latency ? FormattableString.Invariant($"/Trade/{latency}") : "") +
@@ -149,6 +152,7 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
         (RequireMaturedCashForLargerVolume?"/MATURED_CASH_MARGINAL_VOLUME":"") +
         (ReserveObservedBarGaps?"/OBSERVED_GAP_RESERVE":"") +
         (ReserveMarginForStopRisk?"/STOP_ADJUSTED_MARGIN_HEADROOM":"") +
+        (RequireEconomicBoundaryEdge?"/VOLATILITY_NORMALIZED_BOUNDARY_ENTRY_EDGE":"") +
         (AllocatePav1AtMinimumVolume?"/PAV1_MINIMUM_VOLUME_MONETARY_ALLOCATION":"") +
         (CompeteEconomicFamilies?"/SEVEN_FAMILY_CAUSAL_COMMON_BOOK_V1":"") +
         (SelectEconomicManagementCausally?"/MATURED_PAIRED_MANAGEMENT_CHOICE_V1":"") +
@@ -157,6 +161,9 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
 
     internal void Verify()
     {
+        if(RequireEconomicBoundaryEdge&&(!CompeteEconomicFamilies||
+            EconomicManagement is not (NativeEconomicMechanisms.BoundaryValue or NativeEconomicMechanisms.BoundaryReduce)))
+            throw new ArgumentException("EUR_BOUNDARY_EDGE_PROFILE");
         if(ReserveMarginForStopRisk&&!CompeteEconomicFamilies)throw new ArgumentException("EUR_STOP_ADJUSTED_MARGIN_PROFILE");
         if(Pav1CompetitiveForecast is not null&&(!CompeteEconomicFamilies||LifecycleEstimator is null||
             Pav1CompetitiveForecast is not ("DIRECT" or "CORROBORATED")))
