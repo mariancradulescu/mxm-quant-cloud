@@ -1,5 +1,5 @@
 """New common-book experiment; no frozen original policy is re-executed."""
-import argparse,os,subprocess
+import argparse,json,os,subprocess,time
 from pathlib import Path
 from decimal import Decimal
 from . import owner_controlled_recency as parent
@@ -16,19 +16,37 @@ def variants(n):
  base=dict(geometry.variants()[0]['Profile'],EconomicManagement='MONETARY_REDUCE',EconomicManagementTimeframe='M15',
   EconomicGeometryTimeframe='M15',DistributionTargetRanges=Decimal('2.5'),AnchorEconomicGeometryToClosedStructure=True,
   EconomicStructureLookbackBars=6,CaptureOpportunityPathEvidence=True,MinimumEpisodes=24,MinimumDays=5,
-  MinimumContractVolumeOnly=True)
- return [dict(Id=name,UniverseCount=n,Profile=dict(base,LifecycleEstimator=estimator,UsePathDistributionManagement=management))
-  for name,estimator,management in [('CENTERED_CONTROL','CENTERED_COST_CONTEXT',False),
-   ('DISTRIBUTION_LOCAL','DISTRIBUTION_LOCAL',False),('DISTRIBUTION_CONTEXT','DISTRIBUTION_CONTEXT',False),
-   ('DISTRIBUTION_CONTEXT_MANAGEMENT','DISTRIBUTION_CONTEXT',True)]]
+  MinimumContractVolumeOnly=True,CaptureVolatilityContext=True)
+ return [dict(Id=name,UniverseCount=n,Profile=dict(base,LifecycleEstimator=estimator,
+  RequirePathTailCapacity=tail,UsePathDistributionManagement=management))
+  for name,estimator,tail,management in [('CENTERED_CONTROL','CENTERED_COST_CONTEXT',False,False),
+   ('DISTRIBUTION_CONTEXT','DISTRIBUTION_CONTEXT',False,False),
+   ('DISTRIBUTION_CONTEXT_TAIL','DISTRIBUTION_CONTEXT',True,False),
+   ('DISTRIBUTION_CONTEXT_TAIL_MANAGEMENT','DISTRIBUTION_CONTEXT',True,True)]]
+
 def prepare(work,scope):
- p=read(REGISTRY);need(p['Study']==STUDY and p['Scopes']==['earlier','recent'] and p['Orders']==0 and not p['CloudActivated'],'PATH_ECONOMIC_SCOPE')
+ p=read(REGISTRY);need(p['Study']==STUDY and p['Scopes']==['earlier','recent'] and p['Orders']==0 and not p['CloudActivated'] and p['Models']==[v['Id'] for v in variants(29)] and p['SelectionMultiplicity']==12,'PATH_ECONOMIC_SCOPE')
  parent.prepare(work,scope);source=read(work/'net-source.json');plan=read(work/'net-plan.json');receipt=read(parent.REPORT/'source-receipt.json')
- recovery=p['HeldRegistry'];verified_download(recovery['Artifact'],recovery['Run'],recovery['ArchiveSha256'],Path('held-recovery-verified'))
+ recovery=dict(p['HeldRegistry'])
+ if 'Artifact' not in recovery:
+  repo=os.environ['GITHUB_REPOSITORY'];started=time.monotonic()
+  while True:
+   state=json.loads(subprocess.check_output(['gh','api',f'repos/{repo}/actions/runs/{recovery["Run"]}']))
+   need(state['head_sha']==p['HeldRegistryHead'] and state['head_branch']=='main','PATH_ECONOMIC_HELD_SOURCE_REVISION')
+   pages=json.loads(subprocess.check_output(['gh','api','--paginate','--slurp',f'repos/{repo}/actions/runs/{recovery["Run"]}/artifacts?per_page=100']))
+   found=[a for page in pages for a in page['artifacts'] if a['name']==recovery['ArtifactName']]
+   if found:
+    need(len(found)==1 and not found[0]['expired'],'PATH_ECONOMIC_HELD_ARTIFACT')
+    recovery.update(Artifact=found[0]['id'],ArchiveSha256=found[0]['digest'].removeprefix('sha256:'));break
+   need(state['status']!='completed' and time.monotonic()-started<12600,'PATH_ECONOMIC_SOURCE_NOT_PUBLISHED')
+   print('WAITING_FOR_COMPLETED_AUTHENTIC_MONETARY_REGISTRY',recovery['Run'],flush=True);time.sleep(30)
+ verified_download(recovery['Artifact'],recovery['Run'],recovery['ArchiveSha256'],Path('held-recovery-verified'))
  registry=Path('held-recovery-verified/verified-valuation-registry.json')
- need(sha(registry)==recovery['RegistrySha256'] and read(registry)['Orders']==0,'PATH_ECONOMIC_MONETARY_REGISTRY')
+ if 'RegistrySha256' in recovery:need(sha(registry)==recovery['RegistrySha256'],'PATH_ECONOMIC_MONETARY_REGISTRY_SHA')
+ recovery['RegistrySha256']=sha(registry)
+ need(read(registry)['Orders']==0 and not read(registry)['CloudActivated'] and read(registry)['PacketsReconciled']>0,'PATH_ECONOMIC_MONETARY_REGISTRY')
  plan.update(Study=STUDY,Variants=variants(len(source['Markets'])))
- proof=dict(Parent=receipt,Registry=p,RegistrySha256=sha(registry),SourceBrokerRequests=0,OriginalPoliciesReplayed=0,
+ proof=dict(Parent=receipt,Registry=p,HeldRegistryResolved=recovery,RegistrySha256=sha(registry),SourceBrokerRequests=0,OriginalPoliciesReplayed=0,
   PredictiveHorizonIsNotExitRule=True,FundingHorizonMs=3600000)
  protocol=__import__('hashlib').sha256(exact_json(plan).encode()).hexdigest();evidence=__import__('hashlib').sha256(exact_json(proof).encode()).hexdigest()
  source.update(ProtocolSha256=protocol,EvidenceManifestSha256=evidence,EngineRevision=os.environ['GITHUB_SHA']);plan.update(SourceProtocolSha256=protocol,EvidenceManifestSha256=evidence)
@@ -56,7 +74,9 @@ def conserve():
  seal_files([(p,str(p.relative_to('distribution-economic-parts'))) for p in files],'distribution-economic-sealed',public,
   os.environ['GITHUB_RUN_ID'],STUDY,receipt['SourceSha256'],complete=(REPORT/'summary.json').exists(),protocol_sha=receipt['ProtocolSha256'])
 def main():
- p=argparse.ArgumentParser();p.add_argument('stage',choices=['evaluate','conserve']);p.add_argument('--scope',choices=['earlier','recent']);p.add_argument('--work',type=Path);a=p.parse_args()
- if a.stage=='conserve':conserve()
+ p=argparse.ArgumentParser();p.add_argument('stage',choices=['check','evaluate','conserve']);p.add_argument('--scope',choices=['earlier','recent']);p.add_argument('--work',type=Path);a=p.parse_args()
+ if a.stage=='check':
+  v=read(REGISTRY);need(v['Study']==STUDY and v['Models']==[x['Id'] for x in variants(29)] and v['SelectionMultiplicity']==12 and v['Orders']==0 and not v['CloudActivated'],'PATH_ECONOMIC_REGISTRATION')
+ elif a.stage=='conserve':conserve()
  else:evaluate(a.work,a.scope)
 if __name__=='__main__':main()

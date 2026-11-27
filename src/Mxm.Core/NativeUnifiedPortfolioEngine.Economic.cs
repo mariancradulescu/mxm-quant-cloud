@@ -372,13 +372,18 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 bracket.Entry,plan.Side>0?q.Bid:q.Ask,q.LiquidationSlippagePerSide??intent.SlippagePerSide));
             var context=DescribeEurContext(observed,frame.At,plan.Side,guard.TotalReservedMarginEur,equity,risk,cost);
             if(context is not null)context=context with {MarketState=DescribeGeneralState(observed,frame,plan.Side),
-                RelativeVolatility=eurDevelopmentProfile?.RevalidatePredictiveVolatilityAtFill==true
+                RelativeVolatility=eurDevelopmentProfile?.RevalidatePredictiveVolatilityAtFill==true||
+                    eurDevelopmentProfile is {CaptureOpportunityPathEvidence:true,CaptureVolatilityContext:true}
                     ?DescribeRelativeVolatility(observed,frame.At):null,
                 ClosedBarActivity=eurDevelopmentProfile?.CaptureClosedBarActivity==true
                     ?DescribeClosedBarActivity(observed,frame.At,plan.Side):null};
-            if(CompetitiveCandidatePayoff(observed,frame.At,plan.Family,plan.Side,units,risk,cost+debit,
-                policy==EurGeneralSelect?context:null,managementOverride:prior.SelectedEconomicManagement)
-                is not {GrossLowerEur:>0m,NetLowerEur:>0m})return null;
+            var payoff=CompetitiveCandidatePayoff(observed,frame.At,plan.Family,plan.Side,units,risk,cost+debit,
+                policy==EurGeneralSelect?context:null,managementOverride:prior.SelectedEconomicManagement);
+            if(payoff is not {GrossLowerEur:>0m,NetLowerEur:>0m})return null;
+            if(eurDevelopmentProfile?.RequirePathTailCapacity==true&&!NativeDistributionTailCapacity.Allows(
+                guard.ProjectedPostFillLiquidationEquityEur,current.ObservedPeakEur,
+                Math.Max(0m,guard.AggregateReservedRiskEur-risk),risk,guard.TotalReservedMarginEur,payoff.ExpectedShortfallEur))
+            {Count("EUR_FILL_PATH_TAIL_CAPACITY");return null;}
         }
         return prior with {InitialRiskEur=risk,InitialRewardEur=reward};
     }

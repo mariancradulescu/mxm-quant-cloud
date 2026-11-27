@@ -25,7 +25,10 @@ internal static class NativeCenteredLifecycle
         diagnostic?.Invoke(grossLower<=0m?"CENTERED_GROSS_LOWER_NONPOSITIVE":
             netLower<=0m?"CENTERED_NET_LOWER_NONPOSITIVE":"CENTERED_POSITIVE");
         return normalized with {GrossMeanEur=gross,GrossLowerEur=grossLower,NetMeanEur=net,NetLowerEur=netLower,
-            NetWorstEur=normalized.NetWorstEur*risk,NetBestEur=normalized.NetBestEur*risk};
+            NetWorstEur=normalized.NetWorstEur*risk,NetBestEur=normalized.NetBestEur*risk,
+            ExpectedShortfallEur=normalized.ExpectedShortfallEur is decimal tail
+                ?Math.Min(tail*risk,(normalized.GrossExpectedShortfallEur??tail)*risk-cost):null,
+            GrossExpectedShortfallEur=normalized.GrossExpectedShortfallEur*risk};
     }
 
     // Predeclared dimensionless bands compare historical execution-cost burden

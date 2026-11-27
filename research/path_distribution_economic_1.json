@@ -1,0 +1,22 @@
+{
+  "Study": "MONETARY_PATH_DISTRIBUTION_1",
+  "Scopes": ["earlier", "recent"],
+  "Models": ["CENTERED_CONTROL", "DISTRIBUTION_CONTEXT", "DISTRIBUTION_CONTEXT_TAIL", "DISTRIBUTION_CONTEXT_TAIL_MANAGEMENT"],
+  "SharedCapitalEur": 300,
+  "CommonBookEvaluations": 30,
+  "SelectionMultiplicity": 12,
+  "TailProbabilityMass": 0.1,
+  "FundingForecastHorizonMs": 3600000,
+  "PredictiveHorizonIsNotAnExitTimer": true,
+  "HeldRegistryHead": "cf152a0b27dd8a6e8eb707f939c030cec69158a7",
+  "HeldRegistry": {
+    "Run": 45979460303,
+    "ArtifactName": "held-equity-completed-earlier"
+  },
+  "Exposure": "DEVELOPMENT_ONLY_NO_INDEPENDENT_CLAIM",
+  "OriginalPoliciesReplayed": 0,
+  "SourceBrokerRequests": 0,
+  "Orders": 0,
+  "CloudActivated": false,
+  "IndependentConfirmationCertified": false
+}

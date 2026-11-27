@@ -69,8 +69,8 @@ internal static partial class IntegratedEconomicReplay
             !estimatorStudy&&p.Variants.Any(v=>v.Profile.LifecycleEstimator is not null))
             throw new InvalidDataException("LIFECYCLE_ESTIMATOR_STUDY_BINDING");
         if(distributionStudy&&(p.Variants.Any(v=>!v.Profile.CaptureOpportunityPathEvidence||!v.Profile.ReserveMarginForStopRisk)||
-            p.Variants.Count(v=>v.Profile.UsePathDistributionManagement)!=1||
-            !p.Variants.Select(v=>v.Profile.LifecycleEstimator).Order().SequenceEqual(new[]{"CENTERED_COST_CONTEXT","DISTRIBUTION_CONTEXT","DISTRIBUTION_CONTEXT","DISTRIBUTION_LOCAL"})))
+            p.Variants.Count(v=>v.Profile.UsePathDistributionManagement)!=1||p.Variants.Count(v=>v.Profile.RequirePathTailCapacity)!=2||
+            !p.Variants.Select(v=>v.Profile.LifecycleEstimator).Order().SequenceEqual(new[]{"CENTERED_COST_CONTEXT","DISTRIBUTION_CONTEXT","DISTRIBUTION_CONTEXT","DISTRIBUTION_CONTEXT"})))
             throw new InvalidDataException("DISTRIBUTION_STUDY_ABLATION_BINDING");
         Directory.CreateDirectory(directory);
         string scenario=EerHash(planHash+"|"+FormattableString.Invariant($"{stress:G29}"));

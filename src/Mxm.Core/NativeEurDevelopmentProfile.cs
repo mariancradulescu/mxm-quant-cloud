@@ -123,6 +123,8 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
     public bool CaptureOpportunityPathEvidence { get; init; }
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
     public bool UsePathDistributionManagement { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool RequirePathTailCapacity { get; init; }
     // Optional research-only recency weighting without a permanent family prior.
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
     public int LifecycleRecencyHalfLifeDays { get; init; }
@@ -185,6 +187,8 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
 
     internal void Verify()
     {
+        if(RequirePathTailCapacity&&LifecycleEstimator is not ("DISTRIBUTION_LOCAL" or "DISTRIBUTION_CONTEXT" or "DISTRIBUTION_POOLED"))
+            throw new ArgumentException("EUR_PATH_TAIL_REQUIRES_DISTRIBUTION");
         if(BoundaryMinimumSamples!=0&&BoundaryMinimumSamples<3||BoundaryMinimumDays<0)
             throw new ArgumentException("EUR_BOUNDARY_SUPPORT_PROFILE");
         if(BoundaryHorizonBars!=0&&(BoundaryHorizonBars is <2 or >6||

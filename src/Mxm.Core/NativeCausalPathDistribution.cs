@@ -10,7 +10,11 @@ public sealed record NativePathSample(string Symbol,string? AssetClass,long Deci
 public sealed record NativePathDistributionForecast(int Samples,int Days,decimal EffectiveDays,
     decimal Mean,decimal LowerMean,decimal[] Quantiles,decimal PositiveProbability,
     decimal UpperFirstLower,decimal UpperFirstUpper,decimal MeanFavorable,decimal MeanAdverse,
-    decimal ExpectedShortfall,decimal MeanDurationMinutes,decimal RegimeEntropy,long LatestAvailableAt);
+    decimal ExpectedShortfall,decimal MeanDurationMinutes,decimal RegimeEntropy,long LatestAvailableAt)
+{
+    public decimal MinimumOutcome { get; init; }
+    public decimal MaximumOutcome { get; init; }
+}
 
 // An empirical conditional distribution over mature paths, with day-balanced
 // context kernels and optional absolute-age forgetting. No order or exit clock.
@@ -70,6 +74,7 @@ public static class NativeCausalPathDistribution
         {double p=(double)(g.Sum(x=>x.Weight)/total);entropy-=p*Math.Log(p);}
         return new(rows.Length,days.Length,effective,mean,lower,quantiles,Mean(x=>x.Outcome>0m?1m:0m),
             Mean(x=>x.UpperFirstLower),Mean(x=>x.UpperFirstUpper),Mean(x=>x.Favorable),Mean(x=>x.Adverse),
-            tailMass>0m?tail/tailMass:0m,Mean(x=>x.DurationMinutes),(decimal)entropy,rows.Max(x=>x.AvailableAt));
+            tailMass>0m?tail/tailMass:0m,Mean(x=>x.DurationMinutes),(decimal)entropy,rows.Max(x=>x.AvailableAt))
+            {MinimumOutcome=rows.Min(x=>x.Outcome),MaximumOutcome=rows.Max(x=>x.Outcome)};
     }
 }
