@@ -1,0 +1,43 @@
+{
+  "Study": "OWNER_MATCHED_SHADOW_PREDICTION_AUDIT_1",
+  "OriginalRun": 45954500909,
+  "ArchiveIds": [
+    15178354067,
+    15179335228
+  ],
+  "Contexts": 24,
+  "ShadowEpisodes": 89476,
+  "MatchedGroups": 26948,
+  "MatchedCandidateLabels": 71919,
+  "MatchedBothDirections": 11888,
+  "PositiveShadowGrossContexts": 5,
+  "PositiveShadowNetContexts": 0,
+  "Methods": {
+    "GLOBAL": {
+      "PositiveImprovement": 9,
+      "PositiveNet": 0,
+      "MeanChosenNetR": -0.1495198349171204
+    },
+    "LOCAL": {
+      "PositiveImprovement": 10,
+      "PositiveNet": 0,
+      "MeanChosenNetR": -0.14829644275660867
+    },
+    "SESSION": {
+      "PositiveImprovement": 12,
+      "PositiveNet": 0,
+      "MeanChosenNetR": -0.14761486514784228
+    },
+    "PAIRED_RELATIVE": {
+      "PositiveImprovement": 13,
+      "PositiveNet": 0,
+      "MeanChosenNetR": -0.14677697469728396
+    }
+  },
+  "RetrospectiveMaturedSampleOnly": true,
+  "IndependentSamples": false,
+  "PortfolioEvaluated": false,
+  "OriginalPoliciesReplayed": 0,
+  "Orders": 0,
+  "CloudActivated": false
+}
