@@ -66,4 +66,52 @@ class ManagementFactorialDriver(unittest.TestCase):
    self.assertEqual(report['ResolvedBefore'],0)
    self.assertEqual({t for g in report['Groups'] for t in g['Clocks']},set(clocks[1:]))
    self.assertEqual(report['Orders'],0)
+ def test_factorial_replay_resume_matches_continuous_native_report(self):
+  import copy,hashlib,os
+  from .test_owner_eur_checkpoint import fixture,START,FIT,END,DAY
+  with tempfile.TemporaryDirectory() as root:
+   root=Path(root);fixture(root)
+   source=json.loads((root/'source.json').read_bytes())
+   for i in range(5):
+    name=f'SYNTH_EXTRA_{i}'
+    market=copy.deepcopy(source['Markets'][0]);market['Market']['Name']=name
+    market['Market']['Contract']['Symbol']=name
+    market['Market']['DatedDevelopment']['Contract']['Symbol']=name
+    source['Markets'].append(market)
+    tape=copy.deepcopy(source['Tapes'][0]);tape['Name']=name;source['Tapes'].append(tape)
+    origin=hashlib.sha256(b'SYNTH_A').hexdigest();dest=hashlib.sha256(name.encode()).hexdigest()
+    for suffix in ('bid-eer1.ticks','bid-eer1.coverage','ask-eer1.ticks','ask-eer1.coverage'):
+     (root/'verified-protection'/f'{dest}-{suffix}').write_bytes((root/'verified-protection'/f'{origin}-{suffix}').read_bytes())
+   (root/'source.json').write_text(exact_json(source))
+   plan=dict(Study='MONETARY_MANAGEMENT_FACTORIAL_1',Exposure='PROJECT_EXPOSED_CONDITIONAL_DEVELOPMENT',
+    SourceProtocolSha256=source['ProtocolSha256'],EvidenceManifestSha256=source['EvidenceManifestSha256'],
+    Start=START,SelectionFrom=FIT,EvaluationFrom=FIT+DAY,End=END,Stresses=[0,.5,1],
+    OriginalInstruments=[m['Market']['Name'] for m in source['Markets']],Variants=variants(7))
+   (root/'factorial.json').write_text(exact_json(plan));(root/'registry.json').write_text('{"Rows":[]}')
+   base=dict(os.environ,MXM_ECONOMIC_BOUNDED_NEIGHBORS='1',MXM_ECONOMIC_PAIRED_DISTRIBUTION='1')
+   base.pop('MXM_FACTORIAL_STOP_AFTER_PHASE',None);base.pop('MXM_FACTORIAL_RESUME_FROM',None)
+   def run(out,**settings):
+    cmd=['dotnet','src/Mxm.Replay/bin/Release/net8.0/Mxm.Replay.dll','--owner-path-distribution',
+     str(root/'factorial.json'),str(root/'source.json'),str(out),str(root/'verified-protection'),'0',str(root/'registry.json')]
+    result=subprocess.run(cmd,env=dict(base,**settings),capture_output=True,text=True)
+    self.assertEqual(result.returncode,0,result.stderr[-3500:])
+    return result.stdout
+   continuous=root/'continuous';resumed=root/'resumed'
+   run(continuous)
+   run(resumed,MXM_FACTORIAL_STOP_AFTER_PHASE='1')
+   checkpoint=resumed/'checkpoints'/str(FIT+DAY)/'resume.json'
+   saved=json.loads(checkpoint.read_bytes())
+   self.assertEqual(saved['CalibrationFits'],16)
+   self.assertGreater(saved['BookAdvances'],0);self.assertGreater(saved['ObserverAdvances'],0)
+   self.assertFalse((resumed/'result.json').exists())
+   output=run(resumed,MXM_FACTORIAL_RESUME_FROM=str(checkpoint))
+   restored=next(json.loads(line.split(' ',1)[1]) for line in output.splitlines()
+    if line.startswith('MXM_ECONOMIC_PROGRESS ') and '"FACTORIAL_CHECKPOINT_RESTORED"' in line)
+   self.assertEqual(restored['clocksProcessed'],saved['Clocks'])
+   self.assertEqual(restored['bookAdvances'],saved['BookAdvances'])
+   self.assertEqual(restored['calibrationFits'],saved['CalibrationFits'])
+   for name in ('result.json','holding-valuation-gaps.json'):
+    self.assertEqual(hashlib.sha256((continuous/name).read_bytes()).hexdigest(),
+                     hashlib.sha256((resumed/name).read_bytes()).hexdigest(),name)
+   print('FACTORIAL_NATIVE_RESUME_PARITY',saved['Clocks'],saved['BookAdvances'],saved['CalibrationFits'],flush=True)
 if __name__=='__main__':unittest.main()
