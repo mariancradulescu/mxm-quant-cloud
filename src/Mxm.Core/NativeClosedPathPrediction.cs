@@ -40,6 +40,13 @@ public static class NativeClosedPathPrediction
     public static Context? Observe(Ucp1MarketFrame frame,long at)
     {
         if(frame.Quote.At!=at||frame.ClosedBars is not { } windows)return null;
+        return ObserveClosedWindows(windows,at);
+    }
+
+    // Price-information lane: no fictitious quote or executable frame.
+    public static Context? ObserveClosedWindows(NativeBarContext windows,long at)
+    {
+        if(windows.DecisionAt!=at)return null;
         NativeBarWindow? W(NativeBarTimeframe t)=>windows.Windows.SingleOrDefault(x=>x.Timeframe==t);
         var f=Measure(W(NativeBarTimeframe.M5),at,6);
         var m=Measure(W(NativeBarTimeframe.M15),at,4);
