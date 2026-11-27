@@ -1,0 +1,104 @@
+{
+  "Study": "OWNER_FROZEN_PATH_TERMINAL_POSITION_DIAGNOSIS_20261127",
+  "OriginalRun": 45993633142,
+  "OriginalArtifacts": [
+    {
+      "Scope": "earlier",
+      "Artifact": 15202022040,
+      "Sha256": "2c7b7571c33605b7017b7d78bc8243807e3623798519558db1f369a410647998"
+    },
+    {
+      "Scope": "recent",
+      "Artifact": 15197450546,
+      "Sha256": "ca49c4ff28fe127bbfc5b602078b114f9ab019d2b39d8d66c91a10024bc6ce68"
+    }
+  ],
+  "ArchiveBytesRehashed": true,
+  "BooksWithUndefinedTerminalNet": 6,
+  "OpenPositions": 17,
+  "UnknownFundingWindows": 0,
+  "Earlier": [
+    {
+      "Stress": 2,
+      "Id": "DISTRIBUTION_CONTEXT_TAIL_MANAGEMENT",
+      "At": 1792972515000,
+      "Held": 1,
+      "Symbols": [
+        "US500"
+      ],
+      "ConditionalEquityEur": 233.03230372846843,
+      "CashEur": 230.43793466832543
+    }
+  ],
+  "Recent": [
+    {
+      "Stress": 0,
+      "Id": "CENTERED_CONTROL",
+      "Held": 1,
+      "Symbols": [
+        "GBPUSD"
+      ],
+      "CashEur": 239.16385007144362
+    },
+    {
+      "Stress": 0,
+      "Id": "DISTRIBUTION_CONTEXT_TAIL_MANAGEMENT",
+      "Held": 6,
+      "Symbols": [
+        "SpotCrude",
+        "ETHUSD",
+        "USDJPY",
+        "AAPL.US-24",
+        "GBPUSD",
+        "AMD.US"
+      ],
+      "CashEur": 307.63585053145096
+    },
+    {
+      "Stress": 1,
+      "Id": "CENTERED_CONTROL",
+      "Held": 1,
+      "Symbols": [
+        "GBPUSD"
+      ],
+      "CashEur": 220.68203046191388
+    },
+    {
+      "Stress": 1,
+      "Id": "DISTRIBUTION_CONTEXT_TAIL_MANAGEMENT",
+      "Held": 5,
+      "Symbols": [
+        "SpotCrude",
+        "USDJPY",
+        "AAPL.US-24",
+        "GBPUSD",
+        "AMD.US"
+      ],
+      "CashEur": 282.1220938512451
+    },
+    {
+      "Stress": 2,
+      "Id": "DISTRIBUTION_CONTEXT_TAIL_MANAGEMENT",
+      "Held": 3,
+      "Symbols": [
+        "SpotCrude",
+        "USDJPY",
+        "AAPL.US-24"
+      ],
+      "CashEur": 272.95959698603593
+    }
+  ],
+  "RecentAt": 1795650915000,
+  "RecentBooksWithUnknownConditionalEquity": 5,
+  "RecentPositionInstancesWithMatchingGapCode": 14,
+  "RecentGapCode": "NO_EXECUTABLE_FRAME_AND_NOT_VERIFIED_CLOSED",
+  "RecentPositionInstancesWithoutMatchingSymbolClockGapCode": 2,
+  "RecentUnclassifiedSymbol": "AMD.US",
+  "Conclusion": "HistoricalBook.AllTerminalNetEur requires zero open positions and pending intents and exact funding. Earlier equity is already measurable despite undefined terminal NET; five recent books lack terminal conditional equity. Repricing may recover equity but cannot close any original position or make terminal closed NET determined. Absence of symbol gap code is not proof of valid mark.",
+  "OriginalPoliciesReplayed": 0,
+  "OriginalResultsModified": false,
+  "SourceBrokerRequests": 0,
+  "Orders": 0,
+  "CloudActivated": false,
+  "IndependentConfirmationCertified": false
+}
