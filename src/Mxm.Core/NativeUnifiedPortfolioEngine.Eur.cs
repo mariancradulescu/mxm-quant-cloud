@@ -14,6 +14,10 @@ public sealed record NativeEurPayoff(int ReconciledEpisodes,int ObservationDays,
     public string? Cohort { get; init; }
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public NativeEurPredictiveEvidence? PredictiveEvidence { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public decimal? EffectiveObservationDays { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public long? LatestEligibleObservationAt { get; init; }
 }
 public sealed record NativeEurBarState(NativeBarTimeframe Timeframe,int Direction,bool AboveRecentRange);
 public sealed record NativeEurDecisionContext(string Symbol,string? AssetClass, int UtcMinute,
@@ -391,8 +395,17 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 {
                     normalized=NativeCenteredLifecycle.Estimate(scoredHistory,family,side,target,scoredAt,
                         1m,0m,scored.MinimumEpisodes,scored.MinimumDays,scored.DayPenalty,
-                        estimator!="CENTERED_LOCAL",costMatched:matched,halfLifeDays:scored.LifecycleRecencyHalfLifeDays);
+                        estimator!="CENTERED_LOCAL",costMatched:matched,halfLifeDays:scored.LifecycleRecencyHalfLifeDays,
+                        captureRecencyEvidence:scored.CaptureLifecycleRecencyEvidence);
                     if(cache)eurCenteredPayoffs[key]=normalized;
+                }
+                if(scored.CaptureLifecycleRecencyEvidence&&normalized is {LatestEligibleObservationAt:long newest,EffectiveObservationDays:decimal effective})
+                {
+                    long age=(scoredAt-newest)/86_400_000L;
+                    string ageBand=age<2?"LT2":age<7?"2_6":age<14?"7_13":age<28?"14_27":"GE28";
+                    string supportBand=effective<5m?"LT5":effective<10m?"5_9":effective<20m?"10_19":"GE20";
+                    diagnostic?.Invoke("RECENCY_ABSOLUTE_AGE_DAYS_"+ageBand);
+                    diagnostic?.Invoke("RECENCY_EFFECTIVE_DAY_BAND_"+supportBand);
                 }
                 return NativeCenteredLifecycle.Reprice(normalized,candidateRiskEur,currentCostFloorEur,diagnostic);
             }

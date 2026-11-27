@@ -1,0 +1,22 @@
+{
+  "Study": "MONETARY_CONTROLLED_RECENCY_1",
+  "Scopes": [
+    "earlier",
+    "recent"
+  ],
+  "VariantsPerScope": 3,
+  "Evaluations": 24,
+  "FundingHorizonMs": 1800000,
+  "SelectionMultiplicity": 18,
+  "SelectionPenalty": 3,
+  "Exposure": "PROJECT_EXPOSED_CONDITIONAL_DEVELOPMENT",
+  "CommonValuation": "FRESH_AUTHENTIC_HELD_TAPE_ONLY",
+  "MemoryDays": [
+    0,
+    14,
+    28
+  ],
+  "Orders": 0,
+  "CloudActivated": false,
+  "IndependentConfirmationCertified": false
+}

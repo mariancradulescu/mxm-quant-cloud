@@ -33,7 +33,7 @@ internal static class NativeCenteredLifecycle
     internal static int CostBand(decimal costRisk)=>costRisk<=.1m?0:costRisk<=.25m?1:costRisk<=.5m?2:3;
     internal static NativeEurPayoff? Estimate(IEnumerable<NativeEurCalibrationOutcome> history,
         string family,int side,NativeEurDecisionContext context,long at,decimal risk,decimal cost,
-        int minimumEpisodes,int minimumDays,decimal penalty,bool transfer,Action<string>? diagnostic=null,bool costMatched=false,int halfLifeDays=0)
+        int minimumEpisodes,int minimumDays,decimal penalty,bool transfer,Action<string>? diagnostic=null,bool costMatched=false,int halfLifeDays=0,bool captureRecencyEvidence=false)
     {
         if(risk<=0m||cost<0m||minimumEpisodes<minimumDays||minimumDays<2||penalty<0m||halfLifeDays<0)return null;
         int? Regime(NativeEurDecisionContext c)=>c.ClosedStates.SingleOrDefault(x=>x.Timeframe==NativeBarTimeframe.H1)?.Direction;
@@ -107,6 +107,7 @@ internal static class NativeCenteredLifecycle
             netLower<=0m?"CENTERED_NET_LOWER_NONPOSITIVE":"CENTERED_POSITIVE");
         return new(pool.Length,daily.Length,gross,grossLower,net,netLower,halfLifeDays==0?daily.Average(x=>x.Positive):Weighted(daily.Select(x=>x.Positive)),
             pool.Min(x=>x.NetEur/x.RiskEur)*risk,pool.Max(x=>x.NetEur/x.RiskEur)*risk)
-            {Cohort="CENTERED_"+cohort};
+            {Cohort="CENTERED_"+cohort,EffectiveObservationDays=captureRecencyEvidence?effective:null,
+             LatestEligibleObservationAt=captureRecencyEvidence?pool.Max(x=>x.AvailableAt):null};
     }
 }

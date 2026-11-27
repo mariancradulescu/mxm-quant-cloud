@@ -102,6 +102,11 @@ internal static class NativeEconomicMechanismChecks
             recentDays==NativeCenteredLifecycle.Estimate(shifted.Append(shifted[0] with {AvailableAt=at,NetEur=1000m}),
                 "F",1,context,at,1m,.1m,8,3,0m,true,costMatched:true,halfLifeDays:7),
             "Recency-weighted monetary lifecycle adapts to deterioration without unmatured outcomes");
+        var audited=NativeCenteredLifecycle.Estimate(shifted,"F",1,context,at,1m,.1m,8,3,0m,true,
+            costMatched:true,halfLifeDays:7,captureRecencyEvidence:true);
+        check(audited is {EffectiveObservationDays:>0m and <30m}&&audited.LatestEligibleObservationAt==shifted[0].AvailableAt&&
+            NativeCenteredLifecycle.Reprice(audited,2m,.2m)?.LatestEligibleObservationAt==audited.LatestEligibleObservationAt,
+            "Recency evidence preserves latest eligible settlement clock and effective days through repricing");
         var recovering=shifted.Select(x=>x with {GrossEur=-x.GrossEur,NetEur=-x.GrossEur-.1m}).ToArray();
         check(NativeCenteredLifecycle.Estimate(recovering,"F",1,context,at,1m,.1m,8,3,0m,true,costMatched:true,halfLifeDays:7)!
             .NetMeanEur>NativeCenteredLifecycle.Estimate(recovering,"F",1,context,at,1m,.1m,8,3,0m,true,costMatched:true)!.NetMeanEur,
