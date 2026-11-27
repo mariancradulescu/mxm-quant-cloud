@@ -1,0 +1,67 @@
+name: OWNER net horizon completed books verified ciphertext shards
+on:
+  pull_request:
+    paths: ['research/owner_net_horizon_book_shards.py', 'research/test_causal_source_shards.py', 'research/test_net_horizon_book_shards.py', '.github/workflows/owner-net-horizon-book-shards.yml']
+  push:
+    branches: [main]
+    paths: ['research/owner_net_horizon_book_shards.py']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  technical:
+    runs-on: ubuntu-24.04
+    outputs:
+      new_repack: ${{ steps.scope.outputs.new_repack }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - id: scope
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          if [ "$EVENT_NAME" = push ] && git diff --diff-filter=A --name-only "$BEFORE" "$GITHUB_SHA" | grep -Fxq research/owner_net_horizon_book_shards.py; then
+            echo "new_repack=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "new_repack=false" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m unittest research.test_causal_source_shards research.test_generalized_cipher_shards research.test_net_horizon_book_shards
+  repack:
+    needs: technical
+    if: github.event_name == 'push' && needs.technical.outputs.new_repack == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        scope: [earlier, recent]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - id: pack
+        name: Verify and shard existing ciphertext only
+        run: python -m research.owner_net_horizon_book_shards prepare --scope ${{ matrix.scope }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - name: Publish every dynamically sized ciphertext group
+        uses: ./.generated-shard-upload
+      - name: Reconstruct and verify every published cipher part
+        run: python -m research.owner_net_horizon_book_shards verify --scope ${{ matrix.scope }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: net-horizon-${{ matrix.scope }}-books-cipher-shard-metadata
+          path: general-cipher-shards/metadata/
+          retention-days: 90
+          if-no-files-found: error
