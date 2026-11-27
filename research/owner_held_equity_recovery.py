@@ -190,6 +190,10 @@ def verify(work,scope,capture_run=None,registry_override=None,sources_only=False
  del payload,packets,rows,proven,journal
  import gc
  gc.collect()
+ reprice_saved_books(work,scope,registry,requests,prefix_count,len(targets))
+
+def reprice_saved_books(work,scope,registry,requests,prefix_count,group_count):
+ key=os.environ['R3_CUSTODY_PRIVATE_KEY_PEM'].encode()
  reports,source,tape=restore(work,scope);results=[]
  for study,folder in reports.items():
   srcpath=work/(study+'-source.json');source_sha=read(folder/'source-receipt.json')['SourceSha256']
@@ -203,7 +207,7 @@ def verify(work,scope,capture_run=None,registry_override=None,sources_only=False
    path.unlink()
   import shutil
   shutil.rmtree(work/(study+'-cipher'));shutil.rmtree(work/(study+'-books'))
- write(REPORT/(scope+'-summary.json'),dict(Study=STUDY,Scope=scope,Groups=len(targets),Requests=requests,
+ write(REPORT/(scope+'-summary.json'),dict(Study=STUDY,Scope=scope,Groups=group_count,Requests=requests,
   Prefixes=prefix_count,Results=results,RecoveredEquityPoints=sum(r['RecoveredEquityPoints'] for r in results),
   UnknownBefore=sum(r['UnknownBefore'] for r in results),UnknownAfter=sum(r['UnknownAfter'] for r in results),
   NewAdmissions=0,OriginalPoliciesReplayed=0,Orders=0,CloudActivated=False,IndependentConfirmationCertified=False))

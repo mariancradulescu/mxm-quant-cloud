@@ -54,3 +54,18 @@ Run 45983234693 completed SUCCESS. Artifact 15192146112 has ZIP SHA-256 aa3d14c6
 All three chronological horizon selectors retain CASH: selection increment lower bounds are -0.0189910853, -0.0604700260 and -0.0336740427 ATR for 15/30/60 minutes. CONTEXT_28 versus NO_PEERS_28 has only a small descriptive gross improvement; no independent NET conclusion follows from it. Calendar support, active coverage and all nonpositive outcomes remain exposed. These authentic annual bars and current contract inventories do not certify twelve independent economic months.
 
 The no-peer kernel now masks the two unused feature columns instead of cloning every mature history sample for every forecast. Two additional native checks prove numerical equality with the registered copied-feature ablation and that informative peer columns are actually excluded. All 1,479 native checks pass. The corrected annual result remains bound to its original execution revision; this computational optimization does not rerun or retune it.
+
+
+## Recent frozen equity result
+
+The recent half of run 45983234609 completed SUCCESS. Artifact 15193665248 has independently rehashed archive SHA-256 bc2135886c49dd8504c75141bad1f2794756f7dad145bb5663e593e66d9352e3. All 33 original report digests, final cash values and event-chain hashes were independently matched against the conserved NET_HORIZON and MEMORY report ZIPs.
+
+| Original study | Books | Unknown before | Recovered points | Unknown after |
+|---|---:|---:|---:|---:|
+| NET_HORIZON | 21 | 21,280 | 18,760 | 2,520 |
+| MEMORY | 12 | 9,230 | 8,963 | 267 |
+| Combined | 33 | 30,510 | 27,723 | 2,787 |
+
+The newly measurable margin count is 27,723. No newly measurable point exceeds 70% held-plus-pending margin. The maximum measured margin fraction is 68.2128334%, and maximum drawdown on the sampled, partially recovered curve is 29.1089716%. These are conditional historical measurements, not continuous drawdown certificates. Frozen admission decisions remain unchanged: zero new admissions and no original policy rerun.
+
+Residual held symbols were reconstructed from actual filled admissions and closing episodes with exact held-count parity at every point in all 33 recent books. They produce 5,197 distinct held-symbol/moments across the 2,787 still unknown book points. The next registered native inspection classifies those remaining needs with the existing verified registry and subtracts conserved positive coverage and authentic absence before authorizing any further collection. The report does not equate an unresolved valuation with unavailable broker data.

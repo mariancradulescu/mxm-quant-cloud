@@ -34,8 +34,8 @@ def prepare(work,scope,local_registry_dir=None):
   need(settlement['RunId']==os.environ['GITHUB_RUN_ID'] and settlement['Orders']==0 and not settlement['CloudActivated'] and
    settlement['OriginalCaptureRun']==45973360072,'PATH_ECONOMIC_LOCAL_SETTLEMENT_BINDING')
   registry_folder.mkdir();shutil.copyfile(local/'verified-valuation-registry.json',registry_folder/'verified-valuation-registry.json')
-  recovery=dict(Run=os.environ['GITHUB_RUN_ID'],Head=os.environ['GITHUB_SHA'],ArtifactName='held-equity-completed-earlier',
-   SettlementSha256=sha(local/'remaining-source-summary.json'),RegistrySha256=sha(registry_folder/'verified-valuation-registry.json'))
+  recovery=dict(settlement.get('SourceRegistryBinding') or dict(Run=os.environ['GITHUB_RUN_ID'],Head=os.environ['GITHUB_SHA'],ArtifactName='held-equity-completed-earlier'))
+  recovery.update(SettlementSha256=sha(local/'remaining-source-summary.json'),RegistrySha256=sha(registry_folder/'verified-valuation-registry.json'))
  elif 'Artifact' not in recovery:
   repo=os.environ['GITHUB_REPOSITORY'];started=time.monotonic()
   while True:

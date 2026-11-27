@@ -1,0 +1,25 @@
+{
+  "Study": "OWNER_HELD_FINANCIAL_RECOVERY_1",
+  "InterruptedRun": 45983234609,
+  "InterruptedHead": "2c09c5d3a68b877e1b750f2d364afc4a47ff725c",
+  "InterruptedJob": 140458915402,
+  "RepriceScopes": [
+    "earlier"
+  ],
+  "EconomicScopes": [
+    "earlier",
+    "recent"
+  ],
+  "EconomicRegistrationSha256": "40c5a7894fd4a75b211bb93efa5fb4b29ab63f2d34979fe8f7e943fd9b49e290",
+  "GlobalVerifiedRegistry": {
+    "Run": 45983234609,
+    "Artifact": 15193665248,
+    "ArtifactName": "held-equity-completed-recent",
+    "ArchiveSha256": "bc2135886c49dd8504c75141bad1f2794756f7dad145bb5663e593e66d9352e3"
+  },
+  "SourceBrokerRequests": 0,
+  "OriginalPoliciesReplayed": 0,
+  "Orders": 0,
+  "CloudActivated": false,
+  "Reason": "Earlier runner ended before artifact/log publication; recent source registry is global and already authenticated"
+}
