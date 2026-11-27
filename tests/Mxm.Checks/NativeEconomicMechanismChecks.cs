@@ -258,6 +258,13 @@ internal static class NativeEconomicMechanismChecks
         var boundaryForecast=NativeEconomicMechanisms.BoundaryDistributionEur(extended,at,1,102m,100m,104m,"H1");
         check(boundaryForecast is {Count:>=8,Days:>=1,Mean:>0m,HorizonMs:3_600_000L}&&boundaryForecast.Through<at,
             "Boundary projection discloses completed historical support, days and actual forecast horizon");
+        var twoBarBoundary=NativeEconomicMechanisms.BoundaryDistributionEur(extended,at,1,102m,100m,104m,"H1",horizonBars:2);
+        check(twoBarBoundary is {Count:>=8 and <=11,HorizonMs:7_200_000L}&&
+            boundaryForecast is not null&&twoBarBoundary.Mean>boundaryForecast.Mean&&twoBarBoundary.Through<at,
+            "Two-bar boundary paths accumulate causal movement without overlapping forward labels");
+        check(NativeEconomicMechanisms.BoundaryDistributionEur(extended,at,1,102m,100m,104m,"H1",horizonBars:3) is null&&
+            NativeEconomicMechanisms.BoundaryDistributionEur(extended,at,1,102m,100m,104m,"H1",horizonBars:7) is null,
+            "Insufficient nonoverlapping multi-bar evidence or out-of-range horizon cannot establish a forecast");
         check(NativeEconomicMechanisms.BoundaryDistributionEur(extended,at,1,102m,100m,104m,"H1",40) is null&&
             NativeEconomicMechanisms.BoundaryDistributionEur(extended,at,1,102m,100m,104m,"H1",2) is null,
             "Neither insufficient support nor a two-observation profile establishes a boundary forecast");
@@ -283,12 +290,14 @@ internal static class NativeEconomicMechanismChecks
             "A future label invalidates boundary evidence rather than increasing support or its payoff");
         var adverseProjection=extended with {EconomicTransitionWindows=extended.EconomicTransitionWindows!.Select(w=>w with
             {Bars=w.Bars.Select((b,i)=>i==2?b with {Low=.001m}:b).ToArray()}).ToArray()};
-        check(NativeEconomicMechanisms.BoundaryDistributionEur(adverseProjection,at,1,100m,99m,101m,"H1") is null,
+        check(NativeEconomicMechanisms.BoundaryDistributionEur(adverseProjection,at,1,100m,99m,101m,"H1") is null&&
+            NativeEconomicMechanisms.BoundaryDistributionEur(adverseProjection,at,1,100m,99m,101m,"H1",horizonBars:2) is null,
             "An invalid adverse projection cannot be omitted to improve the empirical forecast");
         var forecastFunding=market with {FundingOffers=new[]{new NativeFundingOfferEvidence(market.Symbol,1,1m,
             at-1,at-1,at+300_000L,at+900_000L,.1m,new string('a',64))}};
         check(NativePortfolioFunding.OfferDebit(forecastFunding,1,1m,at,null,at+900_000L)==.1m&&
-            NativePortfolioFunding.OfferDebit(forecastFunding,1,1m,at,null,at+3_600_000L) is null,
+            NativePortfolioFunding.OfferDebit(forecastFunding,1,1m,at,null,at+3_600_000L) is null&&
+            NativePortfolioFunding.OfferDebit(forecastFunding,1,1m,at,null,at+7_200_000L) is null,
             "A shorter management funding offer cannot finance a longer boundary forecast");
         check(NativeEconomicMechanisms.Continuation(extended with {ClosedBars=extended.ClosedBars! with {DecisionAt=at-1}},at,"H1",24) is null,
             "Extended transition evidence must bind to the same decision clock");
