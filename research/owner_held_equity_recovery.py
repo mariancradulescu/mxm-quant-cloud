@@ -165,7 +165,7 @@ def restore_final_books(spec,folder,dest,key,source_sha):
     out.write(clear);offset+=len(clear)
   need(offset==row['Bytes'] and sha(path)==row['Sha256'],'HELD_BOOK_PLAINTEXT_HASH');yield path
 
-def verify(work,scope,capture_run=None,registry_override=None):
+def verify(work,scope,capture_run=None,registry_override=None,sources_only=False):
  registered();p=read(CAPTURE/'receipt.json');rid=str(capture_run or os.environ['GITHUB_RUN_ID']);key=os.environ['R3_CUSTODY_PRIVATE_KEY_PEM'].encode()
  payload=eer.unpack(CAPTURE,p['sealed'],key,rid);targets=groups()
  need(payload['RunId']==rid and payload['Groups']==targets and p['PlanSha256']==src.digest(exact_json(targets).encode()),'HELD_CAPTURE_BINDING')
@@ -183,6 +183,7 @@ def verify(work,scope,capture_run=None,registry_override=None):
  write(registry,dict(Study=STUDY,RunId=rid,PlanSha256=p['PlanSha256'],Rows=proven,PacketsReconciled=len(packets),
   SupplementalRegistrySha256=sha(registry_override) if registry_override is not None else None,
   UnresolvedPrefixes=[r for r in rows if r['Witness']['Status']!='AUTHENTIC_LATEST_PREFIX'],OriginalPoliciesReplayed=0,Orders=0,CloudActivated=False))
+ if sources_only:return
  reports,source,tape=restore(work,scope);results=[]
  for study,folder in reports.items():
   srcpath=work/(study+'-source.json');source_sha=read(folder/'source-receipt.json')['SourceSha256']

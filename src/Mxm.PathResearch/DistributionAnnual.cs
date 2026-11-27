@@ -6,6 +6,7 @@ internal static class DistributionAnnual
     record Market(string Symbol,string? AssetClass,Dictionary<string,long[][]> Bars);
     record Observation(string Symbol,string? AssetClass,long At,long AvailableAt,int Horizon,
         NativeClosedPathPrediction.Context Context,decimal RelativeVolatility,decimal Move,decimal Up,decimal Down,decimal FirstLower,decimal FirstUpper);
+    record ClosedContext(string Symbol,string? AssetClass,long At,NativeClosedPathPrediction.Context Context,decimal RelativeVolatility);
     sealed class Stat
     {
         public int Count,Active,ProbCount;public decimal Move,MatchedRaw,Brier,Pinball,UpperBrier;
@@ -18,14 +19,14 @@ internal static class DistributionAnnual
             if(x.FirstLower==x.FirstUpper){e=(f.UpperFirstLower+f.UpperFirstUpper)/2m-x.FirstLower;UpperBrier+=e*e;}
         }
     }
-    public static int Run(string source,string output)
+    public static int Run(string source,string output,bool pastContextsOnly=false)
     {
         var bytes=File.ReadAllBytes(source);var markets=JsonSerializer.Deserialize<Market[]>(bytes)!;
         if(markets.Length<5||markets.Select(m=>m.Symbol).Distinct().Count()!=markets.Length)throw new InvalidDataException("DISTRIBUTION_UNIVERSE");
         long U(int y,int m,int d)=>new DateTimeOffset(y,m,d,0,0,0,TimeSpan.Zero).ToUnixTimeMilliseconds();
         long start=U(2025,11,1),selection=U(2026,5,1),evaluation=U(2026,8,1),end=U(2026,11,26);
         string Stage(long at)=>at<selection?"DEVELOPMENT":at<evaluation?"SELECTION":"EVALUATION_EXPOSED";
-        var observations=new List<Observation>();var coverage=new Dictionary<string,int>();
+        var observations=new List<Observation>();var closedContexts=new List<ClosedContext>();var coverage=new Dictionary<string,int>();
         void Count(string s)=>coverage[s]=coverage.GetValueOrDefault(s)+1;
         foreach(var m in markets)
         {
@@ -41,6 +42,9 @@ internal static class DistributionAnnual
                 NativeBarWindow W(NativeBarTimeframe tf,NativeClosedMarketBar[] a,int stop,int n)=>new(tf,n,a[stop-1].CloseAt,at,"AUTHENTIC_ARCHIVED_CLOSED_BARS",NativeBarStatus.Ready,a[(stop-n)..stop]);
                 var context=NativeClosedPathPrediction.ObserveClosedWindows(new(at,new[]{W(NativeBarTimeframe.M5,f,i+1,6),W(NativeBarTimeframe.M15,med,mi,4),W(NativeBarTimeframe.H1,slow,si,4)}),at);
                 if(context is null){Count(m.Symbol+"/UNSUPPORTED_CONTEXT");continue;}
+                // Membership is determined now, before looking for any future
+                // bar, matured label, cross-stage purge or horizon outcome.
+                closedContexts.Add(new(m.Symbol,m.AssetClass,at,context,1000m*context.Atr/f[i].Close));
                 foreach(int h in new[]{15,30,60})
                 {
                     int n=h/5;if(i+n>=f.Length||Enumerable.Range(i+1,n).Any(j=>f[j].OpenAt!=f[j-1].CloseAt))
@@ -58,7 +62,8 @@ internal static class DistributionAnnual
             }
         }
         var features=new Dictionary<(string,long),double?[]>();
-        foreach(var g in observations.GroupBy(x=>x.At))
+        var featureContexts=pastContextsOnly?closedContexts:observations.Select(x=>new ClosedContext(x.Symbol,x.AssetClass,x.At,x.Context,x.RelativeVolatility)).ToList();
+        foreach(var g in featureContexts.GroupBy(x=>x.At))
         {
             var current=g.GroupBy(x=>x.Symbol).Select(x=>x.First()).ToArray();
             foreach(var x in current)
@@ -74,7 +79,8 @@ internal static class DistributionAnnual
         var history=new Dictionary<(int H,string Scope),Queue<NativePathSample>>();
         var daily=new Dictionary<(string Stage,string Symbol,int H,string Method,long Day),Stat>();
         var matured=observations.OrderBy(x=>x.AvailableAt).ToArray();int k=0;
-        var modes=new[]{("POOLED",0),("LOCAL",28),("CONTEXT",14),("CONTEXT",28),("CONTEXT",56)};
+        var modes=pastContextsOnly?new[]{("POOLED",0),("LOCAL",28),("CONTEXT",14),("CONTEXT",28),("CONTEXT",56),("NO_PEERS",28)}:
+            new[]{("POOLED",0),("LOCAL",28),("CONTEXT",14),("CONTEXT",28),("CONTEXT",56)};
         foreach(var x in observations.OrderBy(x=>x.At).ThenBy(x=>x.Symbol,StringComparer.Ordinal))
         {
             while(k<matured.Length&&matured[k].AvailableAt<x.At)
@@ -94,7 +100,10 @@ internal static class DistributionAnnual
             {
                 var scope=mode=="LOCAL"?"S/"+x.Symbol:"C/"+(x.AssetClass??x.Symbol);
                 history.TryGetValue((x.Horizon,scope),out var rows);
-                var forecast=NativeCausalPathDistribution.Estimate(rows??new Queue<NativePathSample>(),x.Symbol,x.AssetClass,features[(x.Symbol,x.At)],x.At,mode,half);
+                IEnumerable<NativePathSample> samples=rows??new Queue<NativePathSample>();
+                double?[] query=features[(x.Symbol,x.At)];
+                if(mode=="NO_PEERS"){samples=samples.Select(s=>s with{Features=s.Features[..8]});query=query[..8];}
+                var forecast=NativeCausalPathDistribution.Estimate(samples,x.Symbol,x.AssetClass,query,x.At,mode=="NO_PEERS"?"CONTEXT":mode,half);
                 decimal? uncertainty=forecast?.Mean-forecast?.LowerMean;
                 int side=forecast is null?0:forecast.Mean>uncertainty?1:forecast.Mean< -uncertainty?-1:0;
                 Record(mode+"_"+half,side,forecast);
@@ -115,9 +124,13 @@ internal static class DistributionAnnual
                 decimal mean=days.Average();decimal se=days.Length>1?(decimal)Math.Sqrt((double)(days.Sum(d=>(d-mean)*(d-mean))/(days.Length*(days.Length-1m)))):decimal.MaxValue/10m;
                 return new{g.Key.H,g.Key.Method,Increment=mean,Lower=mean-(decimal)Math.Sqrt(2*Math.Log(modes.Length))*se};}).ToArray();
         var choices=selectionScores.GroupBy(x=>x.H).Select(g=>g.OrderByDescending(x=>x.Lower).First()).Select(x=>new{x.H,Method=x.Lower>0m?x.Method:"CASH",x.Increment,x.Lower}).ToArray();
-        File.WriteAllBytes(output,JsonSerializer.SerializeToUtf8Bytes(new{Study="OWNER_DISTRIBUTION_PATH_1",SourceSha256=Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant(),
+        long? firstContext=closedContexts.Count>0?closedContexts.Min(x=>x.At):null;
+        var firstWitness=pastContextsOnly?features.Where(x=>x.Key.Item2==firstContext).OrderBy(x=>x.Key.Item1,StringComparer.Ordinal)
+            .Select(x=>new{Symbol=x.Key.Item1,Features=x.Value}).ToArray():null;
+        File.WriteAllBytes(output,JsonSerializer.SerializeToUtf8Bytes(new{Study=pastContextsOnly?"OWNER_DISTRIBUTION_PATH_CAUSAL_2":"OWNER_DISTRIBUTION_PATH_1",SourceSha256=Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant(),
             Markets=markets.Select(m=>m.Symbol).ToArray(),Labels=observations.Count,Coverage=coverage,Results=results,Selection=selectionScores,Choices=choices,
             ChronologicalMaturityStrict=true,SelectionMultiplicity=modes.Length,SamplingMinutes=60,PathBarrierIntrabarAmbiguityRetained=true,
+            PeerMembershipUsesClosedContextsOnly=pastContextsOnly,FirstPeerContextAt=firstContext,FirstPeerContext=firstWitness,
             PriceInformationOnly=true,PortfolioEvaluated=false,IndependentConfirmationCertified=false,Orders=0,CloudActivated=false}));
         return 0;
     }

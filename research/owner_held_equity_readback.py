@@ -15,7 +15,7 @@ def check():
   and p['SourceBrokerRequests']==p['OriginalPoliciesReplayed']==p['Orders']==0 and not p['CloudActivated'],'HELD_READBACK_REGISTRATION')
  return p
 def api(path):return json.loads(subprocess.check_output(['gh','api',f'repos/{os.environ["GITHUB_REPOSITORY"]}/'+path]))
-def execute(work,scope):
+def execute(work,scope,sources_only=False):
  p=check();run=p['OriginalCaptureRun'];status=api(f'actions/runs/{run}')
  need(status['head_sha']==p['OriginalCaptureHead'] and status['head_branch']=='main','HELD_READBACK_CAPTURE_REVISION')
  names=['held-recovery-plan-earlier','held-recovery-plan-recent','held-recovery-protected'];started=time.monotonic()
@@ -28,13 +28,14 @@ def execute(work,scope):
   print('WAITING_FOR_EXISTING_CAPTURE_PUBLICATION',run,flush=True);time.sleep(30)
  for a in rows:
   destination=recovery.CAPTURE if a['name']=='held-recovery-protected' else Path('held-readback-download')/a['name']
+  destination.parent.mkdir(parents=True,exist_ok=True)
   need(a['workflow_run']['id']==run and not a['expired'],'HELD_READBACK_ARTIFACT_BINDING')
   verified_download(a['id'],run,a['digest'].removeprefix('sha256:'),destination)
   if a['name']!='held-recovery-protected':
    recovery.PLAN.mkdir(exist_ok=True)
    for file in destination.iterdir():
     need(file.is_file() and file.suffix=='.json','HELD_READBACK_PLAN_FILE');(recovery.PLAN/file.name).write_bytes(file.read_bytes())
- recovery.verify(work,scope,run)
+ recovery.verify(work,scope,run,sources_only=sources_only)
  (recovery.REPORT/'readback-provenance.json').write_text(exact_json(dict(Study=p['Study'],CaptureRun=run,
   CaptureHead=p['OriginalCaptureHead'],ReadbackRun=os.environ['GITHUB_RUN_ID'],ReadbackHead=os.environ['GITHUB_SHA'],
   Artifacts=[dict(Id=a['id'],Name=a['name'],ArchiveSha256=a['digest'].removeprefix('sha256:')) for a in rows],

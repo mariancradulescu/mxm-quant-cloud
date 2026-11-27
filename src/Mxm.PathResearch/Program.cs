@@ -5,6 +5,7 @@ using Mxm.Core;
 // Annual information diagnostic. Authentic trendbars are not executable
 // prices. No fees, fill, financing, equity or portfolio is inferred.
 if(args is ["--distribution",var distributionSource,var distributionOutput]){Environment.Exit(DistributionAnnual.Run(distributionSource,distributionOutput));return;}
+if(args is ["--distribution-causal",var causalSource,var causalOutput]){Environment.Exit(DistributionAnnual.Run(causalSource,causalOutput,true));return;}
 if(args.Length!=2)throw new ArgumentException("ANNUAL_PATH_ARGUMENTS");
 var bytes=File.ReadAllBytes(args[0]);
 var input=JsonSerializer.Deserialize<Market[]>(bytes)??throw new InvalidDataException("ANNUAL_PATH_INPUT");

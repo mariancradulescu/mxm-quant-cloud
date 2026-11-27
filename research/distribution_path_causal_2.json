@@ -1,0 +1,15 @@
+{
+  "Study": "OWNER_DISTRIBUTION_PATH_CAUSAL_2",
+  "SourceRegistrationSha256": "80d7f12fc48f8cb1d3af5c8f4ad3f4d4ae710ef9e2fb94daa8bf1066bf9bdf7a",
+  "OriginalResultRun": 45977053433,
+  "OriginalResultArtifact": 15189126012,
+  "OriginalResultArchiveSha256": "c865f10a51a11c85e474a417a12a8e9739ceaf3ee2d45423f1b40ac63db238fe",
+  "Correction": "Peer membership is fixed from closed contexts before future label eligibility",
+  "NewAblation": "NO_PEERS_28",
+  "SelectionMultiplicity": 6,
+  "Parameters": "Preserve original horizons, chronology, kernels and age settings; add the fixed no-peer ablation",
+  "SourceBrokerRequests": 0,
+  "Orders": 0,
+  "CloudActivated": false,
+  "IndependentConfirmationCertified": false
+}
