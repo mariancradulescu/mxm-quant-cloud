@@ -1,0 +1,23 @@
+{
+  "Study": "OWNER_RECENT_FROZEN_EQUITY_RESULT_RECEIPT_20261127",
+  "Run": 45983234609,
+  "Head": "2c09c5d3a68b877e1b750f2d364afc4a47ff725c",
+  "Artifact": 15193665248,
+  "ArchiveSha256": "bc2135886c49dd8504c75141bad1f2794756f7dad145bb5663e593e66d9352e3",
+  "OriginalCashAndEventChainsIndependentlyMatched": 33,
+  "Books": 33,
+  "UnknownBefore": 30510,
+  "UnknownAfter": 2787,
+  "RecoveredEquityPoints": 27723,
+  "NewlyMeasurableMarginPoints": 27723,
+  "NewlyObservedMarginAbove70Percent": 0,
+  "MaximumSampledDrawdown": 0.291089715798052,
+  "MaximumMeasuredHeldPendingMarginFraction": 0.6821283338799965,
+  "NewAdmissions": 0,
+  "AdmissionPolicyReevaluated": false,
+  "OriginalPoliciesReplayed": 0,
+  "Orders": 0,
+  "CloudActivated": false,
+  "ContinuousDrawdownCertified": false,
+  "IndependentConfirmationCertified": false
+}
