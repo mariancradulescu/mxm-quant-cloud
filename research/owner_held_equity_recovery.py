@@ -80,7 +80,7 @@ def groups():
    else:rows[key]=g
  return sorted(rows.values(),key=lambda g:(g['Symbol'],g['From'],g['Through']))
 
-def collect(journal,account,targets):
+def collect(journal,account,targets,coverage_sink=None):
  ids=plan_ids(dict(Targets=[dict(Symbol=g['Symbol']) for g in targets]));rows=[];budget=[6000]
  for index,g in enumerate(targets):
   for side,label in ((e.BID,'BID'),(e.ASK,'ASK')):
@@ -89,9 +89,23 @@ def collect(journal,account,targets):
        fromTimestamp=g['From'],toTimestamp=g['Through']))
     witness=prefix.latest(res,account,g['From'],g['Through'])
     rows.append(dict(Group=index,Symbol=g['Symbol'],Side=label,Witness=witness))
+    if coverage_sink is not None:
+     absent=(type(res) is m.ProtoOAGetTickDataRes and res.IsInitialized() and res.HasField('hasMore') and not res.hasMore and not res.tickData) or (isinstance(res,m.ProtoOAErrorRes) and res.errorCode=='NO_QUOTES')
+     coverage_sink.append(dict(Group=index,Symbol=g['Symbol'],Side=label,Mode=g['Mode'],From=g['From'],Through=g['Through'],
+      Complete=witness['Status']=='AUTHENTIC_LATEST_PREFIX' or absent,AuthenticAbsence=absent,
+      MissingWindows=[] if witness['Status']=='AUTHENTIC_LATEST_PREFIX' or absent else [[g['From'],g['Through']]]))
    else:
     ticks,leaves=roll.tick_window(journal.query,account,ids[g['Symbol']],side,g['From'],g['Through'],budget)
     complete=[(a,b) for a,b,status,_,_ in leaves if status in ('VERIFIED_COMPLETE_PAGE','PROVIDER_NO_QUOTES')]
+    if coverage_sink is not None:
+     missing=[];cursor=g['From']
+     for lo,hi in sorted(complete):
+      if hi<cursor:continue
+      if lo>cursor:missing.append([cursor,min(lo-1,g['Through'])])
+      cursor=max(cursor,hi+1)
+     if cursor<=g['Through']:missing.append([cursor,g['Through']])
+     coverage_sink.append(dict(Group=index,Symbol=g['Symbol'],Side=label,Mode=g['Mode'],From=g['From'],Through=g['Through'],
+      Complete=not missing,AuthenticAbsence=not missing and not ticks,MissingWindows=missing))
     # Only ticks followed by continuously witnessed coverage become prefixes.
     by=collections.defaultdict(set)
     for at,raw in ticks:by[at].add(raw)
@@ -157,9 +171,12 @@ def verify(work,scope,capture_run=None):
  need(payload['RunId']==rid and payload['Groups']==targets and p['PlanSha256']==src.digest(exact_json(targets).encode()),'HELD_CAPTURE_BINDING')
  packets=payload['Packets'];account=src.decode(packets[0]['reqType'],packets[0]['req']).ctidTraderAccountId
  need(src.original_account(account),'HELD_READBACK_ACCOUNT');journal=src.ReadbackJournal(packets)
- rows=collect(journal,account,targets)
+ coverage=[];rows=collect(journal,account,targets,coverage)
  need(rows==payload['Rows'] and journal.index==len(packets)==p['Requests'],'HELD_PACKET_PARITY')
- REPORT.mkdir();proven=[dict(Symbol=r['Symbol'],Side=r['Side'],Witness=r['Witness'],EvidenceSha256=p['sealed']['plainSha256'])
+ REPORT.mkdir();write(REPORT/'collection-coverage.json',dict(Study=STUDY,RunId=rid,Rows=coverage,
+  IncompleteSides=sum(not x['Complete'] for x in coverage),AuthenticAbsentSides=sum(x['AuthenticAbsence'] for x in coverage),
+  MissingRequestWindows=sum(len(x['MissingWindows']) for x in coverage),SourceBrokerRequests=0,Orders=0,CloudActivated=False))
+ proven=[dict(Symbol=r['Symbol'],Side=r['Side'],Witness=r['Witness'],EvidenceSha256=p['sealed']['plainSha256'])
   for r in rows if r['Witness']['Status']=='AUTHENTIC_LATEST_PREFIX']
  registry=REPORT/'verified-valuation-registry.json'
  write(registry,dict(Study=STUDY,RunId=rid,PlanSha256=p['PlanSha256'],Rows=proven,PacketsReconciled=len(packets),
