@@ -129,9 +129,12 @@ def prepare(work,scope):
     terminal_diagnosis(work,scope,p,source_path,work/'verified-protection',registry)
     return source_path,plan_path,registry
 
-def run_native(work,source,plan,registry,out,stress,enabled,log_path):
+def run_native(work,source,plan,registry,out,stress,enabled,log_path,stop_after=None,resume_from=None):
     env=dict(os.environ,MXM_ECONOMIC_BOUNDED_NEIGHBORS=enabled,
              MXM_ECONOMIC_PAIRED_DISTRIBUTION=enabled,MXM_ECONOMIC_PROFILE='1')
+    env.pop('MXM_FACTORIAL_STOP_AFTER_PHASE',None);env.pop('MXM_FACTORIAL_RESUME_FROM',None)
+    if stop_after is not None:env['MXM_FACTORIAL_STOP_AFTER_PHASE']=str(stop_after)
+    if resume_from is not None:env['MXM_FACTORIAL_RESUME_FROM']=str(resume_from)
     started=time.monotonic()
     with log_path.open('w') as log:
         process=subprocess.Popen(['dotnet',REPLAY,'--owner-path-distribution',str(plan),str(source),
@@ -148,7 +151,39 @@ def evaluate(work,scope):
     results=[];timings=[]
     for i,stress in enumerate(STRESSES):
         out=PARTS/f'S{i}';out.mkdir(parents=True)
-        seconds=run_native(work,source,plan,registry,out,stress,'1',REPORT/f'S{i}-progress.log')
+        if scope=='earlier' and i==0:
+            # The actual optimized economic scenario crosses a process boundary.
+            # Stop only at a fully observed and calibrated chronological boundary.
+            registered_plan=read(plan)
+            through=min(registered_plan['SelectionFrom']+7*86400000,registered_plan['EvaluationFrom'])
+            first=run_native(work,source,plan,registry,out,stress,'1',
+                             REPORT/'S0-before-restart-progress.log',stop_after=1)
+            resume=out/'checkpoints'/str(through)/'resume.json'
+            need(resume.is_file() and not (out/'result.json').exists(),'FACTORIAL_CONTROLLED_STOP')
+            saved=read(resume)
+            need(saved['Phase']==1 and saved['Through']==through and saved['Clocks']>0 and
+                 saved['BookAdvances']>0 and saved['CalibrationFits']==16,'FACTORIAL_CHECKPOINT_WORK')
+            second=run_native(work,source,plan,registry,out,stress,'1',
+                              REPORT/'S0-after-restart-progress.log',resume_from=resume)
+            progress=[__import__('json').loads(line.split(' ',1)[1]) for line in
+                      (REPORT/'S0-after-restart-progress.log').read_text().splitlines()
+                      if line.startswith('MXM_ECONOMIC_PROGRESS ')]
+            restored=next(x for x in progress if x['stage']=='FACTORIAL_CHECKPOINT_RESTORED')
+            need(restored['clocksProcessed']==saved['Clocks'] and restored['historicalAt']==through and
+                 restored['bookAdvances']==saved['BookAdvances'] and
+                 restored['calibrationFits']==saved['CalibrationFits'],'FACTORIAL_RESUME_COUNTER_PARITY')
+            need(all(x['historicalAt'] is None or x['historicalAt']>=through for x in progress
+                 if x['stage'] in ('PORTFOLIO_REPLAY','MATURING_OBSERVATIONS','CALIBRATE_BOOK')),
+                 'FACTORIAL_REPEATED_COMPLETED_CLOCKS')
+            seconds=round(first+second,3)
+            write(REPORT/'factorial-restart-receipt.json',dict(Scenario=0,Through=through,
+                CompletedClocksBefore=saved['Clocks'],CompletedBookAdvancesBefore=saved['BookAdvances'],
+                CompletedCalibrationsBefore=saved['CalibrationFits'],RestoredCountersMatch=True,
+                PriorPhasesRepeated=False,FirstProcessSeconds=first,SecondProcessSeconds=second,
+                ResumeSha256=sha(resume),ResultSha256=sha(out/'result.json'),
+                Orders=0,CloudActivated=False,OriginalPoliciesReplayed=0))
+        else:
+            seconds=run_native(work,source,plan,registry,out,stress,'1',REPORT/f'S{i}-progress.log')
         if scope=='earlier' and i==0:
             # Entire new 7-market S0 portfolio run, same input bytes, same
             # runner and instrumentation. Baseline is a technical comparison,
@@ -156,12 +191,16 @@ def evaluate(work,scope):
             baseline=work/'technical-full-baseline';baseline.mkdir()
             baseline_seconds=run_native(work,source,plan,registry,baseline,stress,'0',REPORT/'full-baseline-progress.log')
             baseline_sha=sha(baseline/'result.json');optimized_sha=sha(out/'result.json')
-            need(baseline_sha==optimized_sha,'FACTORIAL_FULL_ENGINE_EXACT_PARITY')
+            need(baseline_sha==optimized_sha and
+                 sha(baseline/'holding-valuation-gaps.json')==sha(out/'holding-valuation-gaps.json'),
+                 'FACTORIAL_FULL_ENGINE_EXACT_PARITY')
             write(REPORT/'full-engine-benchmark.json',dict(Scope=scope,Scenario=i,Markets=7,
                 Books=9,SourceSha256=receipt['SourceSha256'],ProtocolSha256=receipt['ProtocolSha256'],
                 BaselineSeconds=baseline_seconds,OptimizedSeconds=seconds,
                 Speedup=Decimal(str(baseline_seconds))/max(Decimal(str(seconds)),Decimal('0.001')),
-                ExactResultSha256=baseline_sha,ProfileEnabledBoth=True,OriginalPoliciesReplayed=0,
+                ExactResultSha256=baseline_sha,ExactGapsSha256=sha(out/'holding-valuation-gaps.json'),
+                ProfileEnabledBoth=True,OptimizedIncludesCheckpointRestart=True,
+                OriginalPoliciesReplayed=0,
                 Orders=0,CloudActivated=False))
             import shutil
             shutil.rmtree(baseline)
