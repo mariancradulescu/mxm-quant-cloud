@@ -4,6 +4,18 @@ internal static class NativePathDistributionChecks
     public static void Run(Action<bool,string> check)
     {
         const long day=86400000L;long at=30*day;
+        check(NativeDistributionTailCapacity.Allows(300m,300m,5m,2m,200m,-3m),
+            "tail capacity accepts a candidate financed with held and pending stop commitments");
+        check(!NativeDistributionTailCapacity.Allows(300m,300m,5m,2m,200m,-6m),
+            "a positive mean cannot make an adverse distribution fit the trade risk budget");
+        check(!NativeDistributionTailCapacity.Allows(null,300m,0m,1m,1m,-1m),
+            "tail capacity cannot manufacture missing equity");
+        check(!NativeDistributionTailCapacity.Allows(211m,300m,0m,2m,1m,-2m),
+            "tail capacity preserves the global portfolio drawdown floor");
+        check(!NativeDistributionTailCapacity.Allows(300m,300m,5m,2m,208m,-3m),
+            "tail capacity reserves risk before comparing margin headroom");
+        check(!NativeDistributionTailCapacity.Allows(300m,300m,0m,5m,1m,10m),
+            "favorable distribution estimates never release the proposed stop reserve");
         var rows=Enumerable.Range(1,24).Select(i=>new NativePathSample("A","FX",(i+1)*day,(i+1)*day+1,
             new double?[]{.2,.3,.1},1m,2m,.5m,0m,1m,60m)).ToArray();
         var f=NativeCausalPathDistribution.Estimate(rows,"A","FX",new double?[]{.2,.3,.1},at)!;

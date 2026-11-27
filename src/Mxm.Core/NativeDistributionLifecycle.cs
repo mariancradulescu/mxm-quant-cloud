@@ -59,9 +59,10 @@ internal static class NativeDistributionLifecycle
         diagnostic?.Invoke(gross is null||net is null?"PATH_DISTRIBUTION_SUPPORT_MISSING":"PATH_DISTRIBUTION_"+mode);
         if(gross is null||net is null)return null;
         return new(gross.Samples,gross.Days,gross.Mean,gross.LowerMean,net.Mean,net.LowerMean,
-            net.PositiveProbability,net.ExpectedShortfall,net.Quantiles[^1])
+            net.PositiveProbability,net.MinimumOutcome,net.MaximumOutcome)
             {Cohort="PATH_DISTRIBUTION_"+mode,EffectiveObservationDays=gross.EffectiveDays,
-                LatestEligibleObservationAt=gross.LatestAvailableAt,PathDistribution=net};
+                LatestEligibleObservationAt=gross.LatestAvailableAt,PathDistribution=net,
+                ExpectedShortfallEur=net.ExpectedShortfall,GrossExpectedShortfallEur=gross.ExpectedShortfall};
     }
 }
 public sealed record NativeEconomicPathEvidence(decimal FavorableR,decimal AdverseR,decimal TargetFirstLower,

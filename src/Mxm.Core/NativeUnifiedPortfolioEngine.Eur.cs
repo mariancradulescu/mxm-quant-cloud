@@ -11,6 +11,10 @@ public sealed record NativeEurPayoff(int ReconciledEpisodes,int ObservationDays,
     decimal ObservedPositiveNetFraction,decimal NetWorstEur,decimal NetBestEur)
 {
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public decimal? ExpectedShortfallEur { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public decimal? GrossExpectedShortfallEur { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public NativePathDistributionForecast? PathDistribution { get; init; }
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public string? Cohort { get; init; }
@@ -157,8 +161,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 PathEvidence=eurDevelopmentProfile?.CaptureOpportunityPathEvidence==true&&!trip.CrossedUnknownHistory
                     ?new(Math.Max(0m,trip.SampledMfeEur)/evidence.ReservedRiskEur,
                         Math.Max(0m,-trip.SampledMaeEur)/evidence.ReservedRiskEur,
-                        trip.ExitReason.Contains("TARGET",StringComparison.Ordinal)?1m:0m,
-                        trip.ExitReason.Contains("STOP",StringComparison.Ordinal)?0m:1m,
+                        // A modeled exit reason does not prove physical first-touch ordering.
+                        0m,1m,
                         (trip.CloseAt-trip.OpenAt)/60000m):null});
     }
 
@@ -765,6 +769,11 @@ public sealed partial class NativeUnifiedPortfolioEngine
         if(gate.IsFinanceable&&eurDevelopmentProfile?.ReserveMarginForStopRisk==true&&
             !NativePendingCapitalGate.StopAdjustedMarginFits(gate.EquityEur,gate.ReservedMarginAfterEur,gate.ReservedRiskAfterEur))
             return gate with {IsFinanceable=false,Status="PENDING_PLUS_HELD_STOP_ADJUSTED_MARGIN_CAP"};
+        if(gate.IsFinanceable&&eurDevelopmentProfile?.RequirePathTailCapacity==true&&IsEurRank&&
+            !NativeDistributionTailCapacity.Allows(gate.EquityEur,book.ObservedPeakEur,
+                Math.Max(0m,gate.ReservedRiskAfterEur-choice.Geometry.InitialRiskEur),choice.Geometry.InitialRiskEur,
+                gate.ReservedMarginAfterEur,choice.Receipt.Payoff?.ExpectedShortfallEur))
+            return gate with {IsFinanceable=false,Status="PATH_TAIL_CAPACITY"};
         return gate;
     }
 
