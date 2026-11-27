@@ -1,0 +1,35 @@
+{
+  "Study": "OWNER_REUSABLE_HELD_REGISTRY_BUNDLE_20261127",
+  "Purpose": "Concatenate the verified base Rows with the two authenticated delta Rows; native registry rejects conflicting overlaps",
+  "Base": {
+    "Run": 45983234609,
+    "Artifact": 15193665248,
+    "ArchiveSha256": "bc2135886c49dd8504c75141bad1f2794756f7dad145bb5663e593e66d9352e3",
+    "File": "verified-valuation-registry.json",
+    "FileSha256": "fcfa8aa32b8e019a18369421333fab7a4dd1c47e2cb9818a321bbe0c49157cb2",
+    "Rows": 3068616
+  },
+  "Deltas": [
+    {
+      "Run": 45994232872,
+      "Artifact": 15194498731,
+      "ArchiveSha256": "55d919966d65c237b1564b53f657f4240e5810b2d4058438e07de94746b3e7d0",
+      "File": "verified.json",
+      "Rows": 901,
+      "PacketsReconciled": 146
+    },
+    {
+      "Run": 45999343826,
+      "Artifact": 15197362983,
+      "ArchiveSha256": "fc746671b24fa30189ce6fc79b117879f83b5089fdd59821ad200b8cd5a38dbc",
+      "File": "verified.json",
+      "Rows": 24,
+      "PacketsReconciled": 28
+    }
+  ],
+  "CombinedRows": 3069541,
+  "SourceBrokerRequests": 0,
+  "Orders": 0,
+  "CloudActivated": false,
+  "IndependentConfirmationCertified": false
+}

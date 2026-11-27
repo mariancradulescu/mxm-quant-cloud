@@ -1,0 +1,46 @@
+{
+  "Study": "OWNER_HELD_RESIDUAL_SOURCE_RECEIPT_20261127",
+  "Scopes": [
+    {
+      "Scope": "recent",
+      "Run": 45994232872,
+      "PacketVerification": {
+        "PacketsReconciled": 146,
+        "NewPrefixRows": 901,
+        "Incomplete": 0,
+        "AuthenticAbsence": 79,
+        "Orders": 0,
+        "CloudActivated": false
+      },
+      "ProtectedArtifact": 15195277750,
+      "ProtectedArchiveSha256": "89d416ca659aa5ef6d6ae4abeda8d3e24b7940d562b5a7f9157f63fa8b18d846",
+      "VerifiedArtifact": 15194498731,
+      "VerifiedArchiveSha256": "55d919966d65c237b1564b53f657f4240e5810b2d4058438e07de94746b3e7d0",
+      "InspectionArtifact": 15195335939,
+      "InspectionArchiveSha256": "dadd813286bd733390a7090b611f4e2ee0823a5c3d5898833a33e219d91d2f7f"
+    },
+    {
+      "Scope": "earlier",
+      "Run": 45999343826,
+      "PacketVerification": {
+        "PacketsReconciled": 28,
+        "NewPrefixRows": 24,
+        "Incomplete": 0,
+        "AuthenticAbsence": 16,
+        "Orders": 0,
+        "CloudActivated": false
+      },
+      "ProtectedArtifact": 15196564364,
+      "ProtectedArchiveSha256": "4c8cbafb896d9b3ee1fdd3152085717d4119b2c74f89705f96283ec302a20508",
+      "VerifiedArtifact": 15197362983,
+      "VerifiedArchiveSha256": "fc746671b24fa30189ce6fc79b117879f83b5089fdd59821ad200b8cd5a38dbc",
+      "InspectionArtifact": 15197132057,
+      "InspectionArchiveSha256": "2bfb03a656f4f47009427d7a141f37286e50f7d446d8521faa4a3e30f52cee8d"
+    }
+  ],
+  "TotalAdditionalSourceRequests": 174,
+  "TotalAdditionalPrefixes": 925,
+  "AllPlannedWindowsAccountedFor": true,
+  "Orders": 0,
+  "CloudActivated": false
+}
