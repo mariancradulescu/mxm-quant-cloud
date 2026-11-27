@@ -32,15 +32,17 @@ public sealed class NativeReusableValuationRegistry
         if(!rows.TryGetValue((symbol,bid?"BID":"ASK"),out var candidates))return null;
         var data=candidates.Rows;int lo=0,hi=data.Length;
         while(lo<hi){int mid=lo+(hi-lo)/2;if(data[mid].Witness.At<=at)lo=mid+1;else hi=mid;}
-        var found=new List<NativeValuationPrefix>();
+        NativeHistoricalFundingPrefix? latest=null;
+        // Same descending traversal and first eligible witness as the original.
+        // No temporary list/array; a conflict can return immediately because
+        // no remaining witness can restore agreement.
         for(int i=lo-1;i>=0&&candidates.MaximumThrough[i]>=at;i--)
-            if(data[i].Witness.SearchFrom<=at&&at<=data[i].Witness.SearchThrough)found.Add(data[i]);
-        var usable=found.ToArray();
-        if(usable.Length==0)return null;
-        var latest=usable[0].Witness;
-        // An overlapping prefix claiming no later quote must agree with newer
-        // authenticated ticks inside its own interval. Conflicts remain gaps.
-        if(usable.Any(r=>r.Witness.At!=latest.At||r.Witness.Price!=latest.Price))return null;
-        return latest with {SearchThrough=at};
+        {
+            var witness=data[i].Witness;
+            if(witness.SearchFrom>at||at>witness.SearchThrough)continue;
+            if(latest is null)latest=witness;
+            else if(witness.At!=latest.At||witness.Price!=latest.Price)return null;
+        }
+        return latest is null?null:latest with {SearchThrough=at};
     }
 }
