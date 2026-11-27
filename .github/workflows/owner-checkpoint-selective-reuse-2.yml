@@ -1,0 +1,65 @@
+name: OWNER checkpoint selective reuse 2
+on:
+  pull_request:
+    paths: ['research/owner_checkpoint_selective_reuse_2.py','research/test_checkpoint_selective_reuse_2.py','.github/workflows/owner-checkpoint-selective-reuse-2.yml']
+  push:
+    branches: [main]
+    paths: ['research/owner_checkpoint_selective_reuse_2.py']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  technical:
+    runs-on: ubuntu-24.04
+    outputs:
+      new_repack: ${{ steps.scope.outputs.new_repack }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - id: scope
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          if [ "$EVENT_NAME" = push ] && git diff --diff-filter=A --name-only "$BEFORE" "$GITHUB_SHA" | grep -Fxq research/owner_checkpoint_selective_reuse_2.py; then
+            echo "new_repack=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "new_repack=false" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m unittest research.test_causal_source_shards research.test_generalized_cipher_shards research.test_checkpoint_selective_reuse_2
+  repack:
+    needs: technical
+    if: github.event_name == 'push' && needs.technical.outputs.new_repack == 'true' && github.run_attempt == 1
+    strategy:
+      fail-fast: false
+      matrix:
+        scope: [earlier, geometry]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      MXM_CHECKPOINT_SCOPE: ${{ matrix.scope }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m research.owner_checkpoint_selective_reuse_2 prepare
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - uses: ./.generated-shard-upload
+      - run: python -m research.owner_checkpoint_selective_reuse_2 verify
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ${{ matrix.scope }}-checkpoint-selective-metadata
+          path: general-cipher-shards/metadata/
+          retention-days: 90
+          if-no-files-found: error
