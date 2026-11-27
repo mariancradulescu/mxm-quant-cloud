@@ -100,5 +100,75 @@
   "SourceBrokerRequests": 0,
   "Orders": 0,
   "CloudActivated": false,
-  "IndependentConfirmationCertified": false
+  "IndependentConfirmationCertified": false,
+  "AdditionalRegistryInspection": {
+    "RehashedArchives": [
+      {
+        "Artifact": 15196363904,
+        "Sha256": "26de103cba7633dc0895249a4660f618e6d089977cd53bb47fcb3692c3471c7c"
+      },
+      {
+        "Artifact": 15200751037,
+        "Sha256": "41a4ef0300a1c4b8799b17f417c01b3bf67c94ef888c2446e30eff3947a11b8c"
+      }
+    ],
+    "Scope": "Conserved registries scanned for witnessed two-sided terminal coverage; no price or currency conversion inferred",
+    "RecentAt": 1795650915000,
+    "Pairs": [
+      {
+        "Symbol": "SpotCrude",
+        "BidAgeMs": 47511,
+        "AskAgeMs": 47511,
+        "Fresh30Seconds": false
+      },
+      {
+        "Symbol": "ETHUSD",
+        "BidAgeMs": 499,
+        "AskAgeMs": 499,
+        "Fresh30Seconds": true
+      },
+      {
+        "Symbol": "USDJPY",
+        "BidAgeMs": 1983,
+        "AskAgeMs": 1174,
+        "Fresh30Seconds": true
+      },
+      {
+        "Symbol": "AAPL.US-24",
+        "BidAgeMs": 79663,
+        "AskAgeMs": 134447,
+        "Fresh30Seconds": false
+      },
+      {
+        "Symbol": "GBPUSD",
+        "BidAgeMs": 142,
+        "AskAgeMs": 142,
+        "Fresh30Seconds": true
+      },
+      {
+        "Symbol": "AMD.US",
+        "BidAgeMs": 10575373,
+        "AskAgeMs": 10575373,
+        "Fresh30Seconds": false
+      }
+    ],
+    "FreshPairSymbols": 3,
+    "CorrespondingOpenPositionInstances": 8,
+    "EarlierUS500RegistryPairPresent": false,
+    "NewNativeHeldOnlyRouteEnabledInNewStudy": true,
+    "EquityRestated": false
+  },
+  "ResidualRecovery": {
+    "InspectionArchives": [
+      15195335939,
+      15197132057
+    ],
+    "AllFourArchivesRehashed": true,
+    "PriorResidualPoints": 4041,
+    "Recovered": 8,
+    "ResidualPoints": 4033,
+    "Requests": 174,
+    "IncompleteSides": 0,
+    "AuthenticAbsentSides": 95
+  }
 }
