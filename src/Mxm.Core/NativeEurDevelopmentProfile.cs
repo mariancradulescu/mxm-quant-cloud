@@ -134,6 +134,9 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
     public int BoundaryMinimumDays { get; init; }
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
     public bool UseUnscaledBoundaryPaths { get; init; }
+    // Opt-in completed multi-bar economic horizon; zero preserves the frozen one-bar policy.
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public int BoundaryHorizonBars { get; init; }
 
     internal string GeometryIdentity => FormattableString.Invariant(
         $"{UseAvailableContext}/{DistributionTargetRanges:G29}/{StopReserveMultiplier:G29}") +
@@ -162,6 +165,7 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
         (RequireEconomicBoundaryEdge?"/VOLATILITY_NORMALIZED_BOUNDARY_ENTRY_EDGE":"") +
         (EconomicManagement is NativeEconomicMechanisms.BoundaryValue or NativeEconomicMechanisms.BoundaryReduce?
             $"/BOUNDARY_SUPPORT:{BoundaryMinimumSamples}/{BoundaryMinimumDays}/UNSCALED:{UseUnscaledBoundaryPaths}":"") +
+        (BoundaryHorizonBars>0?$"/BOUNDARY_HORIZON_BARS:{BoundaryHorizonBars}":"") +
         (AllocatePav1AtMinimumVolume?"/PAV1_MINIMUM_VOLUME_MONETARY_ALLOCATION":"") +
         (CompeteEconomicFamilies?"/SEVEN_FAMILY_CAUSAL_COMMON_BOOK_V1":"") +
         (SelectEconomicManagementCausally?"/MATURED_PAIRED_MANAGEMENT_CHOICE_V1":"") +
@@ -172,6 +176,9 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
     {
         if(BoundaryMinimumSamples!=0&&BoundaryMinimumSamples<3||BoundaryMinimumDays<0)
             throw new ArgumentException("EUR_BOUNDARY_SUPPORT_PROFILE");
+        if(BoundaryHorizonBars!=0&&(BoundaryHorizonBars is <2 or >6||
+            EconomicManagement is not (NativeEconomicMechanisms.BoundaryValue or NativeEconomicMechanisms.BoundaryReduce)))
+            throw new ArgumentException("EUR_BOUNDARY_HORIZON_PROFILE");
         if(RequireEconomicBoundaryEdge&&(!CompeteEconomicFamilies||
             EconomicManagement is not (NativeEconomicMechanisms.BoundaryValue or NativeEconomicMechanisms.BoundaryReduce)))
             throw new ArgumentException("EUR_BOUNDARY_EDGE_PROFILE");

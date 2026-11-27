@@ -17,7 +17,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
         var forecast=NativeEconomicMechanisms.BoundaryDistributionEur(market,at,side,now,stop,target,
             profile.EconomicManagementTimeframe??profile.EconomicGeometryTimeframe,
             profile.BoundaryMinimumSamples==0?8:profile.BoundaryMinimumSamples,
-            profile.BoundaryMinimumDays==0?1:profile.BoundaryMinimumDays,!profile.UseUnscaledBoundaryPaths);
+            profile.BoundaryMinimumDays==0?1:profile.BoundaryMinimumDays,!profile.UseUnscaledBoundaryPaths,
+            profile.BoundaryHorizonBars==0?1:profile.BoundaryHorizonBars);
         if(forecast is null){Count("BOUNDARY_"+stage+"_INSUFFICIENT_CAUSAL_SUPPORT");return null;}
         string key=stage+"/"+market.Symbol;
         if(!boundaryTotals.TryGetValue(key,out var t))boundaryTotals.Add(key,t=new());

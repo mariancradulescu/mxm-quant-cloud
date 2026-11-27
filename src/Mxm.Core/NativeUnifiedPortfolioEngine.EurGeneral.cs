@@ -59,7 +59,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 {Count("BOUNDARY_ENTRY_UNFUNDED_FORECAST_HORIZON");return false;}
                 decimal immediate=NativeExecutableEconomics.EstimateNet(q,q,side,units,entry,now,
                     q.LiquidationSlippagePerSide??market.SlippagePerSideQuote);
-                // One adjacent-bar opportunity must cover current round-trip
+                // The configured causal path horizon must cover current round-trip
                 // economics. Lifecycle labels and final portfolio still decide.
                 return (value.Mean-value.Sem)*units+immediate-carry>0m;
             }).ToArray();
@@ -403,7 +403,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
                             if(retainedUnits<=0m||retainedUnits>=position.Units||fullHorizon is null||
                                 Horizon(retainedUnits)!=fullHorizon||EurMargin(market,side,retainedUnits,frame.At) is null)continue;
                             decimal close=position.Units-retainedUnits;
-                            var remainderDebit=NativePortfolioFunding.OfferDebit(market,side,retainedUnits,frame.At,FundingScenarioId);
+                            var remainderDebit=NativePortfolioFunding.OfferDebit(market,side,retainedUnits,frame.At,FundingScenarioId,
+                                projected is null?0:frame.At+projected.HorizonMs);
                             if(remainderDebit is not decimal residualDebit)continue;
                             decimal residualFee=Fee(q,retainedUnits,-side);
                             // The common ledger releases booked risk proportionally.
