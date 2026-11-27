@@ -62,6 +62,7 @@ internal static partial class IntegratedEconomicReplay
 
     sealed class EerEvidence
     {
+        public long MinimumFundingHorizonMs {get;init;}
         public EerInput Input;
         readonly Dictionary<string,Dictionary<long,SourceQuote>> tape;
         readonly Dictionary<string,Dictionary<long,DatedRolloverQuote>> funding;
@@ -239,6 +240,25 @@ internal static partial class IntegratedEconomicReplay
             return charge||MarketTimeFx?new(credit,debit,route.Select(h=>h.Symbol).ToArray()):
                 NativeBrokerContractCosts.ComposeCausalQuoteToEur(asset,at,hops);
         }
+        // Same two accepted FX evidence paths as SourceConversionAt. Only
+        // request missing sides when neither complete pair is available.
+        public string[] MissingFundingFxSides(string name,long at)
+        {
+            var q=FundingAt(name,at);
+            var fb=q?.FundingPrice(false,7_200_000L,7_200_000L);
+            var fa=q?.FundingPrice(true,7_200_000L,7_200_000L);
+            if(fb is decimal b&&fa is decimal a&&a>=b)return Array.Empty<string>();
+            var mb=MarketTimeFx?MarketPrice(name,true,at,q?.LatestBidPrefix):null;
+            var ma=MarketTimeFx?MarketPrice(name,false,at,q?.LatestAskPrefix):null;
+            if(mb is not null&&ma is not null&&ma.Price>=mb.Price)return Array.Empty<string>();
+            // Preserve contradictory existing quotes as a gap, not a new rate.
+            if(fb.HasValue&&fa.HasValue)return Array.Empty<string>();
+            var sides=new List<string>();
+            if(!fb.HasValue)sides.Add("BID");
+            if(!fa.HasValue)sides.Add("ASK");
+            return sides.ToArray();
+        }
+
         public NativeObservedRolloverQuote Charge(string name,string asset,long at,
             Dictionary<(string Symbol,long ChargeAt),long>? priorClocks=null)
         {
@@ -291,7 +311,9 @@ internal static partial class IntegratedEconomicReplay
             }
             catch(ArgumentException){stream.Mark(at,"COMMISSION_OR_VOLUME_ROUTE_UNSUPPORTED");return null;}
             var margins=DatedMargins(t);
-            var offers=ManagementFunding(margins,t,m.Name,at,next.Value,scenario,stress,q.Bid,fx);
+            long fundingThrough=MinimumFundingHorizonMs>0?
+                stream.AtOrAfter(at+MinimumFundingHorizonMs,at)??next.Value:next.Value;
+            var offers=ManagementFunding(margins,t,m.Name,at,fundingThrough,scenario,stress,q.Bid,fx);
             if(offers.Length==0)stream.Count("UNKNOWN_SCENARIO_CARRY");
             else stream.Count(next.Value>at+EurStep?"CLOSURE_CARRY_RESERVED":"CARRY_RESERVED");
             var context=DatedEurContext(m,q);
@@ -389,7 +411,8 @@ internal static partial class IntegratedEconomicReplay
             {
                 M5=context.For(NativeBarTimeframe.M5).Bars,M15=context.For(NativeBarTimeframe.M15).Bars,
                 ClosedBars=context,EconomicTransitionWindows=TransitionWindows(market,at),OfficialAssetClass=market.OfficialAssetClass,EurDatedMarginScenario=true,
-                EurMargins=margins,FundingOffers=ManagementFunding(margins,terms,market.Name,at,through,scenario,stress,q.Bid,fx),
+                EurMargins=margins,FundingOffers=ManagementFunding(margins,terms,market.Name,at,
+                    MinimumFundingHorizonMs>0?stream.AtOrAfter(at+MinimumFundingHorizonMs,at)??through:through,scenario,stress,q.Bid,fx),
                 EurTickSize=market.TickSize
             };
         }

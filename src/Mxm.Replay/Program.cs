@@ -13,6 +13,8 @@ if(args is ["--owner-pav1-market-time",var pmProtocol,var pmSource,var pmDirecto
     return IntegratedEconomicReplay.RunPavMarketTime(pmProtocol,pmSource,pmDirectory,pmTape,pmStress);
 if(args is ["--owner-monetary-reduce-common-book",var mrProtocol,var mrSource,var mrDirectory,var mrTape,var mrStress])
     return IntegratedEconomicReplay.RunPavMarketTime(mrProtocol,mrSource,mrDirectory,mrTape,mrStress,monetaryReduceStudy:true);
+if(args is ["--owner-funding-recovery-2",var frSource,var frTape,var frReports,var frWitness,var frOutput])
+    return IntegratedEconomicReplay.RunOwnerFundingRecovery2(frSource,frTape,frReports,frWitness,frOutput);
 if(args is ["--owner-lifecycle-funding",var lfSource,var lfTape,var lfReports,var lfWitness,var lfOutput])
     return IntegratedEconomicReplay.RunLifecycleFunding(lfSource,lfTape,lfReports,lfWitness,lfOutput);
 if(args is ["--owner-goog-open-funding",var gfSource,var gfTape,var gfReport,var gfWitness,var gfOutput])
@@ -27,6 +29,8 @@ if(args is ["--owner-earlier-lifecycle-estimation",var elProtocol,var elSource,v
     return IntegratedEconomicReplay.RunCompetitiveFamilies(elProtocol,elSource,elDirectory,elTape,elStress,estimatorStudy:true,earlierEstimatorStudy:true);
 if(args is ["--owner-lifecycle-estimation",var leProtocol,var leSource,var leDirectory,var leTape,var leStress])
     return IntegratedEconomicReplay.RunCompetitiveFamilies(leProtocol,leSource,leDirectory,leTape,leStress,estimatorStudy:true);
+if(args is ["--owner-boundary-lifecycle",var blProtocol,var blSource,var blDirectory,var blTape,var blStress])
+    return IntegratedEconomicReplay.RunCompetitiveFamilies(blProtocol,blSource,blDirectory,blTape,blStress,estimatorStudy:true,boundaryStudy:true);
 if(args is ["--owner-causal-management",var cmProtocol,var cmSource,var cmDirectory,var cmTape,var cmStress])
     return IntegratedEconomicReplay.RunCompetitiveFamilies(cmProtocol,cmSource,cmDirectory,cmTape,cmStress,causalManagementStudy:true);
 if(args is ["--owner-eur-historical-study",var historicalProtocol,var historicalSource,var historicalReport])

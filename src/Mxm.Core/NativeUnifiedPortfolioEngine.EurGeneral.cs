@@ -54,9 +54,9 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 var q=market.Quote;
                 int side=g.Side;
                 decimal now=side>0?q.Bid:q.Ask,entry=side>0?q.Ask:q.Bid,units=market.Contract.MinimumUnits;
-                if(NativeEconomicMechanisms.BoundaryContinuationEur(market,at,side,now,g.Stop,g.Target,
-                    edge.EconomicManagementTimeframe??edge.EconomicGeometryTimeframe) is not { } value||
-                    NativePortfolioFunding.OfferDebit(market,side,units,at,FundingScenarioId) is not decimal carry)return false;
+                if(BoundaryForecast(market,at,side,now,g.Stop,g.Target,edge,"ENTRY") is not { } value)return false;
+                if(NativePortfolioFunding.OfferDebit(market,side,units,at,FundingScenarioId,at+value.HorizonMs) is not decimal carry)
+                {Count("BOUNDARY_ENTRY_UNFUNDED_FORECAST_HORIZON");return false;}
                 decimal immediate=NativeExecutableEconomics.EstimateNet(q,q,side,units,entry,now,
                     q.LiquidationSlippagePerSide??market.SlippagePerSideQuote);
                 // One adjacent-bar opportunity must cover current round-trip
@@ -350,11 +350,15 @@ public sealed partial class NativeUnifiedPortfolioEngine
             if(residual<=0m)return new("INTEGRATED_MECHANISM_TARGET",position.Units);
             string? management=geometry.SelectedEconomicManagement??eurDevelopmentProfile.EconomicManagement;
             if(management=="BRACKET")return null;
-            decimal? debit=NativePortfolioFunding.OfferDebit(market,side,position.Units,frame.At,FundingScenarioId);
             bool boundary=management is NativeEconomicMechanisms.BoundaryValue or NativeEconomicMechanisms.BoundaryReduce;
             string? tf=eurDevelopmentProfile.EconomicManagementTimeframe??eurDevelopmentProfile.EconomicGeometryTimeframe;
-            var estimate=boundary?NativeEconomicMechanisms.BoundaryContinuationEur(market,frame.At,side,price,geometry.Stop,geometry.Target,tf):
+            var projected=boundary?BoundaryForecast(market,frame.At,side,price,geometry.Stop,geometry.Target,eurDevelopmentProfile,"MANAGEMENT"):null;
+            (decimal Mean,decimal Sem,int Count)? estimate=boundary?
+                projected is null?null:(projected.Mean,projected.Sem,projected.Count):
                 NativeEconomicMechanisms.Continuation(market,frame.At,tf,eurDevelopmentProfile.Pav1TransitionBars);
+            decimal? debit=NativePortfolioFunding.OfferDebit(market,side,position.Units,frame.At,FundingScenarioId,
+                projected is null?0:frame.At+projected.HorizonMs);
+            if(boundary&&debit is null)Count("BOUNDARY_MANAGEMENT_UNFUNDED_FORECAST_HORIZON");
             if(debit is null||estimate is not { } transition)return null;
             // Preserve the original decimal operation order for all frozen
             // management policies. Only the new boundary mode is in EUR/unit.

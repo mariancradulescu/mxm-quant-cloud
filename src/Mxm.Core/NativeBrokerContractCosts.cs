@@ -287,19 +287,20 @@ public static class NativeBrokerContractCosts
     // Spotware public server model, ProtoSwapCalculationType. Inputs are dated
     // account and market observations. This calculates a conditional scenario,
     // without asserting the tariff or the conversion actually charged.
-    public static decimal? ObservedDailySwapEur(NativeObservedContractTerms terms,long from,long through,
-        int side,decimal units,bool? accountSwapFree,int? accountType,int? moneyDigits,int? priceDigits,
-        Func<long,NativeObservedRolloverQuote> quoteAt)
+    // The same calendar drives monetary settlement and recovery planning.
+    // Null is unsupported; an empty array proves only conditional no charge.
+    public static long[]? ObservedDailySwapChargeClocks(NativeObservedContractTerms terms,long from,long through,
+        int side,decimal units,bool? accountSwapFree)
     {
         Validate(terms,units);
         if(from<=0||through<from||side is not (1 or -1))
             throw new ArgumentException("NATIVE_DAILY_SWAP_INPUT_INVALID");
         if(terms.ObservedAtUtcMs>from||accountSwapFree is not false||
             NextScheduledSwapCharge(terms,from) is not long first)return null;
-        if(first>through)return 0m;
+        if(first>through)return Array.Empty<long>();
         if(terms.SwapPeriodHours!=24||terms.ChargeSwapAtWeekends is not bool weekends||
             terms.SkipSwapPeriods is not int skip||skip<0)return null;
-        decimal total=0m;
+        var clocks=new List<long>();
         for(long charge=first;charge<=through;charge+=86_400_000L)
         {
             var weekday=DateTimeOffset.FromUnixTimeMilliseconds(charge).DayOfWeek;
@@ -307,7 +308,22 @@ public static class NativeBrokerContractCosts
             if(skip>0){skip--;continue;}
             if(terms.TripleSwapWeekday is not (>=0 and <=7)||
                 (side>0?terms.LongSwap:terms.ShortSwap) is not decimal swap)return null;
-            if(swap==0m)continue;
+            if(swap!=0m)clocks.Add(charge);
+        }
+        return clocks.ToArray();
+    }
+
+    public static decimal? ObservedDailySwapEur(NativeObservedContractTerms terms,long from,long through,
+        int side,decimal units,bool? accountSwapFree,int? accountType,int? moneyDigits,int? priceDigits,
+        Func<long,NativeObservedRolloverQuote> quoteAt)
+    {
+        var clocks=ObservedDailySwapChargeClocks(terms,from,through,side,units,accountSwapFree);
+        if(clocks is null)return null;
+        decimal total=0m;
+        foreach(long charge in clocks)
+        {
+            var weekday=DateTimeOffset.FromUnixTimeMilliseconds(charge).DayOfWeek;
+            decimal swap=(side>0?terms.LongSwap:terms.ShortSwap)!.Value;
             if(accountType is not (0 or 1)||moneyDigits is not (>=0 and <=18))return null;
             var quote=quoteAt(charge);
             if(quote.QuoteToEur is not {CreditToEur:>0m,DebitToEur:>0m} fx||

@@ -121,9 +121,15 @@ public static class NativeEconomicMechanisms
         return change*(change>=0m?credit:debit);
     }
 
-    internal static (decimal Mean,decimal Sem,int Count)? BoundaryContinuationEur(Ucp1MarketFrame m,long at,
-        int side,decimal now,decimal stop,decimal target,string? timeframe=null)
+    internal sealed record BoundaryEstimate(decimal Mean,decimal Sem,int Count,int Days,
+        decimal StopProbability,decimal TargetProbability,decimal AmbiguousProbability,
+        long HorizonMs,long From,long Through);
+
+    internal static BoundaryEstimate? BoundaryDistributionEur(Ucp1MarketFrame m,long at,
+        int side,decimal now,decimal stop,decimal target,string? timeframe=null,
+        int minimumSamples=8,int minimumDays=1,bool normalize=true)
     {
+        if(minimumSamples<3||minimumDays<1)return null;
         var tf=timeframe is null?NativeBarTimeframe.M15:Enum.Parse<NativeBarTimeframe>(timeframe);
         var w=m.ClosedBars?.DecisionAt==at?m.EconomicTransitionWindows?.Where(x=>x.Timeframe==tf&&x.Ready&&
             x.Bars.Length>=3&&x.Bars.All(v=>v.CloseAt<at)).OrderByDescending(x=>x.Bars.Length).FirstOrDefault():null;
@@ -134,7 +140,8 @@ public static class NativeEconomicMechanisms
         int state=Math.Sign(bars[^1].Close-bars[^2].Close);
         decimal currentRange=TrueRange(bars[^1],bars[^2].Close);
         if(currentRange<=0m)return null;
-        var values=new List<decimal>();
+        var values=new List<(decimal Value,long Day,long At)>();
+        int stops=0,targets=0,ambiguous=0;
         for(int i=2;i<bars.Length;i++)
         {
             var previous=bars[i-1];var label=bars[i];
@@ -143,17 +150,42 @@ public static class NativeEconomicMechanisms
             decimal priorRange=TrueRange(previous,bars[i-2].Close);
             if(priorRange<=0m)continue;
             // Normalize using the range of the state bar, never the label.
-            decimal scale=currentRange/priorRange;
+            decimal scale=normalize?currentRange/priorRange:1m;
             decimal Project(decimal x)=>now+(x-previous.Close)*scale;
             var value=BoundaryPathValueEur(side,now,stop,target,Project(label.Open),Project(label.High),
                 Project(label.Low),Project(label.Close),m.Quote.EurCredit,m.Quote.EurDebit);
-            if(value is decimal v)values.Add(v);
+            if(value is decimal v)
+            {
+                bool stopped=side>0?Project(label.Low)<=stop:Project(label.High)>=stop;
+                bool reached=side>0?Project(label.High)>=target:Project(label.Low)<=target;
+                if(stopped)stops++;
+                if(reached&&!stopped)targets++;
+                if(stopped&&reached)ambiguous++;
+                values.Add((v,label.CloseAt/86_400_000L,label.CloseAt));
+            }
         }
-        if(values.Count<2)return null;
-        decimal mean=values.Average();
-        decimal sem=(decimal)Math.Sqrt(values.Sum(x=>Math.Pow((double)(x-mean),2))/
+        var days=values.GroupBy(x=>x.Day).ToArray();
+        if(values.Count<minimumSamples||days.Length<minimumDays)return null;
+        decimal mean=values.Average(x=>x.Value);
+        decimal sem=(decimal)Math.Sqrt(values.Sum(x=>Math.Pow((double)(x.Value-mean),2))/
             (values.Count*(values.Count-1d)));
-        return (mean,sem,values.Count);
+        if(days.Length>1)
+        {
+            decimal cluster=(decimal)Math.Sqrt(days.Sum(g=>Math.Pow((double)g.Sum(x=>x.Value-mean),2))*
+                days.Length/(days.Length-1d)/(values.Count*(double)values.Count));
+            sem=Math.Max(sem,cluster);
+        }
+        return new(mean,sem,values.Count,days.Length,stops/(decimal)values.Count,
+            targets/(decimal)values.Count,ambiguous/(decimal)values.Count,(long)tf*60_000L,
+            values.Min(x=>x.At),values.Max(x=>x.At));
+    }
+
+    internal static (decimal Mean,decimal Sem,int Count)? BoundaryContinuationEur(Ucp1MarketFrame m,long at,
+        int side,decimal now,decimal stop,decimal target,string? timeframe=null,int minimumSamples=8,
+        int minimumDays=1,bool normalize=true)
+    {
+        var value=BoundaryDistributionEur(m,at,side,now,stop,target,timeframe,minimumSamples,minimumDays,normalize);
+        return value is null?null:(value.Mean,value.Sem,value.Count);
     }
 
     internal static NativeEurPayoff? TransitionPayoff(Ucp1MarketFrame m,long at,int side,

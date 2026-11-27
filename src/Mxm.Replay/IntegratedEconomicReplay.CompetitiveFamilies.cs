@@ -4,7 +4,8 @@ using Mxm.Core;
 internal static partial class IntegratedEconomicReplay
 {
     public static int RunCompetitiveFamilies(string protocolPath,string sourcePath,string directory,
-        string protectionDirectory,string stressText,bool causalManagementStudy=false,bool estimatorStudy=false,bool earlierEstimatorStudy=false)
+        string protectionDirectory,string stressText,bool causalManagementStudy=false,bool estimatorStudy=false,bool earlierEstimatorStudy=false,
+        bool boundaryStudy=false)
     {
         var pb=File.ReadAllBytes(protocolPath);var sb=File.ReadAllBytes(sourcePath);
         var p=JsonSerializer.Deserialize<PavMarketPlan>(pb,Json)!;
@@ -12,17 +13,18 @@ internal static partial class IntegratedEconomicReplay
         bool costStudy=estimatorStudy&&!earlierEstimatorStudy&&p.Study=="MONETARY_COST_CONTEXT_GEOMETRY_1";
         decimal stress=decimal.Parse(stressText,System.Globalization.CultureInfo.InvariantCulture);
         string planHash=GeneralSha(pb),sourceHash=GeneralSha(sb);
-        if(p.Study!=(costStudy?"MONETARY_COST_CONTEXT_GEOMETRY_1":earlierEstimatorStudy?"MONETARY_EARLIER_LIFECYCLE_ESTIMATION_1":estimatorStudy?"MONETARY_LIFECYCLE_ESTIMATION_1":causalManagementStudy?"MONETARY_CAUSAL_MANAGEMENT_1":"MONETARY_COMPETITIVE_FAMILIES_1")||p.Exposure!=ExposedDevelopment||
+        if(p.Study!=(boundaryStudy?"MONETARY_BOUNDARY_LIFECYCLE_1":costStudy?"MONETARY_COST_CONTEXT_GEOMETRY_1":earlierEstimatorStudy?"MONETARY_EARLIER_LIFECYCLE_ESTIMATION_1":estimatorStudy?"MONETARY_LIFECYCLE_ESTIMATION_1":causalManagementStudy?"MONETARY_CAUSAL_MANAGEMENT_1":"MONETARY_COMPETITIVE_FAMILIES_1")||p.Exposure!=ExposedDevelopment||
             p.Start!=input.Start||p.End!=input.End||p.SourceProtocolSha256!=input.ProtocolSha256||
             p.EvidenceManifestSha256!=input.EvidenceManifestSha256||input.Markets.Length!=(earlierEstimatorStudy?7:29)||
             input.Markets.Select(m=>m.Market.Name).Distinct().Count()!=input.Markets.Length||
             !(p.Start<p.SelectionFrom&&p.SelectionFrom<p.EvaluationFrom&&p.EvaluationFrom<p.End)||
             !p.Stresses.SequenceEqual(new[]{0m,.5m,1m})||!p.Stresses.Contains(stress)||
-            p.Variants.Length!=(costStudy?7:earlierEstimatorStudy?9:estimatorStudy?5:causalManagementStudy?3:2)||p.Variants.Select(v=>v.Id).Distinct().Count()!=p.Variants.Length||
+            p.Variants.Length!=(boundaryStudy?11:costStudy?7:earlierEstimatorStudy?9:estimatorStudy?5:causalManagementStudy?3:2)||p.Variants.Select(v=>v.Id).Distinct().Count()!=p.Variants.Length||
             p.Variants.Any(v=>v.UniverseCount!=input.Markets.Length||!v.Profile.CompeteEconomicFamilies||
                 !v.Profile.LearnFromOpportunityEpisodes||!v.Profile.ObserveFamilyDirectionsOnClosedBars||
                 !v.Profile.UseMarketTimeFxValuation||!v.Profile.ReserveObservedBarGaps)||
             !p.Variants.Select(v=>v.Profile.EconomicManagement).ToHashSet().SetEquals(
+                boundaryStudy?new[]{"TRANSITION_VALUE",NativeEconomicMechanisms.MonetaryReduce,NativeEconomicMechanisms.BoundaryValue,NativeEconomicMechanisms.BoundaryReduce}:
                 costStudy?new[]{"TRANSITION_VALUE",NativeEconomicMechanisms.MonetaryReduce,"CAPTURE_VALUE"}:
                 new[]{"TRANSITION_VALUE",NativeEconomicMechanisms.MonetaryReduce}))
             throw new InvalidDataException("COMPETITIVE_FAMILY_STUDY_BINDING");
@@ -37,7 +39,7 @@ internal static partial class IntegratedEconomicReplay
             throw new InvalidDataException("EARLIER_PAV1_FORECAST_ABLATION_BINDING");
         if(costStudy&&(p.Variants.Any(v=>!v.Profile.ReserveMarginForStopRisk)||
             p.Variants.Count(v=>v.Profile.LifecycleEstimator=="CENTERED_COST_CONTEXT")!=6)||
-            !costStudy&&p.Variants.Any(v=>v.Profile.ReserveMarginForStopRisk||v.Profile.LifecycleEstimator=="CENTERED_COST_CONTEXT"))
+            !costStudy&&!boundaryStudy&&p.Variants.Any(v=>v.Profile.ReserveMarginForStopRisk||v.Profile.LifecycleEstimator=="CENTERED_COST_CONTEXT"))
             throw new InvalidDataException("COST_CONTEXT_GEOMETRY_BINDING");
         if(estimatorStudy&&p.Variants.Any(v=>v.Profile.LifecycleEstimator is null)||
             !estimatorStudy&&p.Variants.Any(v=>v.Profile.LifecycleEstimator is not null))
@@ -45,7 +47,7 @@ internal static partial class IntegratedEconomicReplay
         Directory.CreateDirectory(directory);
         string scenario=EerHash(planHash+"|"+FormattableString.Invariant($"{stress:G29}"));
         var tape=new EerProtectionTape(protectionDirectory);
-        var source=new EerEvidence(input){MarketTimeFx=true,ValuationTape=tape};
+        var source=new EerEvidence(input){MarketTimeFx=true,ValuationTape=tape,MinimumFundingHorizonMs=boundaryStudy?900_000L:0L};
         var streams=input.Markets.ToDictionary(m=>m.Market.Name,m=>new EerStream(m),StringComparer.Ordinal);
         var sharedObservers=new Dictionary<string,EurOpportunityObserver>(StringComparer.Ordinal);
         EurOpportunityObserver? Observer(NativeEurDevelopmentProfile profile)
@@ -137,6 +139,8 @@ internal static partial class IntegratedEconomicReplay
             if(current<p.End)Fit(current,false);
         }
         if(selection is null)throw new InvalidDataException("COMPETITIVE_SELECTION_NOT_CAPTURED");
+        if(boundaryStudy)File.WriteAllBytes(Path.Combine(directory,"boundary-forecast-diagnostics.json"),
+            JsonSerializer.SerializeToUtf8Bytes(books.Select(c=>new {c.Id,Forecasts=c.Book.BoundaryForecastDiagnostics()}).ToArray(),Json));
         var result=new {p.Study,p.Exposure,Stress=stress,SourceSha256=sourceHash,ProtocolSha256=planHash,
             input.EvidenceManifestSha256,Selection=selection,Fits=fits,
             CommonBooks=books.Select(c=>new {c.Id,Result=HistoricalBook(c.Book,new[]{p.SelectionFrom,p.EvaluationFrom,p.End}),

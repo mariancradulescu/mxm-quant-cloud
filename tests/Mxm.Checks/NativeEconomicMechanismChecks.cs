@@ -248,6 +248,27 @@ internal static class NativeEconomicMechanismChecks
                  Close=100m+i*.1m,High=101m+i*.1m,Low=99m+i*.1m}).ToArray()}).ToArray()};
         check(NativeEconomicMechanisms.Continuation(extended,at,"H1",24) is {Count:>=2,Mean:>0m},
             "Longer PAV1 history uses only adjacent transitions in the registered causal closed-bar window");
+        check(NativeEconomicMechanisms.BoundaryPathValueEur(1,100m,95m,105m,100m,106m,94m,104m,1m,1m)==-5m&&
+            NativeEconomicMechanisms.BoundaryPathValueEur(-1,100m,105m,95m,100m,106m,94m,96m,1m,1m)==-5m,
+            "Both-boundary ambiguity is adverse for LONG and SHORT, never a fabricated target fill");
+        check(NativeEconomicMechanisms.BoundaryPathValueEur(1,100m,95m,105m,90m,102m,89m,101m,1m,1m)==-10m,
+            "A stop gap retains the worse opening loss");
+        check(NativeEconomicMechanisms.BoundaryPathValueEur(1,100m,95m,105m,100m,106m,99m,104m,1m,1m)==5m,
+            "A target path is bounded by the target before any subsequent close");
+        var boundaryForecast=NativeEconomicMechanisms.BoundaryDistributionEur(extended,at,1,102m,100m,104m,"H1");
+        check(boundaryForecast is {Count:>=8,Days:>=1,Mean:>0m,HorizonMs:3_600_000L}&&boundaryForecast.Through<at,
+            "Boundary projection discloses completed historical support, days and actual forecast horizon");
+        check(NativeEconomicMechanisms.BoundaryDistributionEur(extended,at,1,102m,100m,104m,"H1",40) is null&&
+            NativeEconomicMechanisms.BoundaryDistributionEur(extended,at,1,102m,100m,104m,"H1",2) is null,
+            "Neither insufficient support nor a two-observation profile establishes a boundary forecast");
+        check(NativeEconomicMechanisms.BoundaryDistributionEur(extended with
+            {ClosedBars=extended.ClosedBars! with {DecisionAt=at-1}},at,1,102m,100m,104m,"H1") is null,
+            "Boundary forecasts reject context from a different decision clock");
+        var forecastFunding=market with {FundingOffers=new[]{new NativeFundingOfferEvidence(market.Symbol,1,1m,
+            at-1,at-1,at+300_000L,at+900_000L,.1m,new string('a',64))}};
+        check(NativePortfolioFunding.OfferDebit(forecastFunding,1,1m,at,null,at+900_000L)==.1m&&
+            NativePortfolioFunding.OfferDebit(forecastFunding,1,1m,at,null,at+3_600_000L) is null,
+            "A shorter management funding offer cannot finance a longer boundary forecast");
         check(NativeEconomicMechanisms.Continuation(extended with {ClosedBars=extended.ClosedBars! with {DecisionAt=at-1}},at,"H1",24) is null,
             "Extended transition evidence must bind to the same decision clock");
         check(NativeEconomicMechanisms.Continuation(extended with {EconomicTransitionWindows=extended.EconomicTransitionWindows!

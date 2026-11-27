@@ -128,6 +128,13 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
     public bool RequireEconomicBoundaryEdge { get; init; }
 
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public int BoundaryMinimumSamples { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public int BoundaryMinimumDays { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool UseUnscaledBoundaryPaths { get; init; }
+
     internal string GeometryIdentity => FormattableString.Invariant(
         $"{UseAvailableContext}/{DistributionTargetRanges:G29}/{StopReserveMultiplier:G29}") +
         (ModeledStopLatencyMs is long latency ? FormattableString.Invariant($"/Trade/{latency}") : "") +
@@ -153,6 +160,8 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
         (ReserveObservedBarGaps?"/OBSERVED_GAP_RESERVE":"") +
         (ReserveMarginForStopRisk?"/STOP_ADJUSTED_MARGIN_HEADROOM":"") +
         (RequireEconomicBoundaryEdge?"/VOLATILITY_NORMALIZED_BOUNDARY_ENTRY_EDGE":"") +
+        (EconomicManagement is NativeEconomicMechanisms.BoundaryValue or NativeEconomicMechanisms.BoundaryReduce?
+            $"/BOUNDARY_SUPPORT:{BoundaryMinimumSamples}/{BoundaryMinimumDays}/UNSCALED:{UseUnscaledBoundaryPaths}":"") +
         (AllocatePav1AtMinimumVolume?"/PAV1_MINIMUM_VOLUME_MONETARY_ALLOCATION":"") +
         (CompeteEconomicFamilies?"/SEVEN_FAMILY_CAUSAL_COMMON_BOOK_V1":"") +
         (SelectEconomicManagementCausally?"/MATURED_PAIRED_MANAGEMENT_CHOICE_V1":"") +
@@ -161,6 +170,8 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
 
     internal void Verify()
     {
+        if(BoundaryMinimumSamples!=0&&BoundaryMinimumSamples<3||BoundaryMinimumDays<0)
+            throw new ArgumentException("EUR_BOUNDARY_SUPPORT_PROFILE");
         if(RequireEconomicBoundaryEdge&&(!CompeteEconomicFamilies||
             EconomicManagement is not (NativeEconomicMechanisms.BoundaryValue or NativeEconomicMechanisms.BoundaryReduce)))
             throw new ArgumentException("EUR_BOUNDARY_EDGE_PROFILE");
