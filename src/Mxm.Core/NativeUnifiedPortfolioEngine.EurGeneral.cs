@@ -356,11 +356,12 @@ public sealed partial class NativeUnifiedPortfolioEngine
             var estimate=boundary?NativeEconomicMechanisms.BoundaryContinuationEur(market,frame.At,side,price,geometry.Stop,geometry.Target,tf):
                 NativeEconomicMechanisms.Continuation(market,frame.At,tf,eurDevelopmentProfile.Pav1TransitionBars);
             if(debit is null||estimate is not { } transition)return null;
-            decimal change=side*transition.Mean;
-            decimal meanEur=boundary?transition.Mean:change*(change>=0m?q.EurCredit:q.EurDebit);
+            // Preserve the original decimal operation order for all frozen
+            // management policies. Only the new boundary mode is in EUR/unit.
+            decimal change=side*transition.Mean*position.Units;
+            decimal value=(boundary?transition.Mean*position.Units:change*(change>=0m?q.EurCredit:q.EurDebit))-debit.Value;
+            decimal uncertainty=boundary?transition.Sem*position.Units:transition.Sem*position.Units*q.EurDebit;
             decimal uncertaintyEur=boundary?transition.Sem:transition.Sem*q.EurDebit;
-            decimal value=meanEur*position.Units-debit.Value;
-            decimal uncertainty=uncertaintyEur*position.Units;
             if(management is NativeEconomicMechanisms.MonetaryReduce or NativeEconomicMechanisms.BoundaryReduce)
             {
                 // Do not use differences of funding ceilings as a guaranteed
@@ -431,7 +432,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 // No future MFE is referenced and already paid entry costs are sunk.
                 decimal now=NativeExecutableEconomics.EstimateNet(entry,q,side,position.Units,
                     entryPrice,price,q.LiquidationSlippagePerSide??position.SlippagePerSide)+position.FinancingRemaining;
-                if(now>0m&&value<=0m&&!fundingReserves!.IsOutstanding(position.Id))
+                if(now>0m&&value<=0m&&fundingReserves is not null&&!fundingReserves.IsOutstanding(position.Id))
                     return new("INTEGRATED_MECHANISM_CAPTURE_NONPOSITIVE_CONTINUATION",position.Units);
             }
             if(boundary)return null; // no arbitrary minimum-lot reduction without portfolio dominance
