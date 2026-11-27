@@ -8,12 +8,17 @@ internal static partial class IntegratedEconomicReplay
     sealed record FrozenCore(LedgerEvent[] Events,Ucp1CurvePoint[] Curve,string Session);
     sealed record FrozenWrapper(string CoreCheckpoint);
 
+    sealed record ValuationRegistryEnvelope(NativeValuationPrefix[] Rows);
+
     static NativeReusableValuationRegistry? LoadValuationRegistry(string? path)
     {
         if(path is null)return null;
         using var stream=File.OpenRead(path);
-        using var document=JsonDocument.Parse(stream);
-        return new(document.RootElement.GetProperty("Rows").Deserialize<NativeValuationPrefix[]>(Json)!);
+        // Deserialize the typed envelope directly: do not retain a multi-million
+        // row JSON DOM while allocating the typed rows and building their index.
+        var envelope=JsonSerializer.Deserialize<ValuationRegistryEnvelope>(stream,Json);
+        if(envelope?.Rows is null)throw new InvalidDataException("VALUATION_REGISTRY_ROWS_REQUIRED");
+        return new(envelope.Rows);
     }
 
     public static int RunHeldRecoveryPlan(string sourcePath,string tapePath,string demandsPath,string output,string? registryPath=null)
