@@ -1,0 +1,30 @@
+{
+  "Study": "NET_HORIZON_IMMUTABLE_GAP_AUDIT_1",
+  "OriginalRun": 45948572291,
+  "Earlier": {
+    "Artifact": 15176413393,
+    "ArchiveSha256": "12553a26e1b2ae9b587baa7443fac7c2e5cf71082965a73092fed50a2848348c",
+    "RawDiagnostics": 173214,
+    "UniqueDiagnostics": 58972,
+    "DiagnosticIntervals": 813,
+    "UnknownBookClocks": 28523,
+    "UnattributedBookClocks": 204,
+    "HeldCountMismatch": 0
+  },
+  "Recent": {
+    "Artifact": 15175739827,
+    "ArchiveSha256": "1a68b4f0de7a2accb20cecfd7b776b3d8fa6d2e1c8be18939de85fec691a7839",
+    "RawDiagnostics": 95482,
+    "UniqueDiagnostics": 32565,
+    "DiagnosticIntervals": 1489,
+    "UnknownBookClocks": 21280,
+    "UnattributedBookClocks": 414,
+    "HeldCountMismatch": 0
+  },
+  "DiagnosticOnly": true,
+  "OriginalPoliciesReplayed": 0,
+  "SourceBrokerRequests": 0,
+  "Orders": 0,
+  "CloudActivated": false,
+  "HistoricalEquityRestored": false
+}
