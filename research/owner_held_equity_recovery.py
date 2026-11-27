@@ -80,10 +80,11 @@ def groups():
    else:rows[key]=g
  return sorted(rows.values(),key=lambda g:(g['Symbol'],g['From'],g['Through']))
 
-def collect(journal,account,targets,coverage_sink=None):
- ids=plan_ids(dict(Targets=[dict(Symbol=g['Symbol']) for g in targets]));rows=[];budget=[6000]
+def collect(journal,account,targets,coverage_sink=None,page_budget=6000):
+ ids=plan_ids(dict(Targets=[dict(Symbol=g['Symbol']) for g in targets]));rows=[];budget=[page_budget]
  for index,g in enumerate(targets):
   for side,label in ((e.BID,'BID'),(e.ASK,'ASK')):
+   if label not in g.get('Sides',['BID','ASK']):continue
    if g['Mode']=='CLOSED_PREFIX':
     res,_,_=journal.query(m.ProtoOAGetTickDataReq(ctidTraderAccountId=account,symbolId=ids[g['Symbol']],type=side,
        fromTimestamp=g['From'],toTimestamp=g['Through']))
@@ -151,7 +152,7 @@ def restore_final_books(spec,folder,dest,key,source_sha):
  files=[x for x in manifest['Files'] if '-observer' not in x['Path']]
  final=max(int(Path(x['Path']).parts[-2]) for x in files)
  selected=[x for x in files if int(Path(x['Path']).parts[-2])==final]
- dest.mkdir();paths=[]
+ dest.mkdir()
  for row in selected:
   relative=Path(row['Path']);need(not relative.is_absolute() and '..' not in relative.parts,'HELD_BOOK_PATH')
   path=dest/relative;path.parent.mkdir(parents=True,exist_ok=True);offset=0
@@ -162,10 +163,9 @@ def restore_final_books(spec,folder,dest,key,source_sha):
     clear=gzip.decompress(unseal_new(cipher,key,run))
     need(part['Offset']==offset and len(clear)==part['Bytes'] and src.digest(clear)==part['PlainSha256'],'HELD_BOOK_PART')
     out.write(clear);offset+=len(clear)
-  need(offset==row['Bytes'] and sha(path)==row['Sha256'],'HELD_BOOK_PLAINTEXT_HASH');paths.append(path)
- return paths
+  need(offset==row['Bytes'] and sha(path)==row['Sha256'],'HELD_BOOK_PLAINTEXT_HASH');yield path
 
-def verify(work,scope,capture_run=None):
+def verify(work,scope,capture_run=None,registry_override=None):
  registered();p=read(CAPTURE/'receipt.json');rid=str(capture_run or os.environ['GITHUB_RUN_ID']);key=os.environ['R3_CUSTODY_PRIVATE_KEY_PEM'].encode()
  payload=eer.unpack(CAPTURE,p['sealed'],key,rid);targets=groups()
  need(payload['RunId']==rid and payload['Groups']==targets and p['PlanSha256']==src.digest(exact_json(targets).encode()),'HELD_CAPTURE_BINDING')
@@ -178,8 +178,10 @@ def verify(work,scope,capture_run=None):
   MissingRequestWindows=sum(len(x['MissingWindows']) for x in coverage),SourceBrokerRequests=0,Orders=0,CloudActivated=False))
  proven=[dict(Symbol=r['Symbol'],Side=r['Side'],Witness=r['Witness'],EvidenceSha256=p['sealed']['plainSha256'])
   for r in rows if r['Witness']['Status']=='AUTHENTIC_LATEST_PREFIX']
+ if registry_override is not None:proven=read(registry_override)['Rows']
  registry=REPORT/'verified-valuation-registry.json'
  write(registry,dict(Study=STUDY,RunId=rid,PlanSha256=p['PlanSha256'],Rows=proven,PacketsReconciled=len(packets),
+  SupplementalRegistrySha256=sha(registry_override) if registry_override is not None else None,
   UnresolvedPrefixes=[r for r in rows if r['Witness']['Status']!='AUTHENTIC_LATEST_PREFIX'],OriginalPoliciesReplayed=0,Orders=0,CloudActivated=False))
  reports,source,tape=restore(work,scope);results=[]
  for study,folder in reports.items():

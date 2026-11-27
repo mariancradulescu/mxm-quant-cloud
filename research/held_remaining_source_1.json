@@ -1,0 +1,13 @@
+{
+  "Study": "OWNER_HELD_REMAINING_SOURCE_1",
+  "OriginalCaptureRun": 45973360072,
+  "PriorReadbackHead": "0472cc49eecd29e1370fb898b5d2e8d1055e2186",
+  "PriorReadback": {
+    "Run": 45977053461,
+    "ArtifactName": "held-equity-readback-earlier"
+  },
+  "TargetsPerPartition": 200,
+  "OriginalPoliciesReplayed": 0,
+  "Orders": 0,
+  "CloudActivated": false
+}
