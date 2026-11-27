@@ -61,6 +61,15 @@ internal static class NativeEconomicMechanismChecks
             eurDevelopmentProfile:jointProfile with {CompeteEconomicFamilies=false,ReserveObservedBarGaps=false})
             .DescribeEurGeneral(market,at,new(at,new[]{market})).All(s=>s.Family!=NativeEconomicMechanisms.Transition),
             "Frozen scored mechanism still excludes the new transition family");
+        var pathContext=NativeClosedPathPrediction.Observe(market,at);
+        check(pathContext is {Alignment:>0m}&&pathContext.PullbackRepair==0m,
+            "Closed path information separates coherent trend from countertrend repair");
+        var futurePath=market with {ClosedBars=new(at,windows.Select(w=>w with
+            {Bars=w.Bars.Append(w.Bars[^1] with {CloseAt=at}).ToArray()}).ToArray())};
+        check(NativeClosedPathPrediction.Observe(futurePath,at) is null,
+            "Closed path predictor rejects unavailable and current-clock bars");
+        check(pathContext is not null&&NativeClosedPathPrediction.RelativeDisplacement(pathContext,new[]{pathContext}) is null,
+            "Relative information requires two independently observed classified peers");
         var follow=NativeEconomicMechanisms.Describe(NativeEconomicMechanisms.Follow,market,at,1.5m);
         var reverse=NativeEconomicMechanisms.Describe(NativeEconomicMechanisms.Reverse,market,at,1.5m);
         check(follow.Single().Side==1&&reverse.Single().Side==-1,
