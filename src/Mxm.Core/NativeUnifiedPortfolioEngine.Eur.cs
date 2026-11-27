@@ -391,7 +391,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 {
                     normalized=NativeCenteredLifecycle.Estimate(scoredHistory,family,side,target,scoredAt,
                         1m,0m,scored.MinimumEpisodes,scored.MinimumDays,scored.DayPenalty,
-                        estimator!="CENTERED_LOCAL",costMatched:matched);
+                        estimator!="CENTERED_LOCAL",costMatched:matched,halfLifeDays:scored.LifecycleRecencyHalfLifeDays);
                     if(cache)eurCenteredPayoffs[key]=normalized;
                 }
                 return NativeCenteredLifecycle.Reprice(normalized,candidateRiskEur,currentCostFloorEur,diagnostic);

@@ -119,6 +119,9 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
     // Selection-only hypothesis. It does not change shadow lifecycle geometry.
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public string? LifecycleEstimator { get; init; }
+    // Optional research-only recency weighting without a permanent family prior.
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public int LifecycleRecencyHalfLifeDays { get; init; }
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public string? Pav1CompetitiveForecast { get; init; }
 
@@ -183,6 +186,9 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
             EconomicManagement is not (NativeEconomicMechanisms.BoundaryValue or NativeEconomicMechanisms.BoundaryReduce)))
             throw new ArgumentException("EUR_BOUNDARY_EDGE_PROFILE");
         if(ReserveMarginForStopRisk&&!CompeteEconomicFamilies)throw new ArgumentException("EUR_STOP_ADJUSTED_MARGIN_PROFILE");
+        if(LifecycleRecencyHalfLifeDays!=0&&(LifecycleRecencyHalfLifeDays is <7 or >90||
+            LifecycleEstimator!="CENTERED_COST_CONTEXT"||Pav1CompetitiveForecast=="DIRECT"))
+            throw new ArgumentException("EUR_LIFECYCLE_RECENCY_PROFILE");
         if(Pav1CompetitiveForecast is not null&&(!CompeteEconomicFamilies||LifecycleEstimator is null||
             Pav1CompetitiveForecast is not ("DIRECT" or "CORROBORATED")))
             throw new ArgumentException("EUR_PAV1_COMPETITIVE_FORECAST_PROFILE");
