@@ -6,6 +6,7 @@ if (args is ["--cpe1-technical-parity"])
 }
 var passed = 0;
 NativeReusableValuationChecks.Run(Check);
+NativePathDistributionChecks.Run(Check);
 NativeMarketTimeFxChecks.Run(Check);
 NativePendingCapitalGateChecks.Run(Check);
 NativePostFillCapitalGuardChecks.Run(Check);

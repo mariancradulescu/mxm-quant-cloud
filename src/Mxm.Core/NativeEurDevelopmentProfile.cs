@@ -119,6 +119,10 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
     // Selection-only hypothesis. It does not change shadow lifecycle geometry.
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public string? LifecycleEstimator { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool CaptureOpportunityPathEvidence { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool UsePathDistributionManagement { get; init; }
     // Optional research-only recency weighting without a permanent family prior.
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
     public int LifecycleRecencyHalfLifeDays { get; init; }
@@ -152,6 +156,7 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
         (ObserveFamilyDirectionsOnClosedBars?"/CLOSED_BAR_FAMILY_DIRECTION_OBSERVATION":"") +
         (CaptureVolatilityContext?"/CLOSED_BAR_RELATIVE_VOLATILITY_V2":"") +
         (CaptureClosedBarActivity?"/CLOSED_BAR_ACTIVITY_V1":"") +
+        (CaptureOpportunityPathEvidence?"/OBSERVED_LIFECYCLE_PATH_V1":"") +
         (EconomicMechanism is not null?$"/MECHANISM:{EconomicMechanism}/MANAGEMENT:{EconomicManagement}/MINIMUM:{MinimumContractVolumeOnly}":"") +
         (EconomicGeometryTimeframe is not null?FormattableString.Invariant($"/GEOMETRY:{EconomicGeometryTimeframe}/{EconomicStopRanges:G29}"):"") +
         (EconomicOpportunityVolumeIndex is int volume?FormattableString.Invariant($"/OBSERVED_VOLUME_INDEX:{volume}"):"") +
@@ -174,6 +179,7 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
         (AllocatePav1AtMinimumVolume?"/PAV1_MINIMUM_VOLUME_MONETARY_ALLOCATION":"") +
         (CompeteEconomicFamilies?"/SEVEN_FAMILY_CAUSAL_COMMON_BOOK_V1":"") +
         (SelectEconomicManagementCausally?"/MATURED_PAIRED_MANAGEMENT_CHOICE_V1":"") +
+        (UsePathDistributionManagement?"/CONDITIONAL_H1_PATH_MANAGEMENT_V1":"") +
         (EconomicManagementTimeframe is not null?$"/MANAGEMENT_TIMEFRAME:{EconomicManagementTimeframe}":"") +
         (EconomicMechanism is not null&&KeepAdmissionRiskAtFill?$"/MECHANISM_KEEP_RISK/RESIZE:{ResizeWithinAdmissionRiskAtFill}":"");
 
@@ -197,7 +203,7 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
             Pav1CompetitiveForecast is not ("DIRECT" or "CORROBORATED")))
             throw new ArgumentException("EUR_PAV1_COMPETITIVE_FORECAST_PROFILE");
         if(LifecycleEstimator is not null&&(!CompeteEconomicFamilies||
-            SelectEconomicManagementCausally||LifecycleEstimator is not ("CENTERED_LOCAL" or "CENTERED_TRANSFER" or "CENTERED_COST_CONTEXT")))
+            SelectEconomicManagementCausally||LifecycleEstimator is not ("CENTERED_LOCAL" or "CENTERED_TRANSFER" or "CENTERED_COST_CONTEXT" or "DISTRIBUTION_LOCAL" or "DISTRIBUTION_POOLED" or "DISTRIBUTION_CONTEXT")))
             throw new ArgumentException("EUR_LIFECYCLE_ESTIMATOR_PROFILE");
         if(SelectEconomicManagementCausally&&(!CompeteEconomicFamilies||!LearnFromOpportunityEpisodes||
             EconomicManagement!="TRANSITION_VALUE"))
