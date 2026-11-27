@@ -129,4 +129,84 @@ internal static partial class IntegratedEconomicReplay
             OriginalPoliciesReplayed=0,Orders=0,CloudActivated=false,ContinuousDrawdownCertified=false,Changes=changes},Json));
         return 0;
     }
+
+    // Original terminal mark restatement: apply immutable recorded ledger facts
+    // only, never execute a policy, create an order or synthesize a close.
+    public static int RunFrozenHeldTerminal(string sourcePath,string tapePath,string registryPath,
+        string checkpointPath,string originalReport,string id,string output)
+    {
+        string sourceSha=FactorialFileSha(sourcePath);
+        using var original=JsonDocument.Parse(File.ReadAllBytes(originalReport));
+        var report=original.RootElement;
+        if(report.GetProperty("SourceSha256").GetString()!=sourceSha)
+            throw new InvalidDataException("FROZEN_TERMINAL_SOURCE_HASH");
+        var book=report.GetProperty("CommonBooks").EnumerateArray().Single(b=>b.GetProperty("Id").GetString()==id);
+        var expected=book.GetProperty("Result");
+        if(expected.GetProperty("AllTerminalNetEur").ValueKind!=JsonValueKind.Null||
+            expected.GetProperty("OpenPositions").GetInt32()<=0)
+            throw new InvalidDataException("FROZEN_TERMINAL_OPEN_BOOK_REQUIRED");
+        decimal stress=report.GetProperty("Stress").GetDecimal();
+        var input=JsonSerializer.Deserialize<EerInput>(File.ReadAllBytes(sourcePath),Json)!;
+        var source=new EerEvidence(input){MarketTimeFx=true,ValuationTape=new(tapePath),HeldRegistry=LoadValuationRegistry(registryPath)};
+        var wrapper=JsonSerializer.Deserialize<FrozenWrapper>(File.ReadAllBytes(checkpointPath),NativeHistoricalCheckpointJson.Options)!;
+        var core=JsonSerializer.Deserialize<FrozenCore>(wrapper.CoreCheckpoint,Json)!;
+        using var savedSession=JsonDocument.Parse(core.Session);
+        string sessionPayload=savedSession.RootElement.GetProperty("Payload").GetString()!;
+        if(GeneralSha(System.Text.Encoding.UTF8.GetBytes(sessionPayload))!=savedSession.RootElement.GetProperty("Sha256").GetString())
+            throw new InvalidDataException("FROZEN_TERMINAL_SESSION_HASH");
+        using var savedPayload=JsonDocument.Parse(sessionPayload);
+        string ledgerCheckpoint=savedPayload.RootElement.GetProperty("Ledger").GetString()!;
+        using var savedLedger=JsonDocument.Parse(ledgerCheckpoint);
+        var ledger=new NativeFundedLedger(savedLedger.RootElement.GetProperty("MaximumStalenessMs").GetInt64());
+        var point=core.Curve.Last();
+        var publicPoint=book.GetProperty("Details").GetProperty("EquityPath").EnumerateArray().Last();
+        decimal? originalEquity=point.FundingCapital?.ConditionalEquityEur;
+        decimal? publicEquity=publicPoint.GetProperty("EquityEur").ValueKind==JsonValueKind.Null
+            ?null:publicPoint.GetProperty("EquityEur").GetDecimal();
+        if(publicPoint.GetProperty("At").GetInt64()!=point.At||
+            publicPoint.GetProperty("CashEur").GetDecimal()!=point.CashEur||
+            publicPoint.GetProperty("Held").GetInt32()!=point.Held||
+            publicPoint.GetProperty("Pending").GetInt32()!=point.Pending||publicEquity!=originalEquity)
+            throw new InvalidDataException("FROZEN_TERMINAL_PUBLIC_CURVE_PARITY");
+        if(core.Events.Any(e=>e.At>point.At))
+            throw new InvalidDataException("FROZEN_TERMINAL_EVENTS_AFTER_CURVE");
+        foreach(var fact in core.Events)ledger.Apply(fact);
+        var before=ledger.Summary(point.At);
+        var restored=NativeFundedLedger.Restore(ledgerCheckpoint).Summary();
+        if(before.EventChainHash!=expected.GetProperty("EventChainHash").GetString()||
+            before.EventChainHash!=restored.EventChainHash||before.CashEur!=restored.CashEur||
+            Math.Abs(before.CashEur-expected.GetProperty("CashEur").GetDecimal())>.00000001m||
+            Math.Abs(before.CashEur-point.CashEur)>.00000001m||
+            before.OpenPositions!=point.Held||before.OpenPositions!=expected.GetProperty("OpenPositions").GetInt32()||
+            before.PendingIntents!=point.Pending)
+            throw new InvalidDataException("FROZEN_TERMINAL_CASH_POSITION_CHAIN_PARITY");
+        string unchanged=ledger.Checkpoint();
+        source.BeginHistoricalClock();
+        var assessments=ledger.PositionSnapshot().Select(x=>x.Symbol).Distinct(StringComparer.Ordinal)
+            .Select(name=>source.InspectHeldMark(name,point.At,stress,true)).ToArray();
+        var marks=assessments.Select(x=>x.Quote).OfType<LedgerQuote>().ToArray();
+        var positions=ledger.InspectConditionalPositions(point.At,marks);
+        var current=ledger.InspectConditionalValuation(point.At,marks);
+        if(ledger.Checkpoint()!=unchanged||positions.Length!=before.OpenPositions||
+            (positions.All(x=>x.FloatingAfterExitCostsEur.HasValue)&&
+             current.LiquidationEquityEur!=before.CashEur+positions.Sum(x=>x.FloatingAfterExitCostsEur!.Value)))
+            throw new InvalidDataException("FROZEN_TERMINAL_VALUE_CONSERVATION");
+        decimal? ceiling=point.FundingCapital?.ConditionalUnmodeledDebitCeilingEur;
+        decimal? conditional=current.LiquidationEquityEur-ceiling;
+        File.WriteAllBytes(output,JsonSerializer.SerializeToUtf8Bytes(new
+        {
+            Study="OWNER_FROZEN_PATH_TERMINAL_MONETARY_1",Id=id,Stress=stress,point.At,
+            SourceSha256=sourceSha,RegistrySha256=FactorialFileSha(registryPath),
+            OriginalReportSha256=FactorialFileSha(originalReport),CheckpointSha256=FactorialFileSha(checkpointPath),
+            before.CashEur,before.EventChainHash,before.OpenPositions,before.PendingIntents,
+            OriginalConditionalEquityEur=originalEquity,RestatedLiquidationEquityEur=current.LiquidationEquityEur,
+            FundingDebitCeilingEur=ceiling,RestatedConditionalEquityEur=conditional,
+            RecoveredConditionalEquityEur=originalEquity is null?conditional:null,
+            OriginalTerminalNetEur=(decimal?)null,TerminalNetRestated=false,
+            KnownPositionValues=positions.Count(x=>x.FloatingAfterExitCostsEur.HasValue),
+            Positions=positions,Assessments=assessments,OriginalLedgerUnchanged=true,NewAdmissions=0,
+            OriginalPoliciesReplayed=0,Orders=0,CloudActivated=false,IndependentConfirmationCertified=false
+        },Json));
+        return 0;
+    }
 }
