@@ -239,6 +239,25 @@ internal static partial class IntegratedEconomicReplay
             return charge||MarketTimeFx?new(credit,debit,route.Select(h=>h.Symbol).ToArray()):
                 NativeBrokerContractCosts.ComposeCausalQuoteToEur(asset,at,hops);
         }
+        // Same two accepted FX evidence paths as SourceConversionAt. Only
+        // request missing sides when neither complete pair is available.
+        public string[] MissingFundingFxSides(string name,long at)
+        {
+            var q=FundingAt(name,at);
+            var fb=q?.FundingPrice(false,7_200_000L,7_200_000L);
+            var fa=q?.FundingPrice(true,7_200_000L,7_200_000L);
+            if(fb is decimal b&&fa is decimal a&&a>=b)return Array.Empty<string>();
+            var mb=MarketTimeFx?MarketPrice(name,true,at,q?.LatestBidPrefix):null;
+            var ma=MarketTimeFx?MarketPrice(name,false,at,q?.LatestAskPrefix):null;
+            if(mb is not null&&ma is not null&&ma.Price>=mb.Price)return Array.Empty<string>();
+            // Preserve contradictory existing quotes as a gap, not a new rate.
+            if(fb.HasValue&&fa.HasValue)return Array.Empty<string>();
+            var sides=new List<string>();
+            if(!fb.HasValue)sides.Add("BID");
+            if(!fa.HasValue)sides.Add("ASK");
+            return sides.ToArray();
+        }
+
         public NativeObservedRolloverQuote Charge(string name,string asset,long at,
             Dictionary<(string Symbol,long ChargeAt),long>? priorClocks=null)
         {
