@@ -6,6 +6,7 @@ from . import owner_controlled_recency as parent
 from . import owner_path_distribution_economic as original
 from . import owner_lifecycle_estimation as selection
 from .owner_earlier_lifecycle_digest_recovery import verified_download
+from .owner_held_equity_recovery import restore_final_books
 from .owner_monetary_reduce_common_book import REPLAY,STRESSES
 from .merge_eur_scenarios import read,exact_json
 from .verified_research_cache import sha,seal_files
@@ -72,7 +73,17 @@ def terminal_diagnosis(work,scope,p,source,tape,registry):
     bound=next(x for x in receipt['Scopes'] if x['Summary']['Scope']==scope)
     folder=work/'original-economic-public'
     verified_download(bound['Artifact'],bound['Run'],bound['ArchiveSha256'],folder)
-    positions=[];demands=collections.defaultdict(set)
+    # Reconstruct exact original normalized source, not merely a new source
+    # with similar market rows. The original receipt pins every byte.
+    original_plan=read(folder/'registered-plan.json')
+    need(sha(folder/'registered-plan.json')==bound['Summary']['ProtocolSha256'],'FACTORIAL_ORIGINAL_PLAN_SHA')
+    original_source=read(source)
+    original_source.update(ProtocolSha256=original_plan['SourceProtocolSha256'],
+        EvidenceManifestSha256=original_plan['EvidenceManifestSha256'],EngineRevision=bound['Head'])
+    exact_source=work/'original-path-distribution-source.json';write(exact_source,original_source)
+    del original_source;gc.collect()
+    need(sha(exact_source)==bound['Summary']['SourceSha256'],'FACTORIAL_EXACT_ORIGINAL_SOURCE')
+    positions=[];demands=collections.defaultdict(set);wanted=set()
     for i in range(3):
         report=read(folder/f'S{i}-result.json')
         need(report['SourceSha256']==bound['Summary']['SourceSha256'] and
@@ -80,6 +91,7 @@ def terminal_diagnosis(work,scope,p,source,tape,registry):
              report['Orders']==0 and not report['CloudActivated'],'FACTORIAL_ORIGINAL_REPORT_BINDING')
         for row in bound['Rows']:
             if row['Stress']!=i or row['TerminalNet'] is not None:continue
+            wanted.add((f'S{i}',row['Id']))
             book=next(b for b in report['CommonBooks'] if b['Id']==row['Id'])
             details=book['Details'];point=details['EquityPath'][-1]
             closed={e['PositionId'] for e in details['Episodes'] if e['CloseAt']<=point['At']}
@@ -94,17 +106,40 @@ def terminal_diagnosis(work,scope,p,source,tape,registry):
     request=work/'terminal-demands.json'
     write(request,[dict(Symbol=s,At=t,Studies=sorted(v)) for (s,t),v in sorted(demands.items())])
     native=REPORT/'terminal-native-assessments.json'
-    subprocess.run(['dotnet',REPLAY,'--owner-held-residual-plan',str(source),str(tape),str(request),
+    subprocess.run(['dotnet',REPLAY,'--owner-held-residual-plan',str(exact_source),str(tape),str(request),
                     str(registry),str(native)],check=True)
     result=read(native)
     need(result['RegistrySha256']==sha(registry) and result['DistinctSymbolClocks']==len(demands) and
          result['OriginalPoliciesReplayed']==result['Orders']==0,'FACTORIAL_TERMINAL_NATIVE_BINDING')
-    # Mark assessments are diagnostic; no original position or cash is changed.
-    # The restored market source is not asserted to be the original source digest.
+    spec=p['OriginalTerminalBooks'][scope]
+    need(spec['Run']==bound['Run'],'FACTORIAL_TERMINAL_SEALED_RUN')
+    key=os.environ['R3_CUSTODY_PRIVATE_KEY_PEM'].encode()
+    paths=restore_final_books((spec['Artifact'],spec['Run'],spec['ArchiveSha256']),
+        work/'original-terminal-cipher',work/'original-terminal-books',key,
+        bound['Summary']['SourceSha256'],wanted=wanted,protocol_sha=bound['Summary']['ProtocolSha256'])
+    valued=[]
+    for path in paths:
+        stress=path.parts[-4];book_id=path.stem;out=REPORT/f'terminal-{stress}-{book_id}.json'
+        subprocess.run(['dotnet',REPLAY,'--owner-frozen-held-terminal',str(exact_source),str(tape),
+            str(registry),str(path),str(folder/f'{stress}-result.json'),book_id,str(out)],check=True)
+        row=read(out)
+        need(row['OriginalLedgerUnchanged'] and row['OriginalPoliciesReplayed']==row['Orders']==0
+             and row['SourceSha256']==bound['Summary']['SourceSha256'] and row['TerminalNetRestated'] is False,
+             'FACTORIAL_FROZEN_TERMINAL_CONSERVATION')
+        expected_positions={x['PositionId'] for x in positions if x['Book']==book_id and x['Stress']==int(stress[1:])}
+        need({x['PositionId'] for x in row['Positions']}==expected_positions,'FACTORIAL_FROZEN_POSITION_IDENTITIES')
+        valued.append(row)
+        print('FACTORIAL_TERMINAL_MONETARY',scope,stress,book_id,row['KnownPositionValues'],row['OpenPositions'],flush=True)
+    need(len(valued)==len(wanted) and sum(x['OpenPositions'] for x in valued)==len(positions),
+         'FACTORIAL_FROZEN_TERMINAL_COMPLETENESS')
     write(REPORT/'terminal-position-diagnosis.json',dict(Scope=scope,Positions=positions,
-        OriginalReportBinding=bound['ArchiveSha256'],RestoredSourceSha256=sha(source),
+        OriginalReportBinding=bound['ArchiveSha256'],RestoredSourceSha256=sha(exact_source),
         StatusCounts=dict(collections.Counter(a['Status'] for a in result['Assessments'])),
         DistinctSymbolClocks=len(demands),ValuableSymbolClocks=result['ResolvedBefore'],
+        OriginalBooks=len(valued),KnownPositionValues=sum(x['KnownPositionValues'] for x in valued),
+        UnknownPositionValues=len(positions)-sum(x['KnownPositionValues'] for x in valued),
+        RecoveredEquityBooks=sum(x['RecoveredConditionalEquityEur'] is not None for x in valued),
+        OriginalEquityKnownBooks=sum(x['OriginalConditionalEquityEur'] is not None for x in valued),
         OriginalPoliciesReplayed=0,Orders=0,CloudActivated=False,TerminalNetRestated=False))
 
 def prepare(work,scope):
