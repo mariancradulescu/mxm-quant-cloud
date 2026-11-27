@@ -59,6 +59,59 @@ def native(source,tape,reports,witness,out):
 def target_keys(rows):
     return {(r['Symbol'],r['At'],r['Side']) for r in rows}
 
+def safe_mark(q,at,both):
+    from .owner_economic_mechanisms import valid_mark
+    try:return valid_mark(q,at,both)
+    except (TypeError,ValueError):return False
+
+def apply_recovered_registry(source,registry,source_sha):
+    """Overlay verified witnesses on a compatible child; never change a saved original."""
+    from decimal import Decimal
+    need(registry['Study']==STUDY and registry['Orders']==0 and not registry['CloudActivated']
+         and source_sha in registry['SourceSha256']+registry.get('CompatibleBaseSourceSha256',[]),
+         'RECOVERY2_REGISTRY_SOURCE')
+    tapes={t['Name']:t for t in source['Tapes']};seen=set();filled=retained=unresolved=0
+    for row in registry['Rows']:
+        t=row['Target'];w=row['Witness'];k=(t['Symbol'],t['At'],t['Side'])
+        need(k not in seen and t['Side'] in ('BID','ASK'),'RECOVERY2_REGISTRY_DUPLICATE');seen.add(k)
+        if t['Symbol'] not in tapes:continue
+        if w['Status']!='AUTHENTIC_LATEST_PREFIX':unresolved+=1;continue
+        at=t['At'];need(w['SearchThrough']==at and w['SearchFrom']==at-345600000
+            and 0<w['At']<=at and at-w['At']<=345600000 and Decimal(w['Price'])>0
+            and w['PrefixNewestFirst'] and w['LeadingTimestampComplete'],'RECOVERY2_REGISTRY_PREFIX')
+        quotes=tapes[t['Symbol']]['FundingQuotes'];matches=[q for q in quotes if q['At']==at]
+        need(len(matches)<=1,'RECOVERY2_OVERLAY_DUPLICATE_CLOCK')
+        if matches:q=matches[0]
+        else:q=dict(At=at,RequestedCoverage=False,BidAt=None,AskAt=None,Bid=None,Ask=None);quotes.append(q)
+        side='Bid' if t['Side']=='BID' else 'Ask';field='Latest'+side+'Prefix'
+        stamp=q.get(side+'At');price=q.get(side)
+        if stamp==w['At'] and price is not None:
+            need(Decimal(str(price))==Decimal(w['Price']),'RECOVERY2_SAME_TIMESTAMP_CONFLICT')
+        if q.get(field) is not None:
+            need(q[field]==w,'RECOVERY2_EXISTING_PREFIX_CONFLICT');retained+=1
+        elif q.get('RequestedCoverage') and stamp is not None and price is not None and price>0 and 0<stamp<=at and at-stamp<=7200000:
+            retained+=1
+        else:q[field]=w;filled+=1
+        quotes.sort(key=lambda q:q['At'])
+    return dict(Filled=filled,Retained=retained,UnresolvedWitnesses=unresolved)
+
+def collect(journal,account,p):
+    """Reuse complete latest prefixes across compatible clocks before issuing a request."""
+    from .ctrader_proto import OpenApiMessages_pb2 as m,OpenApiModelMessages_pb2 as e
+    from .owner_eur_archive_funding_2 import plan_ids
+    ids=plan_ids(p);cache={};rows=[]
+    for t in sorted(p['Targets'],key=lambda t:(t['Symbol'],t['Side'],-t['At'])):
+        hi=t['At'];lo=hi-p['LookbackMs'];key=(t['Symbol'],t['Side']);w=cache.get(key)
+        if w and w['Status']=='AUTHENTIC_LATEST_PREFIX' and lo<=w['At']<=hi:
+            w=dict(w,SearchFrom=lo,SearchThrough=hi)
+        else:
+            response,_,_=journal.query(m.ProtoOAGetTickDataReq(ctidTraderAccountId=account,
+                symbolId=ids[t['Symbol']],type=e.BID if t['Side']=='BID' else e.ASK,
+                fromTimestamp=lo,toTimestamp=hi))
+            w=prefix.latest(response,account,lo,hi);cache[key]=w
+        rows.append(dict(Target=t,Witness=w))
+    return rows
+
 def parity(report,native_report,source):
     from decimal import Decimal
     terms={x['Market']['Name']:x['Market']['DatedDevelopment']['Contract'] for x in source['Markets']}
@@ -83,23 +136,23 @@ def parity(report,native_report,source):
 
 def prepare(work):
     work.mkdir(mode=0o700);data=sources(work);PLAN.mkdir()
-    targets=set();results=[]
+    targets=set();results=[];retrospective=set();preventive_keys=set()
     for i,(source,tape,reports) in enumerate(data):
         n=native(source,tape,reports,'-',PLAN/f'native-{i}.json')
         s=read(source);comparison=parity(reports,n,s)
         # Preventive planning is reusable on either compatible normalized source.
-        from .owner_economic_mechanisms import valid_mark
-        def safe_mark(q,at,both):
-            try:return valid_mark(q,at,both)
-            except (TypeError,ValueError):return False
         preventive=pre.preflight(s,safe_mark)
         write(PLAN/f'preventive-{i}.json',dict(SourceSha256=sha(source),Plan=preventive,CalendarParity=comparison))
-        targets.update(target_keys(n['Targets']))
+        retrospective.update(target_keys(n['Targets']));preventive_keys.update(target_keys(preventive['Targets']))
+        targets.update(target_keys(n['Targets']));targets.update(target_keys(preventive['Targets']))
         results.append(dict(SourceSha256=sha(source),ReportSha256=sha(PLAN/f'native-{i}.json'),
+            PreventiveSha256=sha(PLAN/f'preventive-{i}.json'),
             OriginalWindows=n['OriginalWindows'],ReconciledBeforeCapture=n['ReconciledWindows'],
             ExcludedDiagnosticClocks=n['ExcludedDiagnosticClocks'],Parity=comparison))
     plan=dict(Study=STUDY,RunId=os.environ['GITHUB_RUN_ID'],LookbackMs=345600000,
         Targets=[dict(Symbol=s,At=a,Side=d) for s,a,d in sorted(targets)],
+        RetrospectiveTargets=len(retrospective),PreventiveTargets=len(preventive_keys),
+        SharedTargets=len(retrospective&preventive_keys),
         Sources=results,OriginalPoliciesReplayed=0,Orders=0,CloudActivated=False)
     write(PLAN/'plan.json',plan)
     print('RECOVERY2_AUTHORIZED_TARGETS',len(targets),flush=True)
@@ -111,7 +164,9 @@ def checked_plan():
          and p['Orders']==0 and not p['CloudActivated'],'RECOVERY2_PLAN_BINDING')
     for i,s in enumerate(p['Sources']):
         need(sha(PLAN/f'native-{i}.json')==s['ReportSha256'],'RECOVERY2_PLAN_REPORT')
+        need(sha(PLAN/f'preventive-{i}.json')==s['PreventiveSha256'],'RECOVERY2_PREVENTIVE_REPORT')
     union=set().union(*(target_keys(read(PLAN/f'native-{i}.json')['Targets']) for i in range(len(p['Sources']))))
+    union.update(set().union(*(target_keys(read(PLAN/f'preventive-{i}.json')['Plan']['Targets']) for i in range(len(p['Sources'])))))
     need(target_keys(p['Targets'])==union,'RECOVERY2_PLAN_SCOPE')
     return p,sha(PLAN/'plan.json')
 
@@ -124,7 +179,7 @@ def capture():
         t=P05ReadOnlyTransport(response_timeout=20)
         try:
             account=authenticate(t);need(src.original_account(account),'RECOVERY2_ACCOUNT')
-            journal=src.Journal(t,account);rows=prefix.collect(journal,account,p);packets=journal.packets
+            journal=src.Journal(t,account);rows=collect(journal,account,p);packets=journal.packets
         finally:t.close()
     CAPTURE.mkdir()
     sealed=eer.seal(CAPTURE/'packets.sealed',dict(runId=rid,protocolSha256=digest,rows=rows,packets=packets),
@@ -141,25 +196,39 @@ def verify(work):
     if packets:
         account=src.decode(packets[0]['reqType'],packets[0]['req']).ctidTraderAccountId
         need(src.original_account(account),'RECOVERY2_READBACK_ACCOUNT')
-        journal=src.ReadbackJournal(packets);rows=prefix.collect(journal,account,p)
+        journal=src.ReadbackJournal(packets);rows=collect(journal,account,p)
         need(journal.index==len(packets)==receipt['requests'],'RECOVERY2_PACKET_PARITY')
     else:
         need(not p['Targets'] and receipt['requests']==0,'RECOVERY2_EMPTY_CAPTURE');rows=[]
     need(rows==d['rows'],'RECOVERY2_EXACT_READBACK')
     work.mkdir(mode=0o700);data=sources(work);REPORT.mkdir()
     witness=work/'witness.json';write(witness,rows)
-    results=[]
+    results=[];coverage=[]
+    registry=dict(Study=STUDY,RunId=rid,PlanSha256=digest,
+        SourceSha256=[s['SourceSha256'] for s in p['Sources']],CompatibleBaseSourceSha256=[parent.SOURCE],
+        PacketReceipt=receipt,Rows=rows,PacketsReconciled=len(packets),
+        OriginalPoliciesReplayed=0,Orders=0,CloudActivated=False)
     for i,(source,tape,reports) in enumerate(data):
         need(sha(source)==p['Sources'][i]['SourceSha256'],'RECOVERY2_SOURCE_RESTORATION')
         n=native(source,tape,reports,witness,REPORT/f'native-{i}.json')
         need(target_keys(n['Targets'])==target_keys(read(PLAN/f'native-{i}.json')['Targets']),'RECOVERY2_REPRODUCED_TARGETS')
         results.append(n)
-    write(REPORT/'verified-prefix-registry.json',dict(Study=STUDY,RunId=rid,PlanSha256=digest,
-        SourceSha256=[n['SourceSha256'] for n in results],PacketReceipt=receipt,Rows=rows,
-        PacketsReconciled=len(packets),OriginalPoliciesReplayed=0,Orders=0,CloudActivated=False))
+        child=read(source);overlay=apply_recovered_registry(child,registry,sha(source))
+        remaining=pre.preflight(child,safe_mark)
+        coverage.append(dict(SourceSha256=sha(source),Overlay=overlay,Remaining=remaining))
+    write(REPORT/'verified-prefix-registry.json',registry)
+    write(REPORT/'preventive-coverage.json',dict(Sources=coverage,Targets=len(p['Targets']),
+        RetrospectiveTargets=p['RetrospectiveTargets'],PreventiveTargets=p['PreventiveTargets'],
+        SharedTargets=p['SharedTargets'],SourceBrokerRequests=len(packets),
+        ReusedWitnesses=len(rows)-len(packets),
+        UnresolvedWitnesses=[r for r in rows if r['Witness']['Status']!='AUTHENTIC_LATEST_PREFIX'],
+        Orders=0,CloudActivated=False))
     write(REPORT/'summary.json',dict(Study=STUDY,OriginalWindows=sum(n['OriginalWindows'] for n in results),
         ReconciledWindows=sum(n['ReconciledWindows'] for n in results),SourceBrokerRequests=len(packets),
         AuthenticPrefixes=sum(r['Witness']['Status']=='AUTHENTIC_LATEST_PREFIX' for r in rows),
+        PreventiveTargets=p['PreventiveTargets'],DistinctCollectionTargets=len(p['Targets']),
+        RemainingPreventiveTargets=len(set().union(*(target_keys(c['Remaining']['Targets']) for c in coverage))),
+        LocalUnresolved=sum(len(c['Remaining']['LocalUnresolved']) for c in coverage),
         OriginalPoliciesReplayed=0,OriginalEquityHistoryRestored=False,HistoricalTariffCertified=False,
         IndependentConfirmationCertified=False,Orders=0,CloudActivated=False))
     print('RECOVERY2_SETTLEMENT',read(REPORT/'summary.json'),flush=True)
