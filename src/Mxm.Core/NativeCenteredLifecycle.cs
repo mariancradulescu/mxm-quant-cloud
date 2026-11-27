@@ -33,9 +33,9 @@ internal static class NativeCenteredLifecycle
     internal static int CostBand(decimal costRisk)=>costRisk<=.1m?0:costRisk<=.25m?1:costRisk<=.5m?2:3;
     internal static NativeEurPayoff? Estimate(IEnumerable<NativeEurCalibrationOutcome> history,
         string family,int side,NativeEurDecisionContext context,long at,decimal risk,decimal cost,
-        int minimumEpisodes,int minimumDays,decimal penalty,bool transfer,Action<string>? diagnostic=null,bool costMatched=false)
+        int minimumEpisodes,int minimumDays,decimal penalty,bool transfer,Action<string>? diagnostic=null,bool costMatched=false,int halfLifeDays=0)
     {
-        if(risk<=0m||cost<0m||minimumEpisodes<minimumDays||minimumDays<2||penalty<0m)return null;
+        if(risk<=0m||cost<0m||minimumEpisodes<minimumDays||minimumDays<2||penalty<0m||halfLifeDays<0)return null;
         int? Regime(NativeEurDecisionContext c)=>c.ClosedStates.SingleOrDefault(x=>x.Timeframe==NativeBarTimeframe.H1)?.Direction;
         int? FastRegime(NativeEurDecisionContext x)=>x.ClosedStates.SingleOrDefault(s=>s.Timeframe==NativeBarTimeframe.M15)?.Direction;
         int? regime=Regime(context);
@@ -79,18 +79,33 @@ internal static class NativeCenteredLifecycle
             var symbols=day.GroupBy(x=>x.Context!.Symbol).Select(symbol=>(Gross:symbol.Average(x=>x.GrossEur/x.RiskEur)*risk,
                 Net:symbol.Average(x=>x.NetEur/x.RiskEur)*risk,
                 Positive:symbol.Average(x=>x.NetEur>0m?1m:0m))).ToArray();
-            return (Gross:symbols.Average(x=>x.Gross),Net:symbols.Average(x=>x.Net),Positive:symbols.Average(x=>x.Positive));
+            return (Day:day.Key,Gross:symbols.Average(x=>x.Gross),Net:symbols.Average(x=>x.Net),Positive:symbols.Average(x=>x.Positive));
         }).ToArray();
-        decimal gross=daily.Average(x=>x.Gross),historicalNet=daily.Average(x=>x.Net);
+        // Relative age to newest eligible day preserves a frozen calibration cache.
+        // The same causal estimator applies to every family and direction.
+        long newest=daily.Max(x=>x.Day);
+        var weights=daily.Select(x=>halfLifeDays==0?1m:(decimal)Math.Pow(.5,(newest-x.Day)/(double)halfLifeDays)).ToArray();
+        decimal mass=weights.Sum(),squares=weights.Sum(w=>w*w);
+        decimal effective=mass*mass/squares;
+        if(halfLifeDays>0&&effective<minimumDays)
+        {diagnostic?.Invoke("RECENCY_EFFECTIVE_DAYS_INSUFFICIENT");return null;}
+        decimal Weighted(IEnumerable<decimal> values)=>values.Zip(weights,(v,w)=>v*w).Sum()/mass;
+        decimal gross=halfLifeDays==0?daily.Average(x=>x.Gross):Weighted(daily.Select(x=>x.Gross));
+        decimal historicalNet=halfLifeDays==0?daily.Average(x=>x.Net):Weighted(daily.Select(x=>x.Net));
         decimal Lower(decimal mean,IEnumerable<decimal> values)
-            =>mean-penalty*(decimal)Math.Sqrt(values.Sum(v=>Math.Pow((double)(v-mean),2))/(daily.Length*(daily.Length-1d)));
+        {
+            if(halfLifeDays==0)return mean-penalty*(decimal)Math.Sqrt(values.Sum(v=>Math.Pow((double)(v-mean),2))/(daily.Length*(daily.Length-1d)));
+            decimal variance=Weighted(values.Select(v=>(v-mean)*(v-mean)))*effective/(effective-1m);
+            return mean-penalty*(decimal)Math.Sqrt((double)(variance/effective));
+        }
         decimal grossLower=Lower(gross,daily.Select(x=>x.Gross));
         decimal historicalLower=Lower(historicalNet,daily.Select(x=>x.Net));
         decimal net=Math.Min(historicalNet,gross-cost),netLower=Math.Min(historicalLower,grossLower-cost);
+        if(halfLifeDays>0)cohort+=$"/RECENCY_HALF_LIFE_DAYS:{halfLifeDays}";
         diagnostic?.Invoke("CENTERED_"+cohort);
         diagnostic?.Invoke(grossLower<=0m?"CENTERED_GROSS_LOWER_NONPOSITIVE":
             netLower<=0m?"CENTERED_NET_LOWER_NONPOSITIVE":"CENTERED_POSITIVE");
-        return new(pool.Length,daily.Length,gross,grossLower,net,netLower,daily.Average(x=>x.Positive),
+        return new(pool.Length,daily.Length,gross,grossLower,net,netLower,halfLifeDays==0?daily.Average(x=>x.Positive):Weighted(daily.Select(x=>x.Positive)),
             pool.Min(x=>x.NetEur/x.RiskEur)*risk,pool.Max(x=>x.NetEur/x.RiskEur)*risk)
             {Cohort="CENTERED_"+cohort};
     }

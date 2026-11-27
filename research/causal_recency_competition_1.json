@@ -1,0 +1,16 @@
+{
+  "Study": "MONETARY_CAUSAL_RECENCY_COMPETITION_1",
+  "Scopes": [
+    "earlier",
+    "recent"
+  ],
+  "VariantsPerScope": 4,
+  "Evaluations": 30,
+  "FundingHorizonMs": 1800000,
+  "SelectionMultiplicity": 24,
+  "SelectionPenalty": 3,
+  "Exposure": "PROJECT_EXPOSED_CONDITIONAL_DEVELOPMENT",
+  "Orders": 0,
+  "CloudActivated": false,
+  "IndependentConfirmationCertified": false
+}

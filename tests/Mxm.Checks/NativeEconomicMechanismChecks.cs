@@ -93,6 +93,19 @@ internal static class NativeEconomicMechanismChecks
             "Hybrid PAV1 cannot credit an absent direct forecast");
         check(NativeCenteredLifecycle.Corroborate(centered,centered! with {NetLowerEur=-.1m}) is {NetLowerEur:-.1m},
             "Hybrid corroboration preserves a negative conservative forecast");
+        var shifted=Enumerable.Range(1,30).Select(i=>rows[0] with
+            {PositionId="SHIFT"+i,ClosedAt=at-i*86_400_000L,AvailableAt=at-i*86_400_000L+1,
+             GrossEur=i<=7?-1m:2m,NetEur=i<=7?-1.1m:1.9m}).ToArray();
+        var equalDays=NativeCenteredLifecycle.Estimate(shifted,"F",1,context,at,1m,.1m,8,3,0m,true,costMatched:true);
+        var recentDays=NativeCenteredLifecycle.Estimate(shifted,"F",1,context,at,1m,.1m,8,3,0m,true,costMatched:true,halfLifeDays:7);
+        check(equalDays is not null&&recentDays is not null&&recentDays.NetMeanEur<equalDays.NetMeanEur&&
+            recentDays==NativeCenteredLifecycle.Estimate(shifted.Append(shifted[0] with {AvailableAt=at,NetEur=1000m}),
+                "F",1,context,at,1m,.1m,8,3,0m,true,costMatched:true,halfLifeDays:7),
+            "Recency-weighted monetary lifecycle adapts to deterioration without unmatured outcomes");
+        var recovering=shifted.Select(x=>x with {GrossEur=-x.GrossEur,NetEur=-x.GrossEur-.1m}).ToArray();
+        check(NativeCenteredLifecycle.Estimate(recovering,"F",1,context,at,1m,.1m,8,3,0m,true,costMatched:true,halfLifeDays:7)!
+            .NetMeanEur>NativeCenteredLifecycle.Estimate(recovering,"F",1,context,at,1m,.1m,8,3,0m,true,costMatched:true)!.NetMeanEur,
+            "A recovering causal cohort can improve; no permanent family exclusion");
         var highCostRows=rows.Select(r=>r with {Context=context with {CostRiskFraction=.6m}}).ToArray();
         check(NativeCenteredLifecycle.Estimate(highCostRows,"F",1,context,at,1m,.1m,20,3,0m,true,costMatched:true) is null,
             "Cost-context estimate does not transfer a mismatched execution-cost regime");
