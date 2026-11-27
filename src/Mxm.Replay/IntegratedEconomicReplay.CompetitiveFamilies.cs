@@ -11,6 +11,7 @@ internal static partial class IntegratedEconomicReplay
         var elapsed=Stopwatch.StartNew();
         using var process=Process.GetCurrentProcess();
         long clocksProcessed=0, marketFrames=0, bookAdvances=0, observerAdvances=0;
+        long calibrationFits=0, calibrationLabels=0;
         TimeSpan lastProgress=TimeSpan.MinValue;
         void Progress(string stage,long? historicalAt=null,int completedBooks=0,int? totalBooks=null,bool force=false)
         {
@@ -22,7 +23,7 @@ internal static partial class IntegratedEconomicReplay
             {
                 stage,scenario=stressText,historicalAt,completedBooks,totalBooks,
                 remainingBooks=totalBooks.HasValue?(int?)(totalBooks.Value-completedBooks):null,
-                clocksProcessed,marketFrames,bookAdvances,observerAdvances,
+                clocksProcessed,marketFrames,bookAdvances,observerAdvances,calibrationFits,calibrationLabels,
                 elapsedSeconds=now.TotalSeconds,workingSetBytes=process.WorkingSet64,
                 peakWorkingSetBytes=process.PeakWorkingSet64,managedBytes=GC.GetTotalMemory(false),
                 gen0=GC.CollectionCount(0),gen1=GC.CollectionCount(1),gen2=GC.CollectionCount(2)
@@ -187,8 +188,10 @@ internal static partial class IntegratedEconomicReplay
         {
             Progress("CALIBRATE",at,totalBooks:books.Length,force:true);
             using var profile=NativeEconomicProfiler.Measure("replay.calibrate");
+            int completedFits=0;
             foreach(var c in cases)
             {
+                Progress("CALIBRATE_BOOK",at,completedFits,cases.Length,force:true);
                 var model=c.Observer?.Export();
                 if(model is null)
                 {
@@ -203,12 +206,14 @@ internal static partial class IntegratedEconomicReplay
                 if(model.ObservationThrough>=at||model.Outcomes.Any(x=>x.AvailableAt>=at))
                     throw new InvalidDataException("COMPETITIVE_FUTURE_CALIBRATION");
                 if(initial)c.Book.LoadEurCalibration(model);else c.Book.UpdateEurResearchCalibration(model);
+                calibrationFits++;calibrationLabels+=model.Outcomes.Length;completedFits++;
+                Progress("CALIBRATE_BOOK_COMPLETE",at,completedFits,cases.Length,force:true);
                 fits.Add(new {c.Id,AvailableBefore=at,model.ObservationThrough,Outcomes=model.Outcomes.Length,
                     ModelSha256=GeneralSha(JsonSerializer.SerializeToUtf8Bytes(model,Json)),
                     ByFamily=model.Outcomes.GroupBy(x=>new {x.Family,x.Side}).Select(g=>new
                     {g.Key.Family,g.Key.Side,Count=g.Count(),NetEur=g.Sum(x=>x.NetEur)}).ToArray()});
             }
-            Progress("CALIBRATE_COMPLETE",at,totalBooks:books.Length,force:true);
+            Progress("CALIBRATE_COMPLETE",at,cases.Length,cases.Length,force:true);
         }
         void Checkpoint(string phase)
         {
