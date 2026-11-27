@@ -1,6 +1,9 @@
 using System.Text.Json;
 using System.Security.Cryptography;
 
+if(args is ["--owner-held-residual-plan",var residualSource,var residualTape,var residualDemands,var residualRegistry,var residualOutput])
+    return IntegratedEconomicReplay.RunHeldRecoveryPlan(residualSource,residualTape,residualDemands,residualOutput,residualRegistry);
+
 if(args is [var historyUseInput,var historyUseOutput,"--owner-source-history-use"])
     return OwnerSourceHistoryUse.Run(historyUseInput,historyUseOutput);
 if(args is [var officialEurInput,var officialEurOutput,"--owner-official-eur"])

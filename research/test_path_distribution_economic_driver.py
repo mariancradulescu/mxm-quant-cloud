@@ -27,4 +27,13 @@ class RegisteredNativeDriver(unittest.TestCase):
     report=json.loads((root/'report/result.json').read_bytes());self.assertEqual(report['SharedPortfolioEvaluations'],5)
     self.assertEqual(report['Orders'],0);self.assertFalse(report['IndependentConfirmationCertified'])
     self.assertTrue(all(b['Result']['CashEur']==300 and b['Result']['Closed']==0 for b in report['CommonBooks']))
+    (root/'empty-registry.json').write_text('{"Rows":[]}')
+    (root/'demand.json').write_text(exact_json([dict(Symbol=names[0],At=start+3600000,Studies=['NET_HORIZON'])]))
+    residual=root/'residual.json'
+    result=subprocess.run(['dotnet','src/Mxm.Replay/bin/Release/net8.0/Mxm.Replay.dll','--owner-held-residual-plan',
+     str(root/'source.json'),str(root/'tapes'),str(root/'demand.json'),str(root/'empty-registry.json'),str(residual)],capture_output=True,text=True)
+    self.assertEqual(result.returncode,0,result.stderr[-2500:])
+    assessment=json.loads(residual.read_bytes());self.assertEqual(assessment['ResolvedBefore'],0)
+    self.assertEqual(assessment['Assessments'][0]['Status'],'MISSING_DATED_TERMS')
+    self.assertEqual(assessment['Groups'],[]);self.assertEqual(assessment['Orders'],0)
 if __name__=='__main__':unittest.main()
