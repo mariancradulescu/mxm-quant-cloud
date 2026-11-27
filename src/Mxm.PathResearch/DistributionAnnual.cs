@@ -81,7 +81,7 @@ internal static class DistributionAnnual
             {
                 var y=matured[k++];var row=new NativePathSample(y.Symbol,y.AssetClass,y.At,y.AvailableAt,features[(y.Symbol,y.At)],y.Move,y.Up,y.Down,y.FirstLower,y.FirstUpper,y.Horizon);
                 foreach(string scope in new[]{"S/"+y.Symbol,"C/"+(y.AssetClass??y.Symbol)})
-                {var key=(y.Horizon,scope);if(!history.TryGetValue(key,out var q))history.Add(key,q=new());q.Enqueue(row);while(q.Count>256)q.Dequeue();}
+                {var key=(y.Horizon,scope);if(!history.TryGetValue(key,out var q))history.Add(key,q=new());q.Enqueue(row);while(q.Count>(scope.StartsWith("C/",StringComparison.Ordinal)?2048:256))q.Dequeue();}
             }
             int raw=Math.Sign(x.Context.FastEfficiency);
             void Record(string name,int side,NativePathDistributionForecast? f)
