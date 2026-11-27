@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Diagnostics;
 using Mxm.Core;
 
 internal static partial class IntegratedEconomicReplay
@@ -7,6 +8,28 @@ internal static partial class IntegratedEconomicReplay
         string protectionDirectory,string stressText,bool causalManagementStudy=false,bool estimatorStudy=false,bool earlierEstimatorStudy=false,
         bool boundaryStudy=false,bool multibarStudy=false,bool adaptiveStudy=false,bool controlledRecencyStudy=false,bool distributionStudy=false,string? valuationRegistryPath=null)
     {
+        var elapsed=Stopwatch.StartNew();
+        using var process=Process.GetCurrentProcess();
+        long clocksProcessed=0, marketFrames=0, bookAdvances=0, observerAdvances=0;
+        TimeSpan lastProgress=TimeSpan.MinValue;
+        void Progress(string stage,long? historicalAt=null,int completedBooks=0,int? totalBooks=null,bool force=false)
+        {
+            var now=elapsed.Elapsed;
+            if(!force&&lastProgress!=TimeSpan.MinValue&&now-lastProgress<TimeSpan.FromSeconds(15))return;
+            lastProgress=now;
+            process.Refresh();
+            Console.WriteLine("MXM_ECONOMIC_PROGRESS "+JsonSerializer.Serialize(new
+            {
+                stage,scenario=stressText,historicalAt,completedBooks,totalBooks,
+                remainingBooks=totalBooks.HasValue?(int?)(totalBooks.Value-completedBooks):null,
+                clocksProcessed,marketFrames,bookAdvances,observerAdvances,
+                elapsedSeconds=now.TotalSeconds,workingSetBytes=process.WorkingSet64,
+                peakWorkingSetBytes=process.PeakWorkingSet64,managedBytes=GC.GetTotalMemory(false),
+                gen0=GC.CollectionCount(0),gen1=GC.CollectionCount(1),gen2=GC.CollectionCount(2)
+            }));
+            Console.Out.Flush();
+        }
+        Progress("READ_SOURCE",force:true);
         var pb=File.ReadAllBytes(protocolPath);var sb=File.ReadAllBytes(sourcePath);
         var p=JsonSerializer.Deserialize<PavMarketPlan>(pb,Json)!;
         var input=JsonSerializer.Deserialize<EerInput>(sb,Json)!;
@@ -74,11 +97,17 @@ internal static partial class IntegratedEconomicReplay
             throw new InvalidDataException("DISTRIBUTION_STUDY_ABLATION_BINDING");
         Directory.CreateDirectory(directory);
         string scenario=EerHash(planHash+"|"+FormattableString.Invariant($"{stress:G29}"));
-        var tape=new EerProtectionTape(protectionDirectory);
+        Progress("BUILD_EVIDENCE",force:true);
+        EerProtectionTape tape;
+        using(NativeEconomicProfiler.Measure("replay.protection_restore"))
+            tape=new EerProtectionTape(protectionDirectory);
+        NativeReusableValuationRegistry? registry;
+        using(NativeEconomicProfiler.Measure("replay.valuation_registry_restore"))
+            registry=LoadValuationRegistry(valuationRegistryPath);
         var source=new EerEvidence(input){MarketTimeFx=true,ValuationTape=tape,MinimumFundingHorizonMs=distributionStudy?3_600_000L:(multibarStudy||adaptiveStudy)?1_800_000L:boundaryStudy?900_000L:0L,
             CaptureHoldingValuationGaps=multibarStudy||adaptiveStudy||distributionStudy,RecoverFreshHoldingMarks=controlledRecencyStudy||distributionStudy,
             CaptureBetweenDecisionValuationGaps=controlledRecencyStudy||distributionStudy,
-            HeldRegistry=LoadValuationRegistry(valuationRegistryPath)};
+            HeldRegistry=registry};
         var streams=input.Markets.ToDictionary(m=>m.Market.Name,m=>new EerStream(m),StringComparer.Ordinal);
         var sharedObservers=new Dictionary<string,EurOpportunityObserver>(StringComparer.Ordinal);
         EurOpportunityObserver? Observer(NativeEurDevelopmentProfile profile)
@@ -101,24 +130,41 @@ internal static partial class IntegratedEconomicReplay
         void Observe(long from,long through,bool trade)
         {
             int clocks=0;
+            string stage=trade?"PORTFOLIO_REPLAY":"MATURING_OBSERVATIONS";
+            Progress(stage,from,totalBooks:books.Length,force:true);
             for(long at=from+EurOffset;at<through;at+=EurStep)
             {
                 source.BeginHistoricalClock();
-                var frame=new Ucp1Frame(at,streams.Values.Select(m=>source.Frame(m,at,scenario,stress,general:true))
-                    .OfType<Ucp1MarketFrame>().ToArray());
+                Ucp1Frame frame;
+                using(NativeEconomicProfiler.Measure("replay.build_frame"))
+                    frame=new Ucp1Frame(at,streams.Values.Select(m=>source.Frame(m,at,scenario,stress,general:true))
+                        .OfType<Ucp1MarketFrame>().ToArray());
+                // Count actual calls and completed clocks, never projected work.
+                marketFrames+=streams.Count;
                 if(trade)
                     foreach(var c in books)
                     {
-                        tape.Between(c.Book,at-1,source,streams,scenario,stress);
-                        source.Advance(c.Book,frame with {Protection=tape.GridCoverage(c.Book,at)},streams,scenario,stress);
+                        using(NativeEconomicProfiler.Measure("replay.book_protection"))
+                            tape.Between(c.Book,at-1,source,streams,scenario,stress);
+                        using(NativeEconomicProfiler.Measure("replay.book_advance"))
+                            source.Advance(c.Book,frame with {Protection=tape.GridCoverage(c.Book,at)},streams,scenario,stress);
+                        bookAdvances++;
                     }
-                if(estimatorStudy){foreach(var observer in sharedObservers.Values)observer.Advance(frame);}
-                else foreach(var c in cases)c.Observer?.Advance(frame);
+                using(NativeEconomicProfiler.Measure("replay.observer_advance"))
+                {
+                    if(estimatorStudy){foreach(var observer in sharedObservers.Values){observer.Advance(frame);observerAdvances++;}}
+                    else foreach(var c in cases)if(c.Observer is not null){c.Observer.Advance(frame);observerAdvances++;}
+                }
+                clocksProcessed++;
+                Progress(stage,at,totalBooks:books.Length);
                 if(++clocks%288==0)Console.WriteLine($"COMPETITIVE_FAMILIES_PROGRESS stress={stress} at={at} trade={trade} observations={clocks}");
             }
+            Progress(stage,through,totalBooks:books.Length,force:true);
         }
         void Fit(long at,bool initial)
         {
+            Progress("CALIBRATE",at,totalBooks:books.Length,force:true);
+            using var profile=NativeEconomicProfiler.Measure("replay.calibrate");
             foreach(var c in cases)
             {
                 var model=c.Observer?.Export();
@@ -140,9 +186,12 @@ internal static partial class IntegratedEconomicReplay
                     ByFamily=model.Outcomes.GroupBy(x=>new {x.Family,x.Side}).Select(g=>new
                     {g.Key.Family,g.Key.Side,Count=g.Count(),NetEur=g.Sum(x=>x.NetEur)}).ToArray()});
             }
+            Progress("CALIBRATE_COMPLETE",at,totalBooks:books.Length,force:true);
         }
         void Checkpoint(string phase)
         {
+            using var profile=NativeEconomicProfiler.Measure("replay.checkpoint");
+            Progress("WRITE_CHECKPOINT",totalBooks:books.Length,force:true);
             var root=Path.Combine(directory,"checkpoints",phase);Directory.CreateDirectory(root);
             foreach(var c in books)File.WriteAllText(Path.Combine(root,c.Id+".json"),c.Book.HistoricalEurCheckpoint());
             var observers=cases.Where(x=>x.Observer is not null);
@@ -150,6 +199,7 @@ internal static partial class IntegratedEconomicReplay
             foreach(var c in observers)File.WriteAllBytes(Path.Combine(root,c.Id+"-observer.json"),
                 JsonSerializer.SerializeToUtf8Bytes(c.Observer!.Checkpoint(),NativeHistoricalCheckpointJson.Options));
             Console.WriteLine($"COMPETITIVE_FAMILIES_CHECKPOINT {stress} {phase}");
+            Progress("CHECKPOINT_WRITTEN",totalBooks:books.Length,force:true);
         }
         Observe(p.Start,p.SelectionFrom,false);
         Fit(p.SelectionFrom,true);
@@ -189,6 +239,9 @@ internal static partial class IntegratedEconomicReplay
             OriginalResultsModified=false,SourceBrokerRequests=0,Orders=0,CloudActivated=false,
             IndependentConfirmationCertified=false,EconomicPromotionCertified=false};
         File.WriteAllBytes(Path.Combine(directory,"result.json"),JsonSerializer.SerializeToUtf8Bytes(result,Json));
+        Progress("SCENARIO_COMPLETE",p.End,books.Length,books.Length,force:true);
+        if(NativeEconomicProfiler.Enabled)
+            Console.WriteLine("MXM_ECONOMIC_PROFILE "+JsonSerializer.Serialize(NativeEconomicProfiler.Snapshot()));
         return 0;
     }
 }
