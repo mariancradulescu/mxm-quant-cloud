@@ -1,0 +1,33 @@
+name: OWNER matched matured shadow prediction audit
+on:
+  pull_request:
+    paths: ['research/owner_matched_shadow_prediction.py','research/matched_shadow_prediction_receipt.json','.github/workflows/owner-matched-shadow-prediction.yml']
+  push:
+    branches: [main]
+    paths: ['research/matched_shadow_prediction_receipt.json']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  reproduce:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Reproduce frozen report comparison only
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/15178354067/zip" > earlier.zip
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/15179335228/zip" > recent.zip
+          python -m research.owner_matched_shadow_prediction --earlier earlier.zip --recent recent.zip --out matched-shadow-prediction.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: matched-shadow-prediction-audit
+          path: matched-shadow-prediction.json
+          retention-days: 90
+          if-no-files-found: error
