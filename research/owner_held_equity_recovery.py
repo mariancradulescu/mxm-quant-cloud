@@ -184,6 +184,12 @@ def verify(work,scope,capture_run=None,registry_override=None,sources_only=False
   SupplementalRegistrySha256=sha(registry_override) if registry_override is not None else None,
   UnresolvedPrefixes=[r for r in rows if r['Witness']['Status']!='AUTHENTIC_LATEST_PREFIX'],OriginalPoliciesReplayed=0,Orders=0,CloudActivated=False))
  if sources_only:return
+ requests,prefix_count=len(packets),len(proven)
+ # The verified file is authoritative. Release multi-million-row Python
+ # object graphs before decrypting saved books and starting the native reader.
+ del payload,packets,rows,proven,journal
+ import gc
+ gc.collect()
  reports,source,tape=restore(work,scope);results=[]
  for study,folder in reports.items():
   srcpath=work/(study+'-source.json');source_sha=read(folder/'source-receipt.json')['SourceSha256']
@@ -197,8 +203,8 @@ def verify(work,scope,capture_run=None,registry_override=None,sources_only=False
    path.unlink()
   import shutil
   shutil.rmtree(work/(study+'-cipher'));shutil.rmtree(work/(study+'-books'))
- write(REPORT/(scope+'-summary.json'),dict(Study=STUDY,Scope=scope,Groups=len(targets),Requests=len(packets),
-  Prefixes=len(proven),Results=results,RecoveredEquityPoints=sum(r['RecoveredEquityPoints'] for r in results),
+ write(REPORT/(scope+'-summary.json'),dict(Study=STUDY,Scope=scope,Groups=len(targets),Requests=requests,
+  Prefixes=prefix_count,Results=results,RecoveredEquityPoints=sum(r['RecoveredEquityPoints'] for r in results),
   UnknownBefore=sum(r['UnknownBefore'] for r in results),UnknownAfter=sum(r['UnknownAfter'] for r in results),
   NewAdmissions=0,OriginalPoliciesReplayed=0,Orders=0,CloudActivated=False,IndependentConfirmationCertified=False))
 

@@ -8,6 +8,14 @@ internal static partial class IntegratedEconomicReplay
     sealed record FrozenCore(LedgerEvent[] Events,Ucp1CurvePoint[] Curve,string Session);
     sealed record FrozenWrapper(string CoreCheckpoint);
 
+    static NativeReusableValuationRegistry? LoadValuationRegistry(string? path)
+    {
+        if(path is null)return null;
+        using var stream=File.OpenRead(path);
+        using var document=JsonDocument.Parse(stream);
+        return new(document.RootElement.GetProperty("Rows").Deserialize<NativeValuationPrefix[]>(Json)!);
+    }
+
     public static int RunHeldRecoveryPlan(string sourcePath,string tapePath,string demandsPath,string output)
     {
         var bytes=File.ReadAllBytes(sourcePath);var input=JsonSerializer.Deserialize<EerInput>(bytes,Json)!;
@@ -53,9 +61,7 @@ internal static partial class IntegratedEconomicReplay
         string checkpointPath,string originalReport,string id,string output)
     {
         var input=JsonSerializer.Deserialize<EerInput>(File.ReadAllBytes(sourcePath),Json)!;
-        using var reg=JsonDocument.Parse(File.ReadAllBytes(registryPath));
-        var prefixes=reg.RootElement.GetProperty("Rows").Deserialize<NativeValuationPrefix[]>(Json)!;
-        var source=new EerEvidence(input){MarketTimeFx=true,ValuationTape=new(tapePath),HeldRegistry=new(prefixes)};
+        var source=new EerEvidence(input){MarketTimeFx=true,ValuationTape=new(tapePath),HeldRegistry=LoadValuationRegistry(registryPath)};
         var wrapper=JsonSerializer.Deserialize<FrozenWrapper>(File.ReadAllBytes(checkpointPath),NativeHistoricalCheckpointJson.Options)!;
         var core=JsonSerializer.Deserialize<FrozenCore>(wrapper.CoreCheckpoint,Json)!;
         using var original=JsonDocument.Parse(File.ReadAllBytes(originalReport));

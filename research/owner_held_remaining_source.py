@@ -157,11 +157,15 @@ def settle(work,scope):
  write(merged,dict(Study=STUDY,RunId=rid,OriginalCaptureRun=p['OriginalCaptureRun'],Rows=rows,
   PriorRegistrySha256=v['PriorRegistrySha256'],PacketsReconciled=sum(r['PacketsReconciled'] for r in records),
   SourceBrokerRequests=sum(r['PacketsReconciled'] for r in records),Orders=0,CloudActivated=False))
- restore_original_inputs();old.verify(work,scope,p['OriginalCaptureRun'],merged)
  coverage=[row for r in records for row in r['Coverage']]
+ requests,parts,prefix_count=sum(r['PacketsReconciled'] for r in records),len(records),len(rows)
+ del records,prior,rows
+ import gc
+ gc.collect()
+ restore_original_inputs();old.verify(work,scope,p['OriginalCaptureRun'],merged)
  write(old.REPORT/'remaining-source-summary.json',dict(Study=STUDY,RunId=rid,OriginalCaptureRun=p['OriginalCaptureRun'],Scope=scope,
-  PreviousMissingWindows=v['Targets'],Partitions=len(records),Requests=sum(r['PacketsReconciled'] for r in records),
-  ProvenPrefixes=len(rows),IncompleteSides=sum(not r['Complete'] for r in coverage),
+  PreviousMissingWindows=v['Targets'],Partitions=parts,Requests=requests,
+  ProvenPrefixes=prefix_count,IncompleteSides=sum(not r['Complete'] for r in coverage),
   MissingRequestWindows=sum(len(r['MissingWindows']) for r in coverage),AuthenticAbsentSides=sum(r['AuthenticAbsence'] for r in coverage),
   Coverage=coverage,SupplementalRegistrySha256=sha(merged),OriginalPoliciesReplayed=0,Orders=0,CloudActivated=False))
 

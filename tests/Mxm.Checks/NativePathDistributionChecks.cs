@@ -31,5 +31,15 @@ internal static class NativePathDistributionChecks
             "transfer requires an official matching asset class");
         check(NativeCausalPathDistribution.Estimate(rows,"B","FX",new double?[]{.2,.3,.1},at,"LOCAL") is null,
             "local ablation excludes peer observations");
+        var extended=rows.Select((r,i)=>r with {Outcome=(i%5-2)/10m,
+            Features=new double?[]{.2,.3,.1,.1,.2,.3,.4,.5,i%5,i%5}}).ToArray();
+        double?[] query={.2,.3,.1,.1,.2,.3,.4,.5,4,4};
+        var masked=NativeCausalPathDistribution.Estimate(extended,"A","FX",query,at,activeFeatureCount:8)!;
+        var copied=NativeCausalPathDistribution.Estimate(extended.Select(r=>r with {Features=r.Features[..8]}),"A","FX",query[..8],at)!;
+        check(masked.Mean==copied.Mean&&masked.LowerMean==copied.LowerMean&&masked.ExpectedShortfall==copied.ExpectedShortfall&&
+            masked.Quantiles.SequenceEqual(copied.Quantiles)&&masked.Samples==copied.Samples,
+            "feature masking is numerically identical to the registered copied-feature ablation");
+        check(masked.Mean!=NativeCausalPathDistribution.Estimate(extended,"A","FX",query,at)!.Mean,
+            "feature mask removes informative peer columns without cloning mature samples");
     }
 }
