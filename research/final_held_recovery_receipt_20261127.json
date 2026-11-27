@@ -1,0 +1,40 @@
+{
+  "Study": "OWNER_FINAL_HELD_RECOVERY_RECEIPT_20261127",
+  "OriginalBooks": 66,
+  "OriginalCashAndEventChainsIndependentlyMatched": 66,
+  "BeforeUnknown": 71591,
+  "Recovered": 67558,
+  "StillUnknown": 4033,
+  "TotalReadOnlySourceRequests": 7804,
+  "AdditionalRecentRecovered": 1,
+  "AdditionalEarlierRecovered": 7,
+  "Earlier": {
+    "Run": 45999343826,
+    "Head": "5663e32f7016fa07615294a554a1c82b96abd66b",
+    "Artifact": 15200751037,
+    "ArchiveSha256": "41a4ef0300a1c4b8799b17f417c01b3bf67c94ef888c2446e30eff3947a11b8c",
+    "Before": 41081,
+    "Recovered": 39834,
+    "Unknown": 1247
+  },
+  "Recent": {
+    "Run": 45994232872,
+    "Head": "606230b28593c9e463db4ad4a23bcfc14fcbde8b",
+    "Artifact": 15196363904,
+    "ArchiveSha256": "26de103cba7633dc0895249a4660f618e6d089977cd53bb47fcb3692c3471c7c",
+    "Before": 30510,
+    "Recovered": 27724,
+    "Unknown": 2786
+  },
+  "NewlyMeasurableMarginPoints": 67558,
+  "NewlyObservedMarginAbove70Percent": 0,
+  "MaximumSampledDrawdown": 0.291089715798052,
+  "MaximumMeasuredMarginFraction": 0.6874967547757652,
+  "NewAdmissions": 0,
+  "AdmissionPolicyReevaluated": false,
+  "OriginalPoliciesReplayed": 0,
+  "Orders": 0,
+  "CloudActivated": false,
+  "ContinuousDrawdownCertified": false,
+  "IndependentConfirmationCertified": false
+}
