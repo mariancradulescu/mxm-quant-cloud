@@ -1,0 +1,16 @@
+{
+  "Study": "MONETARY_NET_HORIZON_CROSS_CONTEXT_1",
+  "Scopes": [
+    "earlier",
+    "recent"
+  ],
+  "VariantsPerScope": 6,
+  "Evaluations": 42,
+  "FundingHorizonMs": 1800000,
+  "SelectionPenalty": 3.2,
+  "SelectionMultiplicity": 36,
+  "Exposure": "PROJECT_EXPOSED_CONDITIONAL_DEVELOPMENT",
+  "Orders": 0,
+  "CloudActivated": false,
+  "IndependentConfirmationCertified": false
+}
