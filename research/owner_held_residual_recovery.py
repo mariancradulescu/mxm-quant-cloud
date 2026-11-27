@@ -11,7 +11,7 @@ REGISTRY=Path('research/held_residual_recovery_1.json')
 def write(path,v):Path(path).write_text(exact_json(v)+'\n')
 def check():
  p=read(REGISTRY)
- need(p['Study']=='OWNER_HELD_RESIDUAL_RECOVERY_1' and p['Scope']=='recent' and p['ExpectedAdditionalWindows']==146 and
+ need((p['Study'],p['Scope'],p['ExpectedAdditionalWindows']) in (('OWNER_HELD_RESIDUAL_RECOVERY_1','recent',146),('OWNER_HELD_EARLIER_RESIDUAL_RECOVERY_2','earlier',28)) and
   p['Orders']==p['OriginalPoliciesReplayed']==0 and not p['CloudActivated'],'HELD_RESIDUAL_RECOVERY_REGISTRATION')
  return p
 
@@ -21,21 +21,24 @@ def download(spec,destination):
  verified_download(spec['Artifact'],spec['Run'],spec['ArchiveSha256'],destination)
 
 def prepare():
- p=check();inspection=Path('held-residual-inspection');prior=Path('held-residual-prior')
+ p=check();scope=p['Scope'];inspection=Path('held-residual-inspection');prior=Path('held-residual-prior')
  download(p['Inspection'],inspection);download(p['Prior'],prior)
  proof=read(inspection/'summary.json');targets=read(inspection/'additional-uncollected-targets.json')
- need(proof['Scope']=='recent' and proof['ResidualBookPoints']==2787 and proof['OriginalBooksWithExactHeldCountParity']==33 and
+ need(proof['Scope']==scope and proof['ResidualBookPoints']==p.get('PriorUnknown',2787) and proof['OriginalBooksWithExactHeldCountParity']==33 and
   proof['Prior']['Artifact']==p['Prior']['Artifact'] and proof['Prior']['ArchiveSha256']==p['Prior']['ArchiveSha256'] and
   len(targets)==p['ExpectedAdditionalWindows'] and sha(prior/'verified-valuation-registry.json')==proof['Prior']['RegistrySha256'],
   'HELD_RESIDUAL_EXACT_VERIFIED_TARGETS')
+ coverage=prior
+ if p.get('Coverage'):
+  coverage=Path('held-residual-coverage');download(p['Coverage'],coverage)
  collector.PLAN.mkdir();rid=os.environ['GITHUB_RUN_ID']
  write(collector.PLAN/'plan.json',dict(Study=collector.STUDY,RunId=rid,RegistrationSha256=sha(collector.REGISTRY),
   ResidualRegistrationSha256=sha(REGISTRY),Inspection=p['Inspection'],Prior=p['Prior'],
-  PriorRegistrySha256=proof['Prior']['RegistrySha256'],PriorCoverageSha256=sha(prior/'collection-coverage.json'),
+  PriorRegistrySha256=proof['Prior']['RegistrySha256'],PriorCoverageSha256=sha(coverage/'collection-coverage.json'),
   Partitions=[targets],Targets=len(targets),OriginalCaptureRun=45973360072,Orders=0,CloudActivated=False))
  shutil.copyfile(prior/'verified-valuation-registry.json',collector.PLAN/'prior-verified-valuation-registry.json')
- shutil.copyfile(prior/'collection-coverage.json',collector.PLAN/'prior-collection-coverage.json')
- shutil.copyfile(prior/'recent-summary.json',collector.PLAN/'prior-equity-summary.json')
+ shutil.copyfile(coverage/'collection-coverage.json',collector.PLAN/'prior-collection-coverage.json')
+ shutil.copyfile(prior/(scope+'-summary.json'),collector.PLAN/'prior-equity-summary.json')
  write(collector.PLAN/'prior-readback-provenance.json',dict(CaptureRun=45973360072,
   Artifacts=read(Path('research/held_settlement_completion_1.json'))['OriginalArtifacts']))
  with open(os.environ['GITHUB_OUTPUT'],'a') as out:out.write('partitions=[0]\n')
@@ -54,10 +57,10 @@ def settle(work):
   ResidualSourceBrokerRequests=verified['PacketsReconciled'],OriginalPoliciesReplayed=0,Orders=0,CloudActivated=False))
  count=len(prefixes);requests=verified['PacketsReconciled'];new_rows=len(verified['Rows']);coverage=verified['Coverage'];receipt=verified['PacketReceipt']
  del prefixes,prior,verified;gc.collect()
- held.reprice_saved_books(work,'recent',registry,7630+requests,count,3844)
- baseline=read(collector.PLAN/'prior-equity-summary.json');result=read(held.REPORT/'recent-summary.json')
+ held.reprice_saved_books(work,p['Scope'],registry,7630+requests,count,3844)
+ baseline=read(collector.PLAN/'prior-equity-summary.json');result=read(held.REPORT/(p['Scope']+'-summary.json'))
  write(held.REPORT/'residual-source-recovery-summary.json',dict(Study=p['Study'],RunId=rid,Head=os.environ['GITHUB_SHA'],
-  Scope='recent',Inspection=p['Inspection'],Prior=plan['Prior'],PriorRegistrySha256=plan['PriorRegistrySha256'],
+  Scope=p['Scope'],Inspection=p['Inspection'],Prior=plan['Prior'],PriorRegistrySha256=plan['PriorRegistrySha256'],
   RegistrySha256=sha(registry),AdditionalSourceWindows=plan['Targets'],SourceBrokerRequests=requests,NewPrefixRows=new_rows,
   IncompleteSides=sum(not r['Complete'] for r in coverage),AuthenticAbsentSides=sum(r['AuthenticAbsence'] for r in coverage),
   PriorUnknown=baseline['UnknownAfter'],NewUnknown=result['UnknownAfter'],AdditionalRecoveredBookPoints=baseline['UnknownAfter']-result['UnknownAfter'],
