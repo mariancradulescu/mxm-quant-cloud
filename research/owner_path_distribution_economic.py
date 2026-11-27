@@ -24,11 +24,19 @@ def variants(n):
    ('DISTRIBUTION_CONTEXT_TAIL','DISTRIBUTION_CONTEXT',True,False),
    ('DISTRIBUTION_CONTEXT_TAIL_MANAGEMENT','DISTRIBUTION_CONTEXT',True,True)]]
 
-def prepare(work,scope):
+def prepare(work,scope,local_registry_dir=None):
  p=read(REGISTRY);need(p['Study']==STUDY and p['Scopes']==['earlier','recent'] and p['Orders']==0 and not p['CloudActivated'] and p['Models']==[v['Id'] for v in variants(29)] and p['SelectionMultiplicity']==12,'PATH_ECONOMIC_SCOPE')
  parent.prepare(work,scope);source=read(work/'net-source.json');plan=read(work/'net-plan.json');receipt=read(parent.REPORT/'source-receipt.json')
- recovery=dict(p['HeldRegistry'])
- if 'Artifact' not in recovery:
+ recovery=dict(p['HeldRegistry']);registry_folder=Path('held-recovery-verified')
+ if local_registry_dir is not None:
+  import shutil
+  local=Path(local_registry_dir);settlement=read(local/'remaining-source-summary.json')
+  need(settlement['RunId']==os.environ['GITHUB_RUN_ID'] and settlement['Orders']==0 and not settlement['CloudActivated'] and
+   settlement['OriginalCaptureRun']==45973360072,'PATH_ECONOMIC_LOCAL_SETTLEMENT_BINDING')
+  registry_folder.mkdir();shutil.copyfile(local/'verified-valuation-registry.json',registry_folder/'verified-valuation-registry.json')
+  recovery=dict(Run=os.environ['GITHUB_RUN_ID'],Head=os.environ['GITHUB_SHA'],ArtifactName='held-equity-completed-earlier',
+   SettlementSha256=sha(local/'remaining-source-summary.json'),RegistrySha256=sha(registry_folder/'verified-valuation-registry.json'))
+ elif 'Artifact' not in recovery:
   repo=os.environ['GITHUB_REPOSITORY'];started=time.monotonic()
   while True:
    state=json.loads(subprocess.check_output(['gh','api',f'repos/{repo}/actions/runs/{recovery["Run"]}']))
@@ -40,7 +48,7 @@ def prepare(work,scope):
     recovery.update(Artifact=found[0]['id'],ArchiveSha256=found[0]['digest'].removeprefix('sha256:'));break
    need(state['status']!='completed' and time.monotonic()-started<12600,'PATH_ECONOMIC_SOURCE_NOT_PUBLISHED')
    print('WAITING_FOR_COMPLETED_AUTHENTIC_MONETARY_REGISTRY',recovery['Run'],flush=True);time.sleep(30)
- verified_download(recovery['Artifact'],recovery['Run'],recovery['ArchiveSha256'],Path('held-recovery-verified'))
+ if local_registry_dir is None:verified_download(recovery['Artifact'],recovery['Run'],recovery['ArchiveSha256'],registry_folder)
  registry=Path('held-recovery-verified/verified-valuation-registry.json')
  if 'RegistrySha256' in recovery:need(sha(registry)==recovery['RegistrySha256'],'PATH_ECONOMIC_MONETARY_REGISTRY_SHA')
  recovery['RegistrySha256']=sha(registry)
@@ -53,8 +61,8 @@ def prepare(work,scope):
  write(work/'distribution-source.json',source);write(work/'distribution-plan.json',plan);REPORT.mkdir()
  write(REPORT/'registered-plan.json',plan);write(REPORT/'source-receipt.json',dict(Study=STUDY,Scope=scope,SourceSha256=sha(work/'distribution-source.json'),
   ProtocolSha256=sha(work/'distribution-plan.json'),Proof=proof,Orders=0,CloudActivated=False))
-def evaluate(work,scope):
- prepare(work,scope);results=[];receipt=read(REPORT/'source-receipt.json')
+def evaluate(work,scope,local_registry_dir=None):
+ prepare(work,scope,local_registry_dir);results=[];receipt=read(REPORT/'source-receipt.json')
  for i,stress in enumerate(STRESSES):
   out=Path('distribution-economic-parts')/('S'+str(i));out.mkdir(parents=True)
   subprocess.run(['dotnet',REPLAY,'--owner-path-distribution',str(work/'distribution-plan.json'),str(work/'distribution-source.json'),

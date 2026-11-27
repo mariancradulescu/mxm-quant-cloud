@@ -59,9 +59,9 @@ def pending_targets(coverage,prefixes=()):
     targets[key]=dict(Symbol=row['Symbol'],Sides=[row['Side']],Mode=row['Mode'],Session=row['Group'],From=start,Through=end,Clocks=[])
  return [targets[k] for k in sorted(targets)]
 
-def prepare():
- p=registered();prior=dict(p['PriorReadback']);folder=Path('remaining-held-prior')
- if 'Artifact' not in prior:
+def prepare(prior_folder=None,prior_info=None):
+ p=registered();prior=dict(prior_info or p['PriorReadback']);folder=Path(prior_folder or 'remaining-held-prior')
+ if prior_folder is None and 'Artifact' not in prior:
   repo=os.environ['GITHUB_REPOSITORY'];started=time.monotonic()
   while True:
    status=json.loads(subprocess.check_output(['gh','api',f'repos/{repo}/actions/runs/{prior["Run"]}']))
@@ -73,7 +73,7 @@ def prepare():
     prior.update(Artifact=found[0]['id'],ArchiveSha256=found[0]['digest'].removeprefix('sha256:'));break
    need(status['status']!='completed' and time.monotonic()-started<10800,'REMAINING_PRIOR_REPORT_NOT_AVAILABLE')
    print('WAITING_FOR_AUTHENTIC_READBACK_REPORT',prior['Run'],flush=True);time.sleep(30)
- verified_download(prior['Artifact'],prior['Run'],prior['ArchiveSha256'],folder)
+ if prior_folder is None:verified_download(prior['Artifact'],prior['Run'],prior['ArchiveSha256'],folder)
  if 'RegistrySha256' in prior:need(sha(folder/'verified-valuation-registry.json')==prior['RegistrySha256'],'REMAINING_PRIOR_REGISTRY')
  prior['RegistrySha256']=sha(folder/'verified-valuation-registry.json')
  need(read(folder/'verified-valuation-registry.json')['PacketsReconciled']>0,'REMAINING_PRIOR_PACKET_VERIFICATION')
@@ -140,6 +140,7 @@ def restore_original_inputs():
  prior=read(PLAN/'prior-readback-provenance.json')
  for a in prior['Artifacts']:
   folder=old.CAPTURE if a['Name']=='held-recovery-protected' else Path('remaining-original-download')/a['Name']
+  folder.parent.mkdir(parents=True,exist_ok=True)
   verified_download(a['Id'],prior['CaptureRun'],a['ArchiveSha256'],folder)
   if a['Name']!='held-recovery-protected':
    old.PLAN.mkdir(exist_ok=True)

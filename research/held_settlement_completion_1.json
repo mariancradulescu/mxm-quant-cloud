@@ -1,0 +1,31 @@
+{
+  "Study": "OWNER_HELD_SETTLEMENT_COMPLETION_1",
+  "OriginalCaptureRun": 45973360072,
+  "Scopes": [
+    "earlier",
+    "recent"
+  ],
+  "EconomicRegistrationSha256": "40c5a7894fd4a75b211bb93efa5fb4b29ab63f2d34979fe8f7e943fd9b49e290",
+  "OriginalArtifacts": [
+    {
+      "Id": 15186017227,
+      "Name": "held-recovery-plan-earlier",
+      "ArchiveSha256": "7a27c8aa917cd0e4065852a2f394a8306cb3e72e6b0ba79ee27d6f7e780c45a4"
+    },
+    {
+      "Id": 15185963796,
+      "Name": "held-recovery-plan-recent",
+      "ArchiveSha256": "3babea205779c5b738c09fa157e51a34a167796f9778aaab2b706c92bd0b0652"
+    },
+    {
+      "Id": 15189662538,
+      "Name": "held-recovery-protected",
+      "ArchiveSha256": "f38e4ab3c4cd8971116e999512deab79ebf483014cf928120b04defc110337d7"
+    }
+  ],
+  "Orders": 0,
+  "OriginalPoliciesReplayed": 0,
+  "CloudActivated": false,
+  "IndependentConfirmationCertified": false,
+  "Reason": "READBACK_PARENT_DIRECTORY_FAILURE_BEFORE_ANY_ECONOMIC_EXECUTION"
+}
