@@ -1,0 +1,10 @@
+{
+  "Study": "OWNER_HELD_EQUITY_RECOVERY_1",
+  "Scopes": ["earlier", "recent"],
+  "Studies": ["NET_HORIZON", "MEMORY"],
+  "RecoveryUnit": "OFFICIAL_SESSION_OR_COMPLETE_OPEN_INTERVAL_AND_SHARED_MONETARY_ROUTE",
+  "OriginalPoliciesReplayed": 0,
+  "Orders": 0,
+  "CloudActivated": false,
+  "IndependentConfirmationCertified": false
+}

@@ -15,6 +15,10 @@ if(args is ["--owner-monetary-reduce-common-book",var mrProtocol,var mrSource,va
     return IntegratedEconomicReplay.RunPavMarketTime(mrProtocol,mrSource,mrDirectory,mrTape,mrStress,monetaryReduceStudy:true);
 if(args is ["--owner-funding-recovery-2",var frSource,var frTape,var frReports,var frWitness,var frOutput])
     return IntegratedEconomicReplay.RunOwnerFundingRecovery2(frSource,frTape,frReports,frWitness,frOutput);
+if(args is ["--owner-held-recovery-plan",var hrSource,var hrTape,var hrDemands,var hrOutput])
+    return IntegratedEconomicReplay.RunHeldRecoveryPlan(hrSource,hrTape,hrDemands,hrOutput);
+if(args is ["--owner-frozen-held-equity",var feSource,var feTape,var feRegistry,var feCheckpoint,var feReport,var feId,var feOutput])
+    return IntegratedEconomicReplay.RunFrozenHeldEquity(feSource,feTape,feRegistry,feCheckpoint,feReport,feId,feOutput);
 if(args is ["--owner-held-valuation-preflight",var hvSource,var hvTape,var hvRegistry,var hvScope,var hvOutput])
     return IntegratedEconomicReplay.RunHeldValuationPreflight(hvSource,hvTape,hvRegistry,hvScope,hvOutput);
 if(args is ["--owner-funding-coverage",var fcSource,var fcTape,var fcPlan,var fcOutput])
