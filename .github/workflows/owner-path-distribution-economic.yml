@@ -39,6 +39,7 @@ jobs:
       - run: python -m py_compile research/owner_path_distribution_economic.py
       - run: dotnet build src/Mxm.Replay -c Release
       - run: dotnet run --project tests/Mxm.Checks -c Release
+      - run: python -m unittest research.test_path_distribution_economic_driver -v
   economic:
     needs: technical
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.actor == 'mariancradulescu' && github.run_attempt == 1 && needs.technical.outputs.new_study == 'true'

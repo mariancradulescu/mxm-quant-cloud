@@ -1,7 +1,15 @@
 {
   "Study": "MONETARY_PATH_DISTRIBUTION_1",
-  "Scopes": ["earlier", "recent"],
-  "Models": ["CENTERED_CONTROL", "DISTRIBUTION_CONTEXT", "DISTRIBUTION_CONTEXT_TAIL", "DISTRIBUTION_CONTEXT_TAIL_MANAGEMENT"],
+  "Scopes": [
+    "earlier",
+    "recent"
+  ],
+  "Models": [
+    "CENTERED_CONTROL",
+    "DISTRIBUTION_CONTEXT",
+    "DISTRIBUTION_CONTEXT_TAIL",
+    "DISTRIBUTION_CONTEXT_TAIL_MANAGEMENT"
+  ],
   "SharedCapitalEur": 300,
   "CommonBookEvaluations": 30,
   "SelectionMultiplicity": 12,
@@ -18,5 +26,6 @@
   "SourceBrokerRequests": 0,
   "Orders": 0,
   "CloudActivated": false,
-  "IndependentConfirmationCertified": false
+  "IndependentConfirmationCertified": false,
+  "VolumePolicy": "EXISTING_OBSERVED_CONTRACTUAL_VOLUME_OPTIMIZATION"
 }

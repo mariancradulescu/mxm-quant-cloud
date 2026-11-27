@@ -16,7 +16,7 @@ def variants(n):
  base=dict(geometry.variants()[0]['Profile'],EconomicManagement='MONETARY_REDUCE',EconomicManagementTimeframe='M15',
   EconomicGeometryTimeframe='M15',DistributionTargetRanges=Decimal('2.5'),AnchorEconomicGeometryToClosedStructure=True,
   EconomicStructureLookbackBars=6,CaptureOpportunityPathEvidence=True,MinimumEpisodes=24,MinimumDays=5,
-  MinimumContractVolumeOnly=True,CaptureVolatilityContext=True)
+  MinimumContractVolumeOnly=False,CaptureVolatilityContext=True)
  return [dict(Id=name,UniverseCount=n,Profile=dict(base,LifecycleEstimator=estimator,
   RequirePathTailCapacity=tail,UsePathDistributionManagement=management))
   for name,estimator,tail,management in [('CENTERED_CONTROL','CENTERED_COST_CONTEXT',False,False),
