@@ -144,14 +144,19 @@ def capture():
   Requests=len(journal.packets),Groups=len(targets),Orders=0,CloudActivated=False))
  print('HELD_RECOVERY_CAPTURE_REQUESTS',len(journal.packets),flush=True)
 
-def restore_final_books(spec,folder,dest,key,source_sha):
+def restore_final_books(spec,folder,dest,key,source_sha,wanted=None,protocol_sha=None):
  verified_download(*spec,folder);run=str(spec[1])
  public=read(folder/'checkpoint-receipt.json');need(sha(folder/'manifest.sealed')==public['ManifestCipherSha256'],'HELD_BOOK_MANIFEST_HASH')
  manifest=json.loads(gzip.decompress(unseal_new((folder/'manifest.sealed').read_bytes(),key,run)))
- need(manifest['RunId']==run and manifest['SourceSha256']==source_sha and manifest['Complete'],'HELD_BOOK_BINDING')
+ need(manifest['RunId']==run and manifest['SourceSha256']==source_sha and manifest['Complete'] and
+  (protocol_sha is None or manifest['ProtocolSha256']==protocol_sha),'HELD_BOOK_BINDING')
  files=[x for x in manifest['Files'] if '-observer' not in x['Path']]
  final=max(int(Path(x['Path']).parts[-2]) for x in files)
  selected=[x for x in files if int(Path(x['Path']).parts[-2])==final]
+ if wanted is not None:
+  selected=[x for x in selected if (Path(x['Path']).parts[-4],Path(x['Path']).stem) in wanted]
+  need({(Path(x['Path']).parts[-4],Path(x['Path']).stem) for x in selected}==wanted and
+   len(selected)==len(wanted),'HELD_BOOK_SELECTED_SCOPE')
  dest.mkdir()
  for row in selected:
   relative=Path(row['Path']);need(not relative.is_absolute() and '..' not in relative.parts,'HELD_BOOK_PATH')

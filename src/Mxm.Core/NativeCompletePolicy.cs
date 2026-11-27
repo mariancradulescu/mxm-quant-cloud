@@ -29,17 +29,24 @@ public sealed record NativeCompleteDistribution(NativeCompleteSample[] Samples, 
     // Experimental exact selector; baseline remains the default until measured parity is certified.
     static readonly bool BoundedNeighbors=Environment.GetEnvironmentVariable("MXM_ECONOMIC_BOUNDED_NEIGHBORS")=="1";
 
-    internal static IEnumerable<(NativeCompleteSample sample,decimal distance,int index)> SelectBoundedNeighbors(
-        IEnumerable<(NativeCompleteSample sample,decimal distance,int index)> candidates)
-    {
-        var order=Comparer<(NativeCompleteSample sample,decimal distance,int index)>.Create((a,b)=>
+    // Reuse the exact total order across predictions; the final ordinal index
+    // preserves stable legacy ties even for identical symbol and decision time.
+    static readonly Comparer<(NativeCompleteSample sample,decimal distance,int index)> NeighborOrder=
+        Comparer<(NativeCompleteSample sample,decimal distance,int index)>.Create((a,b)=>
         {
             int c=a.distance.CompareTo(b.distance);
             if(c==0)c=a.sample.DecisionAt.CompareTo(b.sample.DecisionAt);
             if(c==0)c=StringComparer.Ordinal.Compare(a.sample.Symbol,b.sample.Symbol);
             return c==0?a.index.CompareTo(b.index):c;
         });
-        var worstFirst=Comparer<(NativeCompleteSample sample,decimal distance,int index)>.Create((a,b)=>order.Compare(b,a));
+    static readonly Comparer<(NativeCompleteSample sample,decimal distance,int index)> WorstNeighborFirst=
+        Comparer<(NativeCompleteSample sample,decimal distance,int index)>.Create((a,b)=>NeighborOrder.Compare(b,a));
+
+    internal static IEnumerable<(NativeCompleteSample sample,decimal distance,int index)> SelectBoundedNeighbors(
+        IEnumerable<(NativeCompleteSample sample,decimal distance,int index)> candidates)
+    {
+        var order=NeighborOrder;
+        var worstFirst=WorstNeighborFirst;
         var byDay=new Dictionary<long,PriorityQueue<(NativeCompleteSample sample,decimal distance,int index),
             (NativeCompleteSample sample,decimal distance,int index)>>();
         void Keep(PriorityQueue<(NativeCompleteSample sample,decimal distance,int index),
@@ -49,8 +56,9 @@ public sealed record NativeCompleteDistribution(NativeCompleteSample[] Samples, 
             if(heap.Count<limit)heap.Enqueue(row,row);
             else if(order.Compare(row,heap.Peek())<0)
             {
-                heap.Dequeue();
-                heap.Enqueue(row,row);
+                // The minimum in worst-first ordering is the evicted row.
+                // One heap adjustment replaces dequeue followed by enqueue.
+                heap.EnqueueDequeue(row,row);
             }
         }
         foreach(var row in candidates)
