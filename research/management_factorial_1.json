@@ -1,0 +1,33 @@
+{
+  "Study": "MONETARY_MANAGEMENT_FACTORIAL_1",
+  "Scopes": [
+    "earlier",
+    "recent"
+  ],
+  "Models": [
+    "CENTERED_CONTROL",
+    "CENTERED_MANAGEMENT",
+    "DISTRIBUTION_CONTEXT",
+    "DISTRIBUTION_MANAGEMENT",
+    "DISTRIBUTION_TAIL",
+    "DISTRIBUTION_TAIL_MANAGEMENT",
+    "PAV1_DIRECT_CONTROL",
+    "PAV1_DIRECT_MANAGEMENT"
+  ],
+  "SharedCapitalEur": 300,
+  "CommonBookEvaluations": 54,
+  "SelectionMultiplicity": 48,
+  "SelectionPenalty": "3.2",
+  "RegistryBundle": "research/reusable_held_registry_bundle_20261127.json",
+  "RegistryRows": 3069541,
+  "OriginalEconomicReceipt": "research/path_distribution_economic_final_receipt_20261127.json",
+  "FundingHorizonMs": 3600000,
+  "OriginalPoliciesReplayed": 0,
+  "SourceBrokerRequests": 0,
+  "Orders": 0,
+  "CloudActivated": false,
+  "IndependentConfirmationCertified": false,
+  "EconomicPromotionCertified": false,
+  "Exposure": "DEVELOPMENT_ONLY_NO_INDEPENDENT_CLAIM",
+  "Comparison": "Matched entry estimator x management, tail and PAV1 direct controls; original sources, new verified registry bundle, no retrospective qualification."
+}
