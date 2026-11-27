@@ -29,5 +29,19 @@
   "IndependentConfirmationCertified": false,
   "EconomicPromotionCertified": false,
   "Exposure": "DEVELOPMENT_ONLY_NO_INDEPENDENT_CLAIM",
-  "Comparison": "Matched entry estimator x management, tail and PAV1 direct controls; original sources, new verified registry bundle, no retrospective qualification."
+  "Comparison": "Matched entry estimator x management, tail and PAV1 direct controls; original sources, new verified registry bundle, no retrospective qualification.",
+  "OriginalTerminalBooks": {
+    "earlier": {
+      "Artifact": 15201093006,
+      "Run": 45993633142,
+      "ArchiveSha256": "71b8da05ae33d8ab63ed60ad1cac4cd007e3b8f4f00290f162166ab5ec0c207d"
+    },
+    "recent": {
+      "Artifact": 15196428821,
+      "Run": 45993633142,
+      "ArchiveSha256": "ea1c823829bcc0e832989c96dec8fd39a1de7004f82bc55e4b8c41e09343cc78"
+    }
+  },
+  "CheckpointStudy": "FACTORIAL_REPLAY_V1",
+  "FullEngineBenchmark": "EARLIER_S0_UNINTERRUPTED_BASELINE_VS_OPTIMIZED_CONTROLLED_RESTART"
 }
