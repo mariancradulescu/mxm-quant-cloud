@@ -20,6 +20,8 @@ if(args is ["--owner-funding-recovery-2",var frSource,var frTape,var frReports,v
     return IntegratedEconomicReplay.RunOwnerFundingRecovery2(frSource,frTape,frReports,frWitness,frOutput);
 if(args is ["--owner-held-recovery-plan",var hrSource,var hrTape,var hrDemands,var hrOutput])
     return IntegratedEconomicReplay.RunHeldRecoveryPlan(hrSource,hrTape,hrDemands,hrOutput);
+if(args is ["--owner-frozen-held-terminal",var ftSource,var ftTape,var ftRegistry,var ftCheckpoint,var ftReport,var ftId,var ftOutput])
+    return IntegratedEconomicReplay.RunFrozenHeldTerminal(ftSource,ftTape,ftRegistry,ftCheckpoint,ftReport,ftId,ftOutput);
 if(args is ["--owner-frozen-held-equity",var feSource,var feTape,var feRegistry,var feCheckpoint,var feReport,var feId,var feOutput])
     return IntegratedEconomicReplay.RunFrozenHeldEquity(feSource,feTape,feRegistry,feCheckpoint,feReport,feId,feOutput);
 if(args is ["--owner-held-valuation-preflight",var hvSource,var hvTape,var hvRegistry,var hvScope,var hvOutput])
