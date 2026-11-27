@@ -353,11 +353,13 @@ public sealed partial class NativeUnifiedPortfolioEngine
             bool boundary=management is NativeEconomicMechanisms.BoundaryValue or NativeEconomicMechanisms.BoundaryReduce;
             string? tf=eurDevelopmentProfile.EconomicManagementTimeframe??eurDevelopmentProfile.EconomicGeometryTimeframe;
             var projected=boundary?BoundaryForecast(market,frame.At,side,price,geometry.Stop,geometry.Target,eurDevelopmentProfile,"MANAGEMENT"):null;
-            (decimal Mean,decimal Sem,int Count)? estimate=boundary?
+            bool distribution=eurDevelopmentProfile.UsePathDistributionManagement;
+            (decimal Mean,decimal Sem,int Count)? estimate=distribution?
+                NativeDistributionLifecycle.Continuation(market,frame.At,side):boundary?
                 projected is null?null:(projected.Mean,projected.Sem,projected.Count):
                 NativeEconomicMechanisms.Continuation(market,frame.At,tf,eurDevelopmentProfile.Pav1TransitionBars);
             decimal? debit=NativePortfolioFunding.OfferDebit(market,side,position.Units,frame.At,FundingScenarioId,
-                projected is null?0:frame.At+projected.HorizonMs);
+                distribution?frame.At+3_600_000L:projected is null?0:frame.At+projected.HorizonMs);
             if(boundary&&debit is null)Count("BOUNDARY_MANAGEMENT_UNFUNDED_FORECAST_HORIZON");
             if(debit is null||estimate is not { } transition)return null;
             // Preserve the original decimal operation order for all frozen

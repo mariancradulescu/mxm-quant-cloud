@@ -11,6 +11,8 @@ public sealed record NativeEurPayoff(int ReconciledEpisodes,int ObservationDays,
     decimal ObservedPositiveNetFraction,decimal NetWorstEur,decimal NetBestEur)
 {
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public NativePathDistributionForecast? PathDistribution { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public string? Cohort { get; init; }
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public NativeEurPredictiveEvidence? PredictiveEvidence { get; init; }
@@ -53,6 +55,8 @@ public sealed record NativeEurCalibrationOutcome(string PositionId,string Family
     long ClosedAt,long AvailableAt,decimal GrossEur,decimal NetEur,decimal RiskEur)
 {
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public NativeEconomicPathEvidence? PathEvidence { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public NativeEurDecisionContext? Context { get; init; }
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public long? DecisionAt { get; init; }
@@ -92,6 +96,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
     // Normalized daily statistics are invariant across candidate volumes and
     // executable fee schedules within one frozen causal calibration.
     readonly Dictionary<(string Symbol,string? AssetClass,string Family,int Side,int? Regime,int? Fast,int? CostBand),NativeEurPayoff?> eurCenteredPayoffs=new();
+    readonly Dictionary<(string Symbol,string Family,int Side,decimal Cost),(long At,NativeEurPayoff? Payoff)> eurPathPayoffs=new();
     NativeEurAdaptiveEstimator? adaptivePayoff;
     sealed record EurRealizedForecastError(string Symbol,string Family,int Side,long AvailableAt,decimal GrossR,decimal NetR);
     readonly Dictionary<(string Symbol,string Family,int Side),List<EurRealizedForecastError>> eurRealizedErrors=new();
@@ -147,7 +152,13 @@ public sealed partial class NativeUnifiedPortfolioEngine
         }
         AddEurOutcome(new(trip.PositionId,trip.Family,trip.Side,trip.CloseAt,reconciled.AvailableAt,
             gross,net,evidence.ReservedRiskEur)
-            {Context=trip.EurContext,DecisionAt=ModelsNativeStops?trip.EconomicEntry?.DecisionAt:null});
+            {Context=trip.EurContext,DecisionAt=ModelsNativeStops?trip.EconomicEntry?.DecisionAt:null,
+                PathEvidence=eurDevelopmentProfile?.CaptureOpportunityPathEvidence==true&&!trip.CrossedUnknownHistory
+                    ?new(Math.Max(0m,trip.SampledMfeEur)/evidence.ReservedRiskEur,
+                        Math.Max(0m,-trip.SampledMaeEur)/evidence.ReservedRiskEur,
+                        trip.ExitReason.Contains("TARGET",StringComparison.Ordinal)?1m:0m,
+                        trip.ExitReason.Contains("STOP",StringComparison.Ordinal)?0m:1m,
+                        (trip.CloseAt-trip.OpenAt)/60000m):null});
     }
 
     void AddEurOutcome(NativeEurCalibrationOutcome outcome)
@@ -210,7 +221,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
             throw new ArgumentException("EUR_CALIBRATION_INVALID_CAUSAL_OUTCOME");
         eurHistory.Clear();
         eurManagementChoices.Clear();
-        eurCenteredPayoffs.Clear();
+        eurCenteredPayoffs.Clear();eurPathPayoffs.Clear();
         eurCalibration=calibration;
         foreach(var outcome in calibration.Outcomes)AddEurOutcome(outcome);
         if(eurDevelopmentProfile is {UseAdaptivePayoff:true} adaptive)
@@ -384,6 +395,17 @@ public sealed partial class NativeUnifiedPortfolioEngine
             if(scored.LifecycleEstimator is { } estimator)
             {
                 if(candidateRiskEur<=0m||currentCostFloorEur<0m)return null;
+                if(estimator.StartsWith("DISTRIBUTION_",StringComparison.Ordinal))
+                {
+                    var distributionKey=(target.Symbol,family,side,target.CostRiskFraction);
+                    if(!eurPathPayoffs.TryGetValue(distributionKey,out var cached)||cached.At!=scoredAt)
+                    {
+                        cached=(scoredAt,NativeDistributionLifecycle.Estimate(scoredHistory,family,side,target,scoredAt,
+                            estimator[13..],scored.MinimumEpisodes,scored.MinimumDays,scored.DayPenalty,diagnostic));
+                        eurPathPayoffs[distributionKey]=cached;
+                    }
+                    return NativeCenteredLifecycle.Reprice(cached.Payoff,candidateRiskEur,currentCostFloorEur,diagnostic);
+                }
                 int? regime=target.ClosedStates.SingleOrDefault(x=>x.Timeframe==NativeBarTimeframe.H1)?.Direction;
                 bool matched=estimator=="CENTERED_COST_CONTEXT";
                 int? fast=matched?target.ClosedStates.SingleOrDefault(x=>x.Timeframe==NativeBarTimeframe.M15)?.Direction:null;

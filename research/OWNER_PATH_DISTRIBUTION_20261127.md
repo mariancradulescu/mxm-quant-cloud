@@ -1,0 +1,15 @@
+# Causal path distribution development
+
+OWNER's 27 November mandate authorizes a new exposed-development experiment. All original protocols, raw sources and closed results remain immutable. No orders, Cloud activation or qualification are authorized.
+
+The annual comparison reuses every first annual bar partition for the 20 prospectively selected instruments in census tranches 5–9. Verify pinned ZIP digests, encrypted packets, original account, exact request/response replay and original partition reports. Keep nonuniform or overlapping nominal bars quarantined; preserve gaps and session boundaries. No broker request occurs.
+
+At hourly nonoverlapping decision clocks, use only strictly closed M5/M15/H1 context. Forecast 15/30/60 minute return distributions, favorable/adverse excursions and first passage to ±1 ATR. An OHLC bar touching both boundaries leaves first passage bounded in [0,1]. Incomplete future paths are censored and labels crossing stage boundaries excluded. No forecast horizon imposes a position exit.
+
+Compare raw fast-direction reference with pooled, local and multivariate contextual empirical distributions. Context includes synchronized same-class peer state when available, multiscale efficiency/displacement and time phase; optional absolute-age forgetting has 14/28/56-day controls. Day-balanced weights, effective calendar support, quantiles, expected shortfall and regime entropy expose uncertainty. The multivariate method is a hypothesis, not a mandatory winning model.
+
+Chronology: development 2025-11-01 to 2026-05-01; selection to 2026-08-01; final exposed evaluation to the source's authentic end, no later than 2026-11-26. Five distribution choices per horizon are fixed before evaluation. Select globally on chronological daily increments against the matched raw reference, with sqrt(2 log(5)) selection penalty; CASH is retained if no increment has a positive bound. Keep every instrument/method/stage and negative result. Statistical bounds are development diagnostics, not independent confirmation.
+
+The economic integration learns distributions of actual reconciled monetary episodes and their sampled favorable/adverse paths. Compare the existing centered estimator, local distribution, contextual distribution, and contextual entry plus conditional path management in aligned EUR300 books and adverse cost scenarios. WAIT/HOLD remain valid. Size, margin, cost, financing, pending commitments, protective stops and partial reduction constraints stay authoritative. Distribution management estimates continuation value against immediate liquidation; it does not turn forecast maturity into an exit timer.
+
+The reusable holding registry supplies valuation evidence only within proven source intervals. Frozen equity restatement keeps original event chains and cash. A separately registered economic experiment can use recovered marks with actual admission/risk decisions; it cannot retroactively insert admissions into frozen books. Annual bars and current contract metadata alone certify neither executable NET nor twelve independent economic months.
