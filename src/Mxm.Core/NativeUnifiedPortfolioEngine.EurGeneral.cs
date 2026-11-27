@@ -48,6 +48,21 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 return Array.Empty<Ucp1DecisionSignal>();
             candidates=NativeGeneralOpportunity.Describe(market,tick).Select(x=>x.Signal).ToArray();
         }
+        if(eurDevelopmentProfile is {RequireEconomicBoundaryEdge:true} edge)
+            candidates=candidates.Where(g=>
+            {
+                var q=market.Quote;
+                int side=g.Side;
+                decimal now=side>0?q.Bid:q.Ask,entry=side>0?q.Ask:q.Bid,units=market.Contract.MinimumUnits;
+                if(NativeEconomicMechanisms.BoundaryContinuationEur(market,at,side,now,g.Stop,g.Target,
+                    edge.EconomicManagementTimeframe??edge.EconomicGeometryTimeframe) is not { } value||
+                    NativePortfolioFunding.OfferDebit(market,side,units,at,FundingScenarioId) is not decimal carry)return false;
+                decimal immediate=NativeExecutableEconomics.EstimateNet(q,q,side,units,entry,now,
+                    q.LiquidationSlippagePerSide??market.SlippagePerSideQuote);
+                // One adjacent-bar opportunity must cover current round-trip
+                // economics. Lifecycle labels and final portfolio still decide.
+                return (value.Mean-value.Sem)*units+immediate-carry>0m;
+            }).ToArray();
         var general=candidates.Select(geometry =>
         {
             decimal origin = market.M5[^1].Close;
@@ -336,12 +351,17 @@ public sealed partial class NativeUnifiedPortfolioEngine
             string? management=geometry.SelectedEconomicManagement??eurDevelopmentProfile.EconomicManagement;
             if(management=="BRACKET")return null;
             decimal? debit=NativePortfolioFunding.OfferDebit(market,side,position.Units,frame.At,FundingScenarioId);
-            if(debit is null||NativeEconomicMechanisms.Continuation(market,frame.At,eurDevelopmentProfile.EconomicManagementTimeframe??eurDevelopmentProfile.EconomicGeometryTimeframe,
-                eurDevelopmentProfile.Pav1TransitionBars) is not { } transition)return null;
-            decimal change=side*transition.Mean*position.Units;
-            decimal value=change*(change>=0m?q.EurCredit:q.EurDebit)-debit.Value;
-            decimal uncertainty=transition.Sem*position.Units*q.EurDebit;
-            if(management==NativeEconomicMechanisms.MonetaryReduce)
+            bool boundary=management is NativeEconomicMechanisms.BoundaryValue or NativeEconomicMechanisms.BoundaryReduce;
+            string? tf=eurDevelopmentProfile.EconomicManagementTimeframe??eurDevelopmentProfile.EconomicGeometryTimeframe;
+            var estimate=boundary?NativeEconomicMechanisms.BoundaryContinuationEur(market,frame.At,side,price,geometry.Stop,geometry.Target,tf):
+                NativeEconomicMechanisms.Continuation(market,frame.At,tf,eurDevelopmentProfile.Pav1TransitionBars);
+            if(debit is null||estimate is not { } transition)return null;
+            decimal change=side*transition.Mean;
+            decimal meanEur=boundary?transition.Mean:change*(change>=0m?q.EurCredit:q.EurDebit);
+            decimal uncertaintyEur=boundary?transition.Sem:transition.Sem*q.EurDebit;
+            decimal value=meanEur*position.Units-debit.Value;
+            decimal uncertainty=uncertaintyEur*position.Units;
+            if(management is NativeEconomicMechanisms.MonetaryReduce or NativeEconomicMechanisms.BoundaryReduce)
             {
                 // Do not use differences of funding ceilings as a guaranteed
                 // monetary saving. First compare actual common-book constraints.
@@ -366,9 +386,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
                             return rows.Length==1?rows[0].NextScheduledManagementAt:null;
                         }
                         long? fullHorizon=Horizon(position.Units);
-                        decimal meanPerUnit=side*transition.Mean;
-                        meanPerUnit=Math.Min(meanPerUnit,residual);
-                        meanPerUnit*=meanPerUnit>=0m?q.EurCredit:q.EurDebit;
+                        decimal meanPerUnit=boundary?transition.Mean:Math.Min(side*transition.Mean,residual);
+                        if(!boundary)meanPerUnit*=meanPerUnit>=0m?q.EurCredit:q.EurDebit;
                         decimal fullFee=Fee(q,position.Units,-side);
                         decimal slip=q.LiquidationSlippagePerSide??position.SlippagePerSide;
                         decimal stopDistance=Math.Max(0m,side*(price-geometry.Stop))+slip+geometry.GapReservePerUnitQuote;
@@ -389,7 +408,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
                             if(residualRisk>reservedResidual)continue;
                             var advantage=NativeEconomicMechanisms.ConstrainedReductionValue(position.Units,close,
                                 market.Contract.MinimumUnits,market.Contract.MaximumUnits,market.Contract.VolumeStepUnits,
-                                meanPerUnit,transition.Sem*q.EurDebit,residualDebit,fullFee,
+                                meanPerUnit,uncertaintyEur,residualDebit,fullFee,
                                 Fee(q,close,-side),residualFee,equity,floor,otherMargin,otherRisk,own.MarginPerUnit,
                                 fullRisk,reservedResidual);
                             if(advantage is decimal candidate&&candidate>best){best=candidate;closeUnits=close;}
@@ -405,7 +424,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 return value+uncertainty<0m?new("INTEGRATED_MECHANISM_NEGATIVE_CONTINUATION",position.Units):null;
             }
             if(value+uncertainty<0m)return new("INTEGRATED_MECHANISM_NEGATIVE_CONTINUATION",position.Units);
-            if(management=="CAPTURE_VALUE"&&position.EntryQuote is { } entry&&
+            if((management=="CAPTURE_VALUE"||management==NativeEconomicMechanisms.BoundaryValue)&&position.EntryQuote is { } entry&&
                 position.EntryPrice is decimal entryPrice)
             {
                 // Immediate executable liquidation is the alternative to HOLD.
@@ -415,6 +434,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 if(now>0m&&value<=0m&&!fundingReserves!.IsOutstanding(position.Id))
                     return new("INTEGRATED_MECHANISM_CAPTURE_NONPOSITIVE_CONTINUATION",position.Units);
             }
+            if(boundary)return null; // no arbitrary minimum-lot reduction without portfolio dominance
             decimal minimum=market.Contract.MinimumUnits,volumeStep=market.Contract.VolumeStepUnits;
             decimal rest=position.Units-minimum;
             return value<0m&&!geometry.Reduced&&minimum>0m&&volumeStep>0m&&rest>=minimum&&(rest-minimum)%volumeStep==0m
