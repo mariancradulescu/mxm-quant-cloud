@@ -1,0 +1,21 @@
+{
+  "Study": "OWNER_HELD_EARLIER_RESIDUAL_2",
+  "Scope": "earlier",
+  "Prior": {
+    "Run": 45993633142,
+    "Head": "f7c5a60c9e76bc6cd2923fe12306124e1f3cc0a6",
+    "Artifact": 15196616483,
+    "ArchiveSha256": "f18197c717eccb54881652803fd3bea3be7c092d560174dd956cdea454c39932"
+  },
+  "Coverage": {
+    "Run": 45983234609,
+    "Head": "2c09c5d3a68b877e1b750f2d364afc4a47ff725c",
+    "Artifact": 15193665248,
+    "ArchiveSha256": "bc2135886c49dd8504c75141bad1f2794756f7dad145bb5663e593e66d9352e3"
+  },
+  "PriorUnknown": 1254,
+  "SourceBrokerRequests": 0,
+  "OriginalPoliciesReplayed": 0,
+  "Orders": 0,
+  "CloudActivated": false
+}

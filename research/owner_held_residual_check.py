@@ -68,6 +68,9 @@ def fetch_prior(p,scope,folder):
 
 def inspect(work,scope):
  p=check();work.mkdir(parents=True,mode=0o700);prior=work/'prior';binding=fetch_prior(p,scope,prior)
+ inspect_conserved(work,scope,binding,prior,prior)
+
+def inspect_conserved(work,scope,binding,prior,coverage_folder):
  reports,source,tape=old.restore(work/'source',scope);demands,books,points=residual_demands(reports,prior,scope)
  REPORT.mkdir();write(REPORT/'residual-demands.json',demands)
  registry=prior/'verified-valuation-registry.json';plan=REPORT/'native-residual-assessment.json'
@@ -75,14 +78,14 @@ def inspect(work,scope):
  result=read(plan);need(result['RegistrySha256']==binding['RegistrySha256'] and result['DistinctSymbolClocks']==len(demands),'HELD_RESIDUAL_NATIVE_ASSESSMENT_BINDING')
  # Positive prefixes, complete intervals, and authenticated absence all remain
  # reusable. No missing-window diagnosis may authorize recollecting them.
- base=read(prior/'collection-coverage.json');supplement=read(prior/'remaining-source-summary.json')
+ base=read(coverage_folder/'collection-coverage.json');supplement=read(coverage_folder/'remaining-source-summary.json')
  coverage=dict(Rows=base['Rows']+supplement['Coverage'])
  for i,g in enumerate(result['Groups']):
   for side in ('BID','ASK'):coverage['Rows'].append(dict(Group='residual/'+str(i),Symbol=g['Symbol'],Side=side,Mode=g['Mode'],
    From=g['From'],Through=g['Through'],Complete=False,AuthenticAbsence=False,MissingWindows=[[g['From'],g['Through']]]))
  prefixes=read(registry)['Rows'];targets=remaining.pending_targets(coverage,prefixes);write(REPORT/'additional-uncollected-targets.json',targets)
  counts=collections.Counter(r['Status'] for r in result['Assessments'])
- write(REPORT/'summary.json',dict(Study=p['Study'],Scope=scope,Prior=binding,OriginalBooksWithExactHeldCountParity=books,
+ write(REPORT/'summary.json',dict(Study='OWNER_HELD_RESIDUAL_CHECK_1',Scope=scope,Prior=binding,OriginalBooksWithExactHeldCountParity=books,
   ResidualBookPoints=points,DistinctHeldSymbolMoments=len(demands),CurrentlyCostValuableSymbolMoments=result['ResolvedBefore'],
   SourceAssessmentCounts=dict(counts),NativeUnresolvedSourceGroups=len(result['Groups']),AdditionalUncollectedSideWindows=len(targets),
   OriginalCashAndEventChainsPreserved=True,SourceBrokerRequests=0,OriginalPoliciesReplayed=0,Orders=0,CloudActivated=False))
