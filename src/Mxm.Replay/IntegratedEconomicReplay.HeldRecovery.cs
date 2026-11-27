@@ -16,18 +16,20 @@ internal static partial class IntegratedEconomicReplay
         return new(document.RootElement.GetProperty("Rows").Deserialize<NativeValuationPrefix[]>(Json)!);
     }
 
-    public static int RunHeldRecoveryPlan(string sourcePath,string tapePath,string demandsPath,string output)
+    public static int RunHeldRecoveryPlan(string sourcePath,string tapePath,string demandsPath,string output,string? registryPath=null)
     {
         var bytes=File.ReadAllBytes(sourcePath);var input=JsonSerializer.Deserialize<EerInput>(bytes,Json)!;
         var demands=JsonSerializer.Deserialize<HeldDemand[]>(File.ReadAllBytes(demandsPath),Json)!;
-        var source=new EerEvidence(input){MarketTimeFx=true,ValuationTape=new(tapePath)};
+        var source=new EerEvidence(input){MarketTimeFx=true,ValuationTape=new(tapePath),HeldRegistry=LoadValuationRegistry(registryPath)};
         var markets=input.Markets.ToDictionary(m=>m.Market.Name,StringComparer.Ordinal);
         var targets=new Dictionary<(string Symbol,string Mode,long Session),HashSet<long>>();
-        int resolved=0;
+        int resolved=0;var assessments=new List<EerEvidence.HeldMarkReceipt>();
         foreach(var d in demands)
         {
             source.BeginHistoricalClock();
-            if(source.InspectHeldMark(d.Symbol,d.At).EvidenceSha256 is not null){resolved++;continue;}
+            var mark=source.InspectHeldMark(d.Symbol,d.At);
+            if(registryPath is not null)assessments.Add(mark);
+            if(mark.EvidenceSha256 is not null){resolved++;continue;}
             if(!markets.TryGetValue(d.Symbol,out var market)||market.Market.DatedDevelopment is not { } terms)continue;
             var names=new HashSet<string>(StringComparer.Ordinal){d.Symbol};
             foreach(var asset in new[]{terms.Contract.QuoteAsset,"USD",terms.Contract.MinimumCommissionAsset}.OfType<string>())
@@ -51,7 +53,8 @@ internal static partial class IntegratedEconomicReplay
         }).ToArray();
         File.WriteAllBytes(output,JsonSerializer.SerializeToUtf8Bytes(new{Study="OWNER_HELD_EQUITY_RECOVERY_1",
             SourceSha256=GeneralSha(bytes),DemandSha256=GeneralSha(File.ReadAllBytes(demandsPath)),
-            DistinctSymbolClocks=demands.Length,ResolvedBefore=resolved,Groups=groups,
+            DistinctSymbolClocks=demands.Length,ResolvedBefore=resolved,Groups=groups,Assessments=assessments,
+            RegistrySha256=registryPath is null?null:GeneralSha(File.ReadAllBytes(registryPath)),
             Orders=0,CloudActivated=false,OriginalPoliciesReplayed=0},Json));
         return 0;
     }

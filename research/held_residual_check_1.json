@@ -1,0 +1,14 @@
+{
+  "Study": "OWNER_HELD_RESIDUAL_CHECK_1",
+  "PriorRun": 45983234609,
+  "PriorHead": "2c09c5d3a68b877e1b750f2d364afc4a47ff725c",
+  "Scopes": [
+    "earlier",
+    "recent"
+  ],
+  "Purpose": "Inspect exact residual held positions before any new source request",
+  "OriginalPoliciesReplayed": 0,
+  "SourceBrokerRequests": 0,
+  "Orders": 0,
+  "CloudActivated": false
+}
