@@ -1,0 +1,112 @@
+{
+  "Run": 45983234693,
+  "Head": "2c09c5d3a68b877e1b750f2d364afc4a47ff725c",
+  "Artifact": 15192146112,
+  "ArchiveSha256": "aa3d14c64472e9bf313831b9e519fb815595b8e495df5ee4dd037b2dee732de2",
+  "Study": "OWNER_DISTRIBUTION_PATH_CAUSAL_2",
+  "Labels": 223483,
+  "Markets": 20,
+  "SourceSha256": "c80a5a19beb9d5f52537d48b72aef0b3c49f9e01a8e7531f5bc0f764b0c4cd00",
+  "Choices": [
+    {
+      "H": 15,
+      "Method": "CASH",
+      "Increment": 0.09412838293150927,
+      "Lower": -0.018991085285752354
+    },
+    {
+      "H": 30,
+      "Method": "CASH",
+      "Increment": 0.0346955746833937,
+      "Lower": -0.060470025964123285
+    },
+    {
+      "H": 60,
+      "Method": "CASH",
+      "Increment": 0.06730916912716702,
+      "Lower": -0.033674042749790974
+    }
+  ],
+  "Methods": [
+    {
+      "Method": "CONTEXT_14",
+      "Rows": 60,
+      "GrossPositive": 40,
+      "StablePositive": 8,
+      "ActiveCoverage": 0.16078942095772392,
+      "EqualSymbolHorizonGrossAtr": 0.001320038463186125,
+      "Brier": 0.24973354640236664
+    },
+    {
+      "Method": "CONTEXT_28",
+      "Rows": 60,
+      "GrossPositive": 36,
+      "StablePositive": 9,
+      "ActiveCoverage": 0.15887168331568252,
+      "EqualSymbolHorizonGrossAtr": 0.00015472551516613277,
+      "Brier": 0.24949763773240424
+    },
+    {
+      "Method": "CONTEXT_56",
+      "Rows": 60,
+      "GrossPositive": 35,
+      "StablePositive": 10,
+      "ActiveCoverage": 0.15786988006983999,
+      "EqualSymbolHorizonGrossAtr": -0.0009093562740010984,
+      "Brier": 0.24942507878477654
+    },
+    {
+      "Method": "LOCAL_28",
+      "Rows": 60,
+      "GrossPositive": 39,
+      "StablePositive": 6,
+      "ActiveCoverage": 0.1898846495119787,
+      "EqualSymbolHorizonGrossAtr": 0.011969352666389809,
+      "Brier": 0.25018274512488775
+    },
+    {
+      "Method": "NO_PEERS_28",
+      "Rows": 60,
+      "GrossPositive": 34,
+      "StablePositive": 9,
+      "ActiveCoverage": 0.1600022898359905,
+      "EqualSymbolHorizonGrossAtr": -0.0008087329073422613,
+      "Brier": 0.2495243680157005
+    },
+    {
+      "Method": "POOLED_0",
+      "Rows": 60,
+      "GrossPositive": 25,
+      "StablePositive": 9,
+      "ActiveCoverage": 0.15306122448979592,
+      "EqualSymbolHorizonGrossAtr": 0.003635097939352686,
+      "Brier": 0.24952259353871642
+    },
+    {
+      "Method": "RAW_REFERENCE",
+      "Rows": 60,
+      "GrossPositive": 23,
+      "StablePositive": 5,
+      "ActiveCoverage": 0.97808913186593,
+      "EqualSymbolHorizonGrossAtr": -0.05553771395460412,
+      "Brier": null
+    }
+  ],
+  "StageLabels": {
+    "DEVELOPMENT": 101889,
+    "SELECTION": 51720,
+    "EVALUATION_EXPOSED": 69874
+  },
+  "Orders": 0,
+  "CloudActivated": false,
+  "PortfolioEvaluated": false,
+  "IndependentConfirmationCertified": false,
+  "OriginalResultArtifact": 15189126012,
+  "OriginalResultArchiveSha256": "c865f10a51a11c85e474a417a12a8e9739ceaf3ee2d45423f1b40ac63db238fe",
+  "OriginalReportConserved": true,
+  "OriginalRawReferenceIdentical": true,
+  "SourceBytesIdentical": true,
+  "PeerMembershipUsesClosedContextsOnly": true,
+  "SelectionMultiplicity": 6,
+  "SourceBrokerRequests": 0
+}

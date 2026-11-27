@@ -22,9 +22,10 @@ public static class NativeCausalPathDistribution
 {
     public static NativePathDistributionForecast? Estimate(IEnumerable<NativePathSample> history,
         string symbol,string? assetClass,double?[] features,long at,string mode="CONTEXT",int halfLifeDays=28,
-        int minimumSamples=24,int minimumDays=5,decimal penalty=1.645m)
+        int minimumSamples=24,int minimumDays=5,decimal penalty=1.645m,int? activeFeatureCount=null)
     {
-        if(mode is not ("LOCAL" or "POOLED" or "CONTEXT")||halfLifeDays<0||minimumSamples<2||minimumDays<2)
+        int featureCount=activeFeatureCount??features.Length;
+        if(mode is not ("LOCAL" or "POOLED" or "CONTEXT")||halfLifeDays<0||minimumSamples<2||minimumDays<2||featureCount<0||featureCount>features.Length)
             throw new ArgumentException("PATH_DISTRIBUTION_OPTIONS");
         var rows=history.Where(x=>x.AvailableAt<at&&x.DecisionAt<x.AvailableAt&&x.Features.Length==features.Length&&
             x.Favorable>=0m&&x.Adverse>=0m&&x.UpperFirstLower>=0m&&x.UpperFirstLower<=x.UpperFirstUpper&&
@@ -36,7 +37,7 @@ public static class NativeCausalPathDistribution
         var weighted=rows.Select(x=>
         {
             double distance=0;int dimensions=0;
-            if(mode=="CONTEXT")for(int i=0;i<features.Length;i++)
+            if(mode=="CONTEXT")for(int i=0;i<featureCount;i++)
             {
                 if(features[i] is double a&&x.Features[i] is double b&&double.IsFinite(a)&&double.IsFinite(b))
                 {double delta=Math.Atan(a)-Math.Atan(b);distance+=delta*delta;dimensions++;}

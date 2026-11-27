@@ -102,8 +102,8 @@ internal static class DistributionAnnual
                 history.TryGetValue((x.Horizon,scope),out var rows);
                 IEnumerable<NativePathSample> samples=rows??new Queue<NativePathSample>();
                 double?[] query=features[(x.Symbol,x.At)];
-                if(mode=="NO_PEERS"){samples=samples.Select(s=>s with{Features=s.Features[..8]});query=query[..8];}
-                var forecast=NativeCausalPathDistribution.Estimate(samples,x.Symbol,x.AssetClass,query,x.At,mode=="NO_PEERS"?"CONTEXT":mode,half);
+                var forecast=NativeCausalPathDistribution.Estimate(samples,x.Symbol,x.AssetClass,query,x.At,
+                    mode=="NO_PEERS"?"CONTEXT":mode,half,activeFeatureCount:mode=="NO_PEERS"?8:null);
                 decimal? uncertainty=forecast?.Mean-forecast?.LowerMean;
                 int side=forecast is null?0:forecast.Mean>uncertainty?1:forecast.Mean< -uncertainty?-1:0;
                 Record(mode+"_"+half,side,forecast);

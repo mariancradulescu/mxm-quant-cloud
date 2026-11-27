@@ -1,0 +1,160 @@
+{
+  "Study": "OWNER_HELD_SOURCE_RECOVERY_RECEIPT_20261127",
+  "OriginalCaptureRun": 45973360072,
+  "OriginalCaptureHead": "f4dfb9afe4ce07d4d95d9f665e504adc3329325d",
+  "CompletionRun": 45983234609,
+  "CompletionHead": "2c09c5d3a68b877e1b750f2d364afc4a47ff725c",
+  "OriginalCaptureArtifact": 15189662538,
+  "OriginalCaptureArchiveSha256": "f38e4ab3c4cd8971116e999512deab79ebf483014cf928120b04defc110337d7",
+  "PlanArtifact": 15189209983,
+  "PlanArchiveSha256": "00b976bdfceea03efd34ab059ec0a7ad31c4148915b1d8673f661682400cb177",
+  "DistinctInstrumentMoments": 93327,
+  "SharedNetHorizonMemoryDemands": 57403,
+  "SourceGroups": 3844,
+  "OriginalReconciledPackets": 6578,
+  "SupplementalReconciledPackets": 1052,
+  "OriginalPrefixRows": 2614738,
+  "SupplementalPrefixRows": 453878,
+  "MergedPrefixRows": 3068616,
+  "OriginalIncompleteSideWindows": 1110,
+  "DistinctAdditionalWindows": 1052,
+  "SupplementalIncompleteWindows": 0,
+  "SupplementalAuthenticAbsentIntervals": 398,
+  "OriginalClosedSessionIncompleteWindows": 0,
+  "SupplementalProtectedArchives": [
+    {
+      "Artifact": 15191255062,
+      "ArchiveSha256": "d540a5ed01d9c99117c4d57e6c9c0118fcc46654977c9397c433f60efe6061c6",
+      "Index": 0,
+      "RunId": "45983234609",
+      "Requests": 200,
+      "Orders": 0,
+      "CloudActivated": false
+    },
+    {
+      "Artifact": 15191220546,
+      "ArchiveSha256": "1c9cfc757120b6b3c6bc19537d3d959879add6e16e781e88d0acb2434799ebb1",
+      "Index": 1,
+      "RunId": "45983234609",
+      "Requests": 200,
+      "Orders": 0,
+      "CloudActivated": false
+    },
+    {
+      "Artifact": 15191465456,
+      "ArchiveSha256": "b0a18c77384f23bdb8da1aa4a0b81a06a7ae3ddaeffc8eacb95be2b758a24f9f",
+      "Index": 2,
+      "RunId": "45983234609",
+      "Requests": 200,
+      "Orders": 0,
+      "CloudActivated": false
+    },
+    {
+      "Artifact": 15190577263,
+      "ArchiveSha256": "cddcb0e143c7c2a7e0c6303fd1dcf0938d4c6610aab6d668ed35e96acf7e1553",
+      "Index": 3,
+      "RunId": "45983234609",
+      "Requests": 200,
+      "Orders": 0,
+      "CloudActivated": false
+    },
+    {
+      "Artifact": 15191416427,
+      "ArchiveSha256": "baa0345bf6b6d7c588ce3e5af8615094e96e2704e4d74593542b62c9b8dd01fe",
+      "Index": 4,
+      "RunId": "45983234609",
+      "Requests": 200,
+      "Orders": 0,
+      "CloudActivated": false
+    },
+    {
+      "Artifact": 15190832332,
+      "ArchiveSha256": "6aa5e94e3db659c9f831172469e3a98106611a5157cab45522a57fa6a4438a7d",
+      "Index": 5,
+      "RunId": "45983234609",
+      "Requests": 52,
+      "Orders": 0,
+      "CloudActivated": false
+    }
+  ],
+  "SupplementalVerifiedArchives": [
+    {
+      "Index": 0,
+      "RunId": "45983234609",
+      "Artifact": 15191810589,
+      "ArchiveSha256": "3505af0bfe2cd6c2a0e03c3c187e16b43458393893cc6eaac49dba8e843be495",
+      "PacketsReconciled": 200,
+      "Prefixes": 961,
+      "Incomplete": 0,
+      "AuthenticAbsence": 140,
+      "Orders": 0,
+      "CloudActivated": false
+    },
+    {
+      "Index": 1,
+      "RunId": "45983234609",
+      "Artifact": 15190712232,
+      "ArchiveSha256": "edaa55dda54966d7bb838c263d1aa05a3b8850ef5109d8aa8587dff9b0b73fde",
+      "PacketsReconciled": 200,
+      "Prefixes": 50544,
+      "Incomplete": 0,
+      "AuthenticAbsence": 87,
+      "Orders": 0,
+      "CloudActivated": false
+    },
+    {
+      "Index": 2,
+      "RunId": "45983234609",
+      "Artifact": 15190592440,
+      "ArchiveSha256": "8a8a5edc8577785e4f3b2b8e7966a32c1de987dc2c91a1df99bdf3603485283c",
+      "PacketsReconciled": 200,
+      "Prefixes": 86196,
+      "Incomplete": 0,
+      "AuthenticAbsence": 54,
+      "Orders": 0,
+      "CloudActivated": false
+    },
+    {
+      "Index": 3,
+      "RunId": "45983234609",
+      "Artifact": 15191845494,
+      "ArchiveSha256": "7f21cfc36136c215e0f14abe54841d77a7e44f206555b99eadc0cd6adba86682",
+      "PacketsReconciled": 200,
+      "Prefixes": 79565,
+      "Incomplete": 0,
+      "AuthenticAbsence": 69,
+      "Orders": 0,
+      "CloudActivated": false
+    },
+    {
+      "Index": 4,
+      "RunId": "45983234609",
+      "Artifact": 15191691043,
+      "ArchiveSha256": "e277023c1e099d5ff5bd10ea83197857cd32fa50b5c1a0c2bcbffdae3f822319",
+      "PacketsReconciled": 200,
+      "Prefixes": 204010,
+      "Incomplete": 0,
+      "AuthenticAbsence": 35,
+      "Orders": 0,
+      "CloudActivated": false
+    },
+    {
+      "Index": 5,
+      "RunId": "45983234609",
+      "Artifact": 15191251581,
+      "ArchiveSha256": "c84da40b031ab9f4e204ab5248a7e0705ce08664160e5c1d6fa0292f9b003272",
+      "PacketsReconciled": 52,
+      "Prefixes": 32602,
+      "Incomplete": 0,
+      "AuthenticAbsence": 13,
+      "Orders": 0,
+      "CloudActivated": false
+    }
+  ],
+  "AllRequestedWindowsResolvedToCoverageOrAuthenticAbsence": true,
+  "UnknownPricesInvented": 0,
+  "OriginalPoliciesReplayed": 0,
+  "Orders": 0,
+  "CloudActivated": false,
+  "IndependentConfirmationCertified": false
+}

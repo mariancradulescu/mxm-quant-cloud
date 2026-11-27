@@ -78,8 +78,7 @@ internal static partial class IntegratedEconomicReplay
         var source=new EerEvidence(input){MarketTimeFx=true,ValuationTape=tape,MinimumFundingHorizonMs=distributionStudy?3_600_000L:(multibarStudy||adaptiveStudy)?1_800_000L:boundaryStudy?900_000L:0L,
             CaptureHoldingValuationGaps=multibarStudy||adaptiveStudy||distributionStudy,RecoverFreshHoldingMarks=controlledRecencyStudy||distributionStudy,
             CaptureBetweenDecisionValuationGaps=controlledRecencyStudy||distributionStudy,
-            HeldRegistry=valuationRegistryPath is null?null:new NativeReusableValuationRegistry(
-                JsonDocument.Parse(File.ReadAllBytes(valuationRegistryPath)).RootElement.GetProperty("Rows").Deserialize<NativeValuationPrefix[]>(Json)!)};
+            HeldRegistry=LoadValuationRegistry(valuationRegistryPath)};
         var streams=input.Markets.ToDictionary(m=>m.Market.Name,m=>new EerStream(m),StringComparer.Ordinal);
         var sharedObservers=new Dictionary<string,EurOpportunityObserver>(StringComparer.Ordinal);
         EurOpportunityObserver? Observer(NativeEurDevelopmentProfile profile)
