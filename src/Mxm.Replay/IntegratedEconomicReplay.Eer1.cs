@@ -68,6 +68,17 @@ internal static partial class IntegratedEconomicReplay
         public bool RecoverFreshRegistryHoldingMarks {get;init;}
         public bool CaptureBetweenDecisionValuationGaps {get;init;}
         readonly HashSet<(string Symbol,long At,string Reason)> holdingValuationGaps=new();
+        public sealed record HoldingGapCheckpoint(string Symbol,long At,string Reason);
+        public HoldingGapCheckpoint[] SaveHoldingGaps()=>holdingValuationGaps.Select(x=>
+            new HoldingGapCheckpoint(x.Symbol,x.At,x.Reason)).ToArray();
+        public void RestoreHoldingGaps(HoldingGapCheckpoint[] saved,long lastClock)
+        {
+            if(holdingValuationGaps.Count!=0||saved.Any(x=>x.At>lastClock))
+                throw new InvalidDataException("FACTORIAL_CHECKPOINT_HOLDING_GAPS");
+            foreach(var row in saved)
+                if(!holdingValuationGaps.Add((row.Symbol,row.At,row.Reason)))
+                    throw new InvalidDataException("FACTORIAL_CHECKPOINT_DUPLICATE_GAP");
+        }
         public object HoldingValuationGapReport()=>holdingValuationGaps.GroupBy(x=>new{x.Symbol,x.Reason})
             .OrderBy(g=>g.Key.Symbol,StringComparer.Ordinal).ThenBy(g=>g.Key.Reason,StringComparer.Ordinal)
             .Select(g=>new{g.Key.Symbol,g.Key.Reason,Clocks=g.Select(x=>x.At).OrderBy(x=>x).ToArray()}).ToArray();
