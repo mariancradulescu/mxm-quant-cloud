@@ -99,7 +99,7 @@ internal static partial class IntegratedEconomicReplay
             throw new InvalidDataException("DISTRIBUTION_STUDY_ABLATION_BINDING");
         if(factorialStudy)
         {
-            var expected=new (string Id,string Estimator,bool Tail,bool Management,string? Pav1)[]
+            var expected=new (string Id,string? Estimator,bool Tail,bool Management,string? Pav1)[]
             {
                 ("CENTERED_CONTROL","CENTERED_COST_CONTEXT",false,false,null),
                 ("CENTERED_MANAGEMENT","CENTERED_COST_CONTEXT",false,true,null),
