@@ -580,6 +580,21 @@ internal static class NativeEurPortfolioChecks
             midnight+28*3_600_000L&&NativeBrokerContractCosts.NextScheduledSwapCharge(
                 c with {SwapTimeUtcMinute=null},Origin) is null,
             "Rollover respects the first charge hour and preserves an absent official clock");
+        long friday=1786140000000L,day=86_400_000L;
+        var daily=c with {ObservedAtUtcMs=friday-day*2,SwapPeriodHours=24,SwapTimeUtcMinute=1320,
+            ChargeSwapAtWeekends=false,SkipSwapPeriods=1,TripleSwapWeekday=5,
+            SwapCalculationType=0,PipPosition=0,LongSwap=-2m,ShortSwap=0m};
+        long from=friday-day-1,through=friday+3*day;
+        var eligible=NativeBrokerContractCosts.ObservedDailySwapChargeClocks(daily,from,through,1,1m,false);
+        var consulted=new List<long>();
+        decimal? settled=NativeBrokerContractCosts.ObservedDailySwapEur(daily,from,through,1,1m,false,0,2,2,
+            at=>{consulted.Add(at);return new(null,new NativeOriginalFxRate(1m,1.25m,new[]{"FX"}));});
+        check(eligible is not null&&eligible.SequenceEqual(new[]{friday,through})&&consulted.SequenceEqual(eligible)&&settled==-10m,
+            "Recovery and settlement use the same skipped Thursday, excluded weekend, Friday triple and debit FX");
+        check(NativeBrokerContractCosts.ObservedDailySwapChargeClocks(daily,from,through,-1,1m,false) is {Length:0}&&
+            NativeBrokerContractCosts.ObservedDailySwapChargeClocks(daily with {ChargeSwapAtWeekends=null},from,through,1,1m,false) is null,
+            "Zero-rate and unknown-calendar funding remain distinct");
+
     }
 
     static void LateNetChangesRanking(Action<bool,string> check)
