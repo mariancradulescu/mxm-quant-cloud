@@ -53,5 +53,10 @@ internal static class NativeReusableValuationChecks
             "new authentic-shaped held marks recover liquidation equity and margin without a new fill");
         check(book.Checkpoint()==heldCheckpoint&&book.Summary().CashEur==300m,
             "held restatement leaves the original event chain position and cash byte-identical");
+        var position=book.InspectConditionalPositions(5000,new[]{Q(5000,102m)}).Single();
+        check(position.PositionId=="P"&&position.FloatingAfterExitCostsEur==1m&&position.MarginEur==1m&&
+            book.Checkpoint()==heldCheckpoint,"individual conditional value uses native exit economics without changing the book");
+        check(book.InspectConditionalPositions(5000,Array.Empty<LedgerQuote>()).Single().FloatingAfterExitCostsEur is null,
+            "missing held evidence remains unknown in individual monetary valuation");
     }
 }
