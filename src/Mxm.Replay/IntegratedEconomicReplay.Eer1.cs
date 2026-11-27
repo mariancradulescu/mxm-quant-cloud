@@ -76,6 +76,7 @@ internal static partial class IntegratedEconomicReplay
         readonly Dictionary<string,EerMarket> marketCalendars;
         readonly Dictionary<string,NativeMarketTimeCalendar> marketTimeCalendars;
         public bool MarketTimeFx { get; init; }
+        public NativeReusableValuationRegistry? HeldRegistry { get; init; }
         public EerProtectionTape? ValuationTape { get; init; }
         public Dictionary<string,int> FxEvidenceCounts { get; }=new(StringComparer.Ordinal);
         public Dictionary<string,NativeMarketTimePrice> ClosedPriceWitnesses { get; }=new(StringComparer.Ordinal);
@@ -109,7 +110,7 @@ internal static partial class IntegratedEconomicReplay
         public SourceQuote? At(string name,long at)=>tape.GetValueOrDefault(name)?.GetValueOrDefault(at);
         public DatedRolloverQuote? FundingAt(string name,long at)=>funding.GetValueOrDefault(name)?.GetValueOrDefault(at);
 
-        bool VerifiedClosedNow(string name,long at)
+        public bool VerifiedClosedNow(string name,long at)
         {
             if(at<Input.Start||at>=Input.End+7*HistoricalDay||marketTimeCalendars.GetValueOrDefault(name)?.Valid!=true||
                 marketCalendars.GetValueOrDefault(name) is not {ScheduledClocks:{ } opened,AmbiguousCalendarClocks:{ } ambiguous})return false;
@@ -119,7 +120,10 @@ internal static partial class IntegratedEconomicReplay
 
         NativeMarketTimePrice? MarketPrice(string name,bool bid,long at,NativeHistoricalFundingPrefix? prefix=null)
         {
-            prefix??=ValuationTape?.LatestPrefix(name,bid,at);
+            var candidates=new[]{prefix,ValuationTape?.LatestPrefix(name,bid,at),HeldRegistry?.At(name,bid,at)}
+                .OfType<NativeHistoricalFundingPrefix>().ToArray();
+            if(candidates.GroupBy(p=>p.At).Any(g=>g.Select(p=>p.Price).Distinct().Count()>1))return null;
+            prefix=candidates.OrderByDescending(p=>p.At).FirstOrDefault();
             var point=prefix is null?null:NativeMarketTimeFx.Resolve(prefix,at,marketTimeCalendars.GetValueOrDefault(name));
             if(point?.UsedClosedSessions==true)
             {FxCount("VERIFIED_CLOSED_SESSION_PRICE");ClosedPriceWitnesses[FormattableString.Invariant($"{name}/{(bid?"BID":"ASK")}/{at}")]=point;}
@@ -127,11 +131,18 @@ internal static partial class IntegratedEconomicReplay
             return point;
         }
 
+        public bool HasValuationPair(string name,long at)
+        {
+            if(At(name,at) is { } q&&Fresh(q,at,30000L)||ValuationTape?.QuoteAt(name,at) is not null)return true;
+            return VerifiedClosedNow(name,at)&&MarketPrice(name,true,at) is { } bid&&
+                MarketPrice(name,false,at) is { } ask&&ask.Price>=bid.Price;
+        }
+
         public sealed record HeldMarkReceipt(string Symbol,long At,string Status,long? BidAt=null,long? AskAt=null,
-            string? EvidenceSha256=null,string? RequiredAsset=null,string[]? OfficialRouteSymbols=null);
+            string? EvidenceSha256=null,string? RequiredAsset=null,string[]? OfficialRouteSymbols=null,LedgerQuote? Quote=null);
         // Preflight only on a hash-bound original source. Evidence is not an
         // executable frame, a fill, equity, or an authorization to query a broker.
-        public HeldMarkReceipt InspectHeldMark(string name,long at)
+        public HeldMarkReceipt InspectHeldMark(string name,long at,decimal stress=0m,bool includeQuote=false)
         {
             HeldMarkReceipt Missing(string reason,string? asset=null)=>new(name,at,reason,
                 RequiredAsset:asset,OfficialRouteSymbols:asset is not null&&Input.Routes.TryGetValue(asset,out var route)?
@@ -139,6 +150,14 @@ internal static partial class IntegratedEconomicReplay
             if(!marketCalendars.TryGetValue(name,out var market))return Missing("SOURCE_CONTRACT_NOT_PRESENT");
             if(market.Market.DatedDevelopment is not { } terms)return Missing("MISSING_DATED_TERMS");
             var grid=At(name,at);var tick=ValuationTape?.QuoteAt(name,at);
+            var rb=HeldRegistry?.At(name,true,at);var ra=HeldRegistry?.At(name,false,at);
+            if(rb is not null&&ra is not null&&at-rb.At<=30_000L&&at-ra.At<=30_000L&&ra.Price>=rb.Price)
+            {
+                var recovered=new SourceQuote(at,rb.At,ra.At,rb.Price,ra.Price,null!);
+                if(tick is not null&&(tick.BidAt==rb.At&&tick.Bid!=rb.Price||tick.AskAt==ra.At&&tick.Ask!=ra.Price))
+                    return Missing("CONFLICTING_AUTHENTIC_RECOVERY_PAIR");
+                if(tick is null||Math.Min(rb.At,ra.At)>Math.Min(tick.BidAt,tick.AskAt))tick=recovered;
+            }
             if(grid is not null&&!Fresh(grid,at,30_000L))grid=null;
             if(tick is not null&&!Fresh(tick,at,30_000L))tick=null;
             if(grid is not null&&tick is not null&&
@@ -179,9 +198,12 @@ internal static partial class IntegratedEconomicReplay
             {
                 var mark=NativeBrokerContractCosts.QuoteBothDirections(c,new(at,bid,ask,fx.CreditToEur,fx.DebitToEur,
                     usd?.DebitToEur??0m,min?.DebitToEur,margin*c.MinimumUnits,c.MinimumUnits,0m)).Quote;
+                decimal slip=(ask-bid)*stress;
+                mark=mark with {LiquidationSlippagePerSide=slip,ExitFeePerUnit=mark.ExitFeePerUnit*(1m+stress),
+                    ExitFeeFloor=mark.ExitFeeFloor*(1m+stress),SellFeePerUnit=mark.SellFeePerUnit*(1m+stress)};
                 string witness=GeneralSha(JsonSerializer.SerializeToUtf8Bytes(new{
                     name,at,bidAt,askAt,basis,terms.Digest,Input.EvidenceManifestSha256,Mark=mark},Json));
-                return new(name,at,basis,bidAt,askAt,witness);
+                return new(name,at,basis,bidAt,askAt,witness,Quote:includeQuote?mark:null);
             }
             catch(ArgumentException){return Missing("CONTRACT_COST_OR_COMMISSION_ROUTE_UNSUPPORTED");}
         }
@@ -315,6 +337,9 @@ internal static partial class IntegratedEconomicReplay
                 else
                 {
                     var q=protection?.QuoteAt(h.Symbol,at)??(MarketTimeFx?ValuationTape?.QuoteAt(h.Symbol,at):null)??At(h.Symbol,at);
+                    if(HeldRegistry?.At(h.Symbol,true,at) is { } rbid&&HeldRegistry?.At(h.Symbol,false,at) is { } rask&&
+                        at-rbid.At<=30_000L&&at-rask.At<=30_000L&&rask.Price>=rbid.Price)
+                        q=new SourceQuote(at,rbid.At,rask.At,rbid.Price,rask.Price,null!);
                     if(q is null && protection is not null)
                         q=At(h.Symbol,(at-EurOffset)/EurStep*EurStep+EurOffset);
                     if(q is not null&&Fresh(q,at,30_000L))
