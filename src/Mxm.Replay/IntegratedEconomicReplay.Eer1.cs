@@ -127,6 +127,65 @@ internal static partial class IntegratedEconomicReplay
             return point;
         }
 
+        public sealed record HeldMarkReceipt(string Symbol,long At,string Status,long? BidAt=null,long? AskAt=null,
+            string? EvidenceSha256=null,string? RequiredAsset=null,string[]? OfficialRouteSymbols=null);
+        // Preflight only on a hash-bound original source. Evidence is not an
+        // executable frame, a fill, equity, or an authorization to query a broker.
+        public HeldMarkReceipt InspectHeldMark(string name,long at)
+        {
+            HeldMarkReceipt Missing(string reason,string? asset=null)=>new(name,at,reason,
+                RequiredAsset:asset,OfficialRouteSymbols:asset is not null&&Input.Routes.TryGetValue(asset,out var route)?
+                    route.Select(x=>x.Symbol).ToArray():null);
+            if(!marketCalendars.TryGetValue(name,out var market))return Missing("SOURCE_CONTRACT_NOT_PRESENT");
+            if(market.Market.DatedDevelopment is not { } terms)return Missing("MISSING_DATED_TERMS");
+            var grid=At(name,at);var tick=ValuationTape?.QuoteAt(name,at);
+            if(grid is not null&&!Fresh(grid,at,30_000L))grid=null;
+            if(tick is not null&&!Fresh(tick,at,30_000L))tick=null;
+            if(grid is not null&&tick is not null&&
+                (grid.BidAt==tick.BidAt&&grid.Bid!=tick.Bid||grid.AskAt==tick.AskAt&&grid.Ask!=tick.Ask))
+                return Missing("CONFLICTING_AUTHENTIC_PAIR");
+            var fresh=grid is null?tick:tick is null?grid:
+                Math.Min(grid.BidAt,grid.AskAt)>=Math.Min(tick.BidAt,tick.AskAt)?grid:tick;
+            decimal bid,ask;long bidAt,askAt;string basis;
+            if(fresh is not null)
+            {bid=fresh.Bid;ask=fresh.Ask;bidAt=fresh.BidAt;askAt=fresh.AskAt;basis="AUTHENTIC_FRESH_PAIR";}
+            else
+            {
+                if(marketTimeCalendars.GetValueOrDefault(name)?.Valid!=true)
+                    return Missing("MISSING_OR_INVALID_CONTRACT_CALENDAR");
+                if(!VerifiedClosedNow(name,at))return Missing("NO_FRESH_PAIR_AT_OPEN_OR_AMBIGUOUS_CLOCK");
+                var fundingPoint=FundingAt(name,at);
+                var tapeBid=MarketPrice(name,true,at);var tapeAsk=MarketPrice(name,false,at);
+                var fundBid=fundingPoint?.LatestBidPrefix is { } bp?MarketPrice(name,true,at,bp):null;
+                var fundAsk=fundingPoint?.LatestAskPrefix is { } ap?MarketPrice(name,false,at,ap):null;
+                if(tapeBid is not null&&fundBid is not null&&tapeBid.ObservedAt==fundBid.ObservedAt&&tapeBid.Price!=fundBid.Price||
+                   tapeAsk is not null&&fundAsk is not null&&tapeAsk.ObservedAt==fundAsk.ObservedAt&&tapeAsk.Price!=fundAsk.Price)
+                    return Missing("CONFLICTING_AUTHENTIC_PREFIX");
+                var b=fundBid is not null&&(tapeBid is null||fundBid.ObservedAt>tapeBid.ObservedAt)?fundBid:tapeBid;
+                var a=fundAsk is not null&&(tapeAsk is null||fundAsk.ObservedAt>tapeAsk.ObservedAt)?fundAsk:tapeAsk;
+                if(b is null||a is null)return Missing(b is null&&a is null?"MISSING_BOTH_CLOSED_PREFIXES":
+                    b is null?"MISSING_CLOSED_BID_PREFIX":"MISSING_CLOSED_ASK_PREFIX");
+                bid=b.Price;ask=a.Price;bidAt=b.ObservedAt;askAt=a.ObservedAt;basis="AUTHENTIC_CALENDAR_CONDITIONAL_PAIR";
+            }
+            if(bid<=0m||ask<bid||bidAt>at||askAt>at)return Missing("INCONSISTENT_PAIR");
+            var c=terms.Contract;
+            var fx=ConversionAt(c.QuoteAsset,at,false,ValuationTape);
+            if(fx is null)return Missing("MISSING_QUOTE_CONVERSION",c.QuoteAsset);
+            var usd=ConversionAt("USD",at,false,ValuationTape);
+            var min=c.MinimumCommissionAsset is { } a0?ConversionAt(a0,at,false,ValuationTape):null;
+            decimal margin=terms.Margin.Where(x=>x.Units>0m).Select(x=>Math.Max(x.BuyMargin,x.SellMargin)/x.Units).DefaultIfEmpty().Max();
+            if(margin<=0m)return Missing("MISSING_MARGIN");
+            try
+            {
+                var mark=NativeBrokerContractCosts.QuoteBothDirections(c,new(at,bid,ask,fx.CreditToEur,fx.DebitToEur,
+                    usd?.DebitToEur??0m,min?.DebitToEur,margin*c.MinimumUnits,c.MinimumUnits,0m)).Quote;
+                string witness=GeneralSha(JsonSerializer.SerializeToUtf8Bytes(new{
+                    name,at,bidAt,askAt,basis,terms.Digest,Input.EvidenceManifestSha256,Mark=mark},Json));
+                return new(name,at,basis,bidAt,askAt,witness);
+            }
+            catch(ArgumentException){return Missing("CONTRACT_COST_OR_COMMISSION_ROUTE_UNSUPPORTED");}
+        }
+
         public LedgerQuote[] HoldingValuations(NativeUnifiedPortfolioEngine book,Ucp1Frame frame,decimal stress)
         {
             if(!MarketTimeFx)return Array.Empty<LedgerQuote>();

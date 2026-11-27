@@ -1,0 +1,14 @@
+{
+  "Study": "OWNER_HELD_VALUATION_PREFLIGHT_1",
+  "RegistrySha256": "576df0e4662e70ad8fb9d9cd8f2720ef71d67aa1936f6503680d92d496044155",
+  "OriginalEngineRevision": "50bd43f3025f23f031014f27cc53ea4186283b5b",
+  "Scopes": [
+    "earlier",
+    "recent"
+  ],
+  "Orders": 0,
+  "CloudActivated": false,
+  "EquityRecovered": false,
+  "OriginalPoliciesReplayed": 0,
+  "SourceBrokerRequests": 0
+}
