@@ -1,0 +1,11 @@
+{
+  "Study": "OWNER_ANNUAL_PATH_INPUT_RECOVERY_1",
+  "OriginalRun": 45975718462,
+  "OriginalHead": "e7bb6c37886298884d51549ab772b066debdc906",
+  "TechnicalCorrection": "Retain exact integer trendbar arrays after interval quarantine",
+  "OriginalPricesChanged": false,
+  "ScientificParametersChanged": false,
+  "SourceBrokerRequests": 0,
+  "Orders": 0,
+  "CloudActivated": false
+}

@@ -17,6 +17,12 @@ def check():
   and p['SourceBrokerRequests']==p['Orders']==0 and not p['CloudActivated'] and not p['IndependentConfirmationCertified'],'PATH_DISTRIBUTION_REGISTRATION')
  return p
 
+def normalized_arrays(rows):
+ """Keep exact original integer trendbar rows after interval quarantine."""
+ normalized,quality=normalize_with_quarantine(rows)
+ clocks={(int(x['OpenAt']),int(x['CloseAt'])) for x in normalized}
+ return [r for r in rows if (r[0],r[1]) in clocks],quality
+
 def annual(work):
  p=check();work.mkdir(mode=0o700);key=os.environ['R3_CUSTODY_PRIVATE_KEY_PEM'].encode();records=[];proofs=[];money=[]
  for original in p['Sources']:
@@ -43,7 +49,7 @@ def annual(work):
    need(journal.index==len(d['packets'])==prior['packetsReconciled'] and report==d['report']==r['report']==prior['report']
     and r['sealed']==prior['sealed'],'PATH_ANNUAL_FULL_PACKET_PARITY')
    name=target['symbol'];normalized={};quarantine={}
-   for tf in ('M5','M15','H1'):normalized[tf],quarantine[tf]=normalize_with_quarantine(bars[tf])
+   for tf in ('M5','M15','H1'):normalized[tf],quarantine[tf]=normalized_arrays(bars[tf])
    records.append(dict(Symbol=name,AssetClass=meta['roster'][name]['assetClass'],Bars=normalized))
    proofs.append(dict(Symbol=name,Run=run,Artifact=spec['Id'],ArchiveSha256=spec['Sha256'],Packets=journal.index,
     Bars={tf:len(v) for tf,v in normalized.items()},Quarantine=quarantine))
