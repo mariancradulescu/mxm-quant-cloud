@@ -5,7 +5,7 @@ internal static partial class IntegratedEconomicReplay
 {
     sealed record HeldDemand(string Symbol,long At,string[] Studies);
     sealed record RecoveryGroup(string Symbol,string Mode,long Session,long From,long Through,long[] Clocks);
-    sealed record FrozenCore(LedgerEvent[] Events,Ucp1CurvePoint[] Curve);
+    sealed record FrozenCore(LedgerEvent[] Events,Ucp1CurvePoint[] Curve,string Session);
     sealed record FrozenWrapper(string CoreCheckpoint);
 
     public static int RunHeldRecoveryPlan(string sourcePath,string tapePath,string demandsPath,string output)
@@ -62,7 +62,14 @@ internal static partial class IntegratedEconomicReplay
         decimal stress=original.RootElement.GetProperty("Stress").GetDecimal();
         var book=original.RootElement.GetProperty("CommonBooks").EnumerateArray().Single(b=>b.GetProperty("Id").GetString()==id);
         var points=book.GetProperty("Details").GetProperty("EquityPath").EnumerateArray().ToDictionary(p=>p.GetProperty("At").GetInt64());
-        var ledger=new NativeFundedLedger(0L);int eventIndex=0,unknownBefore=0,unknownAfter=0,recovered=0;
+        using var savedSession=JsonDocument.Parse(core.Session);
+        string sessionPayload=savedSession.RootElement.GetProperty("Payload").GetString()!;
+        if(GeneralSha(System.Text.Encoding.UTF8.GetBytes(sessionPayload))!=savedSession.RootElement.GetProperty("Sha256").GetString())
+            throw new InvalidDataException("FROZEN_EQUITY_SESSION_HASH");
+        using var savedPayload=JsonDocument.Parse(sessionPayload);
+        using var savedLedger=JsonDocument.Parse(savedPayload.RootElement.GetProperty("Ledger").GetString()!);
+        long staleness=savedLedger.RootElement.GetProperty("MaximumStalenessMs").GetInt64();
+        var ledger=new NativeFundedLedger(staleness);int eventIndex=0,unknownBefore=0,unknownAfter=0,recovered=0;
         decimal peak=300m,dd=0m,maxMargin=0m;int newlyMeasurable=0,aboveMargin=0;
         var changes=new List<object>();
         foreach(var p in core.Curve)

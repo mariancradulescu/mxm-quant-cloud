@@ -4,7 +4,7 @@ on:
     paths: ['src/Mxm.Core/NativeCausalPathDistribution.cs','src/Mxm.Core/NativeDistributionLifecycle.cs','src/Mxm.PathResearch/**','research/owner_distribution_path.py','research/distribution_path_1.json','.github/workflows/owner-distribution-path.yml']
   push:
     branches: [main]
-    paths: ['research/distribution_path_1.json']
+    paths: ['research/distribution_path_1.json','research/annual_path_input_recovery_1.json']
 permissions:
   contents: read
   actions: read
@@ -23,7 +23,7 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           BEFORE: ${{ github.event.before }}
         run: |
-          if [ "$EVENT_NAME" = push ] && git diff --diff-filter=A --name-only "$BEFORE" "$GITHUB_SHA" | grep -Fxq research/distribution_path_1.json; then
+          if [ "$EVENT_NAME" = push ] && git diff --diff-filter=A --name-only "$BEFORE" "$GITHUB_SHA" | grep -Eq '^research/(distribution_path_1|annual_path_input_recovery_1)\.json$'; then
             echo 'new_study=true' >> "$GITHUB_OUTPUT"
           else
             echo 'new_study=false' >> "$GITHUB_OUTPUT"
@@ -41,6 +41,7 @@ jobs:
       - run: dotnet build src/Mxm.Replay -c Release
       - run: dotnet build src/Mxm.Cloud -c Release
       - run: dotnet run --project tests/Mxm.Checks -c Release
+      - run: python -m unittest research.test_distribution_path_input -v
   annual:
     needs: technical
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.actor == 'mariancradulescu' && github.run_attempt == 1 && needs.technical.outputs.new_study == 'true'
