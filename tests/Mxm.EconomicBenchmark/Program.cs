@@ -49,4 +49,50 @@ foreach(int size in (args.Contains("--small")?new[]{256}:new[]{256,1024,4096}))
     results.Add(new {Size=size,CalibrationMs=calibrationMs,PredictionMs=predictionMs,
         AllocatedBytes=GC.GetAllocatedBytesForCurrentThread()-allocated,Digest=digest});
 }
-Console.WriteLine(JsonSerializer.Serialize(new {Results=results,Timings=NativeEconomicProfiler.Snapshot()}));
+// Independent deterministic registry lookup microbenchmark: original
+// collect-all algorithm versus the allocation-free production lookup.
+var prefixes=Enumerable.Range(0,8192).Select(i=>
+{
+    long at=1000L+i*100;
+    return new NativeValuationPrefix("S","BID",new NativeHistoricalFundingPrefix(
+        "AUTHENTIC_LATEST_PREFIX",at-50,at+75,at,1m+i/10000m,true,true),new string('a',64));
+}).ToArray();
+var registry=new NativeReusableValuationRegistry(prefixes);
+var maximum=new long[prefixes.Length];
+for(int i=0;i<prefixes.Length;i++)
+    maximum[i]=Math.Max(i==0?-1:maximum[i-1],prefixes[i].Witness.SearchThrough);
+NativeHistoricalFundingPrefix? Legacy(long at)
+{
+    int lo=0,hi=prefixes.Length;
+    while(lo<hi){int mid=lo+(hi-lo)/2;if(prefixes[mid].Witness.At<=at)lo=mid+1;else hi=mid;}
+    var found=new List<NativeValuationPrefix>();
+    for(int i=lo-1;i>=0&&maximum[i]>=at;i--)
+        if(prefixes[i].Witness.SearchFrom<=at&&at<=prefixes[i].Witness.SearchThrough)found.Add(prefixes[i]);
+    var usable=found.ToArray();
+    if(usable.Length==0)return null;
+    var latest=usable[0].Witness;
+    if(usable.Any(r=>r.Witness.At!=latest.At||r.Witness.Price!=latest.Price))return null;
+    return latest with {SearchThrough=at};
+}
+var queries=Enumerable.Range(0,100000).Select(i=>950L+((i*7919L)%820000L)).ToArray();
+foreach(var at in queries.Take(1024)){_=Legacy(at);_=registry.At("S",true,at);}
+var expected=queries.Select(Legacy).ToArray();
+if(!queries.Select(at=>registry.At("S",true,at)).SequenceEqual(expected))
+    throw new InvalidOperationException("VALUATION_REGISTRY_BENCHMARK_PARITY");
+object MeasureRegistry(Func<long,NativeHistoricalFundingPrefix?> lookup)
+{
+    long allocated=GC.GetAllocatedBytesForCurrentThread();
+    var timer=Stopwatch.StartNew();
+    decimal sum=0m;int count=0;
+    foreach(long at in queries)if(lookup(at) is { } mark){sum+=mark.Price;count++;}
+    timer.Stop();
+    return new {Milliseconds=timer.Elapsed.TotalMilliseconds,
+        AllocatedBytes=GC.GetAllocatedBytesForCurrentThread()-allocated,Matches=count,PriceSum=sum};
+}
+var legacy=MeasureRegistry(Legacy);
+var optimized=MeasureRegistry(at=>registry.At("S",true,at));
+using var process=Process.GetCurrentProcess();
+process.Refresh();
+Console.WriteLine(JsonSerializer.Serialize(new {Results=results,Timings=NativeEconomicProfiler.Snapshot(),
+    Registry=new {Rows=prefixes.Length,Queries=queries.Length,ExactParity=true,Legacy=legacy,Optimized=optimized},
+    PeakWorkingSetBytes=process.PeakWorkingSet64,ManagedBytes=GC.GetTotalMemory(false)}));
