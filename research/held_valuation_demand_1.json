@@ -1,0 +1,23 @@
+{
+  "Study": "OWNER_HELD_VALUATION_DEMAND_1",
+  "ParentStudy": "MONETARY_NET_HORIZON_CROSS_CONTEXT_1",
+  "ArchiveIds": [
+    15176413393,
+    15175739827
+  ],
+  "RegistrySha256": "576df0e4662e70ad8fb9d9cd8f2720ef71d67aa1936f6503680d92d496044155",
+  "UnknownBookClockOccurrences": 49803,
+  "AttributedDistinctSymbolReasonClocks": 27588,
+  "UnattributedBookClockOccurrences": 618,
+  "UnattributedOffGrid": 618,
+  "UnattributedUsedMarginUnknown": 618,
+  "UnattributedDistinctHeldSymbolClocks": 1385,
+  "ObservedIntervals": 2216,
+  "Orders": 0,
+  "CloudActivated": false,
+  "OriginalPoliciesReplayed": 0,
+  "SourceBrokerRequests": 0,
+  "EquityRecovered": false,
+  "RequestAuthorization": false,
+  "PriorityBasis": "SHARED_BOOK_DECISION_CONTINUITY_NOT_MONETARY_LOSS"
+}

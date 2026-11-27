@@ -1,0 +1,38 @@
+name: OWNER frozen held valuation demand registry
+on:
+  pull_request:
+    paths:
+      - 'research/owner_held_valuation_demand.py'
+      - 'research/held_valuation_demand_1.json'
+      - '.github/workflows/owner-held-valuation-demand.yml'
+  push:
+    branches: [main]
+    paths: ['research/held_valuation_demand_1.json']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  reproduce:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Reproduce registry from immutable report archives
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/15176413393/zip" > earlier.zip
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/15175739827/zip" > recent.zip
+          python -m research.owner_held_valuation_demand --earlier earlier.zip --recent recent.zip --out held-valuation-demand.json
+          echo '576df0e4662e70ad8fb9d9cd8f2720ef71d67aa1936f6503680d92d496044155  held-valuation-demand.json' | sha256sum -c -
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: held-valuation-demand-registry
+          path: held-valuation-demand.json
+          retention-days: 90
+          if-no-files-found: error
