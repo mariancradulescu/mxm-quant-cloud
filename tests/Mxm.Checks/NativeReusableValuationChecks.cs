@@ -12,6 +12,31 @@ internal static class NativeReusableValuationChecks
         check(registry.At("EURUSD",false,250) is null,"registry quote sides stay independent");
         var conflict=new NativeReusableValuationRegistry(new[]{r,r with {Witness=w with {Price=1.3m}}});
         check(conflict.At("EURUSD",true,250) is null,"conflicting authentic prefixes remain missing");
+        // Compare the allocation-free lookup to the original descending,
+        // collect-all semantics, including ties, gaps, and conflicting overlaps.
+        var random=new Random(271126);
+        var rows=Enumerable.Range(0,256).Select(i=>
+        {
+            long observed=100+random.Next(0,100);
+            var witness=w with {At=observed,SearchFrom=observed-random.Next(0,20),
+                SearchThrough=observed+random.Next(0,100),Price=1m+random.Next(0,3)/10m};
+            return r with {Symbol=i%3==0?"GBPUSD":"EURUSD",Side=i%2==0?"ASK":"BID",Witness=witness};
+        }).Concat(new[]{r,r}).ToArray();
+        var indexed=new NativeReusableValuationRegistry(rows);
+        bool parity=true;
+        foreach(string symbol in new[]{"EURUSD","GBPUSD","ABSENT"})
+        foreach(bool bid in new[]{false,true})
+        for(long at=75;at<=320;at++)
+        {
+            var usable=rows.Where(x=>x.Symbol==symbol&&x.Side==(bid?"BID":"ASK"))
+                .OrderBy(x=>x.Witness.At).Reverse()
+                .Where(x=>x.Witness.At<=at&&x.Witness.SearchFrom<=at&&at<=x.Witness.SearchThrough)
+                .Select(x=>x.Witness).ToArray();
+            var expected=usable.Length==0||usable.Any(x=>x.At!=usable[0].At||x.Price!=usable[0].Price)
+                ?null:usable[0] with {SearchThrough=at};
+            parity&=indexed.At(symbol,bid,at)==expected;
+        }
+        check(parity,"allocation-free registry equals original overlap semantics at every deterministic clock");
         var ledger=new NativeFundedLedger();var before=ledger.Checkpoint();
         var summary=ledger.InspectConditionalValuation(1000,Array.Empty<LedgerQuote>());
         check(summary.CashEur==300m&&summary.LiquidationEquityEur==300m&&ledger.Checkpoint()==before,
