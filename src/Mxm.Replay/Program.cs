@@ -46,6 +46,10 @@ if(args is ["--owner-lifecycle-estimation",var leProtocol,var leSource,var leDir
     return IntegratedEconomicReplay.RunCompetitiveFamilies(leProtocol,leSource,leDirectory,leTape,leStress,estimatorStudy:true);
 if(args is ["--owner-closed-path-information",var cpPlan,var cpSource,var cpTape,var cpOutput])
     return IntegratedEconomicReplay.RunClosedPathInformation(cpPlan,cpSource,cpTape,cpOutput);
+if(args is ["--owner-persistent-risk-audit-check"])
+    return IntegratedEconomicReplay.CheckPersistentRiskAudit();
+if(args is ["--owner-persistent-risk-audit",var praCheckpoint,var praId,var praOutput])
+    return IntegratedEconomicReplay.RunPersistentRiskAudit(praCheckpoint,praId,praOutput);
 if(args is ["--owner-path-distribution",var pdProtocol,var pdSource,var pdDirectory,var pdTape,var pdStress,var pdRegistry])
     return IntegratedEconomicReplay.RunCompetitiveFamilies(pdProtocol,pdSource,pdDirectory,pdTape,pdStress,
         estimatorStudy:true,distributionStudy:true,valuationRegistryPath:pdRegistry=="-"?null:pdRegistry);

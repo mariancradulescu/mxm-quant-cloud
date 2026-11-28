@@ -48,6 +48,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
                 return Array.Empty<Ucp1DecisionSignal>();
             candidates=NativeGeneralOpportunity.Describe(market,tick).Select(x=>x.Signal).ToArray();
         }
+        if(eurDevelopmentProfile is {IncludeRecoveredEconomicFamilies:true} recovery)
+            candidates=candidates.Concat(NativeRecoveredEconomicMechanisms.Describe(market,sharedFrame,at,recovery)).ToArray();
         if(eurDevelopmentProfile is {RequireEconomicBoundaryEdge:true} edge)
             candidates=candidates.Where(g=>
             {

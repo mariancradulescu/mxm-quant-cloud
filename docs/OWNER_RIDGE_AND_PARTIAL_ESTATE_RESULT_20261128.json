@@ -1,0 +1,117 @@
+{
+  "Study": "OWNER_VERIFIED_RIDGE_ESTATE_RECOVERY_RECEIPT_1",
+  "Run": 46138607165,
+  "Head": "06491b82f460bf19f3f8609d1678b9a76f929e91",
+  "Artifact": 15261800870,
+  "ArchiveSha256": "484e71e53db3f6af5887b5aa033d43c03ebe09a929ed82fd7adfdab1287b0e20",
+  "OriginalResultFiles": {
+    "source-receipt.json": "b652d393f38f8cf32459ddca1ee881c43224024c46f35a6f8f4ca96800669fc5",
+    "result.json": "4e7b40c96e20b9e1c2c99662773ddf1b8531ff223338f877b338837574b7db46",
+    "recovered-mechanisms.json": "e46f7c99d9826b29e75d0f5ec5d60615f22f40f8df54617a6f4d8a0dbb38aa04",
+    "recovered-estate-manifest.json": "978d68a2b012af6245f36674e08b583f7c9c6f31c6cc421f47e31b496f0771bc",
+    "estate-provenance.json": "dcab8a2c12bff35fbd40f5533aeb0a5597138b263fa78127571a81d7a83640b1"
+  },
+  "Ridge": {
+    "Symbols": 57,
+    "Labels": 308939,
+    "Selection": [
+      {
+        "H": 30,
+        "Method": "LOCAL_RIDGE",
+        "Days": 92,
+        "Mean": -0.015395222000501663,
+        "Lower": -0.08804893060693147
+      },
+      {
+        "H": 30,
+        "Method": "CLASS_RIDGE",
+        "Days": 92,
+        "Mean": -0.02721168776914347,
+        "Lower": -0.112467880882598
+      },
+      {
+        "H": 30,
+        "Method": "GLOBAL_RIDGE",
+        "Days": 92,
+        "Mean": -0.0907735357653031,
+        "Lower": -0.17097837633320614
+      },
+      {
+        "H": 60,
+        "Method": "LOCAL_RIDGE",
+        "Days": 92,
+        "Mean": -0.07830315555590887,
+        "Lower": -0.17449266949258327
+      },
+      {
+        "H": 60,
+        "Method": "CLASS_RIDGE",
+        "Days": 92,
+        "Mean": -0.050161985558331845,
+        "Lower": -0.15024669909164712
+      },
+      {
+        "H": 60,
+        "Method": "GLOBAL_RIDGE",
+        "Days": 92,
+        "Mean": -0.061600538027834384,
+        "Lower": -0.16192570395652106
+      }
+    ],
+    "Choices": [
+      {
+        "HorizonMinutes": 30,
+        "Method": "CASH",
+        "Lower": -0.08804893060693147
+      },
+      {
+        "HorizonMinutes": 60,
+        "Method": "CASH",
+        "Lower": -0.15024669909164712
+      }
+    ],
+    "PortfolioEvaluated": false
+  },
+  "Estate": {
+    "Symbols": 83,
+    "Series": 581,
+    "Bars": 15440187,
+    "Labels": 17317958,
+    "Choice": "CASH",
+    "PositiveLowerBounds": 0,
+    "SelectionCells": 84,
+    "ConflictingOpens": 0,
+    "OverlappingOpens": 0
+  },
+  "MissingP05HistoricalSymbols": [
+    "1357.HK",
+    "BCP.PT",
+    "BIRG.IE",
+    "CADCHF",
+    "CGC.US",
+    "CXMT.CN-PERP",
+    "GEM.AU",
+    "GQG.AU",
+    "HEXAB.SE",
+    "JPYX",
+    "MXNJPY",
+    "NHY.NO",
+    "NIO.US-24",
+    "NOKIA.FI",
+    "NZDJPY",
+    "ORSTED.DK",
+    "QBTS.US_SB",
+    "TEF.ES",
+    "UBI.FR",
+    "UBSG.CH",
+    "UMI.BE",
+    "VER.AT",
+    "VIX"
+  ],
+  "SourceCorrection": "research/owner_estate_complete_sources.py",
+  "NoWhole106EstateClaimForOriginal83Result": true,
+  "Orders": 0,
+  "CloudActivated": false,
+  "IndependentConfirmationCertified": false,
+  "EconomicPromotionCertified": false
+}

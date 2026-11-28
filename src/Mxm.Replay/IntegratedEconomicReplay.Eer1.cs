@@ -62,6 +62,15 @@ internal static partial class IntegratedEconomicReplay
 
     sealed class EerEvidence
     {
+        public bool UseRecoveredEconomicFamilies { get; init; }
+        readonly Dictionary<string,NativeRecoveryHistory> recoveryHistories=new(StringComparer.Ordinal);
+        NativeRecoveryForecast? Recovery(SourceMarket market,long at,NativeBarContext context)
+        {
+            if(!UseRecoveredEconomicFamilies)return null;
+            if(!recoveryHistories.TryGetValue(market.Name,out var model))
+                recoveryHistories.Add(market.Name,model=new(market.RecoveryH1??market.H1));
+            return model.At(at,context.For(NativeBarTimeframe.H1).Bars);
+        }
         public long MinimumFundingHorizonMs {get;init;}
         public bool CaptureHoldingValuationGaps {get;init;}
         public bool RecoverFreshHoldingMarks {get;init;}
@@ -478,7 +487,7 @@ internal static partial class IntegratedEconomicReplay
             stream.Mark(at,"MONETARY_FRAME");
             return new(m.Name,quote,c,context.For(NativeBarTimeframe.M5).Bars,context.For(NativeBarTimeframe.M15).Bars,
                 slip,"AUTHENTIC_QUOTES_EXPLICIT_RETROSPECTIVE_TERMS_SCENARIO")
-                {ClosedBars=context,EconomicTransitionWindows=TransitionWindows(m,at),OfficialAssetClass=m.OfficialAssetClass,EurDatedMarginScenario=true,
+                {ClosedBars=context,RecoveryForecast=Recovery(m,at,context),EconomicTransitionWindows=TransitionWindows(m,at),OfficialAssetClass=m.OfficialAssetClass,EurDatedMarginScenario=true,
                  EurMargins=margins,FundingOffers=offers,EurTickSize=general?m.TickSize:null};
         }
         public void Advance(NativeUnifiedPortfolioEngine book,Ucp1Frame frame,

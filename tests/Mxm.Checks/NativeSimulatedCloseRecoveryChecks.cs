@@ -44,6 +44,21 @@ internal static class NativeSimulatedCloseRecoveryChecks
 
     public static void Run(Action<bool,string> check)
     {
+        var (persistentSession,persistentProtection)=Begin(First+100000000L);
+        long requestAt=First+100002000L;
+        persistentSession.ApplyResearchFacts(new[]{E("persistent/request","REQUEST_CLOSE",requestAt,
+            reason:NativeSimulatedCloseLifecycle.PersistentPortfolioCloseReason)});
+        long later=requestAt+86400000L;
+        var missing=NativeSimulatedCloseLifecycle.Advance(persistentSession,persistentProtection,new(later,null));
+        check(missing.CommonBook.PendingIntents==1&&missing.CommonBook.OpenPositions==1&&
+            !missing.AppliedFacts.Any(e=>e.Kind is "MODEL_CLOSE_INTENT_EXPIRED" or "CLOSE_FILL"),
+            "persistent risk intent survives a day without an executable quote and creates no fill");
+        var restoredPersistent=NativeFundedSession.Restore(persistentSession.Checkpoint(),SessionBinding);
+        var witnessed=NativeSimulatedCloseLifecycle.Advance(restoredPersistent,missing.Protection,
+            new(later+1000,Q(A,later+1000,9.7m)));
+        check(witnessed.ModelPositionClosed&&witnessed.CommonBook.PendingIntents==0&&
+            witnessed.AppliedFacts.Any(e=>e.Kind=="CLOSE_FILL"&&e.At==later+1000),
+            "persistent risk closes only on a later observed quote after checkpoint restoration");
         var (session,protection)=Begin(First);
         var start=session.Ledger.Summary(First+1000);
         check(start.OpenPositions==1 && start.CashEur==299.99m &&
