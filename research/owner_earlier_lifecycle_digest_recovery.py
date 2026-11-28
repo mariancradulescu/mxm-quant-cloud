@@ -12,14 +12,25 @@ from .decode import need
 FAILED_RUN=45898672019
 FAILED_REVISION='699e590c6a6e055940f74807c8dd0f4b6977acc2'
 
+def normalized_run_id(value):
+    # GitHub REST returns an integer; Actions environment variables are strings.
+    # Reject bool, floats, noncanonical text and nonpositive IDs rather than
+    # coercing arbitrary values into a valid identity.
+    need(type(value) is int or (type(value) is str and value.isascii() and
+         value.isdecimal() and not value.startswith('0')), 'EARLIER_RECOVERY_RUN_ID')
+    number=int(value)
+    need(number>0,'EARLIER_RECOVERY_RUN_ID')
+    return number
+
 def verified_download(artifact_id,run_id,expected_hash,destination):
+    run_id=normalized_run_id(run_id)
     repo=os.environ['GITHUB_REPOSITORY']
     endpoint=f'repos/{repo}/actions/runs/{run_id}/artifacts?per_page=100'
     pages=json.loads(subprocess.check_output(['gh','api','--paginate','--slurp',endpoint]))
     matches=[a for page in pages for a in page['artifacts'] if a['id']==artifact_id]
     need(len(matches)==1,'EARLIER_RECOVERY_ARTIFACT_UNIQUE_IN_RUN')
     a=matches[0]
-    need(a['workflow_run']['id']==run_id,'EARLIER_RECOVERY_RUN_ID')
+    need(normalized_run_id(a['workflow_run']['id'])==run_id,'EARLIER_RECOVERY_RUN_ID')
     need(a['expired'] is False,'EARLIER_RECOVERY_ARTIFACT_EXPIRED')
     need(a['digest']=='sha256:'+expected_hash,
          f"EARLIER_RECOVERY_DIGEST_MISMATCH artifact={artifact_id} expected={expected_hash} actual={a['digest']}")
