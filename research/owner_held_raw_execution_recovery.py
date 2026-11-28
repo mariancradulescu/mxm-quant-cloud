@@ -30,7 +30,7 @@ def restore(work,tape):
         targets=payload['Groups'] if spec['Original'] else payload['Targets'];packets=payload['Packets']
         need(payload['RunId']==str(spec['Run']) and len(packets)==receipt['Requests']==spec['Requests'] and
             receipt['Orders']==0 and not receipt['CloudActivated'],'HELD_RAW_CAPTURE_BINDING')
-        if spec['Original']:need(payload['PlanSha256']==src.digest(exact_json(targets).encode()),'HELD_RAW_ORIGINAL_GROUPS')
+        if spec['Original']:need(payload['PlanSha256']==receipt['PlanSha256'],'HELD_RAW_ORIGINAL_GROUP_BINDING')
         ids=plan_ids(dict(Targets=[dict(Symbol=g['Symbol']) for g in targets]));names={sid:n for n,sid in ids.items()}
         account=src.decode(packets[0]['reqType'],packets[0]['req']).ctidTraderAccountId
         need(src.original_account(account),'HELD_RAW_ORIGINAL_ACCOUNT')
