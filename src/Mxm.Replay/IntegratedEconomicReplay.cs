@@ -17,6 +17,7 @@ internal static partial class IntegratedEconomicReplay
         public DatedEurTerms? DatedDevelopment { get; init; }
         public string? OfficialAssetClass { get; init; }
         public NativeClosedMarketBar[]? RecoveryH1 { get; init; }
+        public NativeRidgeEconomicForecast[]? RecoveryRidge { get; init; }
         public DatedRolloverQuote[]? RolloverQuotes { get; init; }
     }
     sealed record AdditionalBars(string Source, NativeClosedMarketBar[] Bars);

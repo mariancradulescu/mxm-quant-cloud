@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Mxm.Core;
+using Moments=Mxm.Core.NativeCausalRidgeMoments;
 
 internal static class BreadthRidgeAnnual
 {
@@ -11,58 +12,6 @@ internal static class BreadthRidgeAnnual
     record Market(string Symbol,string? AssetClass,Dictionary<string,NativeClosedMarketBar[]> Bars,Quote[] Quotes);
     record Context(string Symbol,string? AssetClass,long At,NativeClosedPathPrediction.Context Path,decimal Price);
     record Label(Context Context,long AvailableAt,int Horizon,double[] X,decimal Move,decimal Up,decimal Down,Quote? Entry,Quote? Exit);
-    sealed class Moments
-    {
-        public double[,] A=new double[D,D];
-        public double[,] B=new double[D,3];
-        public double Mass;
-        public int Days;
-        public void Add(Label l,double weight)
-        {
-            Mass+=weight;
-            double[] y={(double)l.Move,(double)l.Up,(double)l.Down};
-            for(int i=0;i<D;i++)
-            {
-                for(int j=0;j<D;j++)A[i,j]+=weight*l.X[i]*l.X[j];
-                for(int j=0;j<3;j++)B[i,j]+=weight*l.X[i]*y[j];
-            }
-        }
-        public void AddDay(Moments source,double scale)
-        {
-            if(source.Mass<=0)return;
-            Mass+=scale;
-            for(int i=0;i<D;i++)
-            {
-                for(int j=0;j<D;j++)A[i,j]+=source.A[i,j]/source.Mass*scale;
-                for(int j=0;j<3;j++)B[i,j]+=source.B[i,j]/source.Mass*scale;
-            }
-        }
-        public double[,]? Fit()
-        {
-            if(Days<20||Mass<=0)return null;
-            var a=new double[D,D+3];
-            for(int i=0;i<D;i++)
-            {
-                for(int j=0;j<D;j++)a[i,j]=A[i,j]/Mass+(i==j ? 0.1 : 0.0);
-                for(int j=0;j<3;j++)a[i,D+j]=B[i,j]/Mass;
-            }
-            for(int i=0;i<D;i++)
-            {
-                int pivot=i;
-                for(int j=i+1;j<D;j++)if(Math.Abs(a[j,i])>Math.Abs(a[pivot,i]))pivot=j;
-                if(Math.Abs(a[pivot,i])<1e-12)return null;
-                if(pivot!=i)for(int j=i;j<D+3;j++)(a[i,j],a[pivot,j])=(a[pivot,j],a[i,j]);
-                double z=a[i,i];for(int j=i;j<D+3;j++)a[i,j]/=z;
-                for(int k=0;k<D;k++)if(k!=i)
-                {
-                    double v=a[k,i];for(int j=i;j<D+3;j++)a[k,j]-=v*a[i,j];
-                }
-            }
-            var result=new double[D,3];
-            for(int i=0;i<D;i++)for(int j=0;j<3;j++)result[i,j]=a[i,D+j];
-            return result;
-        }
-    }
     sealed class Stat
     {
         public int N,Active,QuoteEligible,QuoteObserved,QuoteActive;
@@ -103,12 +52,12 @@ internal static class BreadthRidgeAnnual
         if(b.Zip(b.Skip(1)).Any(x=>x.First.CloseAt>x.Second.OpenAt))throw new InvalidDataException("RIDGE_OVERLAPPING_SOURCE_BARS");
         return b;
     }
-    public static int Run(string source,string output)
+    public static int Run(string source,string output,string? forecastsOutput=null)
     {
         using var stream=File.OpenRead(source);
         var options=new JsonSerializerOptions {NumberHandling=JsonNumberHandling.AllowReadingFromString};
         var markets=JsonSerializer.Deserialize<Market[]>(stream,options)??throw new InvalidDataException("RIDGE_INPUT");
-        if(markets.Length!=57||markets.Select(x=>x.Symbol).Distinct(StringComparer.Ordinal).Count()!=57)
+        if(markets.Length==0||markets.Select(x=>x.Symbol).Distinct(StringComparer.Ordinal).Count()!=markets.Length||forecastsOutput is null&&markets.Length!=57)
             throw new InvalidDataException("RIDGE_UNIVERSE");
         var contexts=new List<Context>();var labels=new List<(Context C,long Maturity,int H,decimal Move,decimal Up,decimal Down,Quote? Entry,Quote? Exit)>();
         var coverage=new Dictionary<string,int>();
@@ -162,9 +111,16 @@ internal static class BreadthRidgeAnnual
         var matured=rowsByTime.OrderBy(x=>x.AvailableAt).ToArray();int k=0;
         var history=new Dictionary<(int,string),Moments>();
         var fits=new Dictionary<(int,string),double[,]?>();
+        var forecasts=forecastsOutput is null?null:new List<object>();
         var daily=new Dictionary<(string Stage,string Symbol,int H,string Method,long Day),Stat>();
         string[] methods={"LOCAL_RIDGE","CLASS_RIDGE","GLOBAL_RIDGE"};
-        foreach(var group in rowsByTime.GroupBy(x=>x.Context.At/Day))
+        // Prediction availability never depends on existence of a later label.
+        // The immutable original scoring route still uses only observed labels.
+        var observed=forecastsOutput is null?null:rowsByTime.ToDictionary(l=>(l.Context.Symbol,l.Context.At,l.Horizon));
+        var decisions=forecastsOutput is null?rowsByTime:contexts.SelectMany(c=>new[]{30,60}
+            .Select(h=>new Label(c,0,h,features[(c.Symbol,c.At)],0m,0m,0m,null,null)))
+            .OrderBy(l=>l.Context.At).ThenBy(l=>l.Context.Symbol,StringComparer.Ordinal).ThenBy(l=>l.Horizon).ToArray();
+        foreach(var group in decisions.GroupBy(x=>x.Context.At/Day))
         {
             long cutoff=group.Key*Day;
             // At each new day, combine ONLY labels mature before the day.
@@ -177,7 +133,7 @@ internal static class BreadthRidgeAnnual
                 {
                     var key=(l.AvailableAt/Day,l.Horizon,scope,l.Context.Symbol);
                     if(!batch.TryGetValue(key,out var m))batch.Add(key,m=new());
-                    m.Add(l,1);
+                    m.Add(l.X,l.Move,l.Up,l.Down,1,l.AvailableAt);
                 }
             }
             foreach(var b in batch.GroupBy(x=>(x.Key.Day,x.Key.H,x.Key.Scope)))
@@ -195,23 +151,28 @@ internal static class BreadthRidgeAnnual
                     var key=(l.Horizon,scopes[i]);
                     if(!fits.TryGetValue(key,out var coef))
                     {coef=history.GetValueOrDefault(key)?.Fit();fits.Add(key,coef);}
-                    decimal pred=0;int side=0;
+                    decimal pred=0;int side=0;decimal favorable=0,adverse=0;
                     if(coef is not null)
                     {
                         double[] pred3=new double[3];
                         for(int a=0;a<D;a++)for(int b=0;b<3;b++)pred3[b]+=coef[a,b]*l.X[a];
                         if(pred3.All(double.IsFinite))
                         {
-                            pred=(decimal)pred3[0];
+                            pred=(decimal)pred3[0];favorable=(decimal)pred3[1];adverse=(decimal)pred3[2];
                             // Predicted favorable amplitude must exceed the
                             // predicted adverse amplitude, not merely a direction sign.
                             if(pred>0&&pred3[1]>Math.Max(0,pred3[2]))side=1;
                             if(pred<0&&pred3[2]>Math.Max(0,pred3[1]))side=-1;
                         }
                     }
+                    if(forecasts is not null&&coef is not null)
+                    {var model=history[key];forecasts.Add(new{l.Context.Symbol,Forecast=new NativeRidgeEconomicForecast(l.Context.At,cutoff,model.LatestTrainingAt,model.Days,l.Horizon,methods[i],side,pred,
+                        favorable,adverse,l.Context.Price,l.Context.Path.Atr)});}
+                    var scored=observed is null?l:observed.GetValueOrDefault((l.Context.Symbol,l.Context.At,l.Horizon));
+                    if(scored is null)continue;
                     var dk=(Stage(l.Context.At),l.Context.Symbol,l.Horizon,methods[i],group.Key);
                     if(!daily.TryGetValue(dk,out var stat))daily.Add(dk,stat=new());
-                    stat.Add(l,side,pred);
+                    stat.Add(scored,side,pred);
                 }
             }
         }
@@ -237,12 +198,13 @@ internal static class BreadthRidgeAnnual
             return new{HorizonMinutes=h,Method=best is not null&&best.Lower is >0m?best.Method:"CASH",Lower=best?.Lower};
         }).ToArray();
         stream.Position=0;string sha=Convert.ToHexString(SHA256.HashData(stream)).ToLowerInvariant();
-        File.WriteAllBytes(output,JsonSerializer.SerializeToUtf8Bytes(new{Study="OWNER_BREADTH57_CAUSAL_RIDGE_AMPLITUDE_1",
+        File.WriteAllBytes(output,JsonSerializer.SerializeToUtf8Bytes(new{Study=forecastsOutput is null?"OWNER_BREADTH57_CAUSAL_RIDGE_AMPLITUDE_1":"OWNER_CAUSAL_RIDGE_MONETARY_OFFERS_1",
             SourceSha256=sha,Markets=markets.Select(x=>x.Symbol).ToArray(),Labels=rowsByTime.Length,Coverage=coverage,
             Results=results,Selection=scores,Choices=choices,SelectionMultiplicity=6,TrainingStrictlyMatureBeforeDay=true,
             PeerMembershipUsesClosedContextsOnly=true,PriceHurdlesAtr=new[]{0m,.05m,.15m,.3m},QuoteScreenSpreadOnly=true,
             PortfolioEvaluated=false,HistoricalExecutionCertified=false,HistoricalTariffContinuityCertified=false,
             IndependentConfirmationCertified=false,Orders=0,CloudActivated=false}));
+        if(forecastsOutput is not null)File.WriteAllBytes(forecastsOutput,JsonSerializer.SerializeToUtf8Bytes(forecasts));
         return 0;
     }
 }

@@ -22,6 +22,7 @@ public sealed record Ucp1MarketFrame(
     public NativeBarWindow[]? EconomicTransitionWindows { get; init; }
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public NativeRecoveryForecast? RecoveryForecast { get; init; }
+    public NativeRidgeEconomicForecast[]? RecoveryRidge { get; init; }
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public NativeFundingOfferEvidence[]? FundingOffers { get; init; }
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]

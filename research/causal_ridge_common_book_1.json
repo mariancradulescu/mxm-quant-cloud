@@ -1,0 +1,25 @@
+{
+  "Study": "MONETARY_CAUSAL_RIDGE_COMMON_BOOK_1",
+  "BaseRun": 46141614947,
+  "Models": [
+    "RECOVERED_CONTROL",
+    "RIDGE_30_COMPETITION",
+    "RIDGE_60_COMPETITION",
+    "RIDGE_30_60_COMPETITION"
+  ],
+  "CommonBookEvaluations": 15,
+  "SelectionMultiplicity": 12,
+  "SelectionPenalty": "3.0",
+  "SharedCapitalEur": 300,
+  "RegistryBundle": "research/reusable_held_registry_bundle_20261127.json",
+  "RegistryRows": 3069541,
+  "PriceModel": "Original 12 causal closed-context Ridge features; lambda0.1; local/class/global; min20 mature day clusters; equal-symbol within day; strict preday training",
+  "EconomicCycle": "Forecasts generate native geometry offers; complete same funded entry/stop/target/volume/allocation/HOLD/REDUCE/CLOSE; horizon is not an exit; identical recovered-family control",
+  "Causality": "All valid closed contexts receive forecasts regardless of existence of a later evaluation label. Changing or deleting future bars must leave earlier forecasts unchanged.",
+  "Source": "Reuse the verified reconciled estate and every actual captured financial source lane; no recollection or additive inventory claim",
+  "Orders": 0,
+  "SourceBrokerRequests": 0,
+  "CloudActivated": false,
+  "IndependentConfirmationCertified": false,
+  "EconomicPromotionCertified": false
+}
