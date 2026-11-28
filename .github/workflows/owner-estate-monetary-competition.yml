@@ -36,7 +36,7 @@ jobs:
           python-version: '3.12'
       - run: python -m pip install -r research/requirements.txt
       - run: python -m research.owner_estate_monetary_competition check
-      - run: python -m py_compile research/owner_estate_monetary_competition.py research/owner_persistent_risk_fact_audit.py research/owner_recovery_evidence_review.py
+      - run: python -m py_compile research/owner_estate_monetary_competition.py research/owner_persistent_risk_fact_audit.py research/owner_recovery_evidence_review.py research/owner_estate_complete_sources.py
       - run: dotnet build src/Mxm.PathResearch -c Release
       - run: dotnet build src/Mxm.Replay -c Release
       - run: dotnet build src/Mxm.Cloud -c Release

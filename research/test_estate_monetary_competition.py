@@ -6,6 +6,18 @@ from pathlib import Path
 from .owner_estate_monetary_competition import variants,check
 from .merge_eur_scenarios import exact_json
 class FullEstateMonetaryDriver(unittest.TestCase):
+ def test_registered_progressive_universe_is_contained_in_original_history(self):
+  p=check()
+  self.assertEqual(len(p['HistoricalUniverse106']),106)
+  self.assertTrue(set(p['Universe']).issubset(p['HistoricalUniverse106']))
+ def test_original_p05_period_and_prices_are_exact(self):
+  from decimal import Decimal
+  from .owner_estate_complete_sources import declared_period_rows
+  row=[0,0,100000,200000,50000,110000,5]
+  b=declared_period_rows([row],'H1',zero_close=True)[0]
+  self.assertEqual(b['CloseAt'],3600000)
+  self.assertEqual(b['Close'],Decimal('1.10000'))
+  with self.assertRaises(Exception):declared_period_rows([row],'H1')
  def test_both_registered_universes_reach_native_cash_without_fabricated_prices(self):
   check();day=86400000;start=int(datetime.datetime(2026,1,1,tzinfo=datetime.timezone.utc).timestamp())*1000
   for count in (3,61):

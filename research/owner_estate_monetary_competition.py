@@ -125,10 +125,13 @@ def prepare(work):
     # Original 106-market history, BDP/AIP, original source, continuation, and
     # 2023/24 source all join the same series reconciliation as newer tranches.
     estate.extend_estate(root,work/'older',r)
+    from .owner_estate_complete_sources import extend
+    extend(root,work/'complete-originals',p)
     estate.run_recovered(root,REPORT,r)
     manifest=read(REPORT/'recovered-estate-manifest.json');merged=work/'merged-estate'
     by=defaultdict(dict)
     for item in manifest:by[item['Symbol']][item['Timeframe']]=item
+    need(set(p['HistoricalUniverse106']).issubset(by),'ESTATE_ALL_ORIGINAL_106_RECONCILED')
     history_counts={}
     for name,entry in markets.items():
         m=entry['Market'];m5=None
