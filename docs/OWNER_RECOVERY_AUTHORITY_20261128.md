@@ -1,0 +1,3 @@
+# Permanent OWNER decision — 28 November 2026
+
+Normative authority: [OWNER_SPEC](OWNER_SPEC.md), sections 3–6 and 8. Earlier protocols, archived instructions, frozen flags and code guards remain authoritative for the original execution only. They are not a prohibition on a separately registered corrected or expanded evaluation. Preserve all old results and every valid implementation. Use all relevant authentic data, including later extensions and the earlier 106-market inventory, not a closed study's original scope. No per-study approval. No identical reruns without additional information. Exposed history cannot certify the same selection independently. Orders and Cloud remain prohibited. Prior authority at 0e29a5c64deaafe9b049ef33d092f5d752e3b960 is immutable.

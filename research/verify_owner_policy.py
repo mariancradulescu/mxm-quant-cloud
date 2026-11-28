@@ -30,6 +30,12 @@ def check():
     assert 'Prospective initial capital EUR 300' in Path('README.md').read_text(), 'STALE_README_PROSPECTIVE_CAPITAL'
     assert 'continuous EUR 300 prospective initial capital' in Path('docs/ACCEPTANCE.md').read_text(), 'STALE_ACCEPTANCE_PROSPECTIVE_CAPITAL'
 
+    # Historical closure flags preserve original evidence, not a prohibition on new executions.
+    for required in ('permanent 28 November OWNER decision', 'Closure does not permanently reject a mechanism',
+                     'Reuse of original history is permission, not a scope limit', 'entire authentic information estate',
+                     'No individual approval is required', 'Historical no-rerun/no-retuning/no-expansion flags document original scopes only'):
+        assert required in owner, 'MISSING_OWNER_RECOVERY_AUTHORITY: ' + required
+
     # Closed experiments cannot silently become an independent/funded certificate.
     # A future genuinely new prospectively registered study is not pre-rejected.
     for s in r['prospectiveStudies']:
