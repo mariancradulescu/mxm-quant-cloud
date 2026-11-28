@@ -43,14 +43,15 @@ def materialize(work):
     base.restore(work/'base')
     need(sha(work/'base/source.json')==p['BaseSourceSha256'],'BREADTH57_BASE_SHA')
     source=read(work/'base/source.json');records=[];proofs=[]
+    tapes={x['Name']:x['Quotes'] for x in source['Tapes']}
     for row in source['Markets']:
-        m=row['Market'];quotes,conflict=normalized_quotes(m['Quotes'])
+        m=row['Market'];quotes,conflict=normalized_quotes(tapes.get(m['Name'],[]))
         bars={tf:m[tf] for tf in ('M5','M15','H1')}
         records.append(dict(Symbol=m['Name'],AssetClass=m.get('OfficialAssetClass'),Bars=bars,Quotes=quotes))
         proofs.append(dict(Symbol=m['Name'],SourceSha256=p['BaseSourceSha256'],
             Bars={k:len(v) for k,v in bars.items()},QuoteMarks=len(quotes),ConflictingQuoteClocks=conflict))
     need(len(records)==len({r['Symbol'] for r in records})==29,'BREADTH57_BASE_SCOPE')
-    del source;gc.collect()
+    del source,tapes;gc.collect()
     key=os.environ['R3_CUSTODY_PRIVATE_KEY_PEM'].encode()
     for spec in p['Sources']:
         tranche,run=spec['tranche'],spec['run'];root=work/f'tranche-{tranche}';root.mkdir()

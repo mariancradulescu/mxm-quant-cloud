@@ -43,7 +43,7 @@ internal static class BreadthRidgeAnnual
             var a=new double[D,D+3];
             for(int i=0;i<D;i++)
             {
-                for(int j=0;j<D;j++)a[i,j]=A[i,j]/Mass+(i==j?.1:0);
+                for(int j=0;j<D;j++)a[i,j]=A[i,j]/Mass+(i==j ? 0.1 : 0.0);
                 for(int j=0;j<3;j++)a[i,D+j]=B[i,j]/Mass;
             }
             for(int i=0;i<D;i++)
@@ -234,7 +234,7 @@ internal static class BreadthRidgeAnnual
         }).ToArray();
         var choices=new[]{30,60}.Select(h=>{
             var best=scores.Where(x=>x.H==h&&x.Lower.HasValue).OrderByDescending(x=>x.Lower).FirstOrDefault();
-            return new{HorizonMinutes=h,Method=best?.Lower>0m?best.Method:"CASH",Lower=best?.Lower};
+            return new{HorizonMinutes=h,Method=best is not null&&best.Lower is >0m?best.Method:"CASH",Lower=best?.Lower};
         }).ToArray();
         stream.Position=0;string sha=Convert.ToHexString(SHA256.HashData(stream)).ToLowerInvariant();
         File.WriteAllBytes(output,JsonSerializer.SerializeToUtf8Bytes(new{Study="OWNER_BREADTH57_CAUSAL_RIDGE_AMPLITUDE_1",
