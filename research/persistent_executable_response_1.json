@@ -1,0 +1,32 @@
+{
+  "Study": "OWNER_PERSISTENT_EXECUTABLE_RESPONSE_1",
+  "OriginalHead": "76768453ca03c4a5403d653f8398faebf268498a",
+  "OriginalReport": {
+    "Run": 46138292231,
+    "Artifact": 15262520055,
+    "Sha256": "9e850825530bc80357cb70f1e136210a26e68354040f76b2f32c824bbbbe2cd0"
+  },
+  "OriginalBooks": {
+    "Run": 46138292231,
+    "Artifact": 15262130294,
+    "Sha256": "c85e2a491b4efc226da62fcae6c811122e45711b6491f89eb025db3f32b4c106"
+  },
+  "OriginalSourceSha256": "c4d7d83840fc8d45de550f76a1f34f42f223d979a78b579cfe7c0a20916af8a2",
+  "Targets": [
+    "GBPUSD",
+    "EURUSD"
+  ],
+  "From": 1795564800000,
+  "ThroughExclusive": 1795651200000,
+  "OriginalPreventiveAt": 1795578015000,
+  "OriginalHardAt": 1795599015000,
+  "PageHours": 2,
+  "PerSidePageBudget": 1000,
+  "Question": "Does the immutable persistent close lack executable price information, or fail to consume existing witnesses? Reconstruct the complete EUR300 prefix; collect only if original witness absent, then exercise the same native close on first actual quote. No new entries or policy regeneration.",
+  "Interpretation": "Inherited original state response test; earlier newly witnessed native stops are disclosed, not used to rewrite original positions. Not a complete corrected-policy backtest or continuous-risk certificate.",
+  "OriginalResultsModified": 0,
+  "Orders": 0,
+  "CloudActivated": false,
+  "IndependentConfirmationCertified": false,
+  "EconomicPromotionCertified": false
+}

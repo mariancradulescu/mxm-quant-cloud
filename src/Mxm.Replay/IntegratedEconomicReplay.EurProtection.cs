@@ -115,6 +115,19 @@ internal static partial class IntegratedEconomicReplay
             return new(at,bid.At,ask.At,bid.Raw/100_000m,ask.Raw/100_000m,null!);
         }
 
+        public IEnumerable<long> ObservedQuoteClocks(string symbol,long from,long through)
+            =>Side(symbol,true).Events(from,through).Select(x=>x.At)
+                .Concat(Side(symbol,false).Events(from,through).Select(x=>x.At)).Distinct().OrderBy(x=>x);
+
+        public object? ObservedTradeStop(string symbol,int side,decimal stop,long openedAt,long from,long through)
+        {
+            var tape=Side(symbol,side>0);
+            var touch=tape.Events(from,through).FirstOrDefault(x=>NativeExecutableEconomics.TradeStopReached(
+                side,(side>0?x.Low:x.High)/100000m,stop));
+            return touch.At==0?null:new{At=touch.At,Minimum=touch.Low/100000m,Maximum=touch.High/100000m,
+                CompleteSinceOriginalFill=tape.Covers(openedAt+1,touch.At)};
+        }
+
         public NativeHistoricalFundingPrefix? LatestPrefix(string symbol,bool bid,long at)
         {
             var point=Side(symbol,bid).QuoteAt(at,345600000L);
