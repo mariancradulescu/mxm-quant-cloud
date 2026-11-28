@@ -1,0 +1,150 @@
+{
+  "Study": "FULL_ESTATE_STAGED_RESUME_2",
+  "OriginRun": 46150207165,
+  "FailedJob": 140995875020,
+  "Fragments": {
+    "base": {
+      "sealed": {
+        "Id": 15266090305,
+        "Name": "estate-fragment-base-sealed-attempt1",
+        "RunId": 46150207165,
+        "Sha256": "07e5e57fc5feeed2facbbfa63cab93493824a60af9f8ab20dce30bf0b9596bbf"
+      },
+      "public": {
+        "Id": 15265686782,
+        "Name": "estate-fragment-base-public-attempt1",
+        "RunId": 46150207165,
+        "Sha256": "bd3c7052bd71c459634a5c9aba8e4bbec9a7a82defe5eb87966136c3b18ae64a"
+      }
+    },
+    "T4": {
+      "sealed": {
+        "Id": 15265841263,
+        "Name": "estate-fragment-T4-sealed-attempt1",
+        "RunId": 46150207165,
+        "Sha256": "45f129b04fb98abba7f6497178de7309be9d0ec65ffcea1e8610d1f80c127cc2"
+      },
+      "public": {
+        "Id": 15265591817,
+        "Name": "estate-fragment-T4-public-attempt1",
+        "RunId": 46150207165,
+        "Sha256": "13c950dba1316c10b404a0d81d2c9e84d4a4a803eabb376fe58aed2913c2d7a3"
+      }
+    },
+    "T5": {
+      "sealed": {
+        "Id": 15265191822,
+        "Name": "estate-fragment-T5-sealed-attempt1",
+        "RunId": 46150207165,
+        "Sha256": "a7bcd1a6cf7a62e801eb95654b0f8ae4e992cf27a167a3bdb1e6c276a56b30a1"
+      },
+      "public": {
+        "Id": 15266010356,
+        "Name": "estate-fragment-T5-public-attempt1",
+        "RunId": 46150207165,
+        "Sha256": "148a089b91af30e8ff8736dff0e9d4edd2fd8ae617413ea373339c074d7df22c"
+      }
+    },
+    "T6": {
+      "sealed": {
+        "Id": 15264994181,
+        "Name": "estate-fragment-T6-sealed-attempt1",
+        "RunId": 46150207165,
+        "Sha256": "0e56c9568263be6987ba2f6e7d516bb283459713f200fa4aaa63b8e74799c7e1"
+      },
+      "public": {
+        "Id": 15265013965,
+        "Name": "estate-fragment-T6-public-attempt1",
+        "RunId": 46150207165,
+        "Sha256": "6ba9a4dd5101444d0e9ab092f78835a7b8ddb4793b506b96edebd66291429170"
+      }
+    },
+    "T7": {
+      "sealed": {
+        "Id": 15265231775,
+        "Name": "estate-fragment-T7-sealed-attempt1",
+        "RunId": 46150207165,
+        "Sha256": "5012ca0c82267bec709e51a1f957aa260f56bd30f41310e159ade6b2856c542c"
+      },
+      "public": {
+        "Id": 15265396521,
+        "Name": "estate-fragment-T7-public-attempt1",
+        "RunId": 46150207165,
+        "Sha256": "8ded4f485db944ea3a3a87b1bb0bfafe4edbe1026f544c0c6bb6ec93e7d25105"
+      }
+    },
+    "T8": {
+      "sealed": {
+        "Id": 15265626750,
+        "Name": "estate-fragment-T8-sealed-attempt1",
+        "RunId": 46150207165,
+        "Sha256": "fee75b4ef1ac1189e199ca1f3c9e55e76f763614202c1ccb30079a046a91523d"
+      },
+      "public": {
+        "Id": 15265472189,
+        "Name": "estate-fragment-T8-public-attempt1",
+        "RunId": 46150207165,
+        "Sha256": "e3a744f272aff97e9fab5a55b5bccdc85db63f168d885b949bae1c5e5ef02904"
+      }
+    },
+    "T9": {
+      "sealed": {
+        "Id": 15266030798,
+        "Name": "estate-fragment-T9-sealed-attempt1",
+        "RunId": 46150207165,
+        "Sha256": "4880cd2cf7a36ad697d42c398b835f803b9bf5b95717c03816ad79ef8a1411b2"
+      },
+      "public": {
+        "Id": 15265029057,
+        "Name": "estate-fragment-T9-public-attempt1",
+        "RunId": 46150207165,
+        "Sha256": "2f3849fed4fc1fac2eefd3865fe8b9286c9fd8e586f4c07d490bee3cce8c37b5"
+      }
+    },
+    "T10": {
+      "sealed": {
+        "Id": 15266040644,
+        "Name": "estate-fragment-T10-sealed-attempt1",
+        "RunId": 46150207165,
+        "Sha256": "1da443061cbe3ab92d61b7c9bda3e35476532c31d0c019ea66ca2f3478e8bb47"
+      },
+      "public": {
+        "Id": 15265541893,
+        "Name": "estate-fragment-T10-public-attempt1",
+        "RunId": 46150207165,
+        "Sha256": "82c51695c3aced3f24319efb9c499636a93e7b13bb79646ae3b4514702c021b6"
+      }
+    },
+    "T11": {
+      "sealed": {
+        "Id": 15265911037,
+        "Name": "estate-fragment-T11-sealed-attempt1",
+        "RunId": 46150207165,
+        "Sha256": "d8b2e0ce7602ee7ca8db21062909e4e4395ed52fd6d56bb634daa3f3a64dc754"
+      },
+      "public": {
+        "Id": 15265990927,
+        "Name": "estate-fragment-T11-public-attempt1",
+        "RunId": 46150207165,
+        "Sha256": "f70f29dd69499b4c5a45483f60c6d019a000ad3a4ae70be96cb08760e37bb67f"
+      }
+    },
+    "legacy": {
+      "sealed": {
+        "Id": 15265661772,
+        "Name": "estate-fragment-legacy-sealed-attempt1",
+        "RunId": 46150207165,
+        "Sha256": "5d8e8c8e2fe1bc910f71524ea1ad96880d7f61d0dd1d69ccdcabeca801897c8c"
+      },
+      "public": {
+        "Id": 15265941118,
+        "Name": "estate-fragment-legacy-public-attempt1",
+        "RunId": 46150207165,
+        "Sha256": "35c3ef53c8f994393bf7da544d442830e318724669b87acf0bfed3c8b54e62cc"
+      }
+    }
+  },
+  "Orders": 0,
+  "SourceBrokerRequests": 0,
+  "CloudActivated": false
+}

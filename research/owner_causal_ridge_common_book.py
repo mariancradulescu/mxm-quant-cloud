@@ -2,7 +2,7 @@
 import argparse,gc,hashlib,json,os,subprocess,time
 from pathlib import Path
 from . import owner_estate_monetary_competition as estate
-from .owner_earlier_lifecycle_digest_recovery import verified_download
+from .owner_earlier_lifecycle_digest_recovery import verified_download,normalized_run_id
 from .owner_pav1_market_time import restore_checkpoint
 from .owner_monetary_reduce_common_book import REPLAY,STRESSES
 from .merge_eur_scenarios import read,exact_json
@@ -21,7 +21,7 @@ def check():
         p['BaseRun']==46141614947 and p['CommonBookEvaluations']==20 and p['PrimaryEvaluations']==15 and p['SelectionMultiplicity']==16 and
         p['Orders']==p['SourceBrokerRequests']==0 and not p['CloudActivated'],'RIDGE_MONETARY_REGISTRATION');return p
 
-def await_source(run):
+def await_source(run,staged=False):
     repo=os.environ['GITHUB_REPOSITORY'];started=time.monotonic()
     while True:
         jobs=json.loads(subprocess.check_output(['gh','api',f'repos/{repo}/actions/runs/{run}/jobs?per_page=100']))['jobs']
@@ -31,15 +31,32 @@ def await_source(run):
         need(time.monotonic()-started<18000,'RIDGE_ESTATE_SOURCE_TIMEOUT')
         print('RIDGE_WAITING_FOR_REUSABLE_COMPLETE_ESTATE',run,flush=True);time.sleep(30)
     pages=json.loads(subprocess.check_output(['gh','api','--paginate','--slurp',f'repos/{repo}/actions/runs/{run}/artifacts?per_page=100']))
-    return {a['name']:dict(Id=a['id'],Name=a['name'],Sha256=a['digest'].removeprefix('sha256:'))
-        for page in pages for a in page['artifacts'] if not a['expired']}
+    items={a['name']:dict(Id=a['id'],Name=a['name'],RunId=normalized_run_id(a['workflow_run']['id']),Sha256=a['digest'].removeprefix('sha256:'))
+        for page in pages for a in page['artifacts'] if not a['expired'] and normalized_run_id(a['workflow_run']['id'])==run}
+    if not staged:return items
+    chosen={}
+    for name in ('full-estate-monetary-public','full-estate-monetary-reusable-source'):
+        matches=[a for key,a in items.items() if key.startswith(name+'-attempt')]
+        need(bool(matches),'RIDGE_STAGED_SOURCE_ARTIFACT');chosen[name]=max(matches,key=lambda a:a['Id'])
+    return chosen
 
 def prepare(work):
     p=check();work.mkdir(mode=0o700,parents=True);REPORT.mkdir()
-    items=await_source(p['BaseRun']);public=items['full-estate-monetary-public'];cache=items['full-estate-monetary-reusable-source']
-    verified_download(public['Id'],p['BaseRun'],public['Sha256'],work/'original')
-    receipt=read(work/'original/source-receipt.json');verified_download(cache['Id'],p['BaseRun'],cache['Sha256'],work/'cipher')
-    root=work/'estate';restore_checkpoint(work/'cipher',root,os.environ['R3_CUSTODY_PRIVATE_KEY_PEM'].encode(),str(p['BaseRun']),receipt['SourceSha256'])
+    staged=os.environ.get('MXM_RIDGE_STAGED_RUN_ID')
+    run=normalized_run_id(staged if staged is not None else p['BaseRun'])
+    # The staged workflow binds its own successful economic job and the
+    # actual source receipt; the original failed run remains in registration.
+    items=await_source(run,staged is not None);public=items['full-estate-monetary-public'];cache=items['full-estate-monetary-reusable-source']
+    verified_download(public['Id'],run,public['Sha256'],work/'original')
+    receipt=read(work/'original/source-receipt.json');verified_download(cache['Id'],run,cache['Sha256'],work/'cipher')
+    if staged is not None:
+        summary=read(work/'original/summary.json')
+        need(summary['Study']==estate.STUDY and summary['CommonBookEvaluations']==15 and
+            summary['SourceSha256']==receipt['SourceSha256'] and summary['Orders']==0 and not summary['CloudActivated'],
+            'RIDGE_STAGED_ECONOMIC_BINDING')
+        need({x['Role'] for x in receipt['Evidence']['Fragments']}=={'base','T4','T5','T6','T7','T8','T9','T10','T11','legacy'},
+            'RIDGE_STAGED_FRAGMENT_COVERAGE')
+    root=work/'estate';restore_checkpoint(work/'cipher',root,os.environ['R3_CUSTODY_PRIVATE_KEY_PEM'].encode(),str(run),receipt['SourceSha256'])
     original=read(root/'plan.json');need(sha(root/'plan.json')==receipt['ProtocolSha256'] and original['Study']==estate.STUDY,'RIDGE_ORIGINAL_ESTATE_PLAN')
     names=original['OriginalInstruments'];manifest=read(work/'original/recovered-estate-manifest.json')
     lookup={(x['Symbol'],x['Timeframe']):x for x in manifest};classes={}
@@ -72,7 +89,7 @@ def prepare(work):
     for market in source['Markets']:market['Market']['RecoveryRidge']=by[market['Market']['Name']]
     offer_counts={n:len(v) for n,v in by.items()};del by;gc.collect()
     plan=dict(original,Study=STUDY,Variants=variants(len(names)))
-    evidence=dict(OriginalRun=p['BaseRun'],OriginalPublic=public,ReusableSource=cache,OriginalSourceSha256=receipt['SourceSha256'],
+    evidence=dict(OriginalRun=run,RegisteredFailedBaseRun=p['BaseRun'],OriginalPublic=public,ReusableSource=cache,OriginalSourceSha256=receipt['SourceSha256'],
         OriginalProtocolSha256=receipt['ProtocolSha256'],RegistrationSha256=sha(REG),PriceInputSha256=sha(price_input),
         ForecastSha256=sha(work/'forecasts.json'),ForecastRows=count,ActiveOfferRows=offer_counts,
         TrainingStrictlyMatureBeforeDay=True,PeerMembershipIndependentOfFutureLabels=True,SourceBrokerRequests=0)
@@ -87,6 +104,7 @@ def prepare(work):
     seal_files([(work/'source.json','source.json'),(work/'plan.json','plan.json'),(work/'forecasts.json','forecasts.json')],
         'ridge-monetary-source-sealed',public_key,os.environ['GITHUB_RUN_ID'],STUDY,sha(work/'source.json'),protocol_sha=sha(work/'plan.json'))
     registry=estate.risk.restore_registry(work,p)
+    write(work/'prepared-paths.json',dict(Registry=str(registry),RegistrySha256=sha(registry),SourceSha256=sha(work/'source.json'),ProtocolSha256=sha(work/'plan.json')))
     return registry,root/'verified-protection',work/'original'
 
 def source_correction(work,tapes,registry):
@@ -164,8 +182,14 @@ def source_correction(work,tapes,registry):
     return dict(Books=5,WholePolicyReevaluated=True,SourceSha256=corrected_receipt['SourceSha256'],ReusedAuthenticRequests=receipt['Requests']+raw_held['PacketsReconciled'],
         SourceBrokerRequests=0,ContinuousDrawdownCertified=False,IndependentConfirmationCertified=False)
 
-def evaluate(work):
-    registry,tapes,original=prepare(work);rows=[]
+def evaluate(work,prepared=False):
+    if prepared:
+        state=read(work/'prepared-paths.json');registry=Path(state['Registry'])
+        need(sha(registry)==state['RegistrySha256'] and sha(work/'source.json')==state['SourceSha256'] and
+            sha(work/'plan.json')==state['ProtocolSha256'],'RIDGE_PREPARED_SOURCE_BINDING')
+        tapes,original=work/'estate/verified-protection',work/'original'
+    else:registry,tapes,original=prepare(work)
+    rows=[]
     for i,stress in enumerate(STRESSES):
         out=PARTS/f'S{i}';out.mkdir(parents=True)
         env=dict(os.environ,MXM_ECONOMIC_BOUNDED_NEIGHBORS='1',MXM_ECONOMIC_PAIRED_DISTRIBUTION='1',MXM_ECONOMIC_PROFILE='1',
@@ -201,7 +225,8 @@ def conserve():
             'ridge-monetary-corrected-books-sealed',public,os.environ['GITHUB_RUN_ID'],STUDY,other['SourceSha256'],
             complete=(REPORT/'source-correction-comparison.json').exists(),protocol_sha=other['ProtocolSha256'])
 if __name__=='__main__':
-    parser=argparse.ArgumentParser();parser.add_argument('stage',choices=['check','evaluate','conserve']);parser.add_argument('--work',type=Path);a=parser.parse_args()
+    parser=argparse.ArgumentParser();parser.add_argument('stage',choices=['check','prepare','evaluate','conserve']);parser.add_argument('--prepared',action='store_true');parser.add_argument('--work',type=Path);a=parser.parse_args()
     if a.stage=='check':check()
-    elif a.stage=='evaluate':evaluate(a.work)
+    elif a.stage=='prepare':prepare(a.work)
+    elif a.stage=='evaluate':evaluate(a.work,a.prepared)
     else:conserve()
