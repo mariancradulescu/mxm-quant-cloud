@@ -76,3 +76,32 @@ internal static partial class IntegratedEconomicReplay
         return 0;
     }
 }
+
+internal static partial class IntegratedEconomicReplay
+{
+    sealed record ProtectionGridTape(string Name);
+    sealed record ProtectionGridInput(long Start,long End,ProtectionGridTape[] Tapes);
+    public static int RecoverProtectionGridQuotes(string sourcePath,string tapePath,string output)
+    {
+        // Only the header/name schema is needed; never allocate source bars,
+        // forecasts or existing quote arrays for this exact quote projection.
+        using var file=File.OpenRead(sourcePath);
+        var input=JsonSerializer.Deserialize<ProtectionGridInput>(file,Json)!;
+        if(input.Start>=input.End||input.Tapes.Select(t=>t.Name).Distinct().Count()!=input.Tapes.Length)
+            throw new InvalidDataException("PROTECTION_GRID_SOURCE");
+        var tape=new EerProtectionTape(tapePath);var rows=new List<object>();
+        long first=input.Start/EurStep*EurStep+EurOffset;if(first<input.Start)first+=EurStep;
+        foreach(var name in input.Tapes.Select(t=>t.Name).Order(StringComparer.Ordinal))
+        {
+            var quotes=new List<SourceQuote>();
+            for(long at=first;at<input.End;at+=EurStep)
+                if(tape.QuoteAt(name,at) is { } quote)quotes.Add(quote);
+            rows.Add(new{Symbol=name,Quotes=quotes});
+        }
+        File.WriteAllBytes(output,JsonSerializer.SerializeToUtf8Bytes(new{Study="OWNER_RAW_TICK_GRID_PROJECTION_1",
+            SourceSha256=FactorialFileSha(sourcePath),ProtectionSha256=ProtectionFingerprint(tapePath),
+            GridStepMs=EurStep,MaximumSideAgeMs=30000,ObservedActualQuoteSidesOnly=true,
+            ValuationPrefixesUsedForExecution=false,Rows=rows,Orders=0,CloudActivated=false},Json));
+        return 0;
+    }
+}

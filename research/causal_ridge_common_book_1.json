@@ -7,8 +7,8 @@
     "RIDGE_60_COMPETITION",
     "RIDGE_30_60_COMPETITION"
   ],
-  "CommonBookEvaluations": 15,
-  "SelectionMultiplicity": 12,
+  "CommonBookEvaluations": 20,
+  "SelectionMultiplicity": 16,
   "SelectionPenalty": "3.0",
   "SharedCapitalEur": 300,
   "RegistryBundle": "research/reusable_held_registry_bundle_20261127.json",
@@ -21,5 +21,18 @@
   "SourceBrokerRequests": 0,
   "CloudActivated": false,
   "IndependentConfirmationCertified": false,
-  "EconomicPromotionCertified": false
+  "EconomicPromotionCertified": false,
+  "PrimaryEvaluations": 15,
+  "SourceCorrection": {
+    "Run": 46143349580,
+    "ProtectedArtifact": 15262224879,
+    "ProtectedSha256": "4365c04ef005ba1da763b7bce0a348741d63f93d346cf9436e2b9c7e921f149e",
+    "AuditArtifact": 15262923881,
+    "AuditSha256": "a15abd26feba7a3f7fa707db8a8200ff42abf3f63e1d8a1350ad16cc9e8627a6",
+    "CostStress": "0.5",
+    "Books": 5,
+    "SelectionFrozen": true,
+    "Orders": 0,
+    "CloudActivated": false
+  }
 }

@@ -18,7 +18,7 @@ def variants(n):
         [('RECOVERED_CONTROL',0),('RIDGE_30_COMPETITION',1),('RIDGE_60_COMPETITION',2),('RIDGE_30_60_COMPETITION',3)]]
 def check():
     p=read(REG);need(p['Study']==STUDY and p['Models']==[v['Id'] for v in variants(1)] and
-        p['BaseRun']==46141614947 and p['CommonBookEvaluations']==15 and p['SelectionMultiplicity']==12 and
+        p['BaseRun']==46141614947 and p['CommonBookEvaluations']==20 and p['PrimaryEvaluations']==15 and p['SelectionMultiplicity']==16 and
         p['Orders']==p['SourceBrokerRequests']==0 and not p['CloudActivated'],'RIDGE_MONETARY_REGISTRATION');return p
 
 def await_source(run):
@@ -89,6 +89,81 @@ def prepare(work):
     registry=estate.risk.restore_registry(work,p)
     return registry,root/'verified-protection',work/'original'
 
+def source_correction(work,tapes,registry):
+    """Keep the primary comparison frozen; evaluate all new executable evidence separately."""
+    from . import owner_persistent_executable_response as response
+    from . import owner_eer1_source as eer
+    from . import owner_eer1_readback as readback
+    from . import source_history_universe as src
+    from . import owner_eur_recent_continuous as recent
+    from . import owner_eur_recent_funded as funded
+    import shutil
+    p=check();c=p['SourceCorrection'];run=c['Run'];folder=work/'corrected-capture';public=work/'corrected-public'
+    verified_download(c['ProtectedArtifact'],run,c['ProtectedSha256'],folder)
+    verified_download(c['AuditArtifact'],run,c['AuditSha256'],public)
+    proof=read(public/'summary.json');receipt=read(folder/'receipt.json');key=os.environ['R3_CUSTODY_PRIVATE_KEY_PEM'].encode()
+    payload=eer.unpack(folder,receipt['sealed'],key,str(run));registration=response.registered()
+    need(payload['Study']==response.STUDY and payload['RunId']==str(run) and
+        payload['RegistrationSha256']==sha(response.REG)==receipt['RegistrationSha256'] and
+        proof['CaptureProof']['Capture']==receipt,'RIDGE_CORRECTED_CAPTURE_BINDING')
+    target_tape=work/'all-observed-protection';shutil.copytree(tapes,target_tape)
+    from .owner_held_raw_execution_recovery import restore as restore_raw_held
+    raw_held=restore_raw_held(work/'all-original-held-raw',target_tape)
+    packets=payload['Packets'];account=src.decode(packets[0]['reqType'],packets[0]['req']).ctidTraderAccountId
+    need(src.original_account(account),'RIDGE_CORRECTED_ORIGINAL_ACCOUNT')
+    j=src.ReadbackJournal(packets);sink=readback.protection_tick_sink(target_tape,'eer1');reports=[];new_quotes={}
+    for target in response.targets(registration):
+        report,_,quotes,_=recent.collect(j,account,registration,target,[],tick_sink=sink,keep=True)
+        reports.append(report);new_quotes[target['symbol']]=quotes
+    need(j.index==len(packets)==receipt['Requests']==proof['SourceBrokerRequests'] and
+        reports==payload['Reports']==proof['CaptureProof']['ReadbackReports'],'RIDGE_CORRECTED_EXACT_PACKET_PARITY')
+    acquired=max(x['availableAt'] for x in packets);del payload,packets,j;gc.collect()
+    projected=work/'actual-raw-grid-quotes.json'
+    subprocess.run(['dotnet',REPLAY,'--owner-protection-grid-quotes',str(work/'source.json'),str(target_tape),str(projected)],check=True)
+    grid=read(projected);need(grid['SourceSha256']==sha(work/'source.json') and grid['ObservedActualQuoteSidesOnly'] and
+        not grid['ValuationPrefixesUsedForExecution'] and grid['Orders']==0,'RIDGE_RAW_TICK_GRID_BINDING')
+    new_quotes={row['Symbol']:row['Quotes'] for row in grid['Rows']}
+    source=read(work/'source.json');quote_reconciliation={}
+    for tape in source['Tapes']:
+        if tape['Name'] in new_quotes:
+            tape['Quotes'],conflicts=funded.merge_quotes(tape['Quotes'],new_quotes[tape['Name']])
+            quote_reconciliation[tape['Name']]=dict(Captured=len(new_quotes[tape['Name']]),ConflictingClocks=conflicts)
+    del grid,new_quotes;gc.collect()
+    source['SourceAcquiredAt']=max(source['SourceAcquiredAt'],acquired)
+    plan=read(work/'plan.json');plan.pop('SourceProtocolSha256');plan.pop('EvidenceManifestSha256')
+    plan['SourceCorrection']=dict(OriginalRun=run,NewEntryRules=False,FullPolicyReevaluated=True)
+    evidence=dict(PrimaryReceipt=read(REPORT/'source-receipt.json'),Capture=c,PacketCount=receipt['Requests'],
+        QuoteReconciliation=quote_reconciliation,RawProjectionSha256=sha(projected),RestoredHeldRaw=raw_held,AllNewInformationAppliedToEntryAndProtection=True,Orders=0,CloudActivated=False)
+    protocol=hashlib.sha256(exact_json(plan).encode()).hexdigest();digest=hashlib.sha256(exact_json(evidence).encode()).hexdigest()
+    source.update(ProtocolSha256=protocol,EvidenceManifestSha256=digest);plan.update(SourceProtocolSha256=protocol,EvidenceManifestSha256=digest)
+    write(work/'corrected-source.json',source);write(work/'corrected-plan.json',plan);del source;gc.collect()
+    corrected_receipt=dict(Study=STUDY,SourceSha256=sha(work/'corrected-source.json'),ProtocolSha256=sha(work/'corrected-plan.json'),
+        Evidence=evidence,WholePolicyReevaluated=True,ContinuousDrawdownCertified=False,Orders=0,CloudActivated=False)
+    write(REPORT/'source-corrected-receipt.json',corrected_receipt)
+    public_key,_=derive_recipient(key)
+    seal_files([(work/'corrected-source.json','source.json'),(work/'corrected-plan.json','plan.json')]+
+        [(f,'verified-protection/'+f.name) for f in target_tape.iterdir() if f.is_file()],
+        'ridge-monetary-corrected-source-sealed',public_key,os.environ['GITHUB_RUN_ID'],STUDY,
+        corrected_receipt['SourceSha256'],protocol_sha=corrected_receipt['ProtocolSha256'])
+    out=Path('ridge-corrected-parts/S1');out.mkdir(parents=True)
+    env=dict(os.environ,MXM_ECONOMIC_BOUNDED_NEIGHBORS='1',MXM_ECONOMIC_PAIRED_DISTRIBUTION='1',MXM_ECONOMIC_PROFILE='1',
+        MXM_ECONOMIC_COMPACT_REGISTRY='1',MXM_ECONOMIC_COMPACT_PATH='1',MXM_ECONOMIC_STREAM_REGISTRY='1')
+    subprocess.run(['dotnet',REPLAY,'--owner-path-distribution',str(work/'corrected-plan.json'),str(work/'corrected-source.json'),
+        str(out),str(target_tape),'0.5',str(registry)],env=env,check=True)
+    result=read(out/'result.json');need(result['Study']==STUDY and result['SharedPortfolioEvaluations']==5 and
+        result['SourceSha256']==corrected_receipt['SourceSha256'] and result['Orders']==0,'RIDGE_CORRECTED_WHOLE_POLICY_RESULT')
+    original={b['Id']:b['Result'] for b in read(REPORT/'S1-result.json')['CommonBooks']}
+    comparisons=[]
+    fields=['Closed','ClosedNetEur','AllTerminalNetEur','OpenPositions','PendingIntents','SampledDrawdown','Hard21AllFullRegisteredWeeks']
+    for b in result['CommonBooks']:
+        comparisons.append(dict(Id=b['Id'],Before={k:original[b['Id']][k] for k in fields},After={k:b['Result'][k] for k in fields}))
+    write(REPORT/'source-correction-comparison.json',dict(Study=STUDY,CostStress='0.5',Books=5,Comparisons=comparisons,
+        WholePolicyReevaluated=True,SelectionFrozenFromPrimaryStudy=True,NoNewQualificationFromSingleStress=True,
+        SourceBrokerRequests=0,ReusedAuthenticRequests=receipt['Requests']+raw_held['PacketsReconciled'],ContinuousDrawdownCertified=False,Orders=0,CloudActivated=False))
+    for name in ('result.json','holding-valuation-gaps.json','persistent-risk-audit.json'):(REPORT/('source-corrected-S1-'+name)).write_bytes((out/name).read_bytes())
+    return dict(Books=5,WholePolicyReevaluated=True,SourceSha256=corrected_receipt['SourceSha256'],ReusedAuthenticRequests=receipt['Requests']+raw_held['PacketsReconciled'],
+        SourceBrokerRequests=0,ContinuousDrawdownCertified=False,IndependentConfirmationCertified=False)
+
 def evaluate(work):
     registry,tapes,original=prepare(work);rows=[]
     for i,stress in enumerate(STRESSES):
@@ -105,9 +180,12 @@ def evaluate(work):
         need(all(equality.values()),'RIDGE_DISABLED_CONTROL_NUMERICAL_EQUIVALENCE')
         rows.append(result)
         for name in ('result.json','holding-valuation-gaps.json','persistent-risk-audit.json'):(REPORT/f'S{i}-{name}').write_bytes((out/name).read_bytes())
+    write(REPORT/'primary-summary.json',dict(Study=STUDY,CommonBookEvaluations=15,Selection=estate.base.corrected_selection(
+        [x for r in rows for x in r['Selection']],3),SelectionMultiplicity=16,Orders=0,CloudActivated=False,IndependentConfirmationCertified=False))
+    correction=source_correction(work,tapes,registry)
     receipt=read(REPORT/'source-receipt.json')
-    write(REPORT/'summary.json',dict(Study=STUDY,CommonBookEvaluations=15,SourceSha256=receipt['SourceSha256'],
-        Selection=estate.base.corrected_selection([x for r in rows for x in r['Selection']],3),SelectionMultiplicity=12,
+    write(REPORT/'summary.json',dict(Study=STUDY,CommonBookEvaluations=20,PrimaryEvaluations=15,SourceCorrection=correction,SourceSha256=receipt['SourceSha256'],
+        Selection=estate.base.corrected_selection([x for r in rows for x in r['Selection']],3),SelectionMultiplicity=16,
         Orders=0,CloudActivated=False,IndependentConfirmationCertified=False,EconomicPromotionCertified=False))
 
 def conserve():
@@ -115,7 +193,13 @@ def conserve():
     if not files:return
     receipt=read(REPORT/'source-receipt.json');public,_=derive_recipient(os.environ['R3_CUSTODY_PRIVATE_KEY_PEM'].encode())
     seal_files([(f,str(f.relative_to(PARTS))) for f in files],'ridge-monetary-books-sealed',public,os.environ['GITHUB_RUN_ID'],STUDY,
-        receipt['SourceSha256'],complete=(REPORT/'summary.json').exists(),protocol_sha=receipt['ProtocolSha256'])
+        receipt['SourceSha256'],complete=(REPORT/'primary-summary.json').exists(),protocol_sha=receipt['ProtocolSha256'])
+    corrected=sorted(Path('ridge-corrected-parts').glob('*/checkpoints/**/*.json'))
+    if corrected:
+        other=read(REPORT/'source-corrected-receipt.json')
+        seal_files([(f,str(f.relative_to(Path('ridge-corrected-parts')))) for f in corrected],
+            'ridge-monetary-corrected-books-sealed',public,os.environ['GITHUB_RUN_ID'],STUDY,other['SourceSha256'],
+            complete=(REPORT/'source-correction-comparison.json').exists(),protocol_sha=other['ProtocolSha256'])
 if __name__=='__main__':
     parser=argparse.ArgumentParser();parser.add_argument('stage',choices=['check','evaluate','conserve']);parser.add_argument('--work',type=Path);a=parser.parse_args()
     if a.stage=='check':check()
