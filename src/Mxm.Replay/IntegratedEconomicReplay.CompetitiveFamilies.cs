@@ -48,19 +48,21 @@ internal static partial class IntegratedEconomicReplay
         var pb=File.ReadAllBytes(protocolPath);var sb=File.ReadAllBytes(sourcePath);
         var p=JsonSerializer.Deserialize<PavMarketPlan>(pb,Json)!;
         var input=JsonSerializer.Deserialize<EerInput>(sb,Json)!;
-        bool persistentStudy=distributionStudy&&p.Study=="MONETARY_PERSISTENT_RISK_RECOVERY_1";
+        bool estateStudy=distributionStudy&&p.Study=="MONETARY_FULL_ESTATE_COMPETITION_1";
+        bool persistentStudy=distributionStudy&&(p.Study=="MONETARY_PERSISTENT_RISK_RECOVERY_1"||estateStudy);
         bool riskStudy=distributionStudy&&(p.Study=="MONETARY_WITNESSED_RISK_GEOMETRY_1"||persistentStudy);
         bool factorialStudy=distributionStudy&&(p.Study=="MONETARY_MANAGEMENT_FACTORIAL_1"||riskStudy);
         bool costStudy=estimatorStudy&&!earlierEstimatorStudy&&p.Study=="MONETARY_COST_CONTEXT_GEOMETRY_1";
         decimal stress=decimal.Parse(stressText,System.Globalization.CultureInfo.InvariantCulture);
         string planHash=GeneralSha(pb),sourceHash=GeneralSha(sb);
-        if(p.Study!=(persistentStudy?"MONETARY_PERSISTENT_RISK_RECOVERY_1":riskStudy?"MONETARY_WITNESSED_RISK_GEOMETRY_1":factorialStudy?"MONETARY_MANAGEMENT_FACTORIAL_1":distributionStudy?"MONETARY_PATH_DISTRIBUTION_1":controlledRecencyStudy?"MONETARY_CONTROLLED_RECENCY_1":adaptiveStudy?"MONETARY_CAUSAL_RECENCY_COMPETITION_1":multibarStudy?"MONETARY_NET_HORIZON_CROSS_CONTEXT_1":boundaryStudy?"MONETARY_BOUNDARY_LIFECYCLE_1":costStudy?"MONETARY_COST_CONTEXT_GEOMETRY_1":earlierEstimatorStudy?"MONETARY_EARLIER_LIFECYCLE_ESTIMATION_1":estimatorStudy?"MONETARY_LIFECYCLE_ESTIMATION_1":causalManagementStudy?"MONETARY_CAUSAL_MANAGEMENT_1":"MONETARY_COMPETITIVE_FAMILIES_1")||p.Exposure!=ExposedDevelopment||
+        sb=Array.Empty<byte>();
+        if(p.Study!=(estateStudy?"MONETARY_FULL_ESTATE_COMPETITION_1":persistentStudy?"MONETARY_PERSISTENT_RISK_RECOVERY_1":riskStudy?"MONETARY_WITNESSED_RISK_GEOMETRY_1":factorialStudy?"MONETARY_MANAGEMENT_FACTORIAL_1":distributionStudy?"MONETARY_PATH_DISTRIBUTION_1":controlledRecencyStudy?"MONETARY_CONTROLLED_RECENCY_1":adaptiveStudy?"MONETARY_CAUSAL_RECENCY_COMPETITION_1":multibarStudy?"MONETARY_NET_HORIZON_CROSS_CONTEXT_1":boundaryStudy?"MONETARY_BOUNDARY_LIFECYCLE_1":costStudy?"MONETARY_COST_CONTEXT_GEOMETRY_1":earlierEstimatorStudy?"MONETARY_EARLIER_LIFECYCLE_ESTIMATION_1":estimatorStudy?"MONETARY_LIFECYCLE_ESTIMATION_1":causalManagementStudy?"MONETARY_CAUSAL_MANAGEMENT_1":"MONETARY_COMPETITIVE_FAMILIES_1")||p.Exposure!=ExposedDevelopment||
             p.Start!=input.Start||p.End!=input.End||p.SourceProtocolSha256!=input.ProtocolSha256||
-            p.EvidenceManifestSha256!=input.EvidenceManifestSha256||((multibarStudy||adaptiveStudy||distributionStudy)?input.Markets.Length is not (7 or 29):input.Markets.Length!=(earlierEstimatorStudy?7:29))||
+            p.EvidenceManifestSha256!=input.EvidenceManifestSha256||(estateStudy?(input.Markets.Length==0||!p.OriginalInstruments.Order().SequenceEqual(input.Markets.Select(m=>m.Market.Name).Order())):((multibarStudy||adaptiveStudy||distributionStudy)?input.Markets.Length is not (7 or 29):input.Markets.Length!=(earlierEstimatorStudy?7:29)))||
             input.Markets.Select(m=>m.Market.Name).Distinct().Count()!=input.Markets.Length||
             !(p.Start<p.SelectionFrom&&p.SelectionFrom<p.EvaluationFrom&&p.EvaluationFrom<p.End)||
             !p.Stresses.SequenceEqual(new[]{0m,.5m,1m})||!p.Stresses.Contains(stress)||
-            p.Variants.Length!=(factorialStudy?8:distributionStudy?4:controlledRecencyStudy?3:adaptiveStudy?4:multibarStudy?6:boundaryStudy?13:costStudy?7:earlierEstimatorStudy?9:estimatorStudy?5:causalManagementStudy?3:2)||p.Variants.Select(v=>v.Id).Distinct().Count()!=p.Variants.Length||
+            p.Variants.Length!=(estateStudy?4:factorialStudy?8:distributionStudy?4:controlledRecencyStudy?3:adaptiveStudy?4:multibarStudy?6:boundaryStudy?13:costStudy?7:earlierEstimatorStudy?9:estimatorStudy?5:causalManagementStudy?3:2)||p.Variants.Select(v=>v.Id).Distinct().Count()!=p.Variants.Length||
             p.Variants.Any(v=>v.UniverseCount!=input.Markets.Length||!v.Profile.CompeteEconomicFamilies||
                 !v.Profile.LearnFromOpportunityEpisodes||!v.Profile.ObserveFamilyDirectionsOnClosedBars||
                 !v.Profile.UseMarketTimeFxValuation||!v.Profile.ReserveObservedBarGaps)||
@@ -118,7 +120,24 @@ internal static partial class IntegratedEconomicReplay
         if(p.Variants.Any(v=>v.Profile.PersistWitnessedPortfolioCloseUntilExecutable!=persistentStudy||
             v.Profile.ReservePreventiveDrawdownHeadroom!=(persistentStudy&&v.Profile.UsePathDistributionManagement)))
             throw new InvalidDataException("PERSISTENT_RISK_STUDY_BINDING");
-        if(riskStudy)
+        if(!estateStudy&&p.Variants.Any(v=>v.Profile.IncludeRecoveredEconomicFamilies))
+            throw new InvalidDataException("RECOVERED_FAMILIES_REQUIRE_NEW_STUDY");
+        if(estateStudy)
+        {
+            var expected=new (string Id,bool Recovery,string? Estimator,decimal Target)[]{("ORIGINAL_FAMILIES",false,"CENTERED_COST_CONTEXT",2.5m),
+                ("RECOVERED_FAMILIES",true,"CENTERED_COST_CONTEXT",2.5m),
+                ("RECOVERED_TARGET_15",true,"CENTERED_COST_CONTEXT",1.5m),
+                ("RECOVERED_DISTRIBUTION",true,"DISTRIBUTION_CONTEXT",2.5m)};
+            if(valuationRegistryPath is null||!input.ExtendedEconomicContext||
+                !p.Variants.Select(v=>(v.Id,v.Profile.IncludeRecoveredEconomicFamilies,v.Profile.LifecycleEstimator,
+                    v.Profile.DistributionTargetRanges)).SequenceEqual(expected)||
+                p.Variants.Any(v=>!v.Profile.CaptureOpportunityPathEvidence||!v.Profile.ReserveMarginForStopRisk||
+                    !v.Profile.UsePathDistributionManagement||v.Profile.Pav1CompetitiveForecast is not null||v.Profile.RequirePathTailCapacity)||
+                p.Variants.Select(v=>v.Profile with {IncludeRecoveredEconomicFamilies=false,LifecycleEstimator=null,
+                    DistributionTargetRanges=2.5m}).Distinct().Count()!=1)
+                throw new InvalidDataException("ESTATE_COMMON_BOOK_PROFILE_BINDING");
+        }
+        else if(riskStudy)
         {
             var expected=new (string Id,string? Estimator,bool Management,string? Pav1,decimal Target)[]
             {
@@ -173,7 +192,7 @@ internal static partial class IntegratedEconomicReplay
             CaptureHoldingValuationGaps=multibarStudy||adaptiveStudy||distributionStudy,RecoverFreshHoldingMarks=controlledRecencyStudy||distributionStudy,
             CaptureBetweenDecisionValuationGaps=controlledRecencyStudy||distributionStudy,
             RecoverFreshRegistryHoldingMarks=factorialStudy,
-            HeldRegistry=registry};
+            HeldRegistry=registry,UseRecoveredEconomicFamilies=estateStudy};
         var streams=input.Markets.ToDictionary(m=>m.Market.Name,m=>new EerStream(m),StringComparer.Ordinal);
         var sharedObservers=new Dictionary<string,EurOpportunityObserver>(StringComparer.Ordinal);
         EurOpportunityObserver? Observer(NativeEurDevelopmentProfile profile)
@@ -425,6 +444,7 @@ internal static partial class IntegratedEconomicReplay
             JsonSerializer.SerializeToUtf8Bytes(source.HoldingValuationGapReport(),Json));
         if(controlledRecencyStudy)File.WriteAllBytes(Path.Combine(directory,"held-mark-evidence-counts.json"),
             JsonSerializer.SerializeToUtf8Bytes(source.FxEvidenceCounts,Json));
+        if(persistentStudy)WritePersistentRiskAudit(books,directory);
         var result=new {p.Study,p.Exposure,Stress=stress,SourceSha256=sourceHash,ProtocolSha256=planHash,
             input.EvidenceManifestSha256,Selection=selection,Fits=fits,
             CommonBooks=books.Select(c=>new {c.Id,Result=HistoricalBook(c.Book,new[]{p.SelectionFrom,p.EvaluationFrom,p.End}),
@@ -434,7 +454,7 @@ internal static partial class IntegratedEconomicReplay
             ObserverReceipts=(estimatorStudy?cases.Where(c=>c.Observer is not null).GroupBy(c=>c.Observer).Select(g=>g.First()):
                 cases.Where(c=>c.Observer is not null)).Select(c=>new {c.Id,Report=c.Observer!.Report()}).ToArray(),
             SharedPortfolioEvaluations=books.Length,SharedCapitalEur=300,
-            Scope="SEVEN_FAMILY_COMPETITION_IN_EACH_COMMON_BOOK; HOURLY_CAUSAL_SHADOW_LABELS; WEEKLY_WALK_FORWARD",
+            Scope=estateStudy?"RECOVERED_FAMILIES_AND_CONTROLS_IN_ONE_COMMON_BOOK; CAUSAL_FULL_ESTATE_HISTORY; WEEKLY_WALK_FORWARD":"SEVEN_FAMILY_COMPETITION_IN_EACH_COMMON_BOOK; HOURLY_CAUSAL_SHADOW_LABELS; WEEKLY_WALK_FORWARD",
             OriginalResultsModified=false,SourceBrokerRequests=0,Orders=0,CloudActivated=false,
             IndependentConfirmationCertified=false,EconomicPromotionCertified=false};
         File.WriteAllBytes(Path.Combine(directory,"result.json"),JsonSerializer.SerializeToUtf8Bytes(result,Json));

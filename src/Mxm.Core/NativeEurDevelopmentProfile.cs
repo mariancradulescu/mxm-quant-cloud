@@ -112,6 +112,8 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
 
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
     public bool CompeteEconomicFamilies { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool IncludeRecoveredEconomicFamilies { get; init; }
 
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
     public bool SelectEconomicManagementCausally { get; init; }
@@ -186,6 +188,7 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
         (BoundaryHorizonBars>0?$"/BOUNDARY_HORIZON_BARS:{BoundaryHorizonBars}":"") +
         (AllocatePav1AtMinimumVolume?"/PAV1_MINIMUM_VOLUME_MONETARY_ALLOCATION":"") +
         (CompeteEconomicFamilies?"/SEVEN_FAMILY_CAUSAL_COMMON_BOOK_V1":"") +
+        (IncludeRecoveredEconomicFamilies?"/RECOVERED_HRC_SQP_TWC_RCP_VIA_V1":"") +
         (SelectEconomicManagementCausally?"/MATURED_PAIRED_MANAGEMENT_CHOICE_V1":"") +
         (UsePathDistributionManagement?"/CONDITIONAL_H1_PATH_MANAGEMENT_V1":"") +
         (UseWitnessedPortfolioDrawdownGuard?"/WITNESSED_PORTFOLIO_DRAWDOWN_GUARD_V1":"") +
@@ -196,6 +199,8 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
 
     internal void Verify()
     {
+        if(IncludeRecoveredEconomicFamilies&&(!CompeteEconomicFamilies||EconomicStructureLookbackBars<1))
+            throw new ArgumentException("RECOVERY_REQUIRES_COMMON_ECONOMIC_COMPETITION");
         if(RequirePathTailCapacity&&LifecycleEstimator is not ("DISTRIBUTION_LOCAL" or "DISTRIBUTION_CONTEXT" or "DISTRIBUTION_POOLED"))
             throw new ArgumentException("EUR_PATH_TAIL_REQUIRES_DISTRIBUTION");
         if(BoundaryMinimumSamples!=0&&BoundaryMinimumSamples<3||BoundaryMinimumDays<0)
