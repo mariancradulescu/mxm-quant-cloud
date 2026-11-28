@@ -49,7 +49,7 @@ public sealed partial class NativeUnifiedPortfolioEngine
             .Where(p=>p.Kind=="REQUEST_OPEN"||p.Kind=="REQUEST_CLOSE"&&
                 p.Reason.StartsWith("MODEL_UNTRANSMITTED_",StringComparison.Ordinal)&&p.Reason!=NativeStopModelReason)
             .Select(p=>new Ucp1IntentWatch(p.PositionId,p.Symbol,p.Kind=="REQUEST_OPEN"?p.Side>0:p.Side<0,
-                p.Kind=="REQUEST_OPEN",p.At,p.At+p.LatencyMs,p.At+600_000L)).ToArray();
+                p.Kind=="REQUEST_OPEN",p.At,p.At+p.LatencyMs,NativeSimulatedCloseLifecycle.IsPersistentPortfolioClose(p.Reason)?long.MaxValue:p.At+600_000L)).ToArray();
 
     internal Ucp1MarginObservation[] EurMarginExceedances => eurMarginExceedances.ToArray();
     internal Ucp1MarginObservation[] EurMarginMaxima => eurMarginMaxima.Values.OrderBy(x=>x.Phase,StringComparer.Ordinal).ToArray();
@@ -89,7 +89,9 @@ public sealed partial class NativeUnifiedPortfolioEngine
             // The existing intent watcher requires a later genuine executable
             // tick after latency; no valuation-only mark enters Markets.
             Apply(Event("REQUEST_CLOSE",frame.At,held.Id,held.Symbol,held.Side,held.Units,
-                reason:"MODEL_UNTRANSMITTED_INTEGRATED_WITNESSED_PORTFOLIO_DD_PROTECTION")
+                reason:eurDevelopmentProfile!.PersistWitnessedPortfolioCloseUntilExecutable
+                    ?NativeSimulatedCloseLifecycle.PersistentPortfolioCloseReason
+                    :"MODEL_UNTRANSMITTED_INTEGRATED_WITNESSED_PORTFOLIO_DD_PROTECTION")
                 with {AvailableAt=frame.At,CalibratedThrough=frame.At});
             closeRequests++;
             Count("EUR_WITNESSED_PORTFOLIO_DD_CLOSE_REQUEST");

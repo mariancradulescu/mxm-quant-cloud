@@ -28,6 +28,10 @@ public sealed record NativeModelCloseStep(
 
 public static class NativeSimulatedCloseLifecycle
 {
+    internal const string PersistentPortfolioCloseReason="MODEL_UNTRANSMITTED_INTEGRATED_PERSISTENT_PORTFOLIO_DD_PROTECTION";
+    internal static bool IsPersistentPortfolioClose(string reason)=>reason==PersistentPortfolioCloseReason;
+    internal static bool CloseIntentExpired(string reason,long elapsed,long window)=>
+        !IsPersistentPortfolioClose(reason)&&elapsed>window;
     internal const string MarginReduction = "INTEGRATED_EUR_GENERAL_MARGIN_REDUCTION";
     internal const string AdaptiveContinuationReduction = "INTEGRATED_EUR_ADVERSE_CONTINUATION_REDUCE";
     internal const string AdaptiveContinuationClose = "INTEGRATED_EUR_ADVERSE_CONTINUATION_CLOSE";
@@ -124,7 +128,7 @@ public static class NativeSimulatedCloseLifecycle
             return new(protection,"NON_SIR1_INTENT_PRESERVED_NO_MODEL_RECONCILIATION",
                 facts.ToArray(),session.Ledger.Summary(at),false);
 
-        if(pending is not null && at-pending.At>responseWindowMs)
+        if(pending is not null && CloseIntentExpired(pending.Reason,at-pending.At,responseWindowMs))
         {
             Apply(Fact("MODEL_CLOSE_INTENT_EXPIRED",held,at,
                 reason:"MODEL_UNTRANSMITTED_CLOSE_RESPONSE_WINDOW_EXPIRED",

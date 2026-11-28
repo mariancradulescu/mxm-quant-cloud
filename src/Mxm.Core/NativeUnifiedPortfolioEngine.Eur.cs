@@ -769,6 +769,10 @@ public sealed partial class NativeUnifiedPortfolioEngine
         if(gate.IsFinanceable&&eurDevelopmentProfile?.ReserveMarginForStopRisk==true&&
             !NativePendingCapitalGate.StopAdjustedMarginFits(gate.EquityEur,gate.ReservedMarginAfterEur,gate.ReservedRiskAfterEur))
             return gate with {IsFinanceable=false,Status="PENDING_PLUS_HELD_STOP_ADJUSTED_MARGIN_CAP"};
+        if(gate.IsFinanceable&&eurDevelopmentProfile?.ReservePreventiveDrawdownHeadroom==true&&
+            !NativePendingCapitalGate.PreventiveDrawdownReserveFits(capital.ResearchAdmissionEquityEur,
+                book.ObservedPeakEur,gate.ReservedRiskAfterEur))
+            return gate with {IsFinanceable=false,Status="PREVENTIVE_DD_RESERVE_HEADROOM"};
         if(gate.IsFinanceable&&eurDevelopmentProfile?.RequirePathTailCapacity==true&&IsEurRank&&
             !NativeDistributionTailCapacity.Allows(gate.EquityEur,book.ObservedPeakEur,
                 Math.Max(0m,gate.ReservedRiskAfterEur-choice.Geometry.InitialRiskEur),choice.Geometry.InitialRiskEur,
