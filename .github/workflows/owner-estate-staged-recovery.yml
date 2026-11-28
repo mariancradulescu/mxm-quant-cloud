@@ -130,6 +130,7 @@ jobs:
           if-no-files-found: warn
   information:
     needs: prepare
+    if: always() && !cancelled() && needs.prepare.result == 'success'
     environment: mxm-r3-custody-v1
     runs-on: ubuntu-24.04
     timeout-minutes: 180
@@ -158,6 +159,7 @@ jobs:
           if-no-files-found: warn
   cost:
     needs: prepare
+    if: always() && !cancelled() && needs.prepare.result == 'success'
     strategy:
       fail-fast: false
       matrix:
@@ -201,6 +203,7 @@ jobs:
           if-no-files-found: warn
   economic:
     needs: [cost,information]
+    if: always() && !cancelled() && needs.cost.result == 'success' && needs.information.result == 'success'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -226,7 +229,7 @@ jobs:
           if-no-files-found: warn
   ridge:
     needs: [technical,economic]
-    if: needs.technical.outputs.resume == 'true' && needs.economic.result == 'success'
+    if: always() && !cancelled() && needs.technical.outputs.resume == 'true' && needs.economic.result == 'success'
     environment: mxm-r3-custody-v1
     runs-on: ubuntu-24.04
     timeout-minutes: 300
