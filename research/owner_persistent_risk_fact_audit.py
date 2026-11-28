@@ -26,8 +26,10 @@ def audit(work):
         receipt=read(original/'source-receipt.json');receipts.append(dict(Scope=scope,Original=result,Books=books,Receipt=receipt))
         key=os.environ['R3_CUSTODY_PRIVATE_KEY_PEM'].encode()
         count=0
+        models=[v['Id'] for v in read(original/'registered-plan.json')['Variants']]+['CASH_MARKET_TIME']
+        wanted={(f'S{i}',name) for i in range(3) for name in models}
         for path in restore_final_books((books['Id'],RUN,books['Sha256']),work/(scope+'-cipher'),work/(scope+'-books'),key,
-                receipt['SourceSha256'],protocol_sha=receipt['ProtocolSha256']):
+                receipt['SourceSha256'],wanted=wanted,protocol_sha=receipt['ProtocolSha256']):
             stress=path.parts[-4];name=path.stem;target=out/(scope+'-'+stress+'-'+name+'.json')
             subprocess.run(['dotnet',REPLAY,'--owner-persistent-risk-audit',str(path),name,str(target)],check=True)
             r=read(target);need(r['EventChainVerified'] and r['Orders']==r['OriginalPoliciesReplayed']==0,'PERSISTENT_RISK_FACT_CHAIN')
