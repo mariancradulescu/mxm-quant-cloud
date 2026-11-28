@@ -1,0 +1,27 @@
+{
+  "Study": "FULL_ESTATE_TECHNICAL_RECOVERY_1",
+  "FailedRun": 46141614947,
+  "DependentStoppedRun": 46146387358,
+  "Reason": "HOSTED_RUNNER_LOST_COMMUNICATION_WITHOUT_SOURCE_PUBLICATION",
+  "Fragments": [
+    "base",
+    "T4",
+    "T5",
+    "T6",
+    "T7",
+    "T8",
+    "T9",
+    "T10",
+    "T11",
+    "legacy"
+  ],
+  "EconomicPolicyChanged": false,
+  "SourcePublishedBeforeEconomic": true,
+  "SeparateHostsPerCost": true,
+  "MaximumManagedHeapBytes": 10737418240,
+  "OriginalArtifactsPreserved": true,
+  "SourceBrokerRequests": 0,
+  "Orders": 0,
+  "CloudActivated": false,
+  "IndependentConfirmationCertified": false
+}
