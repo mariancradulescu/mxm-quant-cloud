@@ -48,6 +48,8 @@ if(args is ["--owner-closed-path-information",var cpPlan,var cpSource,var cpTape
     return IntegratedEconomicReplay.RunClosedPathInformation(cpPlan,cpSource,cpTape,cpOutput);
 if(args is ["--owner-persistent-risk-audit-check"])
     return IntegratedEconomicReplay.CheckPersistentRiskAudit();
+if(args is ["--owner-persistent-response",var prSource,var prBook,var prReport,var prOriginalTape,var prExtendedTape,var prOutput])
+    return IntegratedEconomicReplay.RunPersistentResponse(prSource,prBook,prReport,prOriginalTape,prExtendedTape,prOutput);
 if(args is ["--owner-persistent-risk-audit",var praCheckpoint,var praId,var praOutput])
     return IntegratedEconomicReplay.RunPersistentRiskAudit(praCheckpoint,praId,praOutput);
 if(args is ["--owner-path-distribution",var pdProtocol,var pdSource,var pdDirectory,var pdTape,var pdStress,var pdRegistry])
