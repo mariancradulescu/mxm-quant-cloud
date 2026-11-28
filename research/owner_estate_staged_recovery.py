@@ -16,7 +16,7 @@ from . import owner_eur_authentic_expansion as expansion
 from . import owner_eur_recent_funded as funded
 from . import source_history_universe as src
 from .owner_official_breadth_spans import normalize_with_quarantine
-from .owner_earlier_lifecycle_digest_recovery import verified_download
+from .owner_earlier_lifecycle_digest_recovery import verified_download,normalized_run_id
 from .owner_pav1_market_time import restore_checkpoint
 from .owner_monetary_reduce_common_book import REPLAY,STRESSES
 from .merge_eur_scenarios import read,exact_json
@@ -26,6 +26,7 @@ from .custody_new import derive_recipient
 from .decode import need
 REG=Path('research/estate_staged_technical_recovery_1.json')
 REPORT=Path('estate-monetary-report')
+RESUME=Path('research/estate_staged_resume_2.json')
 FRAGMENTS=['base','T4','T5','T6','T7','T8','T9','T10','T11','legacy']
 
 def check():
@@ -36,21 +37,44 @@ def check():
     return p
 
 def artifacts(run=None):
-    repo=os.environ['GITHUB_REPOSITORY'];run=str(run or os.environ['GITHUB_RUN_ID'])
+    repo=os.environ['GITHUB_REPOSITORY'];run=normalized_run_id(run if run is not None else os.environ['GITHUB_RUN_ID'])
     pages=json.loads(subprocess.check_output(['gh','api','--paginate','--slurp',f'repos/{repo}/actions/runs/{run}/artifacts?per_page=100']))
-    return [dict(Id=a['id'],Name=a['name'],Sha256=a['digest'].removeprefix('sha256:'))
-        for page in pages for a in page['artifacts'] if not a['expired']]
+    return [dict(Id=a['id'],Name=a['name'],RunId=normalized_run_id(a['workflow_run']['id']),Sha256=a['digest'].removeprefix('sha256:'))
+        for page in pages for a in page['artifacts'] if not a['expired'] and normalized_run_id(a['workflow_run']['id'])==run]
 
 def latest(prefix,run=None):
     rows=[a for a in artifacts(run) if a['Name'].startswith(prefix)]
     need(bool(rows),'STAGED_ARTIFACT_'+prefix);return max(rows,key=lambda a:a['Id'])
 
+def resume_fragments():
+    p=read(RESUME)
+    need(p['Study']=='FULL_ESTATE_STAGED_RESUME_2' and p['OriginRun']==46150207165 and
+        p['FailedJob']==140995875020 and set(p['Fragments'])==set(FRAGMENTS) and
+        p['Orders']==p['SourceBrokerRequests']==0 and not p['CloudActivated'],'STAGED_RESUME_REGISTRATION')
+    ids=set()
+    for part,items in p['Fragments'].items():
+        need(set(items)=={'sealed','public'},'STAGED_RESUME_KINDS')
+        for kind,spec in items.items():
+            need(spec['RunId']==p['OriginRun'] and spec['Name']==f'estate-fragment-{part}-{kind}-attempt1'
+                and spec['Id'] not in ids and len(spec['Sha256'])==64,'STAGED_RESUME_IDENTITY')
+            ids.add(spec['Id'])
+    return p
+
+def pinned_fragments():
+    p=resume_fragments();inventory=artifacts(p['OriginRun'])
+    for items in p['Fragments'].values():
+        for spec in items.values():
+            need(sum(a==spec for a in inventory)==1,'STAGED_RESUME_PIN_MISMATCH')
+    return p['Fragments']
+
 def restore_artifact(spec,folder):
     cipher=folder.with_name(folder.name+'-cipher')
-    verified_download(spec['Id'],os.environ['GITHUB_RUN_ID'],spec['Sha256'],cipher)
+    run=str(normalized_run_id(spec['RunId']))
+    verified_download(spec['Id'],run,spec['Sha256'],cipher)
     receipt=read(cipher/'checkpoint-receipt.json')
+    need(receipt['RunId']==run,'STAGED_CHECKPOINT_ORIGIN')
     restore_checkpoint(cipher,folder,os.environ['R3_CUSTODY_PRIVATE_KEY_PEM'].encode(),
-        os.environ['GITHUB_RUN_ID'],receipt['SourceSha256'])
+        run,receipt['SourceSha256'])
     return receipt
 
 def tranche(spec,root,work,tape,source,markets,tapes,proof,p):
@@ -163,15 +187,26 @@ def market_rows(markets,by,merged,p,history):
         markets[name]=None;del entry,m,m5,rows;gc.collect()
         print('STAGED_MARKET_WRITTEN',name,flush=True)
 
-def assemble(work):
+def assemble(work,reuse=False):
     check();p=original.check();work.mkdir(mode=0o700,parents=True);REPORT.mkdir()
     root=work/'estate';root.mkdir();tape=work/'verified-protection';tape.mkdir()
     markets={};tapes={};proof=[];fragment_bindings=[];source=None
+    pinned=pinned_fragments() if reuse else None
     for part in FRAGMENTS:
-        spec=latest('estate-fragment-'+part+'-sealed-attempt');folder=work/part
+        spec=pinned[part]['sealed'] if pinned is not None else latest('estate-fragment-'+part+'-sealed-attempt');folder=work/part
         restore_artifact(spec,folder);data=read(folder/'source.json')
         need(data['Role']==part and data['OriginalRegistrationSha256']==sha(original.REGISTRATION),'STAGED_FRAGMENT_BINDING')
-        fragment_bindings.append(dict(Role=part,Artifact=spec,SourceSha256=sha(folder/'source.json')))
+        binding=dict(Role=part,Artifact=spec,SourceSha256=sha(folder/'source.json'))
+        if pinned is not None:
+            public=pinned[part]['public'];dest=work/(part+'-public')
+            verified_download(public['Id'],public['RunId'],public['Sha256'],dest)
+            receipt=read(dest/'receipt.json')
+            need(receipt['Role']==part and receipt['SourceSha256']==binding['SourceSha256'] and
+                receipt['OriginalRegistrationSha256']==sha(original.REGISTRATION) and
+                receipt['Series']==len(list((folder/'estate').glob('*.json'))) and
+                receipt['Orders']==receipt['SourceBrokerRequests']==0 and not receipt['CloudActivated'],'STAGED_RESUME_PUBLIC_BINDING')
+            binding['PublicArtifact']=public
+        fragment_bindings.append(binding)
         if part=='base':source=data['Header']
         else:
             for asset,route in data['Header']['Routes'].items():source['Routes'].setdefault(asset,route)
@@ -228,7 +263,7 @@ def assemble(work):
 def restore_source(work):
     work.mkdir(mode=0o700,parents=True)
     spec=latest('full-estate-monetary-reusable-source-attempt');root=work/'prepared';restore_artifact(spec,root)
-    public=latest('full-estate-prepared-public-attempt');verified_download(public['Id'],os.environ['GITHUB_RUN_ID'],public['Sha256'],work/'original')
+    public=latest('full-estate-prepared-public-attempt');verified_download(public['Id'],public['RunId'],public['Sha256'],work/'original')
     receipt=read(work/'original/source-receipt.json');need(sha(root/'source.json')==receipt['SourceSha256'] and sha(root/'plan.json')==receipt['ProtocolSha256'],'STAGED_PREPARED_SHA')
     return root,receipt
 
@@ -255,12 +290,12 @@ def evaluate(work,cost):
 def finalize(work):
     check();work.mkdir(mode=0o700,parents=True);REPORT.mkdir();rows=[];registry_hashes=set()
     prefix='full-estate-prepared-public-attempt';spec=latest(prefix)
-    verified_download(spec['Id'],os.environ['GITHUB_RUN_ID'],spec['Sha256'],work/'prepared')
+    verified_download(spec['Id'],spec['RunId'],spec['Sha256'],work/'prepared')
     for f in (work/'prepared').iterdir():shutil.copyfile(f,REPORT/f.name)
     receipt=read(REPORT/'source-receipt.json')
     for cost in range(3):
         spec=latest(f'full-estate-cost-S{cost}-public-attempt');dest=work/f'S{cost}'
-        verified_download(spec['Id'],os.environ['GITHUB_RUN_ID'],spec['Sha256'],dest)
+        verified_download(spec['Id'],spec['RunId'],spec['Sha256'],dest)
         result=read(dest/f'S{cost}-result.json');need(result['SourceSha256']==receipt['SourceSha256'] and result['ProtocolSha256']==receipt['ProtocolSha256'],'STAGED_FINAL_SOURCE_PARITY')
         completed=read(dest/'scenario-complete.json');need(completed['Cost']==cost and completed['SourceSha256']==receipt['SourceSha256'],'STAGED_COST_COMPLETION')
         registry_hashes.add(completed['RegistrySha256']);write(REPORT/f'S{cost}-registry-binding.json',completed)
@@ -269,7 +304,7 @@ def finalize(work):
             if f.name.startswith(f'S{cost}-'):shutil.copyfile(f,REPORT/f.name)
     need(len(registry_hashes)==1,'STAGED_ALL_COST_REGISTRY_PARITY')
     spec=latest('full-estate-information-public-attempt');dest=work/'information'
-    verified_download(spec['Id'],os.environ['GITHUB_RUN_ID'],spec['Sha256'],dest)
+    verified_download(spec['Id'],spec['RunId'],spec['Sha256'],dest)
     need(read(dest/'information-binding.json')['SourceSha256']==receipt['SourceSha256'],'STAGED_INFORMATION_SOURCE')
     shutil.copyfile(dest/'recovered-mechanisms.json',REPORT/'recovered-mechanisms.json')
     write(REPORT/'summary.json',dict(Study=original.STUDY,CommonBookEvaluations=15,SourceSha256=receipt['SourceSha256'],
@@ -278,10 +313,10 @@ def finalize(work):
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser();parser.add_argument('stage',choices=['check','fragment','assemble','information','evaluate','finalize','conserve'])
-    parser.add_argument('--work',type=Path);parser.add_argument('--part',choices=FRAGMENTS);parser.add_argument('--cost',type=int,choices=range(3));a=parser.parse_args()
-    if a.stage=='check':check()
+    parser.add_argument('--reuse-fragments',action='store_true');parser.add_argument('--work',type=Path);parser.add_argument('--part',choices=FRAGMENTS);parser.add_argument('--cost',type=int,choices=range(3));a=parser.parse_args()
+    if a.stage=='check':check();resume_fragments()
     elif a.stage=='fragment':fragment(a.work,a.part)
-    elif a.stage=='assemble':assemble(a.work)
+    elif a.stage=='assemble':assemble(a.work,a.reuse_fragments)
     elif a.stage=='information':information(a.work)
     elif a.stage=='evaluate':evaluate(a.work,a.cost)
     elif a.stage=='finalize':finalize(a.work)
