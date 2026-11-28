@@ -124,6 +124,8 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
     public bool UsePathDistributionManagement { get; init; }
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool UseWitnessedPortfolioDrawdownGuard { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
     public bool RequirePathTailCapacity { get; init; }
     // Optional research-only recency weighting without a permanent family prior.
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
@@ -182,6 +184,7 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
         (CompeteEconomicFamilies?"/SEVEN_FAMILY_CAUSAL_COMMON_BOOK_V1":"") +
         (SelectEconomicManagementCausally?"/MATURED_PAIRED_MANAGEMENT_CHOICE_V1":"") +
         (UsePathDistributionManagement?"/CONDITIONAL_H1_PATH_MANAGEMENT_V1":"") +
+        (UseWitnessedPortfolioDrawdownGuard?"/WITNESSED_PORTFOLIO_DRAWDOWN_GUARD_V1":"") +
         (EconomicManagementTimeframe is not null?$"/MANAGEMENT_TIMEFRAME:{EconomicManagementTimeframe}":"") +
         (EconomicMechanism is not null&&KeepAdmissionRiskAtFill?$"/MECHANISM_KEEP_RISK/RESIZE:{ResizeWithinAdmissionRiskAtFill}":"");
 
@@ -198,6 +201,9 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
             EconomicManagement is not (NativeEconomicMechanisms.BoundaryValue or NativeEconomicMechanisms.BoundaryReduce)))
             throw new ArgumentException("EUR_BOUNDARY_EDGE_PROFILE");
         if(ReserveMarginForStopRisk&&!CompeteEconomicFamilies)throw new ArgumentException("EUR_STOP_ADJUSTED_MARGIN_PROFILE");
+        if(UseWitnessedPortfolioDrawdownGuard&&(!CompeteEconomicFamilies||!ObserveIntentExecutionOnTicks||
+            !UseMarketTimeFxValuation||!ReserveMarginForStopRisk||ModeledStopLatencyMs is null))
+            throw new ArgumentException("EUR_WITNESSED_PORTFOLIO_GUARD_PROFILE");
         if(CaptureLifecycleRecencyEvidence&&LifecycleEstimator!="CENTERED_COST_CONTEXT")
             throw new ArgumentException("EUR_RECENCY_EVIDENCE_PROFILE");
         if(LifecycleRecencyHalfLifeDays!=0&&(LifecycleRecencyHalfLifeDays is <7 or >90||

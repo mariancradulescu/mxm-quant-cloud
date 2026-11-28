@@ -600,6 +600,8 @@ public sealed partial class NativeUnifiedPortfolioEngine
         if(ModelsNativeStops)
         {
             AdvanceNativeStops(frame, by);
+            if(eurDevelopmentProfile?.UseWitnessedPortfolioDrawdownGuard==true)
+                RequestWitnessedPortfolioProtection(frame);
             if(between&&readyIntents is not { Count:>0 })
                 return RecordIntegratedFrame(t,model.Ledger.Summary(t),frame);
         }

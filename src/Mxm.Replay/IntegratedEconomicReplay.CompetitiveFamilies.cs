@@ -6,7 +6,7 @@ using Mxm.Core;
 internal static partial class IntegratedEconomicReplay
 {
     sealed record FactorialCheckpointBinding(string Protocol,string Source,string Protection,string Registry,
-        string Scenario,string InputRevision,string? RunnerRevision,bool Bounded,bool Paired);
+        string Scenario,string InputRevision,string? RunnerRevision,bool Bounded,bool Paired,bool CompactRegistry=false,bool CompactPath=false);
     sealed record FactorialCheckpointState(string Version,FactorialCheckpointBinding Binding,int Phase,long Through,long LastClock,
         Dictionary<string,HistoricalStreamState> Streams,Dictionary<string,string> Files,JsonElement[] Fits,
         JsonElement? Selection,EerEvidence.HoldingGapCheckpoint[] HoldingGaps,Dictionary<string,int> FxCounts,
@@ -48,11 +48,12 @@ internal static partial class IntegratedEconomicReplay
         var pb=File.ReadAllBytes(protocolPath);var sb=File.ReadAllBytes(sourcePath);
         var p=JsonSerializer.Deserialize<PavMarketPlan>(pb,Json)!;
         var input=JsonSerializer.Deserialize<EerInput>(sb,Json)!;
-        bool factorialStudy=distributionStudy&&p.Study=="MONETARY_MANAGEMENT_FACTORIAL_1";
+        bool riskStudy=distributionStudy&&p.Study=="MONETARY_WITNESSED_RISK_GEOMETRY_1";
+        bool factorialStudy=distributionStudy&&(p.Study=="MONETARY_MANAGEMENT_FACTORIAL_1"||riskStudy);
         bool costStudy=estimatorStudy&&!earlierEstimatorStudy&&p.Study=="MONETARY_COST_CONTEXT_GEOMETRY_1";
         decimal stress=decimal.Parse(stressText,System.Globalization.CultureInfo.InvariantCulture);
         string planHash=GeneralSha(pb),sourceHash=GeneralSha(sb);
-        if(p.Study!=(factorialStudy?"MONETARY_MANAGEMENT_FACTORIAL_1":distributionStudy?"MONETARY_PATH_DISTRIBUTION_1":controlledRecencyStudy?"MONETARY_CONTROLLED_RECENCY_1":adaptiveStudy?"MONETARY_CAUSAL_RECENCY_COMPETITION_1":multibarStudy?"MONETARY_NET_HORIZON_CROSS_CONTEXT_1":boundaryStudy?"MONETARY_BOUNDARY_LIFECYCLE_1":costStudy?"MONETARY_COST_CONTEXT_GEOMETRY_1":earlierEstimatorStudy?"MONETARY_EARLIER_LIFECYCLE_ESTIMATION_1":estimatorStudy?"MONETARY_LIFECYCLE_ESTIMATION_1":causalManagementStudy?"MONETARY_CAUSAL_MANAGEMENT_1":"MONETARY_COMPETITIVE_FAMILIES_1")||p.Exposure!=ExposedDevelopment||
+        if(p.Study!=(riskStudy?"MONETARY_WITNESSED_RISK_GEOMETRY_1":factorialStudy?"MONETARY_MANAGEMENT_FACTORIAL_1":distributionStudy?"MONETARY_PATH_DISTRIBUTION_1":controlledRecencyStudy?"MONETARY_CONTROLLED_RECENCY_1":adaptiveStudy?"MONETARY_CAUSAL_RECENCY_COMPETITION_1":multibarStudy?"MONETARY_NET_HORIZON_CROSS_CONTEXT_1":boundaryStudy?"MONETARY_BOUNDARY_LIFECYCLE_1":costStudy?"MONETARY_COST_CONTEXT_GEOMETRY_1":earlierEstimatorStudy?"MONETARY_EARLIER_LIFECYCLE_ESTIMATION_1":estimatorStudy?"MONETARY_LIFECYCLE_ESTIMATION_1":causalManagementStudy?"MONETARY_CAUSAL_MANAGEMENT_1":"MONETARY_COMPETITIVE_FAMILIES_1")||p.Exposure!=ExposedDevelopment||
             p.Start!=input.Start||p.End!=input.End||p.SourceProtocolSha256!=input.ProtocolSha256||
             p.EvidenceManifestSha256!=input.EvidenceManifestSha256||((multibarStudy||adaptiveStudy||distributionStudy)?input.Markets.Length is not (7 or 29):input.Markets.Length!=(earlierEstimatorStudy?7:29))||
             input.Markets.Select(m=>m.Market.Name).Distinct().Count()!=input.Markets.Length||
@@ -111,7 +112,30 @@ internal static partial class IntegratedEconomicReplay
             p.Variants.Count(v=>v.Profile.UsePathDistributionManagement)!=1||p.Variants.Count(v=>v.Profile.RequirePathTailCapacity)!=2||
             !p.Variants.Select(v=>v.Profile.LifecycleEstimator).Order().SequenceEqual(new[]{"CENTERED_COST_CONTEXT","DISTRIBUTION_CONTEXT","DISTRIBUTION_CONTEXT","DISTRIBUTION_CONTEXT"})))
             throw new InvalidDataException("DISTRIBUTION_STUDY_ABLATION_BINDING");
-        if(factorialStudy)
+        if(p.Variants.Any(v=>v.Profile.UseWitnessedPortfolioDrawdownGuard!=riskStudy))
+            throw new InvalidDataException("WITNESSED_RISK_STUDY_BINDING");
+        if(riskStudy)
+        {
+            var expected=new (string Id,string? Estimator,bool Management,string? Pav1,decimal Target)[]
+            {
+                ("CENTERED_GUARD","CENTERED_COST_CONTEXT",false,null,2.5m),
+                ("CENTERED_MANAGEMENT_GUARD","CENTERED_COST_CONTEXT",true,null,2.5m),
+                ("DISTRIBUTION_GUARD","DISTRIBUTION_CONTEXT",false,null,2.5m),
+                ("DISTRIBUTION_MANAGEMENT_GUARD","DISTRIBUTION_CONTEXT",true,null,2.5m),
+                ("PAV1_DIRECT_GUARD","CENTERED_COST_CONTEXT",false,"DIRECT",2.5m),
+                ("PAV1_DIRECT_MANAGEMENT_GUARD","CENTERED_COST_CONTEXT",true,"DIRECT",2.5m),
+                ("DISTRIBUTION_MANAGEMENT_TARGET_15","DISTRIBUTION_CONTEXT",true,null,1.5m),
+                ("PAV1_DIRECT_MANAGEMENT_TARGET_15","CENTERED_COST_CONTEXT",true,"DIRECT",1.5m)
+            };
+            if(valuationRegistryPath is null||
+                !p.Variants.Select(v=>(v.Id,v.Profile.LifecycleEstimator,v.Profile.UsePathDistributionManagement,
+                    v.Profile.Pav1CompetitiveForecast,v.Profile.DistributionTargetRanges)).SequenceEqual(expected)||
+                p.Variants.Any(v=>!v.Profile.CaptureOpportunityPathEvidence||!v.Profile.ReserveMarginForStopRisk||v.Profile.RequirePathTailCapacity)||
+                p.Variants.Select(v=>v.Profile with {LifecycleEstimator=null,UsePathDistributionManagement=false,
+                    Pav1CompetitiveForecast=null,DistributionTargetRanges=2.5m}).Distinct().Count()!=1)
+                throw new InvalidDataException("WITNESSED_RISK_GEOMETRY_PROFILE_BINDING");
+        }
+        else if(factorialStudy)
         {
             var expected=new (string Id,string? Estimator,bool Tail,bool Management,string? Pav1)[]
             {
@@ -188,7 +212,9 @@ internal static partial class IntegratedEconomicReplay
             ProtectionFingerprint(protectionDirectory),FactorialFileSha(valuationRegistryPath!),scenario,input.EngineRevision,
             Environment.GetEnvironmentVariable("GITHUB_SHA"),
             Environment.GetEnvironmentVariable("MXM_ECONOMIC_BOUNDED_NEIGHBORS")=="1",
-            Environment.GetEnvironmentVariable("MXM_ECONOMIC_PAIRED_DISTRIBUTION")=="1"):null;
+            Environment.GetEnvironmentVariable("MXM_ECONOMIC_PAIRED_DISTRIBUTION")=="1",
+            Environment.GetEnvironmentVariable("MXM_ECONOMIC_COMPACT_REGISTRY")=="1",
+            Environment.GetEnvironmentVariable("MXM_ECONOMIC_COMPACT_PATH")=="1"):null;
         var distinctObservers=(estimatorStudy?cases.Where(x=>x.Observer is not null).GroupBy(x=>x.Observer).Select(g=>g.First()):
             cases.Where(x=>x.Observer is not null)).ToArray();
         void Observe(long from,long through,bool trade)

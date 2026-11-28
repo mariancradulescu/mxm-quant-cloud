@@ -1,6 +1,7 @@
 namespace Mxm.Core;
 internal static class NativeDistributionLifecycle
 {
+    static readonly bool CompactPath=Environment.GetEnvironmentVariable("MXM_ECONOMIC_COMPACT_PATH")=="1";
     internal static double?[] Features(NativeEurDecisionContext c)
     {
         var values=(c.MarketState??Array.Empty<decimal?>()).Select(x=>(double?)x).ToList();
@@ -41,10 +42,11 @@ internal static class NativeDistributionLifecycle
 
     internal static NativeEurPayoff? Estimate(IEnumerable<NativeEurCalibrationOutcome> history,
         string family,int side,NativeEurDecisionContext target,long at,string mode,int minimumSamples,int minimumDays,
-        decimal penalty,Action<string>? diagnostic)
+        decimal penalty,Action<string>? diagnostic,bool? compactOverride=null)
     {
+        using var profile=NativeEconomicProfiler.Measure("eur.path_distribution");
         var valid=history.Where(x=>x.Family==family&&x.Side==side&&x.RiskEur>0m&&x.Context is not null&&
-            x.PathEvidence is not null&&x.AvailableAt<at).ToArray();
+            x.PathEvidence is not null&&x.AvailableAt<at);
         NativePathSample Row(NativeEurCalibrationOutcome x,bool net)
         {
             var p=x.PathEvidence!;
@@ -52,10 +54,36 @@ internal static class NativeDistributionLifecycle
                 (net?x.NetEur:x.GrossEur)/x.RiskEur,p.FavorableR,p.AdverseR,p.TargetFirstLower,p.TargetFirstUpper,p.DurationMinutes);
         }
         var features=Features(target);
-        var gross=NativeCausalPathDistribution.Estimate(valid.Select(x=>Row(x,false)),target.Symbol,target.AssetClass,
-            features,at,mode,mode=="POOLED"?0:28,minimumSamples,minimumDays,penalty);
-        var net=NativeCausalPathDistribution.Estimate(valid.Select(x=>Row(x,true)),target.Symbol,target.AssetClass,
-            features,at,mode,mode=="POOLED"?0:28,minimumSamples,minimumDays,penalty);
+        NativePathDistributionForecast? gross,net;
+        NativePathDistributionForecast? Estimate(IEnumerable<NativePathSample> rows)=>
+            NativeCausalPathDistribution.Estimate(rows,target.Symbol,target.AssetClass,features,at,mode,
+                mode=="POOLED"?0:28,minimumSamples,minimumDays,penalty);
+        if(compactOverride??CompactPath)
+        {
+            // The original estimator applies these predicates and stable
+            // newest-first Take(1024) before weighting. Filter and cap
+            // before materializing expensive feature vectors, once for
+            // both monetary outcomes. The estimator still revalidates.
+            int Length(NativeEurDecisionContext c)=>(c.MarketState?.Length??0)+3+(c.RelativeVolatility?.Length??7);
+            var pairs=valid.Where(x=>
+            {
+                var c=x.Context!;var p=x.PathEvidence!;
+                return (x.DecisionAt??(x.ClosedAt-1))<x.AvailableAt&&Length(c)==features.Length&&
+                    p.FavorableR>=0m&&p.AdverseR>=0m&&p.TargetFirstLower>=0m&&
+                    p.TargetFirstLower<=p.TargetFirstUpper&&p.TargetFirstUpper<=1m&&p.DurationMinutes>0m&&
+                    (c.Symbol==target.Symbol||mode!="LOCAL"&&target.AssetClass is not null&&c.AssetClass==target.AssetClass);
+            }).OrderByDescending(x=>x.AvailableAt).Take(1024).Select(x=>
+            {
+                var g=Row(x,false);
+                return (Gross:g,Net:g with {Outcome=x.NetEur/x.RiskEur});
+            }).ToArray();
+            gross=Estimate(pairs.Select(x=>x.Gross));net=Estimate(pairs.Select(x=>x.Net));
+        }
+        else
+        {
+            var rows=valid.ToArray();
+            gross=Estimate(rows.Select(x=>Row(x,false)));net=Estimate(rows.Select(x=>Row(x,true)));
+        }
         diagnostic?.Invoke(gross is null||net is null?"PATH_DISTRIBUTION_SUPPORT_MISSING":"PATH_DISTRIBUTION_"+mode);
         if(gross is null||net is null)return null;
         return new(gross.Samples,gross.Days,gross.Mean,gross.LowerMean,net.Mean,net.LowerMean,

@@ -88,6 +88,24 @@ internal static class NativeEconomicMechanismChecks
         var rows=Enumerable.Range(0,30).Select(i=>new NativeEurCalibrationOutcome("E"+i,"F",1,
             at-(i/10+1)*86_400_000L,at-(i/10+1)*86_400_000L+1, i%2==0?2m:-1m,i%2==0?1.9m:-1.1m,1m)
             {Context=context}).ToArray();
+        // Exercise >1024 rows, stable timestamp ties, class transfer,
+        // malformed/future path evidence and multiple context dimensions.
+        var pathRows=Enumerable.Range(0,1400).Select(i=>rows[i%rows.Length] with
+        {
+            PositionId="PATH"+i,AvailableAt=at-((i%200)+1)*86_400_000L+(i%3),
+            ClosedAt=at-((i%200)+1)*86_400_000L,
+            Context=context with {Symbol=i%3==0?"OTHER":"EURUSD",AssetClass=i%5==0?"OTHER":"FX",
+                MarketState=new decimal?[]{i%11/10m,null, i%2==0?1m:-1m}},
+            PathEvidence=new NativeEconomicPathEvidence(i%9==0?-1m:2m,1m,0m,1m,60m)
+        }).Append(rows[0] with {AvailableAt=at,PathEvidence=new(2m,1m,0m,1m,60m)}).ToArray();
+        var pathTarget=context with {AssetClass="FX",MarketState=new decimal?[]{.3m,null,1m}};
+        foreach(string mode in new[]{"LOCAL","POOLED","CONTEXT"})
+        {
+            var originalPath=NativeDistributionLifecycle.Estimate(pathRows,"F",1,pathTarget,at,mode,24,5,1.645m,null,false);
+            var compactPath=NativeDistributionLifecycle.Estimate(pathRows,"F",1,pathTarget,at,mode,24,5,1.645m,null,true);
+            check(originalPath is not null&&System.Text.Json.JsonSerializer.Serialize(originalPath)==
+                System.Text.Json.JsonSerializer.Serialize(compactPath),"compact paired paths retain exact monetary and distribution digests "+mode);
+        }
         var payoff=NativeEconomicMechanisms.LifecyclePayoff(rows,"F",1,context,at,1m,.1m,20,3,0m);
         var centered=NativeCenteredLifecycle.Estimate(rows,"F",1,context,at,1m,.3m,20,3,1.645m,false);
         check(centered is {NetMeanEur:.2m,NetLowerEur:.2m},

@@ -67,6 +67,35 @@ public sealed partial class NativeUnifiedPortfolioEngine
         if(point.MarginFraction>NativePendingCapitalGate.MaximumMarginFraction)eurMarginExceedances.Add(point);
     }
 
+    // Same preventive 28% boundary used by existing admission/management.
+    // A missing valuation cannot become a proven breach. A known conditional
+    // mark may authorize a MODEL close request, never an executable quote/fill.
+    internal static bool WitnessedPortfolioProtectionDue(decimal? equity,decimal observedDrawdown)
+        =>equity.HasValue&&observedDrawdown>=.28m;
+
+    void RequestWitnessedPortfolioProtection(Ucp1Frame frame)
+    {
+        if(researchFork||!IsEurRank||FundingScenarioId is null||fundingReserves is null)return;
+        var summary=model.Ledger.Summary(frame.At);
+        if(summary.OpenPositions==0)return;
+        var capital=Cpe1FundingCapital(summary,frame);
+        if(capital is null||!WitnessedPortfolioProtectionDue(capital.ResearchAdmissionEquityEur,
+            capital.MaximumSampledFundingAdjustedDrawdown))return;
+        var pending=model.Ledger.PendingSnapshot().Select(x=>x.PositionId).ToHashSet(StringComparer.Ordinal);
+        foreach(var held in model.Ledger.PositionSnapshot().OrderBy(x=>x.Id,StringComparer.Ordinal))
+        {
+            if(held.EntryAt>=frame.At||pending.Contains(held.Id)||!plans.TryGetValue(held.Id,out var plan)||
+                plan.Integrated is null||plan.NativeStop is not null)continue;
+            // The existing intent watcher requires a later genuine executable
+            // tick after latency; no valuation-only mark enters Markets.
+            Apply(Event("REQUEST_CLOSE",frame.At,held.Id,held.Symbol,held.Side,held.Units,
+                reason:"MODEL_UNTRANSMITTED_INTEGRATED_WITNESSED_PORTFOLIO_DD_PROTECTION")
+                with {AvailableAt=frame.At,CalibratedThrough=frame.At});
+            closeRequests++;
+            Count("EUR_WITNESSED_PORTFOLIO_DD_CLOSE_REQUEST");
+        }
+    }
+
     void AdvanceNativeStops(Ucp1Frame frame, Dictionary<string,Ucp1MarketFrame> markets)
     {
         long at=frame.At;
