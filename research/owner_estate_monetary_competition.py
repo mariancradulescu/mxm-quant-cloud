@@ -20,11 +20,11 @@ from .merge_eur_scenarios import read,exact_json
 from .verified_research_cache import sha,seal_files
 from .custody_new import derive_recipient
 from .decode import need
+from .bounded_exact_json import write
 STUDY='MONETARY_FULL_ESTATE_COMPETITION_1'
 REGISTRATION=Path('research/full_estate_monetary_competition_1.json')
 REPORT=Path('estate-monetary-report')
 PARTS=Path('estate-monetary-parts')
-def write(path,obj):Path(path).write_text(exact_json(obj)+'\n')
 
 def variants(n):
     profile=dict(risk.variants(n)[1]['Profile'],ReservePreventiveDrawdownHeadroom=True,
@@ -70,6 +70,7 @@ def prepare(work):
     source=read(work/'base/source.json');need(sha(work/'base/source.json')==r['BaseSourceSha256'],'ESTATE_BASE_SHA')
     source.update(Start=p['Start'],FitEnd=p['SelectionFrom'],End=p['End'],ExtendedEconomicContext=True)
     tapes={x['Name']:x for x in source['Tapes']};markets={x['Market']['Name']:x for x in source['Markets']}
+    source['Tapes']=[];source['Markets']=[]
     for name,entry in markets.items():
         m=entry['Market']
         for tf in ('M5','M15','H1'):estate.save_series(root,name,tf,m[tf],'BASE29')

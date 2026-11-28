@@ -9,9 +9,9 @@ from .merge_eur_scenarios import read,exact_json
 from .verified_research_cache import sha,seal_files
 from .custody_new import derive_recipient
 from .decode import need
+from .bounded_exact_json import write
 STUDY='MONETARY_CAUSAL_RIDGE_COMMON_BOOK_1'
 REG=Path('research/causal_ridge_common_book_1.json');REPORT=Path('ridge-monetary-report');PARTS=Path('ridge-monetary-parts')
-def write(p,v):Path(p).write_text(exact_json(v)+'\n')
 def variants(n):
     profile=estate.variants(n)[1]['Profile']
     return [dict(Id=name,UniverseCount=n,Profile=dict(profile,RecoveredRidgeHorizons=mask)) for name,mask in

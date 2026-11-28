@@ -45,9 +45,11 @@ internal static partial class IntegratedEconomicReplay
             Console.Out.Flush();
         }
         Progress("READ_SOURCE",force:true);
-        var pb=File.ReadAllBytes(protocolPath);var sb=File.ReadAllBytes(sourcePath);
+        var pb=File.ReadAllBytes(protocolPath);
         var p=JsonSerializer.Deserialize<PavMarketPlan>(pb,Json)!;
-        var input=JsonSerializer.Deserialize<EerInput>(sb,Json)!;
+        EerInput input;
+        using(var sourceFile=File.OpenRead(sourcePath))
+            input=JsonSerializer.Deserialize<EerInput>(sourceFile,Json)!;
         bool ridgeStudy=distributionStudy&&p.Study=="MONETARY_CAUSAL_RIDGE_COMMON_BOOK_1";
         bool estateStudy=distributionStudy&&(p.Study=="MONETARY_FULL_ESTATE_COMPETITION_1"||ridgeStudy);
         bool persistentStudy=distributionStudy&&(p.Study=="MONETARY_PERSISTENT_RISK_RECOVERY_1"||estateStudy);
@@ -55,8 +57,7 @@ internal static partial class IntegratedEconomicReplay
         bool factorialStudy=distributionStudy&&(p.Study=="MONETARY_MANAGEMENT_FACTORIAL_1"||riskStudy);
         bool costStudy=estimatorStudy&&!earlierEstimatorStudy&&p.Study=="MONETARY_COST_CONTEXT_GEOMETRY_1";
         decimal stress=decimal.Parse(stressText,System.Globalization.CultureInfo.InvariantCulture);
-        string planHash=GeneralSha(pb),sourceHash=GeneralSha(sb);
-        sb=Array.Empty<byte>();
+        string planHash=GeneralSha(pb),sourceHash=FactorialFileSha(sourcePath);
         if(p.Study!=(ridgeStudy?"MONETARY_CAUSAL_RIDGE_COMMON_BOOK_1":estateStudy?"MONETARY_FULL_ESTATE_COMPETITION_1":persistentStudy?"MONETARY_PERSISTENT_RISK_RECOVERY_1":riskStudy?"MONETARY_WITNESSED_RISK_GEOMETRY_1":factorialStudy?"MONETARY_MANAGEMENT_FACTORIAL_1":distributionStudy?"MONETARY_PATH_DISTRIBUTION_1":controlledRecencyStudy?"MONETARY_CONTROLLED_RECENCY_1":adaptiveStudy?"MONETARY_CAUSAL_RECENCY_COMPETITION_1":multibarStudy?"MONETARY_NET_HORIZON_CROSS_CONTEXT_1":boundaryStudy?"MONETARY_BOUNDARY_LIFECYCLE_1":costStudy?"MONETARY_COST_CONTEXT_GEOMETRY_1":earlierEstimatorStudy?"MONETARY_EARLIER_LIFECYCLE_ESTIMATION_1":estimatorStudy?"MONETARY_LIFECYCLE_ESTIMATION_1":causalManagementStudy?"MONETARY_CAUSAL_MANAGEMENT_1":"MONETARY_COMPETITIVE_FAMILIES_1")||p.Exposure!=ExposedDevelopment||
             p.Start!=input.Start||p.End!=input.End||p.SourceProtocolSha256!=input.ProtocolSha256||
             p.EvidenceManifestSha256!=input.EvidenceManifestSha256||(estateStudy?(input.Markets.Length==0||!p.OriginalInstruments.Order().SequenceEqual(input.Markets.Select(m=>m.Market.Name).Order())):((multibarStudy||adaptiveStudy||distributionStudy)?input.Markets.Length is not (7 or 29):input.Markets.Length!=(earlierEstimatorStudy?7:29)))||

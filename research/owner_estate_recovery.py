@@ -17,6 +17,7 @@ from .owner_official_breadth_spans import normalize_with_quarantine
 from .owner_earlier_lifecycle_digest_recovery import verified_download
 from .custody import unseal_new
 from .verified_research_cache import sha
+from .bounded_exact_json import write as bounded_write
 from .ctrader_proto import OpenApiMessages_pb2 as messages,OpenApiModelMessages_pb2 as models
 
 def canonical_bar(x):
@@ -24,6 +25,10 @@ def canonical_bar(x):
         High=Decimal(str(x['High'])),Low=Decimal(str(x['Low'])),Close=Decimal(str(x['Close'])),TickVolume=int(x['TickVolume']))
 
 def merge_series(*parts):
+    return merge_series_parts(parts)
+
+def merge_series_parts(parts):
+    """Consume one authenticated shard at a time; keep quarantines across shards."""
     by={};bad=set()
     for part in parts:
         for x in part:
@@ -41,7 +46,7 @@ def save_series(root,symbol,tf,series,origin):
     name=hashlib.sha256((symbol+'/'+tf+'/'+origin).encode()).hexdigest()
     p=root/(name+'.json')
     need(not p.exists(),'ESTATE_SOURCE_IDENTITY')
-    p.write_text(exact_json(dict(Symbol=symbol,Timeframe=tf,Origin=origin,Bars=series))+'\n')
+    bounded_write(p,dict(Symbol=symbol,Timeframe=tf,Origin=origin,Bars=series))
 
 def fetch(a,dest):
     verified_download(a['Artifact'],a['Run'],a['Sha256'],dest)
@@ -69,7 +74,7 @@ def raw_packets(root,archive,packets,roster,proofs):
         save_series(root,symbol,tf,normalized,str(archive['Artifact']))
     proofs.append(dict(Archive=archive,Packets=len(packets),AcceptedRawBars=accepted,Markets=len({x[0] for x in rows}),Series=len(rows)))
 
-def extend_estate(root,work,p):
+def extend_estate(root,work,p,include_expansion=True):
     work.mkdir(mode=0o700);spec=p['ExtendedEstateSources'];proofs=[]
     key=os.environ['R3_CUSTODY_PRIVATE_KEY_PEM'].encode()
     a,b=spec[:2];fetch(a,work/'original');fetch(b,work/'receipt')
@@ -98,6 +103,10 @@ def extend_estate(root,work,p):
     # Include tranche 11 if its original collection has completed. No new
     # source calls and no incomplete artifact masquerades as complete coverage.
     run=p['ExpansionRun'];repo=os.environ['GITHUB_REPOSITORY']
+    if not include_expansion:
+        bounded_write(work/'estate-provenance.json',dict(Archives=proofs,Expansion=dict(Run=run,Included=False,
+            SeparateVerifiedFragment=True),SourceBrokerRequests=0,Orders=0,CloudActivated=False))
+        return
     state=json.loads(subprocess.check_output(['gh','api',f'repos/{repo}/actions/runs/{run}']))
     expansion=dict(Run=run,Status=state['status'],Conclusion=state['conclusion'],Included=False)
     if state['status']=='completed' and state['conclusion']=='success':
@@ -126,7 +135,7 @@ def extend_estate(root,work,p):
         expansion.update(Included=True,Selected=plan['chosen'],VerifiedPartitions=summary['verified'])
     (work/'estate-provenance.json').write_text(exact_json(dict(Archives=proofs,Expansion=expansion,SourceBrokerRequests=0,Orders=0,CloudActivated=False))+'\n')
 
-def run_recovered(root,report,p):
+def reconcile_series(root,report):
     groups=defaultdict(list)
     for path in sorted(root.glob('*.json')):
         # Read just the identity once; no raw prices go to the public report.
@@ -134,12 +143,16 @@ def run_recovered(root,report,p):
     merged=root.parent/'merged-estate';merged.mkdir()
     manifest=[]
     for (symbol,tf),paths in sorted(groups.items()):
-        rows,quality=merge_series(*(read(f)['Bars'] for f in paths))
+        rows,quality=merge_series_parts(read(f)['Bars'] for f in paths)
         path=merged/(hashlib.sha256((symbol+'/'+tf).encode()).hexdigest()+'.json')
-        path.write_text(exact_json(dict(Symbol=symbol,Timeframe=tf,Bars=rows))+'\n')
+        bounded_write(path,dict(Symbol=symbol,Timeframe=tf,Bars=rows))
         manifest.append(dict(Symbol=symbol,Timeframe=tf,File=path.name,Sha256=sha(path),Rows=len(rows),Quarantine=quality,SourceFiles=len(paths)))
         del rows;gc.collect()
     (merged/'manifest.json').write_text(exact_json(manifest)+'\n')
     (report/'recovered-estate-manifest.json').write_text(exact_json(manifest)+'\n')
     (report/'estate-provenance.json').write_bytes((root.parent/'older/estate-provenance.json').read_bytes())
+    return merged,manifest
+
+def run_recovered(root,report,p):
+    merged,_=reconcile_series(root,report)
     subprocess.run(['dotnet','run','--project','src/Mxm.PathResearch','-c','Release','--no-build','--','--estate-recovery',str(merged),str(report/'recovered-mechanisms.json')],check=True)
