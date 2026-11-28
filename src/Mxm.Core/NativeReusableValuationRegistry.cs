@@ -55,6 +55,22 @@ public sealed class NativeReusableValuationRegistry
                 return new Index(sorted,null,maximum);
             });
     }
+    public static NativeReusableValuationRegistry FromArrayStream(System.IO.Stream stream,
+        System.Text.Json.JsonSerializerOptions options)
+    {
+        IEnumerable<NativeValuationPrefix> Rows()
+        {
+            var e=System.Text.Json.JsonSerializer.DeserializeAsyncEnumerable<NativeValuationPrefix>(stream,options)
+                .GetAsyncEnumerator();
+            try
+            {
+                while(e.MoveNextAsync().AsTask().GetAwaiter().GetResult())
+                    yield return e.Current??throw new ArgumentException("VALUATION_REGISTRY_NULL_ROW");
+            }
+            finally{e.DisposeAsync().AsTask().GetAwaiter().GetResult();}
+        }
+        return new NativeReusableValuationRegistry(Rows(),compact:true);
+    }
     public NativeHistoricalFundingPrefix? At(string symbol,bool bid,long at)
     {
         if(!rows.TryGetValue((symbol,bid?"BID":"ASK"),out var candidates))return null;

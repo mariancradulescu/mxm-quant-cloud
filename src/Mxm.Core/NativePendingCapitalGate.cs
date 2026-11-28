@@ -21,6 +21,8 @@ public static class NativePendingCapitalGate
     public static bool StopAdjustedMarginFits(decimal equity,decimal margin,decimal reservedRisk)
         =>equity>reservedRisk&&margin>=0m&&reservedRisk>=0m&&margin<=(equity-reservedRisk)*MaximumMarginFraction;
 
+    public static bool PreventiveDrawdownReserveFits(decimal? equity,decimal peak,decimal reservedRisk)
+        =>equity is >0m&&peak>0m&&reservedRisk>=0m&&equity.Value-reservedRisk>=peak*.72m;
     public sealed record Commitment(string PositionId,string Symbol,decimal Units,
         decimal MarginPerUnit,decimal ReservedStopRiskEur,
         string RiskClass,bool IsPendingOpen)
