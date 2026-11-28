@@ -24,6 +24,8 @@ internal static class NativeReusableValuationChecks
         }).Concat(new[]{r,r}).ToArray();
         var indexed=new NativeReusableValuationRegistry(rows);
         var compact=new NativeReusableValuationRegistry(rows,compact:true);
+        using var stream=new System.IO.MemoryStream(System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(rows));
+        var streamed=NativeReusableValuationRegistry.FromArrayStream(stream,new System.Text.Json.JsonSerializerOptions());
         bool parity=true;
         foreach(string symbol in new[]{"EURUSD","GBPUSD","ABSENT"})
         foreach(bool bid in new[]{false,true})
@@ -35,7 +37,7 @@ internal static class NativeReusableValuationChecks
                 .Select(x=>x.Witness).ToArray();
             var expected=usable.Length==0||usable.Any(x=>x.At!=usable[0].At||x.Price!=usable[0].Price)
                 ?null:usable[0] with {SearchThrough=at};
-            parity&=indexed.At(symbol,bid,at)==expected&&compact.At(symbol,bid,at)==expected;
+            parity&=indexed.At(symbol,bid,at)==expected&&compact.At(symbol,bid,at)==expected&&streamed.At(symbol,bid,at)==expected;
         }
         check(parity,"allocation-free registry equals original overlap semantics at every deterministic clock");
         check(!NativeUnifiedPortfolioEngine.WitnessedPortfolioProtectionDue(null,.31m)&&
@@ -43,6 +45,13 @@ internal static class NativeReusableValuationChecks
             NativeUnifiedPortfolioEngine.WitnessedPortfolioProtectionDue(215m,.28m)&&
             NativeUnifiedPortfolioEngine.WitnessedPortfolioProtectionDue(0m,.30m),
             "witnessed risk guard retains the 28 percent preventive threshold and rejects unknown equity");
+        check(NativePendingCapitalGate.PreventiveDrawdownReserveFits(230m,300m,14m)&&
+            !NativePendingCapitalGate.PreventiveDrawdownReserveFits(230m,300m,14.01m)&&
+            !NativePendingCapitalGate.PreventiveDrawdownReserveFits(null,300m,0m),
+            "preventive aggregate reserve rejects unknown equity");
+        check(NativeSimulatedCloseLifecycle.CloseIntentExpired("MODEL_UNTRANSMITTED_OLD",600001,600000)&&
+            !NativeSimulatedCloseLifecycle.CloseIntentExpired(NativeSimulatedCloseLifecycle.PersistentPortfolioCloseReason,86400000,600000),
+            "only opt-in protective requests persist across gaps");
         var ledger=new NativeFundedLedger();var before=ledger.Checkpoint();
         var summary=ledger.InspectConditionalValuation(1000,Array.Empty<LedgerQuote>());
         check(summary.CashEur==300m&&summary.LiquidationEquityEur==300m&&ledger.Checkpoint()==before,

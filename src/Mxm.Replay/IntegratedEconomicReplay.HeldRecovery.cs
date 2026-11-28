@@ -10,10 +10,41 @@ internal static partial class IntegratedEconomicReplay
 
     sealed record ValuationRegistryEnvelope(NativeValuationPrefix[] Rows);
 
+    // Exact bounded view of the registered {"Rows":[...]} newline envelope.
+    sealed class RegistryArrayStream:Stream
+    {
+        readonly Stream source;readonly long length;long position;
+        public RegistryArrayStream(Stream source,long length){this.source=source;this.length=length;}
+        public override bool CanRead=>true;public override bool CanSeek=>false;public override bool CanWrite=>false;
+        public override long Length=>length;public override long Position{get=>position;set=>throw new NotSupportedException();}
+        public override int Read(byte[] buffer,int offset,int count)
+        {int n=source.Read(buffer,offset,(int)Math.Min(count,length-position));position+=n;return n;}
+        public override int Read(Span<byte> buffer)
+        {int n=source.Read(buffer[..(int)Math.Min(buffer.Length,length-position)]);position+=n;return n;}
+        public override async ValueTask<int> ReadAsync(Memory<byte> buffer,CancellationToken cancellationToken=default)
+        {int n=await source.ReadAsync(buffer[..(int)Math.Min(buffer.Length,length-position)],cancellationToken).ConfigureAwait(false);position+=n;return n;}
+        public override void Flush()=>throw new NotSupportedException();
+        public override long Seek(long offset,SeekOrigin origin)=>throw new NotSupportedException();
+        public override void SetLength(long value)=>throw new NotSupportedException();
+        public override void Write(byte[] buffer,int offset,int count)=>throw new NotSupportedException();
+    }
     static NativeReusableValuationRegistry? LoadValuationRegistry(string? path)
     {
         if(path is null)return null;
         using var stream=File.OpenRead(path);
+        if(Environment.GetEnvironmentVariable("MXM_ECONOMIC_STREAM_REGISTRY")=="1")
+        {
+            byte[] prefix=System.Text.Encoding.UTF8.GetBytes("{\"Rows\":");
+            var header=new byte[prefix.Length];
+            if(stream.Length<prefix.Length+4)throw new InvalidDataException("STREAM_REGISTRY_ENVELOPE");
+            stream.ReadExactly(header);stream.Position=stream.Length-3;
+            var tail=new byte[3];stream.ReadExactly(tail);
+            if(!header.SequenceEqual(prefix)||!tail.SequenceEqual(new byte[]{93,125,10}))
+                throw new InvalidDataException("STREAM_REGISTRY_ENVELOPE");
+            stream.Position=prefix.Length;
+            using var array=new RegistryArrayStream(stream,stream.Length-prefix.Length-2);
+            return NativeReusableValuationRegistry.FromArrayStream(array,Json);
+        }
         // Deserialize the typed envelope directly: do not retain a multi-million
         // row JSON DOM while allocating the typed rows and building their index.
         var envelope=JsonSerializer.Deserialize<ValuationRegistryEnvelope>(stream,Json);

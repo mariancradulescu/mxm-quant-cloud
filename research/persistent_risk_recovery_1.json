@@ -1,0 +1,48 @@
+{
+  "Study": "MONETARY_PERSISTENT_RISK_RECOVERY_1",
+  "Scopes": [
+    "earlier",
+    "recent"
+  ],
+  "Models": [
+    "CENTERED_GUARD",
+    "CENTERED_MANAGEMENT_GUARD",
+    "DISTRIBUTION_GUARD",
+    "DISTRIBUTION_MANAGEMENT_GUARD",
+    "PAV1_DIRECT_GUARD",
+    "PAV1_DIRECT_MANAGEMENT_GUARD",
+    "DISTRIBUTION_MANAGEMENT_TARGET_15",
+    "PAV1_DIRECT_MANAGEMENT_TARGET_15"
+  ],
+  "SharedCapitalEur": 300,
+  "CommonBookEvaluations": 54,
+  "SelectionMultiplicity": 48,
+  "SelectionPenalty": "3.2",
+  "RegistryBundle": "research/reusable_held_registry_bundle_20261127.json",
+  "RegistryRows": 3069541,
+  "FundingHorizonMs": 3600000,
+  "OriginalFactorial": {
+    "Run": 46033578807,
+    "EarlierArtifact": 15226950640,
+    "EarlierSha256": "69dbc2faee02cdbde1c9c8694ebc550f7c3774a572cafab6c88cc7df46abaacb",
+    "RecentArtifact": 15220467722,
+    "RecentSha256": "fc40a05b83c6a7652a2268f90f779649612040dc129d77736e2a216c151a773a"
+  },
+  "Guard": "Persistent model-only protective close at witnessed threshold; management variants reserve aggregate risk to preventive floor. Separate new conditional development; no continuous risk certification.",
+  "Geometry": "2.5 ATR matched controls and 1.5 target-range alternative for distribution and direct PAV1 management; seven families compete in every book. Selection uses earlier selection snapshots only.",
+  "Benchmark": "Identical new recent S0 source/plan/registry, compact path and index both, streaming loader only changes; exact result and gap SHA-256.",
+  "Orders": 0,
+  "CloudActivated": false,
+  "OriginalPoliciesReplayed": 0,
+  "SourceBrokerRequests": 0,
+  "IndependentConfirmationCertified": false,
+  "EconomicPromotionCertified": false,
+  "Exposure": "DEVELOPMENT_ONLY_NO_INDEPENDENT_CLAIM",
+  "OriginalWitnessedRisk": {
+    "Run": 46114093898,
+    "EarlierArtifact": 15252643714,
+    "EarlierSha256": "9d29c19a839dba24ec619c9a4a1cb1c3f52a4613f3ae8c1e4c088e717a24c234",
+    "RecentArtifact": 15252214008,
+    "RecentSha256": "c17f9440e93743f5ecea2dff75e0dd016d9f0559feb7943b0f8d0cfd3255767c"
+  }
+}
