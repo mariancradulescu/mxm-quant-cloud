@@ -173,6 +173,7 @@ def prepare(work):
         Evidence=evidence,Orders=0,CloudActivated=False,SourceBrokerRequests=0,IndependentConfirmationCertified=False))
     public,_=derive_recipient(key)
     files=[(work/'source.json','source.json'),(work/'plan.json','plan.json')]+[(f,'verified-protection/'+f.name) for f in tape.iterdir()]
+    files += [(f,'reconciled-estate/'+f.name) for f in merged.iterdir() if f.is_file()]
     seal_files(files,'estate-monetary-source-sealed',public,os.environ['GITHUB_RUN_ID'],STUDY,sha(work/'source.json'),protocol_sha=sha(work/'plan.json'))
     return registry
 
