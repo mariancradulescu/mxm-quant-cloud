@@ -131,6 +131,17 @@ internal static class NativeRecoveredEconomicMechanisms
         }
         if(m.RecoveryForecast is { } forecast&&forecast.DecisionAt==at&&forecast.LatestLabelAt<at)
         {Offer(Families[3],forecast.RunSide);Offer(Families[4],forecast.CalendarSide);}
+        if(profile.RecoveredRidgeHorizons>0&&m.RecoveryRidge is { } ridge)
+        foreach(var f in ridge)
+        {
+            int mask=f.HorizonMinutes==30?1:f.HorizonMinutes==60?2:0;
+            if(mask==0||(profile.RecoveredRidgeHorizons&mask)==0||f.DecisionAt!=at||f.FitBefore>at||
+                f.LatestTrainingAt>=f.FitBefore||f.TrainingDays<20||f.Side is not (1 or -1)||f.Atr<=0m||
+                f.Method is not ("LOCAL_RIDGE" or "CLASS_RIDGE" or "GLOBAL_RIDGE"))continue;
+            decimal favorable=f.Side>0?f.FavorableAtr:f.AdverseAtr;
+            if(favorable>0m)Offer($"RECOVERED_RIDGE_{f.HorizonMinutes}_{f.Method}",f.Side,
+                f.AnchorPrice+f.Side*favorable*f.Atr);
+        }
         if(Adjacent(b,9))
         {
             var prior=b.TakeLast(9).Take(8).ToArray();decimal upper=prior.Max(x=>x.High),lower=prior.Min(x=>x.Low);

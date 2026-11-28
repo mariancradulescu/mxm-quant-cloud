@@ -6,6 +6,7 @@ using Mxm.Core;
 // prices. No fees, fill, financing, equity or portfolio is inferred.
 if(args is ["--distribution",var distributionSource,var distributionOutput]){Environment.Exit(DistributionAnnual.Run(distributionSource,distributionOutput));return;}
 if(args is ["--distribution-causal",var causalSource,var causalOutput]){Environment.Exit(DistributionAnnual.Run(causalSource,causalOutput,true));return;}
+if(args is ["--breadth-ridge-monetary-signals",var rmSource,var rmResult,var rmOffers]){Environment.Exit(BreadthRidgeAnnual.Run(rmSource,rmResult,rmOffers));return;}
 if(args is ["--breadth57-ridge",var ridgeSource,var ridgeOutput]){Environment.Exit(BreadthRidgeAnnual.Run(ridgeSource,ridgeOutput));return;}
 if(args is ["--estate-recovery",var estateSource,var estateOutput]){Environment.Exit(RecoveredTransitionEstate.Run(estateSource,estateOutput));return;}
 if(args.Length!=2)throw new ArgumentException("ANNUAL_PATH_ARGUMENTS");

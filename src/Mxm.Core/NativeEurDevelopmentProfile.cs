@@ -114,6 +114,8 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
     public bool CompeteEconomicFamilies { get; init; }
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
     public bool IncludeRecoveredEconomicFamilies { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public int RecoveredRidgeHorizons { get; init; }
 
     [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
     public bool SelectEconomicManagementCausally { get; init; }
@@ -189,6 +191,7 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
         (AllocatePav1AtMinimumVolume?"/PAV1_MINIMUM_VOLUME_MONETARY_ALLOCATION":"") +
         (CompeteEconomicFamilies?"/SEVEN_FAMILY_CAUSAL_COMMON_BOOK_V1":"") +
         (IncludeRecoveredEconomicFamilies?"/RECOVERED_HRC_SQP_TWC_RCP_VIA_V1":"") +
+        (RecoveredRidgeHorizons>0?$"/NATIVE_RIDGE_30_60_MASK:{RecoveredRidgeHorizons}":"") +
         (SelectEconomicManagementCausally?"/MATURED_PAIRED_MANAGEMENT_CHOICE_V1":"") +
         (UsePathDistributionManagement?"/CONDITIONAL_H1_PATH_MANAGEMENT_V1":"") +
         (UseWitnessedPortfolioDrawdownGuard?"/WITNESSED_PORTFOLIO_DRAWDOWN_GUARD_V1":"") +
@@ -199,6 +202,8 @@ public sealed record NativeEurDevelopmentProfile(bool UseAvailableContext = fals
 
     internal void Verify()
     {
+        if(RecoveredRidgeHorizons is <0 or >3||RecoveredRidgeHorizons>0&&!IncludeRecoveredEconomicFamilies)
+            throw new ArgumentException("RIDGE_REQUIRES_RECOVERED_COMMON_BOOK");
         if(IncludeRecoveredEconomicFamilies&&(!CompeteEconomicFamilies||EconomicStructureLookbackBars<1))
             throw new ArgumentException("RECOVERY_REQUIRES_COMMON_ECONOMIC_COMPETITION");
         if(RequirePathTailCapacity&&LifecycleEstimator is not ("DISTRIBUTION_LOCAL" or "DISTRIBUTION_CONTEXT" or "DISTRIBUTION_POOLED"))

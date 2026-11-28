@@ -1,0 +1,38 @@
+{
+  "Study": "MONETARY_CAUSAL_RIDGE_COMMON_BOOK_1",
+  "BaseRun": 46141614947,
+  "Models": [
+    "RECOVERED_CONTROL",
+    "RIDGE_30_COMPETITION",
+    "RIDGE_60_COMPETITION",
+    "RIDGE_30_60_COMPETITION"
+  ],
+  "CommonBookEvaluations": 20,
+  "SelectionMultiplicity": 16,
+  "SelectionPenalty": "3.0",
+  "SharedCapitalEur": 300,
+  "RegistryBundle": "research/reusable_held_registry_bundle_20261127.json",
+  "RegistryRows": 3069541,
+  "PriceModel": "Original 12 causal closed-context Ridge features; lambda0.1; local/class/global; min20 mature day clusters; equal-symbol within day; strict preday training",
+  "EconomicCycle": "Forecasts generate native geometry offers; complete same funded entry/stop/target/volume/allocation/HOLD/REDUCE/CLOSE; horizon is not an exit; identical recovered-family control",
+  "Causality": "All valid closed contexts receive forecasts regardless of existence of a later evaluation label. Changing or deleting future bars must leave earlier forecasts unchanged.",
+  "Source": "Reuse the verified reconciled estate and every actual captured financial source lane; no recollection or additive inventory claim",
+  "Orders": 0,
+  "SourceBrokerRequests": 0,
+  "CloudActivated": false,
+  "IndependentConfirmationCertified": false,
+  "EconomicPromotionCertified": false,
+  "PrimaryEvaluations": 15,
+  "SourceCorrection": {
+    "Run": 46143349580,
+    "ProtectedArtifact": 15262224879,
+    "ProtectedSha256": "4365c04ef005ba1da763b7bce0a348741d63f93d346cf9436e2b9c7e921f149e",
+    "AuditArtifact": 15262923881,
+    "AuditSha256": "a15abd26feba7a3f7fa707db8a8200ff42abf3f63e1d8a1350ad16cc9e8627a6",
+    "CostStress": "0.5",
+    "Books": 5,
+    "SelectionFrozen": true,
+    "Orders": 0,
+    "CloudActivated": false
+  }
+}
