@@ -1,0 +1,257 @@
+{
+  "Study": "OWNER_ECONOMIC_ORIGINAL_RECEIPT_RECOVERY_1",
+  "Originals": [
+    {
+      "Study": "RCP1",
+      "Run": 41837460057,
+      "Artifact": 13326782174,
+      "ArchiveSha256": "9c056776d363c3042adc29fe0943a88186295e55c5a67e7e87a00597c6714d34",
+      "ResultSha256": "e2650ca0c591b4b591be1c700c9a490470f661b1d7ad2651e95689651eaa2e29",
+      "OriginalArchiveDownloadedAndVerified": true,
+      "OriginalPoliciesReplayed": 0
+    },
+    {
+      "Study": "VIA1",
+      "Run": 43446172811,
+      "Artifact": 14047703774,
+      "ArchiveSha256": "b20143ee061b9e7fe3ae7e60979ea8acd4bcd6d0415730f7498857eb8e1b7bc0",
+      "ResultSha256": "e02101e27edff91d6e2a54003efde362fc38188bec44ba109a2dd0defb974502",
+      "OriginalArchiveDownloadedAndVerified": true,
+      "OriginalPoliciesReplayed": 0
+    }
+  ],
+  "RcpCommonCapitalBooks": {
+    "FLAT_NEUTRAL": {
+      "modeledRoundTrips": 0,
+      "netClosedEur": 0.0,
+      "hard21EligibleWeeksPassed": 0,
+      "eligibleWeeks": 26,
+      "maxSampledDrawdown": 0.0
+    },
+    "FULL": {
+      "modeledRoundTrips": 3,
+      "netClosedEur": 12.23947513,
+      "hard21EligibleWeeksPassed": 0,
+      "eligibleWeeks": 26,
+      "maxSampledDrawdown": 0.049831
+    },
+    "FULL_STRESS": {
+      "modeledRoundTrips": 2,
+      "netClosedEur": 7.76322943,
+      "hard21EligibleWeeksPassed": 0,
+      "eligibleWeeks": 26,
+      "maxSampledDrawdown": 0.05087
+    },
+    "WITHOUT_RANGE_COMPRESSION_RELEASE": {
+      "modeledRoundTrips": 3,
+      "netClosedEur": 12.23947513,
+      "hard21EligibleWeeksPassed": 0,
+      "eligibleWeeks": 26,
+      "maxSampledDrawdown": 0.049831
+    },
+    "WITHOUT_RELATIVE_DISPERSION_REPAIR": {
+      "modeledRoundTrips": 1,
+      "netClosedEur": 0.98827481,
+      "hard21EligibleWeeksPassed": 0,
+      "eligibleWeeks": 26,
+      "maxSampledDrawdown": 0.050839
+    },
+    "WITHOUT_TAIL_VOLATILITY_UNWIND": {
+      "modeledRoundTrips": 2,
+      "netClosedEur": 11.25120031,
+      "hard21EligibleWeeksPassed": 0,
+      "eligibleWeeks": 26,
+      "maxSampledDrawdown": 0.040803
+    }
+  },
+  "ViaUnfundedResults": {
+    "EURUSD": {
+      "Counts": {
+        "scheduled": 2380,
+        "missing_decision": 0,
+        "no_signal": 2327,
+        "intent": 53,
+        "missing_entry": 0,
+        "already_target_or_invalid": 19,
+        "unknown_monitoring": 0,
+        "unknown_financing": 0,
+        "adaptive_priced": 34,
+        "paired_priced": 34,
+        "paired_unavailable_after_exit": 0
+      },
+      "ModeledGrossCentralAdverse": [
+        14.018935042602527,
+        11.566946955894247,
+        10.22861366622218
+      ],
+      "MatchedFixedReversion": [
+        16.09086115504655,
+        13.664998089576809,
+        12.379168232326018
+      ],
+      "PairedHalves": [
+        {
+          "via1": [
+            7.126633453468288,
+            6.064370613689777,
+            5.500532918686708
+          ],
+          "fixed_reversion": [
+            4.522578963933425,
+            3.4734219633037133,
+            2.935751301663516
+          ],
+          "own_momentum": [
+            -4.522589675769361,
+            -5.571746483044828,
+            -6.109417144685025
+          ],
+          "long": [
+            1.134820375826263,
+            0.08566337519655169,
+            -0.45200728644364585
+          ],
+          "short": [
+            -1.1348310876621994,
+            -2.183987894937666,
+            -2.721658556577863
+          ],
+          "cash": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "via1": [
+            6.89230158913424,
+            5.50257634220447,
+            4.728080747535473
+          ],
+          "fixed_reversion": [
+            11.568282191113125,
+            10.191576126273095,
+            9.443416930662503
+          ],
+          "own_momentum": [
+            -11.568296347424857,
+            -12.945002024339555,
+            -13.693161219950149
+          ],
+          "long": [
+            -4.609683310726619,
+            -5.9863889866601845,
+            -6.734548182270778
+          ],
+          "short": [
+            4.609669154414888,
+            3.232963088593726,
+            2.4848038929831304
+          ],
+          "cash": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "PreliminaryPassed": false
+    },
+    "US500": {
+      "Counts": {
+        "scheduled": 2380,
+        "missing_decision": 20,
+        "no_signal": 2284,
+        "intent": 76,
+        "missing_entry": 0,
+        "already_target_or_invalid": 28,
+        "unknown_monitoring": 0,
+        "unknown_financing": 0,
+        "adaptive_priced": 48,
+        "paired_priced": 48,
+        "paired_unavailable_after_exit": 0
+      },
+      "ModeledGrossCentralAdverse": [
+        -2.4428936080162313,
+        -5.04057651927138,
+        -10.23594009332609
+      ],
+      "MatchedFixedReversion": [
+        0.402446150091183,
+        -2.1562708748944877,
+        -7.273705817389214
+      ],
+      "PairedHalves": [
+        {
+          "via1": [
+            -1.9837314354482962,
+            -2.960954802045972,
+            -4.915401547630888
+          ],
+          "fixed_reversion": [
+            -6.59503452437623,
+            -7.5590660739771,
+            -9.487130080202125
+          ],
+          "own_momentum": [
+            6.595000388859358,
+            5.630967932233184,
+            3.7029039260081604
+          ],
+          "long": [
+            -6.030197484227274,
+            -6.994230045605439,
+            -8.922294051830463
+          ],
+          "short": [
+            6.030163348710403,
+            5.066131903861523,
+            3.1380678976365
+          ],
+          "cash": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "via1": [
+            -0.4591621725679351,
+            -2.0796217172254083,
+            -5.3205385456952
+          ],
+          "fixed_reversion": [
+            6.997480674467412,
+            5.402795199082612,
+            2.21342426281291
+          ],
+          "own_momentum": [
+            -6.997658719893673,
+            -8.592344180782446,
+            -11.78171511705215
+          ],
+          "long": [
+            4.345094101266388,
+            2.7504086411506856,
+            -0.43896229511901774
+          ],
+          "short": [
+            -4.345272146692648,
+            -5.939957622850519,
+            -9.129328559120225
+          ],
+          "cash": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "PreliminaryPassed": false
+    }
+  },
+  "SourceCalls": 0,
+  "Orders": 0,
+  "CloudActivated": false,
+  "QualificationChanged": false
+}

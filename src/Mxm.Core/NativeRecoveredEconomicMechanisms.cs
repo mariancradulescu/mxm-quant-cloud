@@ -74,7 +74,7 @@ public sealed class NativeRecoveryHistory
         }
         (int Side,int Days) r=states.GetValueOrDefault((side,run))?.Estimate(5)??(0,0);
         // Source is hourly; stale states cannot be repaired by a price forecast.
-        bool fresh=current.Length>1&&current[^1].CloseAt<at&&at-current[^1].CloseAt<Hour;
+        bool fresh=current.Length>1&&current.All(x=>x.CloseAt<at)&&at-current[^1].CloseAt<Hour;
         return new(at,latest,fresh&&(at-15_000L)%(4*Hour)==0?c.Side:0,fresh?r.Side:0,c.Days,r.Days);
     }
 }

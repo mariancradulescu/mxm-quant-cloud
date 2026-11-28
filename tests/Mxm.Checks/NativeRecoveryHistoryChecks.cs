@@ -17,6 +17,8 @@ internal static class NativeRecoveryHistoryChecks
         check(a.RunDays>5&&a.RunSide==1,"recovered run forecast uses matured same-symbol daily evidence");
         var stale=new NativeRecoveryHistory(bars).At(at+2*hour,current);
         check(stale.RunSide==0&&stale.CalendarSide==0,"stale current states cannot authorize recovered offers");
+        var future=new NativeRecoveryHistory(bars).At(at,current.Append(bars[3000]).ToArray());
+        check(future.RunSide==0&&future.CalendarSide==0,"forming hourly bars cannot enter recovered current-state decisions");
         var one=new NativeRecoveryHistory(bars.Take(10).ToArray()).At(bars[10].OpenAt+15000,bars.Take(10).TakeLast(4).ToArray());
         check(one.RunSide==0&&one.CalendarSide==0,"recovered history retains abstention below actual daily support");
         var alternating=Enumerable.Range(0,30).Select(i=>bars[i] with {Close=100m+(i%2==0?1m:0m)}).ToArray();

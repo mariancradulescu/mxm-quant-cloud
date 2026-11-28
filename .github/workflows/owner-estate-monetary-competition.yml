@@ -41,6 +41,7 @@ jobs:
       - run: dotnet build src/Mxm.Replay -c Release
       - run: dotnet build src/Mxm.Cloud -c Release
       - run: dotnet run --project tests/Mxm.Checks -c Release
+      - run: dotnet src/Mxm.Replay/bin/Release/net8.0/Mxm.Replay.dll --owner-persistent-risk-audit-check
       - run: python -m unittest research.test_estate_monetary_competition research.test_breadth57_causal_ridge research.test_estate_recovery research.test_witnessed_risk_geometry -v
   economic:
     needs: technical
