@@ -2964,6 +2964,18 @@
           "Sha256": "83179788cdeac1e538a5515a332ce6be59b68716c92c82657d38d1a61267a378",
           "Kind": "RESULT",
           "Bytes": 6822
+        },
+        {
+          "Path": "research/integrated_predictive_funded.py",
+          "Sha256": "5eaf2eb2c055bb09b96c787eeaa2b37e21155af4a1783725525f9088df44fdc4",
+          "Kind": "IMPLEMENTATION",
+          "Bytes": 15753
+        },
+        {
+          "Path": "research/integrated_predictive_funded_protocol.json",
+          "Sha256": "2a4e4e649bc69cb3bebeba1fd5757761e48315744fb69c2f05f806228dbe28f2",
+          "Kind": "PROTOCOL_OR_REVIEW",
+          "Bytes": 6478
         }
       ],
       "OriginalNumericFacts": [
@@ -3041,9 +3053,18 @@
           "File": "docs/IPF1_RESULT.json"
         }
       ],
-      "TargetedReview": null,
+      "TargetedReview": {
+        "Priority": 10,
+        "Evidence": "docs/IPF1_RESULT.json",
+        "ImplementationFiles": [
+          "research/integrated_predictive_funded.py",
+          "research/integrated_predictive_funded_protocol.json"
+        ],
+        "Finding": "FULL common EUR200 modeled book-6.281851 EUR; without cross-relative+13.785094 total but-53.110356 in the exposed audit. Native allocation was followed by Python bar-price settlement, not durable funded-ledger execution. H4/D1 features and4/24/72h forecasts contain conditional information cells but not confirmed monetary edge.",
+        "Action": "Reuse the conserved BDP/AIP information for longer-horizon native monetary redevelopment; resolve strict bar/label availability with an observation delay. Compare closed-structure stops, target, funding and continuation on EUR300 without selecting the exposed ablation as qualified. Native Ridge30/60 shares a solver but does not implement the old longer-horizon fusion."
+      },
       "ReviewCoverage": {
-        "LocalFilesInspected": 2,
+        "LocalFilesInspected": 4,
         "OriginalRegistryInspected": true,
         "ArchivedBinaryResultIndependentlyRestoredByThisReview": false,
         "Unresolved": "Archived result, methodology or funded redevelopment remains open where absent from conserved local evidence"
@@ -6111,7 +6132,16 @@
           "File": "docs/FLS1_AUTHENTIC_RESULT_20261107.json"
         }
       ],
-      "TargetedReview": null,
+      "TargetedReview": {
+        "Priority": 12,
+        "Evidence": "docs/FLS1_AUTHENTIC_RESULT_20261107.json",
+        "ImplementationFiles": [
+          "research/fls1_research.py",
+          "research/fls1_protocol.json"
+        ],
+        "Finding": "EURUSD-leading GBPUSD signal has adverse mean-2.915911bps and negative upper bound, despite+0.265136bps calendar-week incremental performance against momentum. No funded C# cycle. The old eligible() filters on future source clocks before adding scored opportunities.",
+        "Action": "Keep the original negative result; regenerate causal decision opportunities independently of future-label availability, then censor outcomes only in scoring. Test leader/lagger information through actual native geometry, funding and management if it adds information beyond existing intermarket and Ridge offers. No promotion from relative improvement while absolute value stays negative."
+      },
       "ReviewCoverage": {
         "LocalFilesInspected": 4,
         "OriginalRegistryInspected": true,
@@ -6373,7 +6403,17 @@
           "File": "docs/CPF1_AUTHENTIC_RESULT_20261107.json"
         }
       ],
-      "TargetedReview": null,
+      "TargetedReview": {
+        "Priority": 13,
+        "Evidence": "docs/CPF1_AUTHENTIC_RESULT_20261107.json",
+        "ImplementationFiles": [
+          "research/CPF1_BENCHMARK_CORRECTION.md",
+          "research/cpf1_benchmark_correction.py",
+          "docs/CPF1_BENCHMARK_CORRECTION_PUBLIC_20261112.json"
+        ],
+        "Finding": "Donchian breakout and same-clock four-hour momentum have structurally identical direction on selected observations, so zero paired variance was not a valid economic futility finding. Corrected weekly filtered adverse proxy remains-2.767843bps versus unfiltered momentum-3.002484. Bollinger selection adverse-1.917838bps; lower bound-5.926970. No actual funded cycle.",
+        "Action": "Retain the corrected benchmark and negative absolute evidence; distinguish a noninformative comparison from a failed executable strategy. A newly justified native lifecycle/geometry redevelopment remains authorized. Control overlap with existing reversal and failed-break offers instead of counting renamed signals as new alpha."
+      },
       "ReviewCoverage": {
         "LocalFilesInspected": 7,
         "OriginalRegistryInspected": true,
@@ -7711,6 +7751,24 @@
           "Sha256": "abab2853386ed82416717c0857d5ae5568fe0f5a407400be749f6b3df4ee441c",
           "Kind": "IMPLEMENTATION",
           "Bytes": 1911
+        },
+        {
+          "Path": "src/Mxm.Core/NativeProductResearchLoop.cs",
+          "Sha256": "c5f8be486cd7a85417d4a958933ebeabc7d43d2c09198bdc9582c6a76f642081",
+          "Kind": "IMPLEMENTATION",
+          "Bytes": 115825
+        },
+        {
+          "Path": "src/Mxm.Core/NativePullbackRangeResearch.cs",
+          "Sha256": "629b8f4c647293b1eedd937553f605db24c9d563e31b4e05451210163c308538",
+          "Kind": "IMPLEMENTATION",
+          "Bytes": 3027
+        },
+        {
+          "Path": "src/Mxm.Replay/Program.cs",
+          "Sha256": "dd56f08f5fd7fce4ebaa3b60f607cb92a73fd16ff9fe0aea710ad5846f501f99",
+          "Kind": "IMPLEMENTATION",
+          "Bytes": 138865
         }
       ],
       "OriginalNumericFacts": [
@@ -7751,9 +7809,19 @@
           "OriginalValue": 0.012519859248143892
         }
       ],
-      "TargetedReview": null,
+      "TargetedReview": {
+        "Priority": 11,
+        "Evidence": "docs/PRR1_AUTHENTIC_PUBLIC_RECEIPT_20261111.json",
+        "ImplementationFiles": [
+          "src/Mxm.Core/NativePullbackRangeResearch.cs",
+          "src/Mxm.Core/NativeProductResearchLoop.cs",
+          "src/Mxm.Replay/Program.cs"
+        ],
+        "Finding": "Seven modeled closures: central+0.223016 EUR, adverse-0.098723, funded-short adverse+2.123686. US2000 only two trips; joint forecast has not beaten its funded direction control. Original source includes US2000, outside the current106-name historical roster.",
+        "Action": "Keep broad-market pullback and crude failed-break geometry recoverable; restore the exact April source before asserting complete estate coverage. Compare against funded direction and cash in the shared engine. The106-name roster is not an upper bound on all historical project sources."
+      },
       "ReviewCoverage": {
-        "LocalFilesInspected": 3,
+        "LocalFilesInspected": 6,
         "OriginalRegistryInspected": true,
         "ArchivedBinaryResultIndependentlyRestoredByThisReview": false,
         "Unresolved": "Archived result, methodology or funded redevelopment remains open where absent from conserved local evidence"
@@ -8001,6 +8069,24 @@
           "Sha256": "c1364a3f02097d0d1eb70dfb412e57471f448a03ec84b573d282c330f7006794",
           "Kind": "IMPLEMENTATION",
           "Bytes": 2404
+        },
+        {
+          "Path": "src/Mxm.Core/NativeProductResearchLoop.cs",
+          "Sha256": "c5f8be486cd7a85417d4a958933ebeabc7d43d2c09198bdc9582c6a76f642081",
+          "Kind": "IMPLEMENTATION",
+          "Bytes": 115825
+        },
+        {
+          "Path": "src/Mxm.Core/NativeRelativeRotationResearch.cs",
+          "Sha256": "1dfc2e49c94535dbd9dcd26a548aa3c182a73894e545bf52b2622df4915ee9f0",
+          "Kind": "IMPLEMENTATION",
+          "Bytes": 3758
+        },
+        {
+          "Path": "src/Mxm.Replay/Program.cs",
+          "Sha256": "dd56f08f5fd7fce4ebaa3b60f607cb92a73fd16ff9fe0aea710ad5846f501f99",
+          "Kind": "IMPLEMENTATION",
+          "Bytes": 138865
         }
       ],
       "OriginalNumericFacts": [
@@ -8061,9 +8147,19 @@
           "OriginalValue": 2
         }
       ],
-      "TargetedReview": null,
+      "TargetedReview": {
+        "Priority": 9,
+        "Evidence": "docs/JRS1_AUTHENTIC_PUBLIC_RECEIPT_20261111.json",
+        "ImplementationFiles": [
+          "src/Mxm.Core/NativeRelativeRotationResearch.cs",
+          "src/Mxm.Core/NativeProductResearchLoop.cs",
+          "src/Mxm.Replay/Program.cs"
+        ],
+        "Finding": "Four native modeled closures: adverse+3.302289 EUR, funded-long adverse+2.903947, incremental+0.398342. All economic contribution is commodity repricing; FX contribution0. Two missing held-minute marks of197;13 stress decisions and0 with exposure; joint-stress marginal NET0.",
+        "Action": "Recover commodity-specific activity repricing and synchronized FX relative rotation as distinct hypotheses; reuse the actual FCE1 February/March source. Test marginal value in the common allocator; current16-family and Ridge studies are not an exact JRS1 redevelopment. A standalone family need not satisfy HARD21, and the untested joint-risk benefit remains open."
+      },
       "ReviewCoverage": {
-        "LocalFilesInspected": 3,
+        "LocalFilesInspected": 6,
         "OriginalRegistryInspected": true,
         "ArchivedBinaryResultIndependentlyRestoredByThisReview": false,
         "Unresolved": "Archived result, methodology or funded redevelopment remains open where absent from conserved local evidence"
@@ -9436,6 +9532,13 @@
       "RecoveryAuthorized": true
     }
   ],
+  "InspectedRevision": "5d032566ad48ca1141ff7de47c5525e4a710429b",
+  "NewNativeResearchProtocols": [
+    "research/full_estate_monetary_competition_1.json",
+    "research/persistent_executable_response_1.json",
+    "research/causal_ridge_common_book_1.json"
+  ],
+  "EarlierPermanentNoReevaluationLanguageOverriddenByCurrentOwnerSpec": true,
   "NewMonetaryStudy": "research/full_estate_monetary_competition_1.json",
   "Orders": 0,
   "CloudActivated": false,
